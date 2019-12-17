@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
+import com.graphhopper.routing.RoutingAlgorithmTest;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -25,7 +25,10 @@ import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
@@ -188,7 +191,7 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWithBorderBlocking() {
-        AbstractRoutingAlgorithmTester.initBiGraph(ghStorage);
+        RoutingAlgorithmTest.initBiGraph(ghStorage);
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new FastestWeighting(encoder), 2);
         final SpatialRule ruleRight = new DefaultSpatialRule() {
