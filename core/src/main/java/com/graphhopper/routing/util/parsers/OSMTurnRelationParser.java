@@ -19,7 +19,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostStorage;
@@ -95,11 +94,11 @@ public class OSMTurnRelationParser implements TurnCostParser {
     }
 
     private EdgeExplorer getInExplorer(Graph graph) {
-        return cachedInExplorer == null ? cachedInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc)) : cachedInExplorer;
+        return cachedInExplorer == null ? cachedInExplorer = graph.createEdgeExplorer() : cachedInExplorer;
     }
 
     private EdgeExplorer getOutExplorer(Graph graph) {
-        return cachedOutExplorer == null ? cachedOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)) : cachedOutExplorer;
+        return cachedOutExplorer == null ? cachedOutExplorer = graph.createEdgeExplorer() : cachedOutExplorer;
     }
 
     /**
@@ -120,7 +119,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
             EdgeIterator iter = edgeInExplorer.setBaseNode(viaNode);
 
             while (iter.next()) {
-                if (map.getOsmIdOfInternalEdge(iter.getEdge()) == osmTurnRelation.getOsmIdFrom()) {
+                if (iter.getReverse(accessEnc) && map.getOsmIdOfInternalEdge(iter.getEdge()) == osmTurnRelation.getOsmIdFrom()) {
                     edgeIdFrom = iter.getEdge();
                     break;
                 }
@@ -134,6 +133,8 @@ public class OSMTurnRelationParser implements TurnCostParser {
             // for TYPE_ONLY_* we add ALL restrictions (from, via, * ) EXCEPT the given turn
             // for TYPE_NOT_*  we add ONE restriction  (from, via, to)
             while (iter.next()) {
+                if (!iter.get(accessEnc))
+                    continue;
                 int edgeId = iter.getEdge();
                 long wayId = map.getOsmIdOfInternalEdge(edgeId);
                 if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRelation.Type.ONLY && wayId != osmTurnRelation.getOsmIdTo()

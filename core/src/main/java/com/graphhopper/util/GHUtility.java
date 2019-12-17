@@ -24,6 +24,7 @@ import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
@@ -84,13 +85,18 @@ public class GHUtility {
         return problems;
     }
 
+    public static boolean allowedAccess(Weighting weighting, EdgeIteratorState edgeState, boolean reverse) {
+        return !Double.isInfinite(weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE));
+    }
+
     /**
      * Counts reachable edges.
      */
-    public static int count(EdgeIterator iter) {
+    public static int count(EdgeIterator iter, EdgeFilter filter) {
         int counter = 0;
         while (iter.next()) {
-            counter++;
+            if (filter.accept(iter))
+                counter++;
         }
         return counter;
     }
@@ -103,11 +109,12 @@ public class GHUtility {
         return s;
     }
 
-    public static Set<Integer> getNeighbors(EdgeIterator iter) {
+    public static Set<Integer> getNeighbors(EdgeIterator iter, EdgeFilter filter) {
         // make iteration order over set static => linked
         Set<Integer> list = new LinkedHashSet<>();
         while (iter.next()) {
-            list.add(iter.getAdjNode());
+            if (filter.accept(iter))
+                list.add(iter.getAdjNode());
         }
         return list;
     }
@@ -233,15 +240,20 @@ public class GHUtility {
         double pCostIsRestriction = 0.1;
 
         DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
-        EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
-        EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        EdgeExplorer inExplorer = graph.createEdgeExplorer();
+        EdgeExplorer outExplorer = graph.createEdgeExplorer();
         IntsRef tcFlags = TurnCost.createFlags();
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (random.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);
                 while (inIter.next()) {
+                    if (!inIter.getReverse(accessEnc))
+                        continue;
                     EdgeIterator outIter = outExplorer.setBaseNode(node);
                     while (outIter.next()) {
+                        if (!outIter.get(accessEnc))
+                            continue;
                         if (inIter.getEdge() == outIter.getEdge()) {
                             // leave u-turns as they are
                             continue;
@@ -273,8 +285,8 @@ public class GHUtility {
         }.start(g.createEdgeExplorer(), startNode);
     }
 
-    public static String getNodeInfo(CHGraph g, int nodeId, EdgeFilter filter) {
-        CHEdgeExplorer ex = g.createEdgeExplorer(filter);
+    public static String getNodeInfo(CHGraph g, int nodeId) {
+        CHEdgeExplorer ex = g.createEdgeExplorer();
         CHEdgeIterator iter = ex.setBaseNode(nodeId);
         NodeAccess na = g.getNodeAccess();
         String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
@@ -286,13 +298,14 @@ public class GHUtility {
     }
 
     public static String getNodeInfo(Graph g, int nodeId, EdgeFilter filter) {
-        EdgeIterator iter = g.createEdgeExplorer(filter).setBaseNode(nodeId);
+        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(nodeId);
         NodeAccess na = g.getNodeAccess();
         String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next()) {
-            str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
-                    + iter.fetchWayGeometry(0).getSize() + ", edgeId:" + iter.getEdge()
-                    + "\t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
+            if (filter.accept(iter))
+                str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
+                        + iter.fetchWayGeometry(0).getSize() + ", edgeId:" + iter.getEdge()
+                        + "\t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
         }
         return str;
     }

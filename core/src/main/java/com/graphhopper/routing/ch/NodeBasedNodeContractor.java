@@ -57,7 +57,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        allEdgeExplorer = prepareGraph.createAllEdgeExplorer();
+        allEdgeExplorer = prepareGraph.createEdgeExplorer();
         prepareAlgo = new NodeBasedWitnessPathSearcher(prepareGraph, maxLevel);
     }
 
@@ -233,7 +233,10 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                     if (status == 0)
                         continue;
 
-                    if (sc.weight >= iter.getWeight(false)) {
+                    double weight = iter.getWeight(false);
+                    if (Double.isInfinite(weight))
+                        continue;
+                    if (sc.weight >= weight) {
                         // special case if a bidirectional shortcut has worse weight and still has to be added as otherwise the opposite direction would be missing
                         // see testShortcutMergeBug
                         if (status == 2)

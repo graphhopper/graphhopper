@@ -91,14 +91,16 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     public void initFromGraph() {
         super.initFromGraph();
         witnessPathSearcher = new EdgeBasedWitnessPathSearcher(prepareGraph, pMap);
-        inEdgeExplorer = prepareGraph.createInEdgeExplorer();
-        outEdgeExplorer = prepareGraph.createOutEdgeExplorer();
-        allEdgeExplorer = prepareGraph.createAllEdgeExplorer();
-        existingShortcutExplorer = prepareGraph.createOutEdgeExplorer();
-        sourceNodeOrigInEdgeExplorer = prepareGraph.createOriginalInEdgeExplorer();
-        targetNodeOrigOutEdgeExplorer = prepareGraph.createOriginalOutEdgeExplorer();
-        loopAvoidanceInEdgeExplorer = prepareGraph.createOriginalInEdgeExplorer();
-        loopAvoidanceOutEdgeExplorer = prepareGraph.createOriginalOutEdgeExplorer();
+
+        // TODO NOW we need to modify the while-iter-next loops?
+        inEdgeExplorer = prepareGraph.createEdgeExplorer();
+        outEdgeExplorer = prepareGraph.createEdgeExplorer();
+        allEdgeExplorer = prepareGraph.createEdgeExplorer();
+        existingShortcutExplorer = prepareGraph.createEdgeExplorer();
+        sourceNodeOrigInEdgeExplorer = prepareGraph.createOriginalEdgeExplorer();
+        targetNodeOrigOutEdgeExplorer = prepareGraph.createOriginalEdgeExplorer();
+        loopAvoidanceInEdgeExplorer = prepareGraph.createOriginalEdgeExplorer();
+        loopAvoidanceOutEdgeExplorer = prepareGraph.createOriginalEdgeExplorer();
         hierarchyDepths = new int[prepareGraph.getNodes()];
     }
 
@@ -197,6 +199,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
             }
         }
 
+        // TODO NOW loop only once over "node"
         PrepareCHEdgeIterator allIter = allEdgeExplorer.setBaseNode(node);
         while (allIter.next()) {
             if (isContracted(allIter.getAdjNode()))
@@ -271,6 +274,8 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 continue;
             }
             final double existingWeight = iter.getWeight(false);
+            if (Double.isInfinite(existingWeight))
+                continue;
             if (existingWeight <= edgeTo.weight) {
                 // our shortcut already exists with lower weight --> do nothing
                 CHEntry entry = new CHEntry(iter.getEdge(), iter.getOrigEdgeLast(), adjNode, existingWeight);

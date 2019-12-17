@@ -22,9 +22,12 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.WeightedEdgeFilter;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,35 +53,31 @@ public class TarjansSCCAlgorithm {
     private final EdgeFilter edgeFilter;
     private int index = 1;
 
-    public TarjansSCCAlgorithm(GraphHopperStorage ghStorage, final EdgeFilter edgeFilter, boolean ignoreSingleEntries) {
+    public TarjansSCCAlgorithm(GraphHopperStorage ghStorage, Weighting weighting, boolean ignoreSingleEntries) {
         this.graph = ghStorage;
         this.nodeStack = new IntArrayDeque();
         this.onStack = new GHBitSetImpl(ghStorage.getNodes());
         this.nodeIndex = new int[ghStorage.getNodes()];
         this.nodeLowLink = new int[ghStorage.getNodes()];
-        this.edgeFilter = edgeFilter;
+        this.edgeFilter = WeightedEdgeFilter.outEdges(weighting);
 
         if (ignoreSingleEntries) {
             // Very important case to boost performance - see #520. Exclude single entry components as we don't need them! 
             // But they'll be created a lot for multiple vehicles because many nodes e.g. for foot are not accessible at all for car.
             // We can ignore these single entry components as they are already set 'not accessible'
-            EdgeExplorer explorer = ghStorage.createEdgeExplorer(edgeFilter);
+            EdgeExplorer explorer = ghStorage.createEdgeExplorer();
             int nodes = ghStorage.getNodes();
             ignoreSet = new GHBitSetImpl(ghStorage.getNodes());
             for (int start = 0; start < nodes; start++) {
                 if (!ghStorage.isNodeRemoved(start)) {
                     EdgeIterator iter = explorer.setBaseNode(start);
-                    if (!iter.next())
+                    if (GHUtility.count(iter, edgeFilter) == 0)
                         ignoreSet.add(start);
                 }
             }
         } else {
             ignoreSet = new GHBitSetImpl();
         }
-    }
-
-    public GHBitSet getIgnoreSet() {
-        return ignoreSet;
     }
 
     /**
@@ -122,7 +121,7 @@ public class TarjansSCCAlgorithm {
                 nodeStack.addLast(start);
                 onStack.add(start);
 
-                iter = graph.createEdgeExplorer(edgeFilter).setBaseNode(start);
+                iter = graph.createEdgeExplorer().setBaseNode(start);
 
             } else {
                 // We're resuming iteration over the next child of 'start', set lowLink as appropriate.
@@ -135,6 +134,8 @@ public class TarjansSCCAlgorithm {
             // Each element (excluding the first) in the current component should be able to find
             // a successor with a lower nodeLowLink.
             while (iter.next()) {
+                if (!edgeFilter.accept(iter))
+                    continue;
                 int connectedId = iter.getAdjNode();
                 if (ignoreSet.contains(start))
                     continue;

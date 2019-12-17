@@ -20,9 +20,8 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHTreeMapComposed;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -162,8 +161,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
     private void initFromGraph() {
         maxLevel = prepareGraph.getNodes();
-        allEdgeExplorer = prepareGraph.createAllEdgeExplorer();
-        disconnectExplorer = prepareGraph.createAllEdgeExplorer();
+        allEdgeExplorer = prepareGraph.createEdgeExplorer();
+        disconnectExplorer = prepareGraph.createEdgeExplorer();
 
         // Use an alternative to PriorityQueue as it has some advantages:
         //   1. Gets automatically smaller if less entries are stored => less total RAM used.

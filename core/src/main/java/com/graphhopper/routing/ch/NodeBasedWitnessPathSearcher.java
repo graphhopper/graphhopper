@@ -57,7 +57,8 @@ public class NodeBasedWitnessPathSearcher {
     public NodeBasedWitnessPathSearcher(PrepareCHGraph graph, int maxLevel) {
         this.graph = graph;
         this.maxLevel = maxLevel;
-        outEdgeExplorer = graph.createOutEdgeExplorer();
+        // TODO NOW we need to modify the while-iter-next loops?
+        outEdgeExplorer = graph.createEdgeExplorer();
 
         parents = new int[graph.getNodes()];
         Arrays.fill(parents, EMPTY_PARENT);

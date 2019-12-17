@@ -67,7 +67,7 @@ public class GraphEdgeIdFinder {
     /**
      * This method fills the edgeIds hash with edgeIds found inside the specified shape
      */
-    public void findEdgesInShape(final GHIntHashSet edgeIds, final Shape shape, EdgeFilter filter) {
+    public void findEdgesInShape(final GHIntHashSet edgeIds, final Shape shape, final EdgeFilter filter) {
         GHPoint center = shape.getCenter();
         QueryResult qr = locationIndex.findClosest(center.getLat(), center.getLon(), filter);
         // TODO: if there is no street close to the center it'll fail although there are roads covered. Maybe we should check edge points or some random points in the Shape instead?
@@ -97,8 +97,9 @@ public class GraphEdgeIdFinder {
 
             @Override
             protected boolean checkAdjacent(EdgeIteratorState edge) {
+                if (!filter.accept(edge))
+                    return false;
                 int adjNodeId = edge.getAdjNode();
-
                 if (localShape.contains(na.getLatitude(adjNodeId), na.getLongitude(adjNodeId))) {
                     edgeIds.add(edge.getEdge());
                     return true;
@@ -113,7 +114,7 @@ public class GraphEdgeIdFinder {
                 return lat <= bbox.maxLat && lat >= bbox.minLat && lon <= bbox.maxLon && lon >= bbox.minLon;
             }
         };
-        bfs.start(graph.createEdgeExplorer(filter), qr.getClosestNode());
+        bfs.start(graph.createEdgeExplorer(), qr.getClosestNode());
     }
 
     /**

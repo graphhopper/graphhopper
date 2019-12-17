@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
@@ -427,11 +426,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public AllEdgesIterator getAllEdges() {
         return baseGraph.getAllEdges();
-    }
-
-    @Override
-    public EdgeExplorer createEdgeExplorer(EdgeFilter filter) {
-        return baseGraph.createEdgeExplorer(filter);
     }
 
     @Override

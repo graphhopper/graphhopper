@@ -21,7 +21,6 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -40,12 +39,12 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
 
     @Override
     protected boolean fromEntryCanBeSkipped() {
-        return entryIsStallable(currFrom, bestWeightMapFrom, inEdgeExplorer, false);
+        return entryIsStallable(currFrom, bestWeightMapFrom, false);
     }
 
     @Override
     protected boolean toEntryCanBeSkipped() {
-        return entryIsStallable(currTo, bestWeightMapTo, outEdgeExplorer, true);
+        return entryIsStallable(currTo, bestWeightMapTo, true);
     }
 
     @Override
@@ -58,8 +57,7 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
         return getName() + "|" + weighting;
     }
 
-    private boolean entryIsStallable(SPTEntry entry, IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer edgeExplorer,
-                                     boolean reverse) {
+    private boolean entryIsStallable(SPTEntry entry, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
         // We check for all 'incoming' edges if we can prove that the current node (that is about to be settled) is 
         // reached via a suboptimal path. We do this regardless of the CH level of the adjacent nodes.
         EdgeIterator iter = edgeExplorer.setBaseNode(entry.adjNode);

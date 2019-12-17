@@ -51,18 +51,20 @@ public class DefaultEdgeFilterTest {
         graph.freeze();
         // add loop shortcut in 'fwd' direction
         addShortcut(chGraph, 0, 0, true, 0, 2);
-        CHEdgeExplorer outExplorer = chGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
-        CHEdgeExplorer inExplorer = chGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+        CHEdgeExplorer explorer = chGraph.createEdgeExplorer();
+        // DefaultEdgeFilter.outEdges(encoder)
 
         IntSet inEdges = new IntHashSet();
         IntSet outEdges = new IntHashSet();
-        CHEdgeIterator outIter = outExplorer.setBaseNode(0);
+        CHEdgeIterator outIter = explorer.setBaseNode(0);
         while (outIter.next()) {
-            outEdges.add(outIter.getEdge());
+            if (DefaultEdgeFilter.outEdges(encoder).accept(outIter))
+                outEdges.add(outIter.getEdge());
         }
-        CHEdgeIterator inIter = inExplorer.setBaseNode(0);
+        CHEdgeIterator inIter = explorer.setBaseNode(0);
         while (inIter.next()) {
-            inEdges.add(inIter.getEdge());
+            if (DefaultEdgeFilter.inEdges(encoder).accept(outIter))
+                inEdges.add(inIter.getEdge());
         }
         // the loop should be accepted by in- and outExplorers
         assertEquals("Wrong outgoing edges", IntHashSet.from(0, 3), outEdges);

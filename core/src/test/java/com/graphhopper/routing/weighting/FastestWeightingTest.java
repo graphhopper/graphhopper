@@ -59,10 +59,10 @@ public class FastestWeightingTest {
         assertEquals(time + 100, instance.calcWeight(virtEdge, false, 0), 1e-8);
         // only after setting it
         virtEdge.setUnfavored(true);
-        assertEquals(time + 100, instance.calcWeight(virtEdge, true, 0), 1e-8);
+        assertEquals(time + 100, instance.calcWeight(virtEdge, false, 0), 1e-8);
         // but not after releasing it
         virtEdge.setUnfavored(false);
-        assertEquals(time, instance.calcWeight(virtEdge, true, 0), 1e-8);
+        assertEquals(time, instance.calcWeight(virtEdge, false, 0), 1e-8);
 
         // test default penalty
         virtEdge.setUnfavored(true);

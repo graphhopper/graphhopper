@@ -17,9 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -36,11 +34,9 @@ import java.util.List;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected final Graph graph;
     protected final Weighting weighting;
-    protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
     protected NodeAccess nodeAccess;
-    protected EdgeExplorer inEdgeExplorer;
-    protected EdgeExplorer outEdgeExplorer;
+    protected EdgeExplorer edgeExplorer;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
     protected EdgeFilter additionalEdgeFilter;
     private boolean alreadyRun;
@@ -52,12 +48,10 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
      */
     public AbstractRoutingAlgorithm(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         this.weighting = weighting;
-        this.flagEncoder = weighting.getFlagEncoder();
         this.traversalMode = traversalMode;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
-        inEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
+        edgeExplorer = graph.createEdgeExplorer();
     }
 
     @Override
@@ -66,6 +60,8 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     }
 
     public RoutingAlgorithm setEdgeFilter(EdgeFilter additionalEdgeFilter) {
+        if (this.additionalEdgeFilter != null)
+            throw new IllegalStateException("Cannot overwrite additionalEdgeFilter for algorithm " + getName());
         this.additionalEdgeFilter = additionalEdgeFilter;
         return this;
     }

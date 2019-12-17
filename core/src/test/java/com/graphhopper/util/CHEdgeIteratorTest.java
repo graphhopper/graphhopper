@@ -50,8 +50,8 @@ public class CHEdgeIteratorTest {
         g.freeze();
 
         CHGraph lg = g.getCHGraph();
-        assertEquals(2, GHUtility.count(lg.getAllEdges()));
-        assertEquals(1, GHUtility.count(lg.createEdgeExplorer(carOutFilter).setBaseNode(1)));
+        assertEquals(2, GHUtility.count(lg.getAllEdges(), EdgeFilter.ALL_EDGES));
+        assertEquals(1, GHUtility.count(lg.createEdgeExplorer().setBaseNode(1), carOutFilter));
         EdgeIteratorState iter = GHUtility.getEdge(lg, 0, 1);
         assertEquals(1, iter.getAdjNode());
         assertTrue(iter.get(accessEnc));
@@ -66,7 +66,7 @@ public class CHEdgeIteratorTest {
         // update distance
         iter.setDistance(10);
         assertEquals(10, iter.getDistance(), 1e-4);
-        assertEquals(0, GHUtility.count(lg.createEdgeExplorer(carOutFilter).setBaseNode(1)));
+        assertEquals(0, GHUtility.count(lg.createEdgeExplorer().setBaseNode(1), carOutFilter));
         iter = GHUtility.getEdge(lg, 0, 1);
 
         assertTrue(iter.get(accessEnc));
@@ -74,7 +74,7 @@ public class CHEdgeIteratorTest {
         assertEquals(20.0, iter.get(avSpeedEnc), .1);
 
         assertEquals(10, iter.getDistance(), 1e-4);
-        assertEquals(1, GHUtility.getNeighbors(lg.createEdgeExplorer().setBaseNode(1)).size());
-        assertEquals(0, GHUtility.getNeighbors(lg.createEdgeExplorer(carOutFilter).setBaseNode(1)).size());
+        assertEquals(1, GHUtility.getNeighbors(lg.createEdgeExplorer().setBaseNode(1), EdgeFilter.ALL_EDGES).size());
+        assertEquals(0, GHUtility.getNeighbors(lg.createEdgeExplorer().setBaseNode(1), carOutFilter).size());
     }
 }

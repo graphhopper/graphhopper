@@ -19,7 +19,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
@@ -73,16 +72,10 @@ public interface CHGraph extends Graph {
     @Override
     CHEdgeExplorer createEdgeExplorer();
 
-    @Override
-    CHEdgeExplorer createEdgeExplorer(EdgeFilter filter);
-
     EdgeExplorer createOriginalEdgeExplorer();
-
-    EdgeExplorer createOriginalEdgeExplorer(EdgeFilter filter);
 
     @Override
     AllCHEdgesIterator getAllEdges();
-
 
     void disconnectEdge(int edge, int adjNode, int prevEdge);
 

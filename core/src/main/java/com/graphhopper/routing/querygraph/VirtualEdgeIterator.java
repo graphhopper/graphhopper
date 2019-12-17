@@ -34,14 +34,12 @@ import java.util.List;
  * @author Peter Karich
  */
 class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
-    private final EdgeFilter edgeFilter;
     private List<EdgeIteratorState> edges;
     private int current;
 
-    VirtualEdgeIterator(EdgeFilter edgeFilter, List<EdgeIteratorState> edges) {
+    VirtualEdgeIterator(List<EdgeIteratorState> edges) {
         this.edges = edges;
         this.current = -1;
-        this.edgeFilter = edgeFilter;
     }
 
     EdgeIterator reset(List<EdgeIteratorState> edges) {
@@ -53,9 +51,6 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     @Override
     public boolean next() {
         current++;
-        while (current < edges.size() && !edgeFilter.accept(edges.get(current))) {
-            current++;
-        }
         return current < edges.size();
     }
 

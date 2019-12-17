@@ -281,10 +281,10 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    public EdgeExplorer createEdgeExplorer(final EdgeFilter edgeFilter) {
+    public EdgeExplorer createEdgeExplorer() {
         // re-use these objects between setBaseNode calls to prevent GC
-        final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
-        final VirtualEdgeIterator virtualEdgeIterator = new VirtualEdgeIterator(edgeFilter, null);
+        final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer();
+        final VirtualEdgeIterator virtualEdgeIterator = new VirtualEdgeIterator(null);
         return new EdgeExplorer() {
             @Override
             public EdgeIterator setBaseNode(int baseNode) {
@@ -333,11 +333,6 @@ public class QueryGraph implements Graph {
             virtualEdgesAtVirtualNodes.add(filteredEdges);
         }
         return virtualEdgesAtVirtualNodes;
-    }
-
-    @Override
-    public EdgeExplorer createEdgeExplorer() {
-        return createEdgeExplorer(EdgeFilter.ALL_EDGES);
     }
 
     @Override

@@ -110,8 +110,9 @@ public class EdgeBasedWitnessPathSearcher {
         this.chGraph = chGraph;
         extractParams(pMap);
 
-        outEdgeExplorer = chGraph.createOutEdgeExplorer();
-        origInEdgeExplorer = chGraph.createOriginalInEdgeExplorer();
+        // TODO NOW we need to modify the while-iter-next loops?
+        outEdgeExplorer = chGraph.createEdgeExplorer();
+        origInEdgeExplorer = chGraph.createOriginalEdgeExplorer();
         maxLevel = chGraph.getNodes();
 
         maxSettledEdges = params.minimumMaxSettledEdges;
@@ -328,11 +329,14 @@ public class EdgeBasedWitnessPathSearcher {
                 continue;
             }
             double turnWeight = calcTurnWeight(sourceEdge, sourceNode, outIter.getOrigEdgeFirst());
-            if (isInfinite(turnWeight)) {
+            if (isInfinite(turnWeight))
                 continue;
-            }
+
             double edgeWeight = outIter.getWeight(false);
             double weight = turnWeight + edgeWeight;
+            if (Double.isInfinite(weight))
+                continue;
+
             boolean isPathToCenter = outIter.getAdjNode() == centerNode;
             int incEdge = outIter.getOrigEdgeLast();
             int adjNode = outIter.getAdjNode();

@@ -175,7 +175,7 @@ public class PrepareContractionHierarchiesTest {
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         assertEquals(oldCount, lg.getOriginalEdges());
-        assertEquals(oldCount + 2,lg.getEdges());
+        assertEquals(oldCount + 2, lg.getEdges());
         RoutingAlgorithm algo = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(4, 2);
         assertEquals(3, p.getDistance(), 1e-6);
@@ -191,13 +191,13 @@ public class PrepareContractionHierarchiesTest {
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
         assertEquals(oldCount, g.getEdges());
-        assertEquals(oldCount, GHUtility.count(g.getAllEdges()));
+        assertEquals(oldCount, GHUtility.count(g.getAllEdges(), EdgeFilter.ALL_EDGES));
 
         long numShortcuts = 9;
         assertEquals(numShortcuts, prepare.getShortcuts());
         assertEquals(oldCount, lg.getOriginalEdges());
         assertEquals(oldCount + numShortcuts, lg.getEdges());
-        assertEquals(oldCount + numShortcuts, GHUtility.count(lg.getAllEdges()));
+        assertEquals(oldCount + numShortcuts, GHUtility.count(lg.getAllEdges(), EdgeFilter.ALL_EDGES));
         RoutingAlgorithm algo = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(0, 10);
         assertEquals(10, p.getDistance(), 1e-6);
@@ -378,11 +378,11 @@ public class PrepareContractionHierarchiesTest {
         CHEdgeExplorer explorer = lg.createEdgeExplorer();
         // shortcuts (and edges) leading to or coming from lower level nodes should be disconnected
         // so far we are only disconnecting shortcuts however, see comments in CHGraphImpl.
-        assertEquals(buildSet(7, 8, 0, 1, 2, 3), GHUtility.getNeighbors(explorer.setBaseNode(6)));
-        assertEquals(buildSet(6, 0), GHUtility.getNeighbors(explorer.setBaseNode(4)));
-        assertEquals(buildSet(6, 1), GHUtility.getNeighbors(explorer.setBaseNode(5)));
-        assertEquals(buildSet(8, 2), GHUtility.getNeighbors(explorer.setBaseNode(7)));
-        assertEquals(buildSet(3), GHUtility.getNeighbors(explorer.setBaseNode(8)));
+        assertEquals(buildSet(7, 8, 0, 1, 2, 3), GHUtility.getNeighbors(explorer.setBaseNode(6), EdgeFilter.ALL_EDGES));
+        assertEquals(buildSet(6, 0), GHUtility.getNeighbors(explorer.setBaseNode(4), EdgeFilter.ALL_EDGES));
+        assertEquals(buildSet(6, 1), GHUtility.getNeighbors(explorer.setBaseNode(5), EdgeFilter.ALL_EDGES));
+        assertEquals(buildSet(8, 2), GHUtility.getNeighbors(explorer.setBaseNode(7), EdgeFilter.ALL_EDGES));
+        assertEquals(buildSet(3), GHUtility.getNeighbors(explorer.setBaseNode(8), EdgeFilter.ALL_EDGES));
     }
 
     private Set<Integer> buildSet(Integer... values) {
@@ -491,9 +491,9 @@ public class PrepareContractionHierarchiesTest {
 
     private EdgeIteratorState getEdge(Graph graph, int from, int to, boolean incoming) {
         EdgeFilter filter = incoming ? DefaultEdgeFilter.inEdges(carEncoder) : DefaultEdgeFilter.outEdges(carEncoder);
-        EdgeIterator iter = graph.createEdgeExplorer(filter).setBaseNode(from);
+        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(from);
         while (iter.next()) {
-            if (iter.getAdjNode() == to) {
+            if (filter.accept(iter) && iter.getAdjNode() == to) {
                 return iter;
             }
         }

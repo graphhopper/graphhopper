@@ -68,14 +68,13 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
     }
 
     protected void runAlgo() {
-        EdgeExplorer explorer = outEdgeExplorer;
         while (true) {
             visitedNodes++;
             if (isMaxVisitedNodesExceeded() || finished())
                 break;
 
             int currNode = currEdge.adjNode;
-            EdgeIterator iter = explorer.setBaseNode(currNode);
+            EdgeIterator iter = edgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
                 if (!accept(iter, currEdge.edge))
                     continue;

@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -253,7 +252,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm impleme
             return false;
         }
         bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
+        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, false);
         return true;
     }
 
@@ -270,13 +269,13 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm impleme
             return false;
         }
         bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
+        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, true);
         return true;
     }
 
     private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
-                           IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
-        EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
+                           IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
+        EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge, reverse))
                 continue;

@@ -1044,7 +1044,7 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            // TODO NOW how does this work together with chProfile.getWeighting!?
+            // TODO NOW for CH it will be overwritten by chProfile.getWeighting but now we need it for locationIndex -> #729
             Weighting weighting = createWeighting(hints, encoder);
 
             RoutingTemplate routingTemplate;
@@ -1266,6 +1266,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     protected void cleanUp() {
         int prevNodeCount = ghStorage.getNodes();
+        // TODO NOW in PrepareRoutingSubnetworks we create new FastestWeighting objects, but we should use createWeighting or the weightings from CH??
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager.fetchEdgeEncoders());
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);

@@ -18,10 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -397,10 +394,11 @@ public class DirectionResolverTest {
     }
 
     private int edge(int from, int to) {
-        EdgeExplorer explorer = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
+        EdgeFilter filter = DefaultEdgeFilter.outEdges(encoder.getAccessEnc());
+        EdgeExplorer explorer = g.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(from);
         while (iter.next()) {
-            if (iter.getAdjNode() == to) {
+            if (filter.accept(iter) && iter.getAdjNode() == to) {
                 return iter.getEdge();
             }
         }

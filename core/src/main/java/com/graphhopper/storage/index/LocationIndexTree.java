@@ -668,8 +668,7 @@ public class LocationIndexTree implements LocationIndex {
             findNetworkEntries(queryLat, queryLon, set, iteration);
 
             final GHBitSet exploredNodes = new GHTBitSet(new GHIntHashSet(set));
-            final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
-
+            final EdgeExplorer explorer = graph.createEdgeExplorer();
             set.forEach(new IntPredicate() {
 
                 @Override

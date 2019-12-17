@@ -166,7 +166,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
         while (true) {
             visitedNodes++;
-            EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
+            EdgeIterator iter = edgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
                 int adjNode = iter.getAdjNode();
                 int prevEdgeId = edgeIds[adjNode];

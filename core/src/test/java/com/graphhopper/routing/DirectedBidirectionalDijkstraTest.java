@@ -493,8 +493,8 @@ public class DirectedBidirectionalDijkstraTest {
 
         // check what edges there are on the query graph directly, there should not be a direct connection from 1 to 0
         // anymore, but only the virtual edge from 1 to 6 (this is how the u-turn is prevented).
-        assertEquals(new HashSet<>(Arrays.asList(0, 2)), GHUtility.getNeighbors(graph.createEdgeExplorer().setBaseNode(1)));
-        assertEquals(new HashSet<>(Arrays.asList(6, 2)), GHUtility.getNeighbors(queryGraph.createEdgeExplorer().setBaseNode(1)));
+        assertEquals(new HashSet<>(Arrays.asList(0, 2)), GHUtility.getNeighbors(graph.createEdgeExplorer().setBaseNode(1), EdgeFilter.ALL_EDGES));
+        assertEquals(new HashSet<>(Arrays.asList(6, 2)), GHUtility.getNeighbors(queryGraph.createEdgeExplorer().setBaseNode(1), EdgeFilter.ALL_EDGES));
 
         EdgeIteratorState virtualEdge = GHUtility.getEdge(queryGraph, 6, 1);
         int outEdge = virtualEdge.getEdge();

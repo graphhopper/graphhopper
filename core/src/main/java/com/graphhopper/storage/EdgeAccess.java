@@ -155,5 +155,5 @@ abstract class EdgeAccess {
         return edgeToRemovePointer;
     }
 
-    abstract EdgeIteratorState getEdgeProps(int edgeId, int adjNode, EdgeFilter edgeFilter);
+    abstract EdgeIteratorState getEdgeProps(int edgeId, int adjNode);
 }

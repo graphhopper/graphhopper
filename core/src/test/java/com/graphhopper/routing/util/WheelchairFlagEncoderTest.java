@@ -91,18 +91,6 @@ public class WheelchairFlagEncoderTest {
     }
 
     @Test
-    public void testGraph() {
-        Graph g = new GraphBuilder(encodingManager).create();
-        g.edge(0, 1).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true).setReverse(wheelchairAccessEnc, true);
-        g.edge(0, 2).setDistance(10).set(wheelchairAvSpeedEnc, 5.0).set(wheelchairAccessEnc, true).setReverse(wheelchairAccessEnc, true);
-        g.edge(1, 3).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true).setReverse(wheelchairAccessEnc, true);
-        EdgeExplorer out = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(wheelchairEncoder));
-        assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(out.setBaseNode(2)));
-    }
-
-    @Test
     public void testAccess() {
         ReaderWay way = new ReaderWay(1);
 

@@ -40,6 +40,8 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
     }
 
     public boolean next() {
+        // TODO NOW should we consider the weighting already here or explicitly in upstream code? If here then we need to know reverse=true/false
+        // loop until finite or no edges: weighting.calcWeight(iter(), reverse, EdgeIterator.NO_EDGE);
         return iter().next();
     }
 
@@ -67,6 +69,7 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
         return iter().isShortcut();
     }
 
+    // TODO NOW: reverse could be hidden, here when we keep separating "in" and "out" EdgeExplorers.
     public double getWeight(boolean reverse) {
         if (isShortcut()) {
             return iter().getWeight();

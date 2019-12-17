@@ -179,8 +179,8 @@ public class DirectionResolver {
                 continue;
             }
 
-            boolean isOut = !Double.isInfinite(weighting.calcWeight(iter, false, -1));
-            boolean isIn = !Double.isInfinite(weighting.calcWeight(iter, true, -1));
+            boolean isOut = !Double.isInfinite(weighting.calcWeight(iter, false, EdgeIterator.NO_EDGE));
+            boolean isIn = !Double.isInfinite(weighting.calcWeight(iter, true, EdgeIterator.NO_EDGE));
             if (!isIn && !isOut) {
                 continue;
             }

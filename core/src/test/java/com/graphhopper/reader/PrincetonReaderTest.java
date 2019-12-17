@@ -45,9 +45,9 @@ public class PrincetonReaderTest {
         Graph graph = new GraphBuilder(encodingManager).create();
         new PrincetonReader(graph).setStream(PrincetonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.getNodes());
-        EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
-        assertEquals(2, count(explorer.setBaseNode(0)));
-        assertEquals(3, count(explorer.setBaseNode(6)));
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        assertEquals(2, count(explorer.setBaseNode(0), carOutEdges));
+        assertEquals(3, count(explorer.setBaseNode(6), carOutEdges));
     }
 
     @Test
@@ -55,8 +55,8 @@ public class PrincetonReaderTest {
         Graph graph = new GraphBuilder(encodingManager).create();
         new PrincetonReader(graph).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.getNodes());
-        EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
-        assertEquals(13, count(explorer.setBaseNode(244)));
-        assertEquals(11, count(explorer.setBaseNode(16)));
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        assertEquals(13, count(explorer.setBaseNode(244), carOutEdges));
+        assertEquals(11, count(explorer.setBaseNode(16), carOutEdges));
     }
 }

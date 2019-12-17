@@ -22,9 +22,11 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightedEdgeFilter;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -33,6 +35,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.graphhopper.util.GHUtility.allowedAccess;
 
 /**
  * Removes nodes which are not part of the large networks. Ie. mostly nodes with no edges at all but
@@ -46,19 +50,22 @@ public class PrepareRoutingSubnetworks {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopperStorage ghStorage;
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
-    private final List<FlagEncoder> encoders;
-    private final List<BooleanEncodedValue> accessEncList;
+    private final List<Weighting> weightingList;
     private int minNetworkSize = 200;
     private int minOneWayNetworkSize = 0;
     private int subnetworks = -1;
 
     public PrepareRoutingSubnetworks(GraphHopperStorage ghStorage, List<FlagEncoder> encoders) {
         this.ghStorage = ghStorage;
-        this.encoders = encoders;
-        this.accessEncList = new ArrayList<>();
-        for (FlagEncoder flagEncoder : encoders) {
-            accessEncList.add(flagEncoder.getAccessEnc());
+        this.weightingList = new ArrayList<>();
+        for (FlagEncoder encoder : encoders) {
+            weightingList.add(new FastestWeighting(encoder));
         }
+    }
+
+    public PrepareRoutingSubnetworks(List<Weighting> weightingList, GraphHopperStorage ghStorage) {
+        this.ghStorage = ghStorage;
+        this.weightingList = new ArrayList<>(weightingList);
     }
 
     public PrepareRoutingSubnetworks setMinNetworkSize(int minNetworkSize) {
@@ -77,16 +84,16 @@ public class PrepareRoutingSubnetworks {
 
         logger.info("start finding subnetworks (min:" + minNetworkSize + ", min one way:" + minOneWayNetworkSize + ") " + Helper.getMemInfo());
         int unvisitedDeadEnds = 0;
-        for (FlagEncoder encoder : encoders) {
-            // mark edges for one vehicle as inaccessible
-            DefaultEdgeFilter filter = DefaultEdgeFilter.allEdges(encoder);
+        for (Weighting weighting : weightingList) {
+            BooleanEncodedValue accessEncToWrite = weighting.getFlagEncoder().getAccessEnc();
             if (minOneWayNetworkSize > 0)
-                unvisitedDeadEnds += removeDeadEndUnvisitedNetworks(filter);
+                unvisitedDeadEnds += removeDeadEndUnvisitedNetworks(weighting, accessEncToWrite);
 
-            List<IntArrayList> components = findSubnetworks(filter);
-            keepLargeNetworks(filter, components);
+            // mark edges for one vehicle as inaccessible
+            List<IntArrayList> components = findSubnetworks(weighting);
+            keepLargeNetworks(weighting, accessEncToWrite, components);
             subnetworks = Math.max(components.size(), subnetworks);
-            logger.info(components.size() + " subnetworks found for " + encoder + ", " + Helper.getMemInfo());
+            logger.info(components.size() + " subnetworks found for " + weighting + ", " + Helper.getMemInfo());
         }
 
         markNodesRemovedIfUnreachable();
@@ -104,9 +111,8 @@ public class PrepareRoutingSubnetworks {
     /**
      * This method finds the double linked components according to the specified filter.
      */
-    List<IntArrayList> findSubnetworks(DefaultEdgeFilter filter) {
-        final BooleanEncodedValue accessEnc = filter.getAccessEnc();
-        final EdgeExplorer explorer = ghStorage.createEdgeExplorer(filter);
+    List<IntArrayList> findSubnetworks(final Weighting weighting) {
+        final EdgeExplorer explorer = ghStorage.createEdgeExplorer();
         int locs = ghStorage.getNodes();
         List<IntArrayList> list = new ArrayList<>(100);
         final GHBitSet bs = new GHBitSetImpl(locs);
@@ -136,7 +142,7 @@ public class PrepareRoutingSubnetworks {
 
                 @Override
                 protected final boolean checkAdjacent(EdgeIteratorState edge) {
-                    if (edge.get(accessEnc) || edge.getReverse(accessEnc)) {
+                    if (allowedAccess(weighting, edge, false) || allowedAccess(weighting, edge, true)) {
                         tmpCounter++;
                         return true;
                     }
@@ -152,15 +158,15 @@ public class PrepareRoutingSubnetworks {
     /**
      * Deletes all but the largest subnetworks.
      */
-    int keepLargeNetworks(DefaultEdgeFilter filter, List<IntArrayList> components) {
+    int keepLargeNetworks(Weighting weighting, BooleanEncodedValue accessEncToWrite, List<IntArrayList> components) {
         if (components.size() <= 1)
             return 0;
 
         int maxCount = -1;
         IntIndexedContainer oldComponent = null;
         int allRemoved = 0;
-        BooleanEncodedValue accessEnc = filter.getAccessEnc();
-        EdgeExplorer explorer = ghStorage.createEdgeExplorer(filter);
+        EdgeFilter filter = WeightedEdgeFilter.allEdges(weighting);
+        EdgeExplorer explorer = ghStorage.createEdgeExplorer();
         for (IntArrayList component : components) {
             if (maxCount < 0) {
                 maxCount = component.size();
@@ -171,12 +177,12 @@ public class PrepareRoutingSubnetworks {
             int removedEdges;
             if (maxCount < component.size()) {
                 // new biggest area found. remove old
-                removedEdges = removeEdges(explorer, accessEnc, oldComponent, minNetworkSize);
+                removedEdges = removeEdges(explorer, accessEncToWrite, filter, oldComponent, minNetworkSize);
 
                 maxCount = component.size();
                 oldComponent = component;
             } else {
-                removedEdges = removeEdges(explorer, accessEnc, component, minNetworkSize);
+                removedEdges = removeEdges(explorer, accessEncToWrite, filter, component, minNetworkSize);
             }
 
             allRemoved += removedEdges;
@@ -195,16 +201,15 @@ public class PrepareRoutingSubnetworks {
      *
      * @return number of removed edges
      */
-    int removeDeadEndUnvisitedNetworks(final DefaultEdgeFilter bothFilter) {
-        StopWatch sw = new StopWatch(bothFilter.getAccessEnc() + " findComponents").start();
-        final EdgeFilter outFilter = DefaultEdgeFilter.outEdges(bothFilter.getAccessEnc());
-
+    int removeDeadEndUnvisitedNetworks(Weighting weighting, BooleanEncodedValue accessEncToWrite) {
+        StopWatch sw = new StopWatch(weighting.toString() + " findComponents").start();
         // partition graph into strongly connected components using Tarjan's algorithm        
-        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, outFilter, true);
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, weighting, true);
         List<IntArrayList> components = tarjan.findComponents();
         logger.info(sw.stop() + ", size:" + components.size());
 
-        return removeEdges(bothFilter, components, minOneWayNetworkSize);
+        final EdgeFilter bothFilter = WeightedEdgeFilter.allEdges(weighting);
+        return removeEdges(bothFilter, accessEncToWrite, components, minOneWayNetworkSize);
     }
 
     /**
@@ -213,23 +218,25 @@ public class PrepareRoutingSubnetworks {
      *
      * @return number of removed edges
      */
-    int removeEdges(final DefaultEdgeFilter bothFilter, List<IntArrayList> components, int min) {
+    int removeEdges(final EdgeFilter bothFilter, BooleanEncodedValue accessEncToWrite, List<IntArrayList> components, int min) {
         // remove edges determined from nodes but only if less than minimum size
-        EdgeExplorer explorer = ghStorage.createEdgeExplorer(bothFilter);
+        EdgeExplorer explorer = ghStorage.createEdgeExplorer();
         int removedEdges = 0;
         for (IntArrayList component : components) {
-            removedEdges += removeEdges(explorer, bothFilter.getAccessEnc(), component, min);
+            removedEdges += removeEdges(explorer, accessEncToWrite, bothFilter, component, min);
         }
         return removedEdges;
     }
 
-    int removeEdges(EdgeExplorer explorer, BooleanEncodedValue accessEnc, IntIndexedContainer component, int min) {
+    int removeEdges(EdgeExplorer explorer, BooleanEncodedValue accessEncToWrite, EdgeFilter filter, IntIndexedContainer component, int min) {
         int removedEdges = 0;
         if (component.size() < min) {
             for (int i = 0; i < component.size(); i++) {
                 EdgeIterator edge = explorer.setBaseNode(component.get(i));
                 while (edge.next()) {
-                    edge.set(accessEnc, false).setReverse(accessEnc, false);
+                    if (!filter.accept(edge))
+                        continue;
+                    edge.set(accessEncToWrite, false).setReverse(accessEncToWrite, false);
                     removedEdges++;
                 }
             }
@@ -262,8 +269,8 @@ public class PrepareRoutingSubnetworks {
         EdgeIterator iter = edgeExplorerAllEdges.setBaseNode(nodeIndex);
         while (iter.next()) {
             // if at least on encoder allows one direction return false
-            for (BooleanEncodedValue accessEnc : accessEncList) {
-                if (iter.get(accessEnc) || iter.getReverse(accessEnc))
+            for (Weighting weighting : weightingList) {
+                if (allowedAccess(weighting, iter, false) || allowedAccess(weighting, iter, true))
                     return false;
             }
         }

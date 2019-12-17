@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.BikeCommonFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -49,6 +50,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final EdgeExplorer crossingExplorer;
     private final BooleanEncodedValue roundaboutEnc;
     private final BooleanEncodedValue accessEnc;
+    private final EdgeFilter outEdgeFilter;
     private final BooleanEncodedValue getOffBikeEnc;
     private final EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
@@ -96,6 +98,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
         this.accessEnc = evLookup.getBooleanEncodedValue(getKey(encoder.toString(), "access"));
+        this.outEdgeFilter = DefaultEdgeFilter.outEdges(accessEnc);
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
 
         // both EncodedValues are optional; And return annotation only when instructions for bike encoder is requested
@@ -114,8 +117,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
-        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
-        crossingExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder));
+        outEdgeExplorer = graph.createEdgeExplorer();
+        // TODO NOW this made no sense: we already filtered the vehicle-specific edges here but later in InstructionsOutgoingEdges
+        // we count all vs. allowed out edges
+        crossingExplorer = graph.createEdgeExplorer();
     }
 
     /**
@@ -219,7 +224,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     // check if there is an exit at the same node the roundabout was entered
                     EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
                     while (edgeIter.next()) {
-                        if ((edgeIter.getAdjNode() != prevNode)
+                        if (outEdgeFilter.accept(edgeIter) && edgeIter.getAdjNode() != prevNode
                                 && !roundaboutEnc.getBool(false, edgeIter.getFlags())) {
                             roundaboutInstruction.increaseExitNumber();
                             break;
@@ -250,7 +255,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // out of the roundabout
             EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(edge.getAdjNode());
             while (edgeIter.next()) {
-                if (!roundaboutEnc.getBool(false, edgeIter.getFlags())) {
+                if (outEdgeFilter.accept(edgeIter) && !roundaboutEnc.getBool(false, edgeIter.getFlags())) {
                     ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
                     break;
                 }

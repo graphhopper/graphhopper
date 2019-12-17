@@ -110,10 +110,10 @@ public class FootFlagEncoderTest {
         g.edge(0, 1).setDistance(10).set(footAvSpeedEnc, 10.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
         g.edge(0, 2).setDistance(10).set(footAvSpeedEnc, 5.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
         g.edge(1, 3).setDistance(10).set(footAvSpeedEnc, 10.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
-        EdgeExplorer out = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
-        assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(out.setBaseNode(2)));
+        EdgeExplorer explorer = g.createEdgeExplorer();
+        assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(explorer.setBaseNode(0), DefaultEdgeFilter.outEdges(footEncoder)));
+        assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(explorer.setBaseNode(1), DefaultEdgeFilter.outEdges(footEncoder)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2), DefaultEdgeFilter.outEdges(footEncoder)));
     }
 
     @Test

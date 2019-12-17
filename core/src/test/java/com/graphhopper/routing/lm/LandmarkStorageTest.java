@@ -172,21 +172,6 @@ public class LandmarkStorageTest {
     }
 
     @Test
-    public void testWeightingConsistence() {
-        // create an indifferent problem: shortest weighting can pass the speed==0 edge but fastest cannot (?)
-        ghStorage.edge(0, 1, 10, true);
-        GHUtility.setProperties(ghStorage.edge(1, 2).setDistance(10), encoder, 0.9, true, true);
-        ghStorage.edge(2, 3, 10, true);
-
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new FastestWeighting(encoder), 2);
-        storage.setMinimumNodes(2);
-        storage.createLandmarks();
-
-        assertEquals(2, storage.getSubnetworksWithLandmarks());
-        assertEquals("[1, 0]", Arrays.toString(storage.getLandmarks(1)));
-    }
-
-    @Test
     public void testWithBorderBlocking() {
         AbstractRoutingAlgorithmTester.initBiGraph(ghStorage);
 

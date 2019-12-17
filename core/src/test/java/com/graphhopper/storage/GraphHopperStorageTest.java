@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
@@ -117,9 +118,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(new BBox(10, 20, 10, 12, 0, 1), g.getBounds());
         assertEquals(10, na.getLatitude(0), 1e-2);
         assertEquals(10, na.getLongitude(0), 1e-2);
-        EdgeExplorer explorer = g.createEdgeExplorer(carOutFilter);
-        assertEquals(2, GHUtility.count(explorer.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(2, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        EdgeExplorer explorer = g.createEdgeExplorer();
+        assertEquals(2, GHUtility.count(explorer.setBaseNode(0), carOutFilter));
+        assertEquals(GHUtility.asSet(2, 1), GHUtility.getNeighbors(explorer.setBaseNode(0), carOutFilter));
 
         EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
@@ -132,20 +133,20 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         assertEquals(11, na.getLatitude(1), 1e-2);
         assertEquals(20, na.getLongitude(1), 1e-2);
-        assertEquals(2, GHUtility.count(explorer.setBaseNode(1)));
-        assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        assertEquals(2, GHUtility.count(explorer.setBaseNode(1), carOutFilter));
+        assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1), carOutFilter));
 
         assertEquals(12, na.getLatitude(2), 1e-2);
         assertEquals(12, na.getLongitude(2), 1e-2);
-        assertEquals(1, GHUtility.count(explorer.setBaseNode(2)));
+        assertEquals(1, GHUtility.count(explorer.setBaseNode(2), carOutFilter));
 
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2), carOutFilter));
 
         EdgeIteratorState eib = GHUtility.getEdge(g, 1, 2);
         assertEquals(Helper.createPointList3D(), eib.fetchWayGeometry(0));
         assertEquals(Helper.createPointList3D(11, 20, 1), eib.fetchWayGeometry(1));
         assertEquals(Helper.createPointList3D(12, 12, 0.4), eib.fetchWayGeometry(2));
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2), carOutFilter));
     }
 
     @Test
@@ -158,21 +159,21 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         EdgeExplorer explorer = graph.createEdgeExplorer();
 
-        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0), EdgeFilter.ALL_EDGES));
+        assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1), EdgeFilter.ALL_EDGES));
         // remove edge "1-2" but only from 1 not from 2
         graph.edgeAccess.internalEdgeDisconnect(iter2.getEdge(), -1, iter2.getBaseNode());
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-        assertEquals(GHUtility.asSet(1), GHUtility.getNeighbors(explorer.setBaseNode(2)));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1), EdgeFilter.ALL_EDGES));
+        assertEquals(GHUtility.asSet(1), GHUtility.getNeighbors(explorer.setBaseNode(2), EdgeFilter.ALL_EDGES));
         // let 0 unchanged -> no side effects
-        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0), EdgeFilter.ALL_EDGES));
 
         // remove edge "0-1" but only from 0
         graph.edgeAccess.internalEdgeDisconnect(iter0.getEdge(), (long) iter3.getEdge() * graph.edgeEntryBytes,
                 iter0.getBaseNode());
-        assertEquals(GHUtility.asSet(3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(3)));
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(3), GHUtility.getNeighbors(explorer.setBaseNode(0), EdgeFilter.ALL_EDGES));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(3), EdgeFilter.ALL_EDGES));
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1), EdgeFilter.ALL_EDGES));
         storage.close();
     }
 

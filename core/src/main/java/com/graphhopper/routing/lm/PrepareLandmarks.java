@@ -84,13 +84,6 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     }
 
     /**
-     * @see LandmarkStorage#setLMSelectionWeighting(Weighting)
-     */
-    public void setLMSelectionWeighting(Weighting w) {
-        lms.setLMSelectionWeighting(w);
-    }
-
-    /**
      * @see LandmarkStorage#setMinimumNodes(int)
      */
     public void setMinimumNodes(int nodes) {
@@ -125,7 +118,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     public void doSpecificWork() {
         StopWatch sw = new StopWatch().start();
         LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, default active lms:"
-                + defaultActiveLandmarks + ", weighting:" + lms.getLmSelectionWeighting() + ", " + Helper.getMemInfo());
+                + defaultActiveLandmarks + ", " + Helper.getMemInfo());
 
         lms.createLandmarks();
         lms.flush();

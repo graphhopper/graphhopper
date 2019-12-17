@@ -23,7 +23,6 @@ import com.graphhopper.util.EdgeIteratorState;
 /**
  * Calculates the shortest route - independent of a vehicle as the calculation is based on the
  * distance only.
- * <p>
  *
  * @author Peter Karich
  */
@@ -39,6 +38,9 @@ public class ShortestWeighting extends AbstractWeighting {
 
     @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        if (!reverse && !edgeState.get(accessEnc) || reverse && !edgeState.getReverse(accessEnc))
+            return Double.POSITIVE_INFINITY;
+
         return edgeState.getDistance();
     }
 

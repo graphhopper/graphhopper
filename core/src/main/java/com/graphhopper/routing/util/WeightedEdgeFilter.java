@@ -18,44 +18,34 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+
+import static com.graphhopper.util.GHUtility.allowedAccess;
 
 /**
  * @author Peter Karich
  */
 public class WeightedEdgeFilter implements EdgeFilter {
-    private static int DEFAULT_FILTER_ID = 0;
     private final boolean bwd;
     private final boolean fwd;
     private final Weighting weighting;
-    /**
-     * Used to be able to create non-equal filter instances with equal access encoder and fwd/bwd flags.
-     */
-    private int filterId;
 
-    private WeightedEdgeFilter(Weighting weighting, boolean fwd, boolean bwd, int filterId) {
+    private WeightedEdgeFilter(Weighting weighting, boolean fwd, boolean bwd) {
         this.weighting = weighting;
         this.fwd = fwd;
         this.bwd = bwd;
-        this.filterId = filterId;
     }
 
     public static WeightedEdgeFilter allEdges(Weighting weighting) {
-        return new WeightedEdgeFilter(weighting, true, true, DEFAULT_FILTER_ID);
+        return new WeightedEdgeFilter(weighting, true, true);
     }
 
     public static WeightedEdgeFilter outEdges(Weighting weighting) {
-        return new WeightedEdgeFilter(weighting, true, false, DEFAULT_FILTER_ID);
+        return new WeightedEdgeFilter(weighting, true, false);
     }
 
     public static WeightedEdgeFilter inEdges(Weighting weighting) {
-        return new WeightedEdgeFilter(weighting, false, true, DEFAULT_FILTER_ID);
-    }
-
-    public WeightedEdgeFilter setFilterId(int filterId) {
-        this.filterId = filterId;
-        return this;
+        return new WeightedEdgeFilter(weighting, false, true);
     }
 
     @Override
@@ -65,11 +55,9 @@ public class WeightedEdgeFilter implements EdgeFilter {
             // background: we need to explicitly accept shortcut edges that are loops, because if we insert a loop
             // shortcut with the fwd flag a DefaultEdgeFilter with bwd=true and fwd=false does not find it, although
             // it is also an 'incoming' edge.
-            return !Double.isInfinite(weighting.calcWeight(iter, false, EdgeIterator.NO_EDGE))
-                    || !Double.isInfinite(weighting.calcWeight(iter, true, EdgeIterator.NO_EDGE));
+            return allowedAccess(weighting, iter, false) || allowedAccess(weighting, iter, true);
         }
-        return fwd && !Double.isInfinite(weighting.calcWeight(iter, false, EdgeIterator.NO_EDGE))
-                || bwd && !Double.isInfinite(weighting.calcWeight(iter, true, EdgeIterator.NO_EDGE));
+        return fwd && allowedAccess(weighting, iter, false) || bwd && allowedAccess(weighting, iter, true);
     }
 
     @Override
@@ -86,7 +74,6 @@ public class WeightedEdgeFilter implements EdgeFilter {
 
         if (bwd != that.bwd) return false;
         if (fwd != that.fwd) return false;
-        if (filterId != that.filterId) return false;
         return weighting.equals(that.weighting);
     }
 
@@ -95,7 +82,6 @@ public class WeightedEdgeFilter implements EdgeFilter {
         int result = (bwd ? 1 : 0);
         result = 31 * result + (fwd ? 1 : 0);
         result = 31 * result + weighting.hashCode();
-        result = 31 * result + filterId;
         return result;
     }
 }

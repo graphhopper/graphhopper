@@ -318,10 +318,11 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private int findEdge(int from, int to) {
-        EdgeExplorer explorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
+        EdgeFilter filter = DefaultEdgeFilter.outEdges(encoder.getAccessEnc());
+        EdgeExplorer explorer = queryGraph.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(from);
         while (iter.next()) {
-            if (iter.getAdjNode() == to) {
+            if (filter.accept(iter) && iter.getAdjNode() == to) {
                 return iter.getEdge();
             }
         }

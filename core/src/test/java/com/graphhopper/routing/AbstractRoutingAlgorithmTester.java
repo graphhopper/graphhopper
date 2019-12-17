@@ -822,6 +822,9 @@ public abstract class AbstractRoutingAlgorithmTester {
 
             @Override
             public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                if (!reverse && !edgeState.get(carAccessEnc) || reverse && !edgeState.getReverse(carAccessEnc))
+                    return Double.POSITIVE_INFINITY;
+
                 int adj = edgeState.getAdjNode();
                 int base = edgeState.getBaseNode();
                 if (reverse) {

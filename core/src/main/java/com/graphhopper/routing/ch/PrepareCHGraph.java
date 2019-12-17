@@ -35,7 +35,6 @@ public class PrepareCHGraph {
     private final CHGraph chGraph;
     private final Weighting weighting;
     private final TurnWeighting turnWeighting;
-    private final FlagEncoder encoder;
 
     public static PrepareCHGraph nodeBased(CHGraph chGraph, Weighting weighting) {
         if (chGraph.getCHProfile().isEdgeBased()) {
@@ -53,29 +52,16 @@ public class PrepareCHGraph {
 
     private PrepareCHGraph(CHGraph chGraph, Weighting weighting, TurnWeighting turnWeighting) {
         this.chGraph = chGraph;
-        this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
         this.turnWeighting = turnWeighting;
     }
 
-    public PrepareCHEdgeExplorer createInEdgeExplorer() {
-        return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)), weighting);
+    public PrepareCHEdgeExplorer createEdgeExplorer() {
+        return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(), weighting);
     }
 
-    public PrepareCHEdgeExplorer createOutEdgeExplorer() {
-        return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), weighting);
-    }
-
-    public PrepareCHEdgeExplorer createAllEdgeExplorer() {
-        return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder)), weighting);
-    }
-
-    public EdgeExplorer createOriginalInEdgeExplorer() {
-        return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
-    }
-
-    public EdgeExplorer createOriginalOutEdgeExplorer() {
-        return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+    public EdgeExplorer createOriginalEdgeExplorer() {
+        return chGraph.createOriginalEdgeExplorer();
     }
 
     public int getNodes() {

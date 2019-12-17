@@ -574,15 +574,21 @@ public class CHTurnCostTest {
             }
         }
         graph.freeze();
-        EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
-        EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+        EdgeFilter inFilter = DefaultEdgeFilter.inEdges(encoder);
+        EdgeExplorer inExplorer = graph.createEdgeExplorer();
+        EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder);
+        EdgeExplorer outExplorer = graph.createEdgeExplorer();
 
         // add turn costs or restrictions
         for (int node = 0; node < size * size; ++node) {
             EdgeIterator inIter = inExplorer.setBaseNode(node);
             while (inIter.next()) {
+                if (!inFilter.accept(inIter))
+                    continue;
                 EdgeIterator outIter = outExplorer.setBaseNode(node);
                 while (outIter.next()) {
+                    if (!outFilter.accept(inIter))
+                        continue;
                     // do not modify u-turn costs
                     if (inIter.getEdge() == outIter.getEdge()) {
                         continue;

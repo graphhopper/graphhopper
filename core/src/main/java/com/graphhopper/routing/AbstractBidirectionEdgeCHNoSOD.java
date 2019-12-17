@@ -47,8 +47,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         // the inner explorers will run on the base- (or query/base-)graph edges only
         Graph baseGraph = graph.getBaseGraph();
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
-        innerInExplorer = baseGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
-        innerOutExplorer = baseGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
+        innerInExplorer = baseGraph.createEdgeExplorer();
+        innerOutExplorer = baseGraph.createEdgeExplorer();
     }
 
     @Override

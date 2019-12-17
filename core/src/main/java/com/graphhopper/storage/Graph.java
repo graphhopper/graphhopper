@@ -97,16 +97,11 @@ public interface Graph {
     AllEdgesIterator getAllEdges();
 
     /**
-     * Returns an EdgeExplorer which makes it possible to traverse all filtered edges of a specific
-     * node. Calling this method might be expensive, so e.g. create an explorer before a for loop!
+     * Returns an EdgeExplorer to traverse all edges of a specific node. Calling this method might be expensive in a loop,
+     * so e.g. create an explorer before!
      *
      * @see EdgeExplorer
      * @see Graph#createEdgeExplorer()
-     */
-    EdgeExplorer createEdgeExplorer(EdgeFilter filter);
-
-    /**
-     * @see Graph#createEdgeExplorer(com.graphhopper.routing.util.EdgeFilter)
      */
     EdgeExplorer createEdgeExplorer();
 

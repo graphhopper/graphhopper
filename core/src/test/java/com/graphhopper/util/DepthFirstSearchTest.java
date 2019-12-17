@@ -21,8 +21,8 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
@@ -41,18 +41,25 @@ public class DepthFirstSearchTest {
     int counter;
     GHIntHashSet set = new GHIntHashSet();
     IntArrayList list = new IntArrayList();
+    DepthFirstSearch dfs;
+    EncodingManager em;
 
     @Before
     public void setup() {
         counter = 0;
-    }
+        em = EncodingManager.create("car");
+        FlagEncoder fe = em.getEncoder("car");
+        final EdgeFilter filter = DefaultEdgeFilter.outEdges(fe);
 
-    @Test
-    public void testDFS1() {
-        DepthFirstSearch dfs = new DepthFirstSearch() {
+        dfs = new DepthFirstSearch() {
             @Override
             protected GHBitSet createBitSet() {
                 return new GHBitSetImpl();
+            }
+
+            @Override
+            protected boolean checkAdjacent(EdgeIteratorState edge) {
+                return filter.accept(edge);
             }
 
             @Override
@@ -64,9 +71,10 @@ public class DepthFirstSearchTest {
                 return super.goFurther(v);
             }
         };
+    }
 
-        EncodingManager em = EncodingManager.create("car");
-        FlagEncoder fe = em.getEncoder("car");
+    @Test
+    public void testDFS1() {
         Graph g = new GraphBuilder(em).create();
         g.edge(1, 2, 1, false);
         g.edge(1, 5, 1, false);
@@ -76,7 +84,7 @@ public class DepthFirstSearchTest {
         g.edge(5, 6, 1, false);
         g.edge(6, 4, 1, false);
 
-        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(fe)), 1);
+        dfs.start(g.createEdgeExplorer(), 1);
 
         assertTrue(counter > 0);
         assertEquals("[1, 2, 3, 4, 5, 6]", list.toString());
@@ -109,7 +117,7 @@ public class DepthFirstSearchTest {
         g.edge(2, 3, 1, false);
         g.edge(4, 3, 1, true);
 
-        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(fe)), 1);
+        dfs.start(g.createEdgeExplorer(), 1);
 
         assertTrue(counter > 0);
         assertEquals("[1, 2, 3, 4]", list.toString());
