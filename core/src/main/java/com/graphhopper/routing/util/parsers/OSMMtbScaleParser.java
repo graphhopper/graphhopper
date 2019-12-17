@@ -50,10 +50,16 @@ public class OSMMtbScaleParser implements TagParser {
         String value = readerWay.getTag("mtb:scale");
         if (value == null)
             return edgeFlags;
+
         // Drop '+' and '-' suffix if there is any. We do not store that level of detail because
         // there are not that many occurences and adding this level of detail would cost us
         // additional two bits per edge.
-        MtbScale scale = MtbScale.find(value.substring(0, 1));
+        MtbScale scale = NONE;
+        if (value.length() == 1) {
+            scale = MtbScale.find(value);
+        } else if (value.length() == 2 && (value.charAt(1) == '+' || value.charAt(1) == '-')) {
+            scale = MtbScale.find(value.substring(0, 1));
+        }
         if (scale != NONE)
             scaleEncoder.setEnum(false, edgeFlags, scale);
         return edgeFlags;

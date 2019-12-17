@@ -21,7 +21,8 @@ package com.graphhopper.routing.profiles;
  * Store valid values of the OSM tag mtb:scale=*. See
  * https://wiki.openstreetmap.org/wiki/Key:mtb:scale for details.
  * 
- * Values are stored as unsigned integers because the OSM key uses unsigned integers only.
+ * Values are stored as enum because the OSM key has a value 0 with a meaning and we would like to
+ * be able to store an undefined value ("none") as well.
  * 
  * @author Michael Reichert
  *
@@ -50,10 +51,11 @@ public enum MtbScale {
     }
 
     public static MtbScale find(String name) {
-        if (name == null)
+        if (name == null) {
             return NONE;
+        }
         try {
-            return MtbScale.valueOf(name);
+            return MtbScale.valueOf("MTB_" + name);
         } catch (IllegalArgumentException ex) {
             return NONE;
         }
