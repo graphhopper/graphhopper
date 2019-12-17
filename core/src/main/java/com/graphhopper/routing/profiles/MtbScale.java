@@ -26,15 +26,36 @@ package com.graphhopper.routing.profiles;
  * @author Michael Reichert
  *
  */
-public class MtbScale {
+public enum MtbScale {
+    NONE("none"),
+    MTB_0("0"),
+    MTB_1("1"),
+    MTB_2("2"),
+    MTB_3("3"),
+    MTB_4("4"),
+    MTB_5("5"),
+    MTB_6("6");
+
     public static final String KEY = "mtb_scale";
 
-    /**
-     * Return a encoder for unsigned integers from 0 (no scale or the invalid tag value "0") to
-     * 7 (although the scale ends at "6" according to
-     * https://wiki.openstreetmap.org/wiki/Key:mtb:scale).
-     */
-    public static UnsignedIntEncodedValue create() {
-        return new UnsignedIntEncodedValue(KEY, 3, false);
+    private final String name;
+
+    MtbScale(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
+    public static MtbScale find(String name) {
+        if (name == null)
+            return NONE;
+        try {
+            return MtbScale.valueOf(name);
+        } catch (IllegalArgumentException ex) {
+            return NONE;
+        }
     }
 }

@@ -17,52 +17,45 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import static com.graphhopper.util.Helper.isEmpty;
+import static com.graphhopper.routing.profiles.MtbScale.NONE;
 
 import java.util.List;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.MtbScale;
-import com.graphhopper.routing.profiles.UnsignedIntEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
 public class OSMMtbScaleParser implements TagParser {
 
-    private final UnsignedIntEncodedValue scaleEncoder;
+    private final EnumEncodedValue<MtbScale> scaleEncoder;
 
     public OSMMtbScaleParser() {
-        this(MtbScale.create());
-    }
-
-    public OSMMtbScaleParser(UnsignedIntEncodedValue scaleEncoder) {
-        this.scaleEncoder = scaleEncoder;
+        this.scaleEncoder = new EnumEncodedValue<>(MtbScale.KEY, MtbScale.class);
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(scaleEncoder);
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
+        link.add(scaleEncoder);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, IntsRef relationFlags) {
-        String value = readerWay.getTag("mtb:scale");
-        if (isEmpty(value)) {
+        if (!access.isWay())
             return edgeFlags;
-        }
-        try {
-            int val = Integer.parseInt(value);
-            if (val > scaleEncoder.getMaxInt()) {
-                val = scaleEncoder.getMaxInt();
-            }
-            if (val < 0) {
-                val = 0;
-            }
-            scaleEncoder.setInt(false, edgeFlags, val);
-        } catch (NumberFormatException ex) {
-        }
+
+        String value = readerWay.getTag("mtb:scale");
+        if (value == null)
+            return edgeFlags;
+        // Drop '+' and '-' suffix if there is any. We do not store that level of detail because
+        // there are not that many occurences and adding this level of detail would cost us
+        // additional two bits per edge.
+        MtbScale scale = MtbScale.find(value.substring(0, 1));
+        if (scale != NONE)
+            scaleEncoder.setEnum(false, edgeFlags, scale);
         return edgeFlags;
     }
 }
