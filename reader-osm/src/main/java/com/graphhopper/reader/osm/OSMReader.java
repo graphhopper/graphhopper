@@ -114,8 +114,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private boolean createStorage = true;
     private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
-    private HandlerPass1 handler1;
-    private HandlerPass2 handler2;
+    /// Handlers for the first reading of the OSM input file
+    private List<OSMHandler> handlers1;
+    /// Handlers for the second reading of the OSM input file
+    private List<OSMHandler> handlers2;
 
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
@@ -132,8 +134,24 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             throw new IllegalArgumentException("Cannot use relation flags with != 2 integers");
 
         tcs = graph.getTurnCostStorage();
-        handler1 = new HandlerPass1();
-        handler2 = new HandlerPass2();
+        handlers1 = new ArrayList<OSMHandler>();
+        addHandlerForPass1(new HandlerPass1());
+        handlers2 = new ArrayList<OSMHandler>();
+        addHandlerForPass2(new HandlerPass2());
+    }
+
+    /**
+     * Register a custom handler for the first reading of the input file.
+     */
+    public void addHandlerForPass1(OSMHandler handler) {
+        handlers1.add(handler);
+    }
+
+    /**
+     * Register a custom handler for the seconds reading of the input file.
+     */
+    public void addHandlerForPass2(OSMHandler handler) {
+        handlers2.add(handler);
     }
 
     @Override
@@ -164,7 +182,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * Preprocessing of OSM file to select nodes which are used for highways. This allows a more
      * compact graph data structure.
      */
-    class HandlerPass1 implements OSMHandler {
+    class HandlerPass1 extends OSMHandler {
         private long tmpWayCounter = 1;
         private long tmpRelationCounter = 1;
 
@@ -208,19 +226,14 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                 throw new RuntimeException("Problem while parsing file", ex);
             }
         }
-
-        @Override
-        public void node(ReaderNode node) {
-        }
-
-        @Override
-        public void osm_object(ReaderElement element) {
-        }
     }
 
     void preProcess(File osmFile) {
         try (OSMInputFile in = openOsmInputFile(osmFile)) {
-            in.addHandler(handler1).open();
+            for (OSMHandler h : handlers1) {
+                in.addHandler(h);
+            }
+            in.open();
         } catch (Exception ex) {
             throw new RuntimeException("Problem while parsing file", ex);
         }
@@ -275,7 +288,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             ghStorage.create(tmp);
         long counter = 1;
         try (OSMInputFile in = openOsmInputFile(osmFile)) {
-            in.addHandler(handler2).open();
+            for (OSMHandler h : handlers2) {
+                in.addHandler(h);
+            }
+            in.open();
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex) {
             throw new RuntimeException("Problem while parsing file", ex);
@@ -296,7 +312,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * of the ways.
      *
      */
-    class HandlerPass2 implements OSMHandler {
+    class HandlerPass2 extends OSMHandler {
         private long counter = 0;
         private long wayStart = -1;
         private long relationStart = -1;
@@ -454,10 +470,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             if (tcs != null && relation.hasTag("type", "restriction"))
                 storeTurnRelation(createTurnRelations(relation));
         }
-
-        @Override
-        public void header(OSMFileHeader relation) {
-        }
     }
 
     /**
@@ -465,7 +477,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * directly from a unit test.
      */
     HandlerPass2 getHandler2() {
-        return handler2;
+        return new HandlerPass2();
     }
 
     void storeTurnRelation(List<OSMTurnRelation> turnRelations) {
@@ -589,14 +601,28 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         }
     }
 
+    /**
+     * Convert the ID of a tower node which has been written to the graph storage
+     * into a ID to be inserted into the mapping from OSM node IDs to graph node IDs.
+     *
+     * @param towerId ID of the tower node
+     * @return ID to be inserted into the map
+     */
+    public static int towerIdToMapId(int towerId) {
+        return -(towerId + 3);
+    }
+
     int addTowerNode(long osmId, double lat, double lon, double ele) {
         if (nodeAccess.is3D())
             nodeAccess.setNode(nextTowerId, lat, lon, ele);
         else
             nodeAccess.setNode(nextTowerId, lat, lon);
 
-        int id = -(nextTowerId + 3);
+        int id = towerIdToMapId(nextTowerId);
         getNodeMap().put(osmId, id);
+        for (OSMHandler h : handlers2) {
+            h.towerNode(osmId, lat, lon, ele, id);
+        }
         nextTowerId++;
         return id;
     }
@@ -926,6 +952,13 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      */
     protected LongIntMap getNodeMap() {
         return osmNodeIdToInternalNodeMap;
+    }
+
+    /**
+     * Get the mapping of OSM node IDs to internal node IDs.
+     */
+    public int getInternalNodeIdByOsmId(long osmId) {
+        return getNodeMap().get(osmId);
     }
 
     protected LongLongMap getNodeFlagsMap() {

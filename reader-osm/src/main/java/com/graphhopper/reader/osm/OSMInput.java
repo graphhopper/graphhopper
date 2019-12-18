@@ -21,7 +21,7 @@ public interface OSMInput extends AutoCloseable {
     /**
      * Register a handler.
      */
-    OSMInput addHandler(OSMHandler handler);
+    void addHandler(OSMHandler handler);
 
     int getUnprocessedElements();
 }

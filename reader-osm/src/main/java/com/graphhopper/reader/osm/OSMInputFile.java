@@ -64,9 +64,8 @@ public class OSMInputFile implements Sink, OSMInput {
         this.handlers = new LinkedList<OSMHandler>();
     }
 
-    public OSMInputFile addHandler(OSMHandler handler) {
+    public void addHandler(OSMHandler handler) {
         handlers.add(handler);
-        return this;
     }
 
     public void open() throws XMLStreamException {
