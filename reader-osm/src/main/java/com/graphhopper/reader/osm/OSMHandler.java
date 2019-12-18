@@ -15,7 +15,7 @@ public interface OSMHandler {
      * Called for each node, way or relation read from the input file
      */
     public void osm_object(ReaderElement element);
-    
+
     /**
      * Called for each node read from the input file
      */
