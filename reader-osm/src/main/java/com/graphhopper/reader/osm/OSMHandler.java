@@ -33,7 +33,7 @@ public abstract class OSMHandler {
     /**
      * Called for each node, way or relation read from the input file
      */
-    public void osm_object(ReaderElement element) {
+    public void osmObject(ReaderElement element) {
     }
 
     /**

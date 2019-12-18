@@ -323,7 +323,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         }
 
         @Override
-        public void osm_object(ReaderElement element) {
+        public void osmObject(ReaderElement element) {
             if (++counter % 200_000_000 == 0) {
                 LOGGER.info(nf(counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
             }
