@@ -19,29 +19,40 @@ package com.graphhopper.routing.util.spatialrules;
 
 import java.util.*;
 
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
+
 /**
- * This class contains a collection of SpatialRule and is used for the implementation SpatialRuleLookupArray.
+ * This class contains a collection of SpatialRule which are valid for a certain Polygon.
  *
  * @author Robin Boldt
+ * @author Thomas Butz
  */
 class SpatialRuleContainer {
+    private static final PreparedGeometryFactory PREP_GEOM_FACTORY = new PreparedGeometryFactory();
 
-    final Set<SpatialRule> rules = new LinkedHashSet<>();
+    private final PreparedGeometry preparedPolygon;
+    private final Set<SpatialRule> rules = new LinkedHashSet<>();
 
-    public SpatialRuleContainer addRule(SpatialRule spatialRule) {
-        rules.add(spatialRule);
-        return this;
+    
+    public SpatialRuleContainer(Polygon polygon) {
+        this(PREP_GEOM_FACTORY.create(polygon));
+    }
+    
+    private SpatialRuleContainer(PreparedGeometry preparedPolygon) {
+        this.preparedPolygon = preparedPolygon;
     }
 
-    public SpatialRuleContainer addRules(Collection<SpatialRule> rules) {
-        this.rules.addAll(rules);
-        return this;
+    public void addRule(SpatialRule spatialRule) {
+        rules.add(spatialRule);
     }
 
     /**
      * Returns a list of all spatial rules including the EMPTY one.
      */
-    Collection<SpatialRule> getRules() {
+    public Collection<SpatialRule> getRules() {
         return rules;
     }
 
@@ -49,27 +60,13 @@ class SpatialRuleContainer {
         return this.rules.size();
     }
 
-    SpatialRule first() {
-        return this.rules.iterator().next();
-    }
-
-    @Override
-    public int hashCode() {
-        return rules.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof SpatialRuleContainer) {
-            if (this.rules.equals(((SpatialRuleContainer) o).getRules()))
-                return true;
-        }
-        return false;
+    public boolean containsProperly(Point point) {
+        return preparedPolygon.containsProperly(point);
     }
 
     public SpatialRuleContainer copy() {
-        SpatialRuleContainer container = new SpatialRuleContainer();
-        container.addRules(this.rules);
+        SpatialRuleContainer container = new SpatialRuleContainer(this.preparedPolygon);
+        container.rules.addAll(this.rules);
         return container;
     }
 }

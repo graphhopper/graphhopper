@@ -23,10 +23,11 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.shapes.Polygon;
 
 import java.util.Collections;
 import java.util.List;
+
+import org.locationtech.jts.geom.Polygon;
 
 /**
  * This class is the simplified entry to all functionality if you import from OpenStreetMap data.

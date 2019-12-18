@@ -18,10 +18,11 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.util.shapes.Polygon;
 
 import java.util.List;
 import java.util.Objects;
+
+import org.locationtech.jts.geom.Polygon;
 
 /**
  * Defines rules that are valid for a certain region, e.g. a country.

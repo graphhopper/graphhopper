@@ -1,9 +1,11 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.Polygon;
 import org.junit.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Polygon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,29 +15,35 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * @author Robin Boldt
+ * @author Thomas Butz
  */
-public class SpatialRuleLookupArrayTest {
+public class SpatialRuleLookupJTSTest {
+    
+    private static final GeometryFactory FAC = new GeometryFactory();
 
     @Test
     public void testSpatialLookup() {
+        Polygon deBorder = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1), new Coordinate(2, 1), new Coordinate(2, 2), new Coordinate(1, 2), new Coordinate(1, 1) });
         List<SpatialRule> spatialRules = new ArrayList<>();
         SpatialRule germany = new DefaultSpatialRule() {
             @Override
             public String getId() {
                 return "DEU";
             }
-        }.addBorder(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}));
+        }.addBorder(deBorder);
         spatialRules.add(germany);
+        
+        Polygon atBorder = FAC.createPolygon(new Coordinate[] { new Coordinate(5, 5), new Coordinate(6, 5), new Coordinate(6, 6), new Coordinate(5, 6), new Coordinate(5, 5) });
         SpatialRule austria = new DefaultSpatialRule() {
             @Override
             public String getId() {
                 return "AUT";
             }
-        }.addBorder(new Polygon(new double[]{5, 5, 6, 6}, new double[]{5, 6, 6, 5}));
+        }.addBorder(atBorder);
         spatialRules.add(austria);
 
         // create lookup with bbox just for DEU (for space reduction)
-        SpatialRuleLookupArray lookup = new SpatialRuleLookupArray(spatialRules, 1, false, new BBox(1, 2, 1, 2));
+        SpatialRuleLookupJTS lookup = new SpatialRuleLookupJTS(spatialRules, deBorder.getEnvelopeInternal());
         SpatialRule rule = lookup.lookupRule(1.5, 1.5);
         assertEquals(germany, rule);
         assertEquals("DEU", rule.getId());
@@ -47,10 +55,13 @@ public class SpatialRuleLookupArrayTest {
     @Test
     public void testSmallScenario() {
         List<SpatialRule> spatialRules = new ArrayList<>();
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}), "1"));
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 3.6, 3.6}, new double[]{3, 4, 4, 3}), "2"));
+        Polygon p1 = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1), new Coordinate(2, 1), new Coordinate(2, 2), new Coordinate(1, 2), new Coordinate(1, 1) });
+        Polygon p2 = FAC.createPolygon(new Coordinate[] { new Coordinate(3, 1), new Coordinate(4, 1), new Coordinate(4, 3.6), new Coordinate(3, 3.6), new Coordinate(3, 1) });
+        spatialRules.add(getSpatialRule(p1, "1"));
+        spatialRules.add(getSpatialRule(p2, "2"));
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, false, new BBox(1, 4, 1, 4));
+        Envelope bbox = new Envelope(1, 4, 1, 4);
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, bbox);
 
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(1.2, 1.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(1.2, 3.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
@@ -60,11 +71,14 @@ public class SpatialRuleLookupArrayTest {
     @Test
     public void testExact() {
         List<SpatialRule> spatialRules = new ArrayList<>();
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}), "1"));
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 3.6, 3.6}, new double[]{3, 4, 4, 3}), "2"));
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{-1, 0, 0, -1}), "3"));
+        Polygon p1 = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1), new Coordinate(2, 1), new Coordinate(2, 2), new Coordinate(1, 2), new Coordinate(1, 1)});
+        Polygon p2 = FAC.createPolygon(new Coordinate[] { new Coordinate(3, 1), new Coordinate(4, 1), new Coordinate(4, 3.6), new Coordinate(3, 3.6), new Coordinate(3, 1)});
+        Polygon p3 = FAC.createPolygon(new Coordinate[] { new Coordinate(-1, 1), new Coordinate(0, 1), new Coordinate(0, 2), new Coordinate(-1, 2), new Coordinate(-1, 1)});
+        spatialRules.add(getSpatialRule(p1, "1"));
+        spatialRules.add(getSpatialRule(p2, "2"));
+        spatialRules.add(getSpatialRule(p3, "3"));
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(-1, 4, 1, 4));
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, new Envelope(-1, 4, 1, 4));
 
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(1.2, 1.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(1.2, 3.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
@@ -89,7 +103,7 @@ public class SpatialRuleLookupArrayTest {
                 return "DEU";
             }
         }.addBorder(germanPolygon));
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, .1, true, new BBox(-180, 180, -90, 90));
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, new Envelope(-180, 180, -90, 90));
 
         // Far from the border of Germany, in Germany
         assertEquals("DEU", spatialRuleLookup.lookupRule(48.777106, 9.180769).getId());
@@ -118,10 +132,12 @@ public class SpatialRuleLookupArrayTest {
     public void testExactAdjacentBorder() {
         List<SpatialRule> spatialRules = new ArrayList<>();
         // Two rules that divide the tile in half
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 1.5, 1.5}, new double[]{1, 2, 2, 1}), "top"));
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1.5, 1.5, 2, 2}, new double[]{1, 2, 2, 1}), "bottom"));
+        Polygon top = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1), new Coordinate(2, 1), new Coordinate(2, 1.5), new Coordinate(1, 1.5), new Coordinate(1, 1)});
+        Polygon bottom = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1.5), new Coordinate(2, 1.5), new Coordinate(2, 2), new Coordinate(1, 2), new Coordinate(1, 1.5)});
+        spatialRules.add(getSpatialRule(top, "top"));
+        spatialRules.add(getSpatialRule(bottom, "bottom"));
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(1, 4, 1, 4));
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, new Envelope(1, 4, 1, 4));
 
         assertEquals("top", spatialRuleLookup.lookupRule(1.4, 1.5).getId());
         assertEquals("bottom", spatialRuleLookup.lookupRule(1.6, 1.5).getId());
@@ -130,20 +146,25 @@ public class SpatialRuleLookupArrayTest {
     @Test
     public void testSmallBoundsBigPolygon() {
         List<SpatialRule> spatialRules = new ArrayList<>();
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{-100, -100, 100, 100}, new double[]{-100, 100, 100, -100}), "big"));
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(1, 2, 1, 2));
+        Polygon big = FAC.createPolygon(new Coordinate[] { new Coordinate(-100, -100), new Coordinate(100, -100), new Coordinate(100, 100), new Coordinate(-100, 100), new Coordinate(-100, -100)});
+        spatialRules.add(getSpatialRule(big, "big"));
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, new Envelope(1, 2, 1, 2));
         assertEquals("big", spatialRuleLookup.lookupRule(1.5, 1.5).getId());
     }
 
     @Test
     public void testSpatialRuleForId() {
         List<SpatialRule> spatialRules = new ArrayList<>();
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 1.5, 1.5}, new double[]{1, 2, 2, 1}), "1"));
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1.5, 1.5, 2, 2}, new double[]{1, 2, 2, 1}), "2"));
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1.5, 1.5, 2, 2}, new double[]{1, 2, 2, 1}), "3"));
-        spatialRules.add(getSpatialRule(new Polygon(new double[]{1.5, 1.5, 2, 2}, new double[]{1, 2, 2, 1}), "4"));
+        Polygon p1 = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1), new Coordinate(2, 1), new Coordinate(2, 1.5), new Coordinate(1, 1.5), new Coordinate(1, 1)});
+        Polygon p2 = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1.5), new Coordinate(2, 1.5), new Coordinate(2, 2), new Coordinate(1, 2), new Coordinate(1, 1.5)});
+        Polygon p3 = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1.5), new Coordinate(2, 1.5), new Coordinate(2, 2), new Coordinate(1, 2), new Coordinate(1, 1.5)});
+        Polygon p4 = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1.5), new Coordinate(2, 1.5), new Coordinate(2, 2), new Coordinate(1, 2), new Coordinate(1, 1.5)});
+        spatialRules.add(getSpatialRule(p1, "1"));
+        spatialRules.add(getSpatialRule(p2, "2"));
+        spatialRules.add(getSpatialRule(p3, "3"));
+        spatialRules.add(getSpatialRule(p4, "4"));
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, .1, false, new BBox(1, 2, 1, 2));
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, new Envelope(1, 2, 1, 2));
 
         // Note index=0 is the EMPTY rule
         assertEquals("1", spatialRuleLookup.getSpatialRule(1).getId());
@@ -152,18 +173,17 @@ public class SpatialRuleLookupArrayTest {
 
     private Polygon parsePolygonString(String polygonString) {
         String[] germanPolygonArr = polygonString.split("\\],\\[");
-        double[] lats = new double[germanPolygonArr.length];
-        double[] lons = new double[germanPolygonArr.length];
+        Coordinate[] shell = new Coordinate[germanPolygonArr.length + 1];
         for (int i = 0; i < germanPolygonArr.length; i++) {
             String temp = germanPolygonArr[i];
             temp = temp.replaceAll("\\[", "");
             temp = temp.replaceAll("\\]", "");
             String[] coords = temp.split(",");
-            lats[i] = Double.parseDouble(coords[1]);
-            lons[i] = Double.parseDouble(coords[0]);
+            shell[i] = new Coordinate(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
         }
+        shell[shell.length - 1] = shell[0];
 
-        return new Polygon(lats, lons);
+        return FAC.createPolygon(shell);
     }
 
     private SpatialRule getSpatialRule(Polygon p, final String name) {
