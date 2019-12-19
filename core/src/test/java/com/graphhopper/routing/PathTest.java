@@ -23,7 +23,6 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -44,12 +43,9 @@ import static org.junit.Assert.*;
  */
 public class PathTest {
     private final FlagEncoder encoder = new CarFlagEncoder();
-    private final DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
     private final EncodingManager carManager = EncodingManager.create(encoder);
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();
-    private final EncodingManager dataFlagManager = new EncodingManager.Builder().add(dataFlagEncoder).build();
-    private final IntsRef edgeFlags = dataFlagManager.createEdgeFlags();
     private final EncodingManager mixedEncoders = EncodingManager.create(new CarFlagEncoder(), new FootFlagEncoder());
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
@@ -822,33 +818,6 @@ public class PathTest {
         assertEquals(3, wayList.size());
         // Assert turn right
         assertEquals(2, wayList.get(1).getSign());
-    }
-
-    @Test
-    public void testCalcInstructionsForDataFlagEncoder() {
-        final Graph g = new GraphBuilder(dataFlagManager).create();
-        final NodeAccess na = g.getNodeAccess();
-
-        na.setNode(1, 48.982618, 13.122021);
-        na.setNode(2, 48.982565, 13.121597);
-        na.setNode(3, 48.982611, 13.121012);
-        na.setNode(4, 48.982336, 13.121002);
-
-        ReaderWay w = new ReaderWay(1);
-        w.setTag("highway", "tertiary");
-
-        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(edgeFlags, w,
-                EncodingManager.Access.WAY));
-        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(edgeFlags, w,
-                EncodingManager.Access.WAY));
-        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(edgeFlags, w,
-                EncodingManager.Access.WAY));
-
-        GenericWeighting weighting = new GenericWeighting(dataFlagEncoder, new HintsMap());
-        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 3);
-        assertTrue(p.isFound());
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, dataFlagManager, tr);
-        assertEquals(3, wayList.size());
     }
 
     @Test

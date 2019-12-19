@@ -54,7 +54,7 @@ public class GraphHopperIT {
     private static final String graphFileFoot = "target/graphhopperIT-foot";
     private static final String osmFile = DIR + "/monaco.osm.gz";
     private static final String importVehicles = "foot";
-    private static final String genericImportVehicles = "generic,foot";
+    private static final String importMultipleVehicles = "car,foot";
     private static final String vehicle = "foot";
     private static final String weightCalcStr = "shortest";
     private static GraphHopper hopper;
@@ -397,20 +397,13 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), "car,generic").build());
+                setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), "car").build());
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
                 setVehicle("car").setWeighting("fastest");
 
         GHResponse rsp = tmpHopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(550, rsp.getBest().getDistance(), 1);
-
-        req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
-                setVehicle("generic").setWeighting("generic");
-
-        rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(550, rsp.getBest().getDistance(), 1);
     }
@@ -776,7 +769,7 @@ public class GraphHopperIT {
     public void testSRTMWithTunnelInterpolation() {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), genericImportVehicles).build());
+                .setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), importMultipleVehicles).build());
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();

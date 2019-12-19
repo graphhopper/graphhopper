@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.MaxSpeed;
-import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
@@ -77,7 +76,7 @@ class InstructionsOutgoingEdges {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        this.speedEnc = (encoder instanceof DataFlagEncoder) ? encoder.getDecimalEncodedValue(MaxSpeed.KEY) : encoder.getAverageSpeedEnc();
+        this.speedEnc = encoder.getAverageSpeedEnc();
         this.nodeAccess = nodeAccess;
 
         EdgeIteratorState tmpEdge;
