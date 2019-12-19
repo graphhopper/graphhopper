@@ -135,14 +135,15 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     @Override
     public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
-        if (prevNode == -1) {
-            prevLat = this.nodeAccess.getLatitude(edge.getBaseNode());
-            prevLon = this.nodeAccess.getLongitude(edge.getBaseNode());
-        }
-
         // baseNode is the current node and adjNode is the next
         int adjNode = edge.getAdjNode();
         int baseNode = edge.getBaseNode();
+
+        if (prevNode == -1) {
+            prevLat = this.nodeAccess.getLatitude(baseNode);
+            prevLon = this.nodeAccess.getLongitude(baseNode);
+        }
+
         IntsRef flags = edge.getFlags();
         double adjLat = nodeAccess.getLatitude(adjNode);
         double adjLon = nodeAccess.getLongitude(adjNode);
