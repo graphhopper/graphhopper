@@ -18,6 +18,8 @@
 
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.EdgeExplorer;
@@ -26,11 +28,29 @@ import com.graphhopper.util.EdgeIterator;
 public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
     private final EdgeExplorer edgeExplorer;
     private final Weighting weighting;
+    private final DefaultEdgeFilter shortcutFilter;
+    private final boolean fwd;
+    private final boolean bwd;
     private EdgeIterator chIterator;
 
-    public PrepareCHEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting) {
+    public static PrepareCHEdgeIterator inEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting) {
+        return new PrepareCHEdgeIterator(edgeExplorer, weighting, DefaultEdgeFilter.inEdges(weighting.getFlagEncoder().getAccessEnc()), false, true);
+    }
+
+    public static PrepareCHEdgeIterator outEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting) {
+        return new PrepareCHEdgeIterator(edgeExplorer, weighting, DefaultEdgeFilter.outEdges(weighting.getFlagEncoder().getAccessEnc()), true, false);
+    }
+
+    public static PrepareCHEdgeIterator allEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting) {
+        return new PrepareCHEdgeIterator(edgeExplorer, weighting, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder().getAccessEnc()), true, true);
+    }
+
+    private PrepareCHEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting, DefaultEdgeFilter shortcutFilter, boolean fwd, boolean bwd) {
         this.edgeExplorer = edgeExplorer;
         this.weighting = weighting;
+        this.shortcutFilter = shortcutFilter;
+        this.fwd = fwd;
+        this.bwd = bwd;
     }
 
     @Override
@@ -40,7 +60,15 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
     }
 
     public boolean next() {
-        return iter().next();
+        while (true) {
+            final EdgeIterator iter = iter();
+            final boolean hasNext = iter.next();
+            if ((fwd && !Double.isInfinite(getWeight(false))) || (bwd && !Double.isInfinite(getWeight(true)))) {
+                return hasNext;
+            } else if (!hasNext) {
+                return false;
+            }
+        }
     }
 
     public int getEdge() {
@@ -70,8 +98,21 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
 
     public double getWeight(boolean reverse) {
         if (isShortcut()) {
-            return chIter().getWeight();
+            final CHEdgeIterator iter = chIter();
+            // currently we still need to use the edge filter, because we maintain access flags for CH shortcuts
+            if (!shortcutFilter.accept(iter)) {
+                return Double.POSITIVE_INFINITY;
+            } else {
+                return iter.getWeight();
+            }
         } else {
+            // early exit if access is blocked, will be moved into weighting(s) in the future
+            final BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
+            final boolean access = reverse ? iter().getReverse(accessEnc) : iter().get(accessEnc);
+            // have to accept loops here, c.f. comments in DefaultEdgeFilter
+            if (!access && iter().getBaseNode() != iter().getAdjNode()) {
+                return Double.POSITIVE_INFINITY;
+            }
             return weighting.calcWeight(iter(), reverse, EdgeIterator.NO_EDGE);
         }
     }
