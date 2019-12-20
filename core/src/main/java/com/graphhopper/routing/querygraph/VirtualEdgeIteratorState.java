@@ -253,11 +253,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public int getAdditionalField() {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
     public int getMergeStatus(int flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
@@ -278,11 +273,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
     public int getOrigEdgeFirst() {
         return getEdge();
     }
@@ -296,7 +286,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     public EdgeIteratorState detach(boolean reverse) {
         if (reverse) {
             // update properties of reverse edge
-            // TODO copy wayGeometry too
+            // TODO copy pointList (geometry) too
             reverseEdge.setFlags(getFlags());
             reverseEdge.setName(getName());
             reverseEdge.setDistance(getDistance());
@@ -304,12 +294,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         } else {
             return this;
         }
-    }
-
-
-    @Override
-    public EdgeIteratorState setAdditionalField(int value) {
-        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override

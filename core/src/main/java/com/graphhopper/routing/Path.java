@@ -42,9 +42,9 @@ import java.util.List;
 public class Path {
     protected Graph graph;
     protected double distance;
-    protected boolean reverseOrder = true;
     protected long time;
     protected int endNode = -1;
+    private boolean reverseOrder = true;
     private List<String> description;
     private boolean found;
     private int fromNode = -1;

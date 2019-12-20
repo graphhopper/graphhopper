@@ -84,7 +84,7 @@ public class Helper {
             maxTurnCosts >>= 1;
             counter++;
         }
-        return counter++;
+        return counter;
     }
 
     public static void saveProperties(Map<String, String> map, Writer tmpWriter) throws IOException {

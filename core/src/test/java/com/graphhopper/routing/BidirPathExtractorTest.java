@@ -18,18 +18,19 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIterator;
 import org.junit.Test;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -64,8 +65,11 @@ public class BidirPathExtractorTest {
         g.edge(2, 3, 20, false);
         // add some turn costs at node 2 where fwd&bwd searches meet. these costs have to be included in the
         // weight and the time of the path
-        TurnCostExtension turnCostExtension = (TurnCostExtension) g.getExtension();
-        turnCostExtension.addTurnInfo(0, 2, 1, carEncoder.getTurnFlags(false, 5));
+        TurnCostStorage turnCostStorage = g.getTurnCostStorage();
+        DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(carEncoder.toString(), EV_SUFFIX));
+        IntsRef tcFlags = TurnCost.createFlags();
+        turnCostEnc.setDecimal(false, tcFlags, 5);
+        turnCostStorage.setTurnCost(tcFlags, 0, 2, 1);
 
         SPTEntry fwdEntry = new SPTEntry(0, 2, 0.6);
         fwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
@@ -73,7 +77,7 @@ public class BidirPathExtractorTest {
         SPTEntry bwdEntry = new SPTEntry(1, 2, 1.2);
         bwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 0);
 
-        Path p = BidirPathExtractor.extractPath(g, new TurnWeighting(new FastestWeighting(carEncoder), turnCostExtension), fwdEntry, bwdEntry, 0);
+        Path p = BidirPathExtractor.extractPath(g, new TurnWeighting(new FastestWeighting(carEncoder), turnCostStorage), fwdEntry, bwdEntry, 0);
         p.setWeight(5 + 1.8);
 
         assertEquals(IntArrayList.from(1, 2, 3), p.calcNodes());

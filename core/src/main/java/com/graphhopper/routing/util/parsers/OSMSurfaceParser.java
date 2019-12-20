@@ -48,14 +48,18 @@ public class OSMSurfaceParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, IntsRef relationFlags) {
         String surfaceTag = readerWay.getTag("surface");
         Surface surface = Surface.find(surfaceTag);
         if (surface == OTHER && !Helper.isEmpty(surfaceTag)) {
-            if (surfaceTag.equals("paving_stones") || surfaceTag.equals("metal") || surfaceTag.startsWith("concrete"))
+            if (surfaceTag.equals("metal"))
                 surface = PAVED;
             else if (surfaceTag.equals("sett"))
                 surface = COBBLESTONE;
+            else if (surfaceTag.equals("wood"))
+                surface = UNPAVED;
+            else if (surfaceTag.equals("earth"))
+                surface = DIRT;
         }
 
         if (surface != OTHER)

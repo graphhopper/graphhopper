@@ -55,14 +55,12 @@ public class GpxFromInstructionsTest {
 
     private EncodingManager carManager;
     private FlagEncoder carEncoder;
-    private BooleanEncodedValue roundaboutEnc;
     private TranslationMap trMap;
 
     @Before
     public void setUp() {
         carEncoder = new CarFlagEncoder();
         carManager = EncodingManager.create(carEncoder);
-        roundaboutEnc = carManager.getBooleanEncodedValue(Roundabout.KEY);
         trMap = new TranslationMap().doImport();
     }
 
@@ -92,7 +90,7 @@ public class GpxFromInstructionsTest {
 
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, roundaboutEnc, trMap.getWithFallBack(Locale.US));
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, trMap.getWithFallBack(Locale.US));
         PointList points = p.calcPoints();
         assertEquals(4, wayList.size());
 
@@ -214,7 +212,7 @@ public class GpxFromInstructionsTest {
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         encodingManager.acceptWay(way, map);
-        return encodingManager.handleWayTags(way, map, 0);
+        return encodingManager.handleWayTags(way, map, encodingManager.createRelationFlags());
     }
 
     private void verifyGPX(String gpx) {

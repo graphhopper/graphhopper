@@ -153,11 +153,6 @@ public class Parameters {
          * This property name configures at start if the DISABLE parameter can have an effect.
          */
         public static final String INIT_DISABLING_ALLOWED = ROUTING_INIT_PREFIX + "ch.disabling_allowed";
-        /**
-         * The property name in HintsMap if heading should be used for CH regardless of the possible
-         * routing errors.
-         */
-        public static final String FORCE_HEADING = "ch.force_heading";
     }
 
     /**
@@ -211,6 +206,7 @@ public class Parameters {
         public static final String STREET_NAME = "street_name";
         public static final String EDGE_ID = "edge_id";
         public static final String TIME = "time";
+        public static final String WEIGHT = "weight";
         public static final String DISTANCE = "distance";
     }
 

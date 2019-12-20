@@ -37,6 +37,7 @@ Here is an overview:
  * henningvs, doc improvements
  * highsource, more efficient geometry update, UI fixes
  * IsNull, improvements like #708
+ * Janekdererste, GUI for public transit
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
  * JohannesPelzer, improved GPX information and various other things
@@ -45,6 +46,7 @@ Here is an overview:
  * legraina, improved docker for dockerhub
  * lmar, improved instructions
  * manueltimita, fixes like #1651
+ * mathstpierre, fixes like #1753
  * michalmac, fixes like #1467
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806

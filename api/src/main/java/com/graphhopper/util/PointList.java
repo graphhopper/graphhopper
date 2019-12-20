@@ -463,7 +463,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
 
     /**
      * Clones this PointList. If this PointList was immutable, the cloned will be mutable. If this PointList was a
-     * ShallowImmutablePointList, the cloned PointList will be a regular PointList.
+     * {@link ShallowImmutablePointList}, the cloned PointList will be a regular PointList.
      */
     public PointList clone(boolean reverse) {
         PointList clonePL = new PointList(getSize(), is3D());
@@ -565,7 +565,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             if (latlon.trim().length() == 0)
                 continue;
 
-            String ll[] = latlon.split(",");
+            String[] ll = latlon.split(",");
             String lat = ll[1].replace("]", "").trim();
             add(Double.parseDouble(lat), Double.parseDouble(ll[0].trim()), Double.NaN);
         }

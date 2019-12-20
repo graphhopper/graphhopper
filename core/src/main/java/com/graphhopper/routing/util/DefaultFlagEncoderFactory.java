@@ -27,13 +27,10 @@ import com.graphhopper.util.PMap;
 public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
     @Override
     public FlagEncoder createFlagEncoder(String name, PMap configuration) {
-        if (name.equals(GENERIC))
-            return new DataFlagEncoder(configuration);
-
-        else if (name.equals(CAR))
+        if (name.equals(CAR))
             return new CarFlagEncoder(configuration);
 
-        else if (name.equals(CAR4WD))
+        if (name.equals(CAR4WD))
             return new Car4WDFlagEncoder(configuration);
 
         if (name.equals(BIKE))
@@ -56,6 +53,9 @@ public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
 
         if (name.equals(MOTORCYCLE))
             return new MotorcycleFlagEncoder(configuration);
+
+        if (name.equals(WHEELCHAIR))
+            return new WheelchairFlagEncoder(configuration);
 
         throw new IllegalArgumentException("entry in encoder list not supported " + name);
     }

@@ -64,7 +64,7 @@ public class GraphHopperOSM extends GraphHopper {
     }
 
     @Override
-    protected void loadOrPrepareLM() {
+    protected void loadOrPrepareLM(boolean closeEarly) {
         if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
             return;
 
@@ -88,6 +88,6 @@ public class GraphHopperOSM extends GraphHopper {
             }
         }
 
-        super.loadOrPrepareLM();
+        super.loadOrPrepareLM(closeEarly);
     }
 }

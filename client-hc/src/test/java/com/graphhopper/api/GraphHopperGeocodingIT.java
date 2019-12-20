@@ -34,6 +34,14 @@ public class GraphHopperGeocodingIT {
     }
 
     @Test
+    public void testForwardGeocodingHouseNumber() {
+        GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest("Bautzen Lauenturm 14", "de", 1));
+        assertEquals(1, response.getHits().size());
+        assertTrue(response.getHits().get(0).getName().contains("Lauenturm"));
+        assertEquals("14", response.getHits().get(0).getHouseNumber());
+    }
+
+    @Test
     public void testExtent() {
         GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest("seattle", "en", 7));
         BBox extent = response.getHits().get(0).getExtendBBox();

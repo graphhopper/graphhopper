@@ -49,11 +49,11 @@ public class CurvatureWeighting extends PriorityWeighting {
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        double priority = priorityEnc.getDecimal(false, edge.getFlags());
-        double bendiness = curvatureEnc.getDecimal(false, edge.getFlags());
-        double speed = getRoadSpeed(edge, reverse);
-        double roadDistance = edge.getDistance();
+    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        double priority = priorityEnc.getDecimal(false, edgeState.getFlags());
+        double bendiness = curvatureEnc.getDecimal(false, edgeState.getFlags());
+        double speed = getRoadSpeed(edgeState, reverse);
+        double roadDistance = edgeState.getDistance();
 
         // We use the log of the speed to decrease the impact of the speed, therefore we don't use the highway
         double regularWeight = roadDistance / Math.log(speed);

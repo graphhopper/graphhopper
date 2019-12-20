@@ -170,4 +170,11 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
         return algo;
     }
+
+    /**
+     * Release landmark storage resources
+     */
+    void close() {
+        this.lms.close();
+    }
 }

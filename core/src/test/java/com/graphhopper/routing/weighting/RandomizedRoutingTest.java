@@ -15,7 +15,6 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,13 +62,11 @@ public class RandomizedRoutingTest {
                 {Algo.ASTAR, false, false, NODE_BASED},
                 {Algo.CH_ASTAR, true, false, NODE_BASED},
                 {Algo.CH_DIJKSTRA, true, false, NODE_BASED},
-                {Algo.LM_UNIDIR, false, true, NODE_BASED},
-                {Algo.LM_BIDIR, false, true, NODE_BASED},
+                {Algo.LM, false, true, NODE_BASED},
                 {Algo.ASTAR, false, false, EDGE_BASED},
                 {Algo.CH_ASTAR, true, false, EDGE_BASED},
                 {Algo.CH_DIJKSTRA, true, false, EDGE_BASED},
-                {Algo.LM_UNIDIR, false, true, EDGE_BASED},
-                {Algo.LM_BIDIR, false, true, EDGE_BASED}
+                {Algo.LM, false, true, EDGE_BASED}
         });
     }
 
@@ -77,8 +74,7 @@ public class RandomizedRoutingTest {
         ASTAR,
         CH_ASTAR,
         CH_DIJKSTRA,
-        LM_BIDIR,
-        LM_UNIDIR
+        LM
     }
 
     public RandomizedRoutingTest(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
@@ -97,14 +93,15 @@ public class RandomizedRoutingTest {
         weighting = new FastestWeighting(encoder);
         chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, TurnWeighting.INFINITE_U_TURN_COSTS));
         graph = createGraph();
-        chGraph = graph.getCHGraph(!traversalMode.isEdgeBased() ? chProfiles.get(0) : chProfiles.get(1));
     }
 
     private void preProcessGraph() {
         graph.freeze();
         if (prepareCH) {
-            pch = new PrepareContractionHierarchies(chGraph);
+            CHProfile chProfile = !traversalMode.isEdgeBased() ? chProfiles.get(0) : chProfiles.get(1);
+            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
             pch.doWork();
+            chGraph = graph.getCHGraph(chProfile);
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
@@ -112,24 +109,21 @@ public class RandomizedRoutingTest {
         }
     }
 
-    private RoutingAlgorithm createAlgo() {
+    private BidirRoutingAlgorithm createAlgo() {
         return createAlgo(prepareCH ? chGraph : graph);
     }
 
-    private RoutingAlgorithm createAlgo(Graph graph) {
+    private BidirRoutingAlgorithm createAlgo(Graph graph) {
         switch (algo) {
             case ASTAR:
                 return new AStarBidirection(graph, weighting, traversalMode);
             case CH_DIJKSTRA:
-                return pch.createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
+                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
             case CH_ASTAR:
-                return pch.createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
-            case LM_BIDIR:
+                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
+            case LM:
                 AStarBidirection astarbi = new AStarBidirection(graph, weighting, traversalMode);
-                return lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
-            case LM_UNIDIR:
-                AStar astar = new AStar(graph, weighting, traversalMode);
-                return lm.getDecoratedAlgorithm(graph, astar, AlgorithmOptions.start().build());
+                return (BidirRoutingAlgorithm) lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }
@@ -339,9 +333,7 @@ public class RandomizedRoutingTest {
     }
 
     private GraphHopperStorage createGraph() {
-        GraphHopperStorage gh = new GraphHopperStorage(chProfiles, dir, encodingManager, false, new TurnCostExtension());
-        gh.create(1000);
-        return gh;
+        return new GraphBuilder(encodingManager).setCHProfiles(chProfiles).setDir(dir).withTurnCosts(true).create();
     }
 
     private int getRandom(Random rnd) {

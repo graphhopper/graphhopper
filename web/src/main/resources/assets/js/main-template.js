@@ -138,9 +138,6 @@ $(document).ready(function (e) {
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
 
-                    if (ghRequest.isPublicTransit())
-                        $(".time_input").show();
-
                     var hiddenVehicles = [];
                     for (var i in vehicles) {
                         var btn = createButton(vehicles[i].toLowerCase(), !showAllVehicles && i > 2);
@@ -245,7 +242,10 @@ function initFromParams(params, doQuery) {
         time_24hr: true,
         enableTime: true
     });
-
+    if (ghRequest.isPublicTransit())
+        $(".time_input").show();
+    else
+        $(".time_input").hide();
     if (ghRequest.getEarliestDepartureTime()) {
         flatpickr.setDate(ghRequest.getEarliestDepartureTime());
     }

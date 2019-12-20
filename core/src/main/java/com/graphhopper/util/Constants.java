@@ -71,7 +71,7 @@ public class Constants {
     public static final int VERSION_SHORTCUT = 5;
     public static final int VERSION_GEOMETRY = 4;
     public static final int VERSION_LOCATION_IDX = 3;
-    public static final int VERSION_NAME_IDX = 3;
+    public static final int VERSION_STRING_IDX = 5;
     /**
      * The version without the snapshot string
      */
@@ -144,7 +144,7 @@ public class Constants {
 
     public static String getVersions() {
         return VERSION_NODE + "," + VERSION_EDGE + "," + VERSION_GEOMETRY + "," + VERSION_LOCATION_IDX
-                + "," + VERSION_NAME_IDX + "," + VERSION_SHORTCUT;
+                + "," + VERSION_STRING_IDX + "," + VERSION_SHORTCUT;
     }
 
     public static String getMajorVersion() {

@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
@@ -48,8 +47,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Peter Karich
  */
-public class PrepareLandmarksTest
-        /* extends AbstractRoutingAlgorithmTester */ {
+public class PrepareLandmarksTest {
     private GraphHopperStorage graph;
     private EncodingManager encodingManager;
     private FlagEncoder encoder;
@@ -61,7 +59,7 @@ public class PrepareLandmarksTest
         tm = TraversalMode.NODE_BASED;
         encodingManager = EncodingManager.create(encoder);
         GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(),
-                encodingManager, false, new GraphExtension.NoOpExtension());
+                encodingManager, false);
         tmp.create(1000);
         graph = tmp;
     }
