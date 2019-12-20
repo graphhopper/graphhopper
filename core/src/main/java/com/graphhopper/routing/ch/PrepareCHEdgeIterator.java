@@ -106,14 +106,22 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
                 return iter.getWeight();
             }
         } else {
-            // early exit if access is blocked, will be moved into weighting(s) in the future
+            final EdgeIterator iter = iter();
             final BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
-            final boolean access = reverse ? iter().getReverse(accessEnc) : iter().get(accessEnc);
             // have to accept loops here, c.f. comments in DefaultEdgeFilter
-            if (!access && iter().getBaseNode() != iter().getAdjNode()) {
+            if (iter.getBaseNode() == iter.getAdjNode()) {
+                if (!iter.get(accessEnc) && !iter.getReverse(accessEnc)) {
+                    return Double.POSITIVE_INFINITY;
+                } else {
+                    return weighting.calcWeight(iter, reverse, EdgeIterator.NO_EDGE);
+                }
+            }
+            // early exit if access is blocked, will be moved into weighting(s) in the future
+            final boolean access = reverse ? iter.getReverse(accessEnc) : iter.get(accessEnc);
+            if (!access) {
                 return Double.POSITIVE_INFINITY;
             }
-            return weighting.calcWeight(iter(), reverse, EdgeIterator.NO_EDGE);
+            return weighting.calcWeight(iter, reverse, EdgeIterator.NO_EDGE);
         }
     }
 
