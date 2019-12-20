@@ -25,7 +25,6 @@ import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -70,12 +69,12 @@ public class PrepareCHGraph {
         return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder)), weighting);
     }
 
-    public EdgeExplorer createOriginalInEdgeExplorer() {
-        return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+    public PrepareCHEdgeExplorer createOriginalInEdgeExplorer() {
+        return new PrepareCHEdgeIterator(chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)), weighting);
     }
 
-    public EdgeExplorer createOriginalOutEdgeExplorer() {
-        return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+    public PrepareCHEdgeExplorer createOriginalOutEdgeExplorer() {
+        return new PrepareCHEdgeIterator(chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), weighting);
     }
 
     public int getNodes() {

@@ -19,7 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
@@ -58,10 +57,10 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private EdgeBasedWitnessPathSearcher witnessPathSearcher;
     private PrepareCHEdgeExplorer existingShortcutExplorer;
     private PrepareCHEdgeExplorer allEdgeExplorer;
-    private EdgeExplorer sourceNodeOrigInEdgeExplorer;
-    private EdgeExplorer targetNodeOrigOutEdgeExplorer;
-    private EdgeExplorer loopAvoidanceInEdgeExplorer;
-    private EdgeExplorer loopAvoidanceOutEdgeExplorer;
+    private PrepareCHEdgeExplorer sourceNodeOrigInEdgeExplorer;
+    private PrepareCHEdgeExplorer targetNodeOrigOutEdgeExplorer;
+    private PrepareCHEdgeExplorer loopAvoidanceInEdgeExplorer;
+    private PrepareCHEdgeExplorer loopAvoidanceOutEdgeExplorer;
 
     // counts the total number of added shortcuts
     private int addedShortcutsCount;
@@ -234,9 +233,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
      * doing a u-turn at any of the incoming edges is forbidden, i.e. the costs of the direct turn will be infinite.
      */
     private boolean loopShortcutNecessary(int node, int firstOrigEdge, int lastOrigEdge, double loopWeight) {
-        EdgeIterator inIter = loopAvoidanceInEdgeExplorer.setBaseNode(node);
+        PrepareCHEdgeIterator inIter = loopAvoidanceInEdgeExplorer.setBaseNode(node);
         while (inIter.next()) {
-            EdgeIterator outIter = loopAvoidanceOutEdgeExplorer.setBaseNode(node);
+            PrepareCHEdgeIterator outIter = loopAvoidanceOutEdgeExplorer.setBaseNode(node);
             double inTurnCost = getTurnCost(inIter.getEdge(), node, firstOrigEdge);
             while (outIter.next()) {
                 double totalLoopCost = inTurnCost + loopWeight +
@@ -450,7 +449,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     continue;
                 }
                 // for each source node we need to look at every incoming original edge and find the initial entries
-                EdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
+                PrepareCHEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
                 while (origInIter.next()) {
                     int numInitialEntries = witnessPathSearcher.initSearch(node, sourceNode, origInIter.getOrigEdgeLast());
                     if (numInitialEntries < 1) {
@@ -471,7 +470,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         }
                         // for each target edge outgoing from a target node we need to check if reaching it requires
                         // a 'bridge-path'
-                        EdgeIterator targetEdgeIter = targetNodeOrigOutEdgeExplorer.setBaseNode(targetNode);
+                        PrepareCHEdgeIterator targetEdgeIter = targetNodeOrigOutEdgeExplorer.setBaseNode(targetNode);
                         while (targetEdgeIter.next()) {
                             int targetEdge = targetEdgeIter.getOrigEdgeFirst();
                             dijkstraSW.start();

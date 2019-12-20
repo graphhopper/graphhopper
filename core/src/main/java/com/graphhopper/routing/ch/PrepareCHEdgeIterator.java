@@ -19,16 +19,16 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
-    private final CHEdgeExplorer edgeExplorer;
+    private final EdgeExplorer edgeExplorer;
     private final Weighting weighting;
-    private CHEdgeIterator chIterator;
+    private EdgeIterator chIterator;
 
-    public PrepareCHEdgeIterator(CHEdgeExplorer edgeExplorer, Weighting weighting) {
+    public PrepareCHEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting) {
         this.edgeExplorer = edgeExplorer;
         this.weighting = weighting;
     }
@@ -64,19 +64,20 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
     }
 
     public boolean isShortcut() {
-        return iter().isShortcut();
+        final EdgeIterator iter = iter();
+        return iter instanceof CHEdgeIterator && ((CHEdgeIterator) iter).isShortcut();
     }
 
     public double getWeight(boolean reverse) {
         if (isShortcut()) {
-            return iter().getWeight();
+            return chIter().getWeight();
         } else {
             return weighting.calcWeight(iter(), reverse, EdgeIterator.NO_EDGE);
         }
     }
 
     public void setWeight(double weight) {
-        iter().setWeight(weight);
+        chIter().setWeight(weight);
     }
 
     @Override
@@ -89,21 +90,29 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
     }
 
     int getMergeStatus(int flags) {
-        return iter().getMergeStatus(flags);
+        return chIter().getMergeStatus(flags);
     }
 
     void setFlagsAndWeight(int flags, double weight) {
-        iter().setFlagsAndWeight(flags, weight);
+        chIter().setFlagsAndWeight(flags, weight);
     }
 
     void setSkippedEdges(int skippedEdge1, int skippedEdge2) {
-        iter().setSkippedEdges(skippedEdge1, skippedEdge2);
+        chIter().setSkippedEdges(skippedEdge1, skippedEdge2);
     }
 
-    private CHEdgeIterator iter() {
+    private EdgeIterator iter() {
         if (chIterator == null) {
             throw new IllegalStateException("You need to call setBaseNode() first");
         }
         return chIterator;
+    }
+
+    private CHEdgeIterator chIter() {
+        EdgeIterator iter = iter();
+        if (!(iter instanceof CHEdgeIterator)) {
+            throw new IllegalStateException("Expected a CH edge iterator, but was: " + iter.getClass().getSimpleName());
+        }
+        return (CHEdgeIterator) iter;
     }
 }
