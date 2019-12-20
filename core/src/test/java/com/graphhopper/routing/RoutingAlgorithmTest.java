@@ -804,6 +804,8 @@ public class RoutingAlgorithmTest {
     public void testTwoWeightsPerEdge2() {
         // other direction should be different!
         Weighting fakeWeighting = new Weighting() {
+            private final Weighting tmpW = new FastestWeighting(carEncoder);
+
             @Override
             public FlagEncoder getFlagEncoder() {
                 return carEncoder;
@@ -834,8 +836,6 @@ public class RoutingAlgorithmTest {
 
                 return edgeState.getDistance() * 0.8;
             }
-
-            private final Weighting tmpW = new FastestWeighting(carEncoder);
 
             @Override
             public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {

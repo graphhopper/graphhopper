@@ -71,18 +71,18 @@ public class FastestWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        double speed = reverse ? edge.getReverse(avSpeedEnc) : edge.get(avSpeedEnc);
+    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
 
-        double time = edge.getDistance() / speed * SPEED_CONV;
+        double time = edgeState.getDistance() / speed * SPEED_CONV;
 
-        if (roadAccessEnc != null && edge.get(roadAccessEnc) == RoadAccess.DESTINATION)
+        if (roadAccessEnc != null && edgeState.get(roadAccessEnc) == RoadAccess.DESTINATION)
             time *= roadAccessPenalty;
 
         // add direction penalties at start/stop/via points
-        boolean unfavoredEdge = edge.get(EdgeIteratorState.UNFAVORED_EDGE);
+        boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
         if (unfavoredEdge)
             time += headingPenalty;
 
