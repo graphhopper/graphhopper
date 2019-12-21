@@ -26,12 +26,15 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
+    private static final double NO_WEIGHT = -Double.MAX_VALUE;
     private final EdgeExplorer edgeExplorer;
     private final Weighting weighting;
     private final DefaultEdgeFilter shortcutFilter;
     private final boolean fwd;
     private final boolean bwd;
     private EdgeIterator chIterator;
+    private double cachedWeightFwd;
+    private double cachedWeightBwd;
 
     public static PrepareCHEdgeIterator inEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting) {
         return new PrepareCHEdgeIterator(edgeExplorer, weighting, DefaultEdgeFilter.inEdges(weighting.getFlagEncoder().getAccessEnc()), false, true);
@@ -51,6 +54,7 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
         this.shortcutFilter = shortcutFilter;
         this.fwd = fwd;
         this.bwd = bwd;
+        clearCachedWeight();
     }
 
     @Override
@@ -63,6 +67,7 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
         while (true) {
             final EdgeIterator iter = iter();
             final boolean hasNext = iter.next();
+            clearCachedWeight();
             if ((fwd && !Double.isInfinite(getWeight(false))) || (bwd && !Double.isInfinite(getWeight(true)))) {
                 return hasNext;
             } else if (!hasNext) {
@@ -97,6 +102,28 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
     }
 
     public double getWeight(boolean reverse) {
+        updateWeight(reverse);
+        return reverse ? cachedWeightBwd : cachedWeightFwd;
+    }
+
+    private void updateWeight(boolean reverse) {
+        if (reverse) {
+            if (cachedWeightBwd == NO_WEIGHT) {
+                cachedWeightBwd = calcWeight(true);
+            }
+        } else {
+            if (cachedWeightFwd == NO_WEIGHT) {
+                cachedWeightFwd = calcWeight(false);
+            }
+        }
+    }
+
+    private void clearCachedWeight() {
+        cachedWeightFwd = NO_WEIGHT;
+        cachedWeightBwd = NO_WEIGHT;
+    }
+
+    private double calcWeight(boolean reverse) {
         if (isShortcut()) {
             final CHEdgeIterator iter = chIter();
             // currently we still need to use the edge filter, because we maintain access flags for CH shortcuts
@@ -127,6 +154,7 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
 
     public void setWeight(double weight) {
         chIter().setWeight(weight);
+        clearCachedWeight();
     }
 
     @Override
@@ -144,6 +172,7 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
 
     void setFlagsAndWeight(int flags, double weight) {
         chIter().setFlagsAndWeight(flags, weight);
+        clearCachedWeight();
     }
 
     void setSkippedEdges(int skippedEdge1, int skippedEdge2) {
