@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import org.junit.Test;
 
@@ -110,7 +109,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
                 ghStorage, g2, weighting, TraversalMode.NODE_BASED).
                 createAlgo(g2, opts).calcPath(0, 7);
 
-        assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 2, 5, 7), p.calcNodes());
         assertEquals(1064, p.getTime());
         assertEquals(4.2, p.getDistance(), 1e-5);
     }
@@ -131,7 +130,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
         // use base graph for solving normal Dijkstra
         Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, defaultOpts).calcPath(0, 3);
-        assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
+        assertEquals(IntArrayList.from(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.29, p1.getDistance(), 1e-2);
         assertEquals(p1.toString(), 144823, p1.getTime());
     }
@@ -152,12 +151,12 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
         // use contracted graph
         Path p1 = contractedFactory.createAlgo(getGraph(g, carOptions.getWeighting()), carOptions).calcPath(0, 7);
-        assertEquals(Helper.createTList(0, 4, 6, 7), p1.calcNodes());
+        assertEquals(IntArrayList.from(0, 4, 6, 7), p1.calcNodes());
         assertEquals(p1.toString(), 15000, p1.getDistance(), 1e-6);
 
         // use base graph for solving normal Dijkstra via car
         Path p2 = new RoutingAlgorithmFactorySimple().createAlgo(g, carOptions).calcPath(0, 7);
-        assertEquals(Helper.createTList(0, 4, 6, 7), p2.calcNodes());
+        assertEquals(IntArrayList.from(0, 4, 6, 7), p2.calcNodes());
         assertEquals(p2.toString(), 15000, p2.getDistance(), 1e-6);
         assertEquals(p2.toString(), 2700 * 1000, p2.getTime());
 
@@ -165,7 +164,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         Path p3 = new RoutingAlgorithmFactorySimple().createAlgo(g, footOptions).calcPath(0, 7);
         assertEquals(p3.toString(), 17000, p3.getDistance(), 1e-6);
         assertEquals(p3.toString(), 12240 * 1000, p3.getTime());
-        assertEquals(Helper.createTList(0, 4, 5, 7), p3.calcNodes());
+        assertEquals(IntArrayList.from(0, 4, 5, 7), p3.calcNodes());
     }
 
     // 7------8------.---9----0
@@ -206,14 +205,14 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         // note that node 9 will be visited by both forward and backward searches
         assertEquals(7, algo.getVisitedNodes());
         assertEquals(102, p.getDistance(), 1.e-3);
-        assertEquals(p.toString(), Helper.createTList(1, 8, 9, 0), p.calcNodes());
+        assertEquals(p.toString(), IntArrayList.from(1, 8, 9, 0), p.calcNodes());
 
         // without stalling we visit 11 nodes
         RoutingAlgorithm algoNoSod = createCHAlgo(graph, chGraph, false, defaultOpts);
         Path pNoSod = algoNoSod.calcPath(1, 0);
         assertEquals(11, algoNoSod.getVisitedNodes());
         assertEquals(102, pNoSod.getDistance(), 1.e-3);
-        assertEquals(pNoSod.toString(), Helper.createTList(1, 8, 9, 0), pNoSod.calcNodes());
+        assertEquals(pNoSod.toString(), IntArrayList.from(1, 8, 9, 0), pNoSod.calcNodes());
     }
 
     // t(0)--slow->1--s(2)
@@ -222,8 +221,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     //      \--<---|
     @Test
     public void testDirectionDependentSpeedFwdSearch() {
-        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, Helper.createTList(0, 1, 2), new MotorcycleFlagEncoder());
-        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, Helper.createTList(0, 1, 2), new Bike2WeightFlagEncoder());
+        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, IntArrayList.from(0, 1, 2), new MotorcycleFlagEncoder());
+        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, IntArrayList.from(0, 1, 2), new Bike2WeightFlagEncoder());
     }
 
     // s(0)--fast->1--t(2)
@@ -232,8 +231,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     //      \--<---|
     @Test
     public void testDirectionDependentSpeedBwdSearch() {
-        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, Helper.createTList(2, 1, 0), new MotorcycleFlagEncoder());
-        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, Helper.createTList(2, 1, 0), new Bike2WeightFlagEncoder());
+        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, IntArrayList.from(2, 1, 0), new MotorcycleFlagEncoder());
+        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, IntArrayList.from(2, 1, 0), new Bike2WeightFlagEncoder());
     }
 
     private void runTestWithDirectionDependentEdgeSpeed(

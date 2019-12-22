@@ -21,6 +21,7 @@ package com.graphhopper.reader.gtfs;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
 import com.conveyal.gtfs.model.FareRule;
+import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.fare.FixedFareAttributeLoader;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -299,8 +300,12 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 		return stationNodes;
 	}
 
-	static String tripKey(String tripId, String startTime) {
-		return tripId+startTime;
+	static String tripKey(GtfsRealtime.TripDescriptor tripDescriptor, boolean isFrequencyBased) {
+		if (isFrequencyBased) {
+			return tripDescriptor.getTripId()+tripDescriptor.getStartTime();
+		} else {
+			return tripDescriptor.getTripId();
+		}
 	}
 
 }

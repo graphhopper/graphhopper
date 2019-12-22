@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -360,7 +360,7 @@ public class PathTest {
         assertEquals(4, timeDetails.size());
         assertEquals(400L, timeDetails.get(0).getValue());
         assertEquals(200L, timeDetails.get(1).getValue());
-        assertEquals(1800L, timeDetails.get(2).getValue());
+        assertEquals(3600L, timeDetails.get(2).getValue());
         assertEquals(400L, timeDetails.get(3).getValue());
 
         assertEquals(0, timeDetails.get(0).getFirst());
@@ -368,6 +368,21 @@ public class PathTest {
         assertEquals(2, timeDetails.get(2).getFirst());
         assertEquals(3, timeDetails.get(3).getFirst());
         assertEquals(4, timeDetails.get(3).getLast());
+    }
+
+    @Test
+    public void testCalcDistanceDetails() {
+        Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(new String[]{DISTANCE}), new PathDetailsBuilderFactory(), 0);
+        assertTrue(details.size() == 1);
+
+        List<PathDetail> distanceDetails = details.get(DISTANCE);
+        assertEquals(5D, distanceDetails.get(0).getValue());
+        assertEquals(5D, distanceDetails.get(1).getValue());
+        assertEquals(10D, distanceDetails.get(2).getValue());
+        assertEquals(5D, distanceDetails.get(3).getValue());
     }
 
     /**
@@ -478,7 +493,7 @@ public class PathTest {
     }
 
     List<String> pick(String key, List<Map<String, Object>> instructionJson) {
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
 
         for (Map<String, Object> json : instructionJson) {
             list.add(json.get(key).toString());
@@ -868,7 +883,7 @@ public class PathTest {
         tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
 
         w.setTag("maxspeed", "10");
-        tmpEdge = g.edge(3, 4, 5, true).setName("3-4");
+        tmpEdge = g.edge(3, 4, 10, true).setName("3-4");
         tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
 
         return g;
@@ -879,7 +894,7 @@ public class PathTest {
         final public NodeAccess na = g.getNodeAccess();
         private final EdgeIteratorState edge3to6, edge3to9;
         boolean clockwise = false;
-        List<EdgeIteratorState> roundaboutEdges = new LinkedList<EdgeIteratorState>();
+        List<EdgeIteratorState> roundaboutEdges = new LinkedList<>();
 
         private RoundaboutGraph() {
             //                                       18

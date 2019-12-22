@@ -91,15 +91,6 @@ graphhopper:
   routing.non_ch.max_waypoint_distance: 1000000
 
 
-
-  ##### Web #####
-
-
-  # if you want to support jsonp response type you need to add it explicitly here. By default it is disabled for stronger security.
-  # web.jsonp_allowed: true
-
-
-
   ##### Storage #####
 
 
@@ -129,6 +120,14 @@ graphhopper:
   # Having less rules, might result in a smaller graph. The line below contains the world-wide bounding box, uncomment and adapt to your need.
   # spatial_rules.max_bbox: -180,180,-90,90
 
+
+# Uncomment the following to point /maps to the source directory in the filesystem instead of
+# the Java resource path. Helpful for development of the web client.
+# Assumes that the web module is the working directory.
+#
+# assets:
+#  overrides:
+#    /maps: web/src/main/resources/assets/
 
 # Dropwizard server configuration
 server:

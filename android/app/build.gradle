@@ -20,7 +20,6 @@ android {
 
     lintOptions {
         /* CGIARProvider refers to java.awt
-         * Helper7 refers to java.lang.management
          * HeightTile refers to javax.imageio and java.awt
          * OSMElement refers to javax.xml.stream
          */

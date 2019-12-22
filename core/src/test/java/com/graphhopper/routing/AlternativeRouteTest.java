@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.AlternativeRoute.AlternativeBidirSearch;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -28,7 +29,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.Helper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -123,12 +123,12 @@ public class AlternativeRouteTest {
         assertEquals(bestPath.calcNodes(), bestAlt.calcNodes());
         assertEquals(bestPath.getWeight(), bestAlt.getWeight(), 1e-3);
 
-        assertEquals(Helper.createTList(5, 6, 3, 4), bestAlt.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 6, 3, 4}), bestAlt.calcNodes());
 
         // Note: here plateau is longer, even longer than optimum, but path is longer
         // so which alternative is better? longer plateau.weight with bigger path.weight or smaller path.weight with smaller plateau.weight
         // assertEquals(Helper.createTList(5, 1, 9, 2, 3, 4), secondAlt.calcNodes());
-        assertEquals(Helper.createTList(5, 6, 7, 8, 4), secondAlt.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 6, 7, 8, 4}), secondAlt.calcNodes());
         assertEquals(1667.9, secondAlt.getWeight(), .1);
     }
 
@@ -149,9 +149,9 @@ public class AlternativeRouteTest {
         assertEquals(3, pathInfos.size());
 
         // result is sorted based on the plateau to full weight ratio
-        assertEquals(Helper.createTList(5, 6, 3, 4), pathInfos.get(0).getPath().calcNodes());
-        assertEquals(Helper.createTList(5, 6, 7, 8, 4), pathInfos.get(1).getPath().calcNodes());
-        assertEquals(Helper.createTList(5, 1, 9, 2, 3, 4), pathInfos.get(2).getPath().calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 6, 3, 4}), pathInfos.get(0).getPath().calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 6, 7, 8, 4}), pathInfos.get(1).getPath().calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 1, 9, 2, 3, 4}), pathInfos.get(2).getPath().calcNodes());
         assertEquals(2416.0, pathInfos.get(2).getPath().getWeight(), .1);
     }
 

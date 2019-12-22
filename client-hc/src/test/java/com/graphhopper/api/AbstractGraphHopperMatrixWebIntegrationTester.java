@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
+import static com.graphhopper.api.GraphHopperMatrixWeb.SERVICE_URL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -56,7 +57,7 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         req.addOutArray("times");
 
         MatrixResponse res = ghMatrix.route(req);
-        assertEquals(2450, res.getTime(1, 2) / 1000, 110);
+        assertEquals(2200, res.getTime(1, 2) / 1000, 200);
     }
 
     @Test
@@ -65,10 +66,42 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         ghmRequest.addOutArray("distances");
         ghmRequest.addOutArray("times");
         ghmRequest.setVehicle("car");
-        ghmRequest.addFromPoints(Arrays.asList(new GHPoint(52.557151, 13.515244)))
-                .addToPoints(Arrays.asList(new GHPoint(52.557151, 13.515244), new GHPoint(52.454545, 13.295517)));
+        ghmRequest.setFromPoints(Arrays.asList(new GHPoint(52.557151, 13.515244)))
+                .setToPoints(Arrays.asList(new GHPoint(52.557151, 13.515244), new GHPoint(52.454545, 13.295517)));
 
         MatrixResponse res = ghMatrix.route(ghmRequest);
         assertEquals(2437, res.getTime(0, 1) / 1000, 30);
+    }
+
+    @Test
+    public void testPOSTMatrixQueryWithPointHints() {
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(52.517004, 13.389416));
+        req.addPoint(new GHPoint(52.485707, 13.435249));
+        req.addPoint(new GHPoint(52.516848, 13.424606));
+        req.addOutArray("distances");
+        MatrixResponse res = ghMatrix.route(req);
+        assertEquals(4833, res.getDistance(1, 2), 30);
+        assertEquals(5162, res.getDistance(2, 1), 30);
+
+        req = new GHMRequest();
+        req.addPoint(new GHPoint(52.517004, 13.389416));
+        req.addPoint(new GHPoint(52.485707, 13.435249));
+        req.addPoint(new GHPoint(52.516848, 13.424606));
+        req.addOutArray("distances");
+        req.setPointHints(Arrays.asList("", "", "ifflandstr"));
+        res = ghMatrix.route(req);
+        assertEquals(4953, res.getDistance(1, 2), 30);
+        assertEquals(4927, res.getDistance(2, 1), 30);
+
+        req = new GHMRequest();
+        req.addPoint(new GHPoint(52.517004, 13.389416));
+        req.addPoint(new GHPoint(52.485707, 13.435249));
+        req.addPoint(new GHPoint(52.516848, 13.424606));
+        // wrong count
+        req.setPointHints(Arrays.asList("", "ifflandstr"));
+        res = ghMatrix.route(req);
+        assertTrue(res.hasErrors());
+        assertEquals("Array length of point_hints must match length of points (or from/to equivalent)", res.getErrors().get(0).getMessage());
     }
 }

@@ -47,6 +47,9 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(TIME))
             builders.add(new TimeDetails(weighting));
 
+        if (requestedPathDetails.contains(DISTANCE))
+            builders.add(new DistanceDetails());
+
         if (requestedPathDetails.size() != builders.size()) {
             throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);
         }

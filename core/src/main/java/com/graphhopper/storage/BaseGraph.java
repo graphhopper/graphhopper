@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,12 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.search.NameIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.graphhopper.util.Helper.nf;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Locale;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
@@ -376,6 +377,35 @@ class BaseGraph implements Graph {
                 + "bounds:" + bounds;
     }
 
+    public void debugPrint() {
+        final int printMax = 100;
+        System.out.println("nodes:");
+        String formatNodes = "%12s | %12s | %12s | %12s \n";
+        System.out.format(Locale.ROOT, formatNodes, "#", "N_EDGE_REF", "N_LAT", "N_LON");
+        NodeAccess nodeAccess = getNodeAccess();
+        for (int i = 0; i < Math.min(nodeCount, printMax); ++i) {
+            System.out.format(Locale.ROOT, formatNodes, i, edgeAccess.getEdgeRef(i), nodeAccess.getLat(i), nodeAccess.getLon(i));
+        }
+        if (nodeCount > printMax) {
+            System.out.format(Locale.ROOT, " ... %d more nodes\n", nodeCount - printMax);
+        }
+        System.out.println("edges:");
+        String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
+        System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS");
+        for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
+            System.out.format(Locale.ROOT, formatEdges, i,
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_NODEA),
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_NODEB),
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_LINKA),
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_LINKB),
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_DIST),
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_FLAGS));
+        }
+        if (edgeCount > printMax) {
+            System.out.printf(Locale.ROOT, " ... %d more edges", edgeCount - printMax);
+        }
+    }
+
     void flush() {
         setNodesHeader();
         setEdgesHeader();
@@ -703,11 +733,11 @@ class BaseGraph implements Graph {
                 setWayGeometry_(fetchWayGeometry_(edgePointer, true, 0, -1, -1), edgePointer, false);
         }
 
-        // clear N_EDGE_REF
-        initNodeRefs((nodeCount - removeNodeCount) * nodeEntryBytes, nodeCount * nodeEntryBytes);
-
         if (removeNodeCount >= nodeCount)
             throw new IllegalStateException("graph is empty after in-place removal but was " + removeNodeCount);
+
+        // clear N_EDGE_REF
+        initNodeRefs(((long) nodeCount - removeNodeCount) * nodeEntryBytes, (long) nodeCount * nodeEntryBytes);
 
         // we do not remove the invalid edges => edgeCount stays the same!
         nodeCount -= removeNodeCount;

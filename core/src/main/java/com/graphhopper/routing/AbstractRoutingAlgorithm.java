@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Collections;
@@ -45,7 +43,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected EdgeExplorer inEdgeExplorer;
     protected EdgeExplorer outEdgeExplorer;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
-    private EdgeFilter additionalEdgeFilter;
+    protected EdgeFilter additionalEdgeFilter;
     private boolean alreadyRun;
 
     /**
@@ -59,8 +57,8 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         this.traversalMode = traversalMode;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
-        inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
+        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
+        inEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
     }
 
     @Override
@@ -73,14 +71,11 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         return this;
     }
 
-    protected boolean accept(EdgeIterator iter, int prevOrNextEdgeId) {
+    protected boolean accept(EdgeIteratorState iter, int prevOrNextEdgeId) {
         if (!traversalMode.hasUTurnSupport() && iter.getEdge() == prevOrNextEdgeId)
             return false;
 
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
-    }
-
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId) {
     }
 
     protected void checkAlreadyRun() {
@@ -88,10 +83,6 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
             throw new IllegalStateException("Create a new instance per call");
 
         alreadyRun = true;
-    }
-
-    protected SPTEntry createSPTEntry(int node, double weight) {
-        return new SPTEntry(EdgeIterator.NO_EDGE, node, weight);
     }
 
     /**

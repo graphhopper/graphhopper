@@ -22,7 +22,7 @@ public abstract class GHMatrixAbstractRequester {
 
     private GraphHopperWeb web = new GraphHopperWeb();
     protected final ObjectMapper objectMapper;
-    protected final Set<String> ignoreSet = new HashSet<String>(10);
+    protected final Set<String> ignoreSet = new HashSet<>(10);
     protected final String serviceUrl;
     private OkHttpClient downloader;
 
@@ -61,18 +61,24 @@ public abstract class GHMatrixAbstractRequester {
 
     protected String getJson(String url) throws IOException {
         Request okRequest = new Request.Builder().url(url).build();
-        ResponseBody body = downloader.newCall(okRequest).execute().body();
-        String str = body.string();
-        body.close();
-        return str;
+        ResponseBody body = null;
+        try {
+            body = downloader.newCall(okRequest).execute().body();
+            return body.string();
+        } finally {
+            Helper.close(body);
+        }
     }
 
     protected String postJson(String url, JsonNode data) throws IOException {
         Request okRequest = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, data.toString())).build();
-        ResponseBody body = downloader.newCall(okRequest).execute().body();
-        String str = body.string();
-        body.close();
-        return str;
+        ResponseBody body = null;
+        try {
+            body = downloader.newCall(okRequest).execute().body();
+            return body.string();
+        } finally {
+            Helper.close(body);
+        }
     }
 
     protected JsonNode toJSON(String url, String str) {

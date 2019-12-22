@@ -23,11 +23,9 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.EncodedDoubleValue;
 import com.graphhopper.routing.util.EncodedValue;
-import com.graphhopper.routing.util.FootFlagEncoder;
 
 public class PtFlagEncoder extends AbstractFlagEncoder {
 
-	private final FootFlagEncoder footFlagEncoder;
 	private EncodedValue time;
 	private EncodedValue transfers;
 	private EncodedValue validityId;
@@ -35,14 +33,6 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 
 	public PtFlagEncoder() {
 		super(0, 1, 0);
-
-		// I use the foot flag encoder only as a delegate to filter by OSM tags,
-		// not to encode flags.
-		footFlagEncoder = new FootFlagEncoder();
-		// Still, I have to do this. Otherwise 'acceptWay' returns 0 even though
-		// it wants to accept. Basically, I have to tell it what 'true' means.
-		footFlagEncoder.defineWayBits(1, 0);
-		footFlagEncoder.defineRelationBits(1, 0);
 	}
 
 	@Override
@@ -54,31 +44,31 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 		speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, 0, 0);
 		shift += speedEncoder.getBits();
 
-		time = new EncodedValue("time", shift, 32, 1.0, 0, Integer.MAX_VALUE);
+		time = new EncodedValue("time", shift, 17, 1.0, 0, 24*60*60);
 		shift += time.getBits();
 		transfers = new EncodedValue("transfers", shift, 1, 1.0, 0, 1);
 		shift += transfers.getBits();
 		validityId = new EncodedValue("validityId", shift, 20, 1.0, 0, 1048575);
 		shift += validityId.getBits();
 		GtfsStorage.EdgeType[] edgeTypes = GtfsStorage.EdgeType.values();
-		type = new EncodedValue("type", shift, 6, 1.0, GtfsStorage.EdgeType.HIGHWAY.ordinal(), edgeTypes[edgeTypes.length-1].ordinal());
+		type = new EncodedValue("type", shift, 4, 1.0, GtfsStorage.EdgeType.HIGHWAY.ordinal(), edgeTypes[edgeTypes.length-1].ordinal());
 		shift += type.getBits();
 		return shift;
 	}
 
 	@Override
 	public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
-		return footFlagEncoder.handleRelationTags(relation, oldRelationFlags);
+		return oldRelationFlags;
 	}
 
 	@Override
 	public long acceptWay(ReaderWay way) {
-		return footFlagEncoder.acceptWay(way);
+		return 0;
 	}
 
 	@Override
 	public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
-		return footFlagEncoder.handleWayTags(way, allowed, relationFlags);
+		return 0;
 	}
 
 	long getTime(long flags) {

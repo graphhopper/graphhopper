@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.shapes.BBox;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,7 +43,7 @@ public class GHUtility {
      * This method could throw exception if uncatched problems like index out of bounds etc
      */
     public static List<String> getProblems(Graph g) {
-        List<String> problems = new ArrayList<String>();
+        List<String> problems = new ArrayList<>();
         int nodes = g.getNodes();
         int nodeIndex = 0;
         NodeAccess na = g.getNodeAccess();
@@ -89,7 +90,7 @@ public class GHUtility {
     }
 
     public static Set<Integer> asSet(int... values) {
-        Set<Integer> s = new HashSet<Integer>();
+        Set<Integer> s = new HashSet<>();
         for (int v : values) {
             s.add(v);
         }
@@ -98,7 +99,7 @@ public class GHUtility {
 
     public static Set<Integer> getNeighbors(EdgeIterator iter) {
         // make iteration order over set static => linked
-        Set<Integer> list = new LinkedHashSet<Integer>();
+        Set<Integer> list = new LinkedHashSet<>();
         while (iter.next()) {
             list.add(iter.getAdjNode());
         }
@@ -106,7 +107,7 @@ public class GHUtility {
     }
 
     public static List<Integer> getEdgeIds(EdgeIterator iter) {
-        List<Integer> list = new ArrayList<Integer>();
+        List<Integer> list = new ArrayList<>();
         while (iter.next()) {
             list.add(iter.getEdge());
         }
@@ -114,18 +115,47 @@ public class GHUtility {
     }
 
     public static void printEdgeInfo(final Graph g, FlagEncoder encoder) {
-        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().length() + " ---");
+        System.out.println("-- Graph nodes:" + g.getNodes() + " edges:" + g.getAllEdges().length() + " ---");
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next()) {
-            String sc = "";
-            if (iter instanceof AllCHEdgesIterator) {
-                AllCHEdgesIterator aeSkip = (AllCHEdgesIterator) iter;
-                sc = aeSkip.isShortcut() ? "sc" : "  ";
-            }
+            String prefix = (iter instanceof AllCHEdgesIterator && ((AllCHEdgesIterator) iter).isShortcut()) ? "sc" : "  ";
             String fwdStr = iter.isForward(encoder) ? "fwd" : "   ";
-            String bckStr = iter.isBackward(encoder) ? "bckwd" : "";
-            System.out.println(sc + " " + iter + " " + fwdStr + " " + bckStr);
+            String bwdStr = iter.isBackward(encoder) ? "bwd" : "   ";
+            System.out.println(prefix + " " + iter + " " + fwdStr + " " + bwdStr + " " + iter.getDistance());
         }
+    }
+
+    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder) {
+        printGraphForUnitTest(g, encoder, new BBox(
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
+    }
+
+    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder, BBox bBox) {
+        NodeAccess na = g.getNodeAccess();
+        for (int node = 0; node < g.getNodes(); ++node) {
+            if (bBox.contains(na.getLat(node), na.getLon(node))) {
+                System.out.printf(Locale.ROOT, "na.setNode(%d, %f, %f);\n", node, na.getLat(node), na.getLon(node));
+            }
+        }
+        AllEdgesIterator iter = g.getAllEdges();
+        while (iter.next()) {
+            if (bBox.contains(na.getLat(iter.getBaseNode()), na.getLon(iter.getBaseNode())) &&
+                    bBox.contains(na.getLat(iter.getAdjNode()), na.getLon(iter.getAdjNode()))) {
+                printUnitTestEdge(encoder, iter);
+            }
+        }
+    }
+
+    private static void printUnitTestEdge(FlagEncoder flagEncoder, EdgeIteratorState edge) {
+        boolean fwd = edge.isForward(flagEncoder);
+        boolean bwd = edge.isBackward(flagEncoder);
+        if (!fwd && !bwd) {
+            return;
+        }
+        int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
+        int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
+        System.out.printf(Locale.ROOT,
+                "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
     }
 
     public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {
@@ -135,10 +165,7 @@ public class GHUtility {
             @Override
             protected boolean goFurther(int nodeId) {
                 System.out.println(getNodeInfo(g, nodeId, filter));
-                if (counter++ > counts) {
-                    return false;
-                }
-                return true;
+                return counter++ <= counts;
             }
         }.start(g.createEdgeExplorer(), startNode);
     }
@@ -306,8 +333,6 @@ public class GHUtility {
             }
         };
     }
-
-    ;
 
     /**
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if

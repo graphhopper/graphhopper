@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,14 +47,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final static int K_FORWARD = 0, K_BACKWARD = 1;
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
     /* restriction definitions where order is important */
-    protected final List<String> restrictions = new ArrayList<String>(5);
-    protected final Set<String> intendedValues = new HashSet<String>(5);
-    protected final Set<String> restrictedValues = new HashSet<String>(5);
-    protected final Set<String> ferries = new HashSet<String>(5);
-    protected final Set<String> oneways = new HashSet<String>(5);
+    protected final List<String> restrictions = new ArrayList<>(5);
+    protected final Set<String> intendedValues = new HashSet<>(5);
+    protected final Set<String> restrictedValues = new HashSet<>(5);
+    protected final Set<String> ferries = new HashSet<>(5);
+    protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected final Set<String> absoluteBarriers = new HashSet<String>(5);
-    protected final Set<String> potentialBarriers = new HashSet<String>(5);
+    protected final Set<String> absoluteBarriers = new HashSet<>(5);
+    protected final Set<String> potentialBarriers = new HashSet<>(5);
     protected final int speedBits;
     protected final double speedFactor;
     private final int maxTurnCosts;
@@ -70,9 +70,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     // This value determines the maximal possible speed of any road regardless the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
-    /* processing properties (to be initialized lazy when needed) */
-    protected EdgeExplorer edgeOutExplorer;
-    protected EdgeExplorer edgeInExplorer;
     /* Edge Flag Encoder fields */
     private long nodeBitMask;
     private long wayBitMask;
@@ -599,7 +596,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             if (costs != 0 || Double.isInfinite(costs))
                 throw new IllegalArgumentException("Restricted turn can only have infinite costs (or use 0)");
         } else if (costs >= maxTurnCosts)
-            throw new IllegalArgumentException("Cost is too high. Or specifiy restricted == true");
+            throw new IllegalArgumentException("Cost is too high. Or specify restricted == true");
 
         if (costs < 0)
             throw new IllegalArgumentException("Turn costs cannot be negative");
@@ -682,7 +679,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     protected double applyMaxSpeed(ReaderWay way, double speed) {
         double maxSpeed = getMaxSpeed(way);
-        // We obay speed limits
+        // We obey speed limits
         if (maxSpeed >= 0) {
             // We assume that the average speed is 90% of the allowed maximum
             return maxSpeed * 0.9;

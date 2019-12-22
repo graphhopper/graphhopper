@@ -1,5 +1,6 @@
 language: java
-sudo: false
+sudo: true
+dist: trusty
 
 env:
   global:
@@ -8,27 +9,24 @@ env:
     - secure: "j6a61/qnfFcSjx5XxmxO2hqBOwtVx5HWrD1+4Atl7WG/pRKz9+jSga1Y7oDAFb2SIl8S65kDmPQB/vC8aHxUDj/Wizjxnxn1FhPqoe9yO6Ztft+984FKFyvj7s6tsBJKcehGec+chTOwZQpH4oI4rU6IlepDHnGLHiOd0Iviryg="
     - secure: "GiFr+v2lTQk/sTQB7CYjju1/mupS8LSJupmizLqY454utiZkabDMBOZQnF9ukpy7WhveB9hKQyEKf9iP2w7HSYEjgvogT26vZ5f2MeLnR4SWvqEtf/WBvvh+W+k/rb2f6YgitkB4Jlxn2izemBEDuKplGJphzGW41lf8XZ2IxVI="
 
-dist: trusty
-group: edge
-
-jdk:
-  - oraclejdk8
-  - oraclejdk9
-  - openjdk8
-
-# matrix:
-#   allow_failures:
-#    - jdk: oraclejdk9
+matrix:
+  include:
+    - jdk: openjdk8
+    - env: JDK='OpenJDK 10'
+      install: . ./install-jdk.sh -F 10 -C
+    - env: JDK='OpenJDK 11'
+      install: . ./install-jdk.sh -F 11 -C
     
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
 
 # store them into travis via https://dracoblue.net/dev/uploading-snapshots-and-releases-to-maven-central-with-travis/
-# gpg -a --export-secret-keys your@email.org | base64 -w 0
+# gpg --export-secret-keys <keyID> | base64 -w 0
 # gpg --export-ownertrust | base64 -w 0
 before_install:
   - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
+  - 'wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh'
   
 # avoid increase of memory via travis https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
@@ -37,11 +35,13 @@ before_script:
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
   - _JAVA_OPTIONS=
+  - "mvn --version"
+  - "if [ -z \"$API_KEY\" ]; then API_KEY=78da6e9a-273e-43d1-bdda-8f24e007a1fa; fi" # change in GraphHopperWebIT too
 script:
-  - "mvn --version && mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
+  - "mvn -Dkey=$API_KEY clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
 
 after_success:
-  # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
+  # deploy snapshot artifacts to sonatype and if tagged deploy then release to maven central
   - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
         mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
     elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
@@ -54,7 +54,7 @@ after_success:
 
 notifications:
   email:
-    - secure: l7/fjqL0c/9UcULXdhaKxsroZMg07nfNDiOHRBf7YKf8wrKdH52Z5kP7E10+a8iD/ieLD+ZaZPlom1bE7HymE1bVkp3d17Ezha47W5sdyOOb3NBDpg8olS4TkehOKo3AQhLXSfF6QGtipxY8Iy9QknXHngQOrcoGYiOlzCZ3BTQ=
+    - $EMAIL
 
 cache:
   directories:

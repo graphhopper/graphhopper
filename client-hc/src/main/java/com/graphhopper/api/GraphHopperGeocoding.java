@@ -20,6 +20,7 @@ package com.graphhopper.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.api.model.GHGeocodingRequest;
 import com.graphhopper.api.model.GHGeocodingResponse;
+import com.graphhopper.http.WebHelper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
