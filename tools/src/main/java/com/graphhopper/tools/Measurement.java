@@ -234,7 +234,7 @@ public class Measurement {
                 writeSummary(summaryLocation, propLocation);
             }
             if (useJson) {
-                storeJson(propLocation);
+                storeJson(propLocation, args.getBool("measurement.useMeasurementTimeAsRefTime", false));
             } else {
                 storeProperties(propLocation);
             }
@@ -595,10 +595,10 @@ public class Measurement {
         properties.put(key, val);
     }
 
-    private void storeJson(String jsonLocation) {
+    private void storeJson(String jsonLocation, boolean useMeasurementTimeAsRefTime) {
         logger.info("storing measurement json in " + jsonLocation);
-        Map<String, Object> result = new HashMap<>();
         Map<String, String> gitInfoMap = new HashMap<>();
+        // add git info if available
         if (Constants.GIT_INFO != null) {
             properties.remove("gh.gitinfo");
             gitInfoMap.put("commitHash", Constants.GIT_INFO.getCommitHash());
@@ -607,6 +607,17 @@ public class Measurement {
             gitInfoMap.put("branch", Constants.GIT_INFO.getBranch());
             gitInfoMap.put("dirty", String.valueOf(Constants.GIT_INFO.isDirty()));
         }
+        Map<String, Object> result = new HashMap<>();
+        // add measurement time, use same format as git commit time
+        String measurementTime = new SimpleDateFormat("yyy-MM-dd'T'HH:mm:ssZ").format(new Date());
+        result.put("measurementTime", measurementTime);
+        // set ref time, this is either the git commit time or the measurement time
+        if (Constants.GIT_INFO != null && !useMeasurementTimeAsRefTime) {
+            result.put("refTime", Constants.GIT_INFO.getCommitTime());
+        } else {
+            result.put("refTime", measurementTime);
+        }
+        result.put("periodicBuild", useMeasurementTimeAsRefTime);
         result.put("gitinfo", gitInfoMap);
         result.put("metrics", properties);
         try {
