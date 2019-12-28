@@ -30,10 +30,18 @@ if (!host) {
 }
 
 var AutoComplete = require('./autocomplete.js');
-if (ghenv.environment === 'development')
+if (ghenv.environment === 'development') {
     var autocomplete = AutoComplete.prototype.createStub();
-else
+    GHRequest.prototype.hasTCSupport = function() {
+       var featureSet = this.features[this.api_params.vehicle];
+       this.api_params.turn_costs = featureSet && featureSet.turn_costs;
+    };
+} else {
     var autocomplete = new AutoComplete(ghenv.geocoding.host, ghenv.geocoding.api_key);
+    GHRequest.prototype.hasTCSupport = function() {
+       return new Set(["car", "truck", "small_truck", "scooter"]).has(this.api_params.vehicle);
+    };
+}
 
 var mapLayer = require('./map.js');
 var nominatim = require('./nominatim.js');
@@ -50,7 +58,6 @@ var tileLayers = require('./config/tileLayers.js');
 var debug = false;
 var ghRequest = new GHRequest(host, ghenv.routing.api_key);
 var bounds = {};
-
 var metaVersionInfo;
 
 // usage: log('inside coolFunc',this,arguments);
@@ -123,7 +130,8 @@ $(document).ready(function (e) {
                     button.click(function () {
                         ghRequest.initVehicle(vehicle);
                         resolveAll();
-                        routeLatLng(ghRequest);
+                        if (ghRequest.route.isResolved())
+                          routeLatLng(ghRequest);
                     });
                     return button;
                 }
@@ -154,7 +162,7 @@ $(document).ready(function (e) {
                                 hiddenVehicles[i].show();
                             }
                         });
-                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://graphhopper.com/api/1/docs/supported-vehicle-profiles/'>?</a>"));
+                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://docs.graphhopper.com/#section/Map-Data-and-Routing-Profiles/OpenStreetMap'>?</a>"));
                         vehiclesDiv.append(moreBtn);
                     }
                 }
@@ -461,6 +469,8 @@ function resolveTo() {
 }
 
 function resolveIndex(index) {
+    if(!ghRequest.route.getIndex(index))
+        return;
     setFlag(ghRequest.route.getIndex(index), index);
     if (index === 0) {
         if (!ghRequest.to.isResolved())
@@ -598,7 +608,8 @@ function routeLatLng(request, doQuery) {
                 mapLayer.updateScale(useMiles);
                 ghRequest.useMiles = useMiles;
                 resolveAll();
-                routeLatLng(ghRequest);
+                if (ghRequest.route.isResolved())
+                  routeLatLng(ghRequest);
             };
         };
 
