@@ -17,6 +17,7 @@
  */
 package com.graphhopper.resources;
 
+import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Constants;
@@ -51,6 +52,7 @@ public class InfoResource {
     public static class Info {
         public static class PerVehicle {
             public boolean elevation;
+            public boolean turn_costs;
         }
 
         public BBox bbox;
@@ -76,6 +78,7 @@ public class InfoResource {
         for (String v : info.supported_vehicles) {
             Info.PerVehicle perVehicleJson = new Info.PerVehicle();
             perVehicleJson.elevation = hasElevation;
+            perVehicleJson.turn_costs = storage.getEncodingManager().getEncoder(v).supports(TurnWeighting.class);
             info.features.put(v, perVehicleJson);
         }
         if (config.has("gtfs.file")) {
