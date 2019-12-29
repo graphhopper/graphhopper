@@ -57,7 +57,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        allEdgeExplorer = prepareGraph.createAllEdgeExplorer();
+        allEdgeExplorer = prepareGraph.createEdgeExplorer();
         prepareAlgo = new NodeBasedWitnessPathSearcher(prepareGraph, maxLevel);
     }
 
@@ -105,6 +105,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         int degree = 0;
         PrepareCHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
         while (iter.next()) {
+            if (!iter.isAccepted(allFilter)) {
+                continue;
+            }
             // only increase the degree for edges going to equal level nodes (the current node is at maxLevel)
             // todo: for historic reasons increase degree also for all shortcuts, even though its wrong, see #1810
             if (iter.isShortcut() || prepareGraph.getLevel(iter.getAdjNode()) == maxLevel) {
@@ -163,6 +166,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             // accept only not-contracted nodes, do not consider loops at the node that is being contracted
             if (fromNode == sch.getNode() || isContracted(fromNode))
                 continue;
+            if (!incomingEdges.isAccepted(inFilter)) {
+                continue;
+            }
 
             final double incomingEdgeWeight = incomingEdges.getWeight(true);
             // this check is important to prevent calling calcMillis on inaccessible edges and also allows early exit
@@ -181,6 +187,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                 // add only not-contracted nodes, do not consider loops at the node that is being contracted
                 if (toNode == sch.getNode() || isContracted(toNode) || fromNode == toNode)
                     continue;
+                if (!outgoingEdges.isAccepted(outFilter)) {
+                    continue;
+                }
 
                 // Limit weight as ferries or forbidden edges can increase local search too much.
                 // If we decrease the correct weight we only explore less and introduce more shortcuts.
@@ -228,6 +237,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             // check if we need to update some existing shortcut in the graph
             PrepareCHEdgeIterator iter = outEdgeExplorer.setBaseNode(sc.from);
             while (iter.next()) {
+                if (!iter.isAccepted(outFilter)) {
+                    continue;
+                }
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to) {
                     int status = iter.getMergeStatus(sc.flags);
                     if (status == 0)

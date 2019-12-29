@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
@@ -105,5 +106,9 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
             throw new IllegalStateException("You need to call setBaseNode() first");
         }
         return chIterator;
+    }
+
+    public boolean isAccepted(DefaultEdgeFilter filter) {
+        return filter.accept(iter());
     }
 }

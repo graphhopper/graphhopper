@@ -91,14 +91,14 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     public void initFromGraph() {
         super.initFromGraph();
         witnessPathSearcher = new EdgeBasedWitnessPathSearcher(prepareGraph, pMap);
-        inEdgeExplorer = prepareGraph.createInEdgeExplorer();
-        outEdgeExplorer = prepareGraph.createOutEdgeExplorer();
-        allEdgeExplorer = prepareGraph.createAllEdgeExplorer();
-        existingShortcutExplorer = prepareGraph.createOutEdgeExplorer();
-        sourceNodeOrigInEdgeExplorer = prepareGraph.createOriginalInEdgeExplorer();
-        targetNodeOrigOutEdgeExplorer = prepareGraph.createOriginalOutEdgeExplorer();
-        loopAvoidanceInEdgeExplorer = prepareGraph.createOriginalInEdgeExplorer();
-        loopAvoidanceOutEdgeExplorer = prepareGraph.createOriginalOutEdgeExplorer();
+        inEdgeExplorer = prepareGraph.createEdgeExplorer();
+        outEdgeExplorer = prepareGraph.createEdgeExplorer();
+        allEdgeExplorer = prepareGraph.createEdgeExplorer();
+        existingShortcutExplorer = prepareGraph.createEdgeExplorer();
+        sourceNodeOrigInEdgeExplorer = prepareGraph.createOriginalEdgeExplorer();
+        targetNodeOrigOutEdgeExplorer = prepareGraph.createOriginalEdgeExplorer();
+        loopAvoidanceInEdgeExplorer = prepareGraph.createOriginalEdgeExplorer();
+        loopAvoidanceOutEdgeExplorer = prepareGraph.createOriginalEdgeExplorer();
         hierarchyDepths = new int[prepareGraph.getNodes()];
     }
 
@@ -178,6 +178,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         while (outIter.next()) {
             if (isContracted(outIter.getAdjNode()))
                 continue;
+            if (!outIter.isAccepted(outFilter)) {
+                continue;
+            }
             numPrevEdges++;
             if (!outIter.isShortcut()) {
                 numPrevOrigEdges++;
@@ -191,6 +194,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
             // do not consider loop edges a second time
             if (inIter.getBaseNode() == inIter.getAdjNode())
                 continue;
+            if (!inIter.isAccepted(inFilter)) {
+                continue;
+            }
             numPrevEdges++;
             if (!inIter.isShortcut()) {
                 numPrevOrigEdges++;
@@ -201,6 +207,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         while (allIter.next()) {
             if (isContracted(allIter.getAdjNode()))
                 continue;
+            if (!allIter.isAccepted(allFilter)) {
+                continue;
+            }
             if (allIter.isShortcut()) {
                 numPrevOrigEdges += getOrigEdgeCount(allIter.getEdge());
             }
@@ -212,6 +221,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         while (iter.next()) {
             if (isContracted(iter.getAdjNode()) || iter.getAdjNode() == node)
                 continue;
+            if (!iter.isAccepted(allFilter)) {
+                continue;
+            }
             hierarchyDepths[iter.getAdjNode()] = Math.max(hierarchyDepths[iter.getAdjNode()], hierarchyDepths[node] + 1);
         }
     }
@@ -236,9 +248,15 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private boolean loopShortcutNecessary(int node, int firstOrigEdge, int lastOrigEdge, double loopWeight) {
         EdgeIterator inIter = loopAvoidanceInEdgeExplorer.setBaseNode(node);
         while (inIter.next()) {
+            if (!inFilter.accept(inIter)) {
+                continue;
+            }
             EdgeIterator outIter = loopAvoidanceOutEdgeExplorer.setBaseNode(node);
             double inTurnCost = getTurnCost(inIter.getEdge(), node, firstOrigEdge);
             while (outIter.next()) {
+                if (!outFilter.accept(outIter)) {
+                    continue;
+                }
                 double totalLoopCost = inTurnCost + loopWeight +
                         getTurnCost(lastOrigEdge, node, outIter.getEdge());
                 double directTurnCost = getTurnCost(inIter.getEdge(), node, outIter.getEdge());
@@ -266,6 +284,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
         final PrepareCHEdgeIterator iter = existingShortcutExplorer.setBaseNode(from);
         while (iter.next()) {
+            if (!iter.isAccepted(allFilter)) {
+                continue;
+            }
             if (!isSameShortcut(iter, adjNode, edgeFrom.getParent().incEdge, edgeTo.incEdge)) {
                 // this is some other (shortcut) edge, we do not care
                 continue;
@@ -364,6 +385,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
             // check if this shortcut already exists
             final PrepareCHEdgeIterator iter = existingShortcutExplorer.setBaseNode(fromNode);
             while (iter.next()) {
+                if (!iter.isAccepted(allFilter)) {
+                    continue;
+                }
                 if (isSameShortcut(iter, toNode, firstOrigEdge, lastOrigEdge)) {
                     // this shortcut exists already, maybe its weight will be updated but we should not count it as
                     // a new edge
@@ -445,6 +469,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 if (isContracted(sourceNode) || sourceNode == node) {
                     continue;
                 }
+                if (!incomingEdges.isAccepted(inFilter)) {
+                    continue;
+                }
                 boolean isNewSourceNode = sourceNodes.add(sourceNode);
                 if (!isNewSourceNode) {
                     continue;
@@ -452,6 +479,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 // for each source node we need to look at every incoming original edge and find the initial entries
                 EdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
                 while (origInIter.next()) {
+                    if (!inFilter.accept(origInIter)) {
+                        continue;
+                    }
                     int numInitialEntries = witnessPathSearcher.initSearch(node, sourceNode, origInIter.getOrigEdgeLast());
                     if (numInitialEntries < 1) {
                         continue;
@@ -465,6 +495,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         if (isContracted(targetNode) || targetNode == node) {
                             continue;
                         }
+                        if (!outgoingEdges.isAccepted(outFilter)) {
+                            continue;
+                        }
                         boolean isNewTargetNode = toNodes.add(targetNode);
                         if (!isNewTargetNode) {
                             continue;
@@ -473,6 +506,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         // a 'bridge-path'
                         EdgeIterator targetEdgeIter = targetNodeOrigOutEdgeExplorer.setBaseNode(targetNode);
                         while (targetEdgeIter.next()) {
+                            if (!outFilter.accept(targetEdgeIter)) {
+                                continue;
+                            }
                             int targetEdge = targetEdgeIter.getOrigEdgeFirst();
                             dijkstraSW.start();
                             CHEntry entry = witnessPathSearcher.runSearch(targetNode, targetEdge);

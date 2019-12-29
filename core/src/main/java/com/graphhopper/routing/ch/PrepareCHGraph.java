@@ -36,6 +36,7 @@ public class PrepareCHGraph {
     private final Weighting weighting;
     private final TurnWeighting turnWeighting;
     private final FlagEncoder encoder;
+    private final DefaultEdgeFilter allFilter;
 
     public static PrepareCHGraph nodeBased(CHGraph chGraph, Weighting weighting) {
         if (chGraph.getCHProfile().isEdgeBased()) {
@@ -56,6 +57,15 @@ public class PrepareCHGraph {
         this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
         this.turnWeighting = turnWeighting;
+        this.allFilter = DefaultEdgeFilter.allEdges(encoder);
+    }
+
+    public Weighting getWeighting() {
+        return weighting;
+    }
+
+    public PrepareCHEdgeExplorer createEdgeExplorer() {
+        return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(), weighting);
     }
 
     public PrepareCHEdgeExplorer createInEdgeExplorer() {
@@ -76,6 +86,10 @@ public class PrepareCHGraph {
 
     public EdgeExplorer createOriginalOutEdgeExplorer() {
         return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+    }
+
+    public EdgeExplorer createOriginalEdgeExplorer() {
+        return chGraph.createOriginalEdgeExplorer();
     }
 
     public int getNodes() {
@@ -142,6 +156,9 @@ public class PrepareCHGraph {
         PrepareCHEdgeIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
         int prevEdge = EdgeIterator.NO_EDGE;
         while (tmpIter.next()) {
+            if (!tmpIter.isAccepted(allFilter)) {
+                continue;
+            }
             // note that we do not disconnect original edges, because we are re-using the base graph for different profiles,
             // even though this is not optimal from a speed performance point of view.
             if (tmpIter.isShortcut() && tmpIter.getEdge() == edgeState.getEdge()) {

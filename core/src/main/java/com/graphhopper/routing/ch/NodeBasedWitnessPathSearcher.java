@@ -20,6 +20,7 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.routing.DijkstraOneToMany;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 
@@ -37,6 +38,7 @@ public class NodeBasedWitnessPathSearcher {
     private static final int NOT_FOUND = -1;
     private final PrepareCHGraph graph;
     private final PrepareCHEdgeExplorer outEdgeExplorer;
+    private final DefaultEdgeFilter outFilter;
     private final IntArrayList changedNodes;
     private final int maxLevel;
     private int maxVisitedNodes = Integer.MAX_VALUE;
@@ -57,7 +59,8 @@ public class NodeBasedWitnessPathSearcher {
     public NodeBasedWitnessPathSearcher(PrepareCHGraph graph, int maxLevel) {
         this.graph = graph;
         this.maxLevel = maxLevel;
-        outEdgeExplorer = graph.createOutEdgeExplorer();
+        outEdgeExplorer = graph.createEdgeExplorer();
+        outFilter = DefaultEdgeFilter.outEdges(graph.getWeighting().getFlagEncoder());
 
         parents = new int[graph.getNodes()];
         Arrays.fill(parents, EMPTY_PARENT);
@@ -137,6 +140,9 @@ public class NodeBasedWitnessPathSearcher {
                 int prevEdgeId = edgeIds[adjNode];
                 if (!accept(iter, prevEdgeId))
                     continue;
+                if (!iter.isAccepted(outFilter)) {
+                    continue;
+                }
 
                 double tmpWeight = iter.getWeight(false) + weights[currNode];
                 if (Double.isInfinite(tmpWeight))

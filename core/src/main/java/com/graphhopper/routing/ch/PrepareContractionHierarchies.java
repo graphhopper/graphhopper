@@ -20,9 +20,9 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHTreeMapComposed;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.LevelEdgeFilter;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -69,6 +69,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private NodeOrderingProvider nodeOrderingProvider;
     private PrepareCHEdgeExplorer allEdgeExplorer;
     private PrepareCHEdgeExplorer disconnectExplorer;
+    private DefaultEdgeFilter allFilter;
     private int maxLevel;
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
@@ -162,8 +163,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
     private void initFromGraph() {
         maxLevel = prepareGraph.getNodes();
-        allEdgeExplorer = prepareGraph.createAllEdgeExplorer();
-        disconnectExplorer = prepareGraph.createAllEdgeExplorer();
+        allEdgeExplorer = prepareGraph.createEdgeExplorer();
+        disconnectExplorer = prepareGraph.createEdgeExplorer();
+        allFilter = DefaultEdgeFilter.allEdges(prepareGraph.getWeighting().getFlagEncoder());
 
         // Use an alternative to PriorityQueue as it has some advantages:
         //   1. Gets automatically smaller if less entries are stored => less total RAM used.
@@ -273,6 +275,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
                 int nn = iter.getAdjNode();
                 if (prepareGraph.getLevel(nn) != maxLevel)
                     continue;
+                if (!iter.isAccepted(allFilter)) {
+                    continue;
+                }
 
                 if (neighborUpdate && !updatedNeighbors.contains(nn) && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
                     neighborUpdateSW.start();
@@ -323,6 +328,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             while (iter.next()) {
                 if (prepareGraph.getLevel(iter.getAdjNode()) != maxLevel)
                     continue;
+                if (!iter.isAccepted(allFilter)) {
+                    continue;
+                }
                 prepareGraph.disconnect(disconnectExplorer, iter);
             }
             if (i % logSize == 0) {

@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -69,6 +70,8 @@ public class EdgeBasedWitnessPathSearcher {
     private final PrepareCHGraph chGraph;
     private final PrepareCHEdgeExplorer outEdgeExplorer;
     private final EdgeExplorer origInEdgeExplorer;
+    private final DefaultEdgeFilter inFilter;
+    private final DefaultEdgeFilter outFilter;
     private final int maxLevel;
 
     // general parameters affecting the number of found witnesses and the search time
@@ -110,8 +113,10 @@ public class EdgeBasedWitnessPathSearcher {
         this.chGraph = chGraph;
         extractParams(pMap);
 
-        outEdgeExplorer = chGraph.createOutEdgeExplorer();
-        origInEdgeExplorer = chGraph.createOriginalInEdgeExplorer();
+        outEdgeExplorer = chGraph.createEdgeExplorer();
+        origInEdgeExplorer = chGraph.createOriginalEdgeExplorer();
+        inFilter = DefaultEdgeFilter.inEdges(chGraph.getWeighting().getFlagEncoder());
+        outFilter = DefaultEdgeFilter.outEdges(chGraph.getWeighting().getFlagEncoder());
         maxLevel = chGraph.getNodes();
 
         maxSettledEdges = params.minimumMaxSettledEdges;
@@ -177,6 +182,9 @@ public class EdgeBasedWitnessPathSearcher {
         // check if we can already reach the target from the shortest path tree we discovered so far
         EdgeIterator inIter = origInEdgeExplorer.setBaseNode(targetNode);
         while (inIter.next()) {
+            if (!inFilter.accept(inIter)) {
+                continue;
+            }
             final int incEdge = inIter.getOrigEdgeLast();
             final int edgeKey = getEdgeKey(incEdge, targetNode);
             if (EdgeIterator.Edge.isValid(edges[edgeKey])) {
@@ -223,6 +231,9 @@ public class EdgeBasedWitnessPathSearcher {
             PrepareCHEdgeIterator iter = outEdgeExplorer.setBaseNode(fromNode);
             while (iter.next()) {
                 if (isContracted(iter.getAdjNode())) {
+                    continue;
+                }
+                if (!iter.isAccepted(outFilter)) {
                     continue;
                 }
                 double edgeWeight = iter.getWeight(false) + calcTurnWeight(incEdges[currKey], iter.getBaseNode(), iter.getOrigEdgeFirst());
@@ -325,6 +336,9 @@ public class EdgeBasedWitnessPathSearcher {
         PrepareCHEdgeIterator outIter = outEdgeExplorer.setBaseNode(sourceNode);
         while (outIter.next()) {
             if (isContracted(outIter.getAdjNode())) {
+                continue;
+            }
+            if (!outIter.isAccepted(outFilter)) {
                 continue;
             }
             double turnWeight = calcTurnWeight(sourceEdge, sourceNode, outIter.getOrigEdgeFirst());
