@@ -1,3 +1,13 @@
+1.0
+    removed GenericWeighting and DataFlagEncoder as a normal CarFlagEncoder does the job too
+    add required EncodedValues like road_class to EncodingManager if not added from user
+    removed PathNative,PathBidirRef,Path4CH,EdgeBasedPathCH and moved path extraction code out of Path class, added PathExtractor,BidirPathExtractor(+subclasses for CH) instead, #1730
+    conditional turn restrictions now supported, #1683
+    added new `curbside` feature, #1697
+    moved QueryGraph to new routing.querygraph package
+    removed GraphExtension, #1783, renamed TurnCostExtension to TurnCostStorage
+    removed `heading`, `pass_through` and `ch.force_heading` parameters for speed mode/CH, #1763
+
 0.13
     removed docker compose file
     PathDetails return null instead of -1 for Infinity by default

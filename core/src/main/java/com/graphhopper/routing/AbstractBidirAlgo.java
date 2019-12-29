@@ -40,7 +40,7 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  * @author Peter Karich
  * @author easbar
  */
-public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
+public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm implements BidirRoutingAlgorithm {
     protected int from;
     protected int to;
     protected int fromOutEdge;
@@ -50,7 +50,9 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     protected IntObjectMap<SPTEntry> bestWeightMapOther;
     protected SPTEntry currFrom;
     protected SPTEntry currTo;
-    protected PathBidirRef bestPath;
+    protected SPTEntry bestFwdEntry;
+    protected SPTEntry bestBwdEntry;
+    protected double bestWeight;
     PriorityQueue<SPTEntry> pqOpenSetFrom;
     PriorityQueue<SPTEntry> pqOpenSetTo;
     private boolean updateBestPath = true;
@@ -63,6 +65,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         super(graph, weighting, tMode);
         fromOutEdge = ANY_EDGE;
         toInEdge = ANY_EDGE;
+        bestWeight = Double.MAX_VALUE;
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
         initCollections(size);
     }
@@ -99,15 +102,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         return calcPath(from, to, ANY_EDGE, ANY_EDGE);
     }
 
-    /**
-     * like {@link #calcPath(int, int)}, but this method also allows to strictly restrict the edge the
-     * path will begin with and the edge it will end with.
-     *
-     * @param fromOutEdge the edge id of the first edge of the path. using {@link EdgeIterator#ANY_EDGE} means
-     *                    not enforcing the first edge of the path
-     * @param toInEdge    the edge id of the last edge of the path. using {@link EdgeIterator#ANY_EDGE} means
-     *                    not enforcing the last edge of the path
-     */
+    @Override
     public Path calcPath(int from, int to, int fromOutEdge, int toInEdge) {
         if ((fromOutEdge != ANY_EDGE || toInEdge != ANY_EDGE) && !traversalMode.isEdgeBased()) {
             throw new IllegalArgumentException("Restricting the start/target edges is only possible for edge-based graph traversal");
@@ -115,15 +110,13 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         this.fromOutEdge = fromOutEdge;
         this.toInEdge = toInEdge;
         checkAlreadyRun();
-        createAndInitPath();
         init(from, 0, to, 0);
         runAlgo();
         return extractPath();
     }
 
-    protected Path createAndInitPath() {
-        bestPath = new PathBidirRef(graph, weighting);
-        return bestPath;
+    protected BidirPathExtractor createPathExtractor(Graph graph, Weighting weighting) {
+        return new BidirPathExtractor(graph, weighting);
     }
 
     void init(int from, double fromWeight, int to, double toWeight) {
@@ -162,9 +155,9 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
             if (currFrom.weight != 0 || currTo.weight != 0) {
                 throw new IllegalStateException("If from=to, the starting weight must be zero for from and to");
             }
-            bestPath.sptEntry = currFrom;
-            bestPath.edgeTo = currTo;
-            bestPath.setWeight(0);
+            bestFwdEntry = currFrom;
+            bestBwdEntry = currTo;
+            bestWeight = 0;
             finishedFrom = true;
             finishedTo = true;
             return;
@@ -244,7 +237,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         if (finishedFrom || finishedTo)
             return true;
 
-        return currFrom.weight + currTo.weight >= bestPath.getWeight();
+        return currFrom.weight + currTo.weight >= bestWeight;
     }
 
     boolean fillEdgesFrom() {
@@ -327,11 +320,10 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
             weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
         }
 
-        if (weight < bestPath.getWeight()) {
-            bestPath.setSwitchToFrom(reverse);
-            bestPath.setSPTEntry(entry);
-            bestPath.setSPTEntryTo(entryOther);
-            bestPath.setWeight(weight);
+        if (weight < bestWeight) {
+            bestFwdEntry = reverse ? entryOther : entry;
+            bestBwdEntry = reverse ? entry : entryOther;
+            bestWeight = weight;
         }
     }
 
@@ -364,9 +356,9 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     @Override
     protected Path extractPath() {
         if (finished())
-            return bestPath.extract();
+            return createPathExtractor(graph, weighting).extract(bestFwdEntry, bestBwdEntry, bestWeight);
 
-        return bestPath;
+        return createEmptyPath();
     }
 
     protected boolean fromEntryCanBeSkipped() {
@@ -407,10 +399,6 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
 
     protected void setUpdateBestPath(boolean b) {
         updateBestPath = b;
-    }
-
-    void setBestPath(PathBidirRef bestPath) {
-        this.bestPath = bestPath;
     }
 
     @Override

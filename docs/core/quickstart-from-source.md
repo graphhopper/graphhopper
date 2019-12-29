@@ -5,8 +5,7 @@
 ## Try out
 
 For a start which requires only the JRE have a look [here](../web/quickstart.md). 
-Windows user can find a quick guide [here](./windows-setup.md).
-People with IDE knowledge can directly jump to [Start Development](#start-development).
+Windows users will need Cygwin - find more details [here](./windows-setup.md).
 
 To proceed install `git` and `openjdk8` or `openjdk11`. Get the a jdk from your package manager, 
 [AdoptOpenJDK](https://adoptopenjdk.net/) or [Red Hat](https://github.com/ojdkbuild/ojdkbuild/releases).
@@ -15,7 +14,7 @@ Then do:
 
 ```bash
 git clone git://github.com/graphhopper/graphhopper.git
-cd graphhopper; git checkout master
+cd graphhopper; git checkout 0.13
 # fetches main.js, can be omitted if no UI is needed
 cd web/src/main/resources/ && ZFILE=/tmp/gh.jar && wget -O $ZFILE "https://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.graphhopper&a=graphhopper-web&v=LATEST" && unzip $ZFILE assets/js/main.js && rm $ZFILE && cd ../../../..
 ./graphhopper.sh -a web -i europe_germany_berlin.pbf
@@ -48,7 +47,9 @@ before running `graphhopper.sh`.
 
 ## Start Development
 
-Open the project in your IDE, first class IDEs are NetBeans and IntelliJ where no further setup is required.
+First you need to run the commands given in section [Try out](#try-out), if you have not done so yet.
+
+Then open the project in your IDE, first class IDEs are NetBeans and IntelliJ where no further setup is required.
 
 ### Running & Debbuging with IntelliJ
 

@@ -18,11 +18,16 @@
 package com.graphhopper.util;
 
 import com.graphhopper.PathWrapper;
+import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.details.PathDetailsFromEdges;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 
 import java.util.ArrayList;
@@ -44,13 +49,21 @@ import java.util.List;
  */
 public class PathMerger {
     private static final DouglasPeucker DP = new DouglasPeucker();
+    private final Graph graph;
+    private final Weighting weighting;
+
     private boolean enableInstructions = true;
     private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
     private PathDetailsBuilderFactory pathBuilderFactory;
-    private List<String> requestedPathDetails = Collections.EMPTY_LIST;
+    private List<String> requestedPathDetails = Collections.emptyList();
     private double favoredHeading = Double.NaN;
+
+    public PathMerger(Graph graph, Weighting weighting) {
+        this.graph = graph;
+        this.weighting = weighting;
+    }
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
@@ -78,7 +91,7 @@ public class PathMerger {
         return this;
     }
 
-    public void doWork(PathWrapper altRsp, List<Path> paths, EncodingManager encodingManager, Translation tr) {
+    public void doWork(PathWrapper altRsp, List<Path> paths, EncodedValueLookup evLookup, Translation tr) {
         int origPoints = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
@@ -88,7 +101,6 @@ public class PathMerger {
         InstructionList fullInstructions = new InstructionList(tr);
         PointList fullPoints = PointList.EMPTY;
         List<String> description = new ArrayList<>();
-        BooleanEncodedValue roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
             Path path = paths.get(pathIndex);
             if (!path.isFound()) {
@@ -100,12 +112,12 @@ public class PathMerger {
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = path.calcInstructions(roundaboutEnc, tr);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);
 
-                    // for all paths except the last replace the FinishInstruction with a ViaInstructionn
+                    // for all paths except the last replace the FinishInstruction with a ViaInstruction
                     if (pathIndex + 1 < paths.size()) {
                         ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
                         newInstr.setViaCount(pathIndex + 1);
@@ -125,7 +137,7 @@ public class PathMerger {
                 }
 
                 fullPoints.add(tmpPoints);
-                altRsp.addPathDetails(path.calcDetails(requestedPathDetails, pathBuilderFactory, origPoints));
+                altRsp.addPathDetails(PathDetailsFromEdges.calcDetails(path, evLookup, weighting, requestedPathDetails, pathBuilderFactory, origPoints));
                 origPoints = fullPoints.size();
             }
 
@@ -155,8 +167,7 @@ public class PathMerger {
                 setTime(fullTimeInMillis);
 
         if (allFound && simplifyResponse && (calcPoints || enableInstructions)) {
-            PathSimplification ps = new PathSimplification(altRsp, douglasPeucker, enableInstructions);
-            ps.simplify();
+            PathSimplification.simplify(altRsp, douglasPeucker, enableInstructions);
         }
     }
 

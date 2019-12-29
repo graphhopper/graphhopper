@@ -110,7 +110,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     }
 
     protected Path createEmptyPath() {
-        return new Path(graph, weighting);
+        return new Path(graph);
     }
 
     @Override

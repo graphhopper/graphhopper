@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
-import com.graphhopper.routing.ch.Path4CH;
 import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -50,10 +49,10 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
     List<AlternativeInfo> calcAlternatives(final int s, final int t) {
         // First, do a regular bidirectional route search
-        createAndInitPath();
+        checkAlreadyRun();
         init(s, 0, t, 0);
         runAlgo();
-        extractPath();
+        Path bestPath = extractPath();
         if (!bestPath.isFound()) {
             return Collections.emptyList();
         }
@@ -82,7 +81,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
                 // We still use this preliminary path to filter for shared path length with other alternatives,
                 // so we don't have to work so much.
-                Path preliminaryRoute = new Path4CH(graph, graph.getBaseGraph(), weighting).setSPTEntryTo(toSPTEntry).setSPTEntry(fromSPTEntry).extract();
+                Path preliminaryRoute = createPathExtractor(graph, weighting).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
                 IntIndexedContainer preliminaryRouteNodes = preliminaryRoute.calcNodes();
                 double preliminaryShare = calculateShare(preliminaryRoute, preliminaryRouteNodes.indexOf(v));
                 if (preliminaryShare > maxShareFactor) {
@@ -99,9 +98,8 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 vtRouter.setEdgeFilter(additionalEdgeFilter);
                 final Path vtPath = vtRouter.calcPath(v, t);
                 final IntIndexedContainer vtNodes = vtPath.calcNodes();
-                Path path = new Path(graph.getBaseGraph(), weighting) {
-                    @Override
-                    public Path extract() {
+                Path path = new Path(graph.getBaseGraph()) {
+                    Path extract() {
                         setFromNode(svNodes.get(0));
                         for (EdgeIteratorState edge : svPath.calcEdges()) {
                             addEdge(edge.getEdge());
@@ -211,9 +209,8 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
     @Override
     public List<Path> calcPaths(int from, int to) {
         List<AlternativeInfo> alts = calcAlternatives(from, to);
-        // If no path was found, return the list of the path that was not found. (Ew.)
         if (alts.isEmpty()) {
-            return Collections.singletonList((Path) bestPath);
+            return Collections.singletonList(createEmptyPath());
         }
         List<Path> paths = new ArrayList<>(alts.size());
         for (AlternativeInfo a : alts) {

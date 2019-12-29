@@ -2,6 +2,7 @@ package com.graphhopper.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.GHRequest;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
@@ -18,6 +19,8 @@ public class GHMRequest extends GHRequest {
     private List<GHPoint> toPoints;
     private List<String> fromPointHints;
     private List<String> toPointHints;
+    private List<String> fromCurbsides;
+    private List<String> toCurbsides;
     private int called = 0;
     boolean identicalLists = true;
     private final Set<String> outArrays = new HashSet<>(5);
@@ -33,6 +36,8 @@ public class GHMRequest extends GHRequest {
         toPoints = new ArrayList<>(size);
         fromPointHints = new ArrayList<>(size);
         toPointHints = new ArrayList<>(size);
+        fromCurbsides = new ArrayList<>(size);
+        toCurbsides = new ArrayList<>(size);
     }
 
     /**
@@ -56,19 +61,6 @@ public class GHMRequest extends GHRequest {
         return this;
     }
 
-    @Override
-    public List<GHPoint> getPoints() {
-        throw new IllegalStateException("use getFromPoints or getToPoints");
-    }
-
-    public List<GHPoint> getFromPoints() {
-        return fromPoints;
-    }
-
-    public List<GHPoint> getToPoints() {
-        return toPoints;
-    }
-
     /**
      * This methods adds the coordinate as 'from' and 'to' to the request.
      */
@@ -77,6 +69,11 @@ public class GHMRequest extends GHRequest {
         fromPoints.add(point);
         toPoints.add(point);
         return this;
+    }
+
+    @Override
+    public List<GHPoint> getPoints() {
+        throw new IllegalStateException("use getFromPoints or getToPoints");
     }
 
     public GHMRequest addFromPoint(GHPoint point) {
@@ -91,18 +88,8 @@ public class GHMRequest extends GHRequest {
         return this;
     }
 
-    public GHRequest addFromPointHint(String pointHint) {
-        this.fromPointHints.add(pointHint);
-        return this;
-    }
-
-    public GHRequest setFromPointHints(List<String> pointHints) {
-        this.fromPointHints = pointHints;
-        return this;
-    }
-
-    public List<String> getFromPointHints() {
-        return fromPointHints;
+    public List<GHPoint> getFromPoints() {
+        return fromPoints;
     }
 
     public GHMRequest addToPoint(GHPoint point) {
@@ -117,24 +104,14 @@ public class GHMRequest extends GHRequest {
         return this;
     }
 
-    public GHRequest addToPointHint(String pointHint) {
-        this.toPointHints.add(pointHint);
-        return this;
-    }
-
-    public GHRequest setToPointHints(List<String> pointHints) {
-        this.toPointHints = pointHints;
-        return this;
-    }
-
-    public List<String> getToPointHints() {
-        return toPointHints;
+    public List<GHPoint> getToPoints() {
+        return toPoints;
     }
 
     @Override
     public GHRequest setPointHints(List<String> pointHints) {
-        this.fromPointHints = pointHints;
-        this.toPointHints = pointHints;
+        setToPointHints(pointHints);
+        this.fromPointHints = this.toPointHints;
         return this;
     }
 
@@ -147,6 +124,82 @@ public class GHMRequest extends GHRequest {
     public boolean hasPointHints() {
         return this.fromPointHints.size() == this.fromPoints.size() && !fromPoints.isEmpty() &&
                 this.toPointHints.size() == this.toPoints.size() && !toPoints.isEmpty();
+    }
+
+    public GHRequest addFromPointHint(String pointHint) {
+        this.fromPointHints.add(pointHint);
+        return this;
+    }
+
+    public GHRequest setFromPointHints(List<String> pointHints) {
+        // create new array as we modify pointHints in compactPointHints
+        this.fromPointHints = new ArrayList<>(pointHints);
+        return this;
+    }
+
+    public List<String> getFromPointHints() {
+        return fromPointHints;
+    }
+
+    public GHRequest addToPointHint(String pointHint) {
+        this.toPointHints.add(pointHint);
+        return this;
+    }
+
+    public GHRequest setToPointHints(List<String> pointHints) {
+        // create new array as we modify pointHints in compactPointHints
+        this.toPointHints = new ArrayList<>(pointHints);
+        return this;
+    }
+
+    public List<String> getToPointHints() {
+        return toPointHints;
+    }
+
+    public GHMRequest addFromCurbside(String curbside) {
+        fromCurbsides.add(curbside);
+        return this;
+    }
+
+    public GHMRequest setFromCurbsides(List<String> curbsides) {
+        fromCurbsides = curbsides;
+        return this;
+    }
+
+    public List<String> getFromCurbsides() {
+        return fromCurbsides;
+    }
+
+    public GHMRequest addToCurbside(String curbside) {
+        toCurbsides.add(curbside);
+        return this;
+    }
+
+    public GHMRequest setToCurbsides(List<String> curbsides) {
+        toCurbsides = curbsides;
+        return this;
+    }
+
+    public List<String> getToCurbsides() {
+        return toCurbsides;
+    }
+
+    @Override
+    public GHRequest setCurbsides(List<String> curbsides) {
+        fromCurbsides = curbsides;
+        toCurbsides = curbsides;
+        return this;
+    }
+
+    @Override
+    public List<String> getCurbsides() {
+        throw new IllegalStateException("Use getFromCurbsides or getToCurbsides");
+    }
+
+    @Override
+    public boolean hasCurbsides() {
+        return fromCurbsides.size() == fromPoints.size() && !fromPoints.isEmpty() &&
+                toCurbsides.size() == toPoints.size() && !toPoints.isEmpty();
     }
 
     /**
@@ -171,7 +224,7 @@ public class GHMRequest extends GHRequest {
         called++;
         boolean clear = true;
         for (String hint : toPointHints) {
-            if (!hint.isEmpty()) {
+            if (!Helper.isEmpty(hint)) {
                 clear = false;
                 break;
             }
@@ -181,7 +234,7 @@ public class GHMRequest extends GHRequest {
 
         clear = true;
         for (String hint : fromPointHints) {
-            if (!hint.isEmpty()) {
+            if (!Helper.isEmpty(hint)) {
                 clear = false;
                 break;
             }

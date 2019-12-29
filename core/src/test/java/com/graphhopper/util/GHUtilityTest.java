@@ -19,6 +19,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -67,11 +68,25 @@ public class GHUtilityTest {
         return g;
     }
 
+    double getLengthOfAllEdges(Graph graph) {
+        double distance = 0;
+        DistanceCalc calc = new DistanceCalc2D();
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            // This is meant to verify that all of the same edges (including tower nodes)
+            // are included in the copied graph. Can not use iter.getDistance() since it
+            // does not verify new geometry. See #1732
+            distance += iter.fetchWayGeometry(3).calcDistance(calc);
+        }
+        return distance;
+    }
+
     @Test
     public void testSort() {
         Graph g = initUnsorted(createGraph());
         Graph newG = GHUtility.sortDFS(g, createGraph());
         assertEquals(g.getNodes(), newG.getNodes());
+        assertEquals(g.getEdges(), newG.getEdges());
         NodeAccess na = newG.getNodeAccess();
         assertEquals(0, na.getLatitude(0), 1e-4); // 0
         assertEquals(2.5, na.getLatitude(1), 1e-4); // 1
@@ -80,18 +95,19 @@ public class GHUtilityTest {
         assertEquals(3.0, na.getLatitude(4), 1e-4); // 3
         assertEquals(5.0, na.getLatitude(5), 1e-4); // 7
         assertEquals(4.2, na.getLatitude(6), 1e-4); // 5
-    }
+        assertEquals(getLengthOfAllEdges(g), getLengthOfAllEdges(newG), 1e-4);
 
-    @Test
-    public void testSort2() {
-        Graph g = initUnsorted(createGraph());
-        Graph newG = GHUtility.sortDFS(g, createGraph());
-        assertEquals(g.getNodes(), newG.getNodes());
-        NodeAccess na = newG.getNodeAccess();
-        assertEquals(0, na.getLatitude(0), 1e-4); // 0
-        assertEquals(2.5, na.getLatitude(1), 1e-4); // 1
-        assertEquals(4.5, na.getLatitude(2), 1e-4); // 2
-        assertEquals(4.6, na.getLatitude(3), 1e-4); // 8        
+        // 0 => 1
+        assertEquals(0, newG.getEdgeIteratorState(0, Integer.MIN_VALUE).getAdjNode());
+        assertEquals(1, newG.getEdgeIteratorState(0, Integer.MIN_VALUE).getBaseNode());
+
+        // 1 => 3 (was 8)
+        assertEquals(1, newG.getEdgeIteratorState(1, Integer.MIN_VALUE).getAdjNode());
+        assertEquals(3, newG.getEdgeIteratorState(1, Integer.MIN_VALUE).getBaseNode());
+
+        // 2 => 1
+        assertEquals(2, newG.getEdgeIteratorState(2, Integer.MIN_VALUE).getAdjNode());
+        assertEquals(1, newG.getEdgeIteratorState(2, Integer.MIN_VALUE).getBaseNode());
     }
 
     @Test
@@ -111,10 +127,10 @@ public class GHUtilityTest {
         Graph g = initUnsorted(createGraph());
         g.edge(0, 0, 11, true);
 
-        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(CHProfile.nodeBased(new FastestWeighting(carEncoder)));
-        GHUtility.copyTo(g, lg);
+        Graph g2 = new GraphBuilder(encodingManager).create();
+        GHUtility.copyTo(g, g2);
 
-        assertEquals(g.getAllEdges().length(), lg.getEdges());
+        assertEquals(g.getEdges(), g2.getEdges());
     }
 
     @Test
@@ -124,15 +140,13 @@ public class GHUtilityTest {
         edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
 
         GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(new FastestWeighting(carEncoder))).create();
-        CHGraph lg = newStore.getCHGraph();
+        Graph lg = new GraphBuilder(encodingManager).create();
         GHUtility.copyTo(g, lg);
         newStore.freeze();
 
         edgeState = GHUtility.getEdge(lg, 5, 6);
         assertEquals(Helper.createPointList(-1, 3, 12, 10), edgeState.fetchWayGeometry(0));
 
-        assertEquals(0, lg.getLevel(0));
-        assertEquals(0, lg.getLevel(1));
         NodeAccess na = lg.getNodeAccess();
         assertEquals(0, na.getLatitude(0), 1e-6);
         assertEquals(1, na.getLongitude(0), 1e-6);

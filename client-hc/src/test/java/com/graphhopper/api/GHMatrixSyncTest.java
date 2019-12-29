@@ -23,11 +23,6 @@ public class GHMatrixSyncTest extends AbstractGHMatrixWebTester {
 
             @Override
             protected String postJson(String url, JsonNode data) throws IOException {
-                return "{\"job_id\": \"1\"}";
-            }
-
-            @Override
-            protected String getJson(String url) throws IOException {
                 return finalJsonStr;
             }
         });

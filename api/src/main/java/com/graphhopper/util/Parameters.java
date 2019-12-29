@@ -92,6 +92,7 @@ public class Parameters {
      */
     public static final class Routing {
         public static final String EDGE_BASED = "edge_based";
+        public static final String TURN_COSTS = "turn_costs";
         public static final String U_TURN_COSTS = "u_turn_costs";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = ROUTING_INIT_PREFIX + "max_visited_nodes";
@@ -115,6 +116,8 @@ public class Parameters {
          */
         public static final String PASS_THROUGH = "pass_through";
         public static final String POINT_HINT = "point_hint";
+        public static final String CURBSIDE = "curbside";
+        public static final String FORCE_CURBSIDE = "force_curbside";
         public static final String SNAP_PREVENTION = "snap_prevention";
         /**
          * default heading penalty in seconds
@@ -126,6 +129,15 @@ public class Parameters {
          * a rectangle lat1,lon1,lat2,lon2
          */
         public static final String BLOCK_AREA = "block_area";
+    }
+
+    /**
+     * Possible values of {@link Parameters.Routing#CURBSIDE}
+     */
+    public static final class Curbsides {
+        public static final String CURBSIDE_LEFT = "left";
+        public static final String CURBSIDE_RIGHT = "right";
+        public static final String CURBSIDE_ANY = "any";
     }
 
     /**
@@ -141,11 +153,6 @@ public class Parameters {
          * This property name configures at start if the DISABLE parameter can have an effect.
          */
         public static final String INIT_DISABLING_ALLOWED = ROUTING_INIT_PREFIX + "ch.disabling_allowed";
-        /**
-         * The property name in HintsMap if heading should be used for CH regardless of the possible
-         * routing errors.
-         */
-        public static final String FORCE_HEADING = "ch.force_heading";
     }
 
     /**
@@ -199,17 +206,8 @@ public class Parameters {
         public static final String STREET_NAME = "street_name";
         public static final String EDGE_ID = "edge_id";
         public static final String TIME = "time";
+        public static final String WEIGHT = "weight";
         public static final String DISTANCE = "distance";
     }
 
-    public static final class PT {
-        public static final String EARLIEST_DEPARTURE_TIME = "pt.earliest_departure_time";
-        public static final String PROFILE_QUERY = "pt.profile";
-        public static final String ARRIVE_BY = "pt.arrive_by";
-        public static final String IGNORE_TRANSFERS = "pt.ignore_transfers";
-        public static final String WALK_SPEED = "pt.walk_speed";
-        public static final String MAX_WALK_DISTANCE_PER_LEG = "pt.max_walk_distance_per_leg";
-        public static final String LIMIT_SOLUTIONS = "pt.limit_solutions";
-        public static final String BLOCKED_ROUTE_TYPES = "pt.blocked_route_types";
-    }
 }

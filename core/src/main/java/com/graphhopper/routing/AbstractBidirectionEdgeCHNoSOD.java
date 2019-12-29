@@ -18,11 +18,12 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHEntry;
-import com.graphhopper.routing.ch.EdgeBasedPathCH;
+import com.graphhopper.routing.ch.EdgeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
@@ -43,11 +44,11 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     public AbstractBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
         super(graph, weighting, TraversalMode.EDGE_BASED);
         this.turnWeighting = weighting;
+        // the inner explorers will run on the base- (or query/base-)graph edges only
+        Graph baseGraph = graph.getBaseGraph();
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
-        // important: we have to use different filter ids, otherwise this will not work with QueryGraph's edge explorer
-        // cache, see #1623.
-        innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder).setFilterId(1));
-        innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder).setFilterId(1));
+        innerInExplorer = baseGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
+        innerOutExplorer = baseGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
     }
 
     @Override
@@ -65,7 +66,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
                 }
             });
         }
-        finishedFrom = bestPath.isFound();
     }
 
     @Override
@@ -80,7 +80,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
                 }
             });
         }
-        finishedTo = bestPath.isFound();
     }
 
     @Override
@@ -95,7 +94,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
             return true;
 
         // changed also the final finish condition for CH
-        return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
+        return currFrom.weight >= bestWeight && currTo.weight >= bestWeight;
     }
 
     @Override
@@ -107,16 +106,14 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         int oppositeEdge = reverse ? fromOutEdge : toInEdge;
         boolean oppositeEdgeRestricted = reverse ? (fromOutEdge != ANY_EDGE) : (toInEdge != ANY_EDGE);
         if (edgeState.getAdjNode() == oppositeNode && (!oppositeEdgeRestricted || getOrigEdgeId(edgeState, reverse) == oppositeEdge)) {
-            if (entry.getWeightOfVisitedPath() < bestPath.getWeight()) {
-                bestPath.setSwitchToFrom(reverse);
-                bestPath.setSPTEntry(entry);
-                bestPath.setSPTEntryTo(new CHEntry(oppositeNode, 0));
-                bestPath.setWeight(entry.getWeightOfVisitedPath());
+            if (entry.getWeightOfVisitedPath() < bestWeight) {
+                bestFwdEntry = reverse ? new CHEntry(oppositeNode, 0) : entry;
+                bestBwdEntry = reverse ? entry : new CHEntry(oppositeNode, 0);
+                bestWeight = entry.getWeightOfVisitedPath();
                 return;
             }
         }
 
-        // todo: it would be sufficient (and maybe more efficient) to use an original edge explorer here ?
         EdgeIterator iter = reverse ?
                 innerInExplorer.setBaseNode(edgeState.getAdjNode()) :
                 innerOutExplorer.setBaseNode(edgeState.getAdjNode());
@@ -126,7 +123,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         while (iter.next()) {
             final int edgeId = getOrigEdgeId(iter, !reverse);
             final int prevOrNextOrigEdgeId = getOrigEdgeId(edgeState, reverse);
-            int key = GHUtility.getEdgeKey(graph, edgeId, iter.getBaseNode(), !reverse);
+            int key = GHUtility.createEdgeKey(graph.getOtherNode(edgeId, iter.getBaseNode()), iter.getBaseNode(), edgeId, !reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {
                 continue;
@@ -137,19 +134,17 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
                     turnWeighting.calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), edgeId);
 
             double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath() + turnCostsAtBridgeNode;
-            if (newWeight < bestPath.getWeight()) {
-                bestPath.setSwitchToFrom(reverse);
-                bestPath.setSPTEntry(entry);
-                bestPath.setSPTEntryTo(entryOther);
-                bestPath.setWeight(newWeight);
+            if (newWeight < bestWeight) {
+                bestFwdEntry = reverse ? entryOther : entry;
+                bestBwdEntry = reverse ? entry : entryOther;
+                bestWeight = newWeight;
             }
         }
     }
 
     @Override
-    protected Path createAndInitPath() {
-        bestPath = new EdgeBasedPathCH(graph, graph.getBaseGraph(), weighting);
-        return bestPath;
+    protected BidirPathExtractor createPathExtractor(Graph graph, Weighting weighting) {
+        return new EdgeBasedCHBidirPathExtractor(graph, graph.getBaseGraph(), weighting);
     }
 
     @Override

@@ -27,6 +27,9 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.List;
 
+/**
+ * This parser stores the spatialId in the edgeFlags based on previously defined areas.
+ */
 public class SpatialRuleParser implements TagParser {
 
     private final IntEncodedValue spatialRuleEnc;
@@ -49,7 +52,7 @@ public class SpatialRuleParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
         GHPoint estimatedCenter = way.getTag("estimated_center", null);
         if (estimatedCenter != null) {
             SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);

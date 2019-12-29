@@ -149,12 +149,12 @@ public class GHGeocodingEntry {
         this.street = street;
     }
 
-    @JsonProperty("house_number")
+    @JsonProperty("housenumber")
     public String getHouseNumber() {
         return houseNumber;
     }
 
-    @JsonProperty("house_number")
+    @JsonProperty("housenumber")
     public void setHouseNumber(String houseNumber) {
         this.houseNumber = houseNumber;
     }

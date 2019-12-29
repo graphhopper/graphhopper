@@ -23,14 +23,16 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
 import java.util.Arrays;
 
 /**
- * A simple dijkstra tuned to perform one to many queries more efficient than Dijkstra. Old data
- * structures are cached between requests and potentially reused. Useful for CH preparation.
+ * A simple dijkstra tuned to perform multiple one to many queries with the same source and different target nodes
+ * more efficiently than {@link Dijkstra}. Old data structures are cached between requests and potentially reused and
+ * the shortest path tree is stored in (large as the graph) arrays instead of hash maps.
  * <p>
  *
  * @author Peter Karich
@@ -75,15 +77,32 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
     @Override
     public Path extractPath() {
-        PathNative p = new PathNative(graph, weighting, parents, edgeIds);
-        if (endNode >= 0)
-            p.setWeight(weights[endNode]);
-        p.setFromNode(fromNode);
-        // return 'not found' if invalid endNode or limit reached
-        if (endNode < 0 || isWeightLimitExceeded())
-            return p;
+        if (endNode < 0 || isWeightLimitExceeded()) {
+            Path path = createEmptyPath();
+            path.setFromNode(fromNode);
+            path.setEndNode(endNode);
+            return path;
+        }
 
-        return p.setEndNode(endNode).extract();
+        Path path = new Path(graph);
+        int node = endNode;
+        while (true) {
+            int edge = edgeIds[node];
+            if (!EdgeIterator.Edge.isValid(edge)) {
+                break;
+            }
+            EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, node);
+            path.addDistance(edgeState.getDistance());
+            path.addTime(weighting.calcMillis(edgeState, false, EdgeIterator.NO_EDGE));
+            path.addEdge(edge);
+            node = parents[node];
+        }
+        path.reverseEdges();
+        path.setFromNode(fromNode);
+        path.setEndNode(endNode);
+        path.setFound(true);
+        path.setWeight(weights[endNode]);
+        return path;
     }
 
     /**

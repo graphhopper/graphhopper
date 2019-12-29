@@ -19,17 +19,25 @@
 package com.graphhopper.http;
 
 import com.graphhopper.http.api.JsonErrorEntity;
+import com.graphhopper.util.Helper;
 import io.dropwizard.jersey.validation.ConstraintMessage;
 import io.dropwizard.jersey.validation.JerseyViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
 import java.util.stream.Collectors;
 
+@Provider
 public class GHJerseyViolationExceptionMapper implements ExceptionMapper<JerseyViolationException> {
+    private static final Logger logger = LoggerFactory.getLogger(GHJerseyViolationExceptionMapper.class);
+
     @Override
     public Response toResponse(final JerseyViolationException e) {
+        logger.info("jersey violation exception: " + (Helper.isEmpty(e.getMessage()) ? "unknown reason" : e.getMessage()));
         return Response
                 .status(ConstraintMessage.determineStatus(e.getConstraintViolations(), e.getInvocable()))
                 .type(MediaType.APPLICATION_JSON)

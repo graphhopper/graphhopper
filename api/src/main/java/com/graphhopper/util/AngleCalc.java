@@ -23,7 +23,7 @@ import static java.lang.Math.toRadians;
 /**
  * Calculates the angle of a turn, defined by three points. The fast atan2 method is from Jim Shima,
  * 1999, http://www.dspguru.com/dsp/tricks/fixed-point-atan2-with-self-normalization
- * <p>
+ * and stands under public domain.
  *
  * @author Johannes Pelzer
  * @author Peter Karich
@@ -33,7 +33,7 @@ public class AngleCalc {
     private final static double PI_2 = Math.PI / 2.0;
     private final static double PI3_4 = 3.0 * Math.PI / 4.0;
 
-    static final double atan2(double y, double x) {
+    static double atan2(double y, double x) {
         // kludge to prevent 0/0 condition
         double absY = Math.abs(y) + 1e-10;
         double r, angle;
@@ -142,6 +142,19 @@ public class AngleCalc {
             cp = "N";
         }
         return cp;
+    }
+
+    /**
+     * @return true if the given vectors follow a clockwise order abc, bca or cab,
+     * false if the order is counter-clockwise cba, acb or bac, e.g. this returns true:
+     * a   b
+     * | /
+     * 0 - c
+     */
+    public boolean isClockwise(double aX, double aY, double bX, double bY, double cX, double cY) {
+        // simply compare angles between a,b and b,c
+        final double angleDiff = (cX - aX) * (bY - aY) - (cY - aY) * (bX - aX);
+        return angleDiff < 0;
     }
 
 }

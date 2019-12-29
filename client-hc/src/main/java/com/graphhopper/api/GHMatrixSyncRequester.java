@@ -2,12 +2,11 @@ package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.jackson.PathWrapperDeserializer;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -17,116 +16,50 @@ import java.util.concurrent.TimeUnit;
 public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
 
     public GHMatrixSyncRequester() {
-        super();
-        initIgnore();
+        this(MATRIX_URL);
+    }
+
+    public GHMatrixSyncRequester(String serviceUrl) {
+        this(serviceUrl, new OkHttpClient.Builder().
+                connectTimeout(5, TimeUnit.SECONDS).
+                readTimeout(5, TimeUnit.SECONDS).
+                addInterceptor(new GzipRequestInterceptor()). // gzip the request
+                build());
     }
 
     public GHMatrixSyncRequester(String serviceUrl, OkHttpClient client) {
         super(serviceUrl, client);
-        initIgnore();
-    }
-
-    public GHMatrixSyncRequester(String serviceUrl) {
-        super(serviceUrl, new OkHttpClient.Builder().
-                connectTimeout(15, TimeUnit.SECONDS).
-                readTimeout(15, TimeUnit.SECONDS).build());
-        initIgnore();
-    }
-
-    private void initIgnore() {
-        ignoreSet.add("vehicle");
-        ignoreSet.add("point");
-        ignoreSet.add("from_point");
-        ignoreSet.add("from_point_hint");
-        ignoreSet.add("to_point");
-        ignoreSet.add("to_point_hint");
-        ignoreSet.add("add_array");
     }
 
     @Override
     public MatrixResponse route(GHMRequest ghRequest) {
-        StringBuilder pointHintsStr = new StringBuilder();
-
-        String pointsStr;
-        if (ghRequest.identicalLists) {
-            pointsStr = createPointQuery(ghRequest.getFromPoints(), "point");
-
-            for (String hint : ghRequest.getFromPointHints()) {
-                if (pointHintsStr.length() > 0)
-                    pointHintsStr.append("&");
-                pointHintsStr.append("point_hint=").append(encode(hint));
-            }
-        } else {
-            pointsStr = createPointQuery(ghRequest.getFromPoints(), "from_point");
-            pointsStr += "&" + createPointQuery(ghRequest.getToPoints(), "to_point");
-
-            for (String hint : ghRequest.getFromPointHints()) {
-                if (pointHintsStr.length() > 0)
-                    pointHintsStr.append("&");
-                pointHintsStr.append("from_point_hint=").append(encode(hint));
-            }
-            for (String hint : ghRequest.getToPointHints()) {
-                if (pointHintsStr.length() > 0)
-                    pointHintsStr.append("&");
-                pointHintsStr.append("to_point_hint=").append(encode(hint));
-            }
-        }
-
-        String outArrayStr = "";
-        List<String> outArraysList = new ArrayList<>(ghRequest.getOutArrays());
-        if (outArraysList.isEmpty()) {
-            outArraysList.add("weights");
-        }
-
-        for (String type : outArraysList) {
-            if (!type.isEmpty()) {
-                outArrayStr += "&";
-            }
-
-            outArrayStr += "out_array=" + type;
-        }
-
-        String url = buildURL("", ghRequest);
-        url += "&" + pointsStr + "&" + pointHintsStr + "&" + outArrayStr;
-        if (!Helper.isEmpty(ghRequest.getVehicle())) {
-            url += "&vehicle=" + ghRequest.getVehicle();
-        }
-        url += "&fail_fast=" + ghRequest.getFailFast();
+        Collection<String> outArraysList = createOutArrayList(ghRequest);
+        JsonNode requestJson = createPostRequest(ghRequest, outArraysList);
 
         boolean withTimes = outArraysList.contains("times");
         boolean withDistances = outArraysList.contains("distances");
         boolean withWeights = outArraysList.contains("weights");
-        MatrixResponse matrixResponse = new MatrixResponse(
+        final MatrixResponse matrixResponse = new MatrixResponse(
                 ghRequest.getFromPoints().size(),
                 ghRequest.getToPoints().size(), withTimes, withDistances, withWeights);
 
         try {
-            String str = getJson(url);
-            JsonNode getResponseJson = objectMapper.reader().readTree(str);
-
-            matrixResponse.addErrors(PathWrapperDeserializer.readErrors(objectMapper, getResponseJson));
-            if (!matrixResponse.hasErrors()) {
-                matrixResponse.addErrors(readUsableEntityError(outArraysList, getResponseJson));
+            String postUrl = buildURLNoHints("/", ghRequest);
+            JsonNode responseJson = fromStringToJSON(postUrl, postJson(postUrl, requestJson));
+            if (responseJson.has("message")) {
+                matrixResponse.addErrors(PathWrapperDeserializer.readErrors(objectMapper, responseJson));
+                return matrixResponse;
             }
 
+            matrixResponse.addErrors(PathWrapperDeserializer.readErrors(objectMapper, responseJson));
             if (!matrixResponse.hasErrors())
-                fillResponseFromJson(matrixResponse, getResponseJson, ghRequest.getFailFast());
+                matrixResponse.addErrors(readUsableEntityError(outArraysList, responseJson));
 
+            if (!matrixResponse.hasErrors())
+                fillResponseFromJson(matrixResponse, responseJson, ghRequest.getFailFast());
+            return matrixResponse;
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
-
-        return matrixResponse;
-    }
-
-    private String createPointQuery(List<GHPoint> list, String pointName) {
-        StringBuilder pointsStr = new StringBuilder();
-        for (GHPoint p : list) {
-            if (pointsStr.length() > 0)
-                pointsStr.append("&");
-
-            pointsStr.append(pointName).append('=').append(encode(Helper.round6(p.lat) + "," + Helper.round6(p.lon)));
-        }
-        return pointsStr.toString();
     }
 }

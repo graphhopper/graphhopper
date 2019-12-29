@@ -1,14 +1,14 @@
 package com.graphhopper.routing.util.parsers;
 
-import static org.junit.Assert.assertEquals;
-
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import org.junit.Test;
 
-import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class OSMValueExtractorTest {
-    
-    private final double DELTA = 0.1;
+
+    private final double DELTA = 0.01;
 
     @Test
     public void stringToTons() {
@@ -20,15 +20,20 @@ public class OSMValueExtractorTest {
         assertEquals(1.5, OSMValueExtractor.stringToTons("3306.9 lbs"), DELTA);
         assertEquals(3, OSMValueExtractor.stringToTons("3 T"), DELTA);
         assertEquals(3, OSMValueExtractor.stringToTons("3ton"), DELTA);
+        assertEquals(10, OSMValueExtractor.stringToTons("10000 kg"), DELTA);
 
         // maximum gross weight
         assertEquals(6, OSMValueExtractor.stringToTons("6t mgw"), DELTA);
     }
 
-    @Test(expected = NumberFormatException.class)
-    public void stringToTonsException() {
-        // Unexpected values
-        OSMValueExtractor.stringToTons("weight limit 1.5t");
+    @Test
+    public void stringToTonsNaN() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToTons("weight limit 1.5t")));
+    }
+
+    @Test
+    public void stringToTonsNaN2() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToTons("")));
     }
 
     @Test
@@ -55,11 +60,22 @@ public class OSMValueExtractorTest {
 
         assertEquals(2.743, OSMValueExtractor.stringToMeter("9'"), DELTA);
         assertEquals(2.743, OSMValueExtractor.stringToMeter("9 feet"), DELTA);
+
+        assertEquals(1.5, OSMValueExtractor.stringToMeter("150 cm"), DELTA);
     }
 
-    @Test(expected = NumberFormatException.class)
-    public void stringToMeterException() {
-        // Unexpected values
-        OSMValueExtractor.stringToMeter("height limit 1.5m");
+    @Test
+    public void stringToMeterNaN() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToMeter("height limit 1.5m")));
+    }
+
+    @Test
+    public void stringToMeterNaN2() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToMeter("")));
+    }
+
+    @Test
+    public void stringToMeterNaN3() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToMeter("default")));
     }
 }

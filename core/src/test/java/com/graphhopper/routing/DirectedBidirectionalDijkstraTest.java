@@ -3,6 +3,9 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
@@ -12,7 +15,6 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -21,10 +23,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 /**
  * This test makes sure that {@link DijkstraBidirectionRef#calcPath(int from, int to, int fromOutEdge, int toInEdge)}, i.e.
@@ -34,14 +37,13 @@ import static org.junit.Assert.assertEquals;
  */
 public class DirectedBidirectionalDijkstraTest {
     private Directory dir;
-    private TurnCostExtension turnCostExtension;
+    private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private GraphHopperStorage graph;
     private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private Weighting weighting;
-    private LocationIndex locationIndex;
-    private QueryGraph queryGraph;
+    private DecimalEncodedValue turnCostEnc;
 
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
@@ -52,13 +54,14 @@ public class DirectedBidirectionalDijkstraTest {
         maxTurnCosts = 10;
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
-        turnCostExtension = new TurnCostExtension();
-        graph = new GraphHopperStorage(dir, encodingManager, false, turnCostExtension).create(1000);
+        graph = new GraphHopperStorage(dir, encodingManager, false, true).create(1000);
+        turnCostStorage = graph.getTurnCostStorage();
         weighting = createWeighting(Double.POSITIVE_INFINITY);
+        turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
     }
 
     private Weighting createWeighting(double defaultUTurnCosts) {
-        return new TurnWeighting(new FastestWeighting(encoder), turnCostExtension, defaultUTurnCosts);
+        return new TurnWeighting(new FastestWeighting(encoder), turnCostStorage, defaultUTurnCosts);
     }
 
     @Test
@@ -247,11 +250,11 @@ public class DirectedBidirectionalDijkstraTest {
         int leftNorth = graph.edge(9, 0, 1, true).getEdge();
 
         // make paths fully deterministic by applying some turn costs at junction node 2
-        addTurnCost(7, 2, 3, 1);
-        addTurnCost(7, 2, 6, 3);
-        addTurnCost(1, 2, 3, 5);
-        addTurnCost(1, 2, 6, 7);
-        addTurnCost(1, 2, 7, 9);
+        setTurnCost(7, 2, 3, 1);
+        setTurnCost(7, 2, 6, 3);
+        setTurnCost(1, 2, 3, 5);
+        setTurnCost(1, 2, 6, 7);
+        setTurnCost(1, 2, 7, 9);
 
         final double unitEdgeWeight = 0.06;
         assertPath(calcPath(9, 9, leftNorth, leftSouth),
@@ -322,7 +325,7 @@ public class DirectedBidirectionalDijkstraTest {
         graph.edge(5, 2, 1, true);
 
         addRestriction(0, 3, 4);
-        addTurnCost(4, 5, 2, 6);
+        setTurnCost(4, 5, 2, 6);
 
         // due to the restrictions we have to take the expensive path with turn costs
         assertPath(calcPath(0, 2, 0, 6), 6.24, 4, 6240, nodes(0, 1, 4, 5, 2));
@@ -392,7 +395,7 @@ public class DirectedBidirectionalDijkstraTest {
         Random rnd = new Random(seed);
         int numNodes = 100;
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostExtension);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 
         long numStrictViolations = 0;
         for (int i = 0; i < numQueries; i++) {
@@ -479,9 +482,12 @@ public class DirectedBidirectionalDijkstraTest {
         na.setNode(3, 0, 2);
         na.setNode(4, 0, 1);
         na.setNode(5, 0, 0);
-        initQueryGraph();
 
-        QueryResult qr = findClosest();
+        LocationIndex locationIndex = new LocationIndexTree(graph, dir);
+        locationIndex.prepareIndex();
+        QueryResult qr = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
+
         assertEquals("wanted to get EDGE", QueryResult.Position.EDGE, qr.getSnappedPosition());
         assertEquals(6, qr.getClosestNode());
 
@@ -498,18 +504,6 @@ public class DirectedBidirectionalDijkstraTest {
         assertEquals(5 + virtualEdge.getDistance(), path.getDistance(), 1.e-3);
     }
 
-    private void initQueryGraph() {
-        queryGraph = new QueryGraph(graph);
-        locationIndex = new LocationIndexTree(graph, dir);
-        locationIndex.prepareIndex();
-    }
-
-    private QueryResult findClosest() {
-        QueryResult qr = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
-        queryGraph.lookup(Collections.singletonList(qr));
-        return qr;
-    }
-
     private Path calcPath(int source, int target, int sourceOutEdge, int targetInEdge) {
         return calcPath(source, target, sourceOutEdge, targetInEdge, weighting);
     }
@@ -524,21 +518,24 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private void addRestriction(int fromNode, int node, int toNode) {
-        turnCostExtension.addTurnInfo(
+        IntsRef tcFlags = TurnCost.createFlags();
+        turnCostEnc.setDecimal(false, tcFlags, Double.POSITIVE_INFINITY);
+        turnCostStorage.setTurnCost(
+                tcFlags,
                 GHUtility.getEdge(graph, fromNode, node).getEdge(),
                 node,
-                GHUtility.getEdge(graph, node, toNode).getEdge(),
-                encoder.getTurnFlags(true, 0)
+                GHUtility.getEdge(graph, node, toNode).getEdge()
         );
     }
 
-    private void addTurnCost(int fromNode, int node, int toNode, double turnCost) {
-        turnCostExtension.addTurnInfo(
+    private void setTurnCost(int fromNode, int node, int toNode, double turnCost) {
+        IntsRef tcFlags = TurnCost.createFlags();
+        turnCostEnc.setDecimal(false, tcFlags, turnCost);
+        turnCostStorage.setTurnCost(
+                tcFlags,
                 GHUtility.getEdge(graph, fromNode, node).getEdge(),
                 node,
-                GHUtility.getEdge(graph, node, toNode).getEdge(),
-                encoder.getTurnFlags(false, turnCost)
-        );
+                GHUtility.getEdge(graph, node, toNode).getEdge());
     }
 
     private IntArrayList nodes(int... nodes) {

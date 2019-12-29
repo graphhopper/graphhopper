@@ -24,8 +24,9 @@ import com.graphhopper.storage.IntsRef;
  * of bits.
  */
 public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue implements DecimalEncodedValue {
-    private final double factor;
+    protected final double factor;
     private final double defaultValue;
+    private final boolean useMaximumAsInfinity;
 
     public UnsignedDecimalEncodedValue(String name, int bits, double factor, boolean storeTwoDirections) {
         this(name, bits, factor, 0, storeTwoDirections);
@@ -39,9 +40,16 @@ public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue i
      * @param storeTwoDirections true if forward and backward direction of the edge should get two independent values.
      */
     public UnsignedDecimalEncodedValue(String name, int bits, double factor, double defaultValue, boolean storeTwoDirections) {
+        this(name, bits, factor, defaultValue, storeTwoDirections, false);
+    }
+
+    public UnsignedDecimalEncodedValue(String name, int bits, double factor, double defaultValue, boolean storeTwoDirections, boolean useMaximumAsInfinity) {
         super(name, bits, storeTwoDirections);
         this.factor = factor;
         this.defaultValue = defaultValue;
+        this.useMaximumAsInfinity = useMaximumAsInfinity;
+        if (useMaximumAsInfinity && Double.isInfinite(defaultValue))
+            throw new IllegalArgumentException("Default value and maximum value cannot be both infinity");
     }
 
     private int toInt(double val) {
@@ -52,6 +60,10 @@ public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue i
     public final void setDecimal(boolean reverse, IntsRef ints, double value) {
         if (!isInitialized())
             throw new IllegalStateException("Call init before usage for EncodedValue " + toString());
+        if (useMaximumAsInfinity && Double.isInfinite(value)) {
+            super.setInt(reverse, ints, maxValue);
+            return;
+        }
         if (value == defaultValue)
             value = 0;
         if (value > maxValue * factor)
@@ -67,6 +79,8 @@ public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue i
     @Override
     public final double getDecimal(boolean reverse, IntsRef ref) {
         int value = getInt(reverse, ref);
+        if (useMaximumAsInfinity && value == maxValue)
+            return Double.POSITIVE_INFINITY;
         if (value == 0)
             return defaultValue;
         return value * factor;

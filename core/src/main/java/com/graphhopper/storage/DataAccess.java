@@ -70,11 +70,14 @@ public interface DataAccess extends Storable<DataAccess> {
 
     /**
      * Get bytes from position 'index'
-     * <p>
      *
      * @param values acts as output
      */
     void getBytes(long bytePos, byte[] values, int length);
+
+    void setByte(long currentPointer, byte value);
+
+    byte getByte(long currentPointer);
 
     /**
      * Set 4 bytes at the header space index to the specified value

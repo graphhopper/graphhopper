@@ -30,4 +30,9 @@ public class RAMIntDataAccessTest extends DataAccessTest {
     public void testSet_GetBytes() {
         // should we implement this?
     }
+
+    @Override
+    public void testSet_GetByte() {
+        // should we implement this?
+    }
 }

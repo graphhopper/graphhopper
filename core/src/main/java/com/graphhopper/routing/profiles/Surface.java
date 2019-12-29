@@ -23,11 +23,10 @@ import com.graphhopper.util.Helper;
  * This enum defines the road surface of an edge like unpaved or asphalt. If not tagged it will be "other".
  */
 public enum Surface {
-    OTHER("other"), COBBLESTONE("cobblestone"),
-    ASPHALT("asphalt"), PAVED("paved"), UNPAVED("unpaved"),
-    GROUND("ground"), GRAVEL("gravel"), CONCRETE("concrete"),
-    PAVING_STONE("paving_stone"), DIRT("dirt"),
-    PARKING("parking"), GRASS("grass"), SAND("sand");
+    OTHER("other"),
+    PAVED("paved"), ASPHALT("asphalt"), CONCRETE("concrete"), PAVING_STONES("paving_stones"), COBBLESTONE("cobblestone"),
+    UNPAVED("unpaved"), COMPACTED("compacted"), FINE_GRAVEL("fine_gravel"), GRAVEL("gravel"),
+    GROUND("ground"), DIRT("dirt"), GRASS("grass"), SAND("sand");
 
     public static final String KEY = "surface";
 

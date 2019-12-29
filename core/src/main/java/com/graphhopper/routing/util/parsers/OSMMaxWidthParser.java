@@ -17,9 +17,6 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
@@ -29,18 +26,19 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class OSMMaxWidthParser implements TagParser {
 
     private final DecimalEncodedValue widthEncoder;
-    private final boolean enableLog;
 
     public OSMMaxWidthParser() {
-        this(MaxWidth.create(), false);
+        this(MaxWidth.create());
     }
-
-    public OSMMaxWidthParser(DecimalEncodedValue widthEncoder, boolean enableLog) {
+    
+    public OSMMaxWidthParser(DecimalEncodedValue widthEncoder) {
         this.widthEncoder = widthEncoder;
-        this.enableLog = enableLog;
     }
 
     @Override
@@ -49,9 +47,9 @@ public class OSMMaxWidthParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
         List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical", "width");
-        OSMValueExtractor.extractMeter(edgeFlags, way, widthEncoder, widthTags, enableLog);
+        OSMValueExtractor.extractMeter(edgeFlags, way, widthEncoder, widthTags);
         return edgeFlags;
     }
 }
