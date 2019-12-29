@@ -18,179 +18,30 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.CHEdgeIterator;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
+public interface PrepareCHEdgeIterator {
 
-public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
-    private static final double NO_WEIGHT = -Double.MAX_VALUE;
-    private final EdgeExplorer edgeExplorer;
-    private final Weighting weighting;
-    private final DefaultEdgeFilter shortcutFilter;
-    private final boolean fwd;
-    private final boolean bwd;
-    private EdgeIterator chIterator;
-    private double cachedWeightFwd;
-    private double cachedWeightBwd;
+    boolean next();
 
-    public static PrepareCHEdgeIterator inEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting) {
-        return new PrepareCHEdgeIterator(edgeExplorer, weighting, DefaultEdgeFilter.inEdges(weighting.getFlagEncoder().getAccessEnc()), false, true);
-    }
+    int getEdge();
 
-    public static PrepareCHEdgeIterator outEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting) {
-        return new PrepareCHEdgeIterator(edgeExplorer, weighting, DefaultEdgeFilter.outEdges(weighting.getFlagEncoder().getAccessEnc()), true, false);
-    }
+    int getBaseNode();
 
-    public static PrepareCHEdgeIterator allEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting) {
-        return new PrepareCHEdgeIterator(edgeExplorer, weighting, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder().getAccessEnc()), true, true);
-    }
+    int getAdjNode();
 
-    private PrepareCHEdgeIterator(EdgeExplorer edgeExplorer, Weighting weighting, DefaultEdgeFilter shortcutFilter, boolean fwd, boolean bwd) {
-        this.edgeExplorer = edgeExplorer;
-        this.weighting = weighting;
-        this.shortcutFilter = shortcutFilter;
-        this.fwd = fwd;
-        this.bwd = bwd;
-        clearCachedWeight();
-    }
+    int getOrigEdgeFirst();
 
-    @Override
-    public PrepareCHEdgeIterator setBaseNode(int node) {
-        chIterator = edgeExplorer.setBaseNode(node);
-        return this;
-    }
+    int getOrigEdgeLast();
 
-    public boolean next() {
-        while (true) {
-            final EdgeIterator iter = iter();
-            final boolean hasNext = iter.next();
-            clearCachedWeight();
-            if ((fwd && !Double.isInfinite(getWeight(false))) || (bwd && !Double.isInfinite(getWeight(true)))) {
-                return hasNext;
-            } else if (!hasNext) {
-                return false;
-            }
-        }
-    }
+    boolean isShortcut();
 
-    public int getEdge() {
-        return iter().getEdge();
-    }
+    double getWeight(boolean reverse);
 
-    public int getBaseNode() {
-        return iter().getBaseNode();
-    }
+    void setWeight(double weight);
 
-    public int getAdjNode() {
-        return iter().getAdjNode();
-    }
+    int getMergeStatus(int flags);
 
-    public int getOrigEdgeFirst() {
-        return iter().getOrigEdgeFirst();
-    }
+    void setFlagsAndWeight(int flags, double weight);
 
-    public int getOrigEdgeLast() {
-        return iter().getOrigEdgeLast();
-    }
+    void setSkippedEdges(int skippedEdge1, int skippedEdge2);
 
-    public boolean isShortcut() {
-        final EdgeIterator iter = iter();
-        return iter instanceof CHEdgeIterator && ((CHEdgeIterator) iter).isShortcut();
-    }
-
-    public double getWeight(boolean reverse) {
-        updateWeight(reverse);
-        return reverse ? cachedWeightBwd : cachedWeightFwd;
-    }
-
-    private void updateWeight(boolean reverse) {
-        if (reverse) {
-            if (cachedWeightBwd == NO_WEIGHT) {
-                cachedWeightBwd = calcWeight(true);
-            }
-        } else {
-            if (cachedWeightFwd == NO_WEIGHT) {
-                cachedWeightFwd = calcWeight(false);
-            }
-        }
-    }
-
-    private void clearCachedWeight() {
-        cachedWeightFwd = NO_WEIGHT;
-        cachedWeightBwd = NO_WEIGHT;
-    }
-
-    private double calcWeight(boolean reverse) {
-        if (isShortcut()) {
-            final CHEdgeIterator iter = chIter();
-            // currently we still need to use the edge filter, because we maintain access flags for CH shortcuts
-            if (!shortcutFilter.accept(iter)) {
-                return Double.POSITIVE_INFINITY;
-            } else {
-                return iter.getWeight();
-            }
-        } else {
-            final EdgeIterator iter = iter();
-            final BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
-            // have to accept loops here, c.f. comments in DefaultEdgeFilter
-            if (iter.getBaseNode() == iter.getAdjNode()) {
-                if (!iter.get(accessEnc) && !iter.getReverse(accessEnc)) {
-                    return Double.POSITIVE_INFINITY;
-                } else {
-                    return weighting.calcWeight(iter, reverse, EdgeIterator.NO_EDGE);
-                }
-            }
-            // early exit if access is blocked, will be moved into weighting(s) in the future
-            final boolean access = reverse ? iter.getReverse(accessEnc) : iter.get(accessEnc);
-            if (!access) {
-                return Double.POSITIVE_INFINITY;
-            }
-            return weighting.calcWeight(iter, reverse, EdgeIterator.NO_EDGE);
-        }
-    }
-
-    public void setWeight(double weight) {
-        chIter().setWeight(weight);
-        clearCachedWeight();
-    }
-
-    @Override
-    public String toString() {
-        if (chIterator == null) {
-            return "not initialized";
-        } else {
-            return getBaseNode() + "->" + getAdjNode() + " (" + getEdge() + ")";
-        }
-    }
-
-    int getMergeStatus(int flags) {
-        return chIter().getMergeStatus(flags);
-    }
-
-    void setFlagsAndWeight(int flags, double weight) {
-        chIter().setFlagsAndWeight(flags, weight);
-        clearCachedWeight();
-    }
-
-    void setSkippedEdges(int skippedEdge1, int skippedEdge2) {
-        chIter().setSkippedEdges(skippedEdge1, skippedEdge2);
-    }
-
-    private EdgeIterator iter() {
-        if (chIterator == null) {
-            throw new IllegalStateException("You need to call setBaseNode() first");
-        }
-        return chIterator;
-    }
-
-    private CHEdgeIterator chIter() {
-        EdgeIterator iter = iter();
-        if (!(iter instanceof CHEdgeIterator)) {
-            throw new IllegalStateException("Expected a CH edge iterator, but was: " + iter.getClass().getSimpleName());
-        }
-        return (CHEdgeIterator) iter;
-    }
 }

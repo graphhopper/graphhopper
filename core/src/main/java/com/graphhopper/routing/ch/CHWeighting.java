@@ -30,10 +30,10 @@ import com.graphhopper.util.EdgeIteratorState;
  * @author Peter Karich
  * @see PrepareContractionHierarchies
  */
-public class PreparationWeighting implements Weighting {
+public class CHWeighting implements Weighting {
     private final Weighting userWeighting;
 
-    public PreparationWeighting(Weighting userWeighting) {
+    public CHWeighting(Weighting userWeighting) {
         this.userWeighting = userWeighting;
     }
 

@@ -33,12 +33,10 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final CHGraph chGraph;
     private final CHProfile chProfile;
-    private final PreparationWeighting prepareWeighting;
 
     public CHRoutingAlgorithmFactory(CHGraph chGraph) {
         this.chGraph = chGraph;
         this.chProfile = chGraph.getCHProfile();
-        prepareWeighting = new PreparationWeighting(chProfile.getWeighting());
     }
 
     @Override
@@ -73,6 +71,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     }
 
     private AbstractBidirAlgo createAlgoNodeBased(Graph graph, AlgorithmOptions opts) {
+        CHWeighting prepareWeighting = new CHWeighting(chProfile.getWeighting());
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
             return new AStarBidirectionCH(graph, prepareWeighting)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
@@ -94,6 +93,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         if (turnCostStorage == null) {
             throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
         }
+        CHWeighting prepareWeighting = new CHWeighting(chProfile.getWeighting());
         return new TurnWeighting(prepareWeighting, turnCostStorage, chProfile.getUTurnCosts());
     }
 
