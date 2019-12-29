@@ -98,10 +98,10 @@ public class TurnWeighting implements Weighting {
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
         // todo: why no first/last orig edge here as in calcWeight ?
         final int origEdgeId = edgeState.getEdge();
-        long turnCostsInSeconds = (long) (reverse
-                ? calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
-                : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId));
-        return millis + 1000 * turnCostsInSeconds;
+        long turnCostMillis = reverse
+                ? calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                : calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+        return millis + turnCostMillis;
     }
 
     /**
@@ -120,6 +120,10 @@ public class TurnWeighting implements Weighting {
                 tCost = turnCostStorage.get(turnCostEnc, tcFlags, edgeFrom, nodeVia, edgeTo);
         }
         return tCost;
+    }
+
+    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
     }
 
     @Override
