@@ -138,6 +138,7 @@ public class PrepareCHGraph {
      */
     public void disconnect(PrepareCHEdgeExplorer explorer, PrepareCHEdgeIterator edgeState) {
         // search edge with opposite direction but we need to know the previousEdge so we cannot simply do:
+        // EdgeIteratorState tmpIter = getEdgeIteratorState(edgeState.getEdge(), edgeState.getBaseNode());
         PrepareCHEdgeIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
         int prevEdge = EdgeIterator.NO_EDGE;
         while (tmpIter.next()) {
