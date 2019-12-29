@@ -230,6 +230,18 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
+    public boolean getFwdAccess() {
+        EdgeIteratorState edge = getCurrentEdge();
+        return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).getFwdAccess();
+    }
+
+    @Override
+    public boolean getBwdAccess() {
+        EdgeIteratorState edge = getCurrentEdge();
+        return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).getBwdAccess();
+    }
+
+    @Override
     public double getWeight() {
         // will be called only from CHWeighting and if isShortcut is true
         return ((CHEdgeIteratorState) getCurrentEdge()).getWeight();
