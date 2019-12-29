@@ -615,7 +615,6 @@ public class GraphHopper implements GraphHopperAPI {
      * disc which is usually a lot faster.
      */
     public GraphHopper importOrLoad() {
-        clean();
         if (!load(ghLocation)) {
             printInfo();
             process(ghLocation, false);
