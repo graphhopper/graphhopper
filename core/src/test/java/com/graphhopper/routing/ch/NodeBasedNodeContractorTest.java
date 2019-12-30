@@ -32,7 +32,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
@@ -519,7 +518,7 @@ public class NodeBasedNodeContractorTest {
         if (edge instanceof CHEdgeIteratorState) {
             return ((CHEdgeIteratorState) edge).getWeight();
         } else {
-            return weighting.calcWeight(edge, false, EdgeIterator.NO_EDGE);
+            return weighting.calcEdgeWeight(edge, false);
         }
     }
 

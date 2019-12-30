@@ -28,6 +28,7 @@ import com.graphhopper.util.EdgeIteratorState;
 
 import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 /**
  * Provides methods to retrieve turn costs for a specific turn.
@@ -76,6 +77,11 @@ public class TurnWeighting implements Weighting {
     }
 
     @Override
+    public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        return calcWeight(edgeState, reverse, NO_EDGE);
+    }
+
+    @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
         if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
@@ -86,6 +92,11 @@ public class TurnWeighting implements Weighting {
                 ? calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
         return weight + turnCosts;
+    }
+
+    @Override
+    public final long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        return calcMillis(edgeState, reverse, NO_EDGE);
     }
 
     @Override

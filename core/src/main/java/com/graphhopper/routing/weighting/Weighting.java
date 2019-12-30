@@ -39,6 +39,8 @@ public interface Weighting {
      */
     double getMinWeight(double distance);
 
+    double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
+
     /**
      * This method calculates the weighting a certain edgeState should be associated. E.g. a high
      * value indicates that the edge should be avoided. Make sure that this method is very fast and
@@ -54,6 +56,8 @@ public interface Weighting {
      * +Infinity. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
     double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
+
+    long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse);
 
     /**
      * This method calculates the time taken (in milli seconds) for the specified edgeState and

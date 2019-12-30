@@ -317,7 +317,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm impleme
 
             // prevents the path to contain the edge at the meeting point twice and subtracts the weight (excluding turn weight => no previous edge)
             entry = entry.getParent();
-            weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
+            weight -= weighting.calcEdgeWeight(edgeState, reverse);
         }
 
         if (weight < bestWeight) {

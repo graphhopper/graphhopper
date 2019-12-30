@@ -17,13 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.InstructionAnnotation;
-import com.graphhopper.util.Translation;
 
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag

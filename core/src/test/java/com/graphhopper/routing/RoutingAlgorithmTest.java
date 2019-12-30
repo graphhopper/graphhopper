@@ -50,6 +50,7 @@ import java.util.Random;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Helper.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
@@ -817,6 +818,11 @@ public class RoutingAlgorithmTest {
             }
 
             @Override
+            public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                return calcWeight(edgeState, reverse, NO_EDGE);
+            }
+
+            @Override
             public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
                 int adj = edgeState.getAdjNode();
                 int base = edgeState.getBaseNode();
@@ -835,6 +841,11 @@ public class RoutingAlgorithmTest {
                     return 2 * edgeState.getDistance();
 
                 return edgeState.getDistance() * 0.8;
+            }
+
+            @Override
+            public final long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+                return calcMillis(edgeState, reverse, NO_EDGE);
             }
 
             @Override

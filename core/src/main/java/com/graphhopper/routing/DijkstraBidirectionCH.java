@@ -73,7 +73,7 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
             // we have to be careful because of rounded shortcut weights in combination with virtual via nodes, see #1574
             final double precision = 0.001;
             if (adjNode != null &&
-                    adjNode.weight + weighting.calcWeight(iter, !reverse, getIncomingEdge(entry)) - entry.weight < -precision) {
+                    adjNode.weight + weighting.calcEdgeWeight(iter, !reverse) - entry.weight < -precision) {
                 return true;
             }
         }
