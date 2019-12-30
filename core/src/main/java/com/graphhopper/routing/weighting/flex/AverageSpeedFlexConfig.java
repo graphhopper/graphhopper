@@ -79,14 +79,12 @@ public class AverageSpeedFlexConfig {
             Double value = entry.getValue(edge, reverse);
             // only first matches
             if (value != null) {
-                speed = ((Number) value).doubleValue();
+                speed = value;
                 break;
             }
         }
         if (Double.isNaN(speed))
             speed = reverse ? edge.getReverse(avgSpeedEnc) : edge.get(avgSpeedEnc);
-        if (speed == 0)
-            return 0;
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid average_speed " + speed);
 
@@ -95,7 +93,7 @@ public class AverageSpeedFlexConfig {
             Double value = entry.getValue(edge, reverse);
             // include all matches
             if (value != null)
-                speed *= ((Number) value).doubleValue();
+                speed *= value;
         }
 
         return Math.min(flexModel.getMaxSpeed(), speed);

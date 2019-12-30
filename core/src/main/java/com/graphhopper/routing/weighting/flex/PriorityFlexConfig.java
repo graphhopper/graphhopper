@@ -63,9 +63,8 @@ public class PriorityFlexConfig {
         for (int i = 0; i < priorityList.size(); i++) {
             ConfigMapEntry entry = priorityList.get(i);
             Double value = entry.getValue(edge, reverse);
-            // include all matches
             if (value != null)
-                priority *= ((Number) value).doubleValue();
+                priority *= value;
         }
         return Math.min(priority, config.getMaxPriority());
     }

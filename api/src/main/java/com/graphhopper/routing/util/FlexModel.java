@@ -41,6 +41,7 @@ public class FlexModel {
     private Map<String, Object> speedFactor = new HashMap<>();
     private Map<String, Object> averageSpeed = new HashMap<>();
     private Map<String, Object> priorityMap = new HashMap<>();
+    private Map<String, Object> delayMap = new HashMap<>();
 
     public FlexModel() {
     }
@@ -115,11 +116,15 @@ public class FlexModel {
         return speedFactor;
     }
 
+    public Map<String, Object> getAverageSpeed() {
+        return averageSpeed;
+    }
+
     public Map<String, Object> getPriority() {
         return priorityMap;
     }
 
-    public Map<String, Object> getAverageSpeed() {
-        return averageSpeed;
+    public Map<String, Object> getDelay() {
+        return delayMap;
     }
 }

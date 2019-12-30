@@ -53,7 +53,7 @@ public class FlexModelWeightingTest {
         FlexModel vehicleModel = new FlexModel();
         vehicleModel.setMaxSpeed(120);
         vehicleModel.setBase("car");
-        Map<String, Double> map = new HashMap<>();
+        Map map = new HashMap();
         map.put(PRIMARY.toString(), 2.0);
         vehicleModel.getPriority().put(KEY, map);
 
@@ -64,5 +64,10 @@ public class FlexModelWeightingTest {
         map.put(PRIMARY.toString(), 1.1);
         weighting = new FlexModelWeighting(vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
         assertEquals(9.5, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), 0.11);
+
+        // force integer value
+        map.put(PRIMARY.toString(), 1);
+        weighting = new FlexModelWeighting(vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
+        assertEquals(10.5, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), 0.11);
     }
 }

@@ -19,19 +19,45 @@ package com.graphhopper.routing.weighting.flex;
 
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.util.FlexModel;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class DelayFlexConfig {
+    private List<ConfigMapEntry> delayList = new ArrayList<>();
+
     public DelayFlexConfig(FlexModel flexModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
-        // TODO NOW
+        for (Map.Entry<String, Object> entry : flexModel.getDelay().entrySet()) {
+            Object value = entry.getValue();
+            if (!lookup.hasEncodedValue(entry.getKey()))
+                throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'delay'");
+
+            if (value instanceof Map) {
+                EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(entry.getKey(), Enum.class);
+                Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
+                delayList.add(new EnumToValue(enumEncodedValue, Helper.createEnumToDoubleArray(enumClass, (Map<String, Object>) value)));
+            } else {
+                throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'delay'");
+            }
+        }
     }
 
     /**
      * @return delay in seconds
      */
     public double calcDelay(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        // TODO NOW
-        return 0;
+        double delay = 0;
+        for (int i = 0; i < delayList.size(); i++) {
+            ConfigMapEntry entry = delayList.get(i);
+            Double value = entry.getValue(edge, reverse);
+            if (value != null)
+                delay += value;
+        }
+        return delay;
     }
 }
