@@ -987,7 +987,7 @@ public class RoutingAlgorithmTest {
     private GraphHopperStorage createGHStorage(boolean is3D, Weighting... weightings) {
         CHProfile[] chProfiles = new CHProfile[weightings.length];
         for (int i = 0; i < weightings.length; i++) {
-            chProfiles[i] = new CHProfile(weightings[i], traversalMode, TurnWeighting.INFINITE_U_TURN_COSTS);
+            chProfiles[i] = new CHProfile(weightings[i], traversalMode, Weighting.INFINITE_U_TURN_COSTS);
         }
         return new GraphBuilder(encodingManager).set3D(is3D)
                 .setCHProfiles(chProfiles)
@@ -1140,7 +1140,7 @@ public class RoutingAlgorithmTest {
     private static abstract class CHCalculator implements PathCalculator {
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, int from, int to) {
-            CHProfile chProfile = new CHProfile(weighting, traversalMode, TurnWeighting.INFINITE_U_TURN_COSTS);
+            CHProfile chProfile = new CHProfile(weighting, traversalMode, Weighting.INFINITE_U_TURN_COSTS);
             PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
             CHGraph chGraph = graph.getCHGraph(chProfile);
             if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
@@ -1166,7 +1166,7 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
-            CHProfile chProfile = new CHProfile(weighting, traversalMode, TurnWeighting.INFINITE_U_TURN_COSTS);
+            CHProfile chProfile = new CHProfile(weighting, traversalMode, Weighting.INFINITE_U_TURN_COSTS);
             PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
             CHGraph chGraph = graph.getCHGraph(chProfile);
             if (chGraph.getEdges() == chGraph.getOriginalEdges()) {

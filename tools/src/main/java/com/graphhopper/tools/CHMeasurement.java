@@ -35,7 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static java.lang.System.nanoTime;

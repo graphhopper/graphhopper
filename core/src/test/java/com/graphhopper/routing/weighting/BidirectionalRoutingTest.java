@@ -92,7 +92,7 @@ public class BidirectionalRoutingTest {
         encoder = new CarFlagEncoder(5, 5, 1);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, TurnWeighting.INFINITE_U_TURN_COSTS));
+        chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, Weighting.INFINITE_U_TURN_COSTS));
         graph = createGraph();
     }
 

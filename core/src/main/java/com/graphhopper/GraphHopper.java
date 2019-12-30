@@ -67,7 +67,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE;
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF;
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
