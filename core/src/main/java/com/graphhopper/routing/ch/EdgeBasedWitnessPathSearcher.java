@@ -21,7 +21,6 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -68,7 +67,7 @@ public class EdgeBasedWitnessPathSearcher {
     // graph variables
     private final PrepareCHGraph chGraph;
     private final PrepareCHEdgeExplorer outEdgeExplorer;
-    private final EdgeExplorer origInEdgeExplorer;
+    private final PrepareCHEdgeExplorer origInEdgeExplorer;
     private final int maxLevel;
 
     // general parameters affecting the number of found witnesses and the search time
@@ -175,7 +174,7 @@ public class EdgeBasedWitnessPathSearcher {
         bestPathIsBridgePath = false;
 
         // check if we can already reach the target from the shortest path tree we discovered so far
-        EdgeIterator inIter = origInEdgeExplorer.setBaseNode(targetNode);
+        PrepareCHEdgeIterator inIter = origInEdgeExplorer.setBaseNode(targetNode);
         while (inIter.next()) {
             final int incEdge = inIter.getOrigEdgeLast();
             final int edgeKey = getEdgeKey(incEdge, targetNode);

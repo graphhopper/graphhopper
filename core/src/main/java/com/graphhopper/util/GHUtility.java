@@ -807,6 +807,16 @@ public class GHUtility {
         }
 
         @Override
+        public boolean getFwdAccess() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public boolean getBwdAccess() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public int getSkippedEdge1() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
