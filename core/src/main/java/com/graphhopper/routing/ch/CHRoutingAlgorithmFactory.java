@@ -83,7 +83,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
                 return new DijkstraBidirectionCHNoSOD(graph, chWeighting);
             }
         } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
-            AlternativeRouteCH altRouteAlgo = new AlternativeRouteCH(graph, prepareWeighting);
+            AlternativeRouteCH altRouteAlgo = new AlternativeRouteCH(graph, chWeighting);
             altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
             altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
             return altRouteAlgo;
