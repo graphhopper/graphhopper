@@ -19,7 +19,6 @@
 package com.graphhopper.routing.ch;
 
 public interface PrepareCHEdgeIterator {
-
     boolean next();
 
     int getEdge();
@@ -43,5 +42,4 @@ public interface PrepareCHEdgeIterator {
     void setFlagsAndWeight(int flags, double weight);
 
     void setSkippedEdges(int skippedEdge1, int skippedEdge2);
-
 }
