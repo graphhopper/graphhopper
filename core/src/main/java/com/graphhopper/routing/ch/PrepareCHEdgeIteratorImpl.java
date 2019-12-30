@@ -74,12 +74,8 @@ public class PrepareCHEdgeIteratorImpl implements PrepareCHEdgeExplorer, Prepare
         if (isShortcut()) {
             return shortcutFilter.accept((CHEdgeIterator) chIterator);
         } else {
-            // copied from DefaultEdgeFilter for now
+            // c.f. comment in DefaultEdgeFilter
             if (chIterator.getBaseNode() == chIterator.getAdjNode()) {
-                // this is needed for edge-based CH, see #1525
-                // background: we need to explicitly accept shortcut edges that are loops, because if we insert a loop
-                // shortcut with the fwd flag a DefaultEdgeFilter with bwd=true and fwd=false does not find it, although
-                // it is also an 'incoming' edge.
                 return finiteWeight(false) || finiteWeight(true);
             }
             return shortcutFilter.fwd && finiteWeight(false) || shortcutFilter.bwd && finiteWeight(true);
@@ -214,6 +210,7 @@ public class PrepareCHEdgeIteratorImpl implements PrepareCHEdgeExplorer, Prepare
         }
 
         public boolean accept(CHEdgeIteratorState edgeState) {
+            // c.f. comment in DefaultEdgeFilter
             if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
                 return edgeState.getFwdAccess() || edgeState.getBwdAccess();
             }
