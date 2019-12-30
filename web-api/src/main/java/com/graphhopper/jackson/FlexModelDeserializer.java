@@ -17,21 +17,19 @@
  */
 package com.graphhopper.jackson;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.graphhopper.util.shapes.GHPoint;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.graphhopper.routing.util.FlexModel;
 
 import java.io.IOException;
 
-class GHPointSerializer extends JsonSerializer<GHPoint> {
+public class FlexModelDeserializer extends JsonDeserializer<FlexModel> {
     @Override
-    public void serialize(GHPoint ghPoint, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
-        jsonGenerator.writeStartArray();
-        for (Double number : ghPoint.toGeoJson()) {
-            jsonGenerator.writeNumber(number);
-        }
-        jsonGenerator.writeEndArray();
+    public FlexModel deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        p.setCodec(new ObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE));
+        return p.readValueAs(FlexModel.class);
     }
 }

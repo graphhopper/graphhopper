@@ -462,4 +462,28 @@ public class Helper {
         }
         return sb.toString();
     }
+
+    /**
+     * This method finds the enum in the enumClass via enum.toString
+     */
+    public static <T extends Enum<T>> T getValueOf(Class<T> enumClass, String enumToString) {
+        if (enumToString == null)
+            return enumClass.getEnumConstants()[0];
+
+        for (T e : enumClass.getEnumConstants()) {
+            if (e.toString().equals(enumToString)) {
+                return e;
+            }
+        }
+        return enumClass.getEnumConstants()[0];
+    }
+
+    public static Double[] createEnumToDoubleArray(Class<? extends Enum> enumClass, Map<String, Object> map) {
+        Double[] tmp = new Double[enumClass.getEnumConstants().length];
+        for (Map.Entry<String, Object> encValEntry : map.entrySet()) {
+            Enum enumValue = getValueOf(enumClass, encValEntry.getKey());
+            tmp[enumValue.ordinal()] = ((Number) encValEntry.getValue()).doubleValue();
+        }
+        return tmp;
+    }
 }

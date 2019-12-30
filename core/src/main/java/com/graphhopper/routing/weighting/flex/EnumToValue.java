@@ -15,23 +15,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.jackson;
+package com.graphhopper.routing.weighting.flex;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.util.EdgeIteratorState;
 
-import java.io.IOException;
+public final class EnumToValue implements ConfigMapEntry {
+    EnumEncodedValue eev;
+    Double[] values;
 
-class GHPointSerializer extends JsonSerializer<GHPoint> {
+    EnumToValue(EnumEncodedValue eev, Double[] values) {
+        this.eev = eev;
+        this.values = values;
+    }
+
     @Override
-    public void serialize(GHPoint ghPoint, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
-        jsonGenerator.writeStartArray();
-        for (Double number : ghPoint.toGeoJson()) {
-            jsonGenerator.writeNumber(number);
-        }
-        jsonGenerator.writeEndArray();
+    public Double getValue(EdgeIteratorState iter, boolean reverse) {
+        Enum enumVal = iter.get(eev);
+        return values[enumVal.ordinal()];
     }
 }

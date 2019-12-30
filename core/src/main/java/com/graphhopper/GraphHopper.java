@@ -826,11 +826,12 @@ public class GraphHopper implements GraphHopperAPI {
                     int uTurnCosts = config.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
 
                     CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
+                    Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder, null, null /* TODO NOW make flex possible on import too */);
                     if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supports(TurnWeighting.class))) {
-                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null)));
+                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(weighting));
                     }
                     if (edgeBasedCHMode != OFF && encoder.supports(TurnWeighting.class)) {
-                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null), uTurnCosts));
+                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(weighting, uTurnCosts));
                     }
                 }
             }
@@ -847,7 +848,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
             for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
-                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null);
+                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null, null /* TODO NOW make flex possible on import too */);
                 lmFactoryDecorator.addWeighting(weighting);
             }
         }
@@ -936,11 +937,13 @@ public class GraphHopper implements GraphHopperAPI {
      * @return the weighting to be used for route calculation
      * @see HintsMap
      */
-    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
+    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph, FlexModel flexModel) {
         String weightingStr = toLowerCase(hintsMap.getWeighting());
         Weighting weighting = null;
 
-        if ("shortest".equalsIgnoreCase(weightingStr)) {
+        if ("flex".equalsIgnoreCase(weightingStr)) {
+            weighting = new FlexModelWeighting(flexModel, encoder, encodingManager, encodedValueFactory);
+        } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {
             if (encoder.supports(PriorityWeighting.class))
@@ -985,10 +988,14 @@ public class GraphHopper implements GraphHopperAPI {
         return response;
     }
 
+    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
+        return calcPaths(request, ghRsp, null);
+    }
+
     /**
      * This method calculates the alternative path list using the low level Path objects.
      */
-    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
+    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp, FlexModel flexModel) {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
@@ -1087,7 +1094,7 @@ public class GraphHopper implements GraphHopperAPI {
                 } else {
                     checkNonChMaxWaypointDistance(points);
                     queryGraph = QueryGraph.lookup(ghStorage, qResults);
-                    weighting = createWeighting(hints, encoder, queryGraph);
+                    weighting = createWeighting(hints, encoder, queryGraph, flexModel);
                 }
                 ghRsp.addDebugInfo("tmode:" + tMode.toString());
 
