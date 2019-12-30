@@ -34,12 +34,10 @@ import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_WEIGHT;
 public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final CHGraph chGraph;
     private final CHProfile chProfile;
-    private final PreparationWeighting prepareWeighting;
 
     public CHRoutingAlgorithmFactory(CHGraph chGraph) {
         this.chGraph = chGraph;
         this.chProfile = chGraph.getCHProfile();
-        prepareWeighting = new PreparationWeighting(chProfile.getWeighting());
     }
 
     @Override
@@ -74,14 +72,15 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     }
 
     private AbstractBidirAlgo createAlgoNodeBased(Graph graph, AlgorithmOptions opts) {
+        CHWeighting chWeighting = new CHWeighting(chProfile.getWeighting());
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            return new AStarBidirectionCH(graph, prepareWeighting)
+            return new AStarBidirectionCH(graph, chWeighting)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
             if (opts.getHints().getBool("stall_on_demand", true)) {
-                return new DijkstraBidirectionCH(graph, prepareWeighting);
+                return new DijkstraBidirectionCH(graph, chWeighting);
             } else {
-                return new DijkstraBidirectionCHNoSOD(graph, prepareWeighting);
+                return new DijkstraBidirectionCHNoSOD(graph, chWeighting);
             }
         } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
             AlternativeRouteCH altRouteAlgo = new AlternativeRouteCH(graph, prepareWeighting);
@@ -100,7 +99,8 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         if (turnCostStorage == null) {
             throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
         }
-        return new TurnWeighting(prepareWeighting, turnCostStorage, chProfile.getUTurnCosts());
+        CHWeighting chWeighting = new CHWeighting(chProfile.getWeighting());
+        return new TurnWeighting(chWeighting, turnCostStorage, chProfile.getUTurnCosts());
     }
 
     public Weighting getWeighting() {

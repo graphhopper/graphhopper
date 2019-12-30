@@ -231,7 +231,7 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
 
     @Override
     public double getWeight() {
-        // will be called only from PreparationWeighting and if isShortcut is true
+        // will be called only from CHWeighting and if isShortcut is true
         return ((CHEdgeIteratorState) getCurrentEdge()).getWeight();
     }
 
