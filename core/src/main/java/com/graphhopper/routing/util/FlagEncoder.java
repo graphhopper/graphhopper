@@ -50,6 +50,8 @@ public interface FlagEncoder extends EncodedValueLookup {
      */
     DecimalEncodedValue getAverageSpeedEnc();
 
+    boolean supportsTurnCosts();
+
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
      * Use support(String) instead.

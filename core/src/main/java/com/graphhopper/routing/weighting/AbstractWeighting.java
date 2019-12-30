@@ -106,7 +106,7 @@ public abstract class AbstractWeighting implements Weighting {
         return toString().equals(other.toString());
     }
 
-    static final boolean isValidName(String name) {
+    static boolean isValidName(String name) {
         if (name == null || name.isEmpty())
             return false;
 

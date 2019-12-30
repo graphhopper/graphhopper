@@ -23,7 +23,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -495,10 +494,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public boolean supports(Class<?> feature) {
-        if (TurnWeighting.class.isAssignableFrom(feature))
-            return maxTurnCosts > 0;
+    public boolean supportsTurnCosts() {
+        return maxTurnCosts > 0;
+    }
 
+    @Override
+    public boolean supports(Class<?> feature) {
         return false;
     }
 
