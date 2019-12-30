@@ -19,7 +19,6 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -58,23 +57,23 @@ public class PrepareCHGraph {
     }
 
     public PrepareCHEdgeExplorer createInEdgeExplorer() {
-        return new PrepareCHEdgeIteratorImpl(chGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.inEdges(chGraph.createEdgeExplorer(), weighting);
     }
 
     public PrepareCHEdgeExplorer createOutEdgeExplorer() {
-        return new PrepareCHEdgeIteratorImpl(chGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.outEdges(chGraph.createEdgeExplorer(), weighting);
     }
 
     public PrepareCHEdgeExplorer createAllEdgeExplorer() {
-        return new PrepareCHEdgeIteratorImpl(chGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.allEdges(chGraph.createEdgeExplorer(), weighting);
     }
 
     public PrepareCHEdgeExplorer createOriginalInEdgeExplorer() {
-        return new PrepareCHEdgeIteratorImpl(chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.inEdges(chGraph.createOriginalEdgeExplorer(), weighting);
     }
 
     public PrepareCHEdgeExplorer createOriginalOutEdgeExplorer() {
-        return new PrepareCHEdgeIteratorImpl(chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.outEdges(chGraph.createOriginalEdgeExplorer(), weighting);
     }
 
     public int getNodes() {
