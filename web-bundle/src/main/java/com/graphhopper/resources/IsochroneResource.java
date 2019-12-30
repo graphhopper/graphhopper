@@ -89,7 +89,7 @@ public class IsochroneResource {
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
 
-        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph);
+        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder);
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {

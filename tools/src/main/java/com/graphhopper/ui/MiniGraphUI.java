@@ -139,7 +139,7 @@ public class MiniGraphUI {
             map.put(Parameters.CH.DISABLE, true);
 //            map.put(Parameters.Landmark.DISABLE, true);
             routingGraph = graph;
-            weighting = hopper.createWeighting(map, encoder, graph);
+            weighting = hopper.createWeighting(map, encoder);
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
             algoFactory = new RoutingAlgorithmFactory() {
 
