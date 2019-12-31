@@ -43,9 +43,9 @@ public class OSMRoadEnvironmentParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
         RoadEnvironment roadEnvironment = OTHER;
-        if (access.isFerry())
+        if (ferry)
             roadEnvironment = FERRY;
         else if (readerWay.hasTag("bridge") && !readerWay.hasTag("bridge", "no"))
             roadEnvironment = BRIDGE;

@@ -600,10 +600,8 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
-        // return if way or ferry
-        Access access = acceptWay.getAccess();
         for (TagParser parser : edgeTagParsers) {
-            parser.handleWayTags(edgeFlags, way, access, relationFlags);
+            parser.handleWayTags(edgeFlags, way, acceptWay.getAccess().isFerry(), relationFlags);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
             encoder.handleWayTags(edgeFlags, way, acceptWay.get(encoder.toString()));

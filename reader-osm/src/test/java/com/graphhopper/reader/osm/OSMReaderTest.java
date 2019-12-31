@@ -948,7 +948,7 @@ public class OSMReaderTest {
                     throw new RuntimeException(e);
                 }
             }
-        }.setEncodingManager(new EncodingManager.Builder().add(new CarFlagEncoder()).build()).
+        }.setEncodingManager(new EncodingManager.Builder().add(new CarFlagEncoder()).add(new MountainBikeFlagEncoder()).build()).
                 setGraphHopperLocation(dir).setCHEnabled(false).
                 importOrLoad();
 
