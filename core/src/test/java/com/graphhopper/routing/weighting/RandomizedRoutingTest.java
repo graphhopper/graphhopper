@@ -87,8 +87,7 @@ public class RandomizedRoutingTest {
     @Before
     public void init() {
         dir = new RAMDirectory();
-        // todonow: make this work with speed_both_directions=true!
-        encoder = new CarFlagEncoder(5, 5, 1);
+        encoder = new MotorcycleFlagEncoder(5, 5, 1);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, TurnWeighting.INFINITE_U_TURN_COSTS));
@@ -105,6 +104,7 @@ public class RandomizedRoutingTest {
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
+            lm.setMaximumWeight(10000);
             lm.doWork();
         }
     }
@@ -218,8 +218,8 @@ public class RandomizedRoutingTest {
         System.out.println("random Graph seed: " + seed);
         final int numQueries = 50;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
-//        GHUtility.printGraphForUnitTest(graph, encoder);
+        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
+                encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
         preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
@@ -254,7 +254,8 @@ public class RandomizedRoutingTest {
         // the same as taking the direct edge!
         double pOffset = 0;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
+        GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true,
+                encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(graph, dir);
