@@ -42,7 +42,7 @@ public class LMApproximator implements WeightApproximator {
     private int[] activeToIntWeights;
     private double epsilon = 1;
     private int toTowerNode = -1;
-    private double distanceToToToTowerNode;
+    private double weightToTowerNode;
 
     // do activate landmark recalculation
     private boolean doALMRecalc = true;
@@ -106,7 +106,7 @@ public class LMApproximator implements WeightApproximator {
             }
         }
 
-        return (getRemainingWeightUnderestimationUpToTowerNode(queryNode) - distanceToToToTowerNode) * epsilon;
+        return (getRemainingWeightUnderestimationUpToTowerNode(queryNode) - weightToTowerNode) * epsilon;
     }
 
     private double getRemainingWeightUnderestimationUpToTowerNode(int v) {
@@ -144,7 +144,7 @@ public class LMApproximator implements WeightApproximator {
             @Override
             protected boolean finished() {
                 toTowerNode = currEdge.adjNode;
-                distanceToToToTowerNode = currEdge.weight;
+                weightToTowerNode = currEdge.weight;
                 return currEdge.adjNode < maxBaseNodes;
             }
 

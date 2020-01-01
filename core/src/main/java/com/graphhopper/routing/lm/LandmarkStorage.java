@@ -54,6 +54,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Peter Karich
  */
 public class LandmarkStorage implements Storable<LandmarkStorage> {
+
+    // Short.MAX_VALUE = 2^15-1 but we have unsigned short so we need 2^16-1
+    private static final int SHORT_INFINITY = Short.MAX_VALUE * 2 + 1;
+    // We have large values that do not fit into a short, use a specific maximum value
+    private static final int SHORT_MAX = SHORT_INFINITY - 1;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LandmarkStorage.class);
     // This value is used to identify nodes where no subnetwork is associated
     private static final int UNSET_SUBNETWORK = -1;
@@ -65,7 +71,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private final int FROM_OFFSET;
     private final int TO_OFFSET;
     private final DataAccess landmarkWeightDA;
-    /* every subnetwork has its own landmark mapping but the count of landmarks is always the same */
+    // every subnetwork has its own landmark mapping but the count of landmarks is always the same
     private final List<int[]> landmarkIDs;
     private double factor = -1;
     private final static double DOUBLE_MLTPL = 1e6;
@@ -75,7 +81,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private Weighting lmSelectionWeighting;
     private final TraversalMode traversalMode;
     private boolean initialized;
-    private int minimumNodes = 500_000;
+    private int minimumNodes;
     private final SubnetworkStorage subnetworkStorage;
     private List<LandmarkSuggestion> landmarkSuggestions = Collections.emptyList();
     private SpatialRuleLookup ruleLookup;
@@ -174,10 +180,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      */
     public int getMinimumNodes() {
         return minimumNodes;
-    }
-
-    SubnetworkStorage getSubnetworkStorage() {
-        return subnetworkStorage;
     }
 
     /**
@@ -482,7 +484,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     int getFromWeight(int landmarkIndex, int node) {
         int res = (int) landmarkWeightDA.getShort((long) node * LM_ROW_LENGTH + landmarkIndex * 4 + FROM_OFFSET)
                 & 0x0000FFFF;
-        assert res >= 0 : "Negative to weight " + res + ", landmark index:" + landmarkIndex + ", node:" + node;
         if (res == SHORT_INFINITY)
             // TODO can happen if endstanding oneway
             // we should set a 'from' value to SHORT_MAX if the 'to' value was already set to find real bugs
@@ -500,18 +501,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     int getToWeight(int landmarkIndex, int node) {
         int res = (int) landmarkWeightDA.getShort((long) node * LM_ROW_LENGTH + landmarkIndex * 4 + TO_OFFSET)
                 & 0x0000FFFF;
-        assert res >= 0 : "Negative to weight " + res + ", landmark index:" + landmarkIndex + ", node:" + node;
         if (res == SHORT_INFINITY)
             return SHORT_MAX;
-//            throw new IllegalStateException("Do not call getToWeight for wrong landmark[" + landmarkIndex + "]=" + landmarkIDs[landmarkIndex] + " and node " + node);
 
         return res;
     }
-
-    // Short.MAX_VALUE = 2^15-1 but we have unsigned short so we need 2^16-1
-    private static final int SHORT_INFINITY = Short.MAX_VALUE * 2 + 1;
-    // We have large values that do not fit into a short, use a specific maximum value
-    private static final int SHORT_MAX = SHORT_INFINITY - 1;
 
     /**
      * @return false if the value capacity was reached and instead of the real value the SHORT_MAX was stored.
@@ -873,14 +867,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         public final boolean accept(EdgeIteratorState iter) {
             boolean blocked = blockedEdges.contains(iter.getEdge());
             return fwd && iter.get(accessEnc) && !blocked || bwd && iter.getReverse(accessEnc) && !blocked;
-        }
-
-        public boolean acceptsBackward() {
-            return bwd;
-        }
-
-        public boolean acceptsForward() {
-            return fwd;
         }
 
         @Override
