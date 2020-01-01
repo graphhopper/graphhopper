@@ -21,10 +21,10 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.ch.PrepareEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -54,7 +54,7 @@ import static org.junit.Assert.assertFalse;
 @RunWith(Parameterized.class)
 public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
-    private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
+    private final FlagEncoder encoder = new CarFlagEncoder("car", true, 5, 5, maxCost);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();

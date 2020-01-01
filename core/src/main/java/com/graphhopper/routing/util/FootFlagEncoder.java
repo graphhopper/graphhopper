@@ -54,26 +54,20 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     private EnumEncodedValue<RouteNetwork> footRouteEnc;
     Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
-    /**
-     * Should be only instantiated via EncodingManager
-     */
     public FootFlagEncoder() {
-        this(4, 1);
+        this(new PMap());
     }
 
     public FootFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 4),
+        this(properties.get("name", "foot"),
+                properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 1));
         this.setBlockFords(properties.getBool("block_fords", false));
         this.speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 
-    public FootFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
-    public FootFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor, 0);
+    public FootFlagEncoder(String name, int speedBits, double speedFactor) {
+        super(name, speedBits, speedFactor, 0);
         restrictions.addAll(Arrays.asList("foot", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");
@@ -314,10 +308,5 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return SHORT_TRIP_FERRY_SPEED;
         }
         return speed;
-    }
-
-    @Override
-    public String toString() {
-        return "foot";
     }
 }

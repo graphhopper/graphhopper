@@ -967,13 +967,8 @@ public abstract class AbstractGraphStorageTester {
     public void test8AndMoreBytesForEdgeFlags() {
         Directory dir = new RAMDirectory();
         List<FlagEncoder> list = new ArrayList<>();
-        list.add(new TmpCarFlagEncoder(29, 0.001, 0) {
-            @Override
-            public String toString() {
-                return "car0";
-            }
-        });
-        list.add(new TmpCarFlagEncoder(29, 0.001, 0));
+        list.add(new CarFlagEncoder("car0", false, 29, 0.001, 0));
+        list.add(new CarFlagEncoder(29, 0.001, 0));
         EncodingManager manager = EncodingManager.create(list);
         graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
 
@@ -1010,19 +1005,9 @@ public abstract class AbstractGraphStorageTester {
         assertTrue(edgeIter.getReverse(access1Enc));
 
         list.clear();
-        list.add(new TmpCarFlagEncoder(29, 0.001, 0) {
-            @Override
-            public String toString() {
-                return "car0";
-            }
-        });
-        list.add(new TmpCarFlagEncoder(29, 0.001, 0));
-        list.add(new TmpCarFlagEncoder(30, 0.001, 0) {
-            @Override
-            public String toString() {
-                return "car2";
-            }
-        });
+        list.add(new CarFlagEncoder("car0", false, 29, 0.001, 0));
+        list.add(new CarFlagEncoder(29, 0.001, 0));
+        list.add(new CarFlagEncoder("car2", false, 30, 0.001, 0));
         manager = EncodingManager.create(list);
         graph = new GraphHopperStorage(new RAMDirectory(), manager, false).create(defaultSize);
         edgeIter = graph.edge(0, 1).set(access0Enc, true).setReverse(access0Enc, false);
@@ -1121,11 +1106,5 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(3, edgeState33.getAdjNode());
         assertEquals(edgeState02.getFlags(), edgeState33.detach(false).getFlags());
         assertEquals(edgeState20.getFlags(), edgeState33.detach(true).getFlags());
-    }
-
-    static class TmpCarFlagEncoder extends CarFlagEncoder {
-        public TmpCarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-            super(speedBits, speedFactor, maxTurnCosts);
-        }
     }
 }

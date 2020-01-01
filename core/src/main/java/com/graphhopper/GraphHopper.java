@@ -128,6 +128,7 @@ public class GraphHopper implements GraphHopperAPI {
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
+    private Map<String, FlexModel> importFlexModels = new HashMap<>();
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -169,6 +170,11 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper setEncodingManager(EncodingManager em) {
         ensureNotLoaded();
         this.encodingManager = em;
+        return this;
+    }
+
+    public GraphHopper putFlexModel(String name, FlexModel flexModel) {
+        importFlexModels.put(name, flexModel);
         return this;
     }
 
@@ -811,30 +817,39 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void initCHAlgoFactoryDecorator() {
-        if (!chFactoryDecorator.hasCHProfiles()) {
-            for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-                for (String chWeightingStr : chFactoryDecorator.getCHProfileStrings()) {
-                    // ghStorage is null at this point
+        if (chFactoryDecorator.hasCHProfiles())
+            return;
 
-                    // extract weighting string and u-turn-costs
-                    String configStr = "";
-                    if (chWeightingStr.contains("|")) {
-                        configStr = chWeightingStr;
-                        chWeightingStr = chWeightingStr.split("\\|")[0];
-                    }
-                    PMap config = new PMap(configStr);
-                    int uTurnCosts = config.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
+            for (String chWeightingStr : chFactoryDecorator.getCHProfileStrings()) {
+                // ghStorage is null at this point
 
-                    CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
-                    Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder, null, null /* TODO NOW make flex possible on import too */);
-                    if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supports(TurnWeighting.class))) {
-                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(weighting));
-                    }
-                    if (edgeBasedCHMode != OFF && encoder.supports(TurnWeighting.class)) {
-                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(weighting, uTurnCosts));
-                    }
+                // extract weighting string and u-turn-costs
+                String configStr = "";
+                if (chWeightingStr.contains("|")) {
+                    configStr = chWeightingStr;
+                    chWeightingStr = chWeightingStr.split("\\|")[0];
+                }
+                PMap config = new PMap(configStr);
+                int uTurnCosts = config.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+
+                CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
+                Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder, null, null);
+                if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supports(TurnWeighting.class))) {
+                    chFactoryDecorator.addCHProfile(CHProfile.nodeBased(weighting));
+                }
+                if (edgeBasedCHMode != OFF && encoder.supports(TurnWeighting.class)) {
+                    chFactoryDecorator.addCHProfile(CHProfile.edgeBased(weighting, uTurnCosts));
                 }
             }
+        }
+
+        for (Map.Entry<String, FlexModel> entry : importFlexModels.entrySet()) {
+            FlagEncoder baseEncoder = getEncodingManager().getEncoder(entry.getValue().getBase());
+            Weighting weighting = new FlexModelWeighting("flex|" + entry.getKey(), entry.getValue(),
+                    baseEncoder, encodingManager, encodedValueFactory);
+            // TODO NOW use edgeBased if flexModel says so
+            chFactoryDecorator.addCHProfile(CHProfile.nodeBased(weighting));
         }
     }
 
@@ -848,9 +863,16 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
             for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
-                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null, null /* TODO NOW make flex possible on import too */);
+                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null, null);
                 lmFactoryDecorator.addWeighting(weighting);
             }
+        }
+
+        for (Map.Entry<String, FlexModel> entry : importFlexModels.entrySet()) {
+            FlagEncoder baseEncoder = getEncodingManager().getEncoder(entry.getValue().getBase());
+            Weighting weighting = new FlexModelWeighting("flex|" + entry.getKey(), entry.getValue(),
+                    baseEncoder, encodingManager, encodedValueFactory);
+            lmFactoryDecorator.addWeighting(weighting);
         }
     }
 
@@ -942,7 +964,12 @@ public class GraphHopper implements GraphHopperAPI {
         Weighting weighting = null;
 
         if ("flex".equalsIgnoreCase(weightingStr)) {
-            weighting = new FlexModelWeighting(flexModel, encoder, encodingManager, encodedValueFactory);
+            if (flexModel == null) {
+                flexModel = importFlexModels.get(hintsMap.getVehicle());
+                if (flexModel == null)
+                    throw new IllegalStateException("flex_model cannot be null for weighting=" + weightingStr + " and vehicle=" + hintsMap.getVehicle());
+            }
+            weighting = new FlexModelWeighting("flex|" + encoder.toString(), flexModel, encoder, encodingManager, encodedValueFactory);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {

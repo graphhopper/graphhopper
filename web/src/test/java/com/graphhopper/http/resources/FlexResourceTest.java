@@ -27,11 +27,9 @@ public class FlexResourceTest {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "no").
-                put("routing.scripting", "true").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 put("graph.location", DIR));
     }
 
@@ -57,11 +55,12 @@ public class FlexResourceTest {
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 3100, 3300);
+        assertBetween("time wasn't correct", path.get("time").asLong() / 1000.0, 170, 200);
     }
 
     @Test
     public void testYamlQuery() {
-        String yamlQuery = "points: [[1.518946,42.531453],[1.54006,42.511178]]\n" +
+        String yamlQuery = "points: [[1.518946,42.531453], [1.54006,42.511178]]\n" +
                 "model:\n" +
                 "  base: car\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);

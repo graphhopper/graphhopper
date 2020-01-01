@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchiesTest {
-    private final CarFlagEncoder carEncoder = new CarFlagEncoder("speed_two_directions=true");
+    private final CarFlagEncoder carEncoder = new CarFlagEncoder("car", true, 5, 5, 0);
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
     private final CHProfile chProfile = CHProfile.nodeBased(weighting);
@@ -175,7 +175,7 @@ public class PrepareContractionHierarchiesTest {
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         assertEquals(oldCount, lg.getOriginalEdges());
-        assertEquals(oldCount + 2,lg.getEdges());
+        assertEquals(oldCount + 2, lg.getEdges());
         RoutingAlgorithm algo = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(4, 2);
         assertEquals(3, p.getDistance(), 1e-6);

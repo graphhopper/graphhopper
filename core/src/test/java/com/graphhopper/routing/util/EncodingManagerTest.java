@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -83,15 +82,10 @@ public class EncodingManagerTest {
 
     @Test
     public void testToDetailsStringIncludesEncoderVersionNumber() {
-        FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 0) {
+        FlagEncoder encoder = new AbstractFlagEncoder("new_encoder", 1, 2.0, 0) {
             @Override
             public int getVersion() {
                 return 10;
-            }
-
-            @Override
-            public String toString() {
-                return "new_encoder";
             }
 
             @Override
@@ -122,17 +116,12 @@ public class EncodingManagerTest {
         ReaderRelation osmRel = new ReaderRelation(1);
 
         BikeFlagEncoder defaultBike = new BikeFlagEncoder();
-        BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder() {
+        BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder("less_relations_bits", 4, 2, 0) {
             @Override
             public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
                 if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.OTHER)
                     priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
                 return edgeFlags;
-            }
-
-            @Override
-            public String toString() {
-                return "less_relations_bits";
             }
         };
         EncodingManager manager = new EncodingManager.Builder().add(lessRelationCodes).add(defaultBike).build();
@@ -140,7 +129,7 @@ public class EncodingManagerTest {
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        IntsRef relFlags = manager.handleRelationTags(osmRel,manager.createRelationFlags());
+        IntsRef relFlags = manager.handleRelationTags(osmRel, manager.createRelationFlags());
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         manager.acceptWay(osmWay, map);
         IntsRef edgeFlags = manager.handleWayTags(osmWay, map, relFlags);
@@ -166,7 +155,7 @@ public class EncodingManagerTest {
         // relation code for network rcn is VERY_NICE for bike and PREFER for mountainbike
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "rcn");
-        IntsRef relFlags = manager.handleRelationTags(osmRel,manager.createRelationFlags());
+        IntsRef relFlags = manager.handleRelationTags(osmRel, manager.createRelationFlags());
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         manager.acceptWay(osmWay, map);
         IntsRef edgeFlags = manager.handleWayTags(osmWay, map, relFlags);

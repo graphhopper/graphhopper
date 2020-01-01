@@ -19,7 +19,6 @@ package com.graphhopper.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.MultiException;
@@ -27,7 +26,6 @@ import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.util.FlexModel;
 import com.graphhopper.routing.util.FlexRequest;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +46,7 @@ public class FlexResource {
     private final ObjectMapper yamlOM;
 
     @Inject
-    public FlexResource(GraphHopper graphHopper, CmdArgs cmdArgs) {
+    public FlexResource(GraphHopper graphHopper) {
         this.graphHopper = graphHopper;
         this.yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
     }
@@ -75,8 +73,10 @@ public class FlexResource {
             throw new IllegalArgumentException("FlexRequest cannot be empty");
 
         FlexModel model = request.getModel();
-        if (model.getMaxSpeed() < 1)
-            model.setMaxSpeed((request.getWeighting().startsWith("car") || request.getWeighting().startsWith("truck")) ? 100 : 10);
+        if (!request.getWeighting().isEmpty())
+            throw new IllegalArgumentException("Flex endpoint requires an empty weighting but was " + request.getWeighting());
+        if (!request.getVehicle().isEmpty())
+            throw new IllegalArgumentException("Flex endpoint requires an empty vehicle but was " + request.getVehicle());
 
         request.setWeighting("flex");
         request.getHints().put("ch.disable", true);

@@ -36,17 +36,17 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
         this(new PMap());
     }
 
-    public Bike2WeightFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
     public Bike2WeightFlagEncoder(PMap properties) {
-        super(properties);
+        this(properties.get("name", "bike2"),
+                properties.getInt("speed_bits", 4),
+                properties.getInt("speed_factor", 2),
+                properties.getBool("turn_costs", false) ? 1 : 0);
+        this.setBlockFords(properties.getBool("block_fords", false));
         speedTwoDirections = true;
     }
 
-    public Bike2WeightFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+    public Bike2WeightFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
+        super(name, speedBits, speedFactor, maxTurnCosts);
         speedTwoDirections = true;
     }
 
@@ -121,10 +121,5 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
             setSpeed(true, intsRef, keepIn(speedReverse, PUSHING_SECTION_SPEED / 2.0, maxSpeed));
         }
         edge.setFlags(intsRef);
-    }
-
-    @Override
-    public String toString() {
-        return "bike2";
     }
 }

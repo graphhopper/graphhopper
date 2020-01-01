@@ -20,23 +20,26 @@ package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.util.FlexModel;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
+import java.util.Arrays;
+import java.util.Map;
 
 import static com.graphhopper.util.Helper.UTF_CS;
 
@@ -72,6 +75,20 @@ public class GraphHopperManaged implements Managed {
             }
         }
         graphHopper.init(configuration);
+
+        String flexModelLocation = configuration.get("graph.flex_model.location", "");
+        if (!flexModelLocation.isEmpty()) {
+            File locationFile = new File(flexModelLocation);
+            ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
+            for (Map.Entry<String, File> entry : Helper.listFiles(locationFile, Arrays.asList("yaml", "yml"))) {
+                try {
+                    FlexModel flexModel = yamlOM.readValue(entry.getValue(), FlexModel.class);
+                    graphHopper.putFlexModel(entry.getKey(), flexModel);
+                } catch (Exception ex) {
+                    throw new RuntimeException("Cannot read vehicle profile from " + entry.getValue(), ex);
+                }
+            }
+        }
     }
 
     @Override

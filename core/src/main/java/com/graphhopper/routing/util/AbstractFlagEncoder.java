@@ -68,6 +68,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     private boolean blockByDefault = true;
     private boolean blockFords = true;
     private boolean registered;
+    private String name;
     protected EncodedValueLookup encodedValueLookup;
 
     // Speeds from CarFlagEncoder
@@ -81,10 +82,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         throw new RuntimeException("This method must be overridden in derived classes");
     }
 
-    public AbstractFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
     /**
      * @param speedBits    specify the number of bits used for speed
      * @param speedFactor  specify the factor to multiple the stored value (can be used to increase
@@ -92,7 +89,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      *                     turn is forbidden and results in costs of positive infinity.
      */
-    protected AbstractFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+    protected AbstractFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
+        if (Helper.isEmpty(name))
+            throw new IllegalArgumentException("name cannot be empty");
+        this.name = name;
         this.maxTurnCosts = maxTurnCosts <= 0 ? 0 : maxTurnCosts;
         this.speedBits = speedBits;
         this.speedFactor = speedFactor;
@@ -505,5 +505,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     @Override
     public boolean hasEncodedValue(String key) {
         return encodedValueLookup.hasEncodedValue(key);
+    }
+
+    @Override
+    public final String toString() {
+        return name;
     }
 }

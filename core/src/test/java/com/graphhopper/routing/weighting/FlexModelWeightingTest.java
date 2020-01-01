@@ -26,6 +26,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -36,15 +37,25 @@ import static org.junit.Assert.assertEquals;
 
 public class FlexModelWeightingTest {
 
+    GraphHopperStorage graphHopperStorage;
+    DecimalEncodedValue avSpeedEnc;
+    BooleanEncodedValue accessEnc;
+    EnumEncodedValue<RoadClass> roadClassEnc;
+    EncodingManager encodingManager;
+    FlagEncoder carFE;
+
+    @Before
+    public void setUp() {
+        carFE = new CarFlagEncoder();
+        encodingManager = new EncodingManager.Builder().add(carFE).build();
+        avSpeedEnc = carFE.getAverageSpeedEnc();
+        accessEnc = carFE.getAccessEnc();
+        roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
+        graphHopperStorage = new GraphBuilder(encodingManager).create();
+    }
+
     @Test
     public void testBasic() {
-        FlagEncoder carFE = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager.Builder().add(carFE).build();
-        DecimalEncodedValue avSpeedEnc = carFE.getAverageSpeedEnc();
-        BooleanEncodedValue accessEnc = carFE.getAccessEnc();
-        EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
-
-        GraphHopperStorage graphHopperStorage = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(10).set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
         EdgeIteratorState edge2 = graphHopperStorage.edge(1, 2).setDistance(10).set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
         graphHopperStorage.edge(2, 3).setDistance(10).set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
@@ -57,17 +68,28 @@ public class FlexModelWeightingTest {
         map.put(PRIMARY.toString(), 2.0);
         vehicleModel.getPriority().put(KEY, map);
 
-        Weighting weighting = new FlexModelWeighting(vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
+        Weighting weighting = new FlexModelWeighting("flex", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
         assertEquals(10.5, weighting.calcWeight(edge2, false, EdgeIterator.NO_EDGE), 0.1);
         assertEquals(5.2, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), 0.1);
 
         map.put(PRIMARY.toString(), 1.1);
-        weighting = new FlexModelWeighting(vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
+        weighting = new FlexModelWeighting("flex", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
         assertEquals(9.5, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), 0.11);
 
         // force integer value
         map.put(PRIMARY.toString(), 1);
-        weighting = new FlexModelWeighting(vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
+        weighting = new FlexModelWeighting("flex", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
         assertEquals(10.5, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), 0.11);
+    }
+
+
+    @Test
+    public void testNoMaxSpeed() {
+        EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(10).set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
+        FlexModel vehicleModel = new FlexModel();
+        vehicleModel.setBase("car");
+
+        Weighting weighting = new FlexModelWeighting("flex", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
+        assertEquals(10.5, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), 0.1);
     }
 }

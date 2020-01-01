@@ -1,0 +1,9 @@
+base: car
+
+max_speed: 80
+
+speed_factor:
+  road_class:
+    motorway: 0.9
+    primary: 0.7
+    residential: 0.5

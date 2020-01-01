@@ -4,10 +4,10 @@ import com.graphhopper.routing.AbstractBidirectionEdgeCHNoSOD;
 import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -32,7 +32,7 @@ public class Path4CHTest {
 
     @Before
     public void init() {
-        encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
+        encoder = new CarFlagEncoder("car", true, 5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(em).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();

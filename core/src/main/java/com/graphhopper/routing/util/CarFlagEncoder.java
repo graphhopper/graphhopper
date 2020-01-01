@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.UnsignedDecimalEncodedValue;
@@ -36,11 +35,10 @@ import java.util.*;
 public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
-
+    private final boolean speedTwoDirections;
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
 
-    protected boolean speedTwoDirections;
     /**
      * A map which associates string to speed. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen
@@ -49,24 +47,26 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
     public CarFlagEncoder() {
-        this(5, 5, 0);
+        this(new PMap());
     }
 
     public CarFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 5),
+        this(properties.get("name", "car"),
+                properties.getBool("speed_two_directions", false),
+                properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.speedTwoDirections = properties.getBool("speed_two_directions", false);
         this.setBlockFords(properties.getBool("block_fords", false));
         this.setBlockByDefault(properties.getBool("block_barriers", true));
     }
 
-    public CarFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
+    public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+        this("car", false, speedBits, speedFactor, maxTurnCosts);
     }
 
-    public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+    public CarFlagEncoder(String name, boolean speedTwoDirections, int speedBits, double speedFactor, int maxTurnCosts) {
+        super(name, speedBits, speedFactor, maxTurnCosts);
+        this.speedTwoDirections = speedTwoDirections;
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
@@ -300,10 +300,5 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         if (badSurfaceSpeed > 0 && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
             speed = badSurfaceSpeed;
         return speed;
-    }
-
-    @Override
-    public String toString() {
-        return "car";
     }
 }

@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
@@ -34,22 +33,19 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  */
 public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     public RacingBikeFlagEncoder() {
-        this(4, 2, 0);
+        this(new PMap());
     }
 
     public RacingBikeFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 4),
+        this(properties.get("name", "racingbike"),
+                (int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public RacingBikeFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
-    public RacingBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+    public RacingBikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
+        super(name, speedBits, speedFactor, maxTurnCosts);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
@@ -151,10 +147,5 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     @Override
     public int getVersion() {
         return 2;
-    }
-
-    @Override
-    public String toString() {
-        return "racingbike";
     }
 }

@@ -38,17 +38,18 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class HikeFlagEncoder extends FootFlagEncoder {
 
     public HikeFlagEncoder() {
-        this(4, 1);
+        this(new PMap());
     }
 
     public HikeFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 4),
+        this(properties.get("name", "hike"),
+                properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 1));
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public HikeFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor);
+    public HikeFlagEncoder(String name, int speedBits, double speedFactor) {
+        super(name, speedBits, speedFactor);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
@@ -134,10 +135,5 @@ public class HikeFlagEncoder extends FootFlagEncoder {
             return true;
 
         return PriorityWeighting.class.isAssignableFrom(feature);
-    }
-
-    @Override
-    public String toString() {
-        return "hike";
     }
 }

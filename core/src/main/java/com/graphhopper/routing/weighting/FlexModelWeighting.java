@@ -34,6 +34,7 @@ public class FlexModelWeighting implements Weighting {
     private BooleanEncodedValue baseVehicleProfileAccessEnc;
     private String baseVehicleProfile;
 
+    private final String name;
     private final double maxPriority;
     private double maxSpeed;
     private double distanceFactor;
@@ -41,23 +42,26 @@ public class FlexModelWeighting implements Weighting {
     private DelayFlexConfig delayConfig;
     private PriorityFlexConfig priorityConfig;
 
-    public FlexModelWeighting(FlexModel config, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, EncodedValueFactory factory) {
+    public FlexModelWeighting(String name, FlexModel flexModel, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, EncodedValueFactory factory) {
+        this.name = name;
         deprecatedFlagEncoder = baseFlagEncoder;
         baseVehicleProfileAccessEnc = baseFlagEncoder.getAccessEnc();
-        baseVehicleProfile = config.getBase();
-        maxSpeed = config.getMaxSpeed() / FlexModel.SPEED_CONV;
-        if (maxSpeed < 2)
+        baseVehicleProfile = flexModel.getBase();
+        maxSpeed = flexModel.getMaxSpeed() / FlexModel.SPEED_CONV;
+        if (maxSpeed < 2) {
             maxSpeed = baseFlagEncoder.getMaxSpeed();
+            flexModel.setMaxSpeed(maxSpeed);
+        }
 
-        speedConfig = new AverageSpeedFlexConfig(config, lookup, factory);
-        delayConfig = new DelayFlexConfig(config, lookup, factory);
-        priorityConfig = new PriorityFlexConfig(config, lookup, factory);
+        speedConfig = new AverageSpeedFlexConfig(flexModel, lookup, factory);
+        delayConfig = new DelayFlexConfig(flexModel, lookup, factory);
+        priorityConfig = new PriorityFlexConfig(flexModel, lookup, factory);
 
-        distanceFactor = config.getDistanceFactor();
+        distanceFactor = flexModel.getDistanceFactor();
         if (distanceFactor < 0)
             throw new IllegalArgumentException("distance_factor cannot be negative");
 
-        maxPriority = config.getMaxPriority();
+        maxPriority = flexModel.getMaxPriority();
         if (maxPriority <= 0)
             throw new IllegalArgumentException("max_priority cannot be zero or negative");
     }
@@ -85,6 +89,9 @@ public class FlexModelWeighting implements Weighting {
             return Double.POSITIVE_INFINITY;
 
         double speed = speedConfig.calcSpeed(edge, reverse, prevOrNextEdgeId);
+        // exit earlier without calculating delay
+        if (speed == 0)
+            return Double.POSITIVE_INFINITY;
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
 
@@ -103,13 +110,18 @@ public class FlexModelWeighting implements Weighting {
     }
 
     @Override
-    public String getName() {
-        return "flex";
-    }
-
-    @Override
     public boolean matches(HintsMap reqMap) {
         return (reqMap.getWeighting().isEmpty() || getName().equals(reqMap.getWeighting())) &&
                 (reqMap.getVehicle().isEmpty() || baseVehicleProfile.equals(reqMap.getVehicle()));
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
