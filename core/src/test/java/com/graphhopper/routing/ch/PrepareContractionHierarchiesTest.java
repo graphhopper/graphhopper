@@ -175,7 +175,7 @@ public class PrepareContractionHierarchiesTest {
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         assertEquals(oldCount, lg.getOriginalEdges());
-        assertEquals(oldCount + 2,lg.getEdges());
+        assertEquals(oldCount + 2, lg.getEdges());
         RoutingAlgorithm algo = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(4, 2);
         assertEquals(3, p.getDistance(), 1e-6);

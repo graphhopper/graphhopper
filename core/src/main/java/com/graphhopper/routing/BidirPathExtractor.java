@@ -122,8 +122,7 @@ public class BidirPathExtractor {
             return;
         }
         if (weighting instanceof TurnWeighting) {
-            double turnWeight = ((TurnWeighting) weighting).calcTurnWeight(inEdge, viaNode, outEdge);
-            path.addTime((long) (turnWeight * 1000));
+            path.addTime(((TurnWeighting) weighting).calcTurnMillis(inEdge, viaNode, outEdge));
         }
     }
 
