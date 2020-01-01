@@ -1042,8 +1042,19 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            // TODO NOW for CH it will be overwritten by chProfile.getWeighting but now we need it for locationIndex -> #729
-            Weighting weighting = createWeighting(hints, encoder);
+            RoutingAlgorithmFactory algoFactory = getAlgorithmFactory(hints);
+            Weighting weighting;
+            CHProfile chProfile = null;
+            if (chFactoryDecorator.isEnabled() && !disableCH) {
+                if (algoFactory instanceof CHRoutingAlgorithmFactory) {
+                    chProfile = ((CHRoutingAlgorithmFactory) algoFactory).getCHProfile();
+                    weighting = chProfile.getWeighting();
+                } else {
+                    throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algoFactory);
+                }
+            } else {
+                weighting = createWeighting(hints, encoder);
+            }
 
             RoutingTemplate routingTemplate;
             if (ROUND_TRIP.equalsIgnoreCase(algoStr))
@@ -1064,28 +1075,15 @@ public class GraphHopper implements GraphHopperAPI {
                 if (ghRsp.hasErrors())
                     return Collections.emptyList();
 
-                RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
                 QueryGraph queryGraph;
-
-                if (chFactoryDecorator.isEnabled() && !disableCH) {
+                if (chProfile != null) {
                     if (request.hasFavoredHeading(0))
                         throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
-                    if (request.getHints().getBool(Routing.PASS_THROUGH, false)) {
+                    if (request.getHints().getBool(Routing.PASS_THROUGH, false))
                         throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
-                    }
-                    // if LM is enabled we have the LMFactory with the CH algo!
-                    RoutingAlgorithmFactory chAlgoFactory = tmpAlgoFactory;
-                    if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
-                        chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) tmpAlgoFactory).getDefaultAlgoFactory();
 
-                    if (chAlgoFactory instanceof CHRoutingAlgorithmFactory) {
-                        CHProfile chProfile = ((CHRoutingAlgorithmFactory) chAlgoFactory).getCHProfile();
-                        queryGraph = QueryGraph.lookup(ghStorage.getCHGraph(chProfile), qResults);
-                        weighting = chProfile.getWeighting();
-                    } else {
-                        throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
-                    }
+                    queryGraph = QueryGraph.lookup(ghStorage.getCHGraph(chProfile), qResults);
                 } else {
                     checkNonChMaxWaypointDistance(points);
                     queryGraph = QueryGraph.lookup(ghStorage, qResults);
@@ -1110,7 +1108,7 @@ public class GraphHopper implements GraphHopperAPI {
                         build();
 
                 // do the actual route calculation !
-                altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
+                altPaths = routingTemplate.calcPaths(queryGraph, algoFactory, algoOpts);
 
                 boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, getEncodingManager().isEnableInstructions());
                 boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
