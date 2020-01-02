@@ -18,92 +18,28 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.CHEdgeExplorer;
-import com.graphhopper.util.CHEdgeIterator;
-import com.graphhopper.util.EdgeIterator;
+public interface PrepareCHEdgeIterator {
+    boolean next();
 
-public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
-    private final CHEdgeExplorer edgeExplorer;
-    private final Weighting weighting;
-    private CHEdgeIterator chIterator;
+    int getEdge();
 
-    public PrepareCHEdgeIterator(CHEdgeExplorer edgeExplorer, Weighting weighting) {
-        this.edgeExplorer = edgeExplorer;
-        this.weighting = weighting;
-    }
+    int getBaseNode();
 
-    @Override
-    public PrepareCHEdgeIterator setBaseNode(int node) {
-        chIterator = edgeExplorer.setBaseNode(node);
-        return this;
-    }
+    int getAdjNode();
 
-    public boolean next() {
-        return iter().next();
-    }
+    int getOrigEdgeFirst();
 
-    public int getEdge() {
-        return iter().getEdge();
-    }
+    int getOrigEdgeLast();
 
-    public int getBaseNode() {
-        return iter().getBaseNode();
-    }
+    boolean isShortcut();
 
-    public int getAdjNode() {
-        return iter().getAdjNode();
-    }
+    double getWeight(boolean reverse);
 
-    public int getOrigEdgeFirst() {
-        return iter().getOrigEdgeFirst();
-    }
+    void setWeight(double weight);
 
-    public int getOrigEdgeLast() {
-        return iter().getOrigEdgeLast();
-    }
+    int getMergeStatus(int flags);
 
-    public boolean isShortcut() {
-        return iter().isShortcut();
-    }
+    void setFlagsAndWeight(int flags, double weight);
 
-    public double getWeight(boolean reverse) {
-        if (isShortcut()) {
-            return iter().getWeight();
-        } else {
-            return weighting.calcWeight(iter(), reverse, EdgeIterator.NO_EDGE);
-        }
-    }
-
-    public void setWeight(double weight) {
-        iter().setWeight(weight);
-    }
-
-    @Override
-    public String toString() {
-        if (chIterator == null) {
-            return "not initialized";
-        } else {
-            return getBaseNode() + "->" + getAdjNode() + " (" + getEdge() + ")";
-        }
-    }
-
-    int getMergeStatus(int flags) {
-        return iter().getMergeStatus(flags);
-    }
-
-    void setFlagsAndWeight(int flags, double weight) {
-        iter().setFlagsAndWeight(flags, weight);
-    }
-
-    void setSkippedEdges(int skippedEdge1, int skippedEdge2) {
-        iter().setSkippedEdges(skippedEdge1, skippedEdge2);
-    }
-
-    private CHEdgeIterator iter() {
-        if (chIterator == null) {
-            throw new IllegalStateException("You need to call setBaseNode() first");
-        }
-        return chIterator;
-    }
+    void setSkippedEdges(int skippedEdge1, int skippedEdge2);
 }
