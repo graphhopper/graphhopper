@@ -62,11 +62,13 @@ public class RandomizedRoutingTest {
                 {Algo.ASTAR, false, false, NODE_BASED},
                 {Algo.CH_ASTAR, true, false, NODE_BASED},
                 {Algo.CH_DIJKSTRA, true, false, NODE_BASED},
-                {Algo.LM, false, true, NODE_BASED},
+                {Algo.LM_UNIDIR, false, true, NODE_BASED},
+                {Algo.LM_BIDIR, false, true, NODE_BASED},
                 {Algo.ASTAR, false, false, EDGE_BASED},
                 {Algo.CH_ASTAR, true, false, EDGE_BASED},
                 {Algo.CH_DIJKSTRA, true, false, EDGE_BASED},
-                {Algo.LM, false, true, EDGE_BASED}
+                {Algo.LM_UNIDIR, false, true, EDGE_BASED},
+                {Algo.LM_BIDIR, false, true, EDGE_BASED}
         });
     }
 
@@ -74,7 +76,8 @@ public class RandomizedRoutingTest {
         ASTAR,
         CH_ASTAR,
         CH_DIJKSTRA,
-        LM
+        LM_BIDIR,
+        LM_UNIDIR
     }
 
     public RandomizedRoutingTest(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
@@ -87,11 +90,13 @@ public class RandomizedRoutingTest {
     @Before
     public void init() {
         dir = new RAMDirectory();
-        encoder = new MotorcycleFlagEncoder(5, 5, 1);
+        // todonow: make this work with speed_both_directions=true!
+        encoder = new CarFlagEncoder(5, 5, 1);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, TurnWeighting.INFINITE_U_TURN_COSTS));
         graph = createGraph();
+        chGraph = graph.getCHGraph(!traversalMode.isEdgeBased() ? chProfiles.get(0) : chProfiles.get(1));
     }
 
     private void preProcessGraph() {
@@ -104,26 +109,28 @@ public class RandomizedRoutingTest {
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
-            lm.setMaximumWeight(10000);
             lm.doWork();
         }
     }
 
-    private BidirRoutingAlgorithm createAlgo() {
+    private RoutingAlgorithm createAlgo() {
         return createAlgo(prepareCH ? chGraph : graph);
     }
 
-    private BidirRoutingAlgorithm createAlgo(Graph graph) {
+    private RoutingAlgorithm createAlgo(Graph graph) {
         switch (algo) {
             case ASTAR:
                 return new AStarBidirection(graph, weighting, traversalMode);
             case CH_DIJKSTRA:
-                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
+                return pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
             case CH_ASTAR:
-                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
-            case LM:
+                return pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
+            case LM_BIDIR:
                 AStarBidirection astarbi = new AStarBidirection(graph, weighting, traversalMode);
-                return (BidirRoutingAlgorithm) lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+                return lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+            case LM_UNIDIR:
+                AStar astar = new AStar(graph, weighting, traversalMode);
+                return lm.getDecoratedAlgorithm(graph, astar, AlgorithmOptions.start().build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }
@@ -218,8 +225,8 @@ public class RandomizedRoutingTest {
         System.out.println("random Graph seed: " + seed);
         final int numQueries = 50;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
-                encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
+//        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
@@ -254,8 +261,7 @@ public class RandomizedRoutingTest {
         // the same as taking the direct edge!
         double pOffset = 0;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true,
-                encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
+        GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(graph, dir);
