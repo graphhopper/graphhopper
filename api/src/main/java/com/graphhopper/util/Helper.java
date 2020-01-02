@@ -499,11 +499,13 @@ public class Helper {
         return enumClass.getEnumConstants()[0];
     }
 
-    public static Double[] createEnumToDoubleArray(Class<? extends Enum> enumClass, Map<String, Object> map) {
+    public static Double[] createEnumToDoubleArray(String name, double min, Class<? extends Enum> enumClass, Map<String, Object> map) {
         Double[] tmp = new Double[enumClass.getEnumConstants().length];
         for (Map.Entry<String, Object> encValEntry : map.entrySet()) {
             Enum enumValue = getValueOf(enumClass, encValEntry.getKey());
             tmp[enumValue.ordinal()] = ((Number) encValEntry.getValue()).doubleValue();
+            if (tmp[enumValue.ordinal()] < min)
+                throw new IllegalArgumentException(name + " cannot be lower than " + min);
         }
         return tmp;
     }

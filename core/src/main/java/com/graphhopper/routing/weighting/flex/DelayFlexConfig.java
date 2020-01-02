@@ -40,7 +40,8 @@ public class DelayFlexConfig {
             if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(entry.getKey(), Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
-                delayList.add(new EnumToValue(enumEncodedValue, Helper.createEnumToDoubleArray(enumClass, (Map<String, Object>) value)));
+                Double[] values = Helper.createEnumToDoubleArray("delay", 0, enumClass, (Map<String, Object>) value);
+                delayList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'delay'");
             }

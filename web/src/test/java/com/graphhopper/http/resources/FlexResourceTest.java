@@ -77,7 +77,7 @@ public class FlexResourceTest {
                 "  base: car\n" +
                 "  priority:\n" +
                 "    road_class:\n" +
-                "      residential: 5\n";
+                "      residential: 0.2\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1800, 1900);

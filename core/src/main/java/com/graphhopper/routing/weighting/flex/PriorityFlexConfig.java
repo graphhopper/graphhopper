@@ -48,7 +48,8 @@ public class PriorityFlexConfig {
             if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(entry.getKey(), Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
-                priorityList.add(new EnumToValue(enumEncodedValue, Helper.createEnumToDoubleArray(enumClass, (Map<String, Object>) value)));
+                Double[] values = Helper.createEnumToDoubleArray("priority", 0, enumClass, (Map<String, Object>) value);
+                priorityList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'priority'");
             }
@@ -64,7 +65,7 @@ public class PriorityFlexConfig {
             ConfigMapEntry entry = priorityList.get(i);
             Double value = entry.getValue(edge, reverse);
             if (value != null)
-                priority *= value;
+                priority = priority / Math.max(0, value);
         }
         return Math.min(priority, config.getMaxPriority());
     }

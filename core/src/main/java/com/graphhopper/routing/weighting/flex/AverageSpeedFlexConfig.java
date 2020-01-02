@@ -48,7 +48,8 @@ public class AverageSpeedFlexConfig {
             if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(entry.getKey(), Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
-                avgSpeedList.add(new EnumToValue(enumEncodedValue, Helper.createEnumToDoubleArray(enumClass, (Map<String, Object>) value)));
+                Double[] values = Helper.createEnumToDoubleArray("average_speed", 0, enumClass, (Map<String, Object>) value);
+                avgSpeedList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'average_speed'");
             }
@@ -61,7 +62,8 @@ public class AverageSpeedFlexConfig {
             if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(entry.getKey(), Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
-                speedFactorList.add(new EnumToValue(enumEncodedValue, Helper.createEnumToDoubleArray(enumClass, (Map<String, Object>) value)));
+                Double[] values = Helper.createEnumToDoubleArray("speed_factor", 0, enumClass, (Map<String, Object>) value);
+                speedFactorList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'speed_factor'");
             }
