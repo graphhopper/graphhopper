@@ -23,8 +23,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.matching.util.HmmProbabilities;
 import com.graphhopper.matching.util.TimeStep;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.PreparationWeighting;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.ch.CHWeighting;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.*;
@@ -92,9 +92,9 @@ public class MapMatching {
         uTurnDistancePenalty = headingTimePenalty * PENALTY_CONVERSION_VELOCITY;
 
         RoutingAlgorithmFactory routingAlgorithmFactory = graphHopper.getAlgorithmFactory(hints);
-        if (routingAlgorithmFactory instanceof PrepareContractionHierarchies) {
+        if (routingAlgorithmFactory instanceof CHRoutingAlgorithmFactory) {
             ch = true;
-            routingGraph = graphHopper.getGraphHopperStorage().getCHGraph(((PrepareContractionHierarchies) routingAlgorithmFactory).getCHProfile());
+            routingGraph = graphHopper.getGraphHopperStorage().getCHGraph(((CHRoutingAlgorithmFactory) routingAlgorithmFactory).getCHProfile());
         } else {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();
@@ -425,7 +425,7 @@ public class MapMatching {
 
                 RoutingAlgorithm router;
                 if (ch) {
-                    router = new DijkstraBidirectionCH(queryGraph, new PreparationWeighting(weighting)) {
+                    router = new DijkstraBidirectionCH(queryGraph, new CHWeighting(weighting)) {
                         @Override
                         protected void initCollections(int size) {
                             super.initCollections(50);
