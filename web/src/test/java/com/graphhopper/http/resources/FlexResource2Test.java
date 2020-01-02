@@ -48,7 +48,7 @@ public class FlexResource2Test {
         String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "model:\n" +
                 "  base: bike\n";
-        JsonNode yamlNode = app.client().target("http://localhost:8080/flex").request().post(Entity.entity(yamlQuery,
+        JsonNode yamlNode = app.client().target("http://localhost:8080/route").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 600, 700);
@@ -60,7 +60,7 @@ public class FlexResource2Test {
                 "  base: bike\n" +
                 // only one tunnel is mapped in this osm file with max_height=1.7 => https://www.openstreetmap.org/way/132908255
                 "  height: 2\n";
-        yamlNode = app.client().target("http://localhost:8080/flex").request().post(Entity.entity(yamlQuery,
+        yamlNode = app.client().target("http://localhost:8080/route").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1000, 2000);

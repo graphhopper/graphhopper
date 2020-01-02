@@ -49,7 +49,7 @@ public class FlexResourceTest {
                 " \"points\": [[1.518946,42.531453],[1.54006,42.511178]]," +
                 " \"model\": { \"base\": \"car\" }" +
                 "}";
-        final Response response = app.client().target("http://localhost:8080/flex").request().post(Entity.json(jsonQuery));
+        final Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -127,7 +127,7 @@ public class FlexResourceTest {
     }
 
     Response queryYaml(String yamlStr, int code) {
-        Response response = app.client().target("http://localhost:8080/flex").request().post(Entity.entity(yamlStr,
+        Response response = app.client().target("http://localhost:8080/route").request().post(Entity.entity(yamlStr,
                 new MediaType("application", "yaml")));
         assertEquals(code, response.getStatus());
         return response;

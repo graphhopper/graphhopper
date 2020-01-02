@@ -17,11 +17,12 @@
  */
 package com.graphhopper.resources;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.MultiException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.graphhopper.*;
 import com.graphhopper.http.WebHelper;
+import com.graphhopper.jackson.Jackson;
+import com.graphhopper.routing.util.FlexRequest;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.InstructionList;
@@ -59,11 +60,13 @@ public class RouteResource {
 
     private final GraphHopperAPI graphHopper;
     private final Boolean hasElevation;
+    private final ObjectMapper yamlOM;
 
     @Inject
     public RouteResource(GraphHopperAPI graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
         this.hasElevation = hasElevation;
+        this.yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
     }
 
     @GET
@@ -175,8 +178,20 @@ public class RouteResource {
         if (request == null)
             throw new IllegalArgumentException("Empty request");
 
+
         StopWatch sw = new StopWatch().start();
-        GHResponse ghResponse = graphHopper.route(request);
+        GHResponse ghResponse;
+
+        if (request instanceof FlexRequest) {
+            if (!(graphHopper instanceof GraphHopper))
+                throw new IllegalStateException("FlexRequest requires GraphHopper base class");
+            request.setWeighting("flex");
+            request.getHints().put("ch.disable", true);
+            ghResponse = new GHResponse();
+            ((GraphHopper) graphHopper).calcPaths(request, ghResponse, ((FlexRequest) request).getModel());
+        } else {
+            ghResponse = graphHopper.route(request);
+        }
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
         boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().get("type", "json"));
@@ -215,6 +230,20 @@ public class RouteResource {
                             header("X-GH-Took", "" + Math.round(took * 1000)).
                             build();
         }
+    }
+
+    @POST
+    @Consumes({"text/x-yaml", "application/x-yaml", "application/yaml"})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
+    public Response doPost(String yaml, @Context HttpServletRequest httpReq) {
+        FlexRequest flexRequest;
+        try {
+            flexRequest = yamlOM.readValue(yaml, FlexRequest.class);
+        } catch (Exception ex) {
+            // TODO should we really provide this much details to API users?
+            throw new IllegalArgumentException("Incorrect YAML: " + ex.getMessage(), ex);
+        }
+        return doPost(flexRequest, httpReq);
     }
 
     private void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, GHRequest request) {
