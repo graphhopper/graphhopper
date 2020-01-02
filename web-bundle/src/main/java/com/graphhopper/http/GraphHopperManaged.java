@@ -74,7 +74,6 @@ public class GraphHopperManaged implements Managed {
                 throw new RuntimeException(e);
             }
         }
-        graphHopper.init(configuration);
 
         String flexModelLocation = configuration.get("graph.flex_model.location", "");
         if (!flexModelLocation.isEmpty()) {
@@ -89,6 +88,8 @@ public class GraphHopperManaged implements Managed {
                 }
             }
         }
+
+        graphHopper.init(configuration);
     }
 
     @Override
