@@ -15,6 +15,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 
+import static com.graphhopper.http.resources.FlexResourceTest.assertBetween;
 import static org.junit.Assert.*;
 
 public class FlexResourceCHTest {
@@ -57,10 +58,5 @@ public class FlexResourceCHTest {
         JsonNode path = json.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 3100, 3300);
         assertBetween("time wasn't correct", path.get("time").asLong() / 1000.0, 230, 280);
-    }
-
-    static void assertBetween(String msg, double val, double from, double to) {
-        assertTrue(msg + " :" + val, val > from);
-        assertTrue(msg + " :" + val, val < to);
     }
 }

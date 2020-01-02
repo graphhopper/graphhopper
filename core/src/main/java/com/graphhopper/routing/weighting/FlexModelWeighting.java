@@ -61,9 +61,9 @@ public class FlexModelWeighting implements Weighting {
         if (distanceFactor < 0)
             throw new IllegalArgumentException("distance_factor cannot be negative");
 
-        maxPriority = flexModel.getMaxPriority();
-        if (maxPriority <= 0)
-            throw new IllegalArgumentException("max_priority cannot be zero or negative");
+        maxPriority = flexModel.getMinPriority();
+        if (maxPriority < 0)
+            throw new IllegalArgumentException("min_priority cannot be negative");
     }
 
     @Override
