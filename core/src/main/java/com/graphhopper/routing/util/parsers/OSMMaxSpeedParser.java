@@ -23,7 +23,6 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.shapes.GHPoint;
@@ -53,7 +52,7 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
         double maxSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
 
         if (maxSpeed < 0) {

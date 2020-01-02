@@ -524,6 +524,7 @@ public class EncodingManager implements EncodedValueLookup {
     public static class AcceptWay {
         private Map<String, Access> accessMap;
         boolean hasAccepted = false;
+        boolean isFerry = false;
 
         public AcceptWay() {
             this.accessMap = new HashMap<>(5);
@@ -541,6 +542,8 @@ public class EncodingManager implements EncodedValueLookup {
             accessMap.put(key, access);
             if (access != Access.CAN_SKIP)
                 hasAccepted = true;
+            if (access == Access.FERRY)
+                isFerry = true;
             return this;
         }
 
@@ -548,14 +551,18 @@ public class EncodingManager implements EncodedValueLookup {
             return accessMap.isEmpty();
         }
 
+        /**
+         * At least one of the entries is not CAN_SKIP
+         */
         public boolean hasAccepted() {
             return hasAccepted;
         }
 
-        public Access getAccess() {
-            if (accessMap.isEmpty())
-                throw new IllegalStateException("Cannot determine Access if map is empty");
-            return accessMap.values().iterator().next();
+        /**
+         * At least one of the entries is FERRY (usually all entries)
+         */
+        public boolean isFerry() {
+            return isFerry;
         }
     }
 
@@ -600,10 +607,8 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
-        // return if way or ferry
-        Access access = acceptWay.getAccess();
         for (TagParser parser : edgeTagParsers) {
-            parser.handleWayTags(edgeFlags, way, access, relationFlags);
+            parser.handleWayTags(edgeFlags, way, acceptWay.isFerry(), relationFlags);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
             encoder.handleWayTags(edgeFlags, way, acceptWay.get(encoder.toString()));

@@ -69,7 +69,7 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
         // just copy value into different bit range
         RouteNetwork routeNetwork = transformerRouteRelEnc.getEnum(false, relationFlags);
         bikeRouteEnc.setEnum(false, edgeFlags, routeNetwork);
