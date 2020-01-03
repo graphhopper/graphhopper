@@ -23,7 +23,6 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RouteNetwork;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -69,7 +68,7 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
         // just copy value into different bit range
         RouteNetwork footNetwork = transformerRouteRelEnc.getEnum(false, relationFlags);
         footRouteEnc.setEnum(false, edgeFlags, footNetwork);
