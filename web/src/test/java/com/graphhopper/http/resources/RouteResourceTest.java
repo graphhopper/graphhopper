@@ -42,6 +42,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
@@ -61,13 +62,13 @@ public class RouteResourceTest {
 
     static {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
-                put("graph.flag_encoders", "car").
+                put("graph.flag_encoders", "car,foot").
                 put("prepare.ch.weightings", "fastest").
                 put("routing.ch.disabling_allowed", "true").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                put("graph.encoded_values", "surface").
                 put("graph.location", DIR));
     }
 
@@ -236,10 +237,10 @@ public class RouteResourceTest {
         assertEquals(5, averageSpeedList.get(1).getLength());
 
         List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
-        assertEquals(77, edgeIdDetails.size());
-        assertEquals(880L, edgeIdDetails.get(0).getValue());
+        assertEquals(78, edgeIdDetails.size());
+        assertEquals(915L, edgeIdDetails.get(0).getValue());
         assertEquals(2, edgeIdDetails.get(0).getLength());
-        assertEquals(881L, edgeIdDetails.get(1).getValue());
+        assertEquals(916L, edgeIdDetails.get(1).getValue());
         assertEquals(8, edgeIdDetails.get(1).getLength());
 
         long expectedTime = rsp.getBest().getTime();
@@ -293,8 +294,8 @@ public class RouteResourceTest {
         JsonNode edgeIds = details.get("edge_id");
         int firstLink = edgeIds.get(0).get(2).asInt();
         int lastLink = edgeIds.get(edgeIds.size() - 1).get(2).asInt();
-        assertEquals(880, firstLink);
-        assertEquals(1421, lastLink);
+        assertEquals(915, firstLink);
+        assertEquals(1547, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
         assertEquals(-1, maxSpeed.get(0).get(2).asDouble(-1), .01);
@@ -463,4 +464,93 @@ public class RouteResourceTest {
         assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
     }
 
+    @Test
+    public void testFlexQuery() {
+        String jsonQuery = "{" +
+                " \"points\": [[1.518946,42.531453],[1.54006,42.511178]]," +
+                " \"model\": { \"base\": \"car\" }" +
+                "}";
+        final Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonQuery));
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 3100, 3300);
+        assertBetween("time wasn't correct", path.get("time").asLong() / 1000.0, 170, 200);
+    }
+
+    @Test
+    public void testFlexYamlQuery() {
+        String yamlQuery = "points: [[1.518946,42.531453], [1.54006,42.511178]]\n" +
+                "model:\n" +
+                "  base: car\n";
+        JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
+        JsonNode infoElement = yamlNode.get("info");
+        assertFalse(infoElement.has("errors"));
+        JsonNode path = yamlNode.get("paths").get(0);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 3100, 3300);
+    }
+
+    @Test
+    public void testFlexCustomWeight() {
+        String yamlQuery = "points: [[1.529106,42.506567], [1.54006,42.511178]]\n" +
+                "model:\n" +
+                "  base: car\n" +
+                "  priority:\n" +
+                "    road_class:\n" +
+                "      secondary: 2\n";
+        JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
+        JsonNode path = yamlNode.get("paths").get(0);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1300, 1400);
+
+        // now prefer primary roads via special yaml-map notation
+        yamlQuery = "points: [[1.5274,42.506211], [1.54006,42.511178]]\n" +
+                "model:\n" +
+                "  base: car\n" +
+                "  priority:\n" +
+                "    road_class: { residential: 1.2, primary: 1.5 }";
+        yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
+        path = yamlNode.get("paths").get(0);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1650, 1750);
+    }
+
+    @Test
+    public void testFlexAvoidTunnels() {
+        String yamlQuery = "points: [[1.533365, 42.506211], [1.523924, 42.520605]]\n" +
+                "model:\n" +
+                "  base: car\n" +
+                "  priority:\n" +
+                "    road_environment:\n" +
+                "      tunnel: 0.1\n";
+        JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
+        JsonNode path = yamlNode.get("paths").get(0);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 3000, 3100);
+    }
+
+    @Test
+    public void testFlexSimplisticWheelchair() {
+        String yamlQuery = "points: [[1.540875,42.510672], [1.54212,42.511131]]\n" +
+                "model:\n" +
+                "  base: foot\n" +
+                "  min_priority: 0\n"+
+                "  priority:\n" +
+                "    road_class:\n" +
+                "      steps: 0\n";
+        JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
+        JsonNode path = yamlNode.get("paths").get(0);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 500, 600);
+    }
+
+    static void assertBetween(String msg, double val, double from, double to) {
+        assertTrue(msg + " :" + val, val > from);
+        assertTrue(msg + " :" + val, val < to);
+    }
+
+    Response queryYaml(String yamlStr, int code) {
+        Response response = app.client().target("http://localhost:8080/route").request().post(Entity.entity(yamlStr,
+                new MediaType("application", "yaml")));
+        assertEquals(code, response.getStatus());
+        return response;
+    }
 }

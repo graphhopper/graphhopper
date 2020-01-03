@@ -178,16 +178,12 @@ public class RouteResource {
         if (request == null)
             throw new IllegalArgumentException("Empty request");
 
-
         StopWatch sw = new StopWatch().start();
-        GHResponse ghResponse;
-
+        GHResponse ghResponse = new GHResponse();
         if (request instanceof FlexRequest) {
             if (!(graphHopper instanceof GraphHopper))
                 throw new IllegalStateException("FlexRequest requires GraphHopper base class");
-            request.setWeighting("flex");
-            request.getHints().put("ch.disable", true);
-            ghResponse = new GHResponse();
+            request.setWeighting("flex").getHints().put("ch.disable", true);
             ((GraphHopper) graphHopper).calcPaths(request, ghResponse, ((FlexRequest) request).getModel());
         } else {
             ghResponse = graphHopper.route(request);
@@ -200,16 +196,17 @@ public class RouteResource {
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
 
-        /* default to false for the route part in next API version, see #437 */
+        // default to false for the route part in next API version, see #437
         boolean withRoute = request.getHints().getBool("gpx.route", true);
         boolean withTrack = request.getHints().getBool("gpx.track", true);
         boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
         String trackName = request.getHints().get("gpx.trackname", "GraphHopper Track");
         String timeString = request.getHints().get("gpx.millis", "");
         float took = sw.stop().getSeconds();
-        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String logStr = httpReq.getQueryString() + " " + infoStr + " " + request.getPoints().size() + ", took:"
-                + took + ", " + request.getAlgorithm() + ", " + request.getWeighting() + ", " + request.getVehicle();
+        String logStr = (httpReq.getQueryString() == null ? "-" : httpReq.getQueryString())
+                + " " + httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent")
+                + " " + request.getPoints().size() + ", took:" + took + ", " + request.getAlgorithm()
+                + ", " + request.getWeighting() + ", " + request.getVehicle();
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
