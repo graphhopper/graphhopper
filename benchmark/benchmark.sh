@@ -52,7 +52,7 @@ prepare.min_network_size=10000 \
 prepare.min_oneway_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
-measurement.useMeasurementTimeAsRefTime=${USE_MEASUREMENT_TIME_AS_REF_TIME}
+measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 # 2 - big map: node-based CH + landmarks
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
@@ -72,4 +72,4 @@ prepare.min_network_size=10000 \
 prepare.min_oneway_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
-measurement.useMeasurementTimeAsRefTime=${USE_MEASUREMENT_TIME_AS_REF_TIME}
+measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}

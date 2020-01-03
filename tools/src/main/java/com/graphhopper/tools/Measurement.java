@@ -96,6 +96,11 @@ public class Measurement {
         int count = args.getInt("measurement.count", 5000);
         put("measurement.map", args.get("datareader.file", "unknown"));
 
+        final boolean useMeasurementTimeAsRefTime = args.getBool("measurement.use_measurement_time_as_ref_time", false);
+        if (useMeasurementTimeAsRefTime && !useJson) {
+            throw new IllegalArgumentException("Using measurement time as reference time only works with json files");
+        }
+
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
             protected void prepareCH(boolean closeEarly) {
@@ -234,7 +239,7 @@ public class Measurement {
                 writeSummary(summaryLocation, propLocation);
             }
             if (useJson) {
-                storeJson(propLocation, args.getBool("measurement.useMeasurementTimeAsRefTime", false));
+                storeJson(propLocation, useMeasurementTimeAsRefTime);
             } else {
                 storeProperties(propLocation);
             }

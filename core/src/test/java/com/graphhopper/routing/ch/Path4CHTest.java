@@ -152,7 +152,7 @@ public class Path4CHTest {
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), graph.getTurnCostStorage());
+        TurnWeighting chTurnWeighting = new TurnWeighting(new CHWeighting(weighting), graph.getTurnCostStorage());
         CHGraph lg = graph.getCHGraph();
         AbstractBidirectionEdgeCHNoSOD algo = new DijkstraBidirectionEdgeCHNoSOD(lg, chTurnWeighting);
         algo.setEdgeFilter(new LevelEdgeFilter(lg));

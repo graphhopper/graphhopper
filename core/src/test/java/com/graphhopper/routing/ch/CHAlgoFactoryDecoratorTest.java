@@ -59,7 +59,6 @@ public class CHAlgoFactoryDecoratorTest {
         ghStorage = new GraphBuilder(encodingManager)
                 .setCHProfiles(profileNode1, profileNode2, profileNode3, profileEdge1, profileEdge2, profileEdge3)
                 .setDir(dir)
-                .set3D(false)
                 .withTurnCosts(true)
                 .create();
     }

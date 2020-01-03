@@ -44,6 +44,16 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     boolean isShortcut();
 
     /**
+     * @return true if this shortcut can be used in fwd direction. Do not call this method if {@link #isShortcut()} is false
+     */
+    boolean getFwdAccess();
+
+    /**
+     * @see #getFwdAccess
+     */
+    boolean getBwdAccess();
+
+    /**
      * This method is only used on preparation.
      *
      * @see PrepareEncoder#getScMergeStatus(int, int)
