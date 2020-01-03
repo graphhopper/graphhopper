@@ -91,8 +91,8 @@ public class AlternativeRouteCHTest {
         GraphHopperStorage g = createTestGraph(true, em);
         AlternativeRouteCH altDijkstra = new AlternativeRouteCH(g.getCHGraph(), new CHWeighting(weighting));
         altDijkstra.setEdgeFilter(new LevelEdgeFilter(g.getCHGraph()));
-        altDijkstra.setMaxShareFactor(0.5);
-        altDijkstra.setMaxWeightFactor(2);
+        altDijkstra.setMaxShareFactor(10);
+        altDijkstra.setMaxWeightFactor(10);
         List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4);
         checkAlternatives(pathInfos);
         assertEquals(2, pathInfos.size());
@@ -120,8 +120,8 @@ public class AlternativeRouteCHTest {
         GraphHopperStorage g = createTestGraph(true, em);
         AlternativeRouteCH altDijkstra = new AlternativeRouteCH(g.getCHGraph(), new CHWeighting(weighting));
         altDijkstra.setEdgeFilter(new LevelEdgeFilter(g.getCHGraph()));
-        altDijkstra.setMaxShareFactor(0.7);
-        altDijkstra.setMaxWeightFactor(2);
+        altDijkstra.setMaxShareFactor(10);
+        altDijkstra.setMaxWeightFactor(10);
 
         List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4);
         checkAlternatives(pathInfos);

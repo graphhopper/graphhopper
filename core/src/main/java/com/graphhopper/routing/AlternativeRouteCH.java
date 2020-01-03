@@ -184,10 +184,10 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 double distance = 0.0;
                 int i = vIndex;
                 while (i > 0 && distance < T) {
-                    distance += edges.get(i).getDistance();
+                    distance += edges.get(i-1).getDistance();
                     i--;
                 }
-                return edges.get(i).getAdjNode();
+                return edges.get(i).getBaseNode();
             }
 
             private int getNextNodeTMetersAway(Path path, int vIndex) {
@@ -199,7 +199,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                     distance += edges.get(i).getDistance();
                     i++;
                 }
-                return edges.get(i).getAdjNode();
+                return edges.get(i-1).getAdjNode();
             }
 
         });
