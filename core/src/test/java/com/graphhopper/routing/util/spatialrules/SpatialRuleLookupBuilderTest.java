@@ -24,6 +24,7 @@ import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -39,7 +40,10 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static junit.framework.TestCase.assertFalse;
@@ -51,6 +55,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class SpatialRuleLookupBuilderTest {
 
+    private static final long MAX_BENCHMARK_RUNTIME_MS = 10_000L;
     private static final String COUNTRIES_FILE = "../core/files/spatialrules/countries.geo.json";
 
     @Test
@@ -193,5 +198,61 @@ public class SpatialRuleLookupBuilderTest {
         livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e4.setFlags(em.handleWayTags(livingStreet2, map, relFlags));
         assertEquals(MaxSpeed.UNSET_SPEED, e4.get(tmpCarMaxSpeedEnc), .1);
+    }
+
+    @Test
+    public void testSpeed() throws IOException {
+        final FileReader reader = new FileReader(COUNTRIES_FILE);
+        SpatialRuleFactory rulePerCountryFactory = new SpatialRuleFactory() {
+            
+            @Override
+            public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
+                return new SpatialRule() {
+                    
+                    @Override
+                    public double getMaxSpeed(String highway, double _default) {
+                        return 100;
+                    }
+                    
+                    @Override
+                    public String getId() {
+                        return id;
+                    }
+                    
+                    @Override
+                    public List<Polygon> getBorders() {
+                        return borders;
+                    }
+                    
+                    @Override
+                    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
+                        return RoadAccess.YES;
+                    }
+                    
+                    @Override
+                    public String toString() {
+                        return getId();
+                    }
+                };
+            }
+        };
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", rulePerCountryFactory);
+    
+        // generate random points in central Europe
+        List<GHPoint> randomPoints = new ArrayList<>();
+        for (int i = 0; i < 1_000_000; i++) {
+            double lat = 46d + Math.random() * 7d;
+            double lon = 6d + Math.random() * 21d;
+            randomPoints.add(new GHPoint(lat, lon));
+        }
+        
+        long start = System.nanoTime();
+        for (GHPoint point : randomPoints) {
+            spatialRuleLookup.lookupRule(point);
+        }
+        long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+        System.out.println("Lookup of " + randomPoints.size() + " points took " + duration + "ms");
+        System.out.println("Average lookup duration: " + ((double) duration) / randomPoints.size() + "ms");
+        assertTrue("Benchmark must be finished in less than " + MAX_BENCHMARK_RUNTIME_MS + "ms", duration < MAX_BENCHMARK_RUNTIME_MS);
     }
 }
