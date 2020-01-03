@@ -109,6 +109,7 @@ public class RandomizedRoutingTest {
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
+            lm.setMaximumWeight(1000);
             lm.doWork();
         }
     }
