@@ -160,7 +160,6 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
             }
 
             private int getPreviousNodeTMetersAway(Path path, int vIndex) {
-                // TODO: Only a quick approximation, probably contains off-by-one error or something
                 List<EdgeIteratorState> edges = path.calcEdges();
                 double distance = 0.0;
                 int i = vIndex;
@@ -172,7 +171,6 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
             }
 
             private int getNextNodeTMetersAway(Path path, int vIndex) {
-                // TODO: Only a quick approximation, probably contains off-by-one error or something
                 List<EdgeIteratorState> edges = path.calcEdges();
                 double distance = 0.0;
                 int i = vIndex;
