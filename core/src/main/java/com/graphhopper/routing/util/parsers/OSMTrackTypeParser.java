@@ -22,7 +22,6 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.TrackType;
-import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
@@ -43,9 +42,8 @@ public class OSMTrackTypeParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, Access access,
-                                 IntsRef relationFlags) {
-        if (!access.isWay())
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
+        if (ferry)
             return edgeFlags;
 
         String trackTypeTag = readerWay.getTag("tracktype");

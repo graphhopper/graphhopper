@@ -8,7 +8,6 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
 import static org.junit.Assert.assertEquals;
 
 public class OSMHazmatParserTest {
@@ -31,22 +30,22 @@ public class OSMHazmatParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("hazmat", "no");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(Hazmat.NO, hazEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("hazmat", "yes");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(Hazmat.YES, hazEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("hazmat", "designated");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(Hazmat.YES, hazEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("hazmat", "designated");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(Hazmat.YES, hazEnc.getEnum(false, intsRef));
     }
 
@@ -54,7 +53,7 @@ public class OSMHazmatParserTest {
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(Hazmat.YES, hazEnc.getEnum(false, intsRef));
     }
 }

@@ -739,7 +739,7 @@ public class GraphHopperIT {
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
                 .setEncodingManager(EncodingManager.start().add(new OSMRoadEnvironmentParser() {
                     @Override
-                    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, IntsRef relationFlags) {
+                    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
                         // do not change RoadEnvironment to avoid triggering tunnel interpolation - is this a valid use case after #TODONOW?
                         return edgeFlags;
                     }

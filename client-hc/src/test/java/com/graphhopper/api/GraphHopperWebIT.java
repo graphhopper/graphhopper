@@ -174,7 +174,7 @@ public class GraphHopperWebIT {
         GHResponse res = gh.route(req);
         List<String> given = extractInstructionNames(res.getBest(), 5);
         assertEquals(Arrays.asList(
-                "Continue", "Keep left", "Turn right onto B 246", "Turn sharp right onto Dorfaue, K 6156", "Turn right onto B 96"
+                "Continue", "Keep left", "Turn right onto B 246", "Turn right onto Dorfaue, K 6156", "Turn right onto B 96"
         ), given);
 
         req.getHints().put("turn_description", false);
