@@ -19,13 +19,11 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -59,23 +57,23 @@ public class PrepareCHGraph {
     }
 
     public PrepareCHEdgeExplorer createInEdgeExplorer() {
-        return new PrepareCHEdgeIteratorImpl(chGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.inEdges(chGraph.createEdgeExplorer(), weighting);
     }
 
     public PrepareCHEdgeExplorer createOutEdgeExplorer() {
-        return new PrepareCHEdgeIteratorImpl(chGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.outEdges(chGraph.createEdgeExplorer(), weighting);
     }
 
     public PrepareCHEdgeExplorer createAllEdgeExplorer() {
-        return new PrepareCHEdgeIteratorImpl(chGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.allEdges(chGraph.createEdgeExplorer(), weighting);
     }
 
-    public EdgeExplorer createOriginalInEdgeExplorer() {
-        return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+    public PrepareCHEdgeExplorer createOriginalInEdgeExplorer() {
+        return PrepareCHEdgeIteratorImpl.inEdges(chGraph.createOriginalEdgeExplorer(), weighting);
     }
 
-    public EdgeExplorer createOriginalOutEdgeExplorer() {
-        return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+    public PrepareCHEdgeExplorer createOriginalOutEdgeExplorer() {
+        return PrepareCHEdgeIteratorImpl.outEdges(chGraph.createOriginalEdgeExplorer(), weighting);
     }
 
     public int getNodes() {

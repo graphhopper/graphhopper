@@ -22,7 +22,6 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.Roundabout;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
@@ -45,8 +44,8 @@ public class OSMRoundaboutParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
-        if (!access.isWay())
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+        if (ferry)
             return edgeFlags;
         boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
         if (isRoundabout)

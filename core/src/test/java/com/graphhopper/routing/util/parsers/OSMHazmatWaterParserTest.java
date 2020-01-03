@@ -32,17 +32,17 @@ public class OSMHazmatWaterParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("hazmat:water", "no");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatWater.NO, hazWaterEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("hazmat:water", "yes");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatWater.YES, hazWaterEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("hazmat:water", "permissive");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatWater.PERMISSIVE, hazWaterEnc.getEnum(false, intsRef));
     }
 
@@ -50,7 +50,7 @@ public class OSMHazmatWaterParserTest {
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatWater.YES, hazWaterEnc.getEnum(false, intsRef));
     }
 }
