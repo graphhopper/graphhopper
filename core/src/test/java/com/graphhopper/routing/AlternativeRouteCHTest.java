@@ -17,9 +17,8 @@
  */
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.AlternativeRoute.AlternativeBidirSearch;
 import com.graphhopper.routing.ch.CHWeighting;
+import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -30,7 +29,6 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
 
 public class AlternativeRouteCHTest {
@@ -38,126 +36,70 @@ public class AlternativeRouteCHTest {
     private final EncodingManager em = EncodingManager.create(carFE);
     private final Weighting weighting = new FastestWeighting(carFE);
 
-    public GraphHopperStorage createTestGraph(boolean fullGraph, EncodingManager tmpEM) {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false);
+    public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
+        final GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false);
         CHProfile chProfile = CHProfile.nodeBased(new FastestWeighting(carFE));
         graph.addCHGraph(chProfile);
         graph.create(1000);
 
-        /* 9
-         _/\
+        /*
+
+           9
+          /\
          1  2-3-4-10
          \   /   \
          5--6-7---8
         
          */
-        graph.edge(1, 9, 1, true);
-        graph.edge(9, 2, 1, true);
-        if (fullGraph)
-            graph.edge(2, 3, 1, true);
-        graph.edge(3, 4, 1, true);
-        graph.edge(4, 10, 1, true);
 
-        graph.edge(5, 6, 1, true);
+        // Make all edges the length of T, the distance around v than an s->v->t path
+        // has to be locally-shortest to be considered.
+        // So we get all three alternatives.
 
-        graph.edge(6, 7, 1, true);
-        graph.edge(7, 8, 1, true);
+        graph.edge(5, 6, AlternativeRouteCH.T, true);
+        graph.edge(6, 3, AlternativeRouteCH.T, true);
+        graph.edge(3, 4, AlternativeRouteCH.T, true);
+        graph.edge(4, 10, AlternativeRouteCH.T, true);
 
-        if (fullGraph)
-            graph.edge(1, 5, 2, true);
-        graph.edge(6, 3, 1, true);
-        graph.edge(4, 8, 1, true);
+        graph.edge(6, 7, AlternativeRouteCH.T, true);
+        graph.edge(7, 8, AlternativeRouteCH.T, true);
+        graph.edge(8, 4, AlternativeRouteCH.T, true);
 
-        updateDistancesFor(graph, 5, 0.00, 0.05);
-        updateDistancesFor(graph, 6, 0.00, 0.10);
-        updateDistancesFor(graph, 7, 0.00, 0.15);
-        updateDistancesFor(graph, 8, 0.00, 0.25);
+        graph.edge(5, 1, AlternativeRouteCH.T, true);
+        graph.edge(1, 9, AlternativeRouteCH.T, true);
+        graph.edge(9, 2, AlternativeRouteCH.T, true);
+        graph.edge(2, 3, AlternativeRouteCH.T, true);
 
-        updateDistancesFor(graph, 1, 0.05, 0.00);
-        updateDistancesFor(graph, 9, 0.10, 0.05);
-        updateDistancesFor(graph, 2, 0.05, 0.10);
-        updateDistancesFor(graph, 3, 0.05, 0.15);
-        updateDistancesFor(graph, 4, 0.05, 0.25);
-        updateDistancesFor(graph, 10, 0.05, 0.30);
         graph.freeze();
 
+        // Carefully construct the CH so that the forward tree and the backward tree
+        // meet on all three possible paths from 5 to 10
+        final List<Integer> nodeOrdering = Arrays.asList(0, 10, 4, 3, 2, 5, 1, 6, 7, 8, 9);
         PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+        contractionHierarchies.useFixedNodeOrdering(new NodeOrderingProvider() {
+            @Override
+            public int getNodeIdForLevel(int level) {
+                return nodeOrdering.get(level);
+            }
+
+            @Override
+            public int getNumNodes() {
+                return nodeOrdering.size();
+            }
+        });
         contractionHierarchies.doWork();
         return graph;
     }
 
     @Test
     public void testCalcAlternatives() {
-        GraphHopperStorage g = createTestGraph(true, em);
+        GraphHopperStorage g = createTestGraph(em);
         AlternativeRouteCH altDijkstra = new AlternativeRouteCH(g.getCHGraph(), new CHWeighting(weighting));
         altDijkstra.setEdgeFilter(new LevelEdgeFilter(g.getCHGraph()));
-        altDijkstra.setMaxShareFactor(10);
+        altDijkstra.setMaxShareFactor(0.9);
         altDijkstra.setMaxWeightFactor(10);
-        List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4);
-        checkAlternatives(pathInfos);
-        assertEquals(2, pathInfos.size());
-
-        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g, new CHWeighting(weighting), TraversalMode.NODE_BASED);
-        Path bestPath = dijkstra.calcPath(5, 4);
-
-        Path bestAlt = pathInfos.get(0).getPath();
-        Path secondAlt = pathInfos.get(1).getPath();
-
-        assertEquals(bestPath.calcNodes(), bestAlt.calcNodes());
-        assertEquals(bestPath.getWeight(), bestAlt.getWeight(), 1e-3);
-
-        assertEquals(IntArrayList.from(5, 6, 3, 4), bestAlt.calcNodes());
-
-        // Note: here plateau is longer, even longer than optimum, but path is longer
-        // so which alternative is better? longer plateau.weight with bigger path.weight or smaller path.weight with smaller plateau.weight
-        // assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), secondAlt.calcNodes());
-        assertEquals(IntArrayList.from(5, 6, 7, 8, 4), secondAlt.calcNodes());
-        assertEquals(1667.9, secondAlt.getWeight(), .1);
-    }
-
-    @Test
-    public void testCalcAlternatives2() {
-        GraphHopperStorage g = createTestGraph(true, em);
-        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(g.getCHGraph(), new CHWeighting(weighting));
-        altDijkstra.setEdgeFilter(new LevelEdgeFilter(g.getCHGraph()));
-        altDijkstra.setMaxShareFactor(10);
-        altDijkstra.setMaxWeightFactor(10);
-
-        List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4);
-        checkAlternatives(pathInfos);
+        List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
         assertEquals(3, pathInfos.size());
-
-        // result is sorted based on the plateau to full weight ratio
-        assertEquals(IntArrayList.from(5, 6, 3, 4), pathInfos.get(0).getPath().calcNodes());
-        assertEquals(IntArrayList.from(5, 6, 7, 8, 4), pathInfos.get(1).getPath().calcNodes());
-        assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), pathInfos.get(2).getPath().calcNodes());
-        assertEquals(2416.0, pathInfos.get(2).getPath().getWeight(), .1);
     }
 
-    private void checkAlternatives(List<AlternativeRouteCH.AlternativeInfo> alternativeInfos) {
-        assertFalse("alternativeInfos should contain alternatives", alternativeInfos.isEmpty());
-        AlternativeRouteCH.AlternativeInfo bestInfo = alternativeInfos.get(0);
-        for (int i = 1; i < alternativeInfos.size(); i++) {
-            AlternativeRouteCH.AlternativeInfo a = alternativeInfos.get(i);
-            if (a.getPath().getWeight() < bestInfo.getPath().getWeight())
-                fail("alternative is not longer -> " + a + " vs " + bestInfo);
-
-        }
-    }
-
-    @Test
-    public void testDisconnectedAreas() {
-        Graph g = createTestGraph(true, em);
-
-        // one single disconnected node
-        updateDistancesFor(g, 20, 0.00, -0.01);
-
-        Weighting weighting = new FastestWeighting(carFE);
-        AlternativeBidirSearch altDijkstra = new AlternativeBidirSearch(g, weighting, TraversalMode.NODE_BASED, 1);
-        Path path = altDijkstra.calcPath(1, 20);
-        assertFalse(path.isFound());
-
-        // make sure not the full graph is traversed!
-        assertEquals(3, altDijkstra.getVisitedNodes());
-    }
 }
