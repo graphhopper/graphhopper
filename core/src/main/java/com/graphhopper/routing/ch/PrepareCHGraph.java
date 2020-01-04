@@ -19,7 +19,6 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
@@ -33,7 +32,6 @@ public class PrepareCHGraph {
     private final CHGraph chGraph;
     private final Weighting weighting;
     private final TurnWeighting turnWeighting;
-    private final FlagEncoder encoder;
 
     public static PrepareCHGraph nodeBased(CHGraph chGraph, Weighting weighting) {
         if (chGraph.getCHProfile().isEdgeBased()) {
@@ -51,7 +49,6 @@ public class PrepareCHGraph {
 
     private PrepareCHGraph(CHGraph chGraph, Weighting weighting, TurnWeighting turnWeighting) {
         this.chGraph = chGraph;
-        this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
         this.turnWeighting = turnWeighting;
     }
