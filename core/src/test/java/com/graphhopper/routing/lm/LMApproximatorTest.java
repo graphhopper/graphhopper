@@ -25,6 +25,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
@@ -50,7 +51,7 @@ public class LMApproximatorTest {
     }
 
     @Test
-    @Repeat(times = 5)
+    @Repeat(times = 50)
     public void randomGraph() {
         Directory dir = new RAMDirectory();
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
@@ -68,9 +69,10 @@ public class LMApproximatorTest {
         lm.doWork();
         LandmarkStorage landmarkStorage = lm.getLandmarkStorage();
         LMApproximator lmApproximator = new LMApproximator(graph, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false);
-
+        BeelineWeightApproximator beelineApproximator = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
         int t = 0;
         lmApproximator.setTo(t);
+        beelineApproximator.setTo(t);
 
         int nOverApproximatedWeights = 0;
         for (int v=0; v<graph.getNodes(); v++) {
@@ -80,7 +82,12 @@ public class LMApproximatorTest {
                 double realRemainingWeight = path.getWeight();
                 double approximatedRemainingWeight = lmApproximator.approximate(v);
                 if (approximatedRemainingWeight > realRemainingWeight) {
-                    System.out.printf("%f\t%f\n", approximatedRemainingWeight, realRemainingWeight);
+                    System.out.printf("LM: %f\treal: %f\n", approximatedRemainingWeight, realRemainingWeight);
+                    nOverApproximatedWeights++;
+                }
+                double beelineApproximatedRemainingWeight = beelineApproximator.approximate(v);
+                if (beelineApproximatedRemainingWeight > realRemainingWeight) {
+                    System.out.printf("beeline: %f\treal: %f\n", beelineApproximatedRemainingWeight, realRemainingWeight);
                     nOverApproximatedWeights++;
                 }
             }

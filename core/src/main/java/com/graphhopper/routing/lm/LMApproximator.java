@@ -130,7 +130,8 @@ public class LMApproximator implements WeightApproximator {
             if (tmpMaxWeightInt > maxWeightInt)
                 maxWeightInt = tmpMaxWeightInt;
         }
-        return maxWeightInt * factor;
+        // Round down, we need to be an underestimator.
+        return (maxWeightInt - 1) * factor;
     }
 
     @Override
