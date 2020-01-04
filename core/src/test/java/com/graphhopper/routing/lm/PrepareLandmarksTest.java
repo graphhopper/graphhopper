@@ -150,7 +150,7 @@ public class PrepareLandmarksTest {
 
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes(), oneDirAlgoWithLandmarks.getVisitedNodes() + 142);
+        assertEquals(expectedAlgo.getVisitedNodes() - 133, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
         opts.getHints().put("lm.recalc_count", 50);
@@ -159,7 +159,7 @@ public class PrepareLandmarksTest {
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes(), biDirAlgoWithLandmarks.getVisitedNodes() + 164);
+        assertEquals(expectedAlgo.getVisitedNodes() - 164, biDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with A* and a QueryGraph. We expect slightly less optimal as two more cycles needs to be traversed
         // due to the two more virtual nodes but this should not harm in practise
@@ -174,7 +174,7 @@ public class PrepareLandmarksTest {
         expectedPath = expectedAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes(), qGraphOneDirAlgo.getVisitedNodes() + 133);
+        assertEquals(expectedAlgo.getVisitedNodes() - 133, qGraphOneDirAlgo.getVisitedNodes());
     }
 
     @Test
