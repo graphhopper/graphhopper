@@ -28,6 +28,17 @@ import com.graphhopper.routing.weighting.flex.DelayFlexConfig;
 import com.graphhopper.routing.weighting.flex.PriorityFlexConfig;
 import com.graphhopper.util.EdgeIteratorState;
 
+/**
+ * Every EncodedValue like road_environment can influence one or more aspects of this Weighting: the delay, the
+ * speed_factor, the average_speed and the priority. The formula is basically:
+ * <pre>
+ * if no access to edge then return infinity
+ * seconds = toSeconds(distance / speed) + delayInSeconds
+ * distanceInfluence = distance * distanceFactor
+ * weight = (seconds + distanceInfluence) / priority;
+ * return weight
+ * </pre>
+ */
 public class FlexModelWeighting implements Weighting {
 
     private FlagEncoder deprecatedFlagEncoder;
