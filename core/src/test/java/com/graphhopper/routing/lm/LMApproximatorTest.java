@@ -81,12 +81,15 @@ public class LMApproximatorTest {
             if (path.isFound()) {
                 double realRemainingWeight = path.getWeight();
                 double approximatedRemainingWeight = lmApproximator.approximate(v);
-                if (approximatedRemainingWeight > realRemainingWeight) {
+                // Give the beelineApproximator some slack, because the map distance of an edge
+                // can be _smaller_ than its Euklidean distance, due to rounding.
+                double slack = path.getEdgeCount() * (1 / 1000.0);
+                if (approximatedRemainingWeight - slack > realRemainingWeight) {
                     System.out.printf("LM: %f\treal: %f\n", approximatedRemainingWeight, realRemainingWeight);
                     nOverApproximatedWeights++;
                 }
                 double beelineApproximatedRemainingWeight = beelineApproximator.approximate(v);
-                if (beelineApproximatedRemainingWeight > realRemainingWeight) {
+                if (beelineApproximatedRemainingWeight - slack > realRemainingWeight) {
                     System.out.printf("beeline: %f\treal: %f\n", beelineApproximatedRemainingWeight, realRemainingWeight);
                     nOverApproximatedWeights++;
                 }
