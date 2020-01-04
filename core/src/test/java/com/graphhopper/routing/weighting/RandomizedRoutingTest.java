@@ -31,11 +31,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
- * This test compares the different bidirectional routing algorithms with {@link DijkstraBidirectionRef}
+ * This test compares different routing algorithms with {@link DijkstraBidirectionRef}. Most prominently it uses
+ * randomly create graphs to create all sorts of different situations.
  *
  * @author easbar
  * @see RandomCHRoutingTest - similar but only tests CH algorithms
- * @see DirectedRoutingTest - similar but focusses on edge-based algorithms an directed queries
+ * @see DirectedRoutingTest - similar but focuses on edge-based algorithms an directed queries
  */
 @RunWith(Parameterized.class)
 public class RandomizedRoutingTest {
@@ -59,12 +60,16 @@ public class RandomizedRoutingTest {
     @Parameterized.Parameters(name = "{0}, {3}")
     public static Collection<Object[]> params() {
         return Arrays.asList(new Object[][]{
-                {Algo.ASTAR, false, false, NODE_BASED},
+                {Algo.DIJKSTRA, false, false, NODE_BASED},
+                {Algo.ASTAR_UNIDIR, false, false, NODE_BASED},
+                {Algo.ASTAR_BIDIR, false, false, NODE_BASED},
                 {Algo.CH_ASTAR, true, false, NODE_BASED},
                 {Algo.CH_DIJKSTRA, true, false, NODE_BASED},
                 {Algo.LM_UNIDIR, false, true, NODE_BASED},
                 {Algo.LM_BIDIR, false, true, NODE_BASED},
-                {Algo.ASTAR, false, false, EDGE_BASED},
+                {Algo.DIJKSTRA, false, false, EDGE_BASED},
+                {Algo.ASTAR_UNIDIR, false, false, EDGE_BASED},
+                {Algo.ASTAR_BIDIR, false, false, EDGE_BASED},
                 {Algo.CH_ASTAR, true, false, EDGE_BASED},
                 {Algo.CH_DIJKSTRA, true, false, EDGE_BASED},
                 {Algo.LM_UNIDIR, false, true, EDGE_BASED},
@@ -73,7 +78,9 @@ public class RandomizedRoutingTest {
     }
 
     private enum Algo {
-        ASTAR,
+        DIJKSTRA,
+        ASTAR_BIDIR,
+        ASTAR_UNIDIR,
         CH_ASTAR,
         CH_DIJKSTRA,
         LM_BIDIR,
@@ -119,7 +126,11 @@ public class RandomizedRoutingTest {
 
     private RoutingAlgorithm createAlgo(Graph graph) {
         switch (algo) {
-            case ASTAR:
+            case DIJKSTRA:
+                return new Dijkstra(graph, weighting, traversalMode);
+            case ASTAR_UNIDIR:
+                return new AStar(graph, weighting, traversalMode);
+            case ASTAR_BIDIR:
                 return new AStarBidirection(graph, weighting, traversalMode);
             case CH_DIJKSTRA:
                 return pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
@@ -176,7 +187,7 @@ public class RandomizedRoutingTest {
                 .calcPath(source, target);
         Path path = createAlgo()
                 .calcPath(0, 3);
-        comparePaths(refPath, path, source, target);
+        comparePaths(refPath, path, source, target, -1);
     }
 
     @Test
@@ -215,21 +226,23 @@ public class RandomizedRoutingTest {
                 .calcPath(source, target);
         Path path = createAlgo()
                 .calcPath(source, target);
-        comparePaths(refPath, path, source, target);
+        comparePaths(refPath, path, source, target, -1);
     }
 
     @Test
     @Repeat(times = 5)
     public void randomGraph() {
         final long seed = System.nanoTime();
-        System.out.println("random Graph seed: " + seed);
-        final int numQueries = 50;
+        run(seed);
+    }
+
+    private void run(long seed) {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
-        for (int i = 0; i < numQueries; i++) {
+        for (int i = 0; i < 50; i++) {
             int source = getRandom(rnd);
             int target = getRandom(rnd);
 //            System.out.println("source: " + source + ", target: " + target);
@@ -237,13 +250,13 @@ public class RandomizedRoutingTest {
                     .calcPath(source, target);
             Path path = createAlgo()
                     .calcPath(source, target);
-            strictViolations.addAll(comparePaths(refPath, path, source, target));
+            strictViolations.addAll(comparePaths(refPath, path, source, target, seed));
         }
-        if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
+        if (strictViolations.size() > Math.max(1, 0.20 * 50)) {
             for (String strictViolation : strictViolations) {
                 System.out.println("strict violation: " + strictViolation);
             }
-            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
+            fail("Too many strict violations: " + strictViolations.size() + " / " + 50 + ", seed: " + seed);
         }
     }
 
@@ -254,9 +267,10 @@ public class RandomizedRoutingTest {
     @Repeat(times = 5)
     public void randomGraph_withQueryGraph() {
         final long seed = System.nanoTime();
-        System.out.println("randomGraph_withQueryGraph seed: " + seed);
-        final int numQueries = 50;
+        runWithQueryGraph(seed);
+    }
 
+    private void runWithQueryGraph(long seed) {
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
@@ -267,7 +281,7 @@ public class RandomizedRoutingTest {
         LocationIndexTree index = new LocationIndexTree(graph, dir);
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
-        for (int i = 0; i < numQueries; i++) {
+        for (int i = 0; i < 50; i++) {
             List<GHPoint> points = getRandomPoints(2, index, rnd);
 
             List<QueryResult> chQueryResults = findQueryResults(index, points);
@@ -279,17 +293,45 @@ public class RandomizedRoutingTest {
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();
 
-            Path refPath = new DijkstraBidirectionRef(queryGraph, weighting, traversalMode)
-                    .calcPath(source, target);
-            Path path = createAlgo(chQueryGraph)
-                    .calcPath(source, target);
-            strictViolations.addAll(comparePaths(refPath, path, source, target));
+            Path refPath = new DijkstraBidirectionRef(queryGraph, weighting, traversalMode).calcPath(source, target);
+            Path path = createAlgo(chQueryGraph).calcPath(source, target);
+            strictViolations.addAll(comparePaths(refPath, path, source, target, seed));
         }
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
-        if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
-            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
+        if (strictViolations.size() > Math.max(1, 0.20 * 50)) {
+            fail("Too many strict violations: " + strictViolations.size() + " / " + 50 + ", seed: " + seed);
         }
+    }
+
+    @Test
+    public void fail1() {
+        run(39457616822163L);
+    }
+
+    @Test
+    public void fail2() {
+        run(39386680060285L);
+    }
+
+    @Test
+    public void fail3() {
+        runWithQueryGraph(39361165106748L);
+    }
+
+    @Test
+    public void fail4() {
+        run(39316239491387L);
+    }
+
+    @Test
+    public void fail5() {
+        run(39449878563251L);
+    }
+
+    @Test
+    public void fail6() {
+        run(39315090735050L);
     }
 
     private List<GHPoint> getRandomPoints(int numPoints, LocationIndex index, Random rnd) {
@@ -318,14 +360,15 @@ public class RandomizedRoutingTest {
         return result;
     }
 
-    private List<String> comparePaths(Path refPath, Path path, int source, int target) {
+    private List<String> comparePaths(Path refPath, Path path, int source, int target, long seed) {
         List<String> strictViolations = new ArrayList<>();
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
         if (Math.abs(refWeight - weight) > 1.e-2) {
             System.out.println("expected: " + refPath.calcNodes());
             System.out.println("given:    " + path.calcNodes());
-            fail("wrong weight: " + source + "->" + target + ", expected: " + refWeight + ", given: " + weight);
+            System.out.println("seed: " + seed);
+            fail("wrong weight: " + source + "->" + target + "\nexpected: " + refWeight + "\ngiven:    " + weight + "\nseed: " + seed);
         }
         if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
             strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
