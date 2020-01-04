@@ -27,18 +27,17 @@ import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_SHARE;
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_WEIGHT;
 
 public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final CHGraph chGraph;
     private final CHProfile chProfile;
-    private final PreparationWeighting prepareWeighting;
 
     public CHRoutingAlgorithmFactory(CHGraph chGraph) {
         this.chGraph = chGraph;
         this.chProfile = chGraph.getCHProfile();
-        prepareWeighting = new PreparationWeighting(chProfile.getWeighting());
     }
 
     @Override
@@ -73,15 +72,21 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     }
 
     private AbstractBidirAlgo createAlgoNodeBased(Graph graph, AlgorithmOptions opts) {
+        CHWeighting chWeighting = new CHWeighting(chProfile.getWeighting());
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            return new AStarBidirectionCH(graph, prepareWeighting)
+            return new AStarBidirectionCH(graph, chWeighting)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
             if (opts.getHints().getBool("stall_on_demand", true)) {
-                return new DijkstraBidirectionCH(graph, prepareWeighting);
+                return new DijkstraBidirectionCH(graph, chWeighting);
             } else {
-                return new DijkstraBidirectionCHNoSOD(graph, prepareWeighting);
+                return new DijkstraBidirectionCHNoSOD(graph, chWeighting);
             }
+        } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
+            AlternativeRouteCH altRouteAlgo = new AlternativeRouteCH(graph, chWeighting);
+            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
+            altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
+            return altRouteAlgo;
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for node-based Contraction Hierarchies. Try with ch.disable=true");
         }
@@ -94,7 +99,8 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         if (turnCostStorage == null) {
             throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
         }
-        return new TurnWeighting(prepareWeighting, turnCostStorage, chProfile.getUTurnCosts());
+        CHWeighting chWeighting = new CHWeighting(chProfile.getWeighting());
+        return new TurnWeighting(chWeighting, turnCostStorage, chProfile.getUTurnCosts());
     }
 
     public Weighting getWeighting() {

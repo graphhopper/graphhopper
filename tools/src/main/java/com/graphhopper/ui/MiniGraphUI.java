@@ -23,7 +23,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.PreparationWeighting;
+import com.graphhopper.routing.ch.CHWeighting;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -129,7 +129,7 @@ public class MiniGraphUI {
                 public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                     // doable but ugly
                     Weighting w = ((PrepareContractionHierarchies) tmpFactory).getWeighting();
-                    return new TmpAlgo(g, new PreparationWeighting(w), mg).
+                    return new TmpAlgo(g, new CHWeighting(w), mg).
                             setEdgeFilter(new LevelEdgeFilter((CHGraph) routingGraph));
                 }
             };

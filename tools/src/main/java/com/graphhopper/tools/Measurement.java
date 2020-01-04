@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 
 /**
@@ -95,6 +96,11 @@ public class Measurement {
         put("measurement.gitinfo", args.get("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
         put("measurement.map", args.get("datareader.file", "unknown"));
+
+        final boolean useMeasurementTimeAsRefTime = args.getBool("measurement.use_measurement_time_as_ref_time", false);
+        if (useMeasurementTimeAsRefTime && !useJson) {
+            throw new IllegalArgumentException("Using measurement time as reference time only works with json files");
+        }
 
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
@@ -164,7 +170,7 @@ public class Measurement {
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
             if (runSlow) {
                 printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr,
-                        true, false, -1, true, false, false);
+                        true, false, -1, true, false, false, false);
             }
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
@@ -173,7 +179,7 @@ public class Measurement {
                 int activeLMCount = 12;
                 for (; activeLMCount > 3; activeLMCount -= 4) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr,
-                            true, false, activeLMCount, true, false, false);
+                            true, false, activeLMCount, true, false, false, false);
                 }
 
                 // compareRouting(hopper, vehicleStr, count / 5);
@@ -188,7 +194,7 @@ public class Measurement {
                     // try just one constellation, often ~4-6 is best
                     int lmCount = 5;
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr,
-                            true, false, lmCount, true, false, false);
+                            true, false, lmCount, true, false, false, false);
                 }
 
                 isLM = false;
@@ -198,24 +204,26 @@ public class Measurement {
                     CHGraph lg = g.getCHGraph(chProfile);
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr,
-                            true, false, -1, true, false, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_with_hints", vehicleStr,
-                            true, true, -1, true, false, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr,
-                            true, false, -1, false, false, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr,
-                            false, false, -1, true, false, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_full", vehicleStr,
-                            true, true, -1, true, false, true);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true,
+                            false, -1, true, false, false, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 10, "routingCH_alt", vehicleStr, true,
+                            false, -1, true, false, false, true);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_with_hints", vehicleStr, true,
+                            true, -1, true, false, false, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true,
+                            false, -1, false, false, false, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false,
+                            false, -1, true, false, false, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_full", vehicleStr, true,
+                            true, -1, true, false, true, false);
                 }
                 if (!hopper.getCHFactoryDecorator().getEdgeBasedCHProfiles().isEmpty()) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge", vehicleStr,
-                            true, false, -1, false, true, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_no_instr", vehicleStr,
-                            false, false, -1, false, true, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_full", vehicleStr,
-                            true, true, -1, false, true, true);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge", vehicleStr, true,
+                            false, -1, false, true, false, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_no_instr", vehicleStr, false,
+                            false, -1, false, true, false, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_full", vehicleStr, true,
+                            true, -1, false, true, true, false);
                 }
             }
         } catch (Exception ex) {
@@ -234,7 +242,7 @@ public class Measurement {
                 writeSummary(summaryLocation, propLocation);
             }
             if (useJson) {
-                storeJson(propLocation, args.getBool("measurement.useMeasurementTimeAsRefTime", false));
+                storeJson(propLocation, useMeasurementTimeAsRefTime);
             } else {
                 storeProperties(propLocation);
             }
@@ -448,12 +456,13 @@ public class Measurement {
                                        int count, String prefix, final String vehicle,
                                        final boolean withInstructions, final boolean withPointHints,
                                        final int activeLandmarks, final boolean sod, final boolean edgeBased,
-                                       final boolean simplify) {
+                                       final boolean simplify, final boolean alternative) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong distSum = new AtomicLong(0);
         final AtomicLong airDistSum = new AtomicLong(0);
+        final AtomicLong altCount = new AtomicLong(0);
         final AtomicInteger failedCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
 
@@ -486,6 +495,9 @@ public class Measurement {
                         put(Landmark.DISABLE, !lm).
                         put(Landmark.ACTIVE_COUNT, activeLandmarks).
                         put("instructions", withInstructions);
+
+                if (alternative)
+                    req.setAlgorithm(ALT_ROUTE);
 
                 if (withInstructions)
                     req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
@@ -550,10 +562,8 @@ public class Measurement {
                     if (dist < minDistance.get())
                         minDistance.set(dist);
 
-//                    extractTimeSum.addAndGet(p.getExtractTime());                    
-//                    long start = System.nanoTime();
-//                    size = p.calcPoints().getSize();
-//                    calcPointsTimeSum.addAndGet(System.nanoTime() - start);
+                    if (alternative)
+                        altCount.addAndGet(rsp.getAll().size());
                 }
 
                 return arsp.getPoints().getSize();
@@ -575,17 +585,13 @@ public class Measurement {
         put(prefix + ".distance_max", maxDistance.get());
         put(prefix + ".visited_nodes_mean", (float) visitedNodesSum.get() / count);
         put(prefix + ".visited_nodes_max", (float) maxVisitedNodes.get());
-
-//        put(prefix + ".extractTime", (float) extractTimeSum.get() / count / 1000000f);
-//        put(prefix + ".calcPointsTime", (float) calcPointsTimeSum.get() / count / 1000000f);
-//        put(prefix + ".calcDistTime", (float) calcDistTimeSum.get() / count / 1000000f);
+        put(prefix + ".alternative_rate", (float) altCount.get() / count);
         print(prefix, miniPerf);
     }
 
     void print(String prefix, MiniPerfTest perf) {
         logger.info(prefix + ": " + perf.getReport());
         put(prefix + ".sum", perf.getSum());
-//        put(prefix+".rms", perf.getRMS());
         put(prefix + ".min", perf.getMin());
         put(prefix + ".mean", perf.getMean());
         put(prefix + ".max", perf.getMax());
