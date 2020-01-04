@@ -27,8 +27,9 @@ import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_SHARE;
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_WEIGHT;
 
 public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final CHGraph chGraph;
@@ -81,6 +82,11 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
             } else {
                 return new DijkstraBidirectionCHNoSOD(graph, chWeighting);
             }
+        } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
+            AlternativeRouteCH altRouteAlgo = new AlternativeRouteCH(graph, chWeighting);
+            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
+            altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
+            return altRouteAlgo;
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for node-based Contraction Hierarchies. Try with ch.disable=true");
         }
