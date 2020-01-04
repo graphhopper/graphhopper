@@ -134,8 +134,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      * Specify the maximum possible value for your used area. With this maximum weight value you can influence the storage
      * precision for your weights that help A* finding its way to the goal. The same value is used for all subnetworks.
      * Note, if you pick this value too big then too similar weights are stored
-     * (some bits of the storage capability will be left unused) which could lead to suboptimal routes.
-     * If too low then far away values will have the same maximum value associated ("maxed out") leading to bad performance.
+     * (some bits of the storage capability will be left unused).
+     * If too low then far away values will have the same maximum value associated ("maxed out").
+     * Both will lead to bad performance.
      *
      * @param maxWeight use a negative value to automatically determine this value.
      */
