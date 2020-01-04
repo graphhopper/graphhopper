@@ -1046,11 +1046,16 @@ public class GraphHopper implements GraphHopperAPI {
             Weighting weighting;
             CHProfile chProfile = null;
             if (chFactoryDecorator.isEnabled() && !disableCH) {
-                if (algoFactory instanceof CHRoutingAlgorithmFactory) {
-                    chProfile = ((CHRoutingAlgorithmFactory) algoFactory).getCHProfile();
+                // if LM is enabled we have the LMFactory with the CH algo!
+                RoutingAlgorithmFactory chAlgoFactory = algoFactory;
+                if (algoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
+                    chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) algoFactory).getDefaultAlgoFactory();
+
+                if (chAlgoFactory instanceof CHRoutingAlgorithmFactory) {
+                    chProfile = ((CHRoutingAlgorithmFactory) chAlgoFactory).getCHProfile();
                     weighting = chProfile.getWeighting();
                 } else {
-                    throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algoFactory);
+                    throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + chAlgoFactory);
                 }
             } else {
                 weighting = createWeighting(hints, encoder);
