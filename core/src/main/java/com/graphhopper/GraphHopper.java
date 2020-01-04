@@ -1267,7 +1267,6 @@ public class GraphHopper implements GraphHopperAPI {
      */
     protected void cleanUp() {
         int prevNodeCount = ghStorage.getNodes();
-        // TODO NOW in PrepareRoutingSubnetworks we create new FastestWeighting objects, but we should use createWeighting or the weightings from CH??
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager.fetchEdgeEncoders());
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
