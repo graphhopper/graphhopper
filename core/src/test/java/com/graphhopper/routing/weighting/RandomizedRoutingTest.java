@@ -97,7 +97,8 @@ public class RandomizedRoutingTest {
     @Before
     public void init() {
         dir = new RAMDirectory();
-        encoder = new MotorcycleFlagEncoder(5, 5, 1);
+//        encoder = new MotorcycleFlagEncoder(5, 5, 1);
+        encoder = new CarFlagEncoder(5, 5, 1);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, TurnWeighting.INFINITE_U_TURN_COSTS));
@@ -332,6 +333,11 @@ public class RandomizedRoutingTest {
     @Test
     public void fail6() {
         run(39315090735050L);
+    }
+
+    @Test
+    public void fail7() { // fails with CarFlagEncoder
+        run(337586249813919L);
     }
 
     private List<GHPoint> getRandomPoints(int numPoints, LocationIndex index, Random rnd) {
