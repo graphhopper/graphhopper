@@ -71,15 +71,16 @@ public class InfoResource {
         final Info info = new Info();
         // use bbox always without elevation (for backward compatibility)
         info.bbox = new BBox(storage.getBounds().minLon, storage.getBounds().maxLon, storage.getBounds().minLat, storage.getBounds().maxLat);
-        info.supported_vehicles = new ArrayList<>(Arrays.asList(storage.getEncodingManager().toString().split(",")));
+        List<String> encoderNames = Arrays.asList(storage.getEncodingManager().toString().split(","));
+        info.supported_vehicles = new ArrayList<>(encoderNames);
         if (config.has("gtfs.file")) {
             info.supported_vehicles.add("pt");
         }
-        for (String v : info.supported_vehicles) {
+        for (String encoderName : encoderNames) {
             Info.PerVehicle perVehicleJson = new Info.PerVehicle();
             perVehicleJson.elevation = hasElevation;
-            perVehicleJson.turn_costs = storage.getEncodingManager().getEncoder(v).supports(TurnWeighting.class);
-            info.features.put(v, perVehicleJson);
+            perVehicleJson.turn_costs = storage.getEncodingManager().getEncoder(encoderName).supports(TurnWeighting.class);
+            info.features.put(encoderName, perVehicleJson);
         }
         if (config.has("gtfs.file")) {
             info.features.put("pt", new InfoResource.Info.PerVehicle());
