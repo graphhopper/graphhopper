@@ -106,7 +106,8 @@ public class LMApproximator implements WeightApproximator {
             }
         }
 
-        return (getRemainingWeightUnderestimationUpToTowerNode(queryNode) - weightToTowerNode) * epsilon;
+        double res = Math.max(0.0, (getRemainingWeightUnderestimationUpToTowerNode(queryNode) - weightToTowerNode) * epsilon);
+        return res;
     }
 
     private double getRemainingWeightUnderestimationUpToTowerNode(int v) {
