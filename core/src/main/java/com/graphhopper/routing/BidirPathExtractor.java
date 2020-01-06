@@ -87,7 +87,7 @@ public class BidirPathExtractor {
         SPTEntry currEntry = sptEntry;
         SPTEntry parentEntry = currEntry.parent;
         while (EdgeIterator.Edge.isValid(currEntry.edge)) {
-            onEdge(currEntry.edge, currEntry.adjNode, reverse, getIncEdge(parentEntry));
+            onEdge(currEntry, currEntry.edge, currEntry.adjNode, reverse, getIncEdge(parentEntry));
             currEntry = parentEntry;
             parentEntry = currEntry.parent;
         }
@@ -110,7 +110,7 @@ public class BidirPathExtractor {
         path.setEndNode(node);
     }
 
-    protected void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
+    protected void onEdge(SPTEntry entry, int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
         path.addDistance(edgeState.getDistance());
         path.addTime(weighting.calcMillis(edgeState, reverse, prevOrNextEdge));

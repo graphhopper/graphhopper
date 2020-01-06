@@ -21,6 +21,7 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.BidirPathExtractor;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.ShortcutUnpacker;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -35,7 +36,7 @@ public class NodeBasedCHBidirPathExtractor extends BidirPathExtractor {
     }
 
     @Override
-    public void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
+    public void onEdge(SPTEntry entry, int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
         if (reverse) {
             shortcutUnpacker.visitOriginalEdgesBwd(edge, adjNode, true, prevOrNextEdge);
         } else {
