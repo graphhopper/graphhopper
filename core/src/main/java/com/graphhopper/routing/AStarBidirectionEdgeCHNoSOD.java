@@ -29,7 +29,7 @@ import com.graphhopper.util.Helper;
  */
 public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD {
     private final boolean useHeuristicForNodeOrder = false;
-    private ConsistentWeightApproximator weightApprox;
+    private BalancedWeightApproximator weightApprox;
 
     public AStarBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
         super(graph, weighting);
@@ -82,7 +82,7 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
     }
 
     public AStarBidirectionEdgeCHNoSOD setApproximation(WeightApproximator weightApproximator) {
-        weightApprox = new ConsistentWeightApproximator(weightApproximator);
+        weightApprox = new BalancedWeightApproximator(weightApproximator);
         return this;
     }
 

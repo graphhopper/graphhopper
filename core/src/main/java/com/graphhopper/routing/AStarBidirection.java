@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
-import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
+import com.graphhopper.routing.weighting.BalancedWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -57,7 +57,7 @@ import com.graphhopper.util.Parameters;
  * @author jansoe
  */
 public class AStarBidirection extends AbstractBidirAlgo implements RecalculationHook {
-    private ConsistentWeightApproximator weightApprox;
+    private BalancedWeightApproximator weightApprox;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -111,7 +111,7 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
      * @param approx if true it enables approximate distance calculation from lat,lon values
      */
     public AStarBidirection setApproximation(WeightApproximator approx) {
-        weightApprox = new ConsistentWeightApproximator(approx);
+        weightApprox = new BalancedWeightApproximator(approx);
         return this;
     }
 
