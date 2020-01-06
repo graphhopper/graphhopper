@@ -79,11 +79,6 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 // s -> v and v -> t need not be shortest paths (see ).
                 // In fact, they can sometimes be pretty strange. We still use this preliminary path to filter
                 // for shared path length with other alternatives, so we don't have to work so much.
-//                Path preliminaryRoute = createPathExtractor(graph, weighting).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
-//                double preliminaryShare = calculateShare(preliminaryRoute);
-//                if (preliminaryShare > maxShareFactor) {
-//                    return true;
-//                }
                 // this reduces alternative rate from 2.0 to 1.6 but makes algorithm roughly 3x faster
                 final List<SPTEntry> sptEntries = calcSPEList(fromSPTEntry, toSPTEntry);
                 double preliminaryShare = calculateShare(sptEntries) / (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
@@ -101,28 +96,29 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 vtRouter.setEdgeFilter(additionalEdgeFilter);
                 final Path vtPath = vtRouter.calcPath(v, t);
                 final IntIndexedContainer vtNodes = vtPath.calcNodes();
-                // TODO NOW remove creating anonymous class and call methods directly
-                Path path = new Path(graph.getBaseGraph()) {
-                    Path extract() {
-                        setFromNode(svNodes.get(0));
-                        for (EdgeIteratorState edge : svPath.calcEdges()) {
-                            addEdge(edge.getEdge());
-                        }
-                        for (EdgeIteratorState edge : vtPath.calcEdges()) {
-                            addEdge(edge.getEdge());
-                        }
-                        setEndNode(vtNodes.get(vtNodes.size() - 1));
-                        setFound(true);
-                        setWeight(svPath.getWeight() + vtPath.getWeight());
-                        setDistance(svPath.getDistance() + vtPath.getDistance());
-                        time = svPath.time + vtPath.time;
-                        return this;
-                    }
-                }.extract();
+
+                sptEntries.clear();
+                Path path = new Path(graph.getBaseGraph());
+                path.setFromNode(svNodes.get(0));
+                for (EdgeIteratorState edge : svPath.calcEdges()) {
+                    path.addEdge(edge.getEdge());
+                    // TODO should we better calculate the weight here instead of edge.getDistance?
+                    // Then we would also need to use "share/path.getWeight" below
+                    sptEntries.add(new SPTEntry(edge.getAdjNode(), edge.getDistance()));
+                }
+                for (EdgeIteratorState edge : vtPath.calcEdges()) {
+                    path.addEdge(edge.getEdge());
+                    sptEntries.add(new SPTEntry(edge.getAdjNode(), edge.getDistance()));
+                }
+                path.setEndNode(vtNodes.get(vtNodes.size() - 1));
+                path.setFound(true);
+                path.setWeight(svPath.getWeight() + vtPath.getWeight());
+                path.setDistance(svPath.getDistance() + vtPath.getDistance());
+                path.time = svPath.time + vtPath.time;
 
                 // And calculate the share again, because this can be totally different.
                 // The first filter is a good heuristic, but we still need this one.
-                double share = calculateShare(path);
+                double share = calculateShare(sptEntries) / path.getDistance();
                 if (share > maxShareFactor) {
                     return true;
                 }
@@ -149,19 +145,6 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 return sharedWeight;
             }
 
-            // TODO NOW unit should be consistent and as we compare to maxShareFactor the "share" should be about weight not distance
-            // TODO NOW currently we do contains check 2*nodes and we can reduce this to 1*nodes
-            private double calculateShare(final Path path) {
-                double sharedDistance = 0.0;
-                List<EdgeIteratorState> edges = path.calcEdges();
-                for (EdgeIteratorState edge : edges) {
-                    if (nodesInCurrentAlternativeSetContains(edge.getBaseNode()) && nodesInCurrentAlternativeSetContains(edge.getAdjNode())) {
-                        sharedDistance += edge.getDistance();
-                    }
-                }
-                return sharedDistance / path.getDistance();
-            }
-
             private boolean nodesInCurrentAlternativeSetContains(int v) {
                 for (AlternativeInfo alternative : alternatives) {
                     if (alternative.nodes.contains(v)) {
@@ -173,8 +156,9 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
             private boolean tTest(Path path, int vIndex) {
                 if (path.getEdgeCount() == 0) return true;
-                int fromNode = getPreviousNodeTMetersAway(path, vIndex);
-                int toNode = getNextNodeTMetersAway(path, vIndex);
+                List<EdgeIteratorState> edges = path.calcEdges();
+                int fromNode = getPreviousNodeTMetersAway(edges, vIndex);
+                int toNode = getNextNodeTMetersAway(edges, vIndex);
                 DijkstraBidirectionCHNoSOD tRouter = new DijkstraBidirectionCHNoSOD(graph, new CHWeighting(weighting));
                 tRouter.setEdgeFilter(additionalEdgeFilter);
                 Path tPath = tRouter.calcPath(fromNode, toNode);
@@ -182,8 +166,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 return tNodes.contains(path.calcNodes().get(vIndex));
             }
 
-            private int getPreviousNodeTMetersAway(Path path, int vIndex) {
-                List<EdgeIteratorState> edges = path.calcEdges();
+            private int getPreviousNodeTMetersAway(List<EdgeIteratorState> edges, int vIndex) {
                 double distance = 0.0;
                 int i = vIndex;
                 while (i > 0 && distance < T) {
@@ -193,8 +176,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 return edges.get(i).getBaseNode();
             }
 
-            private int getNextNodeTMetersAway(Path path, int vIndex) {
-                List<EdgeIteratorState> edges = path.calcEdges();
+            private int getNextNodeTMetersAway(List<EdgeIteratorState> edges, int vIndex) {
                 double distance = 0.0;
                 int i = vIndex;
                 while (i < edges.size() - 1 && distance < T) {
@@ -268,24 +250,6 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                     ", shareWeight=" + shareWeight +
                     ", nodes=" + nodes +
                     '}';
-        }
-    }
-
-    public class Searcher extends DijkstraBidirectionCHNoSOD {
-
-        public Searcher(Graph graph, Weighting weighting) {
-            super(graph, weighting);
-            setEdgeFilter(additionalEdgeFilter);
-        }
-
-        public List<SPTEntry> calcSPTEntries(int from, int to) {
-            checkAlreadyRun();
-            init(from, 0, to, 0);
-            runAlgo();
-            if (finished())
-                return calcSPEList(currFrom, currTo);
-
-            return Collections.emptyList();
         }
     }
 
