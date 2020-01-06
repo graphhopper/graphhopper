@@ -75,9 +75,10 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > maxWeight)
                     return true;
 
-                // The path s -> v -> t is not the shortest path. Only s -> v and v -> t are.
-                // We still use this preliminary path to filter for shared path length with other alternatives,
-                // so we don't have to work so much.
+                // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
+                // s -> v and v -> t need not be shortest paths (see ).
+                // In fact, they can sometimes be pretty strange. We still use this preliminary path to filter
+                // for shared path length with other alternatives, so we don't have to work so much.
 //                Path preliminaryRoute = createPathExtractor(graph, weighting).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
 //                double preliminaryShare = calculateShare(preliminaryRoute);
 //                if (preliminaryShare > maxShareFactor) {
