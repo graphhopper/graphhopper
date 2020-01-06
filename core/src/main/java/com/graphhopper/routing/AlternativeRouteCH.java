@@ -22,7 +22,6 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.routing.ch.CHWeighting;
 import com.graphhopper.routing.ch.NodeBasedCHBidirPathExtractor;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
@@ -46,7 +45,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
     private double maxShareFactor = 0.7;
     public static final double T = 10000.0;
 
-    public AlternativeRouteCH(Graph graph, Weighting weighting) {
+    public AlternativeRouteCH(Graph graph, CHWeighting weighting) {
         super(graph, weighting);
     }
 
@@ -159,7 +158,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 List<EdgeIteratorState> edges = path.calcEdges();
                 int fromNode = getPreviousNodeTMetersAway(edges, vIndex);
                 int toNode = getNextNodeTMetersAway(edges, vIndex);
-                DijkstraBidirectionCHNoSOD tRouter = new DijkstraBidirectionCHNoSOD(graph, new CHWeighting(weighting));
+                DijkstraBidirectionCHNoSOD tRouter = new DijkstraBidirectionCHNoSOD(graph, weighting);
                 tRouter.setEdgeFilter(additionalEdgeFilter);
                 Path tPath = tRouter.calcPath(fromNode, toNode);
                 IntIndexedContainer tNodes = tPath.calcNodes();
