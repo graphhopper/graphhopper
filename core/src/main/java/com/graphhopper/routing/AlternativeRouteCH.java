@@ -78,7 +78,6 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 // s -> v and v -> t need not be shortest paths (see ).
                 // In fact, they can sometimes be pretty strange. We still use this preliminary path to filter
                 // for shared path length with other alternatives, so we don't have to work so much.
-                // this reduces alternative rate from 2.0 to 1.6 but makes algorithm roughly 3x faster
                 final List<SPTEntry> sptEntries = calcSPEList(fromSPTEntry, toSPTEntry);
                 double preliminaryShare = calculateShare(sptEntries) / (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
                 if (preliminaryShare > maxShareFactor) {
@@ -101,8 +100,8 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 path.setFromNode(svNodes.get(0));
                 for (EdgeIteratorState edge : svPath.calcEdges()) {
                     path.addEdge(edge.getEdge());
-                    // TODO should we better calculate the weight here instead of edge.getDistance?
-                    // Then we would also need to use "share/path.getWeight" below
+                    // TODO we should better calculate the weight here instead of edge.getDistance.
+                    // Then we would also need to use "share/path.getWeight" below.
                     sptEntries.add(new SPTEntry(edge.getAdjNode(), edge.getDistance()));
                 }
                 for (EdgeIteratorState edge : vtPath.calcEdges()) {
@@ -162,6 +161,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 tRouter.setEdgeFilter(additionalEdgeFilter);
                 Path tPath = tRouter.calcPath(fromNode, toNode);
                 IntIndexedContainer tNodes = tPath.calcNodes();
+                // TODO path.calcNodes is duplicate work as we already have "edges"
                 return tNodes.contains(path.calcNodes().get(vIndex));
             }
 
