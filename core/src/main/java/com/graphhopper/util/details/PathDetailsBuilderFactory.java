@@ -19,13 +19,12 @@ package com.graphhopper.util.details;
 
 import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Parameters.Details.*;
@@ -69,15 +68,18 @@ public class PathDetailsBuilderFactory {
                 builders.add(new DecimalDetails(key, evl.getDecimalEncodedValue(key)));
         }
 
-        for (Map.Entry entry : Arrays.asList(new MapEntry<>(RoadClass.KEY, RoadClass.class),
+        for (Entry<?, ?> entry : Arrays.asList(new MapEntry<>(RoadClass.KEY, RoadClass.class),
                 new MapEntry<>(RoadEnvironment.KEY, RoadEnvironment.class), new MapEntry<>(Surface.KEY, Surface.class),
                 new MapEntry<>(RoadAccess.KEY, RoadAccess.class), new MapEntry<>(Toll.KEY, Toll.class),
                 new MapEntry<>(TrackType.KEY, TrackType.class), new MapEntry<>(Hazmat.KEY, Hazmat.class),
                 new MapEntry<>(HazmatTunnel.KEY, HazmatTunnel.class), new MapEntry<>(HazmatWater.KEY, HazmatWater.class),
                 new MapEntry<>(Country.KEY, Country.class))) {
             String key = (String) entry.getKey();
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new EnumDetails(key, evl.getEnumEncodedValue(key, (Class<Enum>) entry.getValue())));
+            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key)) {
+                @SuppressWarnings("unchecked")
+                EnumDetails<?> details = new EnumDetails<>(key, evl.getEnumEncodedValue(key, (Class<Enum<?>>) entry.getValue()));
+                builders.add(details);
+            }
         }
 
         if (requestedPathDetails.size() != builders.size()) {
