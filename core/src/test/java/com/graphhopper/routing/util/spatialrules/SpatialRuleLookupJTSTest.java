@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
 import java.util.ArrayList;
@@ -150,6 +151,26 @@ public class SpatialRuleLookupJTSTest {
         spatialRules.add(getSpatialRule(big, "big"));
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, new Envelope(1, 2, 1, 2));
         assertEquals("big", spatialRuleLookup.lookupRule(1.5, 1.5).getId());
+    }
+    
+    @Test
+    public void testHole() {
+        LinearRing shell = FAC.createLinearRing(new Coordinate[] { new Coordinate(1, 1), new Coordinate(7, 1), new Coordinate(7, 7), new Coordinate(1, 7), new Coordinate(1, 1)});
+        LinearRing hole = FAC.createLinearRing(new Coordinate[] { new Coordinate(4, 2), new Coordinate(6, 2), new Coordinate(6, 4), new Coordinate(4, 6), new Coordinate(4, 2)});
+        Polygon p1 = FAC.createPolygon(shell, new LinearRing[] { hole });
+
+        List<SpatialRule> spatialRules = new ArrayList<>();
+        spatialRules.add(getSpatialRule(p1, "1"));
+        
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, p1.getEnvelopeInternal());
+        
+        assertEquals("SpatialRule.EMPTY", spatialRuleLookup.lookupRule(3, 5).getId());
+
+        Polygon p2 = FAC.createPolygon(hole);
+        spatialRules.add(getSpatialRule(p2, "2"));
+        spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, p1.getEnvelopeInternal());
+        
+        assertEquals("2", spatialRuleLookup.lookupRule(3, 5).getId());
     }
 
     @Test
