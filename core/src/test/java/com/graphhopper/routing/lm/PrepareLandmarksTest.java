@@ -123,10 +123,8 @@ public class PrepareLandmarksTest {
 
         // prefer the landmarks before and behind the goal
         int activeLandmarkIndices[] = new int[activeLM];
-        int activeFroms[] = new int[activeLM];
-        int activeTos[] = new int[activeLM];
         Arrays.fill(activeLandmarkIndices, -1);
-        store.initActiveLandmarks(27, 47, activeLandmarkIndices, activeFroms, activeTos, false);
+        store.chooseActiveLandmarks(27, 47, activeLandmarkIndices, false);
         List<Integer> list = new ArrayList<>();
         for (int idx : activeLandmarkIndices) {
             list.add(store.getLandmarks(1)[idx]);

@@ -35,17 +35,13 @@ public class LMApproximator implements WeightApproximator {
 
     private final LandmarkStorage lms;
     private final Weighting weighting;
-    // store node ids
-    private int[] activeLandmarks;
-    // store weights as int
-    private int[] activeFromIntWeights;
-    private int[] activeToIntWeights;
+    private int[] activeLandmarkIndices;
+    private int[] weightsFromActiveLandmarksToT;
+    private int[] weightsFromTToActiveLandmarks;
     private double epsilon = 1;
-    private int toTowerNode = -1;
-    private double weightToTowerNode;
-
-    // do activate landmark recalculation
-    private boolean doALMRecalc = true;
+    private int towerNodeNextToT = -1;
+    private double weightFromTToTowerNode;
+    private boolean recalculateActiveLandmarks = true;
     private final double factor;
     private final boolean reverse;
     private final int maxBaseNodes;
@@ -62,14 +58,14 @@ public class LMApproximator implements WeightApproximator {
             throw new IllegalArgumentException("Active landmarks " + activeCount
                     + " should be lower or equals to landmark count " + lms.getLandmarkCount());
 
-        activeLandmarks = new int[activeCount];
-        Arrays.fill(activeLandmarks, -1);
-        activeFromIntWeights = new int[activeCount];
-        activeToIntWeights = new int[activeCount];
+        activeLandmarkIndices = new int[activeCount];
+        Arrays.fill(activeLandmarkIndices, -1);
+        weightsFromActiveLandmarksToT = new int[activeCount];
+        weightsFromTToActiveLandmarks = new int[activeCount];
 
         this.graph = graph;
         this.weighting = weighting;
-        this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), lms.getWeighting());
+        this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
         this.maxBaseNodes = maxBaseNodes;
     }
 
@@ -82,71 +78,101 @@ public class LMApproximator implements WeightApproximator {
     }
 
     @Override
-    public double approximate(final int queryNode) {
-        if (!doALMRecalc && fallback || lms.isEmpty())
-            return fallBackApproximation.approximate(queryNode);
+    public double approximate(final int v) {
+        if (!recalculateActiveLandmarks && fallback || lms.isEmpty())
+            return fallBackApproximation.approximate(v);
 
-        if (queryNode >= maxBaseNodes) {
+        if (v >= maxBaseNodes) {
             // handle virtual node
             return 0;
         }
 
-        if (queryNode == toTowerNode)
+        if (v == towerNodeNextToT)
             return 0;
 
         // select better active landmarks, LATER: use 'success' statistics about last active landmark
         // we have to update the priority queues and the maps if done in the middle of the search http://cstheory.stackexchange.com/q/36355/13229
-        if (doALMRecalc) {
-            doALMRecalc = false;
-            boolean res = lms.initActiveLandmarks(queryNode, toTowerNode, activeLandmarks, activeFromIntWeights, activeToIntWeights, reverse);
-            if (!res) {
+        if (recalculateActiveLandmarks) {
+            recalculateActiveLandmarks = false;
+            if (lms.chooseActiveLandmarks(v, towerNodeNextToT, activeLandmarkIndices, reverse)) {
+                for (int i = 0; i < activeLandmarkIndices.length; i++) {
+                    weightsFromActiveLandmarksToT[i] = lms.getFromWeight(activeLandmarkIndices[i], towerNodeNextToT);
+                    weightsFromTToActiveLandmarks[i] = lms.getToWeight(activeLandmarkIndices[i], towerNodeNextToT);
+                }
+            } else {
                 // note: fallback==true means forever true!
                 fallback = true;
-                return fallBackApproximation.approximate(queryNode);
+                return fallBackApproximation.approximate(v);
             }
         }
-
-        double res = Math.max(0.0, (getRemainingWeightUnderestimationUpToTowerNode(queryNode) - weightToTowerNode) * epsilon);
-        return res;
+        return Math.max(0.0, (getRemainingWeightUnderestimationUpToTowerNode(v) - weightFromTToTowerNode) * epsilon);
     }
 
     private double getRemainingWeightUnderestimationUpToTowerNode(int v) {
-        int maxWeightInt = -1;
-        for (int activeLMIdx = 0; activeLMIdx < activeLandmarks.length; activeLMIdx++) {
-            int landmarkIndex = activeLandmarks[activeLMIdx];
-
-            // 1. assume route from a to b: a--->v--->b and a landmark LM.
-            //    From this we get two inequality formulas where v is the start (or current node) and b is the 'to' node:
-            //    LMv + vb >= LMb therefor vb >= LMb - LMv => 'getFromWeight'
-            //    vb + bLM >= vLM therefor vb >= vLM - bLM => 'getToWeight'
-            // 2. for the case a->v the sign is reverse as we need to know the vector av not va => if(reverse) "-weight"
-            int fromWeightInt = activeFromIntWeights[activeLMIdx] - lms.getFromWeight(landmarkIndex, v);
-            int toWeightInt = lms.getToWeight(landmarkIndex, v) - activeToIntWeights[activeLMIdx];
-            if (reverse) {
-                fromWeightInt = -fromWeightInt;
-                toWeightInt = -toWeightInt;
-            }
-
-            int tmpMaxWeightInt = Math.max(fromWeightInt, toWeightInt);
-            if (tmpMaxWeightInt > maxWeightInt)
-                maxWeightInt = tmpMaxWeightInt;
+        int maxWeightInt = 0;
+        for (int i = 0; i < activeLandmarkIndices.length; i++) {
+            int resultInt = approximateForLandmark(i, v);
+            maxWeightInt = Math.max(maxWeightInt, resultInt);
         }
         // Round down, we need to be an underestimator.
         return (maxWeightInt - 1) * factor;
     }
 
-    @Override
-    public void setTo(int to) {
-        this.fallBackApproximation.setTo(to);
-        findClosestRealNode(to);
+    private int approximateForLandmark(int i, int v) {
+        // ---> means shortest path, d means length of shortest path
+        // but remember that d(v,t) != d(t,v)
+        //
+        // Suppose we are at v, want to go to t, and are looking at a landmark LM,
+        // preferably behind t.
+        //
+        //   ---> t -->
+        // v ---------> LM
+        //
+        // We know distances from everywhere to LM. From the triangle inequality for shortest-path distances we get:
+        //  I)  d(v,t) + d(t,LM) >= d(v,LM), so d(v,t) >= d(v,LM) - d(t,LM)
+        //
+        // Now suppose LM is behind us:
+        //
+        //    ---> v -->
+        // LM ---------> t
+        //
+        // We also know distances from LM to everywhere, so we get:
+        //  II) d(LM,v) + d(v,t) >= d(LM,t), so d(v,t) >= d(LM,t) - d(LM,v)
+        //
+        // Both equations hold in the general case, so we just pick the tighter approximation.
+        // (The other one will probably be negative.)
+        //
+        // Note that when routing backwards we want to approximate d(t,v), not d(v,t).
+        // When we flip all the arrows in the two figures, we get
+        //  III)  d(t,v)  + d(LM,t) >= d(LM,v), so d(t,v) >= d(LM,v) - d(LM,t)
+        //   IV)  d(v,LM) + d(t,v)  >= d(t,LM), so d(t,v) >= d(t,LM) - d(v,LM)
+        //
+        // ...and we can get the right-hand sides of III) and IV) by multiplying by -1.
+
+        int rhs1Int = weightsFromActiveLandmarksToT[i] - lms.getFromWeight(activeLandmarkIndices[i], v);
+        int rhs2Int = lms.getToWeight(activeLandmarkIndices[i], v) - weightsFromTToActiveLandmarks[i];
+
+        int resultInt;
+        if (reverse) {
+            resultInt = Math.max(-rhs2Int, -rhs1Int);
+        } else {
+            resultInt = Math.max(rhs1Int, rhs2Int);
+        }
+        return resultInt;
     }
 
-    private void findClosestRealNode(int to) {
+    @Override
+    public void setTo(int t) {
+        this.fallBackApproximation.setTo(t);
+        findClosestRealNode(t);
+    }
+
+    private void findClosestRealNode(int t) {
         Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED) {
             @Override
             protected boolean finished() {
-                toTowerNode = currEdge.adjNode;
-                weightToTowerNode = currEdge.weight;
+                towerNodeNextToT = currEdge.adjNode;
+                weightFromTToTowerNode = currEdge.weight;
                 return currEdge.adjNode < maxBaseNodes;
             }
 
@@ -156,19 +182,19 @@ public class LMApproximator implements WeightApproximator {
                 super.initCollections(2);
             }
         };
-        dijkstra.calcPath(to, -1);
+        dijkstra.calcPath(t, -1);
     }
 
     @Override
     public WeightApproximator reverse() {
-        return new LMApproximator(graph, weighting, maxBaseNodes, lms, activeLandmarks.length, factor, !reverse);
+        return new LMApproximator(graph, weighting, maxBaseNodes, lms, activeLandmarkIndices.length, factor, !reverse);
     }
 
     /**
      * This method forces a lazy recalculation of the active landmark set e.g. necessary after the 'to' node changed.
      */
     public void triggerActiveLandmarkRecalculation() {
-        doALMRecalc = true;
+        recalculateActiveLandmarks = true;
     }
 
     @Override

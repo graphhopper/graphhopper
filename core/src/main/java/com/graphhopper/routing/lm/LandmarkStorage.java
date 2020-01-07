@@ -534,8 +534,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     }
 
     // From all available landmarks pick just a few active ones
-    boolean initActiveLandmarks(int fromNode, int toNode, int[] activeLandmarkIndices,
-                                int[] activeFroms, int[] activeTos, boolean reverse) {
+    boolean chooseActiveLandmarks(int fromNode, int toNode, int[] activeLandmarkIndices, boolean reverse) {
         if (fromNode < 0 || toNode < 0)
             throw new IllegalStateException("from " + fromNode + " and to "
                     + toNode + " nodes have to be 0 or positive to init landmarks");
@@ -585,12 +584,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             }
         }
 
-        // store weight values of active landmarks in 'cache' arrays
-        for (int i = 0; i < activeLandmarkIndices.length; i++) {
-            int lmIndex = activeLandmarkIndices[i];
-            activeFroms[i] = getFromWeight(lmIndex, toNode);
-            activeTos[i] = getToWeight(lmIndex, toNode);
-        }
         return true;
     }
 
