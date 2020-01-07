@@ -61,6 +61,11 @@ public class PathDetailsBuilderFactory {
             if (checkSuffix.contains(getKey("", "priority")) && evl.hasEncodedValue(checkSuffix))
                 builders.add(new DecimalDetails(checkSuffix, evl.getDecimalEncodedValue(checkSuffix)));
         }
+        
+        for (String key : Arrays.asList(Motorroad.KEY)) {
+            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
+                builders.add(new BooleanDetails(key, evl.getBooleanEncodedValue(key)));
+        }
 
         for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY,
                 MaxAxleLoad.KEY, MaxLength.KEY)) {
