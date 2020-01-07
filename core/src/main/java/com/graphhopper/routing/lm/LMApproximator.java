@@ -147,7 +147,7 @@ public class LMApproximator implements WeightApproximator {
         //  III)  d(t,v)  + d(LM,t) >= d(LM,v), so d(t,v) >= d(LM,v) - d(LM,t)
         //   IV)  d(v,LM) + d(t,v)  >= d(t,LM), so d(t,v) >= d(t,LM) - d(v,LM)
         //
-        // ...and we can get the right-hand sides of III) and IV) by multiplying by -1.
+        // ...and we can get the right-hand sides of III) and IV) by multiplying those of II) and I) by -1.
 
         int rhs1Int = weightsFromActiveLandmarksToT[i] - lms.getFromWeight(activeLandmarkIndices[i], v);
         int rhs2Int = lms.getToWeight(activeLandmarkIndices[i], v) - weightsFromTToActiveLandmarks[i];
