@@ -69,6 +69,9 @@ public class GraphHopperManaged implements Managed {
         } else {
             graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection).forServer();
         }
+        if (!configuration.get("spatial_rules.location", "").isEmpty()) {
+            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
+        }
         String spatialRuleBordersDirLocation = configuration.get("spatial_rules.borders_directory", "");
         if (!spatialRuleBordersDirLocation.isEmpty()) {
             final BBox maxBounds = BBox.parseBBoxString(configuration.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
