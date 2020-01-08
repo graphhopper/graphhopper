@@ -29,7 +29,7 @@ public class FlexRequestsRouteResourceTest {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "bike,car").
                 put("routing.ch.disabling_allowed", "true").
-                put("graph.flex_model.location", "./src/test/resources/com/graphhopper/http/").
+                put("graph.flex_models.directory", "./src/test/resources/com/graphhopper/http/").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("graph.encoded_values", "max_height").

@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -75,16 +76,15 @@ public class GraphHopperManaged implements Managed {
             }
         }
 
-        String flexModelLocation = configuration.get("graph.flex_model.location", "");
+        String flexModelLocation = configuration.get("graph.flex_models.directory", "");
         if (!flexModelLocation.isEmpty()) {
-            File locationFile = new File(flexModelLocation);
             ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
-            for (Map.Entry<String, File> entry : Helper.listFiles(locationFile, Arrays.asList("yaml", "yml"))) {
+            for (Map.Entry<String, File> entry : Helper.listFiles(new File(flexModelLocation), Arrays.asList("yaml", "yml"))) {
                 try {
                     FlexModel flexModel = yamlOM.readValue(entry.getValue(), FlexModel.class);
                     graphHopper.putFlexModel(entry.getKey(), flexModel);
                 } catch (Exception ex) {
-                    throw new RuntimeException("Cannot read vehicle profile from " + entry.getValue(), ex);
+                    throw new RuntimeException("Cannot flex_model from " + entry.getValue(), ex);
                 }
             }
         }
