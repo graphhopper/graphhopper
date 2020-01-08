@@ -23,7 +23,6 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -148,13 +147,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevLon = this.nodeAccess.getLongitude(baseNode);
         }
 
-        IntsRef flags = edge.getFlags();
         double adjLat = nodeAccess.getLatitude(adjNode);
         double adjLon = nodeAccess.getLongitude(adjNode);
         double latitude, longitude;
 
         PointList wayGeo = edge.fetchWayGeometry(3);
-        boolean isRoundabout = roundaboutEnc.getBool(false, flags);
+        boolean isRoundabout = edge.get(roundaboutEnc);
 
         if (wayGeo.getSize() <= 2) {
             latitude = adjLat;
@@ -224,8 +222,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     // check if there is an exit at the same node the roundabout was entered
                     EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
                     while (edgeIter.next()) {
-                        if ((edgeIter.getAdjNode() != prevNode)
-                                && !roundaboutEnc.getBool(false, edgeIter.getFlags())) {
+                        if ((edgeIter.getAdjNode() != prevNode) && !edgeIter.get(roundaboutEnc)) {
                             roundaboutInstruction.increaseExitNumber();
                             break;
                         }
@@ -433,9 +430,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             return sign;
         }
 
-        IntsRef flag = edge.getFlags();
-        IntsRef prevFlag = prevEdge.getFlags();
-
         boolean outgoingEdgesAreSlower = outgoingEdges.outgoingEdgesAreSlowerByFactor(1);
 
         // There is at least one other possibility to turn, and we are almost going straight
@@ -455,12 +449,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     || InstructionsHelper.isNameSimilar(otherContinue.getName(), prevName)
                     || !outgoingEdgesAreSlower) {
 
-                final RoadClass roadClass = roadClassEnc.getEnum(false, edge.getFlags());
-                final RoadClass prevRoadClass = roadClassEnc.getEnum(false, prevEdge.getFlags());
-                final RoadClass otherRoadClass = roadClassEnc.getEnum(false, otherContinue.getFlags());
-                final boolean link = roadClassLinkEnc.getBool(false, edge.getFlags());
-                final boolean prevLink = roadClassLinkEnc.getBool(false, prevEdge.getFlags());
-                final boolean otherLink = roadClassLinkEnc.getBool(false, otherContinue.getFlags());
+                final RoadClass roadClass = edge.get(roadClassEnc);
+                final RoadClass prevRoadClass = prevEdge.get(roadClassEnc);
+                final RoadClass otherRoadClass = otherContinue.get(roadClassEnc);
+                final boolean link = edge.get(roadClassLinkEnc);
+                final boolean prevLink = prevEdge.get(roadClassLinkEnc);
+                final boolean otherLink = otherContinue.get(roadClassLinkEnc);
                 // We know this is a fork, but we only need an instruction if highways are actually changing,
                 // this approach only works for major roads, for minor roads it can be hard to differentiate easily in real life
                 if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY || roadClass == RoadClass.SECONDARY || roadClass == RoadClass.TERTIARY) {
