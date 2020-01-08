@@ -22,7 +22,6 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
@@ -51,7 +50,7 @@ public class OSMRoadAccessParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
         RoadAccess accessValue = YES;
         RoadAccess tmpAccessValue;
         for (String restriction : restrictions) {

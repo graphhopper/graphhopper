@@ -32,27 +32,27 @@ public class OSMTrackTypeParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("tracktype", "grade1");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(TrackType.GRADE1, ttEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("tracktype", "grade2");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(TrackType.GRADE2, ttEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("tracktype", "grade3");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(TrackType.GRADE3, ttEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("tracktype", "grade4");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(TrackType.GRADE4, ttEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("tracktype", "grade5");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(TrackType.GRADE5, ttEnc.getEnum(false, intsRef));
     }
 
@@ -61,7 +61,7 @@ public class OSMTrackTypeParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("tracktype", "unknownstuff");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(TrackType.OTHER, ttEnc.getEnum(false, intsRef));
     }
 
@@ -69,7 +69,7 @@ public class OSMTrackTypeParserTest {
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(TrackType.OTHER, ttEnc.getEnum(false, intsRef));
     }
 }

@@ -5,7 +5,6 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.Hazmat;
-import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
@@ -24,7 +23,7 @@ public class OSMHazmatParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, Access access, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
         if (readerWay.hasTag("hazmat", "no")) {
             hazEnc.setEnum(false, edgeFlags, Hazmat.NO);
         }

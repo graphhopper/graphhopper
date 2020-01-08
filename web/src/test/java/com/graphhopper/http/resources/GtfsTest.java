@@ -20,6 +20,7 @@ package com.graphhopper.http.resources;
 import com.graphhopper.GHResponse;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.resources.InfoResource;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -31,8 +32,7 @@ import org.junit.Test;
 import javax.ws.rs.core.Response;
 import java.io.File;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 /**
  * Similar to PtRouteResourceTest, but tests the entire app, not the resource, so that the plugging-together
@@ -96,6 +96,16 @@ public class GtfsTest {
         assertEquals(200, response.getStatus());
         GHResponse ghResponse = response.readEntity(GHResponse.class);
         assertFalse(ghResponse.hasErrors());
+    }
+
+    @Test
+    public void testInfo() {
+        final Response response = app.client().target("http://localhost:8080/info")
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        InfoResource.Info info = response.readEntity(InfoResource.Info.class);
+        assertTrue(info.supported_vehicles.contains("pt"));
+        assertTrue(info.features.containsKey("pt"));
     }
 
 }
