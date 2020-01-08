@@ -25,7 +25,6 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
