@@ -12,8 +12,7 @@ I you have a working GraphHopper setup it is easy to enable Spatial Rules, **but
 We provide a set of approximate country borders, within the GraphHopper repository. If you need exact borders you can
 get the exact borders from [here](https://github.com/datasets/geo-countries). Go to your
 `config.yml` file and
-uncommend the line: `spatial_rules.location` and point it to where your rules are. You need to re-import your graph after 
-that.
+uncommend the line: `spatial_rules.borders_directory` and point it to the directory where your rules are. You need to re-import your graph after that.
 
 ## Creating Rules
 
