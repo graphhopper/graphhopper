@@ -20,19 +20,19 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
-import com.graphhopper.routing.ch.CHWeighting;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
- *
  * Minimum number-of-moving-parts implementation of alternative route search with
  * contraction hierarchies.
- *
+ * <p>
  * "Alternative Routes in Road Networks" (Abraham et al.)
  *
  * @author michaz
@@ -43,8 +43,8 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
     private double maxShareFactor = 0.6;
     public static final double T = 10000.0;
 
-    public AlternativeRouteCH(Graph graph, Weighting weighting) {
-        super(graph, weighting);
+    public AlternativeRouteCH(RoutingCHGraph graph) {
+        super(graph);
     }
 
     List<AlternativeInfo> calcAlternatives(final int s, final int t) {
@@ -76,7 +76,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
                 // We still use this preliminary path to filter for shared path length with other alternatives,
                 // so we don't have to work so much.
-                Path preliminaryRoute = createPathExtractor(graph, weighting).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
+                Path preliminaryRoute = createPathExtractor(graph).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
                 double preliminaryShare = calculateShare(preliminaryRoute);
                 if (preliminaryShare > maxShareFactor) {
                     return true;
@@ -84,12 +84,10 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
                 // Okay, now we want the s -> v -> t shortest via-path, so we route s -> v and v -> t
                 // and glue them together.
-                DijkstraBidirectionCHNoSOD svRouter = new DijkstraBidirectionCHNoSOD(graph, weighting);
-                svRouter.setEdgeFilter(additionalEdgeFilter);
+                DijkstraBidirectionCHNoSOD svRouter = new DijkstraBidirectionCHNoSOD(graph);
                 final Path svPath = svRouter.calcPath(s, v);
                 final IntIndexedContainer svNodes = svPath.calcNodes();
-                DijkstraBidirectionCHNoSOD vtRouter = new DijkstraBidirectionCHNoSOD(graph, weighting);
-                vtRouter.setEdgeFilter(additionalEdgeFilter);
+                DijkstraBidirectionCHNoSOD vtRouter = new DijkstraBidirectionCHNoSOD(graph);
                 final Path vtPath = vtRouter.calcPath(v, t);
                 final IntIndexedContainer vtNodes = vtPath.calcNodes();
                 Path path = new Path(graph.getBaseGraph()) {
@@ -152,8 +150,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 if (path.getEdgeCount() == 0) return true;
                 int fromNode = getPreviousNodeTMetersAway(path, vIndex);
                 int toNode = getNextNodeTMetersAway(path, vIndex);
-                DijkstraBidirectionCHNoSOD tRouter = new DijkstraBidirectionCHNoSOD(graph, new CHWeighting(weighting));
-                tRouter.setEdgeFilter(additionalEdgeFilter);
+                DijkstraBidirectionCHNoSOD tRouter = new DijkstraBidirectionCHNoSOD(graph);
                 Path tPath = tRouter.calcPath(fromNode, toNode);
                 IntIndexedContainer tNodes = tPath.calcNodes();
                 return tNodes.contains(path.calcNodes().get(vIndex));
@@ -164,7 +161,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 double distance = 0.0;
                 int i = vIndex;
                 while (i > 0 && distance < T) {
-                    distance += edges.get(i-1).getDistance();
+                    distance += edges.get(i - 1).getDistance();
                     i--;
                 }
                 return edges.get(i).getBaseNode();
@@ -178,7 +175,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                     distance += edges.get(i).getDistance();
                     i++;
                 }
-                return edges.get(i-1).getAdjNode();
+                return edges.get(i - 1).getAdjNode();
             }
 
         });

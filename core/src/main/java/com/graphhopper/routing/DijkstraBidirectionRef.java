@@ -21,7 +21,8 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Parameters;
 
 /**
  * Calculates best path in bidirectional way.
@@ -31,7 +32,7 @@ import com.graphhopper.util.*;
  *
  * @author Peter Karich
  */
-public class DijkstraBidirectionRef extends AbstractBidirAlgo {
+public class DijkstraBidirectionRef extends AbstractNonCHBidirAlgo {
     public DijkstraBidirectionRef(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
     }

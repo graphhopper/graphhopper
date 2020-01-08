@@ -389,4 +389,8 @@ public class QueryGraph implements Graph {
     private UnsupportedOperationException exc() {
         return new UnsupportedOperationException("QueryGraph cannot be modified.");
     }
+
+    public Graph getMainGraph() {
+        return mainGraph;
+    }
 }

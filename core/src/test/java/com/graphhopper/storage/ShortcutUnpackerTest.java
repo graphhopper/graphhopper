@@ -295,7 +295,7 @@ public class ShortcutUnpackerTest {
     }
 
     private ShortcutUnpacker createShortcutUnpacker(ShortcutUnpacker.Visitor visitor) {
-        return new ShortcutUnpacker(chGraph, visitor, edgeBased);
+        return new ShortcutUnpacker(new RoutingCHGraphImpl(chGraph, weighting), visitor, edgeBased);
     }
 
     private void setTurnCost(int fromEdge, int viaNode, int toEdge, double cost) {
