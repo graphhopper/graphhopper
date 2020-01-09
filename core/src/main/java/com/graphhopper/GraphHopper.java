@@ -845,6 +845,9 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         for (Map.Entry<String, FlexModel> entry : importFlexModels.entrySet()) {
+            if (!getEncodingManager().hasEncoder(entry.getValue().getBase()))
+                throw new IllegalArgumentException("For the flex_model " + entry.getKey() + " the specified base " +
+                        entry.getValue().getBase() + " is required in the graph.flag_encoders list");
             FlagEncoder baseEncoder = getEncodingManager().getEncoder(entry.getValue().getBase());
             Weighting weighting = new FlexModelWeighting("flex|" + entry.getKey(), entry.getValue(),
                     baseEncoder, encodingManager, encodedValueFactory);
