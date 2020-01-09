@@ -30,9 +30,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
  * bidirectional dijkstra is far more efficient than a single direction one. The same does not hold
@@ -61,6 +58,7 @@ import java.util.Set;
  */
 public class AStarBidirection extends AbstractBidirAlgo implements RecalculationHook {
     private BalancedWeightApproximator weightApprox;
+    double stoppingCriterionOffset;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -71,26 +69,17 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
 
     @Override
     void init(int from, double fromWeight, int to, double toWeight) {
-        System.out.println("===");
-        weightApprox.setFrom(from);
-        weightApprox.setTo(to);
+        weightApprox.setFromTo(from, to);
+        stoppingCriterionOffset = weightApprox.approximate(to, true) + weightApprox.getSlack();
         super.init(from, fromWeight, to, toWeight);
     }
-
-    Set<Integer> closedFrom = new HashSet<>(), closedTo = new HashSet<>();
 
     @Override
     protected boolean finished() {
         if (finishedFrom || finishedTo)
             return true;
 
-        boolean met = closedTo.contains(currFrom.adjNode) || closedFrom.contains(currTo.adjNode);
-        double lhs = currFrom.weight + currTo.weight;
-        double rhs = this.bestWeight + weightApprox.approximate(to, true);
-        closedFrom.add(currFrom.adjNode);
-        closedTo.add(currTo.adjNode);
-        System.out.printf("%s\t%s\t%s\t%f\t%f\n",super.finished(),lhs>=rhs,met,lhs,rhs);
-        return lhs >= rhs && met;
+        return currFrom.weight + currTo.weight >= this.bestWeight + stoppingCriterionOffset;
     }
 
     @Override
@@ -135,15 +124,15 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
         return this;
     }
 
-    void setFromDataStructures(AStarBidirection astar) {
-        super.setFromDataStructures(astar);
-        weightApprox.setFrom(astar.currFrom.adjNode);
-    }
-
-    void setToDataStructures(AStarBidirection astar) {
-        super.setToDataStructures(astar);
-        weightApprox.setTo(astar.currTo.adjNode);
-    }
+//    void setFromDataStructures(AStarBidirection astar) {
+//        super.setFromDataStructures(astar);
+//        weightApprox.setFrom(astar.currFrom.adjNode);
+//    }
+//
+//    void setToDataStructures(AStarBidirection astar) {
+//        super.setToDataStructures(astar);
+//        weightApprox.setTo(astar.currTo.adjNode);
+//    }
 
     @Override
     public void afterHeuristicChange(boolean forward, boolean backward) {

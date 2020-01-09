@@ -40,8 +40,12 @@ package com.graphhopper.routing.weighting;
  * @author Peter Karich
  */
 public class BalancedWeightApproximator {
+
     private final WeightApproximator uniDirApproximatorForward, uniDirApproximatorReverse;
-    int from, to;
+
+    // Constants to shift the estimate (reverse estimate) so that it is actually 0 at the destination (source).
+    double fromOffset, toOffset;
+
     public BalancedWeightApproximator(WeightApproximator weightApprox) {
         if (weightApprox == null)
             throw new IllegalArgumentException("WeightApproximator cannot be null");
@@ -54,26 +58,24 @@ public class BalancedWeightApproximator {
         return uniDirApproximatorForward;
     }
 
-    public void setFrom(int from) {
-        this.from=from;
+    public void setFromTo(int from, int to) {
         uniDirApproximatorReverse.setTo(from);
-    }
-
-    public void setTo(int to) {
-        this.to=to;
         uniDirApproximatorForward.setTo(to);
+        fromOffset = 0.5 * uniDirApproximatorForward.approximate(from);
+        toOffset = 0.5 * uniDirApproximatorReverse.approximate(to);
     }
 
     public double approximate(int node, boolean reverse) {
-        double weightApproximation = 0.5
-                * (uniDirApproximatorForward.approximate(node) - uniDirApproximatorReverse.approximate(node));
-
+        double weightApproximation = 0.5 * (uniDirApproximatorForward.approximate(node) - uniDirApproximatorReverse.approximate(node));
         if (reverse) {
-            return 0.5*uniDirApproximatorForward.approximate(from)-weightApproximation;
+            return fromOffset - weightApproximation;
         } else {
-            return 0.5*uniDirApproximatorReverse.approximate(to)+weightApproximation;
+            return toOffset + weightApproximation;
         }
+    }
 
+    public double getSlack() {
+        return uniDirApproximatorForward.getSlack();
     }
 
     @Override

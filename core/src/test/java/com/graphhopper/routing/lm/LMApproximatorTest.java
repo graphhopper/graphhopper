@@ -94,8 +94,7 @@ public class LMApproximatorTest {
             reverseBeelineApproximator.setTo(t);
             perfectApproximator.setTo(t);
             reversePerfectApproximator.setTo(t);
-            balancedWeightApproximator.setFrom(0);
-            balancedWeightApproximator.setTo(t);
+            balancedWeightApproximator.setFromTo(0, t);
             int nOverApproximatedWeights = 0;
             int nInconsistentWeights = 0;
             for (int v = 0; v< graph.getNodes(); v++) {

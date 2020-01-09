@@ -59,4 +59,9 @@ public class PerfectApproximator implements WeightApproximator {
     public WeightApproximator reverse() {
         return new PerfectApproximator(graph, weighting, traversalMode, !reverse);
     }
+
+    @Override
+    public double getSlack() {
+        return 0;
+    }
 }

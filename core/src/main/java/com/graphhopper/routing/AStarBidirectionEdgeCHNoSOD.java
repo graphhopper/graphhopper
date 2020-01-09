@@ -38,8 +38,7 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
 
     @Override
     public void init(int from, double fromWeight, int to, double toWeight) {
-        weightApprox.setFrom(from);
-        weightApprox.setTo(to);
+        weightApprox.setFromTo(from, to);
         super.init(from, fromWeight, to, toWeight);
     }
 

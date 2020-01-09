@@ -190,6 +190,11 @@ public class LMApproximator implements WeightApproximator {
         return new LMApproximator(graph, weighting, maxBaseNodes, lms, activeLandmarkIndices.length, factor, !reverse);
     }
 
+    @Override
+    public double getSlack() {
+        return lms.getFactor();
+    }
+
     /**
      * This method forces a lazy recalculation of the active landmark set e.g. necessary after the 'to' node changed.
      */
