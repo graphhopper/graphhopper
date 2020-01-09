@@ -30,6 +30,9 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
  * bidirectional dijkstra is far more efficient than a single direction one. The same does not hold
@@ -68,9 +71,26 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
 
     @Override
     void init(int from, double fromWeight, int to, double toWeight) {
+        System.out.println("===");
         weightApprox.setFrom(from);
         weightApprox.setTo(to);
         super.init(from, fromWeight, to, toWeight);
+    }
+
+    Set<Integer> closedFrom = new HashSet<>(), closedTo = new HashSet<>();
+
+    @Override
+    protected boolean finished() {
+        if (finishedFrom || finishedTo)
+            return true;
+
+        boolean met = closedTo.contains(currFrom.adjNode) || closedFrom.contains(currTo.adjNode);
+        double lhs = Math.abs(currFrom.weight - weightApprox.approximate(from, false)) + Math.abs(currTo.weight - weightApprox.approximate(to, true));
+        double rhs = Math.abs(this.bestWeight - weightApprox.approximate(from, false) + weightApprox.approximate(to, false));
+        closedFrom.add(currFrom.adjNode);
+        closedTo.add(currTo.adjNode);
+        System.out.printf("%s\t%s\t%s\t%f\t%f\n",super.finished(),lhs>=rhs,met,lhs,rhs);
+        return lhs >= rhs && met;
     }
 
     @Override
