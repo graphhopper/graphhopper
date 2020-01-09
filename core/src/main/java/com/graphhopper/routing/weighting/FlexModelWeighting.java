@@ -84,13 +84,14 @@ public class FlexModelWeighting implements Weighting {
 
     @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        double seconds = calcSeconds(edge, reverse, prevOrNextEdgeId);
+        double distance = edge.getDistance();
+        double seconds = calcSeconds(distance, edge, reverse, prevOrNextEdgeId);
         if (Double.isInfinite(seconds))
             return Double.POSITIVE_INFINITY;
-        return (seconds + edge.getDistance() * distanceFactor) / priorityConfig.calcPriority(edge, reverse, prevOrNextEdgeId);
+        return (seconds + distance * distanceFactor) / priorityConfig.calcPriority(edge, reverse, prevOrNextEdgeId);
     }
 
-    double calcSeconds(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+    double calcSeconds(double distance, EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         // special case for loop edges: since they do not have a meaningful direction we always need to read them in forward direction
         if (edge.getBaseNode() == edge.getAdjNode())
             reverse = false;
@@ -107,12 +108,12 @@ public class FlexModelWeighting implements Weighting {
             throw new IllegalArgumentException("Speed cannot be negative");
 
         double delay = delayConfig.calcDelay(edge, reverse, prevOrNextEdgeId);
-        return edge.getDistance() / speed * FlexModel.SPEED_CONV + delay;
+        return distance / speed * FlexModel.SPEED_CONV + delay;
     }
 
     @Override
     public long calcMillis(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        return Math.round(calcSeconds(edge, reverse, prevOrNextEdgeId) * 1000);
+        return Math.round(calcSeconds(edge.getDistance(), edge, reverse, prevOrNextEdgeId) * 1000);
     }
 
     @Override

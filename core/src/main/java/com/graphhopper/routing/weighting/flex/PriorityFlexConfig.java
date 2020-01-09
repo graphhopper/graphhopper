@@ -70,7 +70,7 @@ public class PriorityFlexConfig {
             Double value = entry.getValue(edge, reverse);
             if (value != null) {
                 if (value < 0)
-                    throw new IllegalStateException("Invalid priority " + value);
+                    throw new IllegalStateException("Invalid priority_" + i + ": " + value);
                 priority *= value;
             }
         }
