@@ -86,6 +86,7 @@ public class LMApproximatorTest {
             WeightApproximator reverseBeelineApproximator = beelineApproximator.reverse();
             PerfectApproximator perfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, false);
             PerfectApproximator reversePerfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, true);
+            BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(new LMApproximator(graph, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false));
 
             lmApproximator.setTo(t);
             beelineApproximator.setTo(t);
@@ -93,6 +94,8 @@ public class LMApproximatorTest {
             reverseBeelineApproximator.setTo(t);
             perfectApproximator.setTo(t);
             reversePerfectApproximator.setTo(t);
+            balancedWeightApproximator.setFrom(0);
+            balancedWeightApproximator.setTo(t);
             int nOverApproximatedWeights = 0;
             int nInconsistentWeights = 0;
             for (int v = 0; v< graph.getNodes(); v++) {
@@ -128,6 +131,17 @@ public class LMApproximatorTest {
                         int w = neighbors.getAdjNode();
                         double vw = weighting.calcWeight(neighbors, false, -1);
                         double vwApprox = lmApproximator.approximate(v) - lmApproximator.approximate(w);
+                        if (vwApprox - lm.getLandmarkStorage().getFactor() > vw) {
+                            System.out.printf("%f\t%f\n", vwApprox - lm.getLandmarkStorage().getFactor(),vw);
+                            nInconsistentWeights++;
+                        }
+                    }
+
+                    neighbors = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)).setBaseNode(v);
+                    while (neighbors.next()) {
+                        int w = neighbors.getAdjNode();
+                        double vw = weighting.calcWeight(neighbors, false, -1);
+                        double vwApprox = balancedWeightApproximator.approximate(v, false) - balancedWeightApproximator.approximate(w, false);
                         if (vwApprox - lm.getLandmarkStorage().getFactor() > vw) {
                             System.out.printf("%f\t%f\n", vwApprox - lm.getLandmarkStorage().getFactor(),vw);
                             nInconsistentWeights++;
