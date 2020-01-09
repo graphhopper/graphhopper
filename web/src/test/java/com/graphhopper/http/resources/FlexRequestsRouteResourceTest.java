@@ -50,7 +50,6 @@ public class FlexRequestsRouteResourceTest {
     public void testCHQuery() {
         String jsonQuery = "{" +
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
-                // TODO NOW this is ugly, but only the base FlagEncoder car exists:
                 " \"vehicle\": \"car\"," +
                 " \"weighting\": \"flex|truck\"" +
                 "}";
