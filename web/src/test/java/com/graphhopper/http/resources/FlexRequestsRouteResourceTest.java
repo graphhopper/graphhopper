@@ -77,8 +77,6 @@ public class FlexRequestsRouteResourceTest {
 
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "model:\n" +
-                // default is 0.1
-                "  min_priority: 0\n" +
                 "  base: bike\n" +
                 // only one tunnel is mapped in this osm file with max_height=1.7 => https://www.openstreetmap.org/way/132908255
                 "  height: 2\n";

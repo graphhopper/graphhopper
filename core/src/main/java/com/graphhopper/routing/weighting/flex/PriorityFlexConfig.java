@@ -57,17 +57,20 @@ public class PriorityFlexConfig {
     }
 
     /**
-     * @return weight without unit. The lower it is the higher the priority of the specified edge should be.
+     * @return weight without unit. The lower the priority is the higher the weight of the specified edge will be.
      */
     public double calcPriority(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         double priority = 1;
         for (int i = 0; i < priorityList.size(); i++) {
             ConfigMapEntry entry = priorityList.get(i);
             Double value = entry.getValue(edge, reverse);
-            if (value != null)
-                priority *= Math.max(0, value);
+            if (value != null) {
+                if (value < 0)
+                    throw new IllegalStateException("Invalid priority " + value);
+                priority *= value;
+            }
         }
-        return Math.max(priority, config.getMinPriority());
+        return Math.min(priority, config.getMaxPriority());
     }
 
     private static class MaxValueConfigMapEntry implements ConfigMapEntry {

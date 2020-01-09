@@ -525,7 +525,7 @@ public class RouteResourceTest {
                 "      tunnel: 0.1\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 3000, 3100);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 2350, 2500);
     }
 
     @Test
@@ -533,7 +533,6 @@ public class RouteResourceTest {
         String yamlQuery = "points: [[1.540875,42.510672], [1.54212,42.511131]]\n" +
                 "model:\n" +
                 "  base: foot\n" +
-                "  min_priority: 0\n"+
                 "  priority:\n" +
                 "    road_class:\n" +
                 "      steps: 0\n";

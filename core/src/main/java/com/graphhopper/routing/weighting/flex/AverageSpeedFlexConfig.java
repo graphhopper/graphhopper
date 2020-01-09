@@ -98,6 +98,6 @@ public class AverageSpeedFlexConfig {
                 speed *= value;
         }
 
-        return Math.min(flexModel.getMaxSpeed(), speed);
+        return Math.min(speed, flexModel.getMaxSpeed());
     }
 }

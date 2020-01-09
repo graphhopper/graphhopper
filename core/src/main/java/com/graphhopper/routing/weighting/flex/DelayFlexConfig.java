@@ -56,8 +56,12 @@ public class DelayFlexConfig {
         for (int i = 0; i < delayList.size(); i++) {
             ConfigMapEntry entry = delayList.get(i);
             Double value = entry.getValue(edge, reverse);
-            if (value != null)
+            if (value != null) {
+                if (value < 0)
+                    throw new IllegalStateException("Invalid delay " + value);
+
                 delay += value;
+            }
         }
         return delay;
     }

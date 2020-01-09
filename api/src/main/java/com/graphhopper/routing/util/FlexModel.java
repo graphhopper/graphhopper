@@ -33,7 +33,7 @@ public class FlexModel {
     private String base;
     private double maxSpeed;
     // optional:
-    private double minPriority = 0.1;
+    private double maxPriority = 10;
     private Double weight, width, height, length;
     // max_priority and max_speed have a significant influence on the min_weight estimate, i.e. on quality vs. speed for A* with beeline
     // it also limits possibility to prefer a road
@@ -96,12 +96,12 @@ public class FlexModel {
         return maxSpeed;
     }
 
-    public void setMinPriority(double minPriority) {
-        this.minPriority = minPriority;
+    public void setMaxPriority(double maxPriority) {
+        this.maxPriority = maxPriority;
     }
 
-    public double getMinPriority() {
-        return minPriority;
+    public double getMaxPriority() {
+        return maxPriority;
     }
 
     public void setDistanceFactor(double distanceFactor) {

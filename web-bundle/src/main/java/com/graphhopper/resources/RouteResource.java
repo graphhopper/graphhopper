@@ -230,7 +230,7 @@ public class RouteResource {
     }
 
     @POST
-    @Consumes({"text/x-yaml", "application/x-yaml", "application/yaml"})
+    @Consumes({"text/x-yaml", "text/yaml", "application/x-yaml", "application/yaml"})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response doPost(String yaml, @Context HttpServletRequest httpReq) {
         FlexRequest flexRequest;
