@@ -32,14 +32,10 @@ public class PriorityFlexConfig {
 
     public PriorityFlexConfig(FlexModel flexModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
         this.config = flexModel;
-        if (flexModel.getWeight() != null && lookup.hasEncodedValue(MaxWeight.KEY))
-            priorityList.add(new MaxValueConfigMapEntry("weight", lookup.getDecimalEncodedValue(MaxWeight.KEY), flexModel.getWeight()));
-        if (flexModel.getWidth() != null && lookup.hasEncodedValue(MaxWidth.KEY))
-            priorityList.add(new MaxValueConfigMapEntry("width", lookup.getDecimalEncodedValue(MaxWidth.KEY), flexModel.getWidth()));
-        if (flexModel.getHeight() != null && lookup.hasEncodedValue(MaxHeight.KEY))
-            priorityList.add(new MaxValueConfigMapEntry("height", lookup.getDecimalEncodedValue(MaxHeight.KEY), flexModel.getHeight()));
-        if (flexModel.getLength() != null && lookup.hasEncodedValue(MaxLength.KEY))
-            priorityList.add(new MaxValueConfigMapEntry("length", lookup.getDecimalEncodedValue(MaxLength.KEY), flexModel.getLength()));
+        add(lookup, flexModel.getWeight(), "weight", MaxWeight.KEY);
+        add(lookup, flexModel.getWidth(), "width", MaxWidth.KEY);
+        add(lookup, flexModel.getHeight(), "height", MaxHeight.KEY);
+        add(lookup, flexModel.getLength(), "length", MaxLength.KEY);
 
         for (Map.Entry<String, Object> entry : flexModel.getPriority().entrySet()) {
             if (!lookup.hasEncodedValue(entry.getKey()))
@@ -54,6 +50,14 @@ public class PriorityFlexConfig {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'priority'");
             }
         }
+    }
+
+    void add(EncodedValueLookup lookup, Double value, String name, String encValue) {
+        if (value == null)
+            return;
+        if (!lookup.hasEncodedValue(encValue))
+            throw new IllegalArgumentException("You cannot use " + name + " as encoded value '" + encValue + "' was not enabled on the server.");
+        priorityList.add(new MaxValueConfigMapEntry(name, lookup.getDecimalEncodedValue(encValue), value));
     }
 
     /**

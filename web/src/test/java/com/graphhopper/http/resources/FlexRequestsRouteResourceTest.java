@@ -35,7 +35,6 @@ public class FlexRequestsRouteResourceTest {
                 put("graph.encoded_values", "max_height").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 put("graph.location", DIR));
-        // TODO NOW should we throw an exception if we did forget to include 'max_height'
     }
 
     @ClassRule

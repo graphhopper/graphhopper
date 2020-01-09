@@ -848,7 +848,7 @@ public class GraphHopper implements GraphHopperAPI {
             FlagEncoder baseEncoder = getEncodingManager().getEncoder(entry.getValue().getBase());
             Weighting weighting = new FlexModelWeighting("flex|" + entry.getKey(), entry.getValue(),
                     baseEncoder, encodingManager, encodedValueFactory);
-            // TODO NOW use edgeBased if flexModel says so
+            // TODO use edgeBased if flexModel says so
             chFactoryDecorator.addCHProfile(CHProfile.nodeBased(weighting));
         }
     }
