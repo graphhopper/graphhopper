@@ -92,9 +92,6 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         }
     }
 
-    /**
-     *
-     */
     double getOrigEdgeWeight(boolean reverse) {
         // todo: for #1776 move the access check into the weighting
         final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
