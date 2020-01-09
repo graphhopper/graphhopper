@@ -19,6 +19,9 @@ package com.graphhopper.routing.util.spatialrules;
 
 import java.util.*;
 
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
@@ -32,10 +35,13 @@ import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
  */
 class SpatialRuleContainer {
     private static final PreparedGeometryFactory PREP_GEOM_FACTORY = new PreparedGeometryFactory();
+    private static final GeometryFactory FAC = new GeometryFactory();
+    private static final int GRID_SIZE = 10;
+    private static final double COORD_EPSILON = 0.00001;
 
     private final PreparedGeometry preparedPolygon;
     private final Set<SpatialRule> rules = new LinkedHashSet<>();
-
+    private final List<Envelope> filledLines;
     
     public SpatialRuleContainer(Polygon polygon) {
         this(PREP_GEOM_FACTORY.create(polygon));
@@ -43,6 +49,7 @@ class SpatialRuleContainer {
     
     private SpatialRuleContainer(PreparedGeometry preparedPolygon) {
         this.preparedPolygon = preparedPolygon;
+        this.filledLines = findFilledLines(preparedPolygon);
     }
 
     public void addRule(SpatialRule spatialRule) {
@@ -61,6 +68,14 @@ class SpatialRuleContainer {
     }
 
     public boolean containsProperly(Point point) {
+        Coordinate coord = point.getCoordinate();
+        
+        for (Envelope line : filledLines) {
+            if (line.covers(coord)) {
+                return true;
+            }
+        }
+        
         return preparedPolygon.containsProperly(point);
     }
 
@@ -68,5 +83,35 @@ class SpatialRuleContainer {
         SpatialRuleContainer container = new SpatialRuleContainer(this.preparedPolygon);
         container.rules.addAll(this.rules);
         return container;
+    }
+    
+    private static List<Envelope> findFilledLines(PreparedGeometry prepGeom) {
+        List<Envelope> lines = new ArrayList<>();
+        
+        Envelope bbox = prepGeom.getGeometry().getEnvelopeInternal();
+        double tileWidth  = bbox.getWidth()  / GRID_SIZE;
+        double tileHeight = bbox.getHeight() / GRID_SIZE;
+
+        Envelope tile = new Envelope();
+        Envelope line;
+        for (int row = 0; row < GRID_SIZE; row++) {
+            line = null;
+            for (int column = 0; column < GRID_SIZE; column++) {
+                double minX = bbox.getMinX() + (column * tileWidth);
+                double minY = bbox.getMinY() + (row * tileHeight);
+                tile.init(minX, minX + tileWidth, minY, minY + tileHeight);
+                
+                if (prepGeom.covers(FAC.toGeometry(tile))) {
+                    if (line != null && Math.abs(line.getMaxX() - tile.getMinX()) < COORD_EPSILON) {
+                        line.expandToInclude(tile);
+                    } else {
+                        line = new Envelope(tile);
+                        lines.add(line);
+                    }
+                }
+            }
+        }
+        
+        return lines;
     }
 }
