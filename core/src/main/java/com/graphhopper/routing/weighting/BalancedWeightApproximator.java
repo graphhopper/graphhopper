@@ -41,7 +41,7 @@ package com.graphhopper.routing.weighting;
  */
 public class BalancedWeightApproximator {
     private final WeightApproximator uniDirApproximatorForward, uniDirApproximatorReverse;
-
+    int from, to;
     public BalancedWeightApproximator(WeightApproximator weightApprox) {
         if (weightApprox == null)
             throw new IllegalArgumentException("WeightApproximator cannot be null");
@@ -55,10 +55,12 @@ public class BalancedWeightApproximator {
     }
 
     public void setFrom(int from) {
+        this.from=from;
         uniDirApproximatorReverse.setTo(from);
     }
 
     public void setTo(int to) {
+        this.to=to;
         uniDirApproximatorForward.setTo(to);
     }
 
@@ -66,10 +68,12 @@ public class BalancedWeightApproximator {
         double weightApproximation = 0.5
                 * (uniDirApproximatorForward.approximate(node) - uniDirApproximatorReverse.approximate(node));
 
-        if (reverse)
-            return -weightApproximation;
+        if (reverse) {
+            return 0.5*uniDirApproximatorForward.approximate(from)-weightApproximation;
+        } else {
+            return 0.5*uniDirApproximatorReverse.approximate(to)+weightApproximation;
+        }
 
-        return weightApproximation;
     }
 
     @Override

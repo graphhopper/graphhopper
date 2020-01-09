@@ -85,8 +85,8 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
             return true;
 
         boolean met = closedTo.contains(currFrom.adjNode) || closedFrom.contains(currTo.adjNode);
-        double lhs = Math.abs(currFrom.weight - weightApprox.approximate(from, false)) + Math.abs(currTo.weight - weightApprox.approximate(to, true));
-        double rhs = Math.abs(this.bestWeight - weightApprox.approximate(from, false) + weightApprox.approximate(to, false));
+        double lhs = currFrom.weight + currTo.weight;
+        double rhs = this.bestWeight + weightApprox.approximate(to, true);
         closedFrom.add(currFrom.adjNode);
         closedTo.add(currTo.adjNode);
         System.out.printf("%s\t%s\t%s\t%f\t%f\n",super.finished(),lhs>=rhs,met,lhs,rhs);
