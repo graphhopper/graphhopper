@@ -90,8 +90,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 DijkstraBidirectionCHNoSOD vtRouter = new DijkstraBidirectionCHNoSOD(graph);
                 final Path vtPath = vtRouter.calcPath(v, t);
                 final IntIndexedContainer vtNodes = vtPath.calcNodes();
-                // todonow: which graph do we want here ?
-                Path path = new Path(graph.getBaseGraph()) {
+                Path path = new Path(graph.getGraph().getBaseGraph()) {
                     Path extract() {
                         setFromNode(svNodes.get(0));
                         for (EdgeIteratorState edge : svPath.calcEdges()) {
