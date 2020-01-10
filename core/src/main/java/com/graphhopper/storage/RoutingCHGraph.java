@@ -18,6 +18,7 @@
 
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.Weighting;
 
 public interface RoutingCHGraph {
@@ -47,8 +48,14 @@ public interface RoutingCHGraph {
 
     double getTurnWeight(int inEdge, int viaNode, int outEdge);
 
+    /**
+     * @return the underlying graph, i.e. a {@link CHGraph} or a {@link QueryGraph} wrapping a {@link CHGraph}
+     */
     Graph getGraph();
 
+    /**
+     * @return the base graph (no virtual edges or shortcuts)
+     */
     Graph getBaseGraph();
 
     Weighting getWeighting();
