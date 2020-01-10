@@ -87,28 +87,10 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 DijkstraBidirectionCHNoSOD svRouter = new DijkstraBidirectionCHNoSOD(graph, weighting);
                 svRouter.setEdgeFilter(additionalEdgeFilter);
                 final Path svPath = svRouter.calcPath(s, v);
-                final IntIndexedContainer svNodes = svPath.calcNodes();
                 DijkstraBidirectionCHNoSOD vtRouter = new DijkstraBidirectionCHNoSOD(graph, weighting);
                 vtRouter.setEdgeFilter(additionalEdgeFilter);
                 final Path vtPath = vtRouter.calcPath(v, t);
-                final IntIndexedContainer vtNodes = vtPath.calcNodes();
-                Path path = new Path(graph.getBaseGraph()) {
-                    Path extract() {
-                        setFromNode(svNodes.get(0));
-                        for (EdgeIteratorState edge : svPath.calcEdges()) {
-                            addEdge(edge.getEdge());
-                        }
-                        for (EdgeIteratorState edge : vtPath.calcEdges()) {
-                            addEdge(edge.getEdge());
-                        }
-                        setEndNode(vtNodes.get(vtNodes.size() - 1));
-                        setFound(true);
-                        setWeight(svPath.getWeight() + vtPath.getWeight());
-                        setDistance(svPath.getDistance() + vtPath.getDistance());
-                        time = svPath.time + vtPath.time;
-                        return this;
-                    }
-                }.extract();
+                Path path = concat(graph.getBaseGraph(), svPath, vtPath);
 
                 // And calculate the share again, because this can be totally different.
                 // The first filter is a good heuristic, but we still need this one.
@@ -120,6 +102,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 // This is the final test we need: Discard paths that are not "locally shortest" around v.
                 // So move a couple of nodes to the left and right from v on our path,
                 // route, and check if v is on the shortest path.
+                final IntIndexedContainer svNodes = svPath.calcNodes();
                 int vIndex = svNodes.size() - 1;
                 if (!tTest(path, vIndex))
                     return true;
@@ -189,6 +172,24 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
             }
         });
         return alternatives;
+    }
+
+    private static Path concat(Graph graph, Path svPath, Path vtPath) {
+        Path path = new Path(graph);
+        path.setFromNode(svPath.calcNodes().get(0));
+        for (EdgeIteratorState edge : svPath.calcEdges()) {
+            path.addEdge(edge.getEdge());
+        }
+        for (EdgeIteratorState edge : vtPath.calcEdges()) {
+            path.addEdge(edge.getEdge());
+        }
+        final IntIndexedContainer vtNodes = vtPath.calcNodes();
+        path.setEndNode(vtNodes.get(vtNodes.size() - 1));
+        path.setWeight(svPath.getWeight() + vtPath.getWeight());
+        path.setDistance(svPath.getDistance() + vtPath.getDistance());
+        path.addTime(svPath.time + vtPath.time);
+        path.setFound(true);
+        return path;
     }
 
     @Override
