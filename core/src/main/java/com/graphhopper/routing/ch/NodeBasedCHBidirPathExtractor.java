@@ -24,8 +24,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.ShortcutUnpacker;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-
 public class NodeBasedCHBidirPathExtractor extends BidirPathExtractor {
     private final ShortcutUnpacker shortcutUnpacker;
 
@@ -48,7 +46,7 @@ public class NodeBasedCHBidirPathExtractor extends BidirPathExtractor {
             @Override
             public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
                 path.addDistance(edge.getDistance());
-                path.addTime(weighting.calcMillis(edge, reverse, NO_EDGE));
+                path.addTime(weighting.calcEdgeMillis(edge, reverse));
                 path.addEdge(edge.getEdge());
             }
         }, false);

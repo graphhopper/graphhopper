@@ -19,7 +19,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 

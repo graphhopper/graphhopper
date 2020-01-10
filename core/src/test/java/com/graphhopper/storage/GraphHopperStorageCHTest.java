@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.Assert.*;
 
