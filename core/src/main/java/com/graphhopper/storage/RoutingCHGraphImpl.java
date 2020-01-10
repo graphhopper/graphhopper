@@ -121,7 +121,6 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
         return graph;
     }
 
-    // todonow: should not be used too often
     @Override
     public Graph getBaseGraph() {
         return chGraph.getBaseGraph();
