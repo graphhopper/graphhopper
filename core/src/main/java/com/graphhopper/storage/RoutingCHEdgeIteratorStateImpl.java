@@ -38,61 +38,65 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     @Override
     public EdgeIteratorState getBaseGraphEdgeState() {
         if (isShortcut()) {
-            throw new IllegalStateException("Base edge can only be obtained for original edges, was: " + edgeState);
+            throw new IllegalStateException("Base edge can only be obtained for original edges, was: " + edgeState());
         }
-        return edgeState;
+        return edgeState();
     }
 
     @Override
     public int getEdge() {
-        return edgeState.getEdge();
+        return edgeState().getEdge();
     }
 
     @Override
     public int getOrigEdgeFirst() {
-        return edgeState.getOrigEdgeFirst();
+        return edgeState().getOrigEdgeFirst();
     }
 
     @Override
     public int getOrigEdgeLast() {
-        return edgeState.getOrigEdgeLast();
+        return edgeState().getOrigEdgeLast();
     }
 
     @Override
     public int getBaseNode() {
-        return edgeState.getBaseNode();
+        return edgeState().getBaseNode();
     }
 
     @Override
     public int getAdjNode() {
-        return edgeState.getAdjNode();
+        return edgeState().getAdjNode();
     }
 
     @Override
     public boolean isShortcut() {
-        return (edgeState instanceof CHEdgeIteratorState) && ((CHEdgeIteratorState) edgeState).isShortcut();
+        return (edgeState() instanceof CHEdgeIteratorState) && ((CHEdgeIteratorState) edgeState()).isShortcut();
     }
 
     @Override
     public int getSkippedEdge1() {
-        return ((CHEdgeIteratorState) edgeState).getSkippedEdge1();
+        return ((CHEdgeIteratorState) edgeState()).getSkippedEdge1();
     }
 
     @Override
     public int getSkippedEdge2() {
-        return ((CHEdgeIteratorState) edgeState).getSkippedEdge2();
+        return ((CHEdgeIteratorState) edgeState()).getSkippedEdge2();
     }
 
     @Override
     public double getWeight(boolean reverse) {
         if (isShortcut()) {
-            return ((CHEdgeIteratorState) edgeState).getWeight();
+            return ((CHEdgeIteratorState) edgeState()).getWeight();
         } else {
-            return getOrigEdgeWeight(reverse);
+            return getOrigEdgeWeight(reverse, true);
         }
     }
 
-    double getOrigEdgeWeight(boolean reverse) {
+    /**
+     * @param needWeight if true this method will return as soon as its clear that the weight is finite (no need to
+     *                   do the full computation)
+     */
+    double getOrigEdgeWeight(boolean reverse, boolean needWeight) {
         // todo: for #1776 move the access check into the weighting
         final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
         final boolean access = reverse
@@ -101,7 +105,14 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         if (baseEdge.getBaseNode() != baseEdge.getAdjNode() && !access) {
             return Double.POSITIVE_INFINITY;
         }
+        if (!needWeight) {
+            return 0;
+        }
         return weighting.calcWeight(baseEdge, reverse, EdgeIterator.NO_EDGE);
     }
 
+    EdgeIteratorState edgeState() {
+        // use this only via this getter method as it might have been overwritten
+        return edgeState;
+    }
 }
