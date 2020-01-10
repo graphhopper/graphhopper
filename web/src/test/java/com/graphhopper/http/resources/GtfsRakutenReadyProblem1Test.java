@@ -43,16 +43,16 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
  * of stuff (which is different for PT than for the rest) is under test, too.
  */
 public class GtfsRakutenReadyProblem1Test {
-    private static final String DIR = "./target/gtfs-rr-pb1/";
+    private static final String DIR = "./target/gtfs-rr-pb1-cache/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "foot").
-                put("datareader.file", "/Users/mathieu.stpierre/Documents/Dataset/PBF/america/canada/prince-edward-island-latest.osm.pbf").
-                put("gtfs.file", "/Users/mathieu.stpierre/Documents/Iterations/January2020/princeEdwardIsland/simple-bus-rail-stops-diff-loc.zip").
-                put("graph.location", "/Users/mathieu.stpierre/Documents/Iterations/January2020/princeEdwardIsland/simple-bus-rail-stops-diff-loc-cache").
+                put("datareader.file", "../core/files/prince-edward-island-latest.osm.pbf").
+                put("gtfs.file", "../core/files/simple-bus-rail-stops-diff-loc.zip").
+                put("graph.location", DIR).
                 put("prepare.ch.weightings", "no").
                 put("outing.max_visited_nodes", "1000000"));
     }
