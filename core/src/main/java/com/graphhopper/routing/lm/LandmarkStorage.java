@@ -583,7 +583,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     }
 
     int calcWeight(EdgeIteratorState edge, boolean reverse) {
-        return (int) (weighting.calcWeight(edge, reverse, EdgeIterator.NO_EDGE) / factor);
+        return (int) (weighting.calcEdgeWeight(edge, reverse) / factor);
     }
 
     // From all available landmarks pick just a few active ones

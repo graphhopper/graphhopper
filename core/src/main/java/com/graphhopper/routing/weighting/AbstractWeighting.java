@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
@@ -42,6 +43,16 @@ public abstract class AbstractWeighting implements Weighting {
 
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
+    }
+
+    @Override
+    public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        return calcWeight(edgeState, reverse, NO_EDGE);
+    }
+
+    @Override
+    public final long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        return calcMillis(edgeState, reverse, NO_EDGE);
     }
 
     @Override
@@ -95,7 +106,7 @@ public abstract class AbstractWeighting implements Weighting {
         return toString().equals(other.toString());
     }
 
-    static final boolean isValidName(String name) {
+    static boolean isValidName(String name) {
         if (name == null || name.isEmpty())
             return false;
 

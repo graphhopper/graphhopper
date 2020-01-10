@@ -21,7 +21,6 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorState {
@@ -108,7 +107,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         if (!needWeight) {
             return 0;
         }
-        return weighting.calcWeight(baseEdge, reverse, EdgeIterator.NO_EDGE);
+        return weighting.calcEdgeWeight(baseEdge, reverse);
     }
 
     EdgeIteratorState edgeState() {

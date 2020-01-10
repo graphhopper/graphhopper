@@ -32,7 +32,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.PriorityQueue;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 /**
  * Common subclass for bidirectional algorithms.
@@ -195,7 +194,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
             if (updateBestPath) {
                 // only needed for edge-based -> skip the calculation and use dummy value otherwise
-                double edgeWeight = traversalMode.isEdgeBased() ? weighting.calcWeight(iter, reverse, EdgeIterator.NO_EDGE) : Double.POSITIVE_INFINITY;
+                double edgeWeight = traversalMode.isEdgeBased() ? weighting.calcEdgeWeight(iter, reverse) : Double.POSITIVE_INFINITY;
                 updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
             }
         }
@@ -230,7 +229,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     @Override
     protected double getInEdgeWeight(SPTEntry entry) {
-        return weighting.calcWeight(graph.getEdgeIteratorState(getIncomingEdge(entry), entry.adjNode), false, NO_EDGE);
+        return weighting.calcEdgeWeight(graph.getEdgeIteratorState(getIncomingEdge(entry), entry.adjNode), false);
     }
 
     @Override
