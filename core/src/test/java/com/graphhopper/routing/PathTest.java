@@ -18,9 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.Roundabout;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -585,6 +583,38 @@ public class PathTest {
 
         assertEquals(3, wayList.size());
         assertEquals(-7, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionForMotorwayFork() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=48.909071%2C8.647136&point=48.908789%2C8.649244
+        // 1-2 & 2-4 is a motorway, 2-3 is a motorway_link
+        // We should skip the instruction here
+        //      1 ---- 2 ---- 4
+        //              \
+        //               3
+        na.setNode(1, 48.909071,8.647136);
+        na.setNode(2, 48.908962,8.647978);
+        na.setNode(3, 48.908867,8.648155);
+        na.setNode(4, 48.908789, 8.649244);
+
+        EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        BooleanEncodedValue roadClassLinkEnc = carManager.getBooleanEncodedValue(RoadClassLink.KEY);
+
+        g.edge(1, 2, 5, true).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
+        g.edge(2, 4, 5, true).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
+        g.edge(2, 3, 5, true).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, true);
+
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
+                .calcPath(1, 4);
+        assertTrue(p.isFound());
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+
+        assertEquals(2, wayList.size());
     }
 
     @Test
