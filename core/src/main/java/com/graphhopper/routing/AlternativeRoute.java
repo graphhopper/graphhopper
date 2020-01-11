@@ -277,7 +277,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
                 return true;
 
             // increase overlap of both searches:
-            return currFrom.weight + currTo.weight > explorationFactor * bestWeight;
+            return currFrom.weight + currTo.weight > explorationFactor * (bestWeight + stoppingCriterionOffset);
             // This is more precise but takes roughly 20% longer: return currFrom.weight > bestWeight && currTo.weight > bestWeight;
             // For bidir A* and AStarEdge.getWeightOfVisitedPath see comment in AStarBidirection.finished
         }
