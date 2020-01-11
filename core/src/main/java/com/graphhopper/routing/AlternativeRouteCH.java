@@ -183,8 +183,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
         for (EdgeIteratorState edge : vtPath.calcEdges()) {
             path.addEdge(edge.getEdge());
         }
-        final IntIndexedContainer vtNodes = vtPath.calcNodes();
-        path.setEndNode(vtNodes.get(vtNodes.size() - 1));
+        path.setEndNode(vtPath.getEndNode());
         path.setWeight(svPath.getWeight() + vtPath.getWeight());
         path.setDistance(svPath.getDistance() + vtPath.getDistance());
         path.addTime(svPath.time + vtPath.time);
