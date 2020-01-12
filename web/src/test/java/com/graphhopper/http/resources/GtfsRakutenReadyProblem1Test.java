@@ -38,12 +38,8 @@ import org.junit.Test;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
-/**
- * Similar to PtRouteResourceTest, but tests the entire app, not the resource, so that the plugging-together
- * of stuff (which is different for PT than for the rest) is under test, too.
- */
-public class GtfsRakutenReadyProblem1Test {
-    private static final String DIR = "./target/gtfs-rr-pb1-cache/";
+public class GtfsWalkingHopBetweenTransitsTest {
+    private static final String DIR = "./target/gtfs_pei_simple_cache/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
