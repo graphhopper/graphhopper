@@ -38,7 +38,7 @@ import org.junit.Test;
 
 import io.dropwizard.testing.junit.DropwizardAppRule;
 
-public class GtfsWalkingHopBetweenTransitsTest {
+public class GtfsSimpleRailRoadStopsSameLocationTest {
     private static final String DIR = "./target/gtfs_pei_simple_cache2/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
@@ -63,7 +63,7 @@ public class GtfsWalkingHopBetweenTransitsTest {
     }
 
     @Test
-    public void testTwoDisconnectTransitOver40kmTripQuery() {
+    public void testTwoConnectedTransitOver40kmTripQuery() {
         final Response response = app.client().target("http://localhost:8080/route")
                 .queryParam("point","46.436038,-63.639194") //SB1
                 .queryParam("point","46.273173,-63.153361") //SR2
@@ -73,8 +73,6 @@ public class GtfsWalkingHopBetweenTransitsTest {
         assertEquals(200, response.getStatus());
         GHResponse ghResponse = response.readEntity(GHResponse.class);
         assertFalse(ghResponse.hasErrors());
-        //The walking distance between SB2 and SR1 stops is about 350 meters, so one solution should have a
-        //walking distance less then 1 kilometer.
         assertTrue(ghResponse.getAll().stream().anyMatch( t -> t.getDistance() < 1000));
     }
 }
