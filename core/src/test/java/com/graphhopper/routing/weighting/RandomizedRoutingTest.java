@@ -101,8 +101,7 @@ public class RandomizedRoutingTest {
     @Before
     public void init() {
         dir = new RAMDirectory();
-//        encoder = new MotorcycleFlagEncoder(5, 5, 1);
-        encoder = new CarFlagEncoder(5, 5, 1);
+        encoder = new MotorcycleFlagEncoder(5, 5, 1);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));

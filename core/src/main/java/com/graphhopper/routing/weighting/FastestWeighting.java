@@ -86,8 +86,6 @@ public class FastestWeighting extends AbstractWeighting {
         if (unfavoredEdge)
             time += headingPenalty;
 
-        //System.out.println(time + " " + getMinWeight(edgeState.getDistance()));
-        //return Math.max(time, getMinWeight(edgeState.getDistance()));
         return time;
     }
 
