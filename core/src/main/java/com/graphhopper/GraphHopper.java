@@ -67,7 +67,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE;
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF;
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
@@ -826,10 +826,10 @@ public class GraphHopper implements GraphHopperAPI {
                     int uTurnCosts = config.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
 
                     CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
-                    if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supports(TurnWeighting.class))) {
+                    if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supportsTurnCosts())) {
                         chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null)));
                     }
-                    if (edgeBasedCHMode != OFF && encoder.supports(TurnWeighting.class)) {
+                    if (edgeBasedCHMode != OFF && encoder.supportsTurnCosts()) {
                         chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null), uTurnCosts));
                     }
                 }
@@ -973,7 +973,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode, double uTurnCosts) {
         FlagEncoder encoder = weighting.getFlagEncoder();
-        if (encoder.supports(TurnWeighting.class) && tMode.isEdgeBased())
+        if (encoder.supportsTurnCosts() && tMode.isEdgeBased())
             return new TurnWeighting(weighting, graph.getTurnCostStorage(), uTurnCosts);
         return weighting;
     }
@@ -1013,11 +1013,11 @@ public class GraphHopper implements GraphHopperAPI {
 
             // we use edge-based routing if the encoder supports turn-costs *unless* the edge_based parameter is set
             // explicitly.
-            TraversalMode tMode = encoder.supports(TurnWeighting.class) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
+            TraversalMode tMode = encoder.supportsTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
             if (hints.has(Routing.EDGE_BASED))
                 tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
-            if (tMode.isEdgeBased() && !encoder.supports(TurnWeighting.class)) {
+            if (tMode.isEdgeBased() && !encoder.supportsTurnCosts()) {
                 throw new IllegalArgumentException("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true");
             }
 

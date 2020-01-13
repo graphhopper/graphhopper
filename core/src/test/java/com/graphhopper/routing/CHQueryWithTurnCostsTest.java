@@ -42,7 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 

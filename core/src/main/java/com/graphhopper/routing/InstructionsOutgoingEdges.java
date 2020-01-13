@@ -19,7 +19,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
@@ -62,12 +61,14 @@ class InstructionsOutgoingEdges {
     private final List<EdgeIteratorState> allowedOutgoingEdges;
     // All outgoing edges, including oneways in the wrong direction
     private final List<EdgeIteratorState> allOutgoingEdges;
-    private final DecimalEncodedValue speedEnc;
+    private final DecimalEncodedValue maxSpeedEnc;
+    private final DecimalEncodedValue avgSpeedEnc;
     private final NodeAccess nodeAccess;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
                                      EdgeIteratorState currentEdge,
                                      FlagEncoder encoder,
+                                     DecimalEncodedValue maxSpeedEnc,
                                      EdgeExplorer crossingExplorer,
                                      NodeAccess nodeAccess,
                                      int prevNode,
@@ -76,7 +77,8 @@ class InstructionsOutgoingEdges {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        this.speedEnc = encoder.getAverageSpeedEnc();
+        this.maxSpeedEnc = maxSpeedEnc;
+        this.avgSpeedEnc = encoder.getAverageSpeedEnc();
         this.nodeAccess = nodeAccess;
 
         EdgeIteratorState tmpEdge;
@@ -142,8 +144,15 @@ class InstructionsOutgoingEdges {
         return maxSurroundingSpeed * factor < pathSpeed;
     }
 
+    /**
+     * Will return the tagged maxspeed, if available, if not, we use the average speed
+     * TODO: Should we rely only on the tagged maxspeed?
+     */
     private double getSpeed(EdgeIteratorState edge) {
-        return edge.get(speedEnc);
+       double maxSpeed = edge.get(maxSpeedEnc);
+       if(Double.isInfinite(maxSpeed))
+           return edge.get(avgSpeedEnc);
+       return maxSpeed;
     }
 
     /**

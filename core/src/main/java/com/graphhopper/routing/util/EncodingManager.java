@@ -24,7 +24,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.parsers.*;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -352,7 +351,7 @@ public class EncodingManager implements EncodedValueLookup {
 
             // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
             for (AbstractFlagEncoder encoder : flagEncoderList) {
-                if (encoder.supports(TurnWeighting.class) && !em.turnCostParsers.containsKey(encoder.toString()))
+                if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(encoder.toString()))
                     _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts()));
             }
 
@@ -741,7 +740,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     public boolean needsTurnCostsSupport() {
         for (FlagEncoder encoder : edgeEncoders) {
-            if (encoder.supports(TurnWeighting.class))
+            if (encoder.supportsTurnCosts())
                 return true;
         }
         return false;

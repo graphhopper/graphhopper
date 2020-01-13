@@ -113,7 +113,8 @@ public final class GraphExplorer {
         GtfsStorage.EdgeType edgeType = edge.get(flagEncoder.getTypeEnc());
         switch (edgeType) {
             case HIGHWAY:
-                return (long) (accessEgressWeighting.calcMillis(edge, reverse, -1) * (5.0 / walkSpeedKmH));
+                // todonow: why do we not account for turn times here ?
+                return (long) (accessEgressWeighting.calcEdgeMillis(edge, reverse) * (5.0 / walkSpeedKmH));
             case ENTER_TIME_EXPANDED_NETWORK:
                 if (reverse) {
                     return 0;

@@ -42,7 +42,7 @@ public class FastestWeightingTest {
     public void testMinWeightHasSameUnitAs_getWeight() {
         Weighting instance = new FastestWeighting(encoder);
         IntsRef flags = GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, encoder.getMaxSpeed(), true, false);
-        assertEquals(instance.getMinWeight(10), instance.calcWeight(createMockedEdgeIteratorState(10, flags), false, EdgeIterator.NO_EDGE), 1e-8);
+        assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(createMockedEdgeIteratorState(10, flags), false), 1e-8);
     }
 
     @Test
@@ -52,22 +52,22 @@ public class FastestWeightingTest {
 
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
                 GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 10, true, false), "test", Helper.createPointList(51, 0, 51, 1), false);
-        double time = instance.calcWeight(virtEdge, false, 0);
+        double time = instance.calcEdgeWeight(virtEdge, false);
 
         virtEdge.setUnfavored(true);
         // heading penalty on edge
-        assertEquals(time + 100, instance.calcWeight(virtEdge, false, 0), 1e-8);
+        assertEquals(time + 100, instance.calcEdgeWeight(virtEdge, false), 1e-8);
         // only after setting it
         virtEdge.setUnfavored(true);
-        assertEquals(time + 100, instance.calcWeight(virtEdge, true, 0), 1e-8);
+        assertEquals(time + 100, instance.calcEdgeWeight(virtEdge, true), 1e-8);
         // but not after releasing it
         virtEdge.setUnfavored(false);
-        assertEquals(time, instance.calcWeight(virtEdge, true, 0), 1e-8);
+        assertEquals(time, instance.calcEdgeWeight(virtEdge, true), 1e-8);
 
         // test default penalty
         virtEdge.setUnfavored(true);
         instance = new FastestWeighting(encoder);
-        assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcWeight(virtEdge, false, 0), 1e-8);
+        assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcEdgeWeight(virtEdge, false), 1e-8);
     }
 
     @Test
@@ -75,12 +75,10 @@ public class FastestWeightingTest {
         Weighting instance = new FastestWeighting(encoder);
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
         encoder.getAverageSpeedEnc().setDecimal(false, edgeFlags, 0);
-        assertEquals(1.0 / 0, instance.calcWeight(createMockedEdgeIteratorState(10, edgeFlags),
-                false, EdgeIterator.NO_EDGE), 1e-8);
+        assertEquals(1.0 / 0, instance.calcEdgeWeight(createMockedEdgeIteratorState(10, edgeFlags), false), 1e-8);
 
         // 0 / 0 returns NaN but calcWeight should not return NaN!
-        assertEquals(1.0 / 0, instance.calcWeight(createMockedEdgeIteratorState(0, edgeFlags),
-                false, EdgeIterator.NO_EDGE), 1e-8);
+        assertEquals(1.0 / 0, instance.calcEdgeWeight(createMockedEdgeIteratorState(0, edgeFlags), false), 1e-8);
     }
 
     @Test
@@ -94,8 +92,8 @@ public class FastestWeightingTest {
 
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(100000, edgeFlags);
 
-        assertEquals(375 * 60 * 1000, w.calcMillis(edge, false, EdgeIterator.NO_EDGE));
-        assertEquals(600 * 60 * 1000, w.calcMillis(edge, true, EdgeIterator.NO_EDGE));
+        assertEquals(375 * 60 * 1000, w.calcEdgeMillis(edge, false));
+        assertEquals(600 * 60 * 1000, w.calcEdgeMillis(edge, true));
 
         g.close();
     }

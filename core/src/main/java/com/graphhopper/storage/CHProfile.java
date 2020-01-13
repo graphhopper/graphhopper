@@ -2,7 +2,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
@@ -10,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
 /**
  * Specifies all properties of a CH routing profile. Generally these properties cannot be changed after the CH
@@ -44,7 +43,7 @@ public class CHProfile {
     }
 
     /**
-     * @param uTurnCosts the costs of a u-turn in seconds, for {@link TurnWeighting#INFINITE_U_TURN_COSTS} the u-turn costs
+     * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
      *                   will be infinite
      */
     public CHProfile(Weighting weighting, boolean edgeBased, int uTurnCosts) {

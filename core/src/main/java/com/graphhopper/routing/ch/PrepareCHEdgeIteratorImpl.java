@@ -101,7 +101,7 @@ public class PrepareCHEdgeIteratorImpl implements PrepareCHEdgeExplorer, Prepare
         if (!needWeight) {
             return 0;
         }
-        return weighting.calcWeight(chIterator, reverse, EdgeIterator.NO_EDGE);
+        return weighting.calcEdgeWeight(chIterator, reverse);
     }
 
     @Override

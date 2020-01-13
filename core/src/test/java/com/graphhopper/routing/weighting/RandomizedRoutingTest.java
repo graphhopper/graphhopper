@@ -26,6 +26,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.assertEquals;
@@ -104,7 +105,7 @@ public class RandomizedRoutingTest {
         encoder = new CarFlagEncoder(5, 5, 1);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, TurnWeighting.INFINITE_U_TURN_COSTS));
+        chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
         graph = createGraph();
         chGraph = graph.getCHGraph(!traversalMode.isEdgeBased() ? chProfiles.get(0) : chProfiles.get(1));
     }

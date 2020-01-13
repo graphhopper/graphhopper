@@ -23,6 +23,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+
 /**
  * Used by CH algorithms and therefore assumed that all edges are of type CHEdgeIteratorState
  * <p>
@@ -43,6 +45,11 @@ public class CHWeighting implements Weighting {
     }
 
     @Override
+    public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        return calcWeight(edgeState, reverse, NO_EDGE);
+    }
+
+    @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         CHEdgeIteratorState tmp = (CHEdgeIteratorState) edgeState;
         if (tmp.isShortcut())
@@ -50,6 +57,11 @@ public class CHWeighting implements Weighting {
             return tmp.getWeight();
 
         return userWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+    }
+
+    @Override
+    public final long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        return calcMillis(edgeState, reverse, NO_EDGE);
     }
 
     @Override
