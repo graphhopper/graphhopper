@@ -63,7 +63,7 @@ public class GtfsSimpleRailRoadStopsSameLocationTest {
     }
 
     @Test
-    public void testTwoConnectedTransitOver40kmTripQuery() {
+    public void testTwoConnectedTransitsOver40kmTripQuery() {
         final Response response = app.client().target("http://localhost:8080/route")
                 .queryParam("point","46.436038,-63.639194") //SB1
                 .queryParam("point","46.273173,-63.153361") //SR2
