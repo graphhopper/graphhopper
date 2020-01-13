@@ -34,7 +34,7 @@ public class PerfectApproximator implements WeightApproximator {
     private Weighting weighting;
     private TraversalMode traversalMode;
     private int to;
-    private boolean reverse = false;
+    private boolean reverse;
 
     public PerfectApproximator(Graph graph, Weighting weighting, TraversalMode traversalMode, boolean reverse) {
         this.graph = graph;
@@ -47,7 +47,7 @@ public class PerfectApproximator implements WeightApproximator {
     public double approximate(int currentNode) {
         Dijkstra dijkstra = new Dijkstra(graph, weighting, traversalMode);
         Path path = reverse ? dijkstra.calcPath(to, currentNode) : dijkstra.calcPath(currentNode, to);
-        if (path.isFound()) return path.getWeight(); else return Double.POSITIVE_INFINITY;
+        return path.isFound() ? path.getWeight() : Double.POSITIVE_INFINITY;
     }
 
     @Override
