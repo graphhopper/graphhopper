@@ -119,9 +119,10 @@ public class MapMatchingTest {
 
         PathWrapper route1 = graphHopper.route(new GHRequest(
                 new GHPoint(51.33099, 12.380267),
-                new GHPoint(51.330689, 12.380776))
+                new GHPoint(51.330531, 12.380396))
                 .setWeighting("fastest")).getBest();
         inputGPXEntries = createRandomGPXEntriesAlongRoute(route1);
+        mapMatching.setMeasurementErrorSigma(5);
         mr = mapMatching.doWork(inputGPXEntries);
 
         assertEquals(Arrays.asList("Windmühlenstraße", "Windmühlenstraße", "Bayrischer Platz",
@@ -129,7 +130,8 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
 
         matchGHRsp = new PathWrapper();
-        new PathMerger(mr.getGraph(), mr.getWeighting()).doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), graphHopper.getEncodingManager(), translationMap.get("en"));
+        new PathMerger(mr.getGraph(), mr.getWeighting()).doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()),
+                graphHopper.getEncodingManager(), translationMap.get("en"));
         il = matchGHRsp.getInstructions();
 
         assertEquals(il.toString(), 3, il.size());
@@ -149,9 +151,6 @@ public class MapMatchingTest {
         // GraphHopper travel times aren't exactly additive
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
         assertEquals(142, mr.getEdgeMatches().size());
-
-        // TODO with 20m distortion
-        // TODO with 40m distortion
     }
 
     /**
