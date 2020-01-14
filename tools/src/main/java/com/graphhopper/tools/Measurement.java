@@ -169,11 +169,12 @@ public class Measurement {
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
+            String blockAreaStr = "49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512";
             if (runSlow) {
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing", vehicleStr, count / 20, isCH, isLM).
                         withInstructions());
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", vehicleStr, count / 20, isCH, isLM).
-                        withInstructions().blockArea("51.178267,13.677979, 51.190533,13.829041, 51.121627,13.775482"));
+                        withInstructions().blockArea(blockAreaStr));
             }
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
@@ -185,6 +186,9 @@ public class Measurement {
                             withInstructions().activeLandmarks(activeLMCount));
                 }
 
+                activeLMCount = 8;
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", vehicleStr, count / 4, isCH, isLM).
+                        withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
 
