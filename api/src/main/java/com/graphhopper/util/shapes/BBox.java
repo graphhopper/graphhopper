@@ -312,20 +312,23 @@ public class BBox implements Shape, Cloneable {
 
         double maxLat = Double.parseDouble(splittedObject[2]);
         double maxLon = Double.parseDouble(splittedObject[3]);
+        return BBox.fromPoints(minLat, minLon, maxLat, maxLon);
+    }
 
-        if (minLat > maxLat) {
-            double tmp = minLat;
-            minLat = maxLat;
-            maxLat = tmp;
+    public static BBox fromPoints(double lat1, double lon1, double lat2, double lon2) {
+        if (lat1 > lat2) {
+            double tmp = lat1;
+            lat1 = lat2;
+            lat2 = tmp;
         }
 
-        if (minLon > maxLon) {
-            double tmp = minLon;
-            minLon = maxLon;
-            maxLon = tmp;
+        if (lon1 > lon2) {
+            double tmp = lon1;
+            lon1 = lon2;
+            lon2 = tmp;
         }
 
-        return new BBox(minLon, maxLon, minLat, maxLat);
+        return new BBox(lon1, lon2, lat1, lat2);
     }
 
     /**

@@ -72,7 +72,7 @@ public class GraphEdgeIdFinder {
         QueryResult qr = locationIndex.findClosest(center.getLat(), center.getLon(), filter);
         // TODO: if there is no street close to the center it'll fail although there are roads covered. Maybe we should check edge points or some random points in the Shape instead?
         if (!qr.isValid())
-            throw new IllegalArgumentException("Shape " + shape + " does not cover graph");
+            throw new IllegalArgumentException("Shape '" + shape + "' does not cover graph. Center: " + center);
 
         if (shape.contains(qr.getSnappedPoint().lat, qr.getSnappedPoint().lon))
             edgeIds.add(qr.getClosestEdge().getEdge());
@@ -156,7 +156,7 @@ public class GraphEdgeIdFinder {
                 String objectAsString = blockedCircularAreasArr[i];
                 String[] splittedObject = objectAsString.split(innerObjSep);
                 if (splittedObject.length > 4) {
-                    final Polygon polygon = Polygon.parsePoints(objectAsString, 0.003);
+                    final Polygon polygon = Polygon.parsePoints(objectAsString);
                     findEdgesInShape(blockArea.blockedEdges, polygon, filter);
                 } else if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);
@@ -216,8 +216,10 @@ public class GraphEdgeIdFinder {
             }
 
             if (!blockedShapes.isEmpty() && na != null) {
+                double latAdj = na.getLatitude(edgeState.getAdjNode()), lonAdj = na.getLongitude(edgeState.getAdjNode()),
+                        latBase = na.getLatitude(edgeState.getBaseNode()), lonBase = na.getLongitude(edgeState.getBaseNode());
                 for (Shape shape : blockedShapes) {
-                    if (shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode())))
+                    if (shape.contains(latAdj, lonAdj) || shape.contains(latBase, lonBase))
                         return true;
                 }
             }

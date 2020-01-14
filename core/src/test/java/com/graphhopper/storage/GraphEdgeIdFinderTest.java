@@ -121,16 +121,18 @@ public class GraphEdgeIdFinderTest {
                 .prepareIndex();
 
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("2,1, 0,2, 2,3", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
+        // 500km => big area to force geometry check instead of edge id procedure
+        double area = 500_000L * 500_000L;
+        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("2.1,1, -1.1,2, 2,3", DefaultEdgeFilter.allEdges(encoder), area);
 
         GHIntHashSet blockedEdges = new GHIntHashSet();
-        blockedEdges.addAll(1, 2, 6, 7);
+        blockedEdges.addAll(11, 12, 1, 2, 6, 7);
         assertEquals(blockedEdges, blockArea.blockedEdges);
 
-        blockArea = graphFinder.parseBlockArea("2,1, 1,3, 1,2, 0,1", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
+        blockArea = graphFinder.parseBlockArea("2.1,1, 0.9,3, 0.9,2, -0.3,0", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
 
         blockedEdges = new GHIntHashSet();
-        blockedEdges.addAll(4, 9, 6, 7);
+        blockedEdges.addAll(0, 1, 4, 5, 6, 7, 9);
         assertEquals(blockedEdges, blockArea.blockedEdges);
     }
 }

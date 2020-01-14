@@ -18,8 +18,7 @@
 package com.graphhopper.util.shapes;
 
 /**
- * A shape interface to implement circles or rectangles.
- * <p>
+ * A shape interface to implement circles, polygons or rectangles.
  *
  * @author Peter Karich
  */

@@ -30,7 +30,7 @@ public class Circle implements Shape {
     private final double lon;
     private final double normedDist;
     private final BBox bbox;
-    private DistanceCalc calc = Helper.DIST_EARTH;
+    private DistanceCalc calc;
 
     public Circle(double lat, double lon, double radiusInMeter) {
         this(lat, lon, radiusInMeter, Helper.DIST_EARTH);
