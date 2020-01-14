@@ -22,10 +22,14 @@ import com.graphhopper.util.shapes.GHPoint3D;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+
+import static com.graphhopper.util.Helper.round2;
+import static com.graphhopper.util.Helper.round6;
 
 /**
  * Slim list to store several points (without the need for a point object). Be aware that the PointList is closely
@@ -154,6 +158,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     private double[] longitudes;
     private double[] elevations;
     private boolean isImmutable = false;
+    private LineString cachedLineString;
 
     public PointList() {
         this(10, false);
@@ -399,7 +404,10 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public LineString toLineString(boolean includeElevation) {
-        GeometryFactory gf = new GeometryFactory();
+        return toLineString(new GeometryFactory(), includeElevation);
+    }
+
+    private LineString toLineString(GeometryFactory geometryFactory, boolean includeElevation) {
         Coordinate[] coordinates = new Coordinate[getSize() == 1 ? 2 : getSize()];
         for (int i = 0; i < getSize(); i++) {
             coordinates[i] = includeElevation ?
@@ -415,15 +423,15 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         // special case as just 1 point is not supported in the specification #1412
         if (getSize() == 1)
             coordinates[1] = coordinates[0];
-        return gf.createLineString(coordinates);
+        return geometryFactory.createLineString(new PackedCoordinateSequence.Double(coordinates, includeElevation ? 3 : 2));
     }
 
-    public static final double round6(double value) {
-        return Math.round(value * 1e6) / 1e6;
-    }
-
-    public static final double round2(double value) {
-        return Math.round(value * 100) / 100d;
+    public LineString getCachedLineString(GeometryFactory gf, boolean includeElevation) {
+        if (cachedLineString != null)
+            return cachedLineString;
+        if (!isImmutable)
+            throw new IllegalArgumentException("Make PointList immutable before calling getCachedLineString");
+        return cachedLineString = toLineString(gf, includeElevation);
     }
 
     @Override
@@ -622,8 +630,9 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
      * Once immutable, there is no way to make this object mutable again. This is done to ensure the consistency of
      * shallow copies. If you need to modify this object again, you have to create a deep copy of it.
      */
-    public void makeImmutable() {
+    public PointList makeImmutable() {
         this.isImmutable = true;
+        return this;
     }
 
     private void ensureMutability() {
