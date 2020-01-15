@@ -406,25 +406,4 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm impleme
         return visitedCountFrom + visitedCountTo;
     }
 
-    void setFromDataStructures(AbstractBidirAlgo other) {
-        from = other.from;
-        fromOutEdge = other.fromOutEdge;
-        pqOpenSetFrom = other.pqOpenSetFrom;
-        bestWeightMapFrom = other.bestWeightMapFrom;
-        finishedFrom = other.finishedFrom;
-        currFrom = other.currFrom;
-        visitedCountFrom = other.visitedCountFrom;
-        // outEdgeExplorer
-    }
-
-    void setToDataStructures(AbstractBidirAlgo other) {
-        to = other.to;
-        toInEdge = other.toInEdge;
-        pqOpenSetTo = other.pqOpenSetTo;
-        bestWeightMapTo = other.bestWeightMapTo;
-        finishedTo = other.finishedTo;
-        currTo = other.currTo;
-        visitedCountTo = other.visitedCountTo;
-        // inEdgeExplorer
-    }
 }
