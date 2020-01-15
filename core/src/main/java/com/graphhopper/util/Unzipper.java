@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,13 +56,13 @@ public class Unzipper {
             byte[] buffer = new byte[8 * 1024];
             while (ze != null) {
                 if (ze.isDirectory()) {
-                    new File(toFolder, ze.getName()).mkdir();
+                    getVerifiedFile(toFolder, ze).mkdir();
                 } else {
                     double factor = 1;
                     if (ze.getCompressedSize() > 0 && ze.getSize() > 0)
                         factor = (double) ze.getCompressedSize() / ze.getSize();
 
-                    File newFile = new File(toFolder, ze.getName());
+                    File newFile = getVerifiedFile(toFolder, ze);
                     FileOutputStream fos = new FileOutputStream(newFile);
                     try {
                         int len;
@@ -83,5 +83,13 @@ public class Unzipper {
         } finally {
             zis.close();
         }
+    }
+
+    // see #1628
+    File getVerifiedFile(File destinationDir, ZipEntry ze) throws IOException {
+        File destinationFile = new File(destinationDir, ze.getName());
+        if (!destinationFile.getCanonicalPath().startsWith(destinationDir.getCanonicalPath() + File.separator))
+            throw new SecurityException("Zip Entry is outside of the target dir: " + ze.getName());
+        return destinationFile;
     }
 }

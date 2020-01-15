@@ -3,6 +3,10 @@ var tfAddition = '';
 if (ghenv.thunderforest.api_key)
     tfAddition = '?apikey=' + ghenv.thunderforest.api_key;
 
+var mapilionAddition = '';
+if (ghenv.mapilion.api_key)
+    mapilionAddition = '?key=' + ghenv.mapilion.api_key;
+
 var osAPIKey = 'mapsgraph-bf48cc0b';
 if (ghenv.omniscale.api_key)
     osAPIKey = ghenv.omniscale.api_key;
@@ -16,13 +20,9 @@ var lyrk = L.tileLayer('https://tiles.lyrk.org/' + (retinaTiles ? 'lr' : 'ls') +
     attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>'
 });
 
-var omniscale = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.default' + (retinaTiles ? '/hq.true' : '') + '/{z}/{x}/{y}.png', {
+var omniscale = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.default/{z}/{x}/{y}.png' + (retinaTiles ? '?hq=true' : ''), {
     layers: 'osm',
     attribution: osmAttr + ', &copy; <a href="https://maps.omniscale.com/">Omniscale</a>'
-});
-
-var openMapSurfer = L.tileLayer('http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}', {
-    attribution: osmAttr + ', <a href="http://korona.geog.uni-heidelberg.de/contact.html">GIScience Heidelberg</a>'
 });
 
 // Not an option as too fast over limit.
@@ -50,7 +50,10 @@ var thunderNeighbourhood = L.tileLayer('https://{s}.tile.thunderforest.com/neigh
     attribution: osmAttr + ', <a href="https://thunderforest.com/maps/neighbourhood/" target="_blank">Thunderforest Neighbourhood</a>'
 });
 
-https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}.png?apikey=<insert-your-apikey-here>
+var kurvigerLiberty = L.tileLayer('https://{s}-tiles.mapilion.com/raster/styles/kurviger-liberty/{z}/{x}/{y}{r}.png'+mapilionAddition, {
+    subdomains: ['a', 'b', 'c', 'd', 'e'],
+    attribution: osmAttr + ',&copy; <a href="https://kurviger.de/" target="_blank">Kurviger</a> &copy; <a href="https://mapilion.com/attribution" target="_blank">Mapilion</a> <a href="http://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a>'
+});
 
 var wrk = L.tileLayer('http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png', {
     attribution: osmAttr + ', <a href="http://wanderreitkarte.de" target="_blank">WanderReitKarte</a>',
@@ -80,18 +83,89 @@ var availableTileLayers = {
     "TF Cycle": thunderCycle,
     "TF Outdoors": thunderOutdoors,
     "TF Neighbourhood": thunderNeighbourhood,
+    "Kurviger Liberty": kurvigerLiberty,
     "Lyrk": lyrk,
     "WanderReitKarte": wrk,
-    "OpenMapSurfer": openMapSurfer,
     "Sorbian Language": sorbianLang,
     "OpenStreetMap.de": osmde
 };
+
+var overlays;
+if(ghenv.environment === 'development') {
+    var omniscaleGray = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.grayscale/layers.world,buildings,landusages,labels/{z}/{x}/{y}.png?' + (retinaTiles ? '&hq=true' : ''), {
+        layers: 'osm',
+        attribution: osmAttr + ', &copy; <a href="https://maps.omniscale.com/">Omniscale</a>'
+    });
+    availableTileLayers["Omniscale Dev"] = omniscaleGray;
+
+    require('leaflet.vectorgrid');
+    var vtLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment", {
+      rendererFactory: L.canvas.tile,
+      maxZoom: 20,
+      minZoom: 10,
+      interactive: true,
+      vectorTileLayerStyles: {
+        'roads': function(properties, zoom) {
+            // weight == line width
+            var color, opacity = 1, weight = 1, rc = properties.road_class;
+            // if(properties.speed < 30) console.log(properties)
+            if(rc == "motorway") {
+                color = '#dd504b'; // red
+                weight = 3;
+            } else if(rc == "primary" || rc == "trunk") {
+                color = '#e2a012'; // orange
+                weight = 2;
+            } else if(rc == "secondary") {
+                weight = 2;
+                color = '#f7c913'; // yellow
+            } else {
+                color = "#aaa5a7"; // grey
+            }
+            if(zoom > 16)
+               weight += 3;
+            else if(zoom > 15)
+               weight += 2;
+            else if(zoom > 13)
+               weight += 1;
+
+            return {
+                weight: weight,
+                color: color,
+                opacity: opacity
+            }
+        },
+      },
+    })
+    .on('click', function(e) {
+    })
+    .on('mouseover', function(e) {
+        console.log(e.layer.properties);
+        // remove route info
+        $("#info").children("div").remove();
+        // remove last vector tile info
+        $("#info").children("ul").remove();
+
+        var list = "";
+        $.each(e.layer.properties, function (key, value) {
+            list += "<li>" + key + ": " + value + "</li>";
+        });
+        $("#info").append("<ul>"+list+"</ul>");
+        $("#info").show();
+    }).on('mouseout', function (e) {
+//        $("#info").html("");
+    });
+    overlays = { "Local MVT": vtLayer };
+}
 
 module.exports.activeLayerName = "Omniscale";
 module.exports.defaultLayer = omniscale;
 
 module.exports.getAvailableTileLayers = function () {
     return availableTileLayers;
+};
+
+module.exports.getOverlays = function () {
+    return overlays;
 };
 
 module.exports.selectLayer = function (layerName) {

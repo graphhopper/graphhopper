@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,6 @@
  *  limitations under the License.
  */
 package com.graphhopper.storage;
-
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,7 +76,6 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
 
-        // initialize transient values
         setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
         return this;
@@ -190,7 +187,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 4 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         bitUtil.fromInt(segments[bufferIndex], value, index);
     }
 
@@ -199,12 +197,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 4 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        if (bufferIndex > segments.length) {
-            LoggerFactory.getLogger(getClass()).error(getName() + ", segments:" + segments.length
-                    + ", bufIndex:" + bufferIndex + ", bytePos:" + bytePos
-                    + ", segPower:" + segmentSizePower);
-        }
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         return bitUtil.toInt(segments[bufferIndex], index);
     }
 
@@ -213,8 +207,13 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 2 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        bitUtil.fromShort(segments[bufferIndex], value, index);
+        if (index + 2 > segmentSizeInBytes) {
+            // special case if short has to be written into two separate segments
+            segments[bufferIndex][index] = (byte) (value);
+            segments[bufferIndex + 1][0] = (byte) (value >>> 8);
+        } else {
+            bitUtil.fromShort(segments[bufferIndex], value, index);
+        }
     }
 
     @Override
@@ -222,8 +221,10 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 2 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        return bitUtil.toShort(segments[bufferIndex], index);
+        if (index + 2 > segmentSizeInBytes)
+            return (short) ((segments[bufferIndex + 1][0] & 0xFF) << 8 | (segments[bufferIndex][index] & 0xFF));
+        else
+            return bitUtil.toShort(segments[bufferIndex], index);
     }
 
     @Override
@@ -260,6 +261,22 @@ public class RAMDataAccess extends AbstractDataAccess {
         } else {
             System.arraycopy(seg, index, values, 0, length);
         }
+    }
+
+    @Override
+    public final void setByte(long bytePos, byte value) {
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        segments[bufferIndex][index] = value;
+    }
+
+    @Override
+    public final byte getByte(long bytePos) {
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        return segments[bufferIndex][index];
     }
 
     @Override

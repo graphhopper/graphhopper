@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,12 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
 
+import static com.graphhopper.routing.profiles.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -38,13 +38,10 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public MountainBikeFlagEncoder(PMap properties) {
-        this(
-                (int) properties.getLong("speed_bits", 4),
+        this((int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0
-        );
-        this.properties = properties;
-        this.setBlockFords(properties.getBool("block_fords", true));
+                properties.getBool("turn_costs", false) ? 1 : 0);
+        this.setBlockFords(properties.getBool("block_fords", false));
     }
 
     public MountainBikeFlagEncoder(String propertiesStr) {
@@ -109,14 +106,14 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
         setHighwaySpeed("tertiary_link", 18);
 
         addPushingSection("footway");
+        addPushingSection("platform");
         addPushingSection("pedestrian");
         addPushingSection("steps");
 
-        setCyclingNetworkPreference("icn", PREFER.getValue());
-        setCyclingNetworkPreference("ncn", PREFER.getValue());
-        setCyclingNetworkPreference("rcn", PREFER.getValue());
-        setCyclingNetworkPreference("lcn", PREFER.getValue());
-        setCyclingNetworkPreference("mtb", BEST.getValue());
+        routeMap.put(INTERNATIONAL, PREFER.getValue());
+        routeMap.put(NATIONAL, PREFER.getValue());
+        routeMap.put(REGIONAL, PREFER.getValue());
+        routeMap.put(LOCAL, BEST.getValue());
 
         avoidHighwayTags.add("primary");
         avoidHighwayTags.add("primary_link");
@@ -134,8 +131,6 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
 
         potentialBarriers.add("kissing_gate");
         setSpecificClassBicycle("mtb");
-
-        init();
     }
 
     @Override
@@ -157,19 +152,6 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
             else if (trackType.startsWith("grade"))
                 weightToPrioMap.put(100d, VERY_NICE.getValue());
         }
-    }
-
-    @Override
-    public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
-        oldRelationFlags = super.handleRelationTags(relation, oldRelationFlags);
-        int code = 0;
-        if (relation.hasTag("route", "mtb"))
-            code = PREFER.getValue();
-
-        int oldCode = (int) relationCodeEncoder.getValue(oldRelationFlags);
-        if (oldCode < code)
-            return relationCodeEncoder.setValue(0, code);
-        return oldRelationFlags;
     }
 
     @Override

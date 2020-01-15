@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
+import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.util.shapes.Polygon;
 
 import java.util.List;
@@ -41,14 +42,14 @@ public interface SpatialRule {
     double getMaxSpeed(String highway, double _default);
 
     /**
-     * Returns the {@link AccessValue} for a certain highway type and transportation mode. If nothing is defined,
+     * Returns the {@link RoadAccess} for a certain highway type and transportation mode. If nothing is defined,
      * _default will be returned.
      *
      * @param highwayTag         The highway type, e.g. primary, secondary
      * @param transportationMode The mode of transportation
      * @param _default           The default AccessValue
      */
-    AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default);
+    RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default);
 
     /**
      * Returns the borders in which the SpatialRule is valid
@@ -67,10 +68,11 @@ public interface SpatialRule {
         }
 
         @Override
-        public AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default) {
-            return AccessValue.ACCESSIBLE;
+        public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
+            return _default;
         }
 
+        // should we use Country.DEFAULT here?
         @Override
         public String getId() {
             return "SpatialRule.EMPTY";

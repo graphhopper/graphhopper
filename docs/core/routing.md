@@ -11,7 +11,7 @@ GraphHopper hopper = new GraphHopperOSM().forServer();
 hopper.setDataReaderFile(osmFile);
 // where to store graphhopper files?
 hopper.setGraphHopperLocation(graphFolder);
-hopper.setEncodingManager(new EncodingManager("car"));
+hopper.setEncodingManager(EncodingManager.create("car"));
 
 // now this can take minutes if it imports or a few seconds for loading
 // of course this is dependent on the area you import
@@ -60,7 +60,7 @@ config.yml `prepare.ch.weightings=no`) or on a per request base by adding `ch.di
 (see config.yml `prepare.lm.weightings=fastest`).
 
 If you need multiple vehicle profiles you can specify a list of vehicle profiles (see
-config.yml e.g. `graph.flag_encoders=car,bike` or use `new EncodingManager("car,bike")`). 
+config.yml e.g. `graph.flag_encoders=car,bike` or use `EncodingManager.create("car,bike")`). 
 
 To calculate a route you have to pick one vehicle and optionally an algorithm like `bidirectional_astar`:
 
@@ -69,7 +69,7 @@ GraphHopper hopper = new GraphHopperOSM().forServer();
 hopper.setCHEnabled(false);
 hopper.setOSMFile(osmFile);
 hopper.setGraphHopperLocation(graphFolder);
-hopper.setEncodingManager(new EncodingManager("car,bike"));
+hopper.setEncodingManager(EncodingManager.create("car,bike"));
 
 hopper.importOrLoad();
 
@@ -80,8 +80,9 @@ GHResponse res = hopper.route(req);
 
 ## Heading
 
-The flexibile and hybrid mode allows to add a desired heading (north based azimuth between 0 and 360 degree)
-to any point. Adding a heading makes it more likely that a route starts towards the provided direction:
+The flexible and hybrid modes allow adding a desired heading (north based azimuth between 0 and 360 degree)
+to any point. Adding a heading makes it more likely that a route starts towards the provided direction, because
+roads going into other directions are penalized (see the Routing.HEADING_PENALTY parameter)
 ```java
 GHRequest req = new GHRequest().addPoint(new GHPoint (latFrom, lonFrom), favoredHeading).addPoint(new GHPoint (latTo, lonTo));
 ```

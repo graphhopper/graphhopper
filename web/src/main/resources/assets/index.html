@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <!--
   ~  Licensed to GraphHopper GmbH under one or more contributor
   ~  license agreements. See the NOTICE file distributed with this work for
@@ -23,18 +22,18 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="keywords" content="road routing,shortest path,maps,openstreetmap,android,navigation,routenplaner,gis"/>
-        <link type="image/png" rel="icon" href="/favicon.ico"/>
+        <link type="image/png" rel="icon" href="./favicon.ico"/>
         <link rel="search" type="application/opensearchdescription+xml" title="GraphHopper Maps" href="opensearch.xml"/>
         <title>Driving Directions - GraphHopper Maps</title>
         <meta name="description" content="A fast route planner for biking, hiking and more! Based on OpenStreetMap including elevation data. Try out for free!"/>
-        <link rel="stylesheet" href="css/leaflet.css?v=1.0.3" />
-        <link rel="stylesheet" href="css/leaflet.elevation-0.0.4.css" />
+        <link rel="stylesheet" href="css/leaflet.css?v=1.5.1" />
         <link rel="stylesheet" href="css/leaflet_numbered_markers.css" />
-        <link rel="stylesheet" href="css/leaflet.contextmenu.css" />
+        <link rel="stylesheet" href="css/leaflet.contextmenu.css?v=1.4.0" />
         <link rel="stylesheet" href="css/leaflet.loading.css?v=0.1.24" />
         <link rel="stylesheet" href="css/ui-lightness/jquery-ui.min.css" />
-        <link rel="stylesheet" href="css/flatpickr.min.css">
-        <script type="text/javascript" src="js/main.js?v=0.9.1"></script>
+        <link rel="stylesheet" href="css/L.Control.Heightgraph.css?v=0.2.0" />
+        <link rel="stylesheet" href="css/flatpickr.min.css?v=4.4.6">
+        <script type="text/javascript" src="js/main.js?v=0.11.2"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css" />
     </head>
     <body>
@@ -53,7 +52,7 @@
         </div>
         <form id="locationform">
             <div class="time_input">
-                <input id="input_date_0" class="flatpickr input_date" type="text" placeholder="Select Date & Time"/>
+                <input id="input_date_0" class="flatpickr input_date" type="text" placeholder="Select Date &amp; Time"/>
             </div>
             <div id="locationpoints">
                 <div id="x_pointAdd" class="pointAdd"><img src="img/point_add.png"/></div>
@@ -111,28 +110,25 @@
 </div>
 <div id="map">
 </div>
-<!-- Piwik -->
-<script type="text/javascript">
-            PIWIK = false;
-            if (PIWIK) {
-                var _paq = _paq || [];
-                _paq.push(['trackPageView']);
-                _paq.push(['enableLinkTracking']);
-                (function () {
-                    var url = "https://graphhopper.com/piwik/";
-                    _paq.push(['setTrackerUrl', url + 'piwik.php']);
-                    _paq.push(['setSiteId', 1]);
-                    var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
-                    g.type = 'text/javascript';
-                    g.defer = true;
-                    g.async = true;
-                    g.src = url + 'piwik.js';
-                    s.parentNode.insertBefore(g, s);
-                })();
-            }
 
+<!-- Matomo -->
+<script type="text/javascript">
+        PIWIK = false;
+        if (PIWIK) {
+          var _paq = window._paq || [];
+          /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+          _paq.push(['trackPageView']);
+          _paq.push(['enableLinkTracking']);
+          (function() {
+            var u="//matomo.graphhopper.com/";
+            _paq.push(['setTrackerUrl', u+'matomo.php']);
+            _paq.push(['setSiteId', '1']);
+            var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+            g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+          })();
+        }
 </script>
-<noscript><p><img src="https://graphhopper.com/piwik/piwik.php?idsite=1" style="border:0;" alt=""/></p></noscript>
-<!-- End Piwik Code -->
+<noscript><p><img src="https://matomo.graphhopper.com/matomo.php?idsite=1&amp;rec=1" style="border:0;" alt=""/></p></noscript>
+<!-- End Matomo Code -->
 </body>
 </html>

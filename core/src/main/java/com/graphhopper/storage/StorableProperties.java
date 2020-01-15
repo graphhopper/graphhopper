@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,10 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -34,6 +34,9 @@ import static com.graphhopper.util.Helper.*;
  * @author Peter Karich
  */
 public class StorableProperties implements Storable<StorableProperties> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StorableProperties.class);
+
     private final Map<String, String> map = new LinkedHashMap<>();
     private final DataAccess da;
 
@@ -136,7 +139,7 @@ public class StorableProperties implements Storable<StorableProperties> {
         put("edges.version", Constants.VERSION_EDGE);
         put("geometry.version", Constants.VERSION_GEOMETRY);
         put("location_index.version", Constants.VERSION_LOCATION_IDX);
-        put("name_index.version", Constants.VERSION_NAME_IDX);
+        put("string_index.version", Constants.VERSION_STRING_IDX);
         put("shortcuts.version", Constants.VERSION_SHORTCUT);
     }
 
@@ -145,7 +148,7 @@ public class StorableProperties implements Storable<StorableProperties> {
                 + get("edges.version") + ","
                 + get("geometry.version") + ","
                 + get("location_index.version") + ","
-                + get("name_index.version");
+                + get("string_index.version");
     }
 
     public synchronized boolean checkVersions(boolean silent) {
@@ -161,7 +164,7 @@ public class StorableProperties implements Storable<StorableProperties> {
         if (!check("location_index", Constants.VERSION_LOCATION_IDX, silent))
             return false;
 
-        if (!check("name_index", Constants.VERSION_NAME_IDX, silent))
+        if (!check("string_index", Constants.VERSION_STRING_IDX, silent))
             return false;
 
         if (!check("shortcuts", Constants.VERSION_SHORTCUT, silent))
@@ -188,5 +191,33 @@ public class StorableProperties implements Storable<StorableProperties> {
     @Override
     public synchronized String toString() {
         return da.toString();
+    }
+
+    static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {
+        BufferedReader reader = new BufferedReader(tmpReader);
+        String line;
+        try {
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("//") || line.startsWith("#")) {
+                    continue;
+                }
+
+                if (Helper.isEmpty(line)) {
+                    continue;
+                }
+
+                int index = line.indexOf("=");
+                if (index < 0) {
+                    LOGGER.warn("Skipping configuration at line:" + line);
+                    continue;
+                }
+
+                String field = line.substring(0, index);
+                String value = line.substring(index + 1);
+                map.put(field.trim(), value.trim());
+            }
+        } finally {
+            reader.close();
+        }
     }
 }

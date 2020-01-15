@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
     private final int WIDTH_BYTE_INDEX = 0;
     private final int DEGREE = 1;
     // use a map as an array is not quite useful if we want to hold only parts of the world
-    private final GHIntObjectHashMap<HeightTile> cacheData = new GHIntObjectHashMap<HeightTile>();
+    private final GHIntObjectHashMap<HeightTile> cacheData = new GHIntObjectHashMap<>();
     private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
 
@@ -60,18 +60,13 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
     @Override
     public void release() {
         cacheData.clear();
-
-        // for memory mapped type we create temporary unpacked files which should be removed
-        if (autoRemoveTemporary && dir != null)
-            dir.clear();
-    }
-
-    /**
-     * Creating temporary files can take a long time to fill our DataAccess object, so this option
-     * can be used to disable the default clear mechanism via specifying 'false'.
-     */
-    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
-        this.autoRemoveTemporary = autoRemoveTemporary;
+        if (dir != null) {
+            // for memory mapped type we remove temporary files
+            if (autoRemoveTemporary)
+                dir.clear();
+            else
+                dir.close();
+        }
     }
 
     int down(double val) {
@@ -177,6 +172,12 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
                 } catch (SocketTimeoutException ex) {
                     // just try again after a little nap
                     Thread.sleep(2000);
+                } catch (FileNotFoundException ex) {
+                    if (zippedURL.contains(".hgt.zip")) {
+                        zippedURL = zippedURL.replace(".hgt.zip", "hgt.zip");
+                    } else {
+                        throw ex;
+                    }
                 }
             }
 

@@ -1,0 +1,10 @@
+[ {
+    "exit_number" : 2,
+    "distance" : 0.0,
+    "sign" : 6,
+    "exited" : true,
+    "interval" : [ 0, 3 ],
+    "text" : "At roundabout, take exit 2 onto streetname",
+    "time" : 0,
+    "street_name" : "streetname"
+} ]

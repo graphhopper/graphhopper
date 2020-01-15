@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import java.util.Map;
  * @author Robin Boldt
  */
 public abstract class AbstractTiffElevationProvider extends AbstractElevationProvider {
-    private final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
+    private final Map<String, HeightTile> cacheData = new HashMap<>();
     final double precision = 1e7;
 
     private final int WIDTH;
@@ -57,10 +57,13 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
     @Override
     public void release() {
         cacheData.clear();
-
-        // for memory mapped type we create temporary unpacked files which should be removed
-        if (autoRemoveTemporary && dir != null)
-            dir.clear();
+        if (dir != null) {
+            // for memory mapped type we remove temporary files
+            if (autoRemoveTemporary)
+                dir.clear();
+            else
+                dir.close();
+        }
     }
 
     /**
@@ -186,14 +189,4 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
             throw new RuntimeException("Problem at x:" + x + ", y:" + y, ex);
         }
     }
-
-    /**
-     * Creating temporary files can take a long time as we need to unpack tiff as well as to fill
-     * our DataAccess object, so this option can be used to disable the default clear mechanism via
-     * specifying 'false'.
-     */
-    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
-        this.autoRemoveTemporary = autoRemoveTemporary;
-    }
-
 }

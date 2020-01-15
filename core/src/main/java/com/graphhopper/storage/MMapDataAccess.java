@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,36 +19,46 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * A DataAccess implementation using a memory-mapped file, i.e. a facility of the
  * operating system to access a file like an area of RAM.
- *
+ * <p>
  * Java presents the mapped memory as a ByteBuffer, and ByteBuffer is not
  * thread-safe, which means that access to a ByteBuffer must be externally
  * synchronized.
- *
+ * <p>
  * This class itself is intended to be as thread-safe as other DataAccess
  * implementations are.
- *
- * The exact behavior of memory-mapping is reported to be wildly platform-dependent.
- *
  * <p>
+ * The exact behavior of memory-mapping is reported to be wildly platform-dependent.
  *
  * @author Peter Karich
  * @author Michael Zilske
  */
 public final class MMapDataAccess extends AbstractDataAccess {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MMapDataAccess.class);
+
     private final boolean allowWrites;
     private RandomAccessFile raFile;
     private List<ByteBuffer> segments = new ArrayList<>();
@@ -56,6 +66,92 @@ public final class MMapDataAccess extends AbstractDataAccess {
     MMapDataAccess(String name, String location, ByteOrder order, boolean allowWrites) {
         super(name, location, order);
         this.allowWrites = allowWrites;
+    }
+
+    public static boolean jreIsMinimumJava9() {
+        final StringTokenizer st = new StringTokenizer(System.getProperty("java.specification.version"), ".");
+        int JVM_MAJOR_VERSION = Integer.parseInt(st.nextToken());
+        int JVM_MINOR_VERSION;
+        if (st.hasMoreTokens()) {
+            JVM_MINOR_VERSION = Integer.parseInt(st.nextToken());
+        } else {
+            JVM_MINOR_VERSION = 0;
+        }
+        return JVM_MAJOR_VERSION > 1 || (JVM_MAJOR_VERSION == 1 && JVM_MINOR_VERSION >= 9);
+    }
+
+    public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
+        // TODO avoid reflection on every call
+        try {
+            AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
+                @Override
+                public Object run() throws Exception {
+                    if (jreIsMinimumJava9()) {
+                        // >=JDK9 class sun.misc.Unsafe { void invokeCleaner(ByteBuffer buf) }
+                        final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+                        // fetch the unsafe instance and bind it to the virtual MethodHandle
+                        final Field f = unsafeClass.getDeclaredField("theUnsafe");
+                        f.setAccessible(true);
+                        final Object theUnsafe = f.get(null);
+                        final Method method = unsafeClass.getDeclaredMethod("invokeCleaner", ByteBuffer.class);
+                        try {
+                            method.invoke(theUnsafe, buffer);
+                            return null;
+                        } catch (Throwable t) {
+                            throw new RuntimeException(t);
+                        }
+                    }
+
+                    if (buffer.getClass().getSimpleName().equals("MappedByteBufferAdapter")) {
+                        if (!Constants.ANDROID)
+                            throw new RuntimeException("MappedByteBufferAdapter only supported for Android at the moment");
+
+                        // For Android 4.1 call ((MappedByteBufferAdapter)buffer).free() see #914
+                        Class<?> directByteBufferClass = Class.forName("java.nio.MappedByteBufferAdapter");
+                        callBufferFree(buffer, directByteBufferClass);
+                    } else {
+                        // <=JDK8 class DirectByteBuffer { sun.misc.Cleaner cleaner(Buffer buf) }
+                        //        then call sun.misc.Cleaner.clean
+                        final Class<?> directByteBufferClass = Class.forName("java.nio.DirectByteBuffer");
+                        try {
+                            final Method dbbCleanerMethod = directByteBufferClass.getMethod("cleaner");
+                            dbbCleanerMethod.setAccessible(true);
+                            // call: cleaner = ((DirectByteBuffer)buffer).cleaner()
+                            final Object cleaner = dbbCleanerMethod.invoke(buffer);
+                            if (cleaner != null) {
+                                final Class<?> cleanerMethodReturnType = dbbCleanerMethod.getReturnType();
+                                final Method cleanMethod = cleanerMethodReturnType.getDeclaredMethod("clean");
+                                cleanMethod.setAccessible(true);
+                                // call: ((sun.misc.Cleaner)cleaner).clean()
+                                cleanMethod.invoke(cleaner);
+                            }
+                        } catch (NoSuchMethodException ex2) {
+                            if (Constants.ANDROID)
+                                // For Android 5.1.1 call ((DirectByteBuffer)buffer).free() see #933
+                                callBufferFree(buffer, directByteBufferClass);
+                            else
+                                // ignore if method cleaner or clean is not available
+                                LOGGER.warn("NoSuchMethodException | " + System.getProperty("java.version"), ex2);
+                        }
+                    }
+
+                    return null;
+                }
+            });
+        } catch (PrivilegedActionException e) {
+            throw new RuntimeException("Unable to unmap the mapped buffer", e);
+        }
+    }
+
+    private static void callBufferFree(ByteBuffer buffer, Class<?> directByteBufferClass)
+            throws InvocationTargetException, IllegalAccessException {
+        try {
+            final Method dbbFreeMethod = directByteBufferClass.getMethod("free");
+            dbbFreeMethod.setAccessible(true);
+            dbbFreeMethod.invoke(buffer);
+        } catch (NoSuchMethodException ex2) {
+            LOGGER.warn("NoSuchMethodException | " + System.getProperty("java.version"), ex2);
+        }
     }
 
     private void initRandomAccessFile() {
@@ -138,9 +234,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
         } catch (IOException ex) {
             // we could get an exception here if buffer is too small and area too large
             // e.g. I got an exception for the 65421th buffer (probably around 2**16 == 65536)
-            throw new RuntimeException("Couldn't map buffer " + i + " of " + segmentsToMap
-                    + " for " + name + " at position " + bufferStart + " for " + byteCount
-                    + " bytes with offset " + offset + ", new fileLength:" + newFileLength, ex);
+            throw new RuntimeException("Couldn't map buffer " + i + " of " + segmentsToMap + " with " + longSegmentSize
+                    + " for " + name + " at position " + bufferStart + " for " + byteCount + " bytes with offset " + offset
+                    + ", new fileLength:" + newFileLength + ", " + Helper.getMemInfo(), ex);
         }
     }
 
@@ -154,13 +250,11 @@ public final class MMapDataAccess extends AbstractDataAccess {
         for (int trial = 0; trial < 1; ) {
             try {
                 buf = raFile.getChannel().map(
-                        allowWrites ? FileChannel.MapMode.READ_WRITE : FileChannel.MapMode.READ_ONLY,
-                        offset, byteCount);
+                        allowWrites ? FileChannel.MapMode.READ_WRITE : FileChannel.MapMode.READ_ONLY, offset, byteCount);
                 break;
             } catch (IOException tmpex) {
                 ioex = tmpex;
                 trial++;
-                Helper.cleanHack();
                 try {
                     // mini sleep to let JVM do unmapping
                     Thread.sleep(5);
@@ -230,25 +324,17 @@ public final class MMapDataAccess extends AbstractDataAccess {
     @Override
     public void close() {
         super.close();
-        close(true);
-    }
-
-    /**
-     * @param forceClean if true the clean hack (system.gc) will be executed and forces the system
-     *                   to cleanup the mmap resources. Set false if you need to close many MMapDataAccess objects.
-     */
-    void close(boolean forceClean) {
         clean(0, segments.size());
         segments.clear();
         Helper.close(raFile);
-        if (forceClean)
-            Helper.cleanHack();
     }
 
     @Override
     public final void setInt(long bytePos, int value) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
         synchronized (byteBuffer) {
             byteBuffer.putInt(index, value);
@@ -259,6 +345,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public final int getInt(long bytePos) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
         synchronized (byteBuffer) {
             return byteBuffer.getInt(index);
@@ -271,7 +359,16 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
         synchronized (byteBuffer) {
-            byteBuffer.putShort(index, value);
+            if (index + 2 > segmentSizeInBytes) {
+                ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
+                synchronized (byteBufferNext) {
+                    // special case if short has to be written into two separate segments
+                    byteBuffer.put(index, (byte) value);
+                    byteBufferNext.put(0, (byte) (value >>> 8));
+                }
+            } else {
+                byteBuffer.putShort(index, value);
+            }
         }
     }
 
@@ -280,6 +377,15 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
+        if (index + 2 > segmentSizeInBytes) {
+            ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
+            // never lock byteBuffer and byteBufferNext in a different order to avoid deadlocks (shouldn't happen)
+            synchronized (byteBuffer) {
+                synchronized (byteBufferNext) {
+                    return (short) ((byteBufferNext.get(0) & 0xFF) << 8 | byteBuffer.get(index) & 0xFF);
+                }
+            }
+        }
         synchronized (byteBuffer) {
             return byteBuffer.getShort(index);
         }
@@ -336,6 +442,28 @@ public final class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public void setByte(long bytePos, byte value) {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        final ByteBuffer bb1 = segments.get(bufferIndex);
+        synchronized (bb1) {
+            bb1.position(index);
+            bb1.put(value);
+        }
+    }
+
+    @Override
+    public byte getByte(long bytePos) {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        final ByteBuffer bb1 = segments.get(bufferIndex);
+        synchronized (bb1) {
+            bb1.position(index);
+            return bb1.get();
+        }
+    }
+
+    @Override
     public long getCapacity() {
         long cap = 0;
         for (ByteBuffer bb : segments) {
@@ -362,7 +490,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
     private void clean(int from, int to) {
         for (int i = from; i < to; i++) {
             ByteBuffer bb = segments.get(i);
-            Helper.cleanMappedByteBuffer(bb);
+            cleanMappedByteBuffer(bb);
             segments.set(i, null);
         }
     }
@@ -378,7 +506,6 @@ public final class MMapDataAccess extends AbstractDataAccess {
         }
 
         clean(remainingSegNo, segments.size());
-        Helper.cleanHack();
         segments = new ArrayList<>(segments.subList(0, remainingSegNo));
 
         try {

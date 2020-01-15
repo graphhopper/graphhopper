@@ -1,3 +1,58 @@
+1.0
+    removed GenericWeighting and DataFlagEncoder as a normal CarFlagEncoder does the job too
+    add required EncodedValues like road_class to EncodingManager if not added from user
+    removed PathNative,PathBidirRef,Path4CH,EdgeBasedPathCH and moved path extraction code out of Path class, added PathExtractor,BidirPathExtractor(+subclasses for CH) instead, #1730
+    conditional turn restrictions now supported, #1683
+    added new `curbside` feature, #1697
+    moved QueryGraph to new routing.querygraph package
+    removed GraphExtension, #1783, renamed TurnCostExtension to TurnCostStorage
+    removed `heading`, `pass_through` and `ch.force_heading` parameters for speed mode/CH, #1763
+
+0.13
+    removed docker compose file
+    PathDetails return null instead of -1 for Infinity by default
+    replaced AverageSpeedDetails by DecimalDetails
+    moved TagParser into new package: com.graphhopper.routing.util.parsers
+    removed FlagEncoderFactory.DEFAULT
+    removed forestry and motorroad from RoadClass
+    SpatialRule.AccessValue replaced by RoadAccess
+    removed EncodedValueLookup.hasEncoder, use hasEncodedValue instead
+    removed MappedDecimalEncodedValue: should be replaced with FactoredDecimalEncodedValue
+    DataFlagEncoder: it is now required to add EncodedValues before. graph.encoded_values: max_speed,road_class,road_environment,road_access
+    instead of EncodingManager.ROUNDABOUT use Roundabout.KEY
+    changed output format of result=pointlist and moved it into separate endpoint /spt
+    removed TraversalMode.EDGE_BASED_1DIR and TraversalMode.EDGE_BASED_2DIR_UTURN, renamed TraversalMode.EDGE_BASED_2DIR to TraversalMode.EDGE_BASED
+    to prevent u-turns when using edge-based algorithms it is now required to use TurnWeighting, #1640
+    GraphHopperStorage.getGraph(Class) was replaced by GraphHopperStorage.getBase/CHGraph(), #1669
+    CHGraph.shortcut(int, int) was removed (use .shortcut(int, int, ...) and/or .shortcutEdgeBased(int, int, ...) instead, #1693
+    CH graphs are now identified using CHProfile instead of Weighting, #1670
+    removed the 'traversal_mode` request parameter for /route, instead of 'traversal_mode=edge_based_2dir' use edge_based=true
+    removed GraphHopper.set/getTraversalMode() methods, #1705
+    edge-based CH is now chosen by default if it was prepared, #1706
+    it is now possible to specify finite u-turn costs for CH preparation, #1671
+    removed distances from CH shortcuts, reduces memory consumption per shortcut by 4 bytes (about 8-10%), #1719
+
+0.12
+    renamed VirtualEdgeIteratorState.getOriginalEdgeKey to more precise getOriginalEdgeKey #1549
+    access refactoring #1436 that moves AccessValue into SpatialRule.Access
+    refactoring of EncodingManager to use builder pattern. Migration should be simple. Replace new EncodingManager with EncodingManager.create
+	The methods GraphHopper.setEnableInstructions/setPreferredLanguage is now in EncodingManager.Builder
+    EncodingManager.supports renames to hasEncoder
+    big refactoring #1447: to increase 64bit limit of flags, make reverse direction handling easier, to allow shared EncodedValues,
+        remove reverseFlags method, much simpler property access, simplify FlagEncoder (maybe even deprecate this interface at a later stage)
+    moved shp-reader into separate repository: https://github.com/graphhopper/graphhopper-reader-shp    
+
+0.11
+    web resources for dropwizard web framework (no servlets anymore) #1108
+    prefix -Dgraphhopper. for command line arguments necessary, see docs/web/quickstart.md or docs/core/quickstart-from-source.md#running--debbuging-with-intellij for details
+    delegated reading properties to dropwizard, i.e. the new format yml is not read again in GraphHopper.init
+    changed file format for landmarks #1376
+    convert properties into new yml format via: https://gist.github.com/karussell/dbc9b4c455bca98b6a38e4a160e23bf8
+
+0.10
+    introduce path details
+    added handcoded API java client to this repository
+
 0.9
     remove war bundling support #297
     rename of DefaultModule to GraphHopperModule and GHServletModule to GraphHopperServletModule
@@ -135,7 +190,7 @@
         mapsforge: use mapsforge-map dependency; merged #461; avoid duplicates otherwise mapsforge-core would be duplicate (?)
     refactored/renamed classes and methods:
         refactor 'flags' from int to long (still only int is stored)
-        replacing Graph.edge(a,b,dist,flags) by Graph.edge(a,b).setDistance().setFlags()
+        replacing Graph.edge(a,b,dist,edgeFlags) by Graph.edge(a,b).setDistance().setFlags()
         FlagEncoder.flags => use FlagEncoder.setProperties or separate setAccess and setSpeed method
         renamed LocationIDResult to QueryResult and Location2NodesNtree to LocationIndexTree
         renamed Location2IDIndex to LocationIndex

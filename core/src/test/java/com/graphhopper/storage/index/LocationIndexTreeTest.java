@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,13 +17,16 @@
  */
 package com.graphhopper.storage.index;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
@@ -32,14 +35,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
 public class LocationIndexTreeTest extends AbstractLocationIndexTester {
-    protected final EncodingManager encodingManager = new EncodingManager("car");
+    protected final EncodingManager encodingManager = EncodingManager.create("car");
 
     @Override
     public LocationIndexTree createIndex(Graph g, int resolution) {
@@ -48,7 +50,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         return (LocationIndexTree) createIndexNoPrepare(g, resolution).prepareIndex();
     }
 
-    public LocationIndexTree createIndexNoPrepare(Graph g, int resolution) {
+    private LocationIndexTree createIndexNoPrepare(Graph g, int resolution) {
         Directory dir = new RAMDirectory(location);
         LocationIndexTree tmpIDX = new LocationIndexTree(g, dir);
         tmpIDX.setResolution(resolution);
@@ -103,12 +105,28 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     }
 
     @Test
+    public void testQuery() {
+        Graph graph = createTestGraph2();
+        LocationIndexTree index = createIndex(graph, 500);
+        final ArrayList set = new ArrayList();
+        index.query(new BBox(11.57314, 11.57614, 49.94553, 49.94853), new LocationIndex.Visitor() {
+            @Override
+            public void onNode(int nodeId) {
+                set.add(nodeId);
+            }
+        });
+        assertEquals(17, set.size());
+        assertTrue(set.containsAll(Arrays.asList(2, 3, 4, 5, 6)));
+        assertFalse(set.containsAll(Arrays.asList(17, 18, 25, 30)));
+    }
+
+    @Test
     public void testInMemIndex() {
         Graph graph = createTestGraph(encodingManager);
         LocationIndexTree index = createIndexNoPrepare(graph, 50000);
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
-        assertEquals(Helper.createTList(4, 4), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{4, 4}), index.getEntries());
 
         assertEquals(4, inMemIndex.getEntriesOf(0).size());
         assertEquals(10, inMemIndex.getEntriesOf(1).size());
@@ -155,7 +173,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         LocationIndexTree index = createIndexNoPrepare(graph, 500);
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
-        assertEquals(Helper.createTList(4, 4), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{4, 4}), index.getEntries());
         assertEquals(3, inMemIndex.getEntriesOf(0).size());
         assertEquals(5, inMemIndex.getEntriesOf(1).size());
         assertEquals(0, inMemIndex.getEntriesOf(2).size());
@@ -194,11 +212,12 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         LocationIndexTree index = createIndexNoPrepare(createTestGraph(encodingManager), 10000);
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
-        assertEquals(Helper.createTList(64, 4), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{16, 4, 4}), index.getEntries());
 
-        assertEquals(33, inMemIndex.getEntriesOf(0).size());
-        assertEquals(69, inMemIndex.getEntriesOf(1).size());
-        assertEquals(0, inMemIndex.getEntriesOf(2).size());
+        assertEquals(13, inMemIndex.getEntriesOf(0).size());
+        assertEquals(33, inMemIndex.getEntriesOf(1).size());
+        assertEquals(69, inMemIndex.getEntriesOf(2).size());
+        assertEquals(0, inMemIndex.getEntriesOf(3).size());
 
         index.dataAccess.create(1024);
         inMemIndex.store(inMemIndex.root, LocationIndexTree.START_POINTER);
@@ -211,7 +230,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     @Test
     public void testReverseSpatialKey() {
         LocationIndexTree index = createIndex(createTestGraph(encodingManager), 200);
-        assertEquals(Helper.createTList(64, 64, 64, 4), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{16, 16, 16, 16, 4, 4}), index.getEntries());
 
         // 10111110111110101010
         String str44 = "00000000000000000000000000000000000000000000";
@@ -220,7 +239,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
     @Test
     public void testMoreReal() {
-        Graph graph = createGHStorage(new EncodingManager("car"));
+        Graph graph = createGHStorage(EncodingManager.create("car"));
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);
         na.setNode(0, 52, 9);
@@ -363,12 +382,12 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         graph.edge(4, 5, 10, true);
         graph.edge(6, 7, 10, true);
 
-        graph.edge(8, 2, 10, true);
-        graph.edge(9, 2, 10, true);
-        graph.edge(10, 3, 10, true);
-        graph.edge(11, 4, 10, true);
-        graph.edge(12, 5, 10, true);
-        graph.edge(13, 6, 10, true);
+        graph.edge(2, 8, 10, true);
+        graph.edge(2, 9, 10, true);
+        graph.edge(3, 10, 10, true);
+        graph.edge(4, 11, 10, true);
+        graph.edge(5, 12, 10, true);
+        graph.edge(6, 13, 10, true);
 
         graph.edge(1, 14, 10, true);
         graph.edge(2, 15, 10, true);
@@ -433,7 +452,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
 
-        EncodingManager tmpEM = new EncodingManager(carEncoder, bikeEncoder);
+        EncodingManager tmpEM = EncodingManager.create(carEncoder, bikeEncoder);
         Graph graph = createGHStorage(new RAMDirectory(), tmpEM, false);
         NodeAccess na = graph.getNodeAccess();
 
@@ -453,23 +472,24 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
         // reduce access for bike to two edges only
         AllEdgesIterator iter = graph.getAllEdges();
+        BooleanEncodedValue accessEnc = bikeEncoder.getAccessEnc();
         while (iter.next()) {
-            iter.setFlags(bikeEncoder.setAccess(iter.getFlags(), false, false));
+            iter.set(accessEnc, false).setReverse(accessEnc, false);
         }
         for (EdgeIteratorState edge : Arrays.asList(GHUtility.getEdge(graph, 0, 1), GHUtility.getEdge(graph, 1, 2))) {
-            edge.setFlags(bikeEncoder.setAccess(edge.getFlags(), true, true));
+            edge.set(accessEnc, true).setReverse(accessEnc, true);
         }
 
         LocationIndexTree index = createIndexNoPrepare(graph, 500);
         index.prepareIndex();
         index.setMaxRegionSearch(8);
 
-        EdgeFilter carFilter = new DefaultEdgeFilter(carEncoder, true, true);
+        EdgeFilter carFilter = DefaultEdgeFilter.allEdges(carEncoder);
         QueryResult qr = index.findClosest(0.03, 0.03, carFilter);
         assertTrue(qr.isValid());
         assertEquals(33, qr.getClosestNode());
 
-        EdgeFilter bikeFilter = new DefaultEdgeFilter(bikeEncoder, true, true);
+        EdgeFilter bikeFilter = DefaultEdgeFilter.allEdges(bikeEncoder);
         qr = index.findClosest(0.03, 0.03, bikeFilter);
         assertTrue(qr.isValid());
         assertEquals(2, qr.getClosestNode());
@@ -561,7 +581,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
         // query node 4 => get at least 4-5, 4-7
         List<QueryResult> result = index.findNClosest(0.0004, 0.0006, EdgeFilter.ALL_EDGES, 15);
-        List<Integer> ids = new ArrayList<Integer>();
+        List<Integer> ids = new ArrayList<>();
         for (QueryResult qr : result) {
             ids.add(qr.getClosestEdge().getEdge());
         }

@@ -36,7 +36,6 @@ var GHRequest = function (host, api_key) {
 
     this.do_zoom = true;
     this.useMiles = false;
-    // use jsonp here if host allows CORS
     this.dataType = "json";
     this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false,
         "key": api_key, "pt": {}};
@@ -82,13 +81,7 @@ GHRequest.prototype.init = function (params) {
 
     // overwrite elevation e.g. important if not supported from feature set
     this.api_params.elevation = false;
-    var featureSet = this.features[this.api_params.vehicle];
-    if (featureSet && featureSet.elevation) {
-        if ('elevation' in params)
-            this.api_params.elevation = params.elevation;
-        else
-            this.api_params.elevation = true;
-    }
+    this.initVehicle(this.api_params.vehicle);
 
     if (params.q) {
         var qStr = params.q;
@@ -131,11 +124,8 @@ GHRequest.prototype.getEarliestDepartureTime = function () {
 GHRequest.prototype.initVehicle = function (vehicle) {
     this.api_params.vehicle = vehicle;
     var featureSet = this.features[vehicle];
-
-    if (featureSet && featureSet.elevation)
-        this.api_params.elevation = true;
-    else
-        this.api_params.elevation = false;
+    this.api_params.elevation = featureSet && featureSet.elevation;
+    this.api_params.turn_costs = this.hasTCSupport();
 };
 
 GHRequest.prototype.hasElevation = function () {
@@ -207,27 +197,28 @@ GHRequest.prototype.createPath = function (url, skipParameters) {
 };
 
 GHRequest.prototype.flatParameter = function (key, val) {
+    var url = "";
+    var arr;
+    var keyIndex;
 
-    if(GHRoute.isObject(val)) {
-        var url = "";
-        var arr = Object.keys(val);
-        for (var keyIndex in arr) {
-           var objKey = arr[keyIndex];
-           url += this.flatParameter(key + "." + objKey, val[objKey]);
+    if (GHRoute.isObject(val)) {
+        arr = Object.keys(val);
+        for (keyIndex in arr) {
+            var objKey = arr[keyIndex];
+            url += this.flatParameter(key + "." + objKey, val[objKey]);
         }
         return url;
 
-    } else  if (GHRoute.isArray(val)) {
-        var url = "";
-        var arr = val;
-        for (var keyIndex in arr) {
+    } else if (GHRoute.isArray(val)) {
+        arr = val;
+        for (keyIndex in arr) {
             url += this.flatParameter(key, arr[keyIndex]);
         }
         return url;
     }
 
     return "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val);
-}
+};
 
 GHRequest.prototype.doRequest = function (url, callback) {
     var that = this;
@@ -257,8 +248,6 @@ GHRequest.prototype.doRequest = function (url, callback) {
             callback(json);
         },
         error: function (err) {
-            // problematic: this callback is not invoked when using JSONP!
-            // http://stackoverflow.com/questions/19035557/jsonp-request-error-handling
             var msg = "API did not respond! ";
             var json;
 

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@
 package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.predicates.IntPredicate;
 import com.graphhopper.coll.GHBitSet;
@@ -29,26 +30,30 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-
-import java.util.ArrayList;
-
+import com.graphhopper.util.shapes.Shape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
- * This implementation implements an n-tree to get the closest node or edge from GPS coordinates.
- * <p>
- * All leafs are at the same depth, otherwise it is quite complicated to calculate the Bresenham
- * line for different resolutions, especially if a leaf node could be split into a tree-node and
- * resolution changes.
- * <p>
+ * This class implements a Quadtree to get the closest node or edge from GPS coordinates.
+ * The following properties are different to an ordinary implementation:
+ * <ol>
+ * <li>To reduce overall size it can use 16 instead of just 4 cell if required</li>
+ * <li>Still all leafs are at the same depth, otherwise it is too complicated to calculate the Bresenham line for different
+ * resolutions, especially if a leaf node could be split into a tree-node and resolution changes.</li>
+ * <li>To further reduce size this Quadtree avoids storing the bounding box of every cell and calculates this per request instead.</li>
+ * <li>To simplify this querying and avoid a slow down for the most frequent queries ala "lat,lon" it encodes the point
+ * into a reverse spatial key {@see SpatialKeyAlgo} and can the use the resulting raw bits as cell index to recurse
+ * into the subtrees. E.g. if there are 3 layers with 16, 4 and 4 cells each, then the reverse spatial key has
+ * three parts: 4 bits for the cellIndex into the 16 cells, 2 bits for the next layer and 2 bits for the last layer.
+ * It is the reverse spatial key and not the forward spatial key as we need the start of the index for the current
+ * layer at index 0</li>
+ * <li>An array structure (DataAccess) is internally used and stores the offset to the next cell.
+ * E.g. in case of 4 cells, the offset is 0,1,2 or 3. Except when the leaf-depth is reached, then the value
+ * is the number of node IDs stored in the cell or, if negative, just a single node ID.</li>
+ * </ol>
  *
  * @author Peter Karich
  */
@@ -61,8 +66,8 @@ public class LocationIndexTree implements LocationIndex {
     private final int MAGIC_INT;
     private final NodeAccess nodeAccess;
     protected DistanceCalc distCalc = Helper.DIST_PLANE;
-    protected SpatialKeyAlgo keyAlgo;
-    int maxRegionSearch = 4;
+    SpatialKeyAlgo keyAlgo;
+    private int maxRegionSearch = 4;
     private DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
     private int[] entries;
     private byte[] shifts;
@@ -92,10 +97,10 @@ public class LocationIndexTree implements LocationIndex {
         if (g instanceof CHGraph)
             throw new IllegalArgumentException("Use base graph for LocationIndexTree instead of CHGraph");
 
-        MAGIC_INT = Integer.MAX_VALUE / 22316;
+        MAGIC_INT = Integer.MAX_VALUE / 22317;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
-        dataAccess = dir.find("location_index");
+        dataAccess = dir.find("location_index", DAType.getPreferredInt(dir.getDefaultType()));
     }
 
     public int getMinResolutionInMeter() {
@@ -133,7 +138,7 @@ public class LocationIndexTree implements LocationIndex {
         equalNormedDelta = distCalc.calcNormalizedDist(0.1);
 
         // now calculate the necessary maxDepth d for our current bounds
-        // if we assume a minimum resolution like 0.5km for a leaf-tile                
+        // if we assume a minimum resolution like 0.5km for a leaf-tile
         // n^(depth/2) = toMeter(dLon) / minResolution
         BBox bounds = graph.getBounds();
         if (graph.getNodes() == 0)
@@ -153,9 +158,7 @@ public class LocationIndexTree implements LocationIndex {
         tmp /= 4;
         while (tmp > 1) {
             int tmpNo;
-            if (tmp >= 64) {
-                tmpNo = 64;
-            } else if (tmp >= 16) {
+            if (tmp >= 16) {
                 tmpNo = 16;
             } else if (tmp >= 4) {
                 tmpNo = 4;
@@ -343,17 +346,19 @@ public class LocationIndexTree implements LocationIndex {
         return IntArrayList.from(entries);
     }
 
-    // fillIDs according to how they are stored
-    final void fillIDs(long keyPart, int intIndex, GHIntHashSet set, int depth) {
-        long pointer = (long) intIndex << 2;
+    /**
+     * This method fills the set with stored node IDs from the given spatial key part (a latitude-longitude prefix).
+     */
+    final void fillIDs(long keyPart, int intPointer, GHIntHashSet set, int depth) {
+        long pointer = (long) intPointer << 2;
         if (depth == entries.length) {
-            int value = dataAccess.getInt(pointer);
-            if (value < 0) {
+            int nextIntPointer = dataAccess.getInt(pointer);
+            if (nextIntPointer < 0) {
                 // single data entries (less disc space)
-                set.add(-(value + 1));
+                set.add(-(nextIntPointer + 1));
             } else {
-                long max = (long) value * 4;
-                // leaf entry => value is maxPointer
+                long max = (long) nextIntPointer * 4;
+                // leaf entry => nextIntPointer is maxPointer
                 for (long leafIndex = pointer + 4; leafIndex < max; leafIndex += 4) {
                     set.add(dataAccess.getInt(leafIndex));
                 }
@@ -361,10 +366,10 @@ public class LocationIndexTree implements LocationIndex {
             return;
         }
         int offset = (int) (bitmasks[depth] & keyPart) << 2;
-        int value = dataAccess.getInt(pointer + offset);
-        if (value > 0) {
+        int nextIntPointer = dataAccess.getInt(pointer + offset);
+        if (nextIntPointer > 0) {
             // tree entry => negative value points to subentries
-            fillIDs(keyPart >>> shifts[depth], value, set, depth + 1);
+            fillIDs(keyPart >>> shifts[depth], nextIntPointer, set, depth + 1);
         }
     }
 
@@ -380,7 +385,6 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * calculate the distance to the nearest tile border for a given lat/lon coordinate in the
      * context of a spatial key tile.
-     * <p>
      */
     final double calculateRMin(double lat, double lon) {
         return calculateRMin(lat, lon, 0);
@@ -437,12 +441,76 @@ public class LocationIndexTree implements LocationIndex {
         return deltaLon;
     }
 
-    GHPoint getCenter(double lat, double lon) {
-        GHPoint query = new GHPoint(lat, lon);
-        long key = keyAlgo.encode(query);
-        GHPoint center = new GHPoint();
-        keyAlgo.decode(key, center);
-        return center;
+    public void query(BBox queryShape, final Visitor function) {
+        BBox bbox = graph.getBounds();
+        final IntHashSet set = new IntHashSet();
+        query(START_POINTER, queryShape,
+                bbox.minLat, bbox.minLon, bbox.maxLat - bbox.minLat, bbox.maxLon - bbox.minLon,
+                new Visitor() {
+                    @Override
+                    public boolean isTileInfo() {
+                        return function.isTileInfo();
+                    }
+
+                    @Override
+                    public void onTile(BBox bbox, int width) {
+                        function.onTile(bbox, width);
+                    }
+
+                    @Override
+                    public void onNode(int nodeId) {
+                        if (set.add(nodeId))
+                            function.onNode(nodeId);
+                    }
+                }, 0);
+    }
+
+    final void query(int intPointer, Shape queryBBox,
+                     double minLat, double minLon,
+                     double deltaLatPerDepth, double deltaLonPerDepth,
+                     Visitor function, int depth) {
+        long pointer = (long) intPointer << 2;
+        if (depth == entries.length) {
+            int nextIntPointer = dataAccess.getInt(pointer);
+            if (nextIntPointer < 0) {
+                // single data entries (less disc space)
+                function.onNode(-(nextIntPointer + 1));
+            } else {
+                long maxPointer = (long) nextIntPointer * 4;
+                // loop through every leaf entry => nextIntPointer is maxPointer
+                for (long leafPointer = pointer + 4; leafPointer < maxPointer; leafPointer += 4) {
+                    // we could read the whole info at once via getBytes instead of getInt
+                    function.onNode(dataAccess.getInt(leafPointer));
+                }
+            }
+            return;
+        }
+        int max = (1 << shifts[depth]);
+        int factor = max == 4 ? 2 : 4;
+        deltaLonPerDepth /= factor;
+        deltaLatPerDepth /= factor;
+        for (int cellIndex = 0; cellIndex < max; cellIndex++) {
+            int nextIntPointer = dataAccess.getInt(pointer + cellIndex * 4);
+            if (nextIntPointer <= 0)
+                continue;
+            // this bit magic does two things for the 4 and 16 tiles case:
+            // 1. it assumes the cellIndex is a reversed spatial key and so it reverses it
+            // 2. it picks every second bit (e.g. for just latitudes) and interprets the result as an integer
+            int latCount = max == 4 ? (cellIndex & 1) : (cellIndex & 1) * 2 + ((cellIndex & 4) == 0 ? 0 : 1);
+            int lonCount = max == 4 ? (cellIndex >> 1) : (cellIndex & 2) + ((cellIndex & 8) == 0 ? 0 : 1);
+            double tmpMinLon = minLon + deltaLonPerDepth * lonCount,
+                    tmpMinLat = minLat + deltaLatPerDepth * latCount;
+
+            BBox bbox = (queryBBox != null || function.isTileInfo()) ? new BBox(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth) : null;
+            if (function.isTileInfo())
+                function.onTile(bbox, depth);
+            if (queryBBox == null || queryBBox.contains(bbox)) {
+                // fill without a restriction!
+                query(nextIntPointer, null, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
+            } else if (queryBBox.intersects(bbox)) {
+                query(nextIntPointer, queryBBox, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
+            }
+        }
     }
 
     /**
@@ -454,8 +522,8 @@ public class LocationIndexTree implements LocationIndex {
      * @return true if no further call of this method is required. False otherwise, ie. a next
      * iteration is necessary and no early finish possible.
      */
-    public final boolean findNetworkEntries(double queryLat, double queryLon,
-                                            GHIntHashSet foundEntries, int iteration) {
+    final boolean findNetworkEntries(double queryLat, double queryLon,
+                                     GHIntHashSet foundEntries, int iteration) {
         // find entries in border of searchbox
         for (int yreg = -iteration; yreg <= iteration; yreg++) {
             double subqueryLat = queryLat + yreg * deltaLat;
@@ -510,7 +578,7 @@ public class LocationIndexTree implements LocationIndex {
         return min;
     }
 
-    public final void findNetworkEntriesSingleRegion(GHIntHashSet storedNetworkEntryIds, double queryLat, double queryLon) {
+    final void findNetworkEntriesSingleRegion(GHIntHashSet storedNetworkEntryIds, double queryLat, double queryLon) {
         long keyPart = createReverseKey(queryLat, queryLon);
         fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
     }
@@ -571,13 +639,13 @@ public class LocationIndexTree implements LocationIndex {
 
         return closestMatch;
     }
-    
+
     /**
      * Returns all edges that are within the specified radius around the queried position.
      * Searches at most 9 cells to avoid performance problems. Hence, if the radius is larger than
      * the cell width then not all edges might be returned.
-     * 
-     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or 
+     * <p>
+     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or
      * refactor so it can handle a radius larger than 9 tiles. Also remove reference to 'NClosest',
      * which is misleading, and don't always return at least one value. See map-matching #65.
      * TODO: tidy up logic - see comments in graphhopper #994.
@@ -585,13 +653,13 @@ public class LocationIndexTree implements LocationIndex {
      * @param radius in meters
      */
     public List<QueryResult> findNClosest(final double queryLat, final double queryLon,
-            final EdgeFilter edgeFilter, double radius) {
+                                          final EdgeFilter edgeFilter, double radius) {
         // Return ALL results which are very close and e.g. within the GPS signal accuracy.
         // Also important to get all edges if GPS point is close to a junction.
         final double returnAllResultsWithin = distCalc.calcNormalizedDist(radius);
 
         // implement a cheap priority queue via List, sublist and Collections.sort
-        final List<QueryResult> queryResults = new ArrayList<QueryResult>();
+        final List<QueryResult> queryResults = new ArrayList<>();
         GHIntHashSet set = new GHIntHashSet();
 
         // Doing 2 iterations means searching 9 tiles.
@@ -684,7 +752,7 @@ public class LocationIndexTree implements LocationIndex {
 
         return queryResults;
     }
-    
+
     // make entries static as otherwise we get an additional reference to this class (memory waste)
     interface InMemEntry {
         boolean isLeaf();
@@ -719,10 +787,7 @@ public class LocationIndexTree implements LocationIndex {
 
     // Space efficient sorted integer set. Suited for only a few entries.
     static class SortedIntSet extends IntArrayList {
-        public SortedIntSet() {
-        }
-
-        public SortedIntSet(int capacity) {
+        SortedIntSet(int capacity) {
             super(capacity);
         }
 
@@ -756,7 +821,7 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         public Collection<InMemEntry> getSubEntriesForDebug() {
-            List<InMemEntry> list = new ArrayList<InMemEntry>();
+            List<InMemEntry> list = new ArrayList<>();
             for (InMemEntry e : subEntries) {
                 if (e != null) {
                     list.add(e);
@@ -858,8 +923,8 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         Collection<InMemEntry> getEntriesOf(int selectDepth) {
-            List<InMemEntry> list = new ArrayList<InMemEntry>();
-            fillLayer(list, selectDepth, 0, ((InMemTreeEntry) root).getSubEntriesForDebug());
+            List<InMemEntry> list = new ArrayList<>();
+            fillLayer(list, selectDepth, 0, root.getSubEntriesForDebug());
             return list;
         }
 
@@ -903,48 +968,48 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         // store and freezes tree
-        int store(InMemEntry entry, int intIndex) {
-            long refPointer = (long) intIndex * 4;
+        int store(InMemEntry entry, int intPointer) {
+            long pointer = (long) intPointer * 4;
             if (entry.isLeaf()) {
                 InMemLeafEntry leaf = ((InMemLeafEntry) entry);
                 IntArrayList entries = leaf.getResults();
                 int len = entries.size();
                 if (len == 0) {
-                    return intIndex;
+                    return intPointer;
                 }
                 size += len;
-                intIndex++;
+                intPointer++;
                 leafs++;
-                dataAccess.ensureCapacity((long) (intIndex + len + 1) * 4);
+                dataAccess.ensureCapacity((long) (intPointer + len + 1) * 4);
                 if (len == 1) {
                     // less disc space for single entries
-                    dataAccess.setInt(refPointer, -entries.get(0) - 1);
+                    dataAccess.setInt(pointer, -entries.get(0) - 1);
                 } else {
-                    for (int index = 0; index < len; index++, intIndex++) {
-                        dataAccess.setInt((long) intIndex * 4, entries.get(index));
+                    for (int index = 0; index < len; index++, intPointer++) {
+                        dataAccess.setInt((long) intPointer * 4, entries.get(index));
                     }
-                    dataAccess.setInt(refPointer, intIndex);
+                    dataAccess.setInt(pointer, intPointer);
                 }
             } else {
                 InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
                 int len = treeEntry.subEntries.length;
-                intIndex += len;
-                for (int subCounter = 0; subCounter < len; subCounter++, refPointer += 4) {
+                intPointer += len;
+                for (int subCounter = 0; subCounter < len; subCounter++, pointer += 4) {
                     InMemEntry subEntry = treeEntry.subEntries[subCounter];
                     if (subEntry == null) {
                         continue;
                     }
-                    dataAccess.ensureCapacity((long) (intIndex + 1) * 4);
-                    int beforeIntIndex = intIndex;
-                    intIndex = store(subEntry, beforeIntIndex);
-                    if (intIndex == beforeIntIndex) {
-                        dataAccess.setInt(refPointer, 0);
+                    dataAccess.ensureCapacity((long) (intPointer + 1) * 4);
+                    int prevIntPointer = intPointer;
+                    intPointer = store(subEntry, prevIntPointer);
+                    if (intPointer == prevIntPointer) {
+                        dataAccess.setInt(pointer, 0);
                     } else {
-                        dataAccess.setInt(refPointer, beforeIntIndex);
+                        dataAccess.setInt(pointer, prevIntPointer);
                     }
                 }
             }
-            return intIndex;
+            return intPointer;
         }
     }
 

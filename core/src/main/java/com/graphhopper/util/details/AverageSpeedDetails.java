@@ -1,53 +1,49 @@
-/*
- *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for
- *  additional information regarding copyright ownership.
- *
- *  GraphHopper GmbH licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
- *  compliance with the License. You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 
-import static com.graphhopper.util.Parameters.DETAILS.AVERAGE_SPEED;
+import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
 
-/**
- * Calculate the average speed segments for a Path
- *
- * @author Robin Boldt
- */
 public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 
-    private final FlagEncoder encoder;
-    private double curAvgSpeed = -1;
+    private final Weighting weighting;
+    private final double precision;
+    private double decimalValue = -1;
+    // will include the turn time penalty
+    private int prevEdgeId = -1;
 
-    public AverageSpeedDetails(FlagEncoder encoder) {
+    public AverageSpeedDetails(Weighting weighting) {
+        this(weighting, 0.1);
+    }
+
+    /**
+     * @param precision e.g. 0.1 to avoid creating too many path details, i.e. round the speed to the specified precision
+     *                  before detecting a change.
+     */
+    public AverageSpeedDetails(Weighting weighting, double precision) {
         super(AVERAGE_SPEED);
-        this.encoder = encoder;
+        this.weighting = weighting;
+        this.precision = precision;
+    }
+
+    @Override
+    protected Object getCurrentValue() {
+        return decimalValue;
     }
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        if (Math.abs(encoder.getSpeed(edge.getFlags()) - curAvgSpeed) > 0.0001) {
-            this.curAvgSpeed = this.encoder.getSpeed(edge.getFlags());
+        double tmpVal = edge.getDistance() / weighting.calcMillis(edge, false, prevEdgeId) * 3600;
+        if (Double.isInfinite(tmpVal))
+            throw new IllegalStateException("average_speed was infinite for " + edge.fetchWayGeometry(3));
+
+        prevEdgeId = edge.getEdge();
+        if (Math.abs(tmpVal - decimalValue) >= precision) {
+            this.decimalValue =  Math.round(tmpVal / precision) * precision;
             return true;
         }
         return false;
-    }
-
-    @Override
-    public Object getCurrentValue() {
-        return this.curAvgSpeed;
     }
 }

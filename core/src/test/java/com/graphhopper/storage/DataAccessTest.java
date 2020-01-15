@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -332,6 +332,15 @@ public abstract class DataAccessTest {
     }
 
     @Test
+    public void testSet_GetByte() {
+        DataAccess da = createDataAccess(name);
+        da.create(300);
+        da.setByte(8, (byte) 120);
+        assertEquals(120, da.getByte(8));
+        da.close();
+    }
+
+    @Test
     public void testSet_Get_Short_Long() {
         DataAccess da = createDataAccess(name);
         da.create(300);
@@ -354,6 +363,10 @@ public abstract class DataAccessTest {
             assertEquals(Short.MAX_VALUE / 3, da.getShort(7));
             // should be overwritten
             assertNotEquals(Short.MAX_VALUE / 3, da.getShort(8));
+
+            long pointer = da.getSegmentSize() - 1;
+            da.setShort(pointer, (short) (Short.MAX_VALUE / 3));
+            assertEquals(Short.MAX_VALUE / 3, da.getShort(pointer));
         }
         da.close();
     }

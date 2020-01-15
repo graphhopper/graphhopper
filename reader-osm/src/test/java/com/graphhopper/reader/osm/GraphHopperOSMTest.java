@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,12 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
@@ -32,11 +35,10 @@ import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
@@ -44,10 +46,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -82,7 +81,7 @@ public class GraphHopperOSMTest {
     public void testLoadOSM() {
         GraphHopper closableInstance = new GraphHopperOSM().
                 setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         closableInstance.importOrLoad();
@@ -103,14 +102,14 @@ public class GraphHopperOSMTest {
         closableInstance.close();
         try {
             rsp = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertEquals("You need to create a new GraphHopper instance as it is already closed", ex.getMessage());
         }
 
         try {
             closableInstance.getLocationIndex().findClosest(51.2492152, 9.4317166, EdgeFilter.ALL_EDGES);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertEquals("You need to create a new LocationIndex instance as it is already closed", ex.getMessage());
         }
@@ -119,7 +118,7 @@ public class GraphHopperOSMTest {
     @Test
     public void testLoadOSMNoCH() {
         GraphHopper gh = new GraphHopperOSM().setStoreOnFlush(true).setCHEnabled(false).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         gh.importOrLoad();
@@ -132,7 +131,7 @@ public class GraphHopperOSMTest {
 
         gh.close();
         gh = new GraphHopperOSM().setStoreOnFlush(true).setCHEnabled(false).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(EncodingManager.create("car"));
         assertTrue(gh.load(ghLoc));
         rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertFalse(rsp.hasErrors());
@@ -150,10 +149,69 @@ public class GraphHopperOSMTest {
     }
 
     @Test
+    public void testQueryLocationIndexWithBBox() {
+        final GraphHopper gh = new GraphHopperOSM().setStoreOnFlush(true).
+                setEncodingManager(EncodingManager.create("car")).
+                setCHEnabled(false).
+                setGraphHopperLocation(ghLoc).
+                setDataReaderFile("../core/files/monaco.osm.gz");
+        gh.importOrLoad();
+
+        final NodeAccess na = gh.getGraphHopperStorage().getNodeAccess();
+        final Collection<Integer> indexNodeList = new TreeSet<>();
+        LocationIndexTree index = (LocationIndexTree) gh.getLocationIndex();
+        final EdgeExplorer edgeExplorer = gh.getGraphHopperStorage().createEdgeExplorer();
+        final BBox bbox = new BBox(7.422, 7.429, 43.729, 43.734);
+        index.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
+            @Override
+            public void onTile(BBox bbox, int width) {
+            }
+
+            @Override
+            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
+                for (int i = 0; i < 2; i++) {
+                    int nodeId = i == 0 ? nodeA : nodeB;
+                    double lat = na.getLatitude(nodeId);
+                    double lon = na.getLongitude(nodeId);
+                    if (bbox.contains(lat, lon))
+                        indexNodeList.add(nodeId);
+                }
+            }
+        });
+
+        assertEquals(57, indexNodeList.size());
+        for (int nodeId : indexNodeList) {
+            if (!bbox.contains(na.getLatitude(nodeId), na.getLongitude(nodeId)))
+                fail("bbox " + bbox + " should contain " + nodeId);
+        }
+
+        final Collection<Integer> bfsNodeList = new TreeSet<>();
+        new BreadthFirstSearch() {
+            @Override
+            protected GHBitSet createBitSet() {
+                return new GHBitSetImpl(gh.getGraphHopperStorage().getNodes());
+            }
+
+            @Override
+            protected boolean goFurther(int nodeId) {
+                double lat = na.getLatitude(nodeId);
+                double lon = na.getLongitude(nodeId);
+                if (bbox.contains(lat, lon))
+                    bfsNodeList.add(nodeId);
+
+                return true;
+            }
+        }.start(edgeExplorer, index.findClosest(43.731, 7.425, EdgeFilter.ALL_EDGES).getClosestNode());
+
+        assertTrue("index size: " + indexNodeList.size() + ", bfs size: " + bfsNodeList.size(), indexNodeList.size() >= bfsNodeList.size());
+        assertTrue("index size: " + indexNodeList.size() + ", bfs size: " + bfsNodeList.size(), indexNodeList.containsAll(bfsNodeList));
+    }
+
+    @Test
     public void testLoadingWithDifferentCHConfig_issue471() {
         // with CH should not be loadable without CH configured
         GraphHopper gh = new GraphHopperOSM().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         gh.importOrLoad();
@@ -163,19 +221,19 @@ public class GraphHopperOSMTest {
         gh.close();
 
         gh = new GraphHopperOSM().setStoreOnFlush(true).setCHEnabled(false).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(EncodingManager.create("car"));
         try {
             gh.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.ch.weightings:"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("You loaded a CH graph, but you did not specify any CH weightings in prepare.ch.weightings"));
         }
 
         Helper.removeDir(new File(ghLoc));
 
         // without CH should not be loadable with CH enabled
         gh = new GraphHopperOSM().setStoreOnFlush(true).setCHEnabled(false).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         gh.importOrLoad();
@@ -185,30 +243,30 @@ public class GraphHopperOSMTest {
         gh.close();
 
         gh = new GraphHopperOSM().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(EncodingManager.create("car"));
         try {
             gh.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.ch.weightings:"));
+            assertTrue(ex.getMessage(), ex.getMessage().contains("is not contained in loaded weightings"));
         }
     }
 
     @Test
     public void testAllowMultipleReadingInstances() {
         GraphHopper instance1 = new GraphHopperOSM().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         instance1.importOrLoad();
 
         GraphHopper instance2 = new GraphHopperOSM().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setDataReaderFile(testOsm);
         instance2.load(ghLoc);
 
         GraphHopper instance3 = new GraphHopperOSM().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setDataReaderFile(testOsm);
         instance3.load(ghLoc);
 
@@ -233,10 +291,10 @@ public class GraphHopperOSMTest {
                 return super.importData();
             }
         }.setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
-        final AtomicReference<Exception> ar = new AtomicReference<Exception>();
+        final AtomicReference<Exception> ar = new AtomicReference<>();
         Thread thread = new Thread() {
             @Override
             public void run() {
@@ -250,14 +308,14 @@ public class GraphHopperOSMTest {
         thread.start();
 
         GraphHopper instance2 = new GraphHopperOSM().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setDataReaderFile(testOsm);
         try {
             // let thread reach the CountDownLatch
             latch2.await(3, TimeUnit.SECONDS);
             // now importOrLoad should have create a lock which this load call does not like
             instance2.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (RuntimeException ex) {
             assertNotNull(ex);
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("To avoid reading partial data"));
@@ -277,10 +335,10 @@ public class GraphHopperOSMTest {
     public void testPrepare() {
         instance = new GraphHopperOSM().
                 setStoreOnFlush(false).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
-        instance.getCHFactoryDecorator().setWeightingsAsStrings("shortest");
+        instance.getCHFactoryDecorator().setCHProfileStrings("shortest");
         instance.importOrLoad();
         GHResponse rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
                 setAlgorithm(DIJKSTRA_BI));
@@ -293,7 +351,7 @@ public class GraphHopperOSMTest {
     public void testSortedGraph_noCH() {
         instance = new GraphHopperOSM().setStoreOnFlush(false).
                 setSortGraph(true).
-                setEncodingManager(new EncodingManager("car")).setCHEnabled(false).
+                setEncodingManager(EncodingManager.create("car")).setCHEnabled(false).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         instance.importOrLoad();
@@ -301,32 +359,32 @@ public class GraphHopperOSMTest {
                 setAlgorithm(DIJKSTRA_BI)).getBest();
         assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getPoints().getSize());
-        assertEquals(new GHPoint(51.24921503475044, 9.431716451757769), rsp.getPoints().toGHPoint(0));
-        assertEquals(new GHPoint(52.0, 9.0), rsp.getPoints().toGHPoint(1));
-        assertEquals(new GHPoint(51.199999850988384, 9.39999970197677), rsp.getPoints().toGHPoint(2));
+        assertEquals(new GHPoint(51.24921503475044, 9.431716451757769), rsp.getPoints().get(0));
+        assertEquals(new GHPoint(52.0, 9.0), rsp.getPoints().get(1));
+        assertEquals(new GHPoint(51.199999850988384, 9.39999970197677), rsp.getPoints().get(2));
 
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);
-        boolean old = instance.isEnableInstructions();
+        boolean old = instance.getEncodingManager().isEnableInstructions();
         req.getHints().put("instructions", true);
         instance.route(req);
-        assertEquals(old, instance.isEnableInstructions());
+        assertEquals(old, instance.getEncodingManager().isEnableInstructions());
 
         req.getHints().put("instructions", false);
         instance.route(req);
-        assertEquals("route method should not change instance field", old, instance.isEnableInstructions());
+        assertEquals("route method should not change instance field", old, instance.getEncodingManager().isEnableInstructions());
     }
 
     @Test
     public void testFootAndCar() {
         // now all ways are imported
         instance = new GraphHopperOSM().setStoreOnFlush(false).
-                setEncodingManager(new EncodingManager("car,foot")).setCHEnabled(false).
+                setEncodingManager(EncodingManager.create("car,foot")).setCHEnabled(false).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm3);
         instance.importOrLoad();
 
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
-        assertEquals(8, instance.getGraphHopperStorage().getAllEdges().length());
+        assertEquals(8, instance.getGraphHopperStorage().getEdges());
 
         // A to D
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle("car"));
@@ -362,7 +420,7 @@ public class GraphHopperOSMTest {
     }
 
     @Test
-    public void testFailsForWrongConfig() throws IOException {
+    public void testFailsForWrongConfig() {
         instance = new GraphHopperOSM().init(
                 new CmdArgs().
                         put("datareader.file", testOsm3).
@@ -384,25 +442,9 @@ public class GraphHopperOSMTest {
                             put(Parameters.CH.PREPARE + "weightings", "no")).
                     setDataReaderFile(testOsm3);
             tmpGH.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match"));
-        }
-
-        // different bytesForFlags should fail to load
-        instance = new GraphHopperOSM().init(
-                new CmdArgs().
-                        put("datareader.file", testOsm3).
-                        put("datareader.dataaccess", "RAM").
-                        put("graph.flag_encoders", "foot,car").
-                        put("graph.bytes_for_flags", 8).
-                        put(Parameters.CH.PREPARE + "weightings", "no")).
-                setDataReaderFile(testOsm3);
-        try {
-            instance.load(ghLoc);
-            assertTrue(false);
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.bytes_for_flags (8) is not equal to loaded 4"));
         }
 
         // different order is no longer okay, see #350
@@ -414,9 +456,77 @@ public class GraphHopperOSMTest {
                     put("graph.flag_encoders", "car,foot")).
                     setDataReaderFile(testOsm3);
             tmpGH.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match"));
+        }
+
+        // different encoded values should fail to load
+        instance = new GraphHopperOSM().init(
+                new CmdArgs().
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put("graph.encoded_values", "road_class").
+                        put("graph.flag_encoders", "foot,car").
+                        put(Parameters.CH.PREPARE + "weightings", "no")).
+                setDataReaderFile(testOsm3);
+        try {
+            instance.load(ghLoc);
+            fail();
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoded values do not match"));
+        }
+
+        // different version for car should fail
+        instance = new GraphHopperOSM().setEncodingManager(EncodingManager.create(new FootFlagEncoder(), new CarFlagEncoder() {
+            @Override
+            public int getVersion() {
+                return 0;
+            }
+        })).init(
+                new CmdArgs().
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put(Parameters.CH.PREPARE + "weightings", "no")).
+                setDataReaderFile(testOsm3);
+        try {
+            instance.load(ghLoc);
+            fail();
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match"));
+        }
+    }
+
+    @Test
+    public void testFailsForWrongEVConfig() {
+        instance = new GraphHopperOSM().init(
+                new CmdArgs().
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put("graph.flag_encoders", "foot,car").
+                        put(Parameters.CH.PREPARE + "weightings", "no")).
+                setGraphHopperLocation(ghLoc);
+        instance.importOrLoad();
+        // older versions <= 0.12 did not store this property, ensure that we fail to load it
+        instance.getGraphHopperStorage().getProperties().remove("graph.encoded_values");
+        instance.getGraphHopperStorage().flush();
+        assertEquals(5, instance.getGraphHopperStorage().getNodes());
+        instance.close();
+
+        // different encoded values should fail to load
+        instance = new GraphHopperOSM().init(
+                new CmdArgs().
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put("graph.encoded_values", "road_environment,road_class").
+                        put("graph.flag_encoders", "foot,car").
+                        put(Parameters.CH.PREPARE + "weightings", "no")).
+                setDataReaderFile(testOsm3);
+        try {
+            instance.load(ghLoc);
+            fail();
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoded values do not match"));
         }
     }
 
@@ -424,13 +534,13 @@ public class GraphHopperOSMTest {
     public void testNoNPE_ifLoadNotSuccessful() {
         instance = new GraphHopperOSM().
                 setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(EncodingManager.create("car"));
         try {
             // loading from empty directory
             new File(ghLoc).mkdirs();
             assertFalse(instance.load(ghLoc));
             instance.route(new GHRequest(10, 40, 12, 32));
-            assertTrue(false);
+            fail();
         } catch (IllegalStateException ex) {
             assertEquals("Do a successful call to load or importOrLoad before routing", ex.getMessage());
         }
@@ -439,7 +549,7 @@ public class GraphHopperOSMTest {
     @Test
     public void testDoesNotCreateEmptyFolderIfLoadingFromNonExistingPath() {
         instance = new GraphHopperOSM().
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(EncodingManager.create("car"));
 
         assertFalse(instance.load(ghLoc));
         assertFalse(new File(ghLoc).exists());
@@ -459,7 +569,7 @@ public class GraphHopperOSMTest {
         try {
             tmp.setDataReaderFile(testOsm);
             tmp.importData();
-            assertTrue(false);
+            fail();
         } catch (IllegalStateException ex) {
             assertEquals("Load graph before importing OSM data", ex.getMessage());
         }
@@ -468,7 +578,7 @@ public class GraphHopperOSMTest {
         instance = new GraphHopperOSM();
         try {
             instance.importOrLoad();
-            assertTrue(false);
+            fail();
         } catch (IllegalStateException ex) {
             assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
         }
@@ -476,11 +586,11 @@ public class GraphHopperOSMTest {
         // missing OSM file to import
         instance = new GraphHopperOSM().
                 setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc);
         try {
             instance.importOrLoad();
-            assertTrue(false);
+            fail();
         } catch (IllegalStateException ex) {
             assertEquals("Couldn't load from existing folder: " + ghLoc
                     + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
@@ -493,7 +603,7 @@ public class GraphHopperOSMTest {
                 setDataReaderFile(testOsm3);
         try {
             instance.importOrLoad();
-            assertTrue(false);
+            fail();
         } catch (IllegalStateException ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Cannot load properties to fetch EncodingManager"));
         }
@@ -501,11 +611,11 @@ public class GraphHopperOSMTest {
         // Import is possible even if no storeOnFlush is specified BUT here we miss the OSM file
         instance = new GraphHopperOSM().
                 setStoreOnFlush(false).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc);
         try {
             instance.importOrLoad();
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertEquals("Couldn't load from existing folder: " + ghLoc
                     + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
@@ -516,7 +626,7 @@ public class GraphHopperOSMTest {
     public void testFootOnly() {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
         instance = new GraphHopperOSM().setStoreOnFlush(false).
-                setEncodingManager(new EncodingManager("foot")).
+                setEncodingManager(EncodingManager.create("foot")).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm3);
         instance.importOrLoad();
@@ -683,11 +793,9 @@ public class GraphHopperOSMTest {
 
     private GraphHopper createSquareGraphInstance(boolean withCH) {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager(carEncoder);
+        EncodingManager encodingManager = EncodingManager.create(carEncoder);
         Weighting weighting = new FastestWeighting(carEncoder);
-        GraphHopperStorage g = new GraphHopperStorage(Collections.singletonList(weighting), new RAMDirectory(), encodingManager,
-                false, new GraphExtension.NoOpExtension()).
-                create(20);
+        GraphHopperStorage g = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).setBytes(20).create();
 
         //   2---3---4
         //  /    |    \
@@ -722,7 +830,7 @@ public class GraphHopperOSMTest {
         GraphHopper tmp = new GraphHopperOSM().
                 setCHEnabled(withCH).
                 setEncodingManager(encodingManager);
-        tmp.getCHFactoryDecorator().setWeightingsAsStrings("fastest");
+        tmp.getCHFactoryDecorator().setCHProfileStrings("fastest");
         tmp.setGraphHopperStorage(g);
         tmp.postProcessing();
 
@@ -732,7 +840,7 @@ public class GraphHopperOSMTest {
     @Test
     public void testCustomFactoryForNoneCH() {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager em = new EncodingManager(carEncoder);
+        EncodingManager em = EncodingManager.create(carEncoder);
         // Weighting weighting = new FastestWeighting(carEncoder);
         instance = new GraphHopperOSM().setStoreOnFlush(false).setCHEnabled(false).
                 setEncodingManager(em).
@@ -756,7 +864,7 @@ public class GraphHopperOSMTest {
         });
         instance.importOrLoad();
 
-        assertTrue(af == instance.getAlgorithmFactory(null));
+        assertSame(af, instance.getAlgorithmFactory(null));
 
         // test that hints are passed to algorithm opts
         final AtomicInteger cnt = new AtomicInteger(0);
@@ -789,11 +897,11 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testMultipleCHPreparationsInParallel() {
-        HashMap<String, Integer> shortcutCountMap = new HashMap<String, Integer>();
+        HashMap<String, Long> shortcutCountMap = new HashMap<>();
         // try all parallelization modes        
         for (int threadCount = 1; threadCount < 6; threadCount++) {
-            EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
-                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()), 8);
+            EncodingManager em = EncodingManager.create(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
+                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()));
 
             GraphHopper tmpGH = new GraphHopperOSM().
                     setStoreOnFlush(false).
@@ -805,16 +913,15 @@ public class GraphHopperOSMTest {
             tmpGH.importOrLoad();
 
             assertEquals(5, tmpGH.getCHFactoryDecorator().getPreparations().size());
-            for (RoutingAlgorithmFactory raf : tmpGH.getCHFactoryDecorator().getPreparations()) {
-                PrepareContractionHierarchies pch = (PrepareContractionHierarchies) raf;
+            for (PrepareContractionHierarchies pch : tmpGH.getCHFactoryDecorator().getPreparations()) {
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", pch.isPrepared());
 
-                String name = AbstractWeighting.weightingToFileName(pch.getWeighting());
-                Integer singleThreadShortcutCount = shortcutCountMap.get(name);
+                String name = pch.getCHProfile().toFileName();
+                Long singleThreadShortcutCount = shortcutCountMap.get(name);
                 if (singleThreadShortcutCount == null)
                     shortcutCountMap.put(name, pch.getShortcuts());
                 else
-                    assertEquals((int) singleThreadShortcutCount, pch.getShortcuts());
+                    assertEquals((long) singleThreadShortcutCount, pch.getShortcuts());
 
                 String keyError = Parameters.CH.PREPARE + "error." + name;
                 String valueError = tmpGH.getGraphHopperStorage().getProperties().get(keyError);
@@ -822,7 +929,7 @@ public class GraphHopperOSMTest {
 
                 String key = Parameters.CH.PREPARE + "date." + name;
                 String value = tmpGH.getGraphHopperStorage().getProperties().get(key);
-                assertTrue("Properties for " + name + " did NOT contain finish date [" + threadCount + "]", !value.isEmpty());
+                assertFalse("Properties for " + name + " did NOT contain finish date [" + threadCount + "]", value.isEmpty());
             }
             tmpGH.close();
         }
@@ -830,11 +937,11 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testMultipleLMPreparationsInParallel() {
-        HashMap<String, Integer> landmarkCount = new HashMap<String, Integer>();
+        HashMap<String, Integer> landmarkCount = new HashMap<>();
         // try all parallelization modes
         for (int threadCount = 1; threadCount < 6; threadCount++) {
-            EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
-                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()), 8);
+            EncodingManager em = EncodingManager.create(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
+                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()));
 
             GraphHopper tmpGH = new GraphHopperOSM().
                     setStoreOnFlush(false).
@@ -866,7 +973,7 @@ public class GraphHopperOSMTest {
 
                 String key = Parameters.Landmark.PREPARE + "date." + name;
                 String value = tmpGH.getGraphHopperStorage().getProperties().get(key);
-                assertTrue("Properties for " + name + " did NOT contain finish date [" + threadCount + "]", !value.isEmpty());
+                assertFalse("Properties for " + name + " did NOT contain finish date [" + threadCount + "]", value.isEmpty());
             }
             tmpGH.close();
         }
@@ -878,46 +985,46 @@ public class GraphHopperOSMTest {
         TestEncoder simpleTruck = new TestEncoder("simple_truck");
 
         // use simple truck first
-        EncodingManager em = new EncodingManager(simpleTruck, truck);
+        EncodingManager em = EncodingManager.create(simpleTruck, truck);
         CHAlgoFactoryDecorator decorator = new CHAlgoFactoryDecorator();
         Weighting fwSimpleTruck = new FastestWeighting(simpleTruck);
         Weighting fwTruck = new FastestWeighting(truck);
         RAMDirectory ramDir = new RAMDirectory();
-        GraphHopperStorage storage = new GraphHopperStorage(Arrays.asList(fwSimpleTruck, fwTruck), ramDir, em, false, new GraphExtension.NoOpExtension());
-        decorator.addWeighting(fwSimpleTruck);
-        decorator.addWeighting(fwTruck);
-        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), fwSimpleTruck, TraversalMode.NODE_BASED));
-        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwTruck), fwTruck, TraversalMode.NODE_BASED));
+        GraphHopperStorage storage = new GraphBuilder(em).setCHProfiles(CHProfile.createProfilesForWeightings(Arrays.asList(fwSimpleTruck, fwTruck))).setDir(ramDir).build();
+        decorator.addCHProfile(CHProfile.nodeBased(fwSimpleTruck));
+        decorator.addCHProfile(CHProfile.nodeBased(fwTruck));
+        decorator.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, CHProfile.nodeBased(fwSimpleTruck)));
+        decorator.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, CHProfile.nodeBased(fwTruck)));
 
         HintsMap wMap = new HintsMap("fastest");
         wMap.put("vehicle", "truck");
-        assertEquals("fastest|truck", ((PrepareContractionHierarchies) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
+        assertEquals("fastest|truck", ((CHRoutingAlgorithmFactory) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
         wMap.put("vehicle", "simple_truck");
-        assertEquals("fastest|simple_truck", ((PrepareContractionHierarchies) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
+        assertEquals("fastest|simple_truck", ((CHRoutingAlgorithmFactory) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
 
         // make sure weighting cannot be mixed
-        decorator.addWeighting(fwTruck);
-        decorator.addWeighting(fwSimpleTruck);
+        decorator.addCHProfile(CHProfile.nodeBased(fwTruck));
+        decorator.addCHProfile(CHProfile.nodeBased(fwSimpleTruck));
         try {
-            decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), fwSimpleTruck, TraversalMode.NODE_BASED));
-            assertTrue(false);
+            decorator.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, CHProfile.nodeBased(fwSimpleTruck)));
+            fail();
         } catch (Exception ex) {
         }
     }
 
     @Test
     public void testGetMultipleWeightingsForCH() {
-        EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder()), 8);
+        EncodingManager em = EncodingManager.create(Collections.singletonList(new CarFlagEncoder()));
 
         GraphHopper tmpGH = new GraphHopperOSM().
                 setStoreOnFlush(false).
                 setEncodingManager(em);
-        tmpGH.getCHFactoryDecorator().setWeightingsAsStrings("fastest", "shortest");
+        tmpGH.getCHFactoryDecorator().setCHProfileStrings("fastest", "shortest");
 
-        assertEquals(2, tmpGH.getCHFactoryDecorator().getWeightingsAsStrings().size());
+        assertEquals(2, tmpGH.getCHFactoryDecorator().getCHProfileStrings().size());
     }
 
-    class TestEncoder extends CarFlagEncoder {
+    private static class TestEncoder extends CarFlagEncoder {
         private final String name;
 
         public TestEncoder(String name) {

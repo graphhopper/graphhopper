@@ -20,7 +20,7 @@ package com.graphhopper.util.details;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.Parameters.DETAILS.TIME;
+import static com.graphhopper.util.Parameters.Details.TIME;
 
 /**
  * Calculate the time segments for a Path
@@ -30,8 +30,8 @@ import static com.graphhopper.util.Parameters.DETAILS.TIME;
 public class TimeDetails extends AbstractPathDetailsBuilder {
 
     private final Weighting weighting;
-
-    private int edgeId = -1;
+    private int prevEdgeId = -1;
+    // will include the turn time penalty
     private long time = 0;
 
     public TimeDetails(Weighting weighting) {
@@ -41,9 +41,9 @@ public class TimeDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        if (edge.getEdge() != edgeId) {
-            edgeId = edge.getEdge();
-            time = weighting.calcMillis(edge, false, -1);
+        if (edge.getEdge() != prevEdgeId) {
+            time = weighting.calcMillis(edge, false, prevEdgeId);
+            prevEdgeId = edge.getEdge();
             return true;
         }
         return false;

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,15 +33,15 @@ public class BitUtilLittle extends BitUtil {
     }
 
     @Override
-    public final int toInt(byte[] b, int offset) {
-        return (b[offset + 3] & 0xFF) << 24 | (b[offset + 2] & 0xFF) << 16
-                | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
-    }
-
-    @Override
     public void fromShort(byte[] bytes, short value, int offset) {
         bytes[offset + 1] = (byte) (value >>> 8);
         bytes[offset] = (byte) (value);
+    }
+
+    @Override
+    public final int toInt(byte[] b, int offset) {
+        return (b[offset + 3] & 0xFF) << 24 | (b[offset + 2] & 0xFF) << 16
+                | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
     }
 
     @Override

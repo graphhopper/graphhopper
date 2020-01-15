@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,13 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
@@ -28,6 +31,8 @@ import static com.graphhopper.util.Helper.toLowerCase;
  */
 public abstract class AbstractWeighting implements Weighting {
     protected final FlagEncoder flagEncoder;
+    protected final DecimalEncodedValue avSpeedEnc;
+    protected final BooleanEncodedValue accessEnc;
 
     protected AbstractWeighting(FlagEncoder encoder) {
         this.flagEncoder = encoder;
@@ -35,17 +40,36 @@ public abstract class AbstractWeighting implements Weighting {
             throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager before using it elsewhere");
         if (!isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
+
+        avSpeedEnc = encoder.getAverageSpeedEnc();
+        accessEnc = encoder.getAccessEnc();
+    }
+
+    @Override
+    public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        return calcWeight(edgeState, reverse, NO_EDGE);
+    }
+
+    @Override
+    public final long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        return calcMillis(edgeState, reverse, NO_EDGE);
     }
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        long flags = edgeState.getFlags();
-        if (reverse && !flagEncoder.isBackward(flags)
-                || !reverse && !flagEncoder.isForward(flags))
-            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
-                    + "Reverse:" + reverse + ", fwd:" + flagEncoder.isForward(flags) + ", bwd:" + flagEncoder.isBackward(flags));
+        // special case for loop edges: since they do not have a meaningful direction we always need to read them in
+        // forward direction
+        if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
+            reverse = false;
+        }
 
-        double speed = reverse ? flagEncoder.getReverseSpeed(flags) : flagEncoder.getSpeed(flags);
+        if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))
+            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
+                    "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
+                    + edgeState.fetchWayGeometry(3) + ", dist: " + edgeState.getDistance() + " "
+                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(avSpeedEnc) + ", bwd-speed: " + edgeState.getReverse(avSpeedEnc));
+
+        double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid speed stored in edge! " + speed);
         if (speed == 0)
@@ -56,8 +80,8 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public boolean matches(HintsMap reqMap) {
-        return getName().equals(reqMap.getWeighting())
-                && flagEncoder.toString().equals(reqMap.getVehicle());
+        return (reqMap.getWeighting().isEmpty() || getName().equals(reqMap.getWeighting())) &&
+                (reqMap.getVehicle().isEmpty() || flagEncoder.toString().equals(reqMap.getVehicle()));
     }
 
     @Override
@@ -82,7 +106,7 @@ public abstract class AbstractWeighting implements Weighting {
         return toString().equals(other.toString());
     }
 
-    static final boolean isValidName(String name) {
+    static boolean isValidName(String name) {
         if (name == null || name.isEmpty())
             return false;
 

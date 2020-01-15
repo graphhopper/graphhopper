@@ -6,7 +6,7 @@
     <Contact>info@graphhopper.com</Contact>    
     <Image height="16" width="16" type="image/x-icon">http://graphhopper.com/favicon.ico</Image>
     <Image height="16" width="16" type="image/x-icon">http://graphhopper.com/img/icon.png</Image>
-    <Url type="text/html" template="http://graphhopper.com/maps?q={searchTerms}"/>    
+    <Url type="text/html" template="https://graphhopper.com/maps/?point={searchTerms}"/>    
     <OutputEncoding>UTF-8</OutputEncoding>
     <InputEncoding>UTF-8</InputEncoding>
 </OpenSearchDescription>

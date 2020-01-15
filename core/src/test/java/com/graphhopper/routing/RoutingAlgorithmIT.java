@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,10 +25,7 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.Parameters;
@@ -89,18 +86,20 @@ public class RoutingAlgorithmIT {
         }
 
         if (hopper.getCHFactoryDecorator().isEnabled()) {
-            final HintsMap chHints = new HintsMap(defaultHints).put(Parameters.CH.DISABLE, false);
-            Weighting pickedWeighting = null;
-            for (Weighting tmpWeighting : hopper.getCHFactoryDecorator().getWeightings()) {
-                if (tmpWeighting.equals(weighting)) {
-                    pickedWeighting = tmpWeighting;
+            final HintsMap chHints = new HintsMap(defaultHints);
+            chHints.put(Parameters.CH.DISABLE, false);
+            chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
+            CHProfile pickedProfile = null;
+            for (CHProfile chProfile : hopper.getCHFactoryDecorator().getCHProfiles()) {
+                if (chProfile.getWeighting().equals(weighting) && tMode.isEdgeBased() == chProfile.getTraversalMode().isEdgeBased()) {
+                    pickedProfile = chProfile;
                     break;
                 }
             }
-            if (pickedWeighting == null)
-                throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHFactoryDecorator().getWeightings());
+            if (pickedProfile == null)
+                throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHFactoryDecorator().getCHProfiles());
 
-            prepare.add(new AlgoHelperEntry(ghStorage.getGraph(CHGraph.class, pickedWeighting),
+            prepare.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
@@ -108,7 +107,7 @@ public class RoutingAlgorithmIT {
                 }
             });
 
-            prepare.add(new AlgoHelperEntry(ghStorage.getGraph(CHGraph.class, pickedWeighting),
+            prepare.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
                     AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
@@ -126,7 +125,7 @@ public class RoutingAlgorithmIT {
         int noJvmWarming = N / 4;
 
         Random rand = new Random(0);
-        final EncodingManager eManager = new EncodingManager("car");
+        final EncodingManager eManager = EncodingManager.create("car");
         final GraphHopperStorage graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";

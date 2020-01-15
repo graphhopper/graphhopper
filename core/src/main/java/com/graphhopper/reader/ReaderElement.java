@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +17,8 @@
  */
 package com.graphhopper.reader;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Base class for all network objects
@@ -95,6 +92,16 @@ public abstract class ReaderElement {
         return val;
     }
 
+    public List<String> getKeysWithPrefix(String keyPrefix) {
+        List<String> keys = new ArrayList<>();
+        for (String key : properties.keySet()) {
+            if (key.startsWith(keyPrefix)) {
+                keys.add(key);
+            }
+        }
+        return keys;
+    }
+
     public void setTag(String name, Object value) {
         properties.put(name, value);
     }
@@ -129,7 +136,7 @@ public abstract class ReaderElement {
     /**
      * Check that a given tag has one of the specified values.
      */
-    public final boolean hasTag(String key, Set<String> values) {
+    public final boolean hasTag(String key, Collection<String> values) {
         return values.contains(getTag(key, ""));
     }
 
@@ -137,10 +144,19 @@ public abstract class ReaderElement {
      * Check a number of tags in the given order for the any of the given values. Used to parse
      * hierarchical access restrictions
      */
-    public boolean hasTag(List<String> keyList, Set<String> values) {
+    public boolean hasTag(List<String> keyList, Collection<String> values) {
         for (String key : keyList) {
             if (values.contains(getTag(key, "")))
                 return true;
+        }
+        return false;
+    }
+
+    public boolean hasTagWithKeyPrefix(String keyPrefix) {
+        for (String key : properties.keySet()) {
+            if (key.startsWith(keyPrefix)) {
+                return true;
+            }
         }
         return false;
     }

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     /**
      * Sets the edges that this shortcut skips. Those skipped edges can be shortcuts too.
      */
-    void setSkippedEdges(int edge1, int edge2);
+    CHEdgeIteratorState setSkippedEdges(int edge1, int edge2);
 
     /**
      * @return true if this edge is a shortcut, false otherwise.
@@ -44,11 +44,21 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     boolean isShortcut();
 
     /**
+     * @return true if this shortcut can be used in fwd direction. Do not call this method if {@link #isShortcut()} is false
+     */
+    boolean getFwdAccess();
+
+    /**
+     * @see #getFwdAccess
+     */
+    boolean getBwdAccess();
+
+    /**
      * This method is only used on preparation.
      *
-     * @see PrepareEncoder#getScMergeStatus(long, long)
+     * @see PrepareEncoder#getScMergeStatus(int, int)
      */
-    int getMergeStatus(long flags);
+    int getMergeStatus(int flags);
 
     /**
      * Returns the weight of this shortcut.
@@ -59,4 +69,6 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
      * Sets the weight calculated from Weighting.calcWeight, only applicable if isShortcut is true.
      */
     CHEdgeIteratorState setWeight(double weight);
+
+    void setFlagsAndWeight(int flags, double weight);
 }

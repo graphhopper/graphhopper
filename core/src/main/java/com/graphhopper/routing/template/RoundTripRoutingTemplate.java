@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,14 @@ package com.graphhopper.routing.template;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.tour.MultiPointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;
@@ -54,14 +59,16 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     private final GHRequest ghRequest;
     private final GHResponse ghResponse;
     private final LocationIndex locationIndex;
+    private final EncodingManager encodingManager;
     private PathWrapper altResponse;
     // result from route
     private List<Path> pathList;
 
-    public RoundTripRoutingTemplate(GHRequest request, GHResponse ghRsp, LocationIndex locationIndex, int maxRetries) {
+    public RoundTripRoutingTemplate(GHRequest request, GHResponse ghRsp, LocationIndex locationIndex, EncodingManager encodingManager, int maxRetries) {
         this.ghRequest = request;
         this.ghResponse = ghRsp;
         this.locationIndex = locationIndex;
+        this.encodingManager = encodingManager;
         this.maxRetries = maxRetries;
     }
 
@@ -77,7 +84,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
 
         TourStrategy strategy = new MultiPointTour(new Random(seed), distanceInMeter, roundTripPointCount, initialHeading);
         queryResults = new ArrayList<>(2 + strategy.getNumberOfGeneratedPoints());
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         QueryResult startQR = locationIndex.findClosest(start.lat, start.lon, edgeFilter);
         if (!startQR.isValid())
             throw new PointNotFoundException("Cannot find point 0: " + start, 0);
@@ -105,7 +112,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     }
 
     @Override
-    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
+    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts, FlagEncoder encoder) {
         pathList = new ArrayList<>(queryResults.size() - 1);
 
         AvoidEdgesWeighting avoidPathWeighting = new AvoidEdgesWeighting(algoOpts.getWeighting());
@@ -151,7 +158,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
         altResponse = new PathWrapper();
         altResponse.setWaypoints(getWaypoints());
         ghResponse.add(altResponse);
-        pathMerger.doWork(altResponse, pathList, tr);
+        pathMerger.doWork(altResponse, pathList, encodingManager, tr);
         // with potentially retrying, including generating new route points, for now disabled
         return true;
     }

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,48 +17,58 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.util.TurnCostEncoder;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+
 /**
  * Provides methods to retrieve turn costs for a specific turn.
- * <p>
  *
  * @author Karl Hübner
  * @author Peter Karich
  */
 public class TurnWeighting implements Weighting {
-    /**
-     * Encoder, which decodes the turn flags
-     */
-    private final TurnCostEncoder turnCostEncoder;
-    private final TurnCostExtension turnCostExt;
+    private final DecimalEncodedValue turnCostEnc;
+    private final TurnCostStorage turnCostStorage;
     private final Weighting superWeighting;
-    private double defaultUTurnCost = 40;
+    private final double uTurnCosts;
+    private final IntsRef tcFlags = TurnCost.createFlags();
 
-    /**
-     * @param turnCostExt the turn cost storage to be used
-     */
-    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
-        this.turnCostEncoder = (TurnCostEncoder) superWeighting.getFlagEncoder();
-        this.superWeighting = superWeighting;
-        this.turnCostExt = turnCostExt;
-
-        if (turnCostExt == null)
-            throw new RuntimeException("No storage set to calculate turn weight");
+    public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostStorage) {
+        this(superWeighting, turnCostStorage, INFINITE_U_TURN_COSTS);
     }
 
     /**
-     * Set the default cost for an u-turn in seconds. Default is 40s. Should be that high to avoid
-     * 'tricking' other turn costs or restrictions.
+     * @param superWeighting  the weighting that is wrapped by this {@link TurnWeighting} and used to calculate the
+     *                        edge weights for example
+     * @param turnCostStorage the turn cost storage to be used
+     * @param uTurnCosts      the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
+     *                        whether or not turnCostExt contains explicit values for these turns.
      */
-    public TurnWeighting setDefaultUTurnCost(double costInSeconds) {
-        this.defaultUTurnCost = costInSeconds;
-        return this;
+    public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostStorage, double uTurnCosts) {
+        if (turnCostStorage == null) {
+            throw new RuntimeException("No storage set to calculate turn weight");
+        }
+        FlagEncoder encoder = superWeighting.getFlagEncoder();
+        String key = getKey(encoder.toString(), EV_SUFFIX);
+        // if null the TurnWeighting can be still useful for edge-based routing
+        this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
+        this.superWeighting = superWeighting;
+        this.turnCostStorage = turnCostStorage;
+        this.uTurnCosts = uTurnCosts < 0 ? Double.POSITIVE_INFINITY : uTurnCosts;
+    }
+
+    public double getUTurnCosts() {
+        return uTurnCosts;
     }
 
     @Override
@@ -67,50 +77,63 @@ public class TurnWeighting implements Weighting {
     }
 
     @Override
+    public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        return calcWeight(edgeState, reverse, NO_EDGE);
+    }
+
+    @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
-        if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
             return weight;
 
-        int edgeId = edgeState.getEdge();
-        double turnCosts;
-        if (reverse)
-            turnCosts = calcTurnWeight(edgeId, edgeState.getBaseNode(), prevOrNextEdgeId);
-        else
-            turnCosts = calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeId);
-
-        if (turnCosts == 0 && edgeId == prevOrNextEdgeId)
-            return weight + defaultUTurnCost;
-
+        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
+        double turnCosts = reverse
+                ? calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
         return weight + turnCosts;
+    }
+
+    @Override
+    public final long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        return calcMillis(edgeState, reverse, NO_EDGE);
     }
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         long millis = superWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
-        if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
             return millis;
 
-        // TODO for now assume turn costs are returned in milliseconds?
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
-        long turnCostsInMillis;
-        if (reverse)
-            turnCostsInMillis = (long) calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId);
-        else
-            turnCostsInMillis = (long) calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
-
-        return millis + turnCostsInMillis;
+        // todo: why no first/last orig edge here as in calcWeight ?
+        final int origEdgeId = edgeState.getEdge();
+        long turnCostMillis = reverse
+                ? calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                : calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+        return millis + turnCostMillis;
     }
 
     /**
      * This method calculates the turn weight separately.
      */
     public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
-        long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
-        if (turnCostEncoder.isTurnRestricted(turnFlags))
-            return Double.POSITIVE_INFINITY;
+        if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo)) {
+            return 0;
+        }
+        double tCost = 0;
+        if (turnCostStorage.isUTurn(edgeFrom, edgeTo)) {
+            // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
+            tCost = turnCostStorage.isUTurnAllowed(nodeVia) ? uTurnCosts : Double.POSITIVE_INFINITY;
+        } else {
+            if (turnCostEnc != null)
+                tCost = turnCostStorage.get(turnCostEnc, tcFlags, edgeFrom, nodeVia, edgeTo);
+        }
+        return tCost;
+    }
 
-        return turnCostEncoder.getTurnCost(turnFlags);
+    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
     }
 
     @Override

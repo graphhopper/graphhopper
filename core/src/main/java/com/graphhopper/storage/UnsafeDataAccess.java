@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.NotThreadSafe;
 
 import java.io.File;
@@ -92,9 +93,16 @@ public class UnsafeDataAccess extends AbstractDataAccess {
 
         try {
             address = UNSAFE.reallocateMemory(address, capacity);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(ex.getMessage() + " - problem when allocating new memory. "
+                    + "address:" + address + "capacity:" + capacity + ", old capacity:" + oldCap + ", new bytes:" + newBytes
+                    + ", allSegments:" + allSegments + ", segmentSizeInBytes:" + segmentSizeInBytes
+                    + ", segmentSizePower:" + segmentSizePower + ", " + Helper.getMemInfo());
         } catch (OutOfMemoryError err) {
-            throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
-                    + oldCap + ", new bytes:" + newBytes + ", segmentSizeIntsPower:" + segmentSizePower);
+            throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. "
+                    + "address:" + address + "capacity:" + capacity + ", old capacity:" + oldCap + ", new bytes:" + newBytes
+                    + ", allSegments:" + allSegments + ", segmentSizeInBytes:" + segmentSizeInBytes
+                    + ", segmentSizePower:" + segmentSizePower + ", " + Helper.getMemInfo());
         }
 
         if (clearNewMem)
@@ -215,6 +223,16 @@ public class UnsafeDataAccess extends AbstractDataAccess {
         for (int offset = 0; offset < length; offset++) {
             values[offset] = UNSAFE.getByte(address + bytePos + offset);
         }
+    }
+
+    @Override
+    public final void setByte(long bytePos, byte value) {
+        UNSAFE.putByte(address + bytePos, value);
+    }
+
+    @Override
+    public final byte getByte(long bytePos) {
+        return UNSAFE.getByte(address + bytePos);
     }
 
     @Override

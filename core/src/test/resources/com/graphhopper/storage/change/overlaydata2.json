@@ -1,0 +1,14 @@
+{
+    "type": "FeatureCollection",
+    "features": [{
+        "type": "Feature",
+        "geometry": {
+            "type": "Point",
+            "coordinates": [0.005, 0.01]
+        },
+        "properties": {
+            "vehicles": ["car"],
+            "access": false
+        }
+    }]
+}

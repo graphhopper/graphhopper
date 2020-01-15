@@ -55,7 +55,8 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
                     // Made the instructions icon a bit bigger, as they are placed before the path details
                     iconSize: [16, 16]
                 }),
-                draggable: true
+                draggable: true,
+                autoPan: true
             }).addTo(mapLayer.getRoutingLayer()).bindPopup(title);
         }
     }

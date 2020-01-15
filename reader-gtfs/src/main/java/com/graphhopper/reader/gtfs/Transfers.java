@@ -43,7 +43,7 @@ class Transfers {
     List<Transfer> getTransfersToStop(String toStopId, String toRouteId) {
         final List<Transfer> allInboundTransfers = transfersToStop.getOrDefault(toStopId, Collections.emptyList());
         final Map<String, List<Transfer>> byFromStop = allInboundTransfers.stream()
-                .filter(t -> t.transfer_type == 2)
+                .filter(t -> t.transfer_type == 0 || t.transfer_type == 2)
                 .filter(t -> t.to_route_id == null || toRouteId.equals(t.to_route_id))
                 .collect(Collectors.groupingBy(t -> t.from_stop_id));
         final List<Transfer> result = new ArrayList<>();
@@ -68,7 +68,7 @@ class Transfers {
     List<Transfer> getTransfersFromStop(String fromStopId, String fromRouteId) {
         final List<Transfer> allOutboundTransfers = transfersFromStop.getOrDefault(fromStopId, Collections.emptyList());
         final Map<String, List<Transfer>> byToStop = allOutboundTransfers.stream()
-                .filter(t -> t.transfer_type == 2)
+                .filter(t -> t.transfer_type == 0 || t.transfer_type == 2)
                 .filter(t -> t.from_route_id == null || fromRouteId.equals(t.from_route_id))
                 .collect(Collectors.groupingBy(t -> t.to_stop_id));
         final List<Transfer> result = new ArrayList<>();
@@ -94,10 +94,10 @@ class Transfers {
         final ArrayList<Transfer> transfersBySpecificity = new ArrayList<>(transfers);
         transfersBySpecificity.sort(Comparator.comparingInt(t -> {
             int score = 0;
-            if (fromRouteId.equals(t.from_route_id)) {
+            if (Objects.equals(fromRouteId, t.from_route_id)) {
                 score++;
             }
-            if (toRouteId.equals(t.to_route_id)) {
+            if (Objects.equals(toRouteId, t.to_route_id)) {
                 score++;
             }
             return -score;
@@ -108,4 +108,11 @@ class Transfers {
         return transfersBySpecificity.get(0);
     }
 
+    public boolean hasNoRouteSpecificDepartureTransferRules(String stop_id) {
+        return transfersToStop.getOrDefault(stop_id, Collections.emptyList()).stream().allMatch(transfer -> transfer.to_route_id == null);
+    }
+
+    public boolean hasNoRouteSpecificArrivalTransferRules(String stop_id) {
+        return transfersFromStop.getOrDefault(stop_id, Collections.emptyList()).stream().allMatch(transfer -> transfer.from_route_id == null);
+    }
 }

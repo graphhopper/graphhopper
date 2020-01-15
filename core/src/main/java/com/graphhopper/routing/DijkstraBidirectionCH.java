@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
@@ -27,14 +26,16 @@ import com.graphhopper.util.EdgeIterator;
 
 /**
  * Uses a very simple version of stall-on-demand (SOD) for CH queries to prevent exploring nodes that can not be part
- * of a shortest path. When a node that is about to be settled is stallable it is not expanded, but no further search
- * for neighboring stallable nodes is performed.
+ * of a shortest path. When a node that is about to be settled is stallable it is not expanded. However, no further search
+ * for neighboring stallable nodes is performed (sometimes called 'aggressive' stalling in the literature). Some experimenting
+ * showed that due to the overhead for such aggressive stalling the routing does not become faster, see #240.
  *
- * @author ammagamma
+ * @author easbar
  */
 public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
-    public DijkstraBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
-        super(graph, weighting, traversalMode);
+
+    public DijkstraBidirectionCH(Graph graph, Weighting weighting) {
+        super(graph, weighting);
     }
 
     @Override
@@ -63,10 +64,16 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
         // reached via a suboptimal path. We do this regardless of the CH level of the adjacent nodes.
         EdgeIterator iter = edgeExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
+            // no need to inspect the edge we are coming from
+            if (iter.getEdge() == entry.edge) {
+                continue;
+            }
             int traversalId = traversalMode.createTraversalId(iter, reverse);
             SPTEntry adjNode = bestWeightMap.get(traversalId);
+            // we have to be careful because of rounded shortcut weights in combination with virtual via nodes, see #1574
+            final double precision = 0.001;
             if (adjNode != null &&
-                    adjNode.weight + weighting.calcWeight(iter, !reverse, entry.edge) < entry.weight) {
+                    adjNode.weight + weighting.calcEdgeWeight(iter, !reverse) - entry.weight < -precision) {
                 return true;
             }
         }

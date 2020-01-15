@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -32,6 +31,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -42,7 +42,7 @@ public class GraphEdgeIdFinderTest {
     @Test
     public void testParseStringHints() {
         FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graph = new GraphBuilder(em).create();
         // 0-1-2
         // | |
@@ -52,17 +52,17 @@ public class GraphEdgeIdFinderTest {
         graph.edge(3, 4, 1, true);
         graph.edge(0, 3, 1, true);
         graph.edge(1, 4, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.01, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, 0.01, 0.02);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 3, 0.00, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 4, 0.00, 0.01);
+        updateDistancesFor(graph, 0, 0.01, 0.00);
+        updateDistancesFor(graph, 1, 0.01, 0.01);
+        updateDistancesFor(graph, 2, 0.01, 0.02);
+        updateDistancesFor(graph, 3, 0.00, 0.00);
+        updateDistancesFor(graph, 4, 0.00, 0.01);
 
         LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory())
                 .prepareIndex();
 
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("0.01,0.005,1", new DefaultEdgeFilter(encoder), 1000 * 1000);
+        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("0.01,0.005,1", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
 
         GHIntHashSet blockedEdges = new GHIntHashSet();
         blockedEdges.add(0);
@@ -72,7 +72,7 @@ public class GraphEdgeIdFinderTest {
 
         // big area converts into shapes
         graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        blockArea = graphFinder.parseBlockArea("0,0,1000", new DefaultEdgeFilter(encoder), 1000 * 1000);
+        blockArea = graphFinder.parseBlockArea("0,0,1000", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
         blockedEdges.clear();
         assertEquals(blockedEdges, blockArea.blockedEdges);
         blockedShapes.add(new Circle(0, 0, 1000));
@@ -82,7 +82,7 @@ public class GraphEdgeIdFinderTest {
     @Test
     public void testBlockAreasWithPolygon() {
         FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graph = new GraphBuilder(em).create();
 
         // 00-01-02-03
@@ -104,33 +104,33 @@ public class GraphEdgeIdFinderTest {
         graph.edge(9, 10, 1, true); // 11
         graph.edge(10, 11, 1, true); // 12
 
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 2, 0);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 2, 1);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, 2, 2);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 3, 2, 3);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 4, 1, 0);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 5, 1, 1);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 6, 1, 2);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 7, 1, 3);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 8, 0, 0);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 9, 0, 1);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 10, 0, 2);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 11, 0, 3);
+        updateDistancesFor(graph, 0, 2, 0);
+        updateDistancesFor(graph, 1, 2, 1);
+        updateDistancesFor(graph, 2, 2, 2);
+        updateDistancesFor(graph, 3, 2, 3);
+        updateDistancesFor(graph, 4, 1, 0);
+        updateDistancesFor(graph, 5, 1, 1);
+        updateDistancesFor(graph, 6, 1, 2);
+        updateDistancesFor(graph, 7, 1, 3);
+        updateDistancesFor(graph, 8, 0, 0);
+        updateDistancesFor(graph, 9, 0, 1);
+        updateDistancesFor(graph, 10, 0, 2);
+        updateDistancesFor(graph, 11, 0, 3);
 
         LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory())
                 .prepareIndex();
 
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("2,1, 0,2, 2,3", new DefaultEdgeFilter(encoder), 1000 * 1000);
+        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("2,1, 0,2, 2,3", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
 
         GHIntHashSet blockedEdges = new GHIntHashSet();
-        blockedEdges.addAll(new int[]{1, 2, 6, 7});
+        blockedEdges.addAll(1, 2, 6, 7);
         assertEquals(blockedEdges, blockArea.blockedEdges);
 
-        blockArea = graphFinder.parseBlockArea("2,1, 1,3, 1,2, 0,1", new DefaultEdgeFilter(encoder), 1000 * 1000);
+        blockArea = graphFinder.parseBlockArea("2,1, 1,3, 1,2, 0,1", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
 
         blockedEdges = new GHIntHashSet();
-        blockedEdges.addAll(new int[]{4, 9, 6, 7});
+        blockedEdges.addAll(4, 9, 6, 7);
         assertEquals(blockedEdges, blockArea.blockedEdges);
     }
 }

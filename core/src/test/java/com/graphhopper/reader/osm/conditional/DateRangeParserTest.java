@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,13 @@ public class DateRangeParserTest extends CalendarBasedTest {
         assertSameDate(2015, Calendar.MARCH, 1, "2015 Mar");
         assertSameDate(1970, Calendar.MARCH, 31, "Mar 31");
         assertSameDate(1970, Calendar.DECEMBER, 1, "Dec");
+    }
+
+    @Test
+    public void testCreate() throws ParseException {
+        DateRangeParser dateRangeParser = DateRangeParser.createInstance("2019-10-08");
+        assertFalse(dateRangeParser.checkCondition("2014 Oct 8-2014 Dec 12").isCheckPassed());
+        assertTrue(dateRangeParser.checkCondition("2019 Oct 8-2019 Dec 12").isCheckPassed());
     }
 
     @Test

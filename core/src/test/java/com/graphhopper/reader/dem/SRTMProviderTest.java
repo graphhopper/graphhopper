@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -142,6 +142,14 @@ public class SRTMProviderTest {
         assertEquals(324, instance.getEle(42.1, 11.999999), precision);
         assertEquals("Eurasia/N42E012", instance.getFileName(42.1, 12.000001));
         assertEquals(324, instance.getEle(42.1, 12.000001), precision);
+    }
+
+    @Ignore
+    public void testDownloadIssue_1274() {
+        instance = new SRTMProvider();
+        // The file is incorrectly named on the sever: N55W061hgt.zip (it should be N55W061.hgt.zip)
+        assertEquals("North_America/N55W061", instance.getFileName(55.055,-60.541));
+        assertEquals(204, instance.getEle(55.055,-60.541), .1);
     }
 
 }

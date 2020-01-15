@@ -6,14 +6,17 @@ graphhopper:
   ##### Vehicles #####
 
 
-  # Possible options: car,foot,bike,bike2,mtb,racingbike,motorcycle (comma separated)
-  # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below
+  # More options: foot,bike,bike2,mtb,racingbike,motorcycle (comma separated)
+  # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
   graph.flag_encoders: car
-
 
   # Enable turn restrictions for car or motorcycle.
   # graph.flag_encoders: car|turn_costs=true
 
+  # Add additional information to every edge. Used for path details.
+  # If road_environment is added and elevation is enabled then also a tunnel and bridge interpolation is done, see #798.
+  # More options are: surface,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type
+  graph.encoded_values: road_class,road_class_link,road_environment,max_speed,road_access
 
   ##### Elevation #####
 
@@ -37,7 +40,17 @@ graphhopper:
   # By default the speed mode with the 'fastest' weighting is used. Internally a graph preparation via
   # contraction hierarchies (CH) is done to speed routing up. This requires more RAM/disc space for holding the
   # graph but less for every request. You can also setup multiple weightings, by providing a comma separated list.
+  # To enable finite u-turn costs use something like fastest|u_turn_costs=30, where 30 are the u-turn costs in seconds
+  # (given as integer). Note that since the u-turn costs are given in seconds the weighting you use should also
+  # calculate the weight in seconds. The u-turn costs will only be applied for edge_based, see below.
   prepare.ch.weightings: fastest
+
+  # To enable turn-costs in speed mode (contraction hierarchies) edge-based graph traversal and a more elaborate
+  # pre-processing is required. Using this option you can either turn off the edge-based pre-processing (choose 'off'),
+  # use edge-based pre-processing for all encoders/vehicles with turn_costs=true (choose 'edge_or_node') or use node-based
+  # pre-processing for all encoders/vehicles and additional edge-based pre-processing for all encoders/vehicles with
+  # turn_costs=true (choose 'edge_and_node').
+  prepare.ch.edge_based: off
 
 
   # Disable the speed mode. Should be used only with routing.max_visited_nodes or when the hybrid mode is enabled instead
@@ -73,7 +86,7 @@ graphhopper:
   # routing.max_visited_nodes: 1000000
 
 
-  # If enabled, allows a user to run flexibility requests even if speed mode is enabled. Every request then has to include a hint routing.ch.disable=true.
+  # If enabled, allows a user to run flexibility requests even if speed mode is enabled. Every request then has to include a hint ch.disable=true.
   # Attention, non-CH route calculations take way more time and resources, compared to CH routing.
   # A possible attacker might exploit this to slow down your service. Only enable it if you need it and with routing.maxVisitedNodes
   # routing.ch.disabling_allowed: true
@@ -89,15 +102,6 @@ graphhopper:
   # You can limit the max distance between two consecutive waypoints of flexible routing requests to be less or equal
   # the given distance in meter. Default is set to 1000km.
   routing.non_ch.max_waypoint_distance: 1000000
-
-
-
-  ##### Web #####
-
-
-  # if you want to support jsonp response type you need to add it explicitly here. By default it is disabled for stronger security.
-  # web.jsonp_allowed: true
-
 
 
   ##### Storage #####
@@ -151,3 +155,17 @@ server:
   - type: http
     port: 8990
     bindHost: localhost
+# See https://www.dropwizard.io/1.3.8/docs/manual/configuration.html#logging
+logging:
+  appenders:
+  - type: file
+    timeZone: UTC
+    currentLogFilename: logs/graphhopper.log
+    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    archive: true
+    archivedLogFilenamePattern: ./logs/graphhopper-%d.log.gz
+    archivedFileCount: 30
+    neverBlock: true
+  - type: console
+    timeZone: UTC
+    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

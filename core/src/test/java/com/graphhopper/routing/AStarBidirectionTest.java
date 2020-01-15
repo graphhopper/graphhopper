@@ -17,59 +17,39 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.SPTEntry;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
 
 /**
+ * Run some tests specific for {@link AStarBidirection}
+ *
  * @author Peter Karich
+ * @see RoutingAlgorithmTest for test cases covering standard node- and edge-based routing with this algorithm
+ * @see EdgeBasedRoutingAlgorithmTest for test cases covering routing with turn costs with this algorithm
  */
-@RunWith(Parameterized.class)
-public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
-    private final TraversalMode traversalMode;
-
-    public AStarBidirectionTest(TraversalMode tMode) {
-        this.traversalMode = tMode;
-    }
-
-    /**
-     * Runs the same test with each of the supported traversal modes
-     */
-    @Parameters(name = "{0}")
-    public static Collection<Object[]> configs() {
-        return Arrays.asList(new Object[][]{
-                {TraversalMode.NODE_BASED},
-                {TraversalMode.EDGE_BASED_1DIR},
-                {TraversalMode.EDGE_BASED_2DIR},
-                {TraversalMode.EDGE_BASED_2DIR_UTURN}
-        });
-    }
-
-    @Override
-    public RoutingAlgorithmFactory createFactory(GraphHopperStorage prepareGraph, AlgorithmOptions prepareOpts) {
-        return new RoutingAlgorithmFactory() {
-            @Override
-            public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                return new AStarBidirection(g, opts.getWeighting(), traversalMode);
-            }
-        };
-    }
+public class AStarBidirectionTest {
+    private final EncodingManager encodingManager = EncodingManager.create("car");
+    private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
 
     @Test
     public void testInitFromAndTo() {
-        Graph g = createGHStorage(false);
+        doTestInitFromAndTo(TraversalMode.NODE_BASED);
+        doTestInitFromAndTo(TraversalMode.EDGE_BASED);
+    }
+
+    private void doTestInitFromAndTo(final TraversalMode traversalMode) {
+        Graph g = new GraphBuilder(encodingManager).create();
         g.edge(0, 1, 1, true);
         updateDistancesFor(g, 0, 0.00, 0.00);
         updateDistancesFor(g, 1, 0.01, 0.01);
