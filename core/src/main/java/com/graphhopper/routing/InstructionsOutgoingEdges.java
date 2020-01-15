@@ -19,7 +19,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
@@ -59,15 +58,17 @@ class InstructionsOutgoingEdges {
     private final EdgeIteratorState prevEdge;
     private final EdgeIteratorState currentEdge;
     // Outgoing edges that we would be allowed to turn on
-    private final List<EdgeIteratorState> allowedOutgoingEdges;
+    private final List<EdgeIteratorState> filteredOutgoingEdges;
     // All outgoing edges, including oneways in the wrong direction
-    private final List<EdgeIteratorState> allOutgoingEdges;
-    private final DecimalEncodedValue speedEnc;
+    private final List<EdgeIteratorState> filteredEdges;
+    private final DecimalEncodedValue maxSpeedEnc;
+    private final DecimalEncodedValue avgSpeedEnc;
     private final NodeAccess nodeAccess;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
                                      EdgeIteratorState currentEdge,
                                      FlagEncoder encoder,
+                                     DecimalEncodedValue maxSpeedEnc,
                                      EdgeExplorer crossingExplorer,
                                      NodeAccess nodeAccess,
                                      int prevNode,
@@ -76,20 +77,21 @@ class InstructionsOutgoingEdges {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        this.speedEnc = encoder.getAverageSpeedEnc();
+        this.maxSpeedEnc = maxSpeedEnc;
+        this.avgSpeedEnc = encoder.getAverageSpeedEnc();
         this.nodeAccess = nodeAccess;
 
         EdgeIteratorState tmpEdge;
 
-        allOutgoingEdges = new ArrayList<>();
-        allowedOutgoingEdges = new ArrayList<>();
+        filteredEdges = new ArrayList<>();
+        filteredOutgoingEdges = new ArrayList<>();
         EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
         while (edgeIter.next()) {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
                 tmpEdge = edgeIter.detach(false);
-                allOutgoingEdges.add(tmpEdge);
+                filteredEdges.add(tmpEdge);
                 if (tmpEdge.get(accessEnc)) {
-                    allowedOutgoingEdges.add(tmpEdge);
+                    filteredOutgoingEdges.add(tmpEdge);
                 }
             }
         }
@@ -100,7 +102,7 @@ class InstructionsOutgoingEdges {
      * roads one might take at the intersection. This excludes the road you are coming from and inaccessible roads.
      */
     public int nrOfAllowedOutgoingEdges() {
-        return 1 + allowedOutgoingEdges.size();
+        return 1 + filteredOutgoingEdges.size();
     }
 
     /**
@@ -108,7 +110,7 @@ class InstructionsOutgoingEdges {
      * at the intersection. This excludes the road your are coming from.
      */
     public int nrOfAllOutgoingEdges() {
-        return 1 + allOutgoingEdges.size();
+        return 1 + filteredEdges.size();
     }
 
 
@@ -127,7 +129,7 @@ class InstructionsOutgoingEdges {
 
         double maxSurroundingSpeed = -1;
 
-        for (EdgeIteratorState edge : allOutgoingEdges) {
+        for (EdgeIteratorState edge : filteredEdges) {
             tmpSpeed = getSpeed(edge);
             if (tmpSpeed < 1) {
                 // This might happen for the DataFlagEncoder, might create unnecessary turn instructions
@@ -142,8 +144,15 @@ class InstructionsOutgoingEdges {
         return maxSurroundingSpeed * factor < pathSpeed;
     }
 
+    /**
+     * Will return the tagged maxspeed, if available, if not, we use the average speed
+     * TODO: Should we rely only on the tagged maxspeed?
+     */
     private double getSpeed(EdgeIteratorState edge) {
-        return edge.get(speedEnc);
+       double maxSpeed = edge.get(maxSpeedEnc);
+       if(Double.isInfinite(maxSpeed))
+           return edge.get(avgSpeedEnc);
+       return maxSpeed;
     }
 
     /**
@@ -153,7 +162,7 @@ class InstructionsOutgoingEdges {
      */
     public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation) {
         int tmpSign;
-        for (EdgeIteratorState edge : allowedOutgoingEdges) {
+        for (EdgeIteratorState edge : filteredOutgoingEdges) {
             GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
             tmpSign = InstructionsHelper.calculateSign(prevLat, prevLon, point.getLat(), point.getLon(), prevOrientation);
             if (Math.abs(tmpSign) <= 1) {
@@ -175,7 +184,7 @@ class InstructionsOutgoingEdges {
 
         // If flags are changing, there might be a chance we find these flags on a different edge
         boolean checkFlag = currentEdge.getFlags() != prevEdge.getFlags();
-        for (EdgeIteratorState edge : allowedOutgoingEdges) {
+        for (EdgeIteratorState edge : filteredOutgoingEdges) {
             String edgeName = edge.getName();
             IntsRef edgeFlag = edge.getFlags();
             // leave the current street || enter a different street
