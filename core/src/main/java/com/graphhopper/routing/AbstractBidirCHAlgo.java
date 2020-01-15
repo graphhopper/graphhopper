@@ -25,7 +25,6 @@ import com.graphhopper.storage.*;
 import java.util.PriorityQueue;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 /**
  * Common subclass for bidirectional CH algorithms.
@@ -204,8 +203,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
             if (updateBestPath) {
                 // only needed for edge-based -> skip the calculation and use dummy value otherwise
-                double edgeWeight = traversalMode.isEdgeBased() ? calcWeight(iter, reverse, NO_EDGE) : Double.POSITIVE_INFINITY;
-                updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
+                updateBestPath(Double.POSITIVE_INFINITY, entry, origEdgeId, traversalId, reverse);
             }
         }
     }

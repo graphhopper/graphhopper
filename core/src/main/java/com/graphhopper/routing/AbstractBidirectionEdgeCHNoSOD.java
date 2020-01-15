@@ -73,6 +73,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
 
     @Override
     protected void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
+        assert Double.isInfinite(edgeWeight) : "edge-based CH does not use pre-calculated edge weight";
         // special case where the fwd/bwd search runs directly into the opposite node, for example if the highest level
         // node of the shortest path matches the source or target. in this case one of the searches does not contribute
         // anything to the shortest path.
