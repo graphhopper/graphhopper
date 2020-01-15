@@ -4,6 +4,7 @@ TODO.txt
 nbactions*.xml
 maven/
 */nbactions.xml
+.idea
 .idea/
 *.iml
 .*#
