@@ -287,24 +287,23 @@ public class PrepareContractionHierarchiesTest {
 
         int tmpEdgeId = edgeState01.getEdge();
         g.freeze();
-        int x = EdgeIterator.NO_EDGE;
-        double weight = w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x);
-        int sc0_2 = lg.shortcut(0, 2, oneDirFlags, w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x), tmpEdgeId, edgeState12.getEdge());
+        double weight = w.calcEdgeWeight(edgeState01, false) + w.calcEdgeWeight(edgeState12, false);
+        int sc0_2 = lg.shortcut(0, 2, oneDirFlags, w.calcEdgeWeight(edgeState01, false) + w.calcEdgeWeight(edgeState12, false), tmpEdgeId, edgeState12.getEdge());
 
         tmpEdgeId = sc0_2;
-        weight += w.calcWeight(edgeState23, false, x);
+        weight += w.calcEdgeWeight(edgeState23, false);
         int sc0_3 = lg.shortcut(0, 3, oneDirFlags, weight, tmpEdgeId, edgeState23.getEdge());
 
         tmpEdgeId = sc0_3;
-        weight += w.calcWeight(edgeState34, false, x);
+        weight += w.calcEdgeWeight(edgeState34, false);
         int sc0_4 = lg.shortcut(0, 4, oneDirFlags, weight, tmpEdgeId, edgeState34.getEdge());
 
         tmpEdgeId = sc0_4;
-        weight += w.calcWeight(edgeState45, false, x);
+        weight += w.calcEdgeWeight(edgeState45, false);
         int sc0_5 = lg.shortcut(0, 5, oneDirFlags, weight, tmpEdgeId, edgeState45.getEdge());
 
         tmpEdgeId = sc0_5;
-        weight += w.calcWeight(edgeState56, false, x);
+        weight += w.calcEdgeWeight(edgeState56, false);
         int sc0_6 = lg.shortcut(0, 6, oneDirFlags, weight, tmpEdgeId, edgeState56.getEdge());
 
         lg.setLevel(0, 10);
@@ -486,7 +485,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     private double getWeight(Graph graph, Weighting w, int from, int to, boolean incoming) {
-        return w.calcWeight(getEdge(graph, from, to, false), incoming, -1);
+        return w.calcEdgeWeight(getEdge(graph, from, to, false), incoming);
     }
 
     private EdgeIteratorState getEdge(Graph graph, int from, int to, boolean incoming) {

@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlexModel;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,17 +68,17 @@ public class FlexModelWeightingTest {
         vehicleModel.getPriority().put(KEY, map);
 
         Weighting weighting = new FlexModelWeighting("flex", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
-        assertEquals(10.5, weighting.calcWeight(edge2, false, EdgeIterator.NO_EDGE), 0.1);
-        assertEquals(5.2, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), 0.1);
+        assertEquals(10.5, weighting.calcEdgeWeight(edge2, false), 0.1);
+        assertEquals(5.2, weighting.calcEdgeWeight(edge1, false), 0.1);
 
         map.put(PRIMARY.toString(), 1.1);
         weighting = new FlexModelWeighting("flex", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
-        assertEquals(9.5, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), 0.11);
+        assertEquals(9.5, weighting.calcEdgeWeight(edge1, false), 0.11);
 
         // force integer value
         map.put(PRIMARY.toString(), 1);
         weighting = new FlexModelWeighting("flex", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
-        assertEquals(10.5, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), 0.11);
+        assertEquals(10.5, weighting.calcEdgeWeight(edge1, false), 0.11);
     }
 
 
@@ -90,6 +89,6 @@ public class FlexModelWeightingTest {
         vehicleModel.setBase("car");
 
         Weighting weighting = new FlexModelWeighting("flex", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
-        assertEquals(10.5, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), 0.1);
+        assertEquals(10.5, weighting.calcEdgeWeight(edge1, false), 0.1);
     }
 }

@@ -18,7 +18,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)

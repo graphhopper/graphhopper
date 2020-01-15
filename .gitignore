@@ -13,6 +13,7 @@ bin/
 *.map
 android/libs/graphhopper-*-android.jar
 */nbactions.xml
+.idea
 .idea/
 *iml
 debug.sh

@@ -25,7 +25,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;

@@ -29,7 +29,7 @@ import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 

@@ -28,6 +28,8 @@ import com.graphhopper.routing.weighting.flex.DelayFlexConfig;
 import com.graphhopper.routing.weighting.flex.PriorityFlexConfig;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+
 /**
  * Every EncodedValue like road_environment can influence one or more aspects of this Weighting: the delay, the
  * speed_factor, the average_speed and the priority. The formula is basically:
@@ -83,6 +85,11 @@ public class FlexModelWeighting implements Weighting {
     }
 
     @Override
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        return calcWeight(edgeState, reverse, NO_EDGE);
+    }
+
+    @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         double distance = edge.getDistance();
         double seconds = calcSeconds(distance, edge, reverse, prevOrNextEdgeId);
@@ -109,6 +116,11 @@ public class FlexModelWeighting implements Weighting {
 
         double delay = delayConfig.calcDelay(edge, reverse, prevOrNextEdgeId);
         return distance / speed * FlexModel.SPEED_CONV + delay;
+    }
+
+    @Override
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        return calcMillis(edgeState, reverse, NO_EDGE);
     }
 
     @Override
