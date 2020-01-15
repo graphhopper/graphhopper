@@ -241,7 +241,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 }
 
                 // todo: for #1776/#1835 move the access check into weighting
-                double tmpWeight = !filter.accept(iter) ? Double.POSITIVE_INFINITY : weighting.calcWeight(iter, reverseFlow, currEdge.edge) + currEdge.weight;
+                double tmpWeight = !filter.accept(iter) ? Double.POSITIVE_INFINITY : (weighting.calcWeight(iter, reverseFlow, currEdge.edge) + currEdge.weight);
                 if (Double.isInfinite(tmpWeight))
                     continue;
 

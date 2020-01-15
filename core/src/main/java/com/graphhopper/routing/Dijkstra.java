@@ -79,7 +79,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                     continue;
 
                 // todo: for #1776/#1835 move the access check into weighting
-                double tmpWeight = !outEdgeFilter.accept(iter) ? Double.POSITIVE_INFINITY : weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
+                double tmpWeight = !outEdgeFilter.accept(iter) ? Double.POSITIVE_INFINITY : (weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight);
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
                 }
