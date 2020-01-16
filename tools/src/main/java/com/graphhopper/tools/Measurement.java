@@ -171,6 +171,8 @@ public class Measurement {
             if (runSlow) {
                 printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr,
                         true, false, -1, true, false, false, false);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing_edge", vehicleStr,
+                        true, false, -1, true, true, false, false);
             }
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
@@ -180,6 +182,8 @@ public class Measurement {
                 for (; activeLMCount > 3; activeLMCount -= 4) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr,
                             true, false, activeLMCount, true, false, false, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount + "_edge", vehicleStr,
+                            true, false, activeLMCount, true, true, false, false);
                 }
 
                 // compareRouting(hopper, vehicleStr, count / 5);
