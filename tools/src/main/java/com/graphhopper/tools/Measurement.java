@@ -182,7 +182,7 @@ public class Measurement {
                 for (; activeLMCount > 3; activeLMCount -= 4) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr,
                             true, false, activeLMCount, true, false, false, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM_edge" + activeLMCount, vehicleStr,
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount + "_edge", vehicleStr,
                             true, false, activeLMCount, true, true, false, false);
                 }
 
