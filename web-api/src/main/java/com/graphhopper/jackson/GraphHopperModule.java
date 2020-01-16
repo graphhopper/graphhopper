@@ -23,7 +23,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.MultiException;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.util.FlexModel;
-import com.graphhopper.routing.util.FlexRequest;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.details.PathDetail;
