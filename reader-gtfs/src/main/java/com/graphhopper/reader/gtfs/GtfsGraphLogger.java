@@ -102,14 +102,15 @@ class GtfsGraphLogger {
     private Document dom;
     private Element graphEle;
 
-    private void addKeyNode(final Element parentEle, final String attributes) {
-        Element keyEle = dom.createElement("key");
+    private Element addNode(final Element parentEle, final String nodeName, final String attributes) {
+        Element keyEle = dom.createElement(nodeName);
         final String[] attributeList = attributes.split(" ");
         for (String attr : attributeList) {
             String[] attVal = attr.split("=");
             keyEle.setAttribute(attVal[0], attVal[1]);
         }
         parentEle.appendChild(keyEle);
+        return keyEle;
     }
 
     GtfsGraphLogger() throws ParserConfigurationException {
@@ -129,17 +130,17 @@ class GtfsGraphLogger {
         rootEle.setAttribute("xmlns:yed", "http://www.yworks.com/xml/yed/3");
         rootEle.setAttribute("xsi:schemaLocation", "http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd");
 
-        addKeyNode(rootEle, "attr.name=Description attr.type=string for=graph id=d0");
-        addKeyNode(rootEle, "for=port id=d1 yfiles.type=portgraphics");
-        addKeyNode(rootEle, "for=port id=d2 yfiles.type=portgeometry");
-        addKeyNode(rootEle, "for=port id=d3 yfiles.type=portuserdata");
-        addKeyNode(rootEle, "attr.name=url attr.type=string for=node id=d4");
-        addKeyNode(rootEle, "attr.name=description attr.type=string for=node id=d5");
-        addKeyNode(rootEle, "for=node id=d6 yfiles.type=nodegraphics");
-        addKeyNode(rootEle, "for=graphml id=d7 yfiles.type=resources");
-        addKeyNode(rootEle, "attr.name=url attr.type=string for=edge id=d8");
-        addKeyNode(rootEle, "attr.name=description attr.type=string for=edge id=d9");
-        addKeyNode(rootEle, "for=edge id=d10 yfiles.type=edgegraphics");
+        addNode(rootEle, "key", "attr.name=Description attr.type=string for=graph id=d0");
+        addNode(rootEle, "key", "for=port id=d1 yfiles.type=portgraphics");
+        addNode(rootEle, "key", "for=port id=d2 yfiles.type=portgeometry");
+        addNode(rootEle, "key", "for=port id=d3 yfiles.type=portuserdata");
+        addNode(rootEle, "key", "attr.name=url attr.type=string for=node id=d4");
+        addNode(rootEle, "key", "attr.name=description attr.type=string for=node id=d5");
+        addNode(rootEle, "key", "for=node id=d6 yfiles.type=nodegraphics");
+        addNode(rootEle, "key", "for=graphml id=d7 yfiles.type=resources");
+        addNode(rootEle, "key", "attr.name=url attr.type=string for=edge id=d8");
+        addNode(rootEle, "key", "attr.name=description attr.type=string for=edge id=d9");
+        addNode(rootEle, "key", "for=edge id=d10 yfiles.type=edgegraphics");
 
         graphEle = dom.createElement("graph");
         graphEle.setAttribute("edgedefault", "directed");
@@ -231,6 +232,29 @@ class GtfsGraphLogger {
     }
 
     void addEdge() {
+
+        Element edgeNode = addNode(graphEle, "edge", "id=e32 source=n2 target=n14");
+        Element dataNode = addNode(edgeNode, "data", "key=d10");
+        Element polyEdgeNode = addNode(dataNode, "y:PolyLineEdge", "");
+
+        addNode(polyEdgeNode, "y:Path", "sx=0.0 sy=0.0 tx=0.0 ty=0.0");
+        addNode(polyEdgeNode, "y:LineStyle", "color=#000000 type=line width=1.0");
+        addNode(polyEdgeNode, "y:Arrows", "source=none target=standard");
+        Element edgeLabelNode = addNode(polyEdgeNode, "y:EdgeLabel", "alignment=center anchorX=27.526667606424326 anchorY=50.05534221010657 configuration=AutoFlippingLabel distance=2.0 fontFamily=Dialog fontSize=12 fontStyle=plain hasBackgroundColor=false hasLineColor=false height=18.1328125 modelName=custom preferredPlacement=anywhere ratio=0.5 textColor=#000000 upX=0.30976697067661274 upY=-0.9508125072157152 visible=true width=28.7734375 x=27.526667606424326 y=32.81443729410911");
+            
+//            //HOP
+//                <y:LabelModel>
+//                <y:SmartEdgeLabelModel autoRotationEnabled=true defaultAngle=0.0 defaultDistance=10.0");
+//                </y:LabelModel>
+//                <y:ModelParameter>
+//                <y:SmartEdgeLabelModelParameter angle=0.0 distance=30.0 distanceToCenter=true position=right ratio=0.5 segment=0/>
+//                </y:ModelParameter>
+//                <y:PreferredPlacementDescriptor angle=0.0 angleOffsetOnRightSide=0 angleReference=absolute angleRotationOnRightSide=co distance=-1.0 frozen=true placement=anywhere side=anywhere sideReference=relative_to_edge_flow/>
+//            </y:EdgeLabel>
+//            <y:BendStyle smoothed=false/>
+//            </y:PolyLineEdge>
+//        </data>
+//    </edge>
     }
 
     void exportGraphmlToFile(final String filename) {
