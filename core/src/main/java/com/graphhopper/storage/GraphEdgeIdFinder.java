@@ -210,16 +210,20 @@ public class GraphEdgeIdFinder {
         /**
          * @return true if the specified edgeState is part of this BlockArea
          */
-        public final boolean contains(EdgeIteratorState edgeState) {
+        public final boolean intersects(EdgeIteratorState edgeState) {
             if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
                 return true;
             }
 
-            if (!blockedShapes.isEmpty() && na != null) {
-                double latAdj = na.getLatitude(edgeState.getAdjNode()), lonAdj = na.getLongitude(edgeState.getAdjNode()),
-                        latBase = na.getLatitude(edgeState.getBaseNode()), lonBase = na.getLongitude(edgeState.getBaseNode());
-                for (Shape shape : blockedShapes) {
-                    if (shape.contains(latAdj, lonAdj) || shape.contains(latBase, lonBase))
+            // compromise: mostly avoid expensive fetchWayGeometry which isn't yet fast for being used in Weighting.calc
+            BBox bbox = BBox.fromPoints(na.getLatitude(edgeState.getBaseNode()), na.getLongitude(edgeState.getBaseNode()),
+                    na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()));
+            PointList pointList = null;
+            for (Shape shape : blockedShapes) {
+                if (shape.getBounds().intersects(bbox)) {
+                    if (pointList == null)
+                        pointList = edgeState.fetchWayGeometry(3).makeImmutable();
+                    if (shape.intersects(pointList))
                         return true;
                 }
             }

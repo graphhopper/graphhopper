@@ -441,13 +441,13 @@ public class GraphHopperIT {
         req.getHints().put(Routing.BLOCK_AREA, someArea);
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(12173, rsp.getBest().getDistance(), 1);
+        assertEquals(13988, rsp.getBest().getDistance(), 1);
 
         // Add blocked point to above area, to increase detour        
         req.getHints().put(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(12787, rsp.getBest().getDistance(), 1);
+        assertEquals(14602, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small circular area
         req.getHints().put(Routing.BLOCK_AREA, "49.981599,11.517448,100");

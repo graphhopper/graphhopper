@@ -19,6 +19,9 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
+import com.graphhopper.util.PointList;
+import org.locationtech.jts.algorithm.RectangleLineIntersector;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 
 import java.util.ArrayList;
@@ -161,6 +164,36 @@ public class BBox implements Shape, Cloneable {
         throw new UnsupportedOperationException("unsupported shape");
     }
 
+    private RectangleLineIntersector cachedIntersector;
+
+    RectangleLineIntersector getCachedRectangleLineIntersector() {
+        if (cachedIntersector == null)
+            cachedIntersector = new RectangleLineIntersector(toEnvelope(this));
+        return cachedIntersector;
+    }
+
+    @Override
+    public boolean intersects(PointList pointList) {
+        int len = pointList.getSize();
+        if (len == 0)
+            throw new IllegalArgumentException("PointList must not be empty");
+
+        double lat = pointList.getLatitude(0);
+        double lon = pointList.getLongitude(0);
+        if (len == 1)
+            return contains(lat, lon);
+
+        Coordinate coords = new Coordinate(lon, lat);
+        RectangleLineIntersector intersector = getCachedRectangleLineIntersector();
+        for (int pointIndex = 1; pointIndex < len; pointIndex++) {
+            Coordinate nextCoords = new Coordinate(pointList.getLongitude(pointIndex), pointList.getLatitude(pointIndex));
+            if (intersector.intersects(coords, nextCoords))
+                return true;
+            coords = nextCoords;
+        }
+        return false;
+    }
+
     public boolean intersects(Circle s) {
         return s.intersects(this);
     }
@@ -285,6 +318,10 @@ public class BBox implements Shape, Cloneable {
 
     public static BBox fromEnvelope(Envelope envelope) {
         return new BBox(envelope.getMinX(), envelope.getMaxX(), envelope.getMinY(), envelope.getMaxY());
+    }
+
+    public static Envelope toEnvelope(BBox bbox) {
+        return new Envelope(bbox.minLon, bbox.maxLon, bbox.minLat, bbox.maxLat);
     }
 
     /**
