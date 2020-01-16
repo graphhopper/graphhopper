@@ -82,14 +82,12 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     protected void postInitFrom() {
         if (fromOutEdge == ANY_EDGE) {
-            fillEdgesFromUsingFilter(additionalEdgeFilter);
+            fillEdgesFrom();
         } else {
-            // need to use a local reference here, because additionalEdgeFilter is modified when calling fillEdgesFromUsingFilter
-            final EdgeFilter tmpFilter = additionalEdgeFilter;
             fillEdgesFromUsingFilter(new EdgeFilter() {
                 @Override
                 public boolean accept(EdgeIteratorState edgeState) {
-                    return (tmpFilter == null || tmpFilter.accept(edgeState)) && edgeState.getOrigEdgeFirst() == fromOutEdge;
+                    return edgeState.getOrigEdgeFirst() == fromOutEdge;
                 }
             });
         }
@@ -97,39 +95,33 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     protected void postInitTo() {
         if (toInEdge == ANY_EDGE) {
-            fillEdgesToUsingFilter(additionalEdgeFilter);
+            fillEdgesTo();
         } else {
-            final EdgeFilter tmpFilter = additionalEdgeFilter;
             fillEdgesToUsingFilter(new EdgeFilter() {
                 @Override
                 public boolean accept(EdgeIteratorState edgeState) {
-                    return (tmpFilter == null || tmpFilter.accept(edgeState)) && edgeState.getOrigEdgeLast() == toInEdge;
+                    return edgeState.getOrigEdgeLast() == toInEdge;
                 }
             });
         }
     }
 
     /**
-     * @param edgeFilter edge filter used to fill edges. the {@link #additionalEdgeFilter} reference will be set to
-     *                   edgeFilter by this method, so make sure edgeFilter does not use it directly.
+     * @param edgeFilter edge filter used to filter edges during {@link #fillEdgesFrom()}
      */
     protected void fillEdgesFromUsingFilter(EdgeFilter edgeFilter) {
-        // we temporarily ignore the additionalEdgeFilter
-        EdgeFilter tmpFilter = additionalEdgeFilter;
         additionalEdgeFilter = edgeFilter;
         finishedFrom = !fillEdgesFrom();
-        additionalEdgeFilter = tmpFilter;
+        additionalEdgeFilter = null;
     }
 
     /**
      * @see #fillEdgesFromUsingFilter(EdgeFilter)
      */
     protected void fillEdgesToUsingFilter(EdgeFilter edgeFilter) {
-        // we temporarily ignore the additionalEdgeFilter
-        EdgeFilter tmpFilter = additionalEdgeFilter;
         additionalEdgeFilter = edgeFilter;
         finishedTo = !fillEdgesTo();
-        additionalEdgeFilter = tmpFilter;
+        additionalEdgeFilter = null;
     }
 
     @Override
@@ -245,11 +237,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             return createPathExtractor(graph, weighting).extract(bestFwdEntry, bestBwdEntry, bestWeight);
 
         return createEmptyPath();
-    }
-
-    public RoutingAlgorithm setEdgeFilter(EdgeFilter additionalEdgeFilter) {
-        this.additionalEdgeFilter = additionalEdgeFilter;
-        return this;
     }
 
     protected boolean accept(EdgeIteratorState iter, int prevOrNextEdgeId) {

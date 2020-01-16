@@ -81,7 +81,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         if (fromOutEdge == ANY_EDGE) {
             fillEdgesFromUsingFilter(levelEdgeFilter);
         } else {
-            // need to use a local reference here, because additionalEdgeFilter is modified when calling fillEdgesFromUsingFilter
+            // need to use a local reference here, because levelEdgeFilter is modified when calling fillEdgesFromUsingFilter
             final CHEdgeFilter tmpFilter = levelEdgeFilter;
             fillEdgesFromUsingFilter(new CHEdgeFilter() {
                 @Override
