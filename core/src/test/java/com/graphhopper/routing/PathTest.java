@@ -596,9 +596,9 @@ public class PathTest {
         //      1 ---- 2 ---- 4
         //              \
         //               3
-        na.setNode(1, 48.909071,8.647136);
-        na.setNode(2, 48.908962,8.647978);
-        na.setNode(3, 48.908867,8.648155);
+        na.setNode(1, 48.909071, 8.647136);
+        na.setNode(2, 48.908962, 8.647978);
+        na.setNode(3, 48.908867, 8.648155);
         na.setNode(4, 48.908789, 8.649244);
 
         EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
