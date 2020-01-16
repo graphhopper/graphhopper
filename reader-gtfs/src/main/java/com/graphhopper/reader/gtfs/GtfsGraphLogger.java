@@ -33,67 +33,15 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Text;
 
 class GtfsGraphLogger {
 
     public static void main(String[] args) throws Exception {
-        // Document dom;
-        // Element e = null;
-    
-        // // instance of a DocumentBuilderFactory
-        // DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        // try {
-        //     // use factory to get an instance of document builder
-        //     DocumentBuilder db = dbf.newDocumentBuilder();
-        //     // create instance of DOM
-        //     dom = db.newDocument();
-    
-        //     // create the root element
-        //     Element rootEle = dom.createElement("roles");
-    
-        //     // create data elements and place them under root
-        //     e = dom.createElement("role1");
-        //     //e.appendChild(dom.createTextNode("role1"));
-        //     rootEle.appendChild(e);
-    
-        //     e = dom.createElement("role2");
-        //     //e.appendChild(dom.createTextNode("role2"));
-        //     rootEle.appendChild(e);
-    
-        //     e = dom.createElement("role3");
-        //     //e.appendChild(dom.createTextNode("role3"));
-        //     rootEle.appendChild(e);
-    
-        //     e = dom.createElement("role4");
-        //     //e.appendChild(dom.createTextNode("role4"));
-        //     rootEle.appendChild(e);
-    
-        //     dom.appendChild(rootEle);
-    
-        //     try {
-        //         Transformer tr = TransformerFactory.newInstance().newTransformer();
-        //         tr.setOutputProperty(OutputKeys.INDENT, "yes");
-        //         tr.setOutputProperty(OutputKeys.METHOD, "xml");
-        //         tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        //         tr.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "roles.dtd");
-        //         tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-    
-        //         // send DOM to file
-        //         tr.transform(new DOMSource(dom), 
-        //                              new StreamResult(new FileOutputStream("/Users/mathieu.stpierre/Documents/Iterations/January2020/gtfs_graph_logger/gtfsGraph2.graphml")));
-    
-        //     } catch (TransformerException te) {
-        //         System.out.println(te.getMessage());
-        //     } catch (IOException ioe) {
-        //         System.out.println(ioe.getMessage());
-        //     }
-        // } catch (ParserConfigurationException pce) {
-        //     System.out.println("UsersXML: Error trying to instantiate DocumentBuilder " + pce);
-        // }
-
         final GtfsGraphLogger graphLogger = new GtfsGraphLogger();
         graphLogger.addNode("node1", 0, 0);
         graphLogger.addNode("node2", 50, 50);
+        graphLogger.addEdge("HOP", "edge1", "node1", "node2");
         graphLogger.exportGraphmlToFile("/Users/mathieu.stpierre/Documents/Iterations/January2020/gtfs_graph_logger/gtfsGraph.graphml");
     }
 
@@ -107,7 +55,9 @@ class GtfsGraphLogger {
         final String[] attributeList = attributes.split(" ");
         for (String attr : attributeList) {
             String[] attVal = attr.split("=");
-            keyEle.setAttribute(attVal[0], attVal[1]);
+            if (attVal.length > 1) {
+                keyEle.setAttribute(attVal[0], attVal[1]);
+            }
         }
         parentEle.appendChild(keyEle);
         return keyEle;
@@ -231,30 +181,26 @@ class GtfsGraphLogger {
         shapeNodeEle.appendChild(shapeEle);
     }
 
-    void addEdge() {
+    void addEdge(String edgeType, String id, String srcNodeId, String targetNodeId) {
+        Element edgeEle = addNode(graphEle, "edge", "id=" + id + " source=" + srcNodeId + " target=" + targetNodeId);
+        Element dataEle = addNode(edgeEle, "data", "key=d10");
+        Element polyEdgeEle = addNode(dataEle, "y:PolyLineEdge", "");
 
-        Element edgeNode = addNode(graphEle, "edge", "id=e32 source=n2 target=n14");
-        Element dataNode = addNode(edgeNode, "data", "key=d10");
-        Element polyEdgeNode = addNode(dataNode, "y:PolyLineEdge", "");
+        addNode(polyEdgeEle, "y:Path", "sx=0.0 sy=0.0 tx=0.0 ty=0.0");
+        addNode(polyEdgeEle, "y:LineStyle", "color=#000000 type=line width=1.0");
+        addNode(polyEdgeEle, "y:Arrows", "source=none target=standard");
+        Element edgeLabelEle = addNode(polyEdgeEle, "y:EdgeLabel", "alignment=center anchorX=27.526667606424326 anchorY=50.05534221010657 configuration=AutoFlippingLabel distance=2.0 fontFamily=Dialog fontSize=12 fontStyle=plain hasBackgroundColor=false hasLineColor=false height=18.1328125 modelName=custom preferredPlacement=anywhere ratio=0.5 textColor=#000000 upX=0.30976697067661274 upY=-0.9508125072157152 visible=true width=28.7734375 x=27.526667606424326 y=32.81443729410911");
 
-        addNode(polyEdgeNode, "y:Path", "sx=0.0 sy=0.0 tx=0.0 ty=0.0");
-        addNode(polyEdgeNode, "y:LineStyle", "color=#000000 type=line width=1.0");
-        addNode(polyEdgeNode, "y:Arrows", "source=none target=standard");
-        Element edgeLabelNode = addNode(polyEdgeNode, "y:EdgeLabel", "alignment=center anchorX=27.526667606424326 anchorY=50.05534221010657 configuration=AutoFlippingLabel distance=2.0 fontFamily=Dialog fontSize=12 fontStyle=plain hasBackgroundColor=false hasLineColor=false height=18.1328125 modelName=custom preferredPlacement=anywhere ratio=0.5 textColor=#000000 upX=0.30976697067661274 upY=-0.9508125072157152 visible=true width=28.7734375 x=27.526667606424326 y=32.81443729410911");
-            
-//            //HOP
-//                <y:LabelModel>
-//                <y:SmartEdgeLabelModel autoRotationEnabled=true defaultAngle=0.0 defaultDistance=10.0");
-//                </y:LabelModel>
-//                <y:ModelParameter>
-//                <y:SmartEdgeLabelModelParameter angle=0.0 distance=30.0 distanceToCenter=true position=right ratio=0.5 segment=0/>
-//                </y:ModelParameter>
-//                <y:PreferredPlacementDescriptor angle=0.0 angleOffsetOnRightSide=0 angleReference=absolute angleRotationOnRightSide=co distance=-1.0 frozen=true placement=anywhere side=anywhere sideReference=relative_to_edge_flow/>
-//            </y:EdgeLabel>
-//            <y:BendStyle smoothed=false/>
-//            </y:PolyLineEdge>
-//        </data>
-//    </edge>
+        Text textNode = dom.createTextNode(edgeType);
+        edgeLabelEle.appendChild(textNode);
+
+        Element labelModelEle = addNode(edgeLabelEle, "y:LabelModel", "");
+        addNode(labelModelEle, "y:SmartEdgeLabelModel", "autoRotationEnabled=true defaultAngle=0.0 defaultDistance=10.0");
+
+        Element modelParamEle = addNode(edgeLabelEle, "y:ModelParameter", "");
+        addNode(modelParamEle, "y:SmartEdgeLabelModelParameter", "angle=0.0 distance=30.0 distanceToCenter=true position=right ratio=0.5 segment=0");
+        addNode(edgeLabelEle, "y:PreferredPlacementDescriptor", "angle=0.0 angleOffsetOnRightSide=0 angleReference=absolute angleRotationOnRightSide=co distance=-1.0 frozen=true placement=anywhere side=anywhere sideReference=relative_to_edge_flow");
+        addNode(polyEdgeEle, "y:BendStyle", "smoothed=false");
     }
 
     void exportGraphmlToFile(final String filename) {
