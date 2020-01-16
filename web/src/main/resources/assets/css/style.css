@@ -444,13 +444,15 @@ td img.pic {
 }
 
 .fullscreen-reverse-btn, .fullscreen-btn {
-    cursor:pointer;
+    cursor: pointer;
     width: 30px;
     height: 30px;
     border-radius: 4px;
+    background-color: white;
+    background-position: 50% 50%;
     background-repeat: no-repeat;
     box-shadow: none;
-    border: 2px solid rgba(0,0,0,0.2);
+    border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 .fullscreen-btn {
