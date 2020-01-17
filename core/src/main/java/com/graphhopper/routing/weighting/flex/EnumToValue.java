@@ -17,12 +17,11 @@
  */
 package com.graphhopper.routing.weighting.flex;
 
-import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.HashMap;
+import java.util.Arrays;
 
 public final class EnumToValue implements ConfigMapEntry {
     private final IntEncodedValue eev;
@@ -37,5 +36,10 @@ public final class EnumToValue implements ConfigMapEntry {
     public Double getValue(EdgeIteratorState iter, boolean reverse) {
         int enumOrdinal = iter.get(eev);
         return values[enumOrdinal];
+    }
+
+    @Override
+    public String toString() {
+        return eev.getName() + ": " + Arrays.toString(values);
     }
 }
