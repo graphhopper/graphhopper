@@ -482,16 +482,25 @@ public class Measurement {
         MiniPerfTest miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
-                int from = rand.nextInt(maxNode);
-                int to = rand.nextInt(maxNode);
-                double fromLat = na.getLatitude(from);
-                double fromLon = na.getLongitude(from);
-                double toLat = na.getLatitude(to);
-                double toLon = na.getLongitude(to);
-                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setWeighting("fastest").
-                        setVehicle(vehicle);
-
+                GHRequest req = null;
+                int from = 0;
+                int to = 0;
+                while (req == null) {
+                    int f = rand.nextInt(maxNode);
+                    int t = rand.nextInt(maxNode);
+                    double fromLat = na.getLatitude(f);
+                    double fromLon = na.getLongitude(f);
+                    double toLat = na.getLatitude(t);
+                    double toLon = na.getLongitude(t);
+                    if (fromLat > 47.9917 && fromLat < 48.3014 && fromLon > 11.2966 && fromLon < 11.8844
+                            && toLat > 47.9917 && toLat < 48.3014 && toLon > 11.2966 && toLon < 11.8844) {
+                        req = new GHRequest(fromLat, fromLon, toLat, toLon).
+                                setWeighting("fastest").
+                                setVehicle(vehicle);
+                        from = f;
+                        to = t;
+                    }
+                }
                 req.getHints().put(CH.DISABLE, !ch).
                         put("stall_on_demand", sod).
                         put(Parameters.Routing.EDGE_BASED, edgeBased).
@@ -557,7 +566,7 @@ public class Measurement {
                     long dist = (long) arsp.getDistance();
                     distSum.addAndGet(dist);
 
-                    airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
+//                    airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
 
                     if (dist > maxDistance.get())
                         maxDistance.set(dist);
