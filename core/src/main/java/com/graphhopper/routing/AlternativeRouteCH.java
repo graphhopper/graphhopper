@@ -26,13 +26,15 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
- *
  * Minimum number-of-moving-parts implementation of alternative route search with
  * contraction hierarchies.
- *
+ * <p>
  * "Alternative Routes in Road Networks" (Abraham et al.)
  *
  * @author michaz
@@ -147,7 +149,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 double distance = 0.0;
                 int i = vIndex;
                 while (i > 0 && distance < T) {
-                    distance += edges.get(i-1).getDistance();
+                    distance += edges.get(i - 1).getDistance();
                     i--;
                 }
                 return edges.get(i).getBaseNode();
@@ -161,7 +163,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                     distance += edges.get(i).getDistance();
                     i++;
                 }
-                return edges.get(i-1).getAdjNode();
+                return edges.get(i - 1).getAdjNode();
             }
 
         });
