@@ -71,7 +71,7 @@ public class Polygon implements Shape {
     }
 
     public boolean intersects(PointList pointList) {
-        return polygon.intersects(pointList.getCachedLineString(factory, false));
+        return polygon.intersects(pointList.getCachedLineString(false));
     }
 
     /**

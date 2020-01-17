@@ -38,6 +38,8 @@ import static com.graphhopper.util.Helper.round6;
  * @author Peter Karich
  */
 public class PointList implements Iterable<GHPoint3D>, PointAccess {
+    // should be thread-safe according to https://github.com/locationtech/jts/issues/512
+    private static final GeometryFactory factory = new GeometryFactory();
     public static final PointList EMPTY = new PointList(0, true) {
         @Override
         public void set(int index, double lat, double lon, double ele) {
@@ -404,10 +406,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public LineString toLineString(boolean includeElevation) {
-        return toLineString(new GeometryFactory(), includeElevation);
-    }
-
-    private LineString toLineString(GeometryFactory geometryFactory, boolean includeElevation) {
         Coordinate[] coordinates = new Coordinate[getSize() == 1 ? 2 : getSize()];
         for (int i = 0; i < getSize(); i++) {
             coordinates[i] = includeElevation ?
@@ -423,15 +421,15 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         // special case as just 1 point is not supported in the specification #1412
         if (getSize() == 1)
             coordinates[1] = coordinates[0];
-        return geometryFactory.createLineString(new PackedCoordinateSequence.Double(coordinates, includeElevation ? 3 : 2));
+        return factory.createLineString(new PackedCoordinateSequence.Double(coordinates, includeElevation ? 3 : 2));
     }
 
-    public LineString getCachedLineString(GeometryFactory gf, boolean includeElevation) {
+    public LineString getCachedLineString(boolean includeElevation) {
         if (cachedLineString != null)
             return cachedLineString;
         if (!isImmutable)
             throw new IllegalArgumentException("Make PointList immutable before calling getCachedLineString");
-        return cachedLineString = toLineString(gf, includeElevation);
+        return cachedLineString = toLineString(includeElevation);
     }
 
     @Override
