@@ -125,7 +125,7 @@ public class Polygon implements Shape {
 
     @Override
     public String toString() {
-        return "polygon (" + polygon.getGeometry().getNumPoints() + " points)";
+        return "polygon (" + polygon.getGeometry().getNumPoints() + " points," + polygon.getGeometry().getNumGeometries() + " geometries)";
     }
 
     public static Polygon parsePoints(String pointsStr) {
