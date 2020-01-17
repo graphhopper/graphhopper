@@ -21,6 +21,11 @@ package com.graphhopper.reader.gtfs;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import java.lang.Integer;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -35,12 +40,17 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
 
+
 class GtfsGraphLogger {
+
+    public enum NodeLogType {
+        OSM_NODE, ENTER_EXIT_PT, BOARD_NODE, ARRIVAL_STOP_TIME_NODE, DEPARTURE_STOP_TIME_NODE, ALIGHT_NODE, BLOCK_TRANSFER_NODE
+    }
 
     public static void main(String[] args) throws Exception {
         final GtfsGraphLogger graphLogger = new GtfsGraphLogger();
-        graphLogger.addNode("node1", 0, 0);
-        graphLogger.addNode("node2", 50, 50);
+        graphLogger.addNode("node1", 0, 0, NodeLogType.DEPARTURE_STOP_TIME_NODE);
+        graphLogger.addNode("node2", 50, 50, NodeLogType.ARRIVAL_STOP_TIME_NODE);
         graphLogger.addEdge("HOP", "edge1", "node1", "node2");
         graphLogger.exportGraphmlToFile("/Users/mathieu.stpierre/Documents/Iterations/January2020/gtfs_graph_logger/gtfsGraph.graphml");
     }
@@ -49,8 +59,30 @@ class GtfsGraphLogger {
     private DocumentBuilder db;
     private Document dom;
     private Element graphEle;
+    private final Map<String, Boolean> insertedNodes = new HashMap<>();
+    private int currentTripIndex = 0;
 
-    private Element addNode(final Element parentEle, final String nodeName, final String attributes) {
+
+    private final int OSM_NODE_Y_POS = -20;
+    private final int TRIP_HEIGHT_SPACE = 70;
+    private final int BOARD_NODE_Y_DISTANCE_FROM_BASE = 10;
+    private final int TIME_NODE_Y_DISTANCE_FROM_BASE = 40;
+    private final int ALIGH_NODE_Y_DISTANCE_FROM_BASE = 50;
+    private final int BLOCK_TRANSFER_NODE_Y_DISTANCE_FROM_BASE = 60;
+
+    private final int BOARD_NODE_X_DISTANCE_FROM_CURRENT = 10;
+    private final int TIME_NODE_X_DISTANCE_FROM_CURRENT = 10;
+    private final int DEPARTURE_TIME_NODE_X_DISTANCE_INCREMENT = 150;
+    private final int ARRIVAL_TIME_NODE_X_DISTANCE_INCREMENT = 150;
+    private final int ALIGHT_NODE_X_DISTANCE_FROM_BASE = 10;
+
+
+
+    private int currentXPos = 0;
+
+
+
+    private Element appendXmlNode(final Element parentEle, final String nodeName, final String attributes) {
         Element keyEle = dom.createElement(nodeName);
         final String[] attributeList = attributes.split(" ");
         for (String attr : attributeList) {
@@ -80,17 +112,17 @@ class GtfsGraphLogger {
         rootEle.setAttribute("xmlns:yed", "http://www.yworks.com/xml/yed/3");
         rootEle.setAttribute("xsi:schemaLocation", "http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd");
 
-        addNode(rootEle, "key", "attr.name=Description attr.type=string for=graph id=d0");
-        addNode(rootEle, "key", "for=port id=d1 yfiles.type=portgraphics");
-        addNode(rootEle, "key", "for=port id=d2 yfiles.type=portgeometry");
-        addNode(rootEle, "key", "for=port id=d3 yfiles.type=portuserdata");
-        addNode(rootEle, "key", "attr.name=url attr.type=string for=node id=d4");
-        addNode(rootEle, "key", "attr.name=description attr.type=string for=node id=d5");
-        addNode(rootEle, "key", "for=node id=d6 yfiles.type=nodegraphics");
-        addNode(rootEle, "key", "for=graphml id=d7 yfiles.type=resources");
-        addNode(rootEle, "key", "attr.name=url attr.type=string for=edge id=d8");
-        addNode(rootEle, "key", "attr.name=description attr.type=string for=edge id=d9");
-        addNode(rootEle, "key", "for=edge id=d10 yfiles.type=edgegraphics");
+        appendXmlNode(rootEle, "key", "attr.name=Description attr.type=string for=graph id=d0");
+        appendXmlNode(rootEle, "key", "for=port id=d1 yfiles.type=portgraphics");
+        appendXmlNode(rootEle, "key", "for=port id=d2 yfiles.type=portgeometry");
+        appendXmlNode(rootEle, "key", "for=port id=d3 yfiles.type=portuserdata");
+        appendXmlNode(rootEle, "key", "attr.name=url attr.type=string for=node id=d4");
+        appendXmlNode(rootEle, "key", "attr.name=description attr.type=string for=node id=d5");
+        appendXmlNode(rootEle, "key", "for=node id=d6 yfiles.type=nodegraphics");
+        appendXmlNode(rootEle, "key", "for=graphml id=d7 yfiles.type=resources");
+        appendXmlNode(rootEle, "key", "attr.name=url attr.type=string for=edge id=d8");
+        appendXmlNode(rootEle, "key", "attr.name=description attr.type=string for=edge id=d9");
+        appendXmlNode(rootEle, "key", "for=edge id=d10 yfiles.type=edgegraphics");
 
         graphEle = dom.createElement("graph");
         graphEle.setAttribute("edgedefault", "directed");
@@ -101,7 +133,71 @@ class GtfsGraphLogger {
         dom.appendChild(rootEle);
     }
 
-    void addNode(String id, double x, double y) {
+    Integer getYPos(NodeLogType type) {
+
+        int yBasePos = currentTripIndex * TRIP_HEIGHT_SPACE;
+
+        switch (type) {
+            case OSM_NODE: return OSM_NODE_Y_POS;
+            case ENTER_EXIT_PT: return yBasePos;
+            case BOARD_NODE: return yBasePos + BOARD_NODE_Y_DISTANCE_FROM_BASE;
+            case ARRIVAL_STOP_TIME_NODE:
+            case DEPARTURE_STOP_TIME_NODE:
+                return yBasePos + TIME_NODE_Y_DISTANCE_FROM_BASE;
+            case ALIGHT_NODE: return yBasePos + ALIGH_NODE_Y_DISTANCE_FROM_BASE;
+            case BLOCK_TRANSFER_NODE: return yBasePos + BLOCK_TRANSFER_NODE_Y_DISTANCE_FROM_BASE;
+            default :
+        }
+
+        return yBasePos;
+    }
+
+    void getNextNodePos(Integer x, Integer y, NodeLogType type) {
+
+        switch (type) {
+            case OSM_NODE:
+                x = currentXPos;
+                break;
+            case ENTER_EXIT_PT:
+                x = currentXPos;
+                break;
+            case BOARD_NODE:
+                x = currentXPos + BOARD_NODE_X_DISTANCE_FROM_CURRENT;
+                break;
+            case ARRIVAL_STOP_TIME_NODE:
+                x = currentXPos + TIME_NODE_X_DISTANCE_FROM_CURRENT;
+                x += DEPARTURE_TIME_NODE_X_DISTANCE_INCREMENT;
+                break;
+            case DEPARTURE_STOP_TIME_NODE:
+                x = currentXPos + TIME_NODE_X_DISTANCE_FROM_CURRENT;
+                x += ARRIVAL_TIME_NODE_X_DISTANCE_INCREMENT;
+                break;
+            case ALIGHT_NODE:
+                x = currentXPos + ALIGHT_NODE_X_DISTANCE_FROM_BASE;
+                break;
+        }
+
+        y = getYPos(type);
+    }
+
+    void addNode(int id, double x, double y, NodeLogType type) {
+        addNode(String.valueOf(id), x, y, type);
+    }
+
+    void addNode(String id, double x, double y, NodeLogType type) {
+
+        //Avoid creating duplicate nodes.
+        if (insertedNodes.containsKey(id)) {
+            return;
+        }
+
+        Integer xPos = null;
+        Integer yPos = null;
+
+        getNextNodePos(xPos, yPos, type);
+
+        insertedNodes.put(id, true);
+
         Element nodeEle = dom.createElement("node");
         nodeEle.setAttribute("id", id);
         graphEle.appendChild(nodeEle);
@@ -121,8 +217,8 @@ class GtfsGraphLogger {
         geomEle.setAttribute("key", "d6");
         geomEle.setAttribute("height", "30.0");
         geomEle.setAttribute("width", "30.0");
-        geomEle.setAttribute("x", Double.valueOf(x).toString());
-        geomEle.setAttribute("y", Double.valueOf(y).toString());
+        geomEle.setAttribute("x", xPos.toString());
+        geomEle.setAttribute("y", yPos.toString());
         shapeNodeEle.appendChild(geomEle);
 
         Element fillEle = dom.createElement("y:Fill");
@@ -181,26 +277,30 @@ class GtfsGraphLogger {
         shapeNodeEle.appendChild(shapeEle);
     }
 
-    void addEdge(String edgeType, String id, String srcNodeId, String targetNodeId) {
-        Element edgeEle = addNode(graphEle, "edge", "id=" + id + " source=" + srcNodeId + " target=" + targetNodeId);
-        Element dataEle = addNode(edgeEle, "data", "key=d10");
-        Element polyEdgeEle = addNode(dataEle, "y:PolyLineEdge", "");
+    void addEdge(String edgeType, int id, int srcNodeId, int targetNodeId) {
+        addEdge(edgeType, String.valueOf(id), String.valueOf(srcNodeId), String.valueOf(targetNodeId));
+    }
 
-        addNode(polyEdgeEle, "y:Path", "sx=0.0 sy=0.0 tx=0.0 ty=0.0");
-        addNode(polyEdgeEle, "y:LineStyle", "color=#000000 type=line width=1.0");
-        addNode(polyEdgeEle, "y:Arrows", "source=none target=standard");
-        Element edgeLabelEle = addNode(polyEdgeEle, "y:EdgeLabel", "alignment=center anchorX=27.526667606424326 anchorY=50.05534221010657 configuration=AutoFlippingLabel distance=2.0 fontFamily=Dialog fontSize=12 fontStyle=plain hasBackgroundColor=false hasLineColor=false height=18.1328125 modelName=custom preferredPlacement=anywhere ratio=0.5 textColor=#000000 upX=0.30976697067661274 upY=-0.9508125072157152 visible=true width=28.7734375 x=27.526667606424326 y=32.81443729410911");
+    void addEdge(String edgeType, String id, String srcNodeId, String targetNodeId) {
+        Element edgeEle = appendXmlNode(graphEle, "edge", "id=" + id + " source=" + srcNodeId + " target=" + targetNodeId);
+        Element dataEle = appendXmlNode(edgeEle, "data", "key=d10");
+        Element polyEdgeEle = appendXmlNode(dataEle, "y:PolyLineEdge", "");
+
+        appendXmlNode(polyEdgeEle, "y:Path", "sx=0.0 sy=0.0 tx=0.0 ty=0.0");
+        appendXmlNode(polyEdgeEle, "y:LineStyle", "color=#000000 type=line width=1.0");
+        appendXmlNode(polyEdgeEle, "y:Arrows", "source=none target=standard");
+        Element edgeLabelEle = appendXmlNode(polyEdgeEle, "y:EdgeLabel", "alignment=center anchorX=27.526667606424326 anchorY=50.05534221010657 configuration=AutoFlippingLabel distance=2.0 fontFamily=Dialog fontSize=12 fontStyle=plain hasBackgroundColor=false hasLineColor=false height=18.1328125 modelName=custom preferredPlacement=anywhere ratio=0.5 textColor=#000000 upX=0.30976697067661274 upY=-0.9508125072157152 visible=true width=28.7734375 x=27.526667606424326 y=32.81443729410911");
 
         Text textNode = dom.createTextNode(edgeType);
         edgeLabelEle.appendChild(textNode);
 
-        Element labelModelEle = addNode(edgeLabelEle, "y:LabelModel", "");
-        addNode(labelModelEle, "y:SmartEdgeLabelModel", "autoRotationEnabled=true defaultAngle=0.0 defaultDistance=10.0");
+        Element labelModelEle = appendXmlNode(edgeLabelEle, "y:LabelModel", "");
+        appendXmlNode(labelModelEle, "y:SmartEdgeLabelModel", "autoRotationEnabled=true defaultAngle=0.0 defaultDistance=10.0");
 
-        Element modelParamEle = addNode(edgeLabelEle, "y:ModelParameter", "");
-        addNode(modelParamEle, "y:SmartEdgeLabelModelParameter", "angle=0.0 distance=30.0 distanceToCenter=true position=right ratio=0.5 segment=0");
-        addNode(edgeLabelEle, "y:PreferredPlacementDescriptor", "angle=0.0 angleOffsetOnRightSide=0 angleReference=absolute angleRotationOnRightSide=co distance=-1.0 frozen=true placement=anywhere side=anywhere sideReference=relative_to_edge_flow");
-        addNode(polyEdgeEle, "y:BendStyle", "smoothed=false");
+        Element modelParamEle = appendXmlNode(edgeLabelEle, "y:ModelParameter", "");
+        appendXmlNode(modelParamEle, "y:SmartEdgeLabelModelParameter", "angle=0.0 distance=30.0 distanceToCenter=true position=right ratio=0.5 segment=0");
+        appendXmlNode(edgeLabelEle, "y:PreferredPlacementDescriptor", "angle=0.0 angleOffsetOnRightSide=0 angleReference=absolute angleRotationOnRightSide=co distance=-1.0 frozen=true placement=anywhere side=anywhere sideReference=relative_to_edge_flow");
+        appendXmlNode(polyEdgeEle, "y:BendStyle", "smoothed=false");
     }
 
     void exportGraphmlToFile(final String filename) {
