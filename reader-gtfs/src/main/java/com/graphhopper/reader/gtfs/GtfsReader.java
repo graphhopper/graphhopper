@@ -23,6 +23,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.*;
 import com.google.common.collect.HashMultimap;
 import com.google.transit.realtime.GtfsRealtime;
+import com.graphhopper.reader.gtfs.GtfsGraphLogger;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -42,10 +43,12 @@ import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -72,6 +75,15 @@ class GtfsReader {
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GtfsReader.class);
+    private static GtfsGraphLogger GTFS_GRAPH_LOGGER = null;
+
+    static {
+        try {
+            GTFS_GRAPH_LOGGER = new GtfsGraphLogger();
+        } catch (ParserConfigurationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     private final Graph graph;
     private final LocationIndex walkNetworkIndex;
@@ -105,6 +117,7 @@ class GtfsReader {
         this.i = graph.getNodes();
         this.startDate = feed.getStartDate();
         this.endDate = feed.getEndDate();
+
     }
 
     void connectStopsToStreetNetwork() {
@@ -115,6 +128,7 @@ class GtfsReader {
                 QueryResult locationQueryResult = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
                 int streetNode;
                 if (!locationQueryResult.isValid()) {
+                    GTFS_GRAPH_LOGGER.addNode(i, stop.stop_lon, stop.stop_lat, GtfsGraphLogger.NodeLogType.ENTER_EXIT_PT);
                     streetNode = i++;
                     nodeAccess.setNode(streetNode, stop.stop_lat, stop.stop_lon);
                     EdgeIteratorState edge = graph.edge(streetNode, streetNode);
@@ -139,6 +153,7 @@ class GtfsReader {
         createTrips();
         wireUpStops();
         insertTransfers();
+        GTFS_GRAPH_LOGGER.exportGraphmlToFile("/Users/mathieu.stpierre/Documents/Iterations/January2020/gtfs_graph_logger/gtfsSimpleBusRail.graphml");
     }
 
     private void createTrips() {
@@ -257,6 +272,7 @@ class GtfsReader {
         int departureNode = -1;
         for (StopTime stopTime : trip.stopTimes) {
             Stop stop = feed.stops.get(stopTime.stop_id);
+            GTFS_GRAPH_LOGGER.addNode(i, stop.stop_lon, stop.stop_lat, GtfsGraphLogger.NodeLogType.DEPARTURE_STOP_TIME_NODE);
             arrivalNode = i++;
             nodeAccess.setNode(arrivalNode, stop.stop_lat, stop.stop_lon);
             arrivalTime = stopTime.arrival_time + time;
@@ -284,6 +300,7 @@ class GtfsReader {
                 departureTimeline = departureTimelines.computeIfAbsent(GtfsStorageI.PlatformDescriptor.route(route.route_id), s -> new TreeMap<>());
             }
             int departureTimelineNode = departureTimeline.computeIfAbsent((stopTime.departure_time + time) % (24 * 60 * 60), t -> {
+                GTFS_GRAPH_LOGGER.addNode(i, stop.stop_lon, stop.stop_lat, GtfsGraphLogger.NodeLogType.BOARD_NODE);
                 final int _departureTimelineNode = i++;
                 nodeAccess.setNode(_departureTimelineNode, stop.stop_lat, stop.stop_lon);
                 return _departureTimelineNode;
@@ -297,10 +314,12 @@ class GtfsReader {
                 arrivalTimeline = arrivalTimelines.computeIfAbsent(GtfsStorageI.PlatformDescriptor.route(route.route_id), s -> new TreeMap<>());
             }
             int arrivalTimelineNode = arrivalTimeline.computeIfAbsent((stopTime.arrival_time + time) % (24 * 60 * 60), t -> {
+                GTFS_GRAPH_LOGGER.addNode(i, stop.stop_lon, stop.stop_lat, GtfsGraphLogger.NodeLogType.ALIGHT_NODE);
                 final int _arrivalTimelineNode = i++;
                 nodeAccess.setNode(_arrivalTimelineNode, stop.stop_lat, stop.stop_lon);
                 return _arrivalTimelineNode;
             });
+            GTFS_GRAPH_LOGGER.addNode(i, stop.stop_lon, stop.stop_lat, GtfsGraphLogger.NodeLogType.ARRIVAL_STOP_TIME_NODE);
             departureNode = i++;
             nodeAccess.setNode(departureNode, stop.stop_lat, stop.stop_lon);
             int dayShift = stopTime.departure_time / (24 * 60 * 60);
@@ -356,9 +375,13 @@ class GtfsReader {
         tripWithStopTimeAndArrivalNode.arrivalNode = arrivalNode;
         tripWithStopTimeAndArrivalNode.arrivalTime = arrivalTime;
         arrivalNodes.add(tripWithStopTimeAndArrivalNode);
+
+        GTFS_GRAPH_LOGGER.incrementTrip();
     }
 
     private void wireUpDepartureTimeline(int streetNode, Stop stop, NavigableMap<Integer, Integer> departureTimeline, int route_type, GtfsStorageI.PlatformDescriptor platformDescriptorIfStatic) {
+        GTFS_GRAPH_LOGGER.addNode(streetNode, nodeAccess.getLon(streetNode), nodeAccess.getLat(streetNode), GtfsGraphLogger.NodeLogType.OSM_NODE);
+        GTFS_GRAPH_LOGGER.addNode(i, stop.stop_lon, stop.stop_lat, GtfsGraphLogger.NodeLogType.ENTER_EXIT_PT);
         nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
         int stopEnterNode = i - 1;
         EdgeIteratorState entryEdge = graph.edge(streetNode, stopEnterNode);
@@ -373,6 +396,7 @@ class GtfsReader {
     }
 
     private void wireUpArrivalTimeline(int streetNode, Stop stop, NavigableMap<Integer, Integer> arrivalTimeline, int route_type, GtfsStorageI.PlatformDescriptor platformDescriptorIfStatic) {
+        GTFS_GRAPH_LOGGER.addNode(i, stop.stop_lon, stop.stop_lat, GtfsGraphLogger.NodeLogType.ENTER_EXIT_PT);
         nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
         int stopExitNode = i - 1;
         EdgeIteratorState exitEdge = graph.edge(stopExitNode, streetNode);
@@ -487,6 +511,7 @@ class GtfsReader {
         Map<GtfsStorageI.PlatformDescriptor, NavigableMap<Integer, Integer>> departureTimelineNodesByRoute = departureTimelinesByStop.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
         NavigableMap<Integer, Integer> departureTimelineNodes = departureTimelineNodesByRoute.computeIfAbsent(GtfsStorageI.PlatformDescriptor.route(trip.route_id), s -> new TreeMap<>());
         int departureTimelineNode = departureTimelineNodes.computeIfAbsent(departureTime % (24 * 60 * 60), t -> {
+            GTFS_GRAPH_LOGGER.addNode(i, stop.stop_lon, stop.stop_lat, GtfsGraphLogger.NodeLogType.BLOCK_TRANSFER_NODE);
             final int _departureTimelineNode = i++;
             nodeAccess.setNode(_departureTimelineNode, stop.stop_lat, stop.stop_lon);
             return _departureTimelineNode;
@@ -581,6 +606,7 @@ class GtfsReader {
                     blockTransferValidityId = gtfsStorage.getOperatingDayPatterns().size();
                     gtfsStorage.getOperatingDayPatterns().put(blockTransferValidOn, blockTransferValidityId);
                 }
+                GTFS_GRAPH_LOGGER.addNode(i, stop.stop_lon, stop.stop_lat, GtfsGraphLogger.NodeLogType.BLOCK_TRANSFER_NODE);
                 nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                 EdgeIteratorState transferEdge = graph.edge(lastTrip.arrivalNode, i - 1);
                 transferEdge.set(accessEnc, true).setReverse(accessEnc, false);
@@ -664,6 +690,25 @@ class GtfsReader {
     private void setEdgeTypeAndClearDistance(EdgeIteratorState edge, GtfsStorage.EdgeType edgeType) {
         edge.setDistance(0.0);
         edge.set(ptEncodedValues.getTypeEnc(), edgeType);
+        String edgeLabel = "";
+
+        switch (edgeType) {
+            case HIGHWAY: edgeLabel = "HIGHWAY"; break;
+            case ENTER_TIME_EXPANDED_NETWORK: edgeLabel = "ENTER_TEN"; break;
+            case LEAVE_TIME_EXPANDED_NETWORK: edgeLabel = "LEAVE_TEN"; break;
+            case ENTER_PT: edgeLabel = "ENTER_PT"; break;
+            case EXIT_PT: edgeLabel = "EXIT_PT"; break;
+            case HOP: edgeLabel = "HOP"; break;
+            case DWELL: edgeLabel = "DWELL"; break;
+            case BOARD: edgeLabel = "BOARD"; break;
+            case ALIGHT: edgeLabel = "ALIGHT"; break;
+            case OVERNIGHT: edgeLabel = "OVERNIGHT"; break;
+            case TRANSFER: edgeLabel = "TRANSFER"; break;
+            case WAIT: edgeLabel = "WAIT"; break;
+            case WAIT_ARRIVAL: edgeLabel = "WAIT_ARRIVAL"; break;
+        }
+        
+        GTFS_GRAPH_LOGGER.addEdge(edgeLabel, edge.getEdge(), edge.getBaseNode(), edge.getAdjNode());
     }
 
     private BitSet getValidOn(BitSet validOnDay, int dayShift) {

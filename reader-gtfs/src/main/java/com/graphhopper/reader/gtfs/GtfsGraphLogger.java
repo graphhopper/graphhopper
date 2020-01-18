@@ -63,18 +63,18 @@ class GtfsGraphLogger {
     private int currentTripIndex = 0;
 
 
-    private final int OSM_NODE_Y_POS = -20;
-    private final int TRIP_HEIGHT_SPACE = 70;
-    private final int BOARD_NODE_Y_DISTANCE_FROM_BASE = 10;
-    private final int TIME_NODE_Y_DISTANCE_FROM_BASE = 40;
-    private final int ALIGH_NODE_Y_DISTANCE_FROM_BASE = 50;
-    private final int BLOCK_TRANSFER_NODE_Y_DISTANCE_FROM_BASE = 60;
+    private int OSM_NODE_Y_POS = -20;
+    private int TRIP_HEIGHT_SPACE = 70;
+    private int BOARD_NODE_Y_DISTANCE_FROM_BASE = 10;
+    private int TIME_NODE_Y_DISTANCE_FROM_BASE = 40;
+    private int ALIGH_NODE_Y_DISTANCE_FROM_BASE = 50;
+    private int BLOCK_TRANSFER_NODE_Y_DISTANCE_FROM_BASE = 60;
 
-    private final int BOARD_NODE_X_DISTANCE_FROM_CURRENT = 10;
-    private final int TIME_NODE_X_DISTANCE_FROM_CURRENT = 10;
-    private final int DEPARTURE_TIME_NODE_X_DISTANCE_INCREMENT = 150;
-    private final int ARRIVAL_TIME_NODE_X_DISTANCE_INCREMENT = 150;
-    private final int ALIGHT_NODE_X_DISTANCE_FROM_BASE = 10;
+    private int BOARD_NODE_X_DISTANCE_FROM_CURRENT = 10;
+    private int TIME_NODE_X_DISTANCE_FROM_CURRENT = 10;
+    private int DEPARTURE_TIME_NODE_X_DISTANCE_INCREMENT = 150;
+    private int ARRIVAL_TIME_NODE_X_DISTANCE_INCREMENT = 150;
+    private int ALIGHT_NODE_X_DISTANCE_FROM_BASE = 10;
 
 
 
@@ -94,8 +94,42 @@ class GtfsGraphLogger {
         parentEle.appendChild(keyEle);
         return keyEle;
     }
-
+    
     GtfsGraphLogger() throws ParserConfigurationException {
+
+        try {
+            String val = System.getenv("GTFS_GRAPH_LOGGER_Y_SPACE_SCALE");
+            
+            if (val != null) {
+                int spaceYScaleFactor = Integer.parseInt(val);
+
+                OSM_NODE_Y_POS *= spaceYScaleFactor;
+                TRIP_HEIGHT_SPACE *= spaceYScaleFactor;
+                BOARD_NODE_Y_DISTANCE_FROM_BASE *= spaceYScaleFactor;
+                TIME_NODE_Y_DISTANCE_FROM_BASE *= spaceYScaleFactor;
+                ALIGH_NODE_Y_DISTANCE_FROM_BASE *= spaceYScaleFactor;
+                BLOCK_TRANSFER_NODE_Y_DISTANCE_FROM_BASE *= spaceYScaleFactor;
+            }
+        }
+        catch (Exception e) {
+        }
+
+        try {
+            String val = System.getenv("GTFS_GRAPH_LOGGER_X_SPACE_SCALE");
+
+            if (val != null) {
+                int spaceYScaleFactor = Integer.parseInt(val);
+
+                BOARD_NODE_X_DISTANCE_FROM_CURRENT *= spaceYScaleFactor;
+                TIME_NODE_X_DISTANCE_FROM_CURRENT *= spaceYScaleFactor;
+                DEPARTURE_TIME_NODE_X_DISTANCE_INCREMENT *= spaceYScaleFactor;
+                ARRIVAL_TIME_NODE_X_DISTANCE_INCREMENT *= spaceYScaleFactor;
+                ALIGHT_NODE_X_DISTANCE_FROM_BASE *= spaceYScaleFactor;
+            }
+        }
+        catch (Exception e) {
+        }
+        
 
         dbf = DocumentBuilderFactory.newInstance();
         db = dbf.newDocumentBuilder();
@@ -133,7 +167,30 @@ class GtfsGraphLogger {
         dom.appendChild(rootEle);
     }
 
-    Integer getYPos(NodeLogType type) {
+    private int getXPos(NodeLogType type) {
+
+        switch (type) {
+            case OSM_NODE: return currentXPos;
+            case ENTER_EXIT_PT: return currentXPos;
+            case BOARD_NODE: return currentXPos + BOARD_NODE_X_DISTANCE_FROM_CURRENT;
+            case ARRIVAL_STOP_TIME_NODE: {
+                int x = currentXPos + TIME_NODE_X_DISTANCE_FROM_CURRENT;
+                currentXPos += DEPARTURE_TIME_NODE_X_DISTANCE_INCREMENT;
+                return x;
+            }
+            case DEPARTURE_STOP_TIME_NODE: {
+                int x = currentXPos + TIME_NODE_X_DISTANCE_FROM_CURRENT;
+                currentXPos += ARRIVAL_TIME_NODE_X_DISTANCE_INCREMENT;
+                return x;
+            }
+            case ALIGHT_NODE:
+                return currentXPos + ALIGHT_NODE_X_DISTANCE_FROM_BASE;
+        }
+
+        return currentXPos;
+    }
+
+    private int getYPos(NodeLogType type) {
 
         int yBasePos = currentTripIndex * TRIP_HEIGHT_SPACE;
 
@@ -152,49 +209,21 @@ class GtfsGraphLogger {
         return yBasePos;
     }
 
-    void getNextNodePos(Integer x, Integer y, NodeLogType type) {
 
-        switch (type) {
-            case OSM_NODE:
-                x = currentXPos;
-                break;
-            case ENTER_EXIT_PT:
-                x = currentXPos;
-                break;
-            case BOARD_NODE:
-                x = currentXPos + BOARD_NODE_X_DISTANCE_FROM_CURRENT;
-                break;
-            case ARRIVAL_STOP_TIME_NODE:
-                x = currentXPos + TIME_NODE_X_DISTANCE_FROM_CURRENT;
-                x += DEPARTURE_TIME_NODE_X_DISTANCE_INCREMENT;
-                break;
-            case DEPARTURE_STOP_TIME_NODE:
-                x = currentXPos + TIME_NODE_X_DISTANCE_FROM_CURRENT;
-                x += ARRIVAL_TIME_NODE_X_DISTANCE_INCREMENT;
-                break;
-            case ALIGHT_NODE:
-                x = currentXPos + ALIGHT_NODE_X_DISTANCE_FROM_BASE;
-                break;
-        }
-
-        y = getYPos(type);
+    public void incrementTrip() {
+        currentTripIndex++;
     }
 
-    void addNode(int id, double x, double y, NodeLogType type) {
+    public void addNode(int id, double x, double y, NodeLogType type) {
         addNode(String.valueOf(id), x, y, type);
     }
 
-    void addNode(String id, double x, double y, NodeLogType type) {
+    public void addNode(String id, double x, double y, NodeLogType type) {
 
         //Avoid creating duplicate nodes.
         if (insertedNodes.containsKey(id)) {
             return;
         }
-
-        Integer xPos = null;
-        Integer yPos = null;
-
-        getNextNodePos(xPos, yPos, type);
 
         insertedNodes.put(id, true);
 
@@ -217,8 +246,8 @@ class GtfsGraphLogger {
         geomEle.setAttribute("key", "d6");
         geomEle.setAttribute("height", "30.0");
         geomEle.setAttribute("width", "30.0");
-        geomEle.setAttribute("x", xPos.toString());
-        geomEle.setAttribute("y", yPos.toString());
+        geomEle.setAttribute("x", String.valueOf(getXPos(type)));
+        geomEle.setAttribute("y", String.valueOf(getYPos(type)));
         shapeNodeEle.appendChild(geomEle);
 
         Element fillEle = dom.createElement("y:Fill");
