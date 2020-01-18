@@ -61,6 +61,10 @@ Main class: com.graphhopper.http.GraphHopperApplication
 VM options: -Xms1g -Xmx1g -server -Dgraphhopper.datareader.file=[your-area].osm.pbf -Dgraphhopper.graph.location=./[your-area].osm-gh
 Program arguments: server config.yml
 ```
+Settings -> Build,Execution,Deployment -> Compiler -> Java Compiler and disable: 
+Use '--release' option for cross compilation(java 9 and later)
+(otherwise Error:(46, 26) java: package sun.misc does not exist)
+
 
 ### Contribute
 
