@@ -29,7 +29,11 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class ShortestWeighting extends AbstractWeighting {
     public ShortestWeighting(FlagEncoder flagEncoder) {
-        super(flagEncoder);
+        this(flagEncoder, new NoTurnCostProvider());
+    }
+
+    public ShortestWeighting(FlagEncoder flagEncoder, TurnCostProvider turnCostProvider) {
+        super(flagEncoder, turnCostProvider);
     }
 
     @Override

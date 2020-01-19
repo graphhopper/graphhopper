@@ -37,7 +37,11 @@ public class PriorityWeighting extends FastestWeighting {
     private final DecimalEncodedValue priorityEnc;
 
     public PriorityWeighting(FlagEncoder encoder, PMap pMap) {
-        super(encoder, pMap);
+        this(encoder, pMap, new NoTurnCostProvider());
+    }
+
+    public PriorityWeighting(FlagEncoder encoder, PMap pMap, TurnCostProvider turnCostProvider) {
+        super(encoder, pMap, turnCostProvider);
         priorityEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
         double maxPriority = PriorityCode.getFactor(BEST.getValue());
         minFactor = 1 / (0.5 + maxPriority);
@@ -49,8 +53,8 @@ public class PriorityWeighting extends FastestWeighting {
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        double weight = super.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        double weight = super.calcEdgeWeight(edgeState, reverse);
         if (Double.isInfinite(weight))
             return Double.POSITIVE_INFINITY;
         return weight / (0.5 + edgeState.get(priorityEnc));

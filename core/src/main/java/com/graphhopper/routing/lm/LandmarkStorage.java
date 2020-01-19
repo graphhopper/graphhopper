@@ -87,9 +87,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // allowing arbitrary weighting is too dangerous
         this.lmSelectionWeighting = new ShortestWeighting(encoder) {
             @Override
-            public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+            public double calcEdgeWeight(EdgeIteratorState edge, boolean reverse) {
                 // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
-                double res = weighting.calcWeight(edge, reverse, prevOrNextEdgeId);
+                double res = weighting.calcEdgeWeight(edge, reverse);
                 if (res >= Double.MAX_VALUE)
                     return Double.POSITIVE_INFINITY;
 
