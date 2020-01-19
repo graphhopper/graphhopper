@@ -123,14 +123,14 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
         return this;
     }
 
-    void setFromDataStructures(AStarBidirection astar) {
-        super.setFromDataStructures(astar);
-        weightApprox.setFrom(astar.currFrom.adjNode);
+    @Override
+    void setFromDataStructures(AbstractBidirAlgo algo) {
+        throw new UnsupportedOperationException("Setting from/to data structures separately is not allowed for bidirectional A*");
     }
 
-    void setToDataStructures(AStarBidirection astar) {
-        super.setToDataStructures(astar);
-        weightApprox.setTo(astar.currTo.adjNode);
+    @Override
+    void setToDataStructures(AbstractBidirAlgo algo) {
+        throw new UnsupportedOperationException("Setting from/to data structures separately is not allowed for bidirectional A*");
     }
 
     @Override

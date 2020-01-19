@@ -59,17 +59,9 @@ public class BalancedWeightApproximator {
     }
 
     public void setFromTo(int from, int to) {
-        setFrom(from);
-        setTo(to);
-    }
-
-    public void setFrom(int from) {
         uniDirApproximatorReverse.setTo(from);
-        fromOffset = 0.5 * uniDirApproximatorForward.approximate(from);
-    }
-
-    public void setTo(int to) {
         uniDirApproximatorForward.setTo(to);
+        fromOffset = 0.5 * uniDirApproximatorForward.approximate(from);
         toOffset = 0.5 * uniDirApproximatorReverse.approximate(to);
     }
 
