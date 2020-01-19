@@ -15,35 +15,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.util.EdgeIteratorState;
+public interface TurnCostProvider {
+    double calcTurnWeight(int inEdge, int viaNode, int outEdge);
 
-/**
- * Calculates the shortest route - independent of a vehicle as the calculation is based on the
- * distance only.
- * <p>
- *
- * @author Peter Karich
- */
-public class ShortestWeighting extends AbstractWeighting {
-    public ShortestWeighting(FlagEncoder flagEncoder) {
-        super(flagEncoder);
-    }
-
-    @Override
-    public double getMinWeight(double currDistToGoal) {
-        return currDistToGoal;
-    }
-
-    @Override
-    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        return edgeState.getDistance();
-    }
-
-    @Override
-    public String getName() {
-        return "shortest";
-    }
+    long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 }

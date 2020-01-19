@@ -21,9 +21,9 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
@@ -33,8 +33,13 @@ public abstract class AbstractWeighting implements Weighting {
     protected final FlagEncoder flagEncoder;
     protected final DecimalEncodedValue avSpeedEnc;
     protected final BooleanEncodedValue accessEnc;
+    private final TurnCostProvider turnCostProvider;
 
     protected AbstractWeighting(FlagEncoder encoder) {
+        this(encoder, new NoTurnCostProvider());
+    }
+
+    protected AbstractWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
         this.flagEncoder = encoder;
         if (!flagEncoder.isRegistered())
             throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager before using it elsewhere");
@@ -43,20 +48,53 @@ public abstract class AbstractWeighting implements Weighting {
 
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
+        this.turnCostProvider = turnCostProvider;
     }
 
     @Override
-    public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        return calcWeight(edgeState, reverse, NO_EDGE);
+    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        return calcWeightWithTurnWeight(this, turnCostProvider, edgeState, reverse, prevOrNextEdgeId);
     }
 
-    @Override
-    public final long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        return calcMillis(edgeState, reverse, NO_EDGE);
+    /**
+     * In most cases subclasses should only override this method to change the edge-weight. The turn cost handling
+     * should normally be changed by passing another {@link TurnCostProvider} implementation to the constructor instead.
+     */
+    public abstract double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
+
+    public static double calcWeightWithTurnWeight(Weighting weighting, TurnCostProvider turnCostProvider, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        final double edgeWeight = weighting.calcEdgeWeight(edgeState, reverse);
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
+            return edgeWeight;
+        }
+        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
+        double turnWeight = reverse
+                ? turnCostProvider.calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                : turnCostProvider.calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+        return edgeWeight + turnWeight;
     }
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        return calcMillisWithTurnMillis(this, turnCostProvider, edgeState, reverse, prevOrNextEdgeId);
+    }
+
+    public static long calcMillisWithTurnMillis(Weighting weighting, TurnCostProvider turnCostProvider, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        long edgeMillis = weighting.calcEdgeMillis(edgeState, reverse);
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
+            return edgeMillis;
+        }
+        // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
+        // todo: why no first/last orig edge here as in calcWeight ?
+        final int origEdgeId = edgeState.getEdge();
+        long turnMillis = reverse
+                ? turnCostProvider.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                : turnCostProvider.calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+        return edgeMillis + turnMillis;
+    }
+
+    @Override
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
         // special case for loop edges: since they do not have a meaningful direction we always need to read them in
         // forward direction
         if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
@@ -76,6 +114,16 @@ public abstract class AbstractWeighting implements Weighting {
             throw new IllegalStateException("Speed cannot be 0 for unblocked edge, use access properties to mark edge blocked! Should only occur for shortest path calculation. See #242.");
 
         return (long) (edgeState.getDistance() * 3600 / speed);
+    }
+
+//    @Override
+    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+    }
+
+//    @Override
+    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        return turnCostProvider.calcTurnMillis(inEdge, viaNode, outEdge);
     }
 
     @Override
