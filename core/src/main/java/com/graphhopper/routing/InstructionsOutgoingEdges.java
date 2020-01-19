@@ -149,10 +149,10 @@ class InstructionsOutgoingEdges {
      * TODO: Should we rely only on the tagged maxspeed?
      */
     private double getSpeed(EdgeIteratorState edge) {
-       double maxSpeed = edge.get(maxSpeedEnc);
-       if(Double.isInfinite(maxSpeed))
-           return edge.get(avgSpeedEnc);
-       return maxSpeed;
+        double maxSpeed = edge.get(maxSpeedEnc);
+        if (Double.isInfinite(maxSpeed))
+            return edge.get(avgSpeedEnc);
+        return maxSpeed;
     }
 
     /**
