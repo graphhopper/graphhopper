@@ -123,6 +123,16 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
         return this;
     }
 
+    void setFromDataStructures(AStarBidirection astar) {
+        super.setFromDataStructures(astar);
+        weightApprox.setFrom(astar.currFrom.adjNode);
+    }
+
+    void setToDataStructures(AStarBidirection astar) {
+        super.setToDataStructures(astar);
+        weightApprox.setTo(astar.currTo.adjNode);
+    }
+
     @Override
     public void afterHeuristicChange(boolean forward, boolean backward) {
         updatePriorityQueues(pqOpenSetFrom, pqOpenSetTo, weightApprox, forward, backward);
