@@ -738,6 +738,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             else
                 initTo(startNode, 0);
         }
+
         int getFromCount() {
             return bestWeightMapFrom.size();
         }

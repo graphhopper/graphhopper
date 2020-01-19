@@ -143,13 +143,13 @@ public class RandomizedRoutingTest {
             case LM_BIDIR:
                 AStarBidirection astarbi = new AStarBidirection(graph, weighting, traversalMode);
                 return lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+            case LM_UNIDIR:
+                AStar astar = new AStar(graph, weighting, traversalMode);
+                return lm.getDecoratedAlgorithm(graph, astar, AlgorithmOptions.start().build());
             case PERFECT_ASTAR:
                 AStarBidirection perfectastarbi = new AStarBidirection(graph, weighting, traversalMode);
                 perfectastarbi.setApproximation(new PerfectApproximator(graph, weighting, traversalMode, false));
                 return perfectastarbi;
-            case LM_UNIDIR:
-                AStar astar = new AStar(graph, weighting, traversalMode);
-                return lm.getDecoratedAlgorithm(graph, astar, AlgorithmOptions.start().build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }
@@ -245,12 +245,13 @@ public class RandomizedRoutingTest {
     }
 
     private void run(long seed) {
+        final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < numQueries; i++) {
             int source = getRandom(rnd);
             int target = getRandom(rnd);
 //            System.out.println("source: " + source + ", target: " + target);
@@ -260,11 +261,11 @@ public class RandomizedRoutingTest {
                     .calcPath(source, target);
             strictViolations.addAll(comparePaths(refPath, path, source, target, seed));
         }
-        if (strictViolations.size() > Math.max(1, 0.20 * 50)) {
+        if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
             for (String strictViolation : strictViolations) {
                 System.out.println("strict violation: " + strictViolation);
             }
-            fail("Too many strict violations: " + strictViolations.size() + " / " + 50 + ", seed: " + seed);
+            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
     }
 
@@ -279,6 +280,7 @@ public class RandomizedRoutingTest {
     }
 
     private void runWithQueryGraph(long seed) {
+        final int numQueries = 50;
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
@@ -289,9 +291,9 @@ public class RandomizedRoutingTest {
         LocationIndexTree index = new LocationIndexTree(graph, dir);
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < numQueries; i++) {
             List<GHPoint> points = getRandomPoints(2, index, rnd);
-
+            System.out.println("List<GHPoint> points = Arrays.asList(new GHPoint(" + points.get(0).getLat() + ", " + points.get(1).getLat() + ", " + "new GHPoint(" + points.get(1).getLat() + ", " + points.get(1).getLon() + ")");
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
 
@@ -307,8 +309,8 @@ public class RandomizedRoutingTest {
         }
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
-        if (strictViolations.size() > Math.max(1, 0.20 * 50)) {
-            fail("Too many strict violations: " + strictViolations.size() + " / " + 50 + ", seed: " + seed);
+        if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
+            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
     }
 
