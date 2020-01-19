@@ -23,12 +23,12 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathExtractor;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.Coordinate;
@@ -226,7 +226,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         checkAlreadyRun();
         currEdge = new IsoLabel(-1, from, 0, 0, 0);
         fromMap.put(from, currEdge);
-        EdgeExplorer explorer = reverseFlow ? inEdgeExplorer : outEdgeExplorer;
+        EdgeFilter filter = reverseFlow ? inEdgeFilter : outEdgeFilter;
         while (true) {
             visitedNodes++;
             if (finished()) {
@@ -234,13 +234,14 @@ public class Isochrone extends AbstractRoutingAlgorithm {
             }
 
             int neighborNode = currEdge.adjNode;
-            EdgeIterator iter = explorer.setBaseNode(neighborNode);
+            EdgeIterator iter = edgeExplorer.setBaseNode(neighborNode);
             while (iter.next()) {
                 if (!accept(iter, currEdge.edge)) {
                     continue;
                 }
 
-                double tmpWeight = weighting.calcWeight(iter, reverseFlow, currEdge.edge) + currEdge.weight;
+                // todo: for #1776/#1835 move the access check into weighting
+                double tmpWeight = !filter.accept(iter) ? Double.POSITIVE_INFINITY : (weighting.calcWeight(iter, reverseFlow, currEdge.edge) + currEdge.weight);
                 if (Double.isInfinite(tmpWeight))
                     continue;
 

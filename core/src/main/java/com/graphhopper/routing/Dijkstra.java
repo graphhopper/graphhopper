@@ -23,7 +23,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
@@ -68,19 +67,19 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
     }
 
     protected void runAlgo() {
-        EdgeExplorer explorer = outEdgeExplorer;
         while (true) {
             visitedNodes++;
             if (isMaxVisitedNodesExceeded() || finished())
                 break;
 
             int currNode = currEdge.adjNode;
-            EdgeIterator iter = explorer.setBaseNode(currNode);
+            EdgeIterator iter = edgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
                 if (!accept(iter, currEdge.edge))
                     continue;
 
-                double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
+                // todo: for #1776/#1835 move the access check into weighting
+                double tmpWeight = !outEdgeFilter.accept(iter) ? Double.POSITIVE_INFINITY : (weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight);
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
                 }

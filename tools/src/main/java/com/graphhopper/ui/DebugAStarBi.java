@@ -22,7 +22,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.awt.*;
 
@@ -44,11 +43,11 @@ public class DebugAStarBi extends AStarBidirection implements DebugAlgo {
     }
 
     @Override
-    public void updateBestPath(EdgeIteratorState edgeState, SPTEntry entry, int traversalId, boolean reverse) {
+    public void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
         if (g2 != null) {
             mg.plotNode(g2, traversalId, Color.YELLOW);
         }
-        super.updateBestPath(edgeState, entry, traversalId, reverse);
+        super.updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
     }
 
     @Override

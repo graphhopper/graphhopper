@@ -792,8 +792,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         public void setFilter(IntHashSet set, boolean fwd, boolean bwd) {
             EdgeFilter ef = new BlockedEdgesFilter(flagEncoder.getAccessEnc(), fwd, bwd, set);
-            outEdgeExplorer = graph.createEdgeExplorer(ef);
-            inEdgeExplorer = graph.createEdgeExplorer(ef);
+            inEdgeFilter = ef;
+            outEdgeFilter = ef;
         }
 
         public void setStartNode(int startNode) {
