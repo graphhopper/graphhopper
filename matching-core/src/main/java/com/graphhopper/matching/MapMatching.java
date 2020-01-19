@@ -24,13 +24,15 @@ import com.graphhopper.matching.util.HmmProbabilities;
 import com.graphhopper.matching.util.TimeStep;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
-import com.graphhopper.routing.ch.CHWeighting;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -425,13 +427,13 @@ public class MapMatching {
 
                 RoutingAlgorithm router;
                 if (ch) {
-                    router = new DijkstraBidirectionCH(queryGraph, new CHWeighting(weighting)) {
+                    RoutingCHGraphImpl g = new RoutingCHGraphImpl(queryGraph, weighting);
+                    router = new DijkstraBidirectionCH(g) {
                         @Override
                         protected void initCollections(int size) {
                             super.initCollections(50);
                         }
                     };
-                    ((DijkstraBidirectionCH) router).setEdgeFilter(new LevelEdgeFilter((CHGraph) routingGraph));
                     router.setMaxVisitedNodes(maxVisitedNodes);
                 } else {
                     router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.NODE_BASED) {
