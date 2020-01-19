@@ -178,8 +178,7 @@ public class Measurement {
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
                 isLM = true;
-                int activeLMCount = 12;
-                for (; activeLMCount > 3; activeLMCount -= 4) {
+                for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr,
                             true, false, activeLMCount, true, false, false, false);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount + "_edge", vehicleStr,
