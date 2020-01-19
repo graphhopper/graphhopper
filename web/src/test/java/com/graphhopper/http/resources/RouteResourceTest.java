@@ -97,7 +97,7 @@ public class RouteResourceTest {
     @Test
     public void testBasicPostQuery() {
         String jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
-        final Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonStr));
+        Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -106,6 +106,12 @@ public class RouteResourceTest {
         double distance = path.get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 9000);
         assertTrue("distance wasn't correct:" + distance, distance < 9500);
+
+        // we currently just ignore URL parameters
+        jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        response = app.client().target("http://localhost:8080/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
+        assertEquals(200, response.getStatus());
+        assertFalse(response.readEntity(JsonNode.class).get("info").has("errors"));
     }
 
     @Test

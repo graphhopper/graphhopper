@@ -970,7 +970,8 @@ public class GraphHopper implements GraphHopperAPI {
             if (customModel == null) {
                 customModel = importCustomModels.get(hintsMap.getVehicle());
                 if (customModel == null)
-                    throw new IllegalStateException("custom_model cannot be null for weighting=" + weightingStr + " and vehicle=" + hintsMap.getVehicle());
+                    throw new IllegalArgumentException("Did you specify the 'model' entry in your request? It cannot be null. " +
+                            "Internal weighting=" + weightingStr + " and vehicle=" + hintsMap.getVehicle());
             }
             weighting = new CustomWeighting("custom|" + encoder.toString(), customModel, encoder, encodingManager, encodedValueFactory);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
