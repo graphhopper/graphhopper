@@ -15,18 +15,31 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.GHRequest;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.util.EdgeIteratorState;
 
-public class FlexRequest extends GHRequest {
-    private FlexModel model;
+import java.util.Arrays;
 
-    public void setModel(FlexModel model) {
-        this.model = model;
+public final class EnumToValue implements ConfigMapEntry {
+    private final IntEncodedValue eev;
+    private final Double[] values;
+
+    EnumToValue(EnumEncodedValue eev, Double[] values) {
+        this.eev = eev;
+        this.values = values;
     }
 
-    public FlexModel getModel() {
-        return model;
+    @Override
+    public Double getValue(EdgeIteratorState iter, boolean reverse) {
+        int enumOrdinal = iter.get(eev);
+        return values[enumOrdinal];
+    }
+
+    @Override
+    public String toString() {
+        return eev.getName() + ": " + Arrays.toString(values);
     }
 }

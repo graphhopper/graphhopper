@@ -15,14 +15,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.weighting.flex;
+package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlexModel;
+import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
@@ -30,17 +30,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class AverageSpeedFlexConfig {
+public class AverageSpeedCustomConfig {
     private List<ConfigMapEntry> speedFactorList = new ArrayList<>();
     private List<ConfigMapEntry> avgSpeedList = new ArrayList<>();
     private DecimalEncodedValue avgSpeedEnc;
-    private FlexModel flexModel;
+    private CustomModel customModel;
 
-    public AverageSpeedFlexConfig(FlexModel flexModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
-        this.flexModel = flexModel;
-        this.avgSpeedEnc = lookup.getDecimalEncodedValue(EncodingManager.getKey(flexModel.getBase(), "average_speed"));
+    public AverageSpeedCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
+        this.customModel = customModel;
+        this.avgSpeedEnc = lookup.getDecimalEncodedValue(EncodingManager.getKey(customModel.getBase(), "average_speed"));
         // do as much as possible outside of the eval method
-        for (Map.Entry<String, Object> entry : flexModel.getAverageSpeed().entrySet()) {
+        for (Map.Entry<String, Object> entry : customModel.getAverageSpeed().entrySet()) {
             Object value = entry.getValue();
             if (!lookup.hasEncodedValue(entry.getKey()))
                 throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'average_speed'");
@@ -55,7 +55,7 @@ public class AverageSpeedFlexConfig {
             }
         }
 
-        for (Map.Entry<String, Object> entry : flexModel.getSpeedFactor().entrySet()) {
+        for (Map.Entry<String, Object> entry : customModel.getSpeedFactor().entrySet()) {
             if (!lookup.hasEncodedValue(entry.getKey()))
                 throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'speed_factor'");
             Object value = entry.getValue();
@@ -98,6 +98,6 @@ public class AverageSpeedFlexConfig {
                 speed *= value;
         }
 
-        return Math.min(speed, flexModel.getMaxSpeed());
+        return Math.min(speed, customModel.getVehicleMaxSpeed());
     }
 }

@@ -15,21 +15,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.jackson;
+package com.graphhopper.routing.util;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.graphhopper.routing.util.FlexModel;
+import com.graphhopper.GHRequest;
 
-import java.io.IOException;
+public class CustomRequest extends GHRequest {
+    private CustomModel model;
 
-public class FlexModelDeserializer extends JsonDeserializer<FlexModel> {
-    @Override
-    public FlexModel deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        p.setCodec(new ObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE));
-        return p.readValueAs(FlexModel.class);
+    public void setModel(CustomModel model) {
+        this.model = model;
+    }
+
+    public CustomModel getModel() {
+        return model;
     }
 }

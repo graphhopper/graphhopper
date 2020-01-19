@@ -1,6 +1,6 @@
 base: car
 
-max_speed: 80
+vehicle_max_speed: 80
 
 speed_factor:
   road_class:

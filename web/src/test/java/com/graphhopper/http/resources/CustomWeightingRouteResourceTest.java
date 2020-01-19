@@ -20,7 +20,7 @@ import static com.graphhopper.http.resources.RouteResourceTest.assertBetween;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-public class FlexRequestsRouteResourceTest {
+public class CustomWeightingRouteResourceTest {
 
     private static final String DIR = "./target/north-bayreuth-gh/";
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
@@ -29,7 +29,7 @@ public class FlexRequestsRouteResourceTest {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "bike,car").
                 put("routing.ch.disabling_allowed", "true").
-                put("graph.flex_models.directory", "./src/test/resources/com/graphhopper/http/").
+                put("graph.custom_models.directory", "./src/test/resources/com/graphhopper/http/").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("graph.encoded_values", "max_height").
@@ -51,7 +51,7 @@ public class FlexRequestsRouteResourceTest {
         String jsonQuery = "{" +
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"vehicle\": \"car\"," +
-                " \"weighting\": \"flex|truck\"" +
+                " \"weighting\": \"custom|truck\"" +
                 "}";
         final Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());
@@ -77,7 +77,7 @@ public class FlexRequestsRouteResourceTest {
                 "model:\n" +
                 "  base: bike\n" +
                 // only one tunnel is mapped in this osm file with max_height=1.7 => https://www.openstreetmap.org/way/132908255
-                "  height: 2\n";
+                "  vehicle_height: 2\n";
         yamlNode = app.client().target("http://localhost:8080/route").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);

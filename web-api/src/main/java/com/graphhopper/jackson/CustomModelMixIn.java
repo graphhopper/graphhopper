@@ -23,12 +23,24 @@ import java.util.Map;
 
 /**
  * With this approach we avoid the jackson annotations dependency in core. Another approach without duplication would
- * be a separate FlexModelDeserializer with an ObjectMapper with a SNAKE_CASE as property naming strategy.
+ * be a separate CustomModelDeserializer with an ObjectMapper with a SNAKE_CASE as property naming strategy.
  */
-interface FlexModelMixIn {
+interface CustomModelMixIn {
 
-    @JsonProperty("max_speed")
-    double getMaxSpeed();
+    @JsonProperty("vehicle_max_speed")
+    double getVehicleMaxSpeed();
+
+    @JsonProperty("vehicle_weight")
+    double getVehicleWeight();
+
+    @JsonProperty("vehicle_width")
+    double getVehicleWidth();
+
+    @JsonProperty("vehicle_height")
+    double getVehicleHeight();
+
+    @JsonProperty("vehicle_length")
+    double getVehicleLength();
 
     @JsonProperty("min_priority")
     double getMinPriority();

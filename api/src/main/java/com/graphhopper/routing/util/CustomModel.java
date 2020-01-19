@@ -22,7 +22,7 @@ import com.graphhopper.util.Helper;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FlexModel {
+public class CustomModel {
 
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
@@ -31,10 +31,9 @@ public class FlexModel {
     public final static double SPEED_CONV = 3.6;
     // required
     private String base;
-    private double maxSpeed;
     // optional:
+    private Double vehicleMaxSpeed, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
     private double maxPriority = 10;
-    private Double weight, width, height, length;
     // max_priority and max_speed have a significant influence on the min_weight estimate, i.e. on quality vs. speed for A* with beeline
     // it also limits possibility to prefer a road
     private double distanceFactor = 1;
@@ -43,7 +42,7 @@ public class FlexModel {
     private Map<String, Object> priorityMap = new HashMap<>();
     private Map<String, Object> delayMap = new HashMap<>();
 
-    public FlexModel() {
+    public CustomModel() {
     }
 
     public void setBase(String base) {
@@ -56,44 +55,44 @@ public class FlexModel {
         return base;
     }
 
-    public void setWeight(Double weight) {
-        this.weight = weight;
+    public void setVehicleWeight(Double vehicleWeight) {
+        this.vehicleWeight = vehicleWeight;
     }
 
-    public Double getWeight() {
-        return weight;
+    public Double getVehicleWeight() {
+        return vehicleWeight;
     }
 
-    public void setHeight(Double height) {
-        this.height = height;
+    public void setVehicleHeight(Double vehicleHeight) {
+        this.vehicleHeight = vehicleHeight;
     }
 
-    public Double getHeight() {
-        return height;
+    public Double getVehicleHeight() {
+        return vehicleHeight;
     }
 
-    public void setLength(Double length) {
-        this.length = length;
+    public void setVehicleLength(Double vehicleLength) {
+        this.vehicleLength = vehicleLength;
     }
 
-    public Double getLength() {
-        return length;
+    public Double getVehicleLength() {
+        return vehicleLength;
     }
 
-    public void setWidth(Double width) {
-        this.width = width;
+    public void setVehicleWidth(Double vehicleWidth) {
+        this.vehicleWidth = vehicleWidth;
     }
 
-    public Double getWidth() {
-        return width;
+    public Double getVehicleWidth() {
+        return vehicleWidth;
     }
 
-    public void setMaxSpeed(double maxSpeed) {
-        this.maxSpeed = maxSpeed;
+    public void setVehicleMaxSpeed(Double vehicleMaxSpeed) {
+        this.vehicleMaxSpeed = vehicleMaxSpeed;
     }
 
-    public double getMaxSpeed() {
-        return maxSpeed;
+    public Double getVehicleMaxSpeed() {
+        return vehicleMaxSpeed;
     }
 
     public void setMaxPriority(double maxPriority) {

@@ -15,10 +15,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.weighting.flex;
+package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.FlexModel;
+import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
@@ -26,18 +26,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class PriorityFlexConfig {
-    private final FlexModel config;
+public class PriorityCustomConfig {
+    private final CustomModel config;
     private List<ConfigMapEntry> priorityList = new ArrayList<>();
 
-    public PriorityFlexConfig(FlexModel flexModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
-        this.config = flexModel;
-        add(lookup, flexModel.getWeight(), "weight", MaxWeight.KEY);
-        add(lookup, flexModel.getWidth(), "width", MaxWidth.KEY);
-        add(lookup, flexModel.getHeight(), "height", MaxHeight.KEY);
-        add(lookup, flexModel.getLength(), "length", MaxLength.KEY);
+    public PriorityCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
+        this.config = customModel;
+        add(lookup, customModel.getVehicleWeight(), "vehicle_weight", MaxWeight.KEY);
+        add(lookup, customModel.getVehicleWidth(), "vehicle_width", MaxWidth.KEY);
+        add(lookup, customModel.getVehicleHeight(), "vehicle_height", MaxHeight.KEY);
+        add(lookup, customModel.getVehicleLength(), "vehicle_length", MaxLength.KEY);
 
-        for (Map.Entry<String, Object> entry : flexModel.getPriority().entrySet()) {
+        for (Map.Entry<String, Object> entry : customModel.getPriority().entrySet()) {
             if (!lookup.hasEncodedValue(entry.getKey()))
                 throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'priority'");
             Object value = entry.getValue();

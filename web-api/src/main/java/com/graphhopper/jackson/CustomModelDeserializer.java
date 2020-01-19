@@ -15,31 +15,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.weighting.flex;
+package com.graphhopper.jackson;
 
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.util.EdgeIteratorState;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.graphhopper.routing.util.CustomModel;
 
-import java.util.Arrays;
+import java.io.IOException;
 
-public final class EnumToValue implements ConfigMapEntry {
-    private final IntEncodedValue eev;
-    private final Double[] values;
-
-    EnumToValue(EnumEncodedValue eev, Double[] values) {
-        this.eev = eev;
-        this.values = values;
-    }
-
+public class CustomModelDeserializer extends JsonDeserializer<CustomModel> {
     @Override
-    public Double getValue(EdgeIteratorState iter, boolean reverse) {
-        int enumOrdinal = iter.get(eev);
-        return values[enumOrdinal];
-    }
-
-    @Override
-    public String toString() {
-        return eev.getName() + ": " + Arrays.toString(values);
+    public CustomModel deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        p.setCodec(new ObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE));
+        return p.readValueAs(CustomModel.class);
     }
 }

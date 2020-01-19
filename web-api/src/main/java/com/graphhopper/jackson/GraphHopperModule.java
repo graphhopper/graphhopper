@@ -22,7 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.MultiException;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.routing.util.FlexModel;
+import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.details.PathDetail;
@@ -33,7 +33,7 @@ public class GraphHopperModule extends SimpleModule {
 
     public GraphHopperModule() {
         setMixInAnnotation(GHRequest.class, GHRequestMixIn.class);
-        addDeserializer(FlexModel.class, new FlexModelDeserializer());
+        addDeserializer(CustomModel.class, new CustomModelDeserializer());
         addDeserializer(GHResponse.class, new GHResponseDeserializer());
         addDeserializer(PathWrapper.class, new PathWrapperDeserializer());
         addDeserializer(BBox.class, new BBoxDeserializer());

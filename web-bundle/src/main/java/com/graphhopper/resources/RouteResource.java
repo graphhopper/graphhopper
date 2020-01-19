@@ -22,7 +22,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.*;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.routing.util.FlexRequest;
+import com.graphhopper.routing.util.CustomRequest;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.InstructionList;
@@ -180,11 +180,11 @@ public class RouteResource {
 
         StopWatch sw = new StopWatch().start();
         GHResponse ghResponse = new GHResponse();
-        if (request instanceof FlexRequest) {
+        if (request instanceof CustomRequest) {
             if (!(graphHopper instanceof GraphHopper))
-                throw new IllegalStateException("FlexRequest requires GraphHopper base class");
-            request.setWeighting("flex").getHints().put("ch.disable", true);
-            ((GraphHopper) graphHopper).calcPaths(request, ghResponse, ((FlexRequest) request).getModel());
+                throw new IllegalStateException("CustomRequest requires GraphHopper base class");
+            request.setWeighting("custom").getHints().put("ch.disable", true);
+            ((GraphHopper) graphHopper).calcPaths(request, ghResponse, ((CustomRequest) request).getModel());
         } else {
             ghResponse = graphHopper.route(request);
         }
@@ -233,14 +233,14 @@ public class RouteResource {
     @Consumes({"text/x-yaml", "text/yaml", "application/x-yaml", "application/yaml"})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response doPost(String yaml, @Context HttpServletRequest httpReq) {
-        FlexRequest flexRequest;
+        CustomRequest customRequest;
         try {
-            flexRequest = yamlOM.readValue(yaml, FlexRequest.class);
+            customRequest = yamlOM.readValue(yaml, CustomRequest.class);
         } catch (Exception ex) {
             // TODO should we really provide this much details to API users?
             throw new IllegalArgumentException("Incorrect YAML: " + ex.getMessage(), ex);
         }
-        return doPost(flexRequest, httpReq);
+        return doPost(customRequest, httpReq);
     }
 
     private void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, GHRequest request) {

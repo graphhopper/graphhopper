@@ -15,12 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.weighting.flex;
+package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.util.FlexModel;
+import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
@@ -28,11 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class DelayFlexConfig {
+public class DelayCustomConfig {
     private List<ConfigMapEntry> delayList = new ArrayList<>();
 
-    public DelayFlexConfig(FlexModel flexModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
-        for (Map.Entry<String, Object> entry : flexModel.getDelay().entrySet()) {
+    public DelayCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
+        for (Map.Entry<String, Object> entry : customModel.getDelay().entrySet()) {
             Object value = entry.getValue();
             if (!lookup.hasEncodedValue(entry.getKey()))
                 throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'delay'");

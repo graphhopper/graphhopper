@@ -27,7 +27,7 @@ import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.util.FlexModel;
+import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
@@ -75,15 +75,15 @@ public class GraphHopperManaged implements Managed {
             }
         }
 
-        String flexModelLocation = configuration.get("graph.flex_models.directory", "");
-        if (!flexModelLocation.isEmpty()) {
+        String customModelLocation = configuration.get("graph.custom_models.directory", "");
+        if (!customModelLocation.isEmpty()) {
             ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
-            for (Map.Entry<String, File> entry : Helper.listFiles(new File(flexModelLocation), Arrays.asList("yaml", "yml"))) {
+            for (Map.Entry<String, File> entry : Helper.listFiles(new File(customModelLocation), Arrays.asList("yaml", "yml"))) {
                 try {
-                    FlexModel flexModel = yamlOM.readValue(entry.getValue(), FlexModel.class);
-                    graphHopper.putFlexModel(entry.getKey(), flexModel);
+                    CustomModel customModel = yamlOM.readValue(entry.getValue(), CustomModel.class);
+                    graphHopper.putCustomModel(entry.getKey(), customModel);
                 } catch (Exception ex) {
-                    throw new RuntimeException("Cannot flex_model from " + entry.getValue(), ex);
+                    throw new RuntimeException("Cannot custom_model from " + entry.getValue(), ex);
                 }
             }
         }

@@ -128,7 +128,7 @@ public class GraphHopper implements GraphHopperAPI {
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
-    private Map<String, FlexModel> importFlexModels = new HashMap<>();
+    private Map<String, CustomModel> importCustomModels = new HashMap<>();
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -173,8 +173,8 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public GraphHopper putFlexModel(String name, FlexModel flexModel) {
-        importFlexModels.put(name, flexModel);
+    public GraphHopper putCustomModel(String name, CustomModel customModel) {
+        importCustomModels.put(name, customModel);
         return this;
     }
 
@@ -844,14 +844,14 @@ public class GraphHopper implements GraphHopperAPI {
             }
         }
 
-        for (Map.Entry<String, FlexModel> entry : importFlexModels.entrySet()) {
+        for (Map.Entry<String, CustomModel> entry : importCustomModels.entrySet()) {
             if (!getEncodingManager().hasEncoder(entry.getValue().getBase()))
-                throw new IllegalArgumentException("For the flex_model " + entry.getKey() + " the specified base " +
+                throw new IllegalArgumentException("For the custom_model " + entry.getKey() + " the specified base " +
                         entry.getValue().getBase() + " is required in the graph.flag_encoders list");
             FlagEncoder baseEncoder = getEncodingManager().getEncoder(entry.getValue().getBase());
-            Weighting weighting = new FlexModelWeighting("flex|" + entry.getKey(), entry.getValue(),
+            Weighting weighting = new CustomWeighting("custom|" + entry.getKey(), entry.getValue(),
                     baseEncoder, encodingManager, encodedValueFactory);
-            // TODO use edgeBased if flexModel says so
+            // TODO use edgeBased if customModel says so
             chFactoryDecorator.addCHProfile(CHProfile.nodeBased(weighting));
         }
     }
@@ -871,9 +871,9 @@ public class GraphHopper implements GraphHopperAPI {
             }
         }
 
-        for (Map.Entry<String, FlexModel> entry : importFlexModels.entrySet()) {
+        for (Map.Entry<String, CustomModel> entry : importCustomModels.entrySet()) {
             FlagEncoder baseEncoder = getEncodingManager().getEncoder(entry.getValue().getBase());
-            Weighting weighting = new FlexModelWeighting("flex|" + entry.getKey(), entry.getValue(),
+            Weighting weighting = new CustomWeighting("custom|" + entry.getKey(), entry.getValue(),
                     baseEncoder, encodingManager, encodedValueFactory);
             lmFactoryDecorator.addWeighting(weighting);
         }
@@ -962,17 +962,17 @@ public class GraphHopper implements GraphHopperAPI {
      * @return the weighting to be used for route calculation
      * @see HintsMap
      */
-    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph, FlexModel flexModel) {
+    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph, CustomModel customModel) {
         String weightingStr = toLowerCase(hintsMap.getWeighting());
         Weighting weighting = null;
 
-        if ("flex".equalsIgnoreCase(weightingStr)) {
-            if (flexModel == null) {
-                flexModel = importFlexModels.get(hintsMap.getVehicle());
-                if (flexModel == null)
-                    throw new IllegalStateException("flex_model cannot be null for weighting=" + weightingStr + " and vehicle=" + hintsMap.getVehicle());
+        if ("custom".equalsIgnoreCase(weightingStr)) {
+            if (customModel == null) {
+                customModel = importCustomModels.get(hintsMap.getVehicle());
+                if (customModel == null)
+                    throw new IllegalStateException("custom_model cannot be null for weighting=" + weightingStr + " and vehicle=" + hintsMap.getVehicle());
             }
-            weighting = new FlexModelWeighting("flex|" + encoder.toString(), flexModel, encoder, encodingManager, encodedValueFactory);
+            weighting = new CustomWeighting("custom|" + encoder.toString(), customModel, encoder, encodingManager, encodedValueFactory);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {
@@ -1025,7 +1025,7 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * This method calculates the alternative path list using the low level Path objects.
      */
-    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp, FlexModel flexModel) {
+    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp, CustomModel customModel) {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
@@ -1124,7 +1124,7 @@ public class GraphHopper implements GraphHopperAPI {
                 } else {
                     checkNonChMaxWaypointDistance(points);
                     queryGraph = QueryGraph.lookup(ghStorage, qResults);
-                    weighting = createWeighting(hints, encoder, queryGraph, flexModel);
+                    weighting = createWeighting(hints, encoder, queryGraph, customModel);
                 }
                 ghRsp.addDebugInfo("tmode:" + tMode.toString());
 

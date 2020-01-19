@@ -21,11 +21,11 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlexModel;
+import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.weighting.flex.AverageSpeedFlexConfig;
-import com.graphhopper.routing.weighting.flex.DelayFlexConfig;
-import com.graphhopper.routing.weighting.flex.PriorityFlexConfig;
+import com.graphhopper.routing.weighting.custom.AverageSpeedCustomConfig;
+import com.graphhopper.routing.weighting.custom.DelayCustomConfig;
+import com.graphhopper.routing.weighting.custom.PriorityCustomConfig;
 import com.graphhopper.util.EdgeIteratorState;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -41,7 +41,7 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
  * return weight
  * </pre>
  */
-public class FlexModelWeighting implements Weighting {
+public class CustomWeighting implements Weighting {
 
     private FlagEncoder deprecatedFlagEncoder;
     private BooleanEncodedValue baseVehicleProfileAccessEnc;
@@ -51,30 +51,28 @@ public class FlexModelWeighting implements Weighting {
     private final double maxPriority;
     private double maxSpeed;
     private double distanceFactor;
-    private AverageSpeedFlexConfig speedConfig;
-    private DelayFlexConfig delayConfig;
-    private PriorityFlexConfig priorityConfig;
+    private AverageSpeedCustomConfig speedConfig;
+    private DelayCustomConfig delayConfig;
+    private PriorityCustomConfig priorityConfig;
 
-    public FlexModelWeighting(String name, FlexModel flexModel, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, EncodedValueFactory factory) {
+    public CustomWeighting(String name, CustomModel customModel, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, EncodedValueFactory factory) {
         this.name = name;
         deprecatedFlagEncoder = baseFlagEncoder;
         baseVehicleProfileAccessEnc = baseFlagEncoder.getAccessEnc();
-        baseVehicleProfile = flexModel.getBase();
-        maxSpeed = flexModel.getMaxSpeed() / FlexModel.SPEED_CONV;
-        if (maxSpeed < 2) {
-            maxSpeed = baseFlagEncoder.getMaxSpeed();
-            flexModel.setMaxSpeed(maxSpeed);
-        }
+        baseVehicleProfile = customModel.getBase();
+        if (customModel.getVehicleMaxSpeed() == null || customModel.getVehicleMaxSpeed() < 2)
+            customModel.setVehicleMaxSpeed(baseFlagEncoder.getMaxSpeed());
+        maxSpeed = customModel.getVehicleMaxSpeed() / CustomModel.SPEED_CONV;
 
-        speedConfig = new AverageSpeedFlexConfig(flexModel, lookup, factory);
-        delayConfig = new DelayFlexConfig(flexModel, lookup, factory);
-        priorityConfig = new PriorityFlexConfig(flexModel, lookup, factory);
+        speedConfig = new AverageSpeedCustomConfig(customModel, lookup, factory);
+        delayConfig = new DelayCustomConfig(customModel, lookup, factory);
+        priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
 
-        distanceFactor = flexModel.getDistanceFactor();
+        distanceFactor = customModel.getDistanceFactor();
         if (distanceFactor < 0)
             throw new IllegalArgumentException("distance_factor cannot be negative");
 
-        maxPriority = flexModel.getMaxPriority();
+        maxPriority = customModel.getMaxPriority();
         if (maxPriority <= 0)
             throw new IllegalArgumentException("min_priority cannot be 0 or negative");
     }
@@ -115,7 +113,7 @@ public class FlexModelWeighting implements Weighting {
             throw new IllegalArgumentException("Speed cannot be negative");
 
         double delay = delayConfig.calcDelay(edge, reverse, prevOrNextEdgeId);
-        return distance / speed * FlexModel.SPEED_CONV + delay;
+        return distance / speed * CustomModel.SPEED_CONV + delay;
     }
 
     @Override

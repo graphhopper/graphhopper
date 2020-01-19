@@ -465,7 +465,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testFlexQuery() {
+    public void testCustomWeightingJson() {
         String jsonQuery = "{" +
                 " \"points\": [[1.518946,42.531453],[1.54006,42.511178]]," +
                 " \"model\": { \"base\": \"car\" }" +
@@ -481,7 +481,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testFlexYamlQuery() {
+    public void testCustomWeightingYaml() {
         String yamlQuery = "points: [[1.518946,42.531453], [1.54006,42.511178]]\n" +
                 "model:\n" +
                 "  base: car\n";
@@ -493,7 +493,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testFlexCustomWeight() {
+    public void testCustomWeighting() {
         String yamlQuery = "points: [[1.529106,42.506567], [1.54006,42.511178]]\n" +
                 "model:\n" +
                 "  base: car\n" +
@@ -516,7 +516,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testFlexAvoidTunnels() {
+    public void testCustomWeightingAvoidTunnels() {
         String yamlQuery = "points: [[1.533365, 42.506211], [1.523924, 42.520605]]\n" +
                 "model:\n" +
                 "  base: car\n" +
@@ -529,7 +529,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testFlexSimplisticWheelchair() {
+    public void testCustomWeightingSimplisticWheelchair() {
         String yamlQuery = "points: [[1.540875,42.510672], [1.54212,42.511131]]\n" +
                 "model:\n" +
                 "  base: foot\n" +
