@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
@@ -174,7 +175,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
                 if (!accept(iter, prevEdgeId))
                     continue;
 
-                double tmpWeight = !outEdgeFilter.accept(iter) ? Double.POSITIVE_INFINITY : (weighting.calcWeight(iter, false, prevEdgeId) + weights[currNode]);
+                double tmpWeight = !outEdgeFilter.accept(iter)
+                        ? Double.POSITIVE_INFINITY
+                        : (AbstractWeighting.calcWeightWithTurnWeight(weighting, iter, false, prevEdgeId) + weights[currNode]);
                 if (Double.isInfinite(tmpWeight))
                     continue;
 

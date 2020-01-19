@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -42,7 +43,7 @@ public class TimeDetails extends AbstractPathDetailsBuilder {
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         if (edge.getEdge() != prevEdgeId) {
-            time = weighting.calcMillis(edge, false, prevEdgeId);
+            time = AbstractWeighting.calcMillisWithTurnMillis(weighting, edge, false, prevEdgeId);
             prevEdgeId = edge.getEdge();
             return true;
         }

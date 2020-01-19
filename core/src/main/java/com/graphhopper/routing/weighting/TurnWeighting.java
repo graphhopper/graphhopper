@@ -81,9 +81,8 @@ public class TurnWeighting implements Weighting {
         return calcWeight(edgeState, reverse, NO_EDGE);
     }
 
-    @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+        double weight = AbstractWeighting.calcWeightWithTurnWeight(superWeighting, edgeState, reverse, prevOrNextEdgeId);
         if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
             return weight;
 
@@ -99,9 +98,8 @@ public class TurnWeighting implements Weighting {
         return calcMillis(edgeState, reverse, NO_EDGE);
     }
 
-    @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        long millis = superWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+        long millis = superWeighting.calcEdgeMillis(edgeState, reverse);
         if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
             return millis;
 

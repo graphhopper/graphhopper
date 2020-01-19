@@ -51,35 +51,32 @@ public abstract class AbstractWeighting implements Weighting {
         this.turnCostProvider = turnCostProvider;
     }
 
-    @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        return calcWeightWithTurnWeight(this, turnCostProvider, edgeState, reverse, prevOrNextEdgeId);
-    }
-
     /**
      * In most cases subclasses should only override this method to change the edge-weight. The turn cost handling
      * should normally be changed by passing another {@link TurnCostProvider} implementation to the constructor instead.
      */
     public abstract double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
-    public static double calcWeightWithTurnWeight(Weighting weighting, TurnCostProvider turnCostProvider, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+    /**
+     * Calculates the weight of a given edge like {@link #calcEdgeWeight} and adds the transition
+     * cost (the turn weight) associated with transitioning from/to the edge with ID prevOrNextEdgeId.
+     *
+     * @param prevOrNextEdgeId if reverse is false this has to be the previous edgeId, if true it
+     *                         has to be the next edgeId in the direction from start to end.
+     */
+    public static double calcWeightWithTurnWeight(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         final double edgeWeight = weighting.calcEdgeWeight(edgeState, reverse);
         if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
             return edgeWeight;
         }
         final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
         double turnWeight = reverse
-                ? turnCostProvider.calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
-                : turnCostProvider.calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+                ? weighting.calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                : weighting.calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
         return edgeWeight + turnWeight;
     }
 
-    @Override
-    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        return calcMillisWithTurnMillis(this, turnCostProvider, edgeState, reverse, prevOrNextEdgeId);
-    }
-
-    public static long calcMillisWithTurnMillis(Weighting weighting, TurnCostProvider turnCostProvider, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+    public static long calcMillisWithTurnMillis(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         long edgeMillis = weighting.calcEdgeMillis(edgeState, reverse);
         if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
             return edgeMillis;
@@ -88,8 +85,8 @@ public abstract class AbstractWeighting implements Weighting {
         // todo: why no first/last orig edge here as in calcWeight ?
         final int origEdgeId = edgeState.getEdge();
         long turnMillis = reverse
-                ? turnCostProvider.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
-                : turnCostProvider.calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+                ? weighting.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                : weighting.calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
         return edgeMillis + turnMillis;
     }
 
@@ -116,12 +113,12 @@ public abstract class AbstractWeighting implements Weighting {
         return (long) (edgeState.getDistance() * 3600 / speed);
     }
 
-//    @Override
+    @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
         return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 
-//    @Override
+    @Override
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
         return turnCostProvider.calcTurnMillis(inEdge, viaNode, outEdge);
     }

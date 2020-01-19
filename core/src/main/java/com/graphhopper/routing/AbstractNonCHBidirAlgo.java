@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
@@ -218,7 +219,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (!access) {
             return Double.POSITIVE_INFINITY;
         }
-        return weighting.calcWeight(iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
+        return AbstractWeighting.calcWeightWithTurnWeight(weighting, iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
     }
 
     @Override

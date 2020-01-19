@@ -819,11 +819,6 @@ public class RoutingAlgorithmTest {
 
             @Override
             public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-                return calcWeight(edgeState, reverse, NO_EDGE);
-            }
-
-            @Override
-            public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
                 int adj = edgeState.getAdjNode();
                 int base = edgeState.getBaseNode();
                 if (reverse) {
@@ -845,12 +840,17 @@ public class RoutingAlgorithmTest {
 
             @Override
             public final long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-                return calcMillis(edgeState, reverse, NO_EDGE);
+                return tmpW.calcEdgeMillis(edgeState, reverse);
             }
 
             @Override
-            public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-                return tmpW.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                return tmpW.calcTurnWeight(inEdge, viaNode, outEdge);
+            }
+
+            @Override
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                return tmpW.calcTurnMillis(inEdge, viaNode, outEdge);
             }
 
             @Override

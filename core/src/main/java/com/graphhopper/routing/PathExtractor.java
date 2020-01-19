@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
@@ -78,7 +79,7 @@ public class PathExtractor {
     protected void onEdge(int edge, int adjNode, int prevEdge) {
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
         path.addDistance(edgeState.getDistance());
-        path.addTime(weighting.calcMillis(edgeState, false, prevEdge));
+        path.addTime(AbstractWeighting.calcMillisWithTurnMillis(weighting, edgeState, false, prevEdge));
         path.addEdge(edge);
     }
 

@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
@@ -98,7 +99,9 @@ public class AStar extends AbstractRoutingAlgorithm {
                     continue;
 
                 // todo: for #1776/#1835 move the access check into weighting
-                double tmpWeight = !outEdgeFilter.accept(iter) ? Double.POSITIVE_INFINITY : (weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightOfVisitedPath);
+                double tmpWeight = !outEdgeFilter.accept(iter)
+                        ? Double.POSITIVE_INFINITY
+                        : (AbstractWeighting.calcWeightWithTurnWeight(weighting, iter, false, currEdge.edge) + currEdge.weightOfVisitedPath);
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
                 }

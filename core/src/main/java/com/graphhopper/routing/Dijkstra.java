@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
@@ -79,7 +80,9 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                     continue;
 
                 // todo: for #1776/#1835 move the access check into weighting
-                double tmpWeight = !outEdgeFilter.accept(iter) ? Double.POSITIVE_INFINITY : (weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight);
+                double tmpWeight = !outEdgeFilter.accept(iter)
+                        ? Double.POSITIVE_INFINITY
+                        : (AbstractWeighting.calcWeightWithTurnWeight(weighting, iter, false, currEdge.edge) + currEdge.weight);
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
                 }

@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -113,7 +114,7 @@ public class BidirPathExtractor {
     protected void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
         path.addDistance(edgeState.getDistance());
-        path.addTime(weighting.calcMillis(edgeState, reverse, prevOrNextEdge));
+        path.addTime(AbstractWeighting.calcMillisWithTurnMillis(weighting, edgeState, reverse, prevOrNextEdge));
         path.addEdge(edge);
     }
 
