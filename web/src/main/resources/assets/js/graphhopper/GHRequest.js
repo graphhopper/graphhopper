@@ -125,7 +125,7 @@ GHRequest.prototype.initVehicle = function (vehicle) {
     this.api_params.vehicle = vehicle;
     var featureSet = this.features[vehicle];
     this.api_params.elevation = featureSet && featureSet.elevation;
-    this.api_params.turn_costs = this.hasTCSupport();
+    this.hasTCSupport();
 };
 
 GHRequest.prototype.hasElevation = function () {
