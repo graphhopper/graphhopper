@@ -17,20 +17,20 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionCH;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.SimpleBooleanEncodedValue;
-import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllCHEdgesIterator;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -41,8 +41,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static com.graphhopper.util.Parameters.Routing.HEADING_PENALTY;
 import static org.junit.Assert.*;
 
 public class NodeBasedNodeContractorTest {
@@ -318,7 +316,7 @@ public class NodeBasedNodeContractorTest {
         Dijkstra dikstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
         Path dijkstraPath = dikstra.calcPath(from, to);
 
-        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(lg, new CHWeighting(weighting));
+        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(new RoutingCHGraphImpl(lg, weighting));
         Path chPath = ch.calcPath(from, to);
         assertEquals(dijkstraPath.calcNodes(), chPath.calcNodes());
         assertEquals(dijkstraPath.getDistance(), chPath.getDistance(), 1.e-6);
@@ -367,7 +365,7 @@ public class NodeBasedNodeContractorTest {
         Dijkstra dikstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
         Path dijkstraPath = dikstra.calcPath(from, to);
 
-        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(lg, new CHWeighting(weighting));
+        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(new RoutingCHGraphImpl(lg, weighting));
         Path chPath = ch.calcPath(from, to);
         assertEquals(dijkstraPath.calcNodes(), chPath.calcNodes());
         assertEquals(dijkstraPath.getDistance(), chPath.getDistance(), 1.e-6);
@@ -398,65 +396,6 @@ public class NodeBasedNodeContractorTest {
         nodeContractor.contractNode(0);
         nodeContractor.contractNode(3);
         checkNoShortcuts(pg);
-    }
-
-    @Test
-    public void routingWithHeading_fails() {
-        // heading does not work properly with CH!
-        // 3 - 2 - x - 0 - 1 - 4
-        //     |           |
-        //     5 - - - - - 6
-        graph.edge(3, 2, 10, true);
-        graph.edge(2, 0, 10, true);
-        graph.edge(0, 1, 10, true);
-        graph.edge(1, 4, 10, true);
-        graph.edge(2, 5, 10, true);
-        graph.edge(5, 6, 10, true);
-        graph.edge(6, 1, 10, true);
-        updateDistancesFor(graph, 3, 0.02, 0.00);
-        updateDistancesFor(graph, 2, 0.02, 0.01);
-        updateDistancesFor(graph, 0, 0.02, 0.03);
-        updateDistancesFor(graph, 1, 0.02, 0.04);
-        updateDistancesFor(graph, 4, 0.02, 0.05);
-        updateDistancesFor(graph, 5, 0.01, 0.01);
-        updateDistancesFor(graph, 6, 0.01, 0.01);
-
-        graph.freeze();
-        setMaxLevelOnAllNodes(pg);
-
-        // perform CH contraction
-        Weighting weighting = new FastestWeighting(encoder, new PMap().put(HEADING_PENALTY, Double.POSITIVE_INFINITY));
-        PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
-        contractInOrder(pg, 0, 1, 2, 3, 4, 5, 6);
-
-        // build query graph
-        LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
-        locationIndex.prepareIndex();
-
-        QueryGraph chQueryGraph = QueryGraph.lookup(lg, locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES));
-
-        QueryGraph queryGraph = QueryGraph.lookup(graph, locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES));
-
-        // without heading
-        {
-            DijkstraBidirectionCH ch = new DijkstraBidirectionCH(chQueryGraph, new CHWeighting(weighting));
-            Path chPath = ch.calcPath(7, 3);
-            assertEquals(IntArrayList.from(7, 2, 3), chPath.calcNodes());
-        }
-        // with heading
-        {
-            queryGraph.enforceHeading(7, 90, false);
-            Dijkstra dijkstra = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED);
-            Path path = dijkstra.calcPath(7, 3);
-            assertEquals(IntArrayList.from(7, 0, 1, 6, 5, 2, 3), path.calcNodes());
-
-            chQueryGraph.enforceHeading(7, 90, false);
-            DijkstraBidirectionCH ch = new DijkstraBidirectionCH(chQueryGraph, new CHWeighting(weighting));
-            Path chPath = ch.calcPath(7, 3);
-            // the route takes a u-turn at node 1 and 'skips' the virtual node when going from 0 to 3 (because it takes
-            // the shortcut from 1 to 2), which both should not be
-            assertEquals(IntArrayList.from(7, 0, 1, 0, 2, 3), chPath.calcNodes());
-        }
     }
 
     private void contractInOrder(int... nodeIds) {

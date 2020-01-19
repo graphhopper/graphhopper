@@ -18,18 +18,14 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Test;
 
 import static com.graphhopper.routing.RoutingAlgorithmTest.initTestStorage;
@@ -122,37 +118,6 @@ public class DijkstraOneToManyTest {
         // use SPT
         p = algo.calcPath(0, 2);
         assertEquals(IntArrayList.from(0, 1, 2), p.calcNodes());
-    }
-
-    @Test
-    public void testDifferentEdgeFilter() {
-        GraphHopperStorage g = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(new FastestWeighting(carEncoder))).create();
-        g.edge(4, 3, 10, true);
-        g.edge(3, 6, 10, true);
-
-        g.edge(4, 5, 10, true);
-        g.edge(5, 6, 10, true);
-
-        DijkstraOneToMany algo = createAlgo(g);
-        algo.setEdgeFilter(new EdgeFilter() {
-            @Override
-            public boolean accept(EdgeIteratorState iter) {
-                return iter.getAdjNode() != 5;
-            }
-        });
-        Path p = algo.calcPath(4, 6);
-        assertEquals(IntArrayList.from(4, 3, 6), p.calcNodes());
-
-        // important call!
-        algo.clear();
-        algo.setEdgeFilter(new EdgeFilter() {
-            @Override
-            public boolean accept(EdgeIteratorState iter) {
-                return iter.getAdjNode() != 3;
-            }
-        });
-        p = algo.calcPath(4, 6);
-        assertEquals(IntArrayList.from(4, 5, 6), p.calcNodes());
     }
 
     private void initGraph(Graph g) {

@@ -30,6 +30,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
+import java.util.PriorityQueue;
+
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
  * bidirectional dijkstra is far more efficient than a single direction one. The same does not hold
@@ -56,7 +58,7 @@ import com.graphhopper.util.Parameters;
  * @author Peter Karich
  * @author jansoe
  */
-public class AStarBidirection extends AbstractBidirAlgo implements RecalculationHook {
+public class AStarBidirection extends AbstractNonCHBidirAlgo implements RecalculationHook {
     private ConsistentWeightApproximator weightApprox;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
@@ -127,8 +129,16 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
 
     @Override
     public void afterHeuristicChange(boolean forward, boolean backward) {
-        if (forward) {
+        updatePriorityQueues(pqOpenSetFrom, pqOpenSetTo, weightApprox, forward, backward);
+    }
 
+    @Override
+    public String getName() {
+        return Parameters.Algorithms.ASTAR_BI + "|" + weightApprox;
+    }
+
+    public static void updatePriorityQueues(PriorityQueue<SPTEntry> pqOpenSetFrom, PriorityQueue<SPTEntry> pqOpenSetTo, ConsistentWeightApproximator weightApprox, boolean forward, boolean backward) {
+        if (forward) {
             // update PQ due to heuristic change (i.e. weight changed)
             if (!pqOpenSetFrom.isEmpty()) {
                 // copy into temporary array to avoid pointer change of PQ
@@ -156,10 +166,5 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
                 }
             }
         }
-    }
-
-    @Override
-    public String getName() {
-        return Parameters.Algorithms.ASTAR_BI + "|" + weightApprox;
     }
 }

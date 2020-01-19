@@ -167,14 +167,14 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
         while (true) {
             visitedNodes++;
-            EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
+            EdgeIterator iter = edgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
                 int adjNode = iter.getAdjNode();
                 int prevEdgeId = edgeIds[adjNode];
                 if (!accept(iter, prevEdgeId))
                     continue;
 
-                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + weights[currNode];
+                double tmpWeight = !outEdgeFilter.accept(iter) ? Double.POSITIVE_INFINITY : (weighting.calcWeight(iter, false, prevEdgeId) + weights[currNode]);
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
