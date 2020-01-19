@@ -19,8 +19,8 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.BalancedWeightApproximator;
+import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -29,6 +29,8 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+
+import java.util.PriorityQueue;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
@@ -56,7 +58,7 @@ import com.graphhopper.util.Parameters;
  * @author Peter Karich
  * @author jansoe
  */
-public class AStarBidirection extends AbstractBidirAlgo implements RecalculationHook {
+public class AStarBidirection extends AbstractNonCHBidirAlgo implements RecalculationHook {
     private BalancedWeightApproximator weightApprox;
     double stoppingCriterionOffset;
 
@@ -79,7 +81,7 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
         if (finishedFrom || finishedTo)
             return true;
 
-        return currFrom.weight + currTo.weight >= this.bestWeight + stoppingCriterionOffset;
+        return currFrom.weight + currTo.weight >= bestWeight + stoppingCriterionOffset;
     }
 
     @Override
@@ -123,8 +125,16 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
 
     @Override
     public void afterHeuristicChange(boolean forward, boolean backward) {
-        if (forward) {
+        updatePriorityQueues(pqOpenSetFrom, pqOpenSetTo, weightApprox, forward, backward);
+    }
 
+    @Override
+    public String getName() {
+        return Parameters.Algorithms.ASTAR_BI + "|" + weightApprox;
+    }
+
+    public static void updatePriorityQueues(PriorityQueue<SPTEntry> pqOpenSetFrom, PriorityQueue<SPTEntry> pqOpenSetTo, BalancedWeightApproximator weightApprox, boolean forward, boolean backward) {
+        if (forward) {
             // update PQ due to heuristic change (i.e. weight changed)
             if (!pqOpenSetFrom.isEmpty()) {
                 // copy into temporary array to avoid pointer change of PQ
@@ -152,10 +162,5 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
                 }
             }
         }
-    }
-
-    @Override
-    public String getName() {
-        return Parameters.Algorithms.ASTAR_BI + "|" + weightApprox;
     }
 }

@@ -122,7 +122,7 @@ public class PrepareLandmarksTest {
         assertEquals(weight1_47, store.getToWeight(1, 47));
 
         // prefer the landmarks before and behind the goal
-        int activeLandmarkIndices[] = new int[activeLM];
+        int[] activeLandmarkIndices = new int[activeLM];
         Arrays.fill(activeLandmarkIndices, -1);
         store.chooseActiveLandmarks(27, 47, activeLandmarkIndices, false);
         List<Integer> list = new ArrayList<>();

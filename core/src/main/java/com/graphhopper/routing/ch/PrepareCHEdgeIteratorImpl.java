@@ -21,7 +21,6 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CHEdgeIterator;
-import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
@@ -188,33 +187,4 @@ public class PrepareCHEdgeIteratorImpl implements PrepareCHEdgeExplorer, Prepare
         assert chIterator != null : "You need to call setBaseNode() before using the iterator";
     }
 
-    public static class ShortcutFilter {
-        private final boolean fwd;
-        private final boolean bwd;
-
-        private ShortcutFilter(boolean fwd, boolean bwd) {
-            this.fwd = fwd;
-            this.bwd = bwd;
-        }
-
-        public static ShortcutFilter outEdges() {
-            return new ShortcutFilter(true, false);
-        }
-
-        public static ShortcutFilter inEdges() {
-            return new ShortcutFilter(false, true);
-        }
-
-        public static ShortcutFilter allEdges() {
-            return new ShortcutFilter(true, true);
-        }
-
-        public boolean accept(CHEdgeIteratorState edgeState) {
-            // c.f. comment in DefaultEdgeFilter
-            if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
-                return edgeState.getFwdAccess() || edgeState.getBwdAccess();
-            }
-            return fwd && edgeState.getFwdAccess() || bwd && edgeState.getBwdAccess();
-        }
-    }
 }

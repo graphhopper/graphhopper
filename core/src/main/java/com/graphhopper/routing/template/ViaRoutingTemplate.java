@@ -136,7 +136,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             List<Path> tmpPathList;
             if (!directions.isEmpty()) {
                 assert ghRequest.getCurbsides().size() == directions.size();
-                if (!(algo instanceof AbstractBidirAlgo)) {
+                if (!(algo instanceof BidirRoutingAlgorithm)) {
                     throw new IllegalArgumentException("To make use of the " + Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
                 } else {
                     final String fromCurbside = ghRequest.getCurbsides().get(placeIndex - 1);
@@ -161,7 +161,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                         }
                     }
                     // todo: enable curbside feature for alternative routes as well ?
-                    tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
+                    tmpPathList = Collections.singletonList(((BidirRoutingAlgorithm) algo)
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
                 }
             } else {

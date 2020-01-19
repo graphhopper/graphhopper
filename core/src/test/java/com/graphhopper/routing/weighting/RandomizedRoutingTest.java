@@ -125,7 +125,7 @@ public class RandomizedRoutingTest {
     }
 
     private RoutingAlgorithm createAlgo() {
-        return createAlgo(prepareCH ? chGraph : graph);
+        return createAlgo(graph);
     }
 
     private RoutingAlgorithm createAlgo(Graph graph) {
@@ -137,9 +137,9 @@ public class RandomizedRoutingTest {
             case ASTAR_BIDIR:
                 return new AStarBidirection(graph, weighting, traversalMode);
             case CH_DIJKSTRA:
-                return pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
+                return pch.getRoutingAlgorithmFactory().createAlgo(graph instanceof QueryGraph ? graph : chGraph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
             case CH_ASTAR:
-                return pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
+                return pch.getRoutingAlgorithmFactory().createAlgo(graph instanceof QueryGraph ? graph : chGraph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM_BIDIR:
                 AStarBidirection astarbi = new AStarBidirection(graph, weighting, traversalMode);
                 return lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
@@ -293,7 +293,6 @@ public class RandomizedRoutingTest {
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             List<GHPoint> points = getRandomPoints(2, index, rnd);
-            System.out.println("List<GHPoint> points = Arrays.asList(new GHPoint(" + points.get(0).getLat() + ", " + points.get(1).getLat() + ", " + "new GHPoint(" + points.get(1).getLat() + ", " + points.get(1).getLon() + ")");
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
 
