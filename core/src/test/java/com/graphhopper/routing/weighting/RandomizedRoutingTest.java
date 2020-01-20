@@ -50,7 +50,7 @@ public class RandomizedRoutingTest {
     private GraphHopperStorage graph;
     private List<CHProfile> chProfiles;
     private CHGraph chGraph;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private Weighting weighting;
     private EncodingManager encodingManager;
     private PrepareContractionHierarchies pch;
@@ -311,41 +311,6 @@ public class RandomizedRoutingTest {
         if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
-    }
-
-    @Test
-    public void fail1() {
-        run(39457616822163L);
-    }
-
-    @Test
-    public void fail2() {
-        run(39386680060285L);
-    }
-
-    @Test
-    public void fail3() {
-        runWithQueryGraph(39361165106748L);
-    }
-
-    @Test
-    public void fail4() {
-        run(39316239491387L);
-    }
-
-    @Test
-    public void fail5() {
-        run(39449878563251L);
-    }
-
-    @Test
-    public void fail6() {
-        run(39315090735050L);
-    }
-
-    @Test
-    public void fail7() { // fails with CarFlagEncoder
-        run(337586249813919L);
     }
 
     private List<GHPoint> getRandomPoints(int numPoints, LocationIndex index, Random rnd) {

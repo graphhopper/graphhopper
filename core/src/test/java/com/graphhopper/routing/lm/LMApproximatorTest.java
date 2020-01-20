@@ -58,11 +58,6 @@ public class LMApproximatorTest {
         run(seed);
     }
 
-    @Test
-    public void fail7() {
-        run(337586249813919L);
-    }
-
     private void run(long seed) {
         Directory dir = new RAMDirectory();
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
