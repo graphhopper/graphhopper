@@ -50,7 +50,6 @@ import java.util.Random;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Helper.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;

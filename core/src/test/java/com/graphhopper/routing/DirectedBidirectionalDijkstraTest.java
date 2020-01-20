@@ -61,7 +61,7 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private Weighting createWeighting(double defaultUTurnCosts) {
-        return new TurnWeighting(new FastestWeighting(encoder), turnCostStorage, defaultUTurnCosts);
+        return new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, defaultUTurnCosts));
     }
 
     @Test
