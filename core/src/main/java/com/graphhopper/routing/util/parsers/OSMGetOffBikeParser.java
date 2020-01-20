@@ -5,7 +5,6 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.GetOffBike;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
