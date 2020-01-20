@@ -124,6 +124,11 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
     }
 
     @Override
+    void setToDataStructures(AbstractBidirAlgo other) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void afterHeuristicChange(boolean forward, boolean backward) {
         updatePriorityQueues(pqOpenSetFrom, pqOpenSetTo, weightApprox, forward, backward);
     }

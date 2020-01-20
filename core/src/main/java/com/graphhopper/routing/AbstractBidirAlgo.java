@@ -246,6 +246,17 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         return visitedCountFrom + visitedCountTo;
     }
 
+    void setToDataStructures(AbstractBidirAlgo other) {
+        to = other.to;
+        toInEdge = other.toInEdge;
+        pqOpenSetTo = other.pqOpenSetTo;
+        bestWeightMapTo = other.bestWeightMapTo;
+        finishedTo = other.finishedTo;
+        currTo = other.currTo;
+        visitedCountTo = other.visitedCountTo;
+        // inEdgeExplorer
+    }
+
     @Override
     public void setMaxVisitedNodes(int numberOfNodes) {
         this.maxVisitedNodes = numberOfNodes;
