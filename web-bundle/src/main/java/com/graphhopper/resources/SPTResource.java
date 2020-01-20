@@ -5,6 +5,7 @@ import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.NoTurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
@@ -77,7 +78,8 @@ public class SPTResource {
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
 
-        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph);
+        // todonow: /spt with turn costs ?
+        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph, new NoTurnCostProvider());
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {

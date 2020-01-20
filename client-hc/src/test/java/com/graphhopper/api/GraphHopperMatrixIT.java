@@ -258,9 +258,9 @@ public class GraphHopperMatrixIT {
                     assertEquals(867000, time, 20000);
                     assertTrue(connected);
                 } else if (i == 3 && j == 1) {
-                    assertEquals(1073, weight, 15);
+                    assertEquals(1073, weight, 20);
                     assertEquals(13856, distance, 100);
-                    assertEquals(864000, time, 15000);
+                    assertEquals(864000, time, 20000);
                     assertTrue(connected);
                 } else {
                     assertEquals(Double.MAX_VALUE, weight, 1.e-3);

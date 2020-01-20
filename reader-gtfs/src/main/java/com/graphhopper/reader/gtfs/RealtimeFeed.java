@@ -31,6 +31,7 @@ import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -246,6 +247,11 @@ public class RealtimeFeed {
 
             @Override
             public TurnCostStorage getTurnCostStorage() {
+                throw new RuntimeException();
+            }
+
+            @Override
+            public Weighting wrapWeighting(Weighting weighting) {
                 throw new RuntimeException();
             }
 

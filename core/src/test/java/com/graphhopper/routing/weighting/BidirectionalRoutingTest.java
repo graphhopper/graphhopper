@@ -92,9 +92,10 @@ public class BidirectionalRoutingTest {
         // todonow: make this work with speed_both_directions=true!
         encoder = new CarFlagEncoder(5, 5, 1);
         encodingManager = EncodingManager.create(encoder);
-        weighting = new FastestWeighting(encoder);
+        graph = new GraphBuilder(encodingManager).setDir(dir).build();
+        weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
         chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
-        graph = createGraph();
+        graph.addCHGraphs(chProfiles).create(1000);
     }
 
     private void preProcessGraph() {
@@ -339,10 +340,6 @@ public class BidirectionalRoutingTest {
             strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refPath.calcNodes() + "\ngiven:    " + path.calcNodes());
         }
         return strictViolations;
-    }
-
-    private GraphHopperStorage createGraph() {
-        return new GraphBuilder(encodingManager).setCHProfiles(chProfiles).setDir(dir).withTurnCosts(true).create();
     }
 
     private int getRandom(Random rnd) {

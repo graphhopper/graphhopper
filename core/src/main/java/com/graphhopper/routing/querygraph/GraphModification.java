@@ -31,7 +31,7 @@ import java.util.List;
  * This class holds the data that is necessary to add additional nodes and edges to an existing graph, as it is needed
  * when we want to start/end a route at a location that is in between the actual nodes of the graph (virtual nodes+edges).
  */
-class GraphModification {
+public class GraphModification {
     // stores the coordinates of the additional/virtual nodes
     private final PointList virtualNodes;
     // stores the closest edge id for each virtual node

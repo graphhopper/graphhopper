@@ -66,10 +66,6 @@ public class CHProfile {
         return edgeBased;
     }
 
-    public double getUTurnCosts() {
-        return uTurnCosts < 0 ? Double.POSITIVE_INFINITY : uTurnCosts;
-    }
-
     /**
      * Use this method when u-turn costs are used to check CHProfile equality
      */

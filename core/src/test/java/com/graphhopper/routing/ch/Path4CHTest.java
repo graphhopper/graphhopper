@@ -7,6 +7,7 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
@@ -31,8 +32,10 @@ public class Path4CHTest {
     public void init() {
         encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
-        Weighting weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(em).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
+        graph = new GraphBuilder(em).build();
+        Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
+        graph.addCHGraph(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
+        graph.create(1000);
         chGraph = graph.getCHGraph();
     }
 

@@ -143,8 +143,9 @@ public class DirectedRoutingTest {
         }
     }
 
-    private TurnWeighting createTurnWeighting(Graph g) {
-        return new TurnWeighting(weighting, g.getTurnCostStorage(), uTurnCosts);
+    // todonow: rename
+    private Weighting createTurnWeighting(Graph g) {
+        return g.wrapWeighting(weighting);
     }
 
     @Test
@@ -221,7 +222,7 @@ public class DirectedRoutingTest {
             int chSourceOutEdge = getSourceOutEdge(tmpRnd2, source, chQueryGraph);
             int chTargetInEdge = getTargetInEdge(tmpRnd2, target, chQueryGraph);
 
-            final TurnWeighting tw = createTurnWeighting(queryGraph);
+            final Weighting tw = createTurnWeighting(queryGraph);
             Path refPath = new DijkstraBidirectionRef(queryGraph, tw, TraversalMode.EDGE_BASED)
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             Path path = createAlgo(chQueryGraph)

@@ -31,6 +31,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.weighting.NoTurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -143,7 +144,7 @@ public class MiniGraphUI {
             map.put(Parameters.CH.DISABLE, true);
 //            map.put(Parameters.Landmark.DISABLE, true);
             routingGraph = graph;
-            weighting = hopper.createWeighting(map, encoder, graph);
+            weighting = hopper.createWeighting(map, encoder, graph, new NoTurnCostProvider());
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
             algoFactory = new RoutingAlgorithmFactory() {
 

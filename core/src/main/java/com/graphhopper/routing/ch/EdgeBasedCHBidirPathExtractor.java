@@ -20,7 +20,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.BidirPathExtractor;
 import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.ShortcutUnpacker;
@@ -37,9 +36,6 @@ public class EdgeBasedCHBidirPathExtractor extends BidirPathExtractor {
         super(routingGraph.getGraph(), routingGraph.getWeighting());
         this.routingGraph = routingGraph;
         shortcutUnpacker = createShortcutUnpacker();
-        if (!(routingGraph.getWeighting() instanceof TurnWeighting)) {
-            throw new IllegalArgumentException("Need a TurnWeighting for edge-based CH");
-        }
     }
 
     @Override

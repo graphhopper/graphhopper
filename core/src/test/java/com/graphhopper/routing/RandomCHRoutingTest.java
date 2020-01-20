@@ -8,7 +8,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -62,6 +61,7 @@ public class RandomCHRoutingTest {
         dir = new RAMDirectory();
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
+        // todonow: missing turn costs ?! why does this test pass ?
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHProfiles(new CHProfile(weighting, traversalMode.isEdgeBased(), uTurnCosts))
@@ -157,9 +157,7 @@ public class RandomCHRoutingTest {
                 assertEquals("queryGraph and chQueryGraph should have equal number of nodes", queryGraph.getNodes(), chQueryGraph.getNodes());
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
-                Weighting w = traversalMode.isEdgeBased()
-                        ? new TurnWeighting(weighting, queryGraph.getTurnCostStorage(), uTurnCosts == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCosts)
-                        : weighting;
+                Weighting w = queryGraph.wrapWeighting(weighting);
                 // using plain dijkstra instead of bidirectional, because of #1592
                 RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, traversalMode);
                 Path refPath = refAlgo.calcPath(from, to);
