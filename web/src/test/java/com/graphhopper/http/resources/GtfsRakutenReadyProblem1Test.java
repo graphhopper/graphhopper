@@ -51,7 +51,7 @@ public class GtfsRakutenReadyProblem1Test {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "foot").
                 put("datareader.file", "../core/files/prince-edward-island-latest.osm.pbf").
-                put("gtfs.file", "../core/files/simple-bus-rail-stops-diff-loc.zip").
+                put("gtfs.file", "../core/files/with-type-0-transfer.zip").
                 put("graph.location", DIR).
                 put("prepare.ch.weightings", "no").
                 put("outing.max_visited_nodes", "1000000"));
