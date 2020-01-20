@@ -28,10 +28,13 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.util.shapes.*;
+import org.locationtech.jts.algorithm.RectangleLineIntersector;
 import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.graphhopper.util.shapes.BBox.toEnvelope;
 
 /**
  * This class allows to find edges (or construct shapes) from shape filter.
@@ -70,7 +73,7 @@ public class GraphEdgeIdFinder {
     public void findEdgesInShape(final GHIntHashSet edgeIds, final Shape shape, EdgeFilter filter) {
         GHPoint center = shape.getCenter();
         QueryResult qr = locationIndex.findClosest(center.getLat(), center.getLon(), filter);
-        // TODO: if there is no street close to the center it'll fail although there are roads covered. Maybe we should check edge points or some random points in the Shape instead?
+        // TODO: this is suboptimal and will be fixed in #1324
         if (!qr.isValid())
             throw new IllegalArgumentException("Shape '" + shape + "' does not cover graph. Center: " + center);
 
@@ -155,25 +158,34 @@ public class GraphEdgeIdFinder {
             for (int i = 0; i < blockedCircularAreasArr.length; i++) {
                 String objectAsString = blockedCircularAreasArr[i];
                 String[] splittedObject = objectAsString.split(innerObjSep);
+
+                // always add the shape as we'll need this for virtual edges and for debugging.
                 if (splittedObject.length > 4) {
                     final Polygon polygon = Polygon.parsePoints(objectAsString);
-                    findEdgesInShape(blockArea.blockedEdges, polygon, filter);
+                    blockArea.add(polygon);
+                    if (polygon.calculateArea() <= useEdgeIdsUntilAreaSize)
+                        findEdgesInShape(blockArea.blockedEdges, polygon, filter);
                 } else if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);
-                    if (bbox.calculateArea() > useEdgeIdsUntilAreaSize)
-                        blockArea.add(bbox);
-                    else
-                        findEdgesInShape(blockArea.blockedEdges, bbox, filter);
+                    final RectangleLineIntersector cachedIntersector = new RectangleLineIntersector(toEnvelope(bbox));
+                    BBox preparedBBox = new BBox(bbox.minLon, bbox.maxLon, bbox.minLat, bbox.maxLat) {
+                        @Override
+                        public boolean intersects(PointList pointList) {
+                            return BBox.intersects(cachedIntersector, pointList);
+                        }
+                    };
+                    blockArea.add(preparedBBox);
+                    if (bbox.calculateArea() <= useEdgeIdsUntilAreaSize)
+                        findEdgesInShape(blockArea.blockedEdges, preparedBBox, filter);
                 } else if (splittedObject.length == 3) {
                     double lat = Double.parseDouble(splittedObject[0]);
                     double lon = Double.parseDouble(splittedObject[1]);
                     int radius = Integer.parseInt(splittedObject[2]);
                     Circle circle = new Circle(lat, lon, radius);
-                    if (circle.calculateArea() > useEdgeIdsUntilAreaSize) {
-                        blockArea.add(circle);
-                    } else {
+                    blockArea.add(circle);
+                    if (circle.calculateArea() <= useEdgeIdsUntilAreaSize)
                         findEdgesInShape(blockArea.blockedEdges, circle, filter);
-                    }
+
                 } else if (splittedObject.length == 2) {
                     double lat = Double.parseDouble(splittedObject[0]);
                     double lon = Double.parseDouble(splittedObject[1]);

@@ -164,27 +164,15 @@ public class BBox implements Shape, Cloneable {
         throw new UnsupportedOperationException("unsupported shape");
     }
 
-    private RectangleLineIntersector cachedIntersector;
-
-    RectangleLineIntersector getCachedRectangleLineIntersector() {
-        if (cachedIntersector == null)
-            cachedIntersector = new RectangleLineIntersector(toEnvelope(this));
-        return cachedIntersector;
-    }
-
-    @Override
-    public boolean intersects(PointList pointList) {
+    public static boolean intersects(RectangleLineIntersector intersector, PointList pointList) {
         int len = pointList.getSize();
         if (len == 0)
             throw new IllegalArgumentException("PointList must not be empty");
 
-        double lat = pointList.getLatitude(0);
-        double lon = pointList.getLongitude(0);
+        Coordinate coords = new Coordinate(pointList.getLongitude(0), pointList.getLatitude(0));
         if (len == 1)
-            return contains(lat, lon);
+            return intersector.intersects(coords, coords);
 
-        Coordinate coords = new Coordinate(lon, lat);
-        RectangleLineIntersector intersector = getCachedRectangleLineIntersector();
         for (int pointIndex = 1; pointIndex < len; pointIndex++) {
             Coordinate nextCoords = new Coordinate(pointList.getLongitude(pointIndex), pointList.getLatitude(pointIndex));
             if (intersector.intersects(coords, nextCoords))
@@ -192,6 +180,11 @@ public class BBox implements Shape, Cloneable {
             coords = nextCoords;
         }
         return false;
+    }
+
+    @Override
+    public boolean intersects(PointList pointList) {
+        return intersects(new RectangleLineIntersector(toEnvelope(this)), pointList);
     }
 
     public boolean intersects(Circle s) {
