@@ -18,8 +18,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.BalancedWeightApproximator;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
-import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
@@ -31,7 +31,7 @@ import com.graphhopper.util.Helper;
  * @see AStarBidirection
  */
 public class AStarBidirectionCH extends AbstractBidirCHAlgo implements RecalculationHook {
-    private ConsistentWeightApproximator weightApprox;
+    private BalancedWeightApproximator weightApprox;
 
     public AStarBidirectionCH(RoutingCHGraph graph) {
         super(graph, TraversalMode.NODE_BASED);
@@ -42,8 +42,7 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo implements Recalcula
 
     @Override
     void init(int from, double fromWeight, int to, double toWeight) {
-        weightApprox.setFrom(from);
-        weightApprox.setTo(to);
+        weightApprox.setFromTo(from, to);
         super.init(from, fromWeight, to, toWeight);
     }
 
@@ -85,18 +84,8 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo implements Recalcula
      * @param approx if true it enables approximate distance calculation from lat,lon values
      */
     public AStarBidirectionCH setApproximation(WeightApproximator approx) {
-        weightApprox = new ConsistentWeightApproximator(approx);
+        weightApprox = new BalancedWeightApproximator(approx);
         return this;
-    }
-
-    void setFromDataStructures(AStarBidirectionCH astar) {
-        super.setFromDataStructures(astar);
-        weightApprox.setFrom(astar.currFrom.adjNode);
-    }
-
-    void setToDataStructures(AStarBidirectionCH astar) {
-        super.setToDataStructures(astar);
-        weightApprox.setTo(astar.currTo.adjNode);
     }
 
     @Override

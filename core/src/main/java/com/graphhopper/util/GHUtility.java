@@ -204,8 +204,8 @@ public class GHUtility {
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
             EdgeIteratorState edge = graph.edge(from, to, distance, bothDirections);
-            double fwdSpeed = 10 + random.nextDouble() * 120;
-            double bwdSpeed = 10 + random.nextDouble() * 120;
+            double fwdSpeed = 10 + random.nextDouble() * 110;
+            double bwdSpeed = 10 + random.nextDouble() * 110;
             if (randomSpeedEnc != null) {
                 edge.set(randomSpeedEnc, fwdSpeed);
                 if (randomSpeedEnc.isStoreTwoDirections())
