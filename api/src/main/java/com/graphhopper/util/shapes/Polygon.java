@@ -37,12 +37,12 @@ import java.util.Arrays;
 public class Polygon implements Shape {
 
     private final GeometryFactory factory = new GeometryFactory();
-    private final PreparedGeometry polygon;
+    private final PreparedGeometry prepPolygon;
     private final Envelope envelope;
 
-    public Polygon(PreparedGeometry polygon) {
-        this.polygon = polygon;
-        this.envelope = polygon.getGeometry().getEnvelopeInternal();
+    public Polygon(PreparedGeometry prepPolygon) {
+        this.prepPolygon = prepPolygon;
+        this.envelope = prepPolygon.getGeometry().getEnvelopeInternal();
     }
 
     public Polygon(double[] lats, double[] lons) {
@@ -57,8 +57,8 @@ public class Polygon implements Shape {
             coordinates[i] = new Coordinate(lons[i], lats[i]);
         }
         coordinates[lats.length] = coordinates[0];
-        this.polygon = new PreparedPolygon(factory.createPolygon(new PackedCoordinateSequence.Double(coordinates, 2)));
-        this.envelope = polygon.getGeometry().getEnvelopeInternal();
+        this.prepPolygon = new PreparedPolygon(factory.createPolygon(new PackedCoordinateSequence.Double(coordinates, 2)));
+        this.envelope = prepPolygon.getGeometry().getEnvelopeInternal();
     }
 
     public static Polygon create(org.locationtech.jts.geom.Polygon polygon) {
@@ -71,7 +71,7 @@ public class Polygon implements Shape {
     }
 
     public boolean intersects(PointList pointList) {
-        return polygon.intersects(pointList.getCachedLineString(false));
+        return prepPolygon.intersects(pointList.getCachedLineString(false));
     }
 
     /**
@@ -82,7 +82,7 @@ public class Polygon implements Shape {
      * @return true if point is inside polygon
      */
     public boolean contains(double lat, double lon) {
-        return polygon.contains(factory.createPoint(new Coordinate(lon, lat)));
+        return prepPolygon.contains(factory.createPoint(new Coordinate(lon, lat)));
     }
 
     @Override
@@ -97,14 +97,14 @@ public class Polygon implements Shape {
 
     @Override
     public GHPoint getCenter() {
-        Point centroid = polygon.getGeometry().getCentroid();
+        Point centroid = prepPolygon.getGeometry().getCentroid();
         return new GHPoint(centroid.getY(), centroid.getX());
     }
 
     @Override
     public double calculateArea() {
         // for estimation use bounding box as reference:
-        return getBounds().calculateArea() * envelope.getArea() / polygon.getGeometry().getArea();
+        return getBounds().calculateArea() * envelope.getArea() / prepPolygon.getGeometry().getArea();
     }
 
     public double getMinLat() {
@@ -125,7 +125,7 @@ public class Polygon implements Shape {
 
     @Override
     public String toString() {
-        return "polygon (" + polygon.getGeometry().getNumPoints() + " points," + polygon.getGeometry().getNumGeometries() + " geometries)";
+        return "polygon (" + prepPolygon.getGeometry().getNumPoints() + " points," + prepPolygon.getGeometry().getNumGeometries() + " geometries)";
     }
 
     public static Polygon parsePoints(String pointsStr) {
