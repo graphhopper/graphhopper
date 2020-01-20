@@ -55,7 +55,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
-        </dependency>   
+        </dependency>
+        <dependency>
+            <groupId>org.osgeo</groupId>
+            <artifactId>proj4j</artifactId>
+            <version>0.1.0</version>
+        </dependency>
         <dependency>
             <groupId>com.google.transit</groupId>
             <artifactId>gtfs-realtime-bindings</artifactId>

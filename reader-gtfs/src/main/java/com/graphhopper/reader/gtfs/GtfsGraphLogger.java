@@ -18,6 +18,8 @@
 
 package com.graphhopper.reader.gtfs;
 
+import java.awt.Color;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -40,6 +42,50 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
 
+import org.osgeo.proj4j.CRSFactory;
+import org.osgeo.proj4j.CoordinateReferenceSystem;
+import org.osgeo.proj4j.CoordinateTransform;
+import org.osgeo.proj4j.CoordinateTransformFactory;
+import org.osgeo.proj4j.ProjCoordinate;
+
+
+class ProjFuncs {
+    static CRSFactory mCsFactory = new CRSFactory();
+    static CoordinateTransformFactory mCtFactory = new CoordinateTransformFactory();
+
+    static String EPSG_WGS84 = "EPSG:4326";
+    static String EPSG_GOOGLE_EARTH = "EPSG:3857";
+    //static String EPSG_TWD67 = "EPSG:3828";
+
+//    static String FUNC_WGS84 = "+proj=longlat +datum=WGS84 +no_defs";
+//    static String FUNC_TWD97 = "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=公尺 +no_defs";
+//    static String FUNC_TWD67 = "+proj=tmerc  +towgs84=-752,-358,-179,-.0000011698,.0000018398,.0000009822,.00002329 +lat_0=0 +lon_0=121 +x_0=250000 +y_0=0 +k=0.9999 +ellps=aust_SA  +units=公尺";
+
+    public static ProjCoordinate latlonToGoogleEarthGcs(double lng, double lat) {
+
+        CoordinateReferenceSystem crs1 = mCsFactory.createFromName(EPSG_WGS84);
+        CoordinateReferenceSystem crs2 = mCsFactory.createFromName(EPSG_GOOGLE_EARTH);
+        CoordinateTransform trans = mCtFactory.createTransform(crs1, crs2);
+        ProjCoordinate p1 = new ProjCoordinate();
+        ProjCoordinate p2 = new ProjCoordinate();
+        p1.x = lng;
+        p1.y = lat;
+        trans.transform(p1, p2);
+
+
+//        CoordinateReferenceSystem crs1 = mCsFactory.createFromParameters(EPSG_WGS84, FUNC_WGS84);
+//        CoordinateReferenceSystem crs2 = mCsFactory.createFromParameters(EPSG_TWD97, FUNC_TWD97);
+//        CoordinateTransform trans = mCtFactory.createTransform(crs1, crs2);
+//        ProjCoordinate p1 = new ProjCoordinate();
+//        ProjCoordinate p2 = new ProjCoordinate();
+//        p1.x = latLng.longitude;
+//        p1.y = latLng.latitude;
+//        trans.transform(p1, p2);
+
+        return p2;
+    }
+}
+
 
 class GtfsGraphLogger {
 
@@ -59,9 +105,21 @@ class GtfsGraphLogger {
     private DocumentBuilder db;
     private Document dom;
     private Element graphEle;
-    private final Map<String, Boolean> insertedNodes = new HashMap<>();
-    private int currentTripIndex = 0;
 
+    class NodeInfo {
+
+        NodeInfo(int xPos, int yPos) {
+            this.xPos = xPos;
+            this.yPos = yPos;
+        }
+
+        public int xPos;
+        public int yPos;
+    }
+
+    private final Map<String, NodeInfo> insertedNodes = new HashMap<>();
+    private int currentTripIndex = 0;
+    private Color currentTripColor = new Color((int)(Math.random() * 0x1000000));
 
     private int OSM_NODE_Y_POS = -20;
     private int TRIP_HEIGHT_SPACE = 70;
@@ -76,11 +134,7 @@ class GtfsGraphLogger {
     private int ARRIVAL_TIME_NODE_X_DISTANCE_INCREMENT = 150;
     private int ALIGHT_NODE_X_DISTANCE_FROM_BASE = 10;
 
-
-
     private int currentXPos = 0;
-
-
 
     private Element appendXmlNode(final Element parentEle, final String nodeName, final String attributes) {
         Element keyEle = dom.createElement(nodeName);
@@ -212,6 +266,7 @@ class GtfsGraphLogger {
 
     public void incrementTrip() {
         currentTripIndex++;
+        currentTripColor = new Color((int)(Math.random() * 0x1000000));
     }
 
     public void addNode(int id, double x, double y, NodeLogType type) {
@@ -225,7 +280,12 @@ class GtfsGraphLogger {
             return;
         }
 
-        insertedNodes.put(id, true);
+        ProjCoordinate coord = ProjFuncs.latlonToGoogleEarthGcs(x, y);
+        currentXPos = (int)coord.x;
+        int xPos = getXPos(type);
+        int yPos = getYPos(type);
+
+        insertedNodes.put(id, new NodeInfo(xPos, yPos));
 
         Element nodeEle = dom.createElement("node");
         nodeEle.setAttribute("id", id);
@@ -246,12 +306,19 @@ class GtfsGraphLogger {
         geomEle.setAttribute("key", "d6");
         geomEle.setAttribute("height", "30.0");
         geomEle.setAttribute("width", "30.0");
-        geomEle.setAttribute("x", String.valueOf(getXPos(type)));
-        geomEle.setAttribute("y", String.valueOf(getYPos(type)));
+        geomEle.setAttribute("x", String.valueOf(xPos));
+        geomEle.setAttribute("y", String.valueOf(yPos));
         shapeNodeEle.appendChild(geomEle);
 
         Element fillEle = dom.createElement("y:Fill");
-        fillEle.setAttribute("color", "#CC99FF");
+
+        if (type == NodeLogType.OSM_NODE) {
+            fillEle.setAttribute("color", String.format("#%02x%02x%02x", 0, 0, 0)); //Black
+        }
+        else {
+            fillEle.setAttribute("color", String.format("#%02x%02x%02x", currentTripColor.getRed(), currentTripColor.getGreen(), currentTripColor.getBlue()));
+        }
+
         fillEle.setAttribute("transparent", "false");
         shapeNodeEle.appendChild(fillEle);
 
