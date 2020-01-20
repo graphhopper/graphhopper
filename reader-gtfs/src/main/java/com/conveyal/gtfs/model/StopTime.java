@@ -31,7 +31,6 @@ import org.mapdb.Fun;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Iterator;
 
 /**
  * Represents a GTFS StopTime. Note that once created and saved in a feed, stop times are by convention immutable
@@ -92,39 +91,6 @@ public class StopTime extends Entity implements Cloneable, Serializable {
 
     }
 
-    public static class Writer extends Entity.Writer<StopTime> {
-        public Writer (GTFSFeed feed) {
-            super(feed, "stop_times");
-        }
-
-        @Override
-        protected void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "stop_headsign",
-                    "pickup_type", "drop_off_type", "shape_dist_traveled", "timepoint"});
-        }
-
-        @Override
-        protected void writeOneRow(StopTime st) throws IOException {
-            writeStringField(st.trip_id);
-            writeTimeField(st.arrival_time);
-            writeTimeField(st.departure_time);
-            writeStringField(st.stop_id);
-            writeIntField(st.stop_sequence);
-            writeStringField(st.stop_headsign);
-            writeIntField(st.pickup_type);
-            writeIntField(st.drop_off_type);
-            writeDoubleField(st.shape_dist_traveled);
-            writeIntField(st.timepoint);
-            endRecord();
-        }
-
-        @Override
-        protected Iterator<StopTime> iterator() {
-            return feed.stop_times.values().iterator();
-        }
-
-
-    }
 
     @Override
     public StopTime clone () {

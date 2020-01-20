@@ -32,7 +32,6 @@ import com.conveyal.gtfs.error.GeneralError;
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
-import java.util.Iterator;
 
 public class FeedInfo extends Entity implements Cloneable {
 
@@ -85,38 +84,4 @@ public class FeedInfo extends Entity implements Cloneable {
         }
     }
 
-    public static class Writer extends Entity.Writer<FeedInfo> {
-
-        public Writer(GTFSFeed feed) {
-            super(feed, "feed_info");
-        }
-
-        @Override
-        public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"feed_id", "feed_publisher_name", "feed_publisher_url", "feed_lang",
-                    "feed_start_date", "feed_end_date", "feed_version"});
-        }
-
-        @Override
-        public void writeOneRow(FeedInfo i) throws IOException {
-            writeStringField(i.feed_id != null && i.feed_id.equals("NONE") ? "" : i.feed_id);
-            writeStringField(i.feed_publisher_name);
-            writeUrlField(i.feed_publisher_url);
-            writeStringField(i.feed_lang);
-
-            if (i.feed_start_date != null) writeDateField(i.feed_start_date);
-            else writeStringField("");
-
-            if (i.feed_end_date != null) writeDateField(i.feed_end_date);
-            else writeStringField("");
-
-            writeStringField(i.feed_version);
-            endRecord();
-        }
-
-        @Override
-        public Iterator<FeedInfo> iterator() {
-            return feed.feedInfo.values().iterator();
-        }
-    }
 }

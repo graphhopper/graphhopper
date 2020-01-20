@@ -20,9 +20,7 @@ package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
-import com.conveyal.gtfs.model.FareRule;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.gtfs.fare.FixedFareAttributeLoader;
 import com.graphhopper.storage.Directory;
 import org.mapdb.Bind;
 import org.mapdb.DB;
@@ -112,16 +110,6 @@ public class GtfsStorage implements GtfsStorageI {
 
 	private DB data;
 
-	public static GtfsStorage createOrLoad(Directory directory) {
-		GtfsStorage gtfsStorage = new GtfsStorage(directory);
-		if (gtfsStorage.loadExisting()) {
-			return gtfsStorage;
-		} else {
-			gtfsStorage.create();
-			return gtfsStorage;
-		}
-	}
-
 	GtfsStorage(Directory dir) {
 		this.dir = dir;
 	}
@@ -172,30 +160,17 @@ public class GtfsStorage implements GtfsStorageI {
 		this.routes = data.getHashMap("routes");
 	}
 
-	void loadGtfsFromFile(String id, ZipFile zip) {
-		File file = new File(dir.getLocation() + "/" + id);
+	void loadGtfsFromZipFile(String id, ZipFile zipFile) {
+		File dbFile = new File(dir.getLocation() + "/" + id);
 		try {
-			Files.deleteIfExists(file.toPath());
-			GTFSFeed feed = new GTFSFeed(file);
-			feed.loadFromFileAndLogErrors(zip);
-			fixFares(feed, zip);
+			Files.deleteIfExists(dbFile.toPath());
+			GTFSFeed feed = new GTFSFeed(dbFile);
+			feed.loadFromFileAndLogErrors(zipFile);
 			this.gtfsFeeds.put(id, feed);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 		this.gtfsFeedIds.add(id);
-	}
-
-	private void fixFares(GTFSFeed feed, ZipFile zip) {
-		feed.fares.clear();
-		Map<String, Fare> fares = new HashMap<>();
-		try {
-			new FixedFareAttributeLoader(feed, fares).loadTable(zip);
-			new FareRule.Loader(feed, fares).loadTable(zip);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		feed.fares.putAll(fares);
 	}
 
 	public void close() {
