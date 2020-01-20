@@ -19,19 +19,14 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.ch.CHWeighting;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.CHProfile;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Test;
@@ -711,12 +706,10 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnWeighting chTurnWeighting = new TurnWeighting(new CHWeighting(weighting), graph.getTurnCostStorage());
-        AbstractBidirectionEdgeCHNoSOD algo = "astar".equals(algoString) ?
-                new AStarBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting) :
-                new DijkstraBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting);
-        algo.setEdgeFilter(new LevelEdgeFilter(chGraph));
-        return algo;
+        TurnWeighting turnWeighting = new TurnWeighting(weighting, graph.getTurnCostStorage());
+        return "astar".equals(algoString) ?
+                new AStarBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting, turnWeighting)) :
+                new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting, turnWeighting));
     }
 
     private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {

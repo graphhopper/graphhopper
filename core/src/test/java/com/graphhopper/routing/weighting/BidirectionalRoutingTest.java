@@ -113,7 +113,7 @@ public class BidirectionalRoutingTest {
     }
 
     private BidirRoutingAlgorithm createAlgo() {
-        return createAlgo(prepareCH ? chGraph : graph);
+        return createAlgo(graph);
     }
 
     private BidirRoutingAlgorithm createAlgo(Graph graph) {
@@ -121,9 +121,9 @@ public class BidirectionalRoutingTest {
             case ASTAR:
                 return new AStarBidirection(graph, weighting, traversalMode);
             case CH_DIJKSTRA:
-                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
+                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph instanceof QueryGraph ? graph : chGraph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
             case CH_ASTAR:
-                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
+                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph instanceof QueryGraph ? graph : chGraph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM:
                 AStarBidirection astarbi = new AStarBidirection(graph, weighting, traversalMode);
                 return (BidirRoutingAlgorithm) lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());

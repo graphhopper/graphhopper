@@ -1,16 +1,14 @@
 package com.graphhopper.routing.util.parsers;
 
-import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.TrackType;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class OSMTrackTypeParserTest {
 

@@ -17,19 +17,23 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.ch.CHWeighting;
 import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.RoutingCHGraphImpl;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class AlternativeRouteCHTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
@@ -94,8 +98,7 @@ public class AlternativeRouteCHTest {
     @Test
     public void testCalcAlternatives() {
         GraphHopperStorage g = createTestGraph(em);
-        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(g.getCHGraph(), new CHWeighting(weighting));
-        altDijkstra.setEdgeFilter(new LevelEdgeFilter(g.getCHGraph()));
+        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(new RoutingCHGraphImpl(g.getCHGraph(), weighting));
         altDijkstra.setMaxShareFactor(0.9);
         altDijkstra.setMaxWeightFactor(10);
         List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);

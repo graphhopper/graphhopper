@@ -15,22 +15,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.storage.IntsRef;
+package com.graphhopper.storage;
 
-import java.util.List;
+import com.graphhopper.util.EdgeIteratorState;
 
-/**
- * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
- * has one corresponding EncodedValue but more are possible too.
- */
-public interface TagParser {
+public interface RoutingCHEdgeIteratorState {
+    EdgeIteratorState getBaseGraphEdgeState();
 
-    void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
+    int getEdge();
 
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags);
+    int getOrigEdgeFirst();
+
+    int getOrigEdgeLast();
+
+    int getBaseNode();
+
+    int getAdjNode();
+
+    boolean isShortcut();
+
+    int getSkippedEdge1();
+
+    int getSkippedEdge2();
+
+    double getWeight(boolean reverse);
 }

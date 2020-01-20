@@ -15,22 +15,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.storage.IntsRef;
+package com.graphhopper.storage;
 
-import java.util.List;
+public interface CHEdgeFilter {
 
-/**
- * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
- * has one corresponding EncodedValue but more are possible too.
- */
-public interface TagParser {
+    CHEdgeFilter ALL_EDGES = new CHEdgeFilter() {
+        @Override
+        public final boolean accept(RoutingCHEdgeIteratorState edgeState) {
+            return true;
+        }
+    };
 
-    void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
-
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags);
+    boolean accept(RoutingCHEdgeIteratorState edgeState);
 }
