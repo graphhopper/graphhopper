@@ -61,7 +61,7 @@ public class RandomCHRoutingTest {
         dir = new RAMDirectory();
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
-        // todonow: missing turn costs ?! why does this test pass ?
+        // todonow: missing turn costs ?! why does this test even pass ?
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHProfiles(new CHProfile(weighting, traversalMode.isEdgeBased(), uTurnCosts))

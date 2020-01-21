@@ -39,6 +39,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     }
 
     public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage, double uTurnCosts) {
+        // todonow: u-turn costs int for name ?
         if (turnCostStorage == null) {
             throw new IllegalArgumentException("No storage set to calculate turn weight");
         }

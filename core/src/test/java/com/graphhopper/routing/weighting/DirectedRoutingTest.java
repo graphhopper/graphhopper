@@ -100,10 +100,12 @@ public class DirectedRoutingTest {
         // todonow: make this work with speed_both_directions=true!
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
-        weighting = new FastestWeighting(encoder);
-        chProfile = CHProfile.edgeBased(weighting, uTurnCosts);
-        graph = createGraph();
+        graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
+        weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
+        chProfile = CHProfile.edgeBased(weighting, uTurnCosts);
+        graph.addCHGraph(chProfile);
+        graph.create(1000);
     }
 
     private void preProcessGraph() {
@@ -283,10 +285,6 @@ public class DirectedRoutingTest {
             strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refPath.calcNodes() + "\ngiven:    " + path.calcNodes());
         }
         return strictViolations;
-    }
-
-    private GraphHopperStorage createGraph() {
-        return new GraphBuilder(encodingManager).setDir(dir).setCHProfiles(chProfile).withTurnCosts(true).create();
     }
 
     private int getTargetInEdge(Random rnd, int node, Graph graph) {

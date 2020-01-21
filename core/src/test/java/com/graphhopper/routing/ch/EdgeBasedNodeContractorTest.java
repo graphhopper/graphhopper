@@ -24,8 +24,6 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphBuilder;
@@ -39,7 +37,6 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.*;
 
 /**
@@ -67,13 +64,13 @@ public class EdgeBasedNodeContractorTest {
     private void initialize() {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager).build();
-        chProfiles = Arrays.asList(
-                CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), INFINITE_U_TURN_COSTS)), INFINITE_U_TURN_COSTS),
-                CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 60)), 60)
-        );
-        graph.addCHGraphs(chProfiles);
-        graph.create(1000);
+        graph = new GraphBuilder(encodingManager)
+                .setCHProfileStrings(
+                        "car|shortest|edge",
+                        "car|shortest|edge|60"
+                )
+                .create();
+        chProfiles = graph.getCHProfiles();
         chGraph = graph.getCHGraph(chProfiles.get(0));
     }
 

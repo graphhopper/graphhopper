@@ -26,7 +26,6 @@ import java.util.*;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.assertEquals;
@@ -51,7 +50,6 @@ public class BidirectionalRoutingTest {
     private CHGraph chGraph;
     private CarFlagEncoder encoder;
     private Weighting weighting;
-    private EncodingManager encodingManager;
     private PrepareContractionHierarchies pch;
     private PrepareLandmarks lm;
 
@@ -91,11 +89,13 @@ public class BidirectionalRoutingTest {
         dir = new RAMDirectory();
         // todonow: make this work with speed_both_directions=true!
         encoder = new CarFlagEncoder(5, 5, 1);
-        encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager).setDir(dir).build();
-        weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
-        chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
-        graph.addCHGraphs(chProfiles).create(1000);
+        EncodingManager encodingManager = EncodingManager.create(encoder);
+        graph = new GraphBuilder(encodingManager)
+                .setCHProfileStrings("car|fastest|node", "car|fastest|edge")
+                .setDir(dir)
+                .create();
+        chProfiles = graph.getCHProfiles();
+        weighting = traversalMode.isEdgeBased() ? chProfiles.get(1).getWeighting() : chProfiles.get(0).getWeighting();
     }
 
     private void preProcessGraph() {

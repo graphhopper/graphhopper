@@ -23,10 +23,11 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Test;
@@ -37,7 +38,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -63,9 +63,10 @@ public class CHQueryWithTurnCostsTest {
 
     public CHQueryWithTurnCostsTest(String algoString) {
         this.algoString = algoString;
-        graph = new GraphBuilder(encodingManager).build();
-        weighting = new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
-        graph.addCHGraph(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create(1000);
+        graph = new GraphBuilder(encodingManager)
+                .setCHProfileStrings("motorcycle|shortest|edge")
+                .create();
+        weighting = graph.getCHProfiles().get(0).getWeighting();
         chGraph = graph.getCHGraph();
     }
 

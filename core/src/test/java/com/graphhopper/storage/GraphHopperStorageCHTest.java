@@ -619,6 +619,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
             profiles.add(CHProfile.nodeBased(nodeBasedCHWeighting));
         }
         for (Weighting edgeBasedCHWeighting : edgeBasedCHWeightings) {
+            // todonow: edge-based wheightings need turn cost provider
             profiles.add(CHProfile.edgeBased(edgeBasedCHWeighting, INFINITE_U_TURN_COSTS));
         }
         return new GraphBuilder(encodingManager).setCHProfiles(profiles).setDir(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE)).build();

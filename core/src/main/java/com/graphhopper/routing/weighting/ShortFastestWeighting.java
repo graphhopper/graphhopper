@@ -51,7 +51,11 @@ public class ShortFastestWeighting extends FastestWeighting {
     }
 
     public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor) {
-        super(encoder);
+        this(encoder, distanceFactor, new NoTurnCostProvider());
+    }
+
+    public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor, TurnCostProvider turnCostProvider) {
+        super(encoder, turnCostProvider);
         this.distanceFactor = checkBounds(DISTANCE_FACTOR, distanceFactor, 0, 10);
         this.timeFactor = 1;
     }
