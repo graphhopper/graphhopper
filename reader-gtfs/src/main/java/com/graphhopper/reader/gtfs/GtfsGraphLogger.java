@@ -312,11 +312,16 @@ class GtfsGraphLogger {
 
         Element fillEle = dom.createElement("y:Fill");
 
-        if (type == NodeLogType.OSM_NODE) {
-            fillEle.setAttribute("color", String.format("#%02x%02x%02x", 0, 0, 0)); //Black
-        }
-        else {
-            fillEle.setAttribute("color", String.format("#%02x%02x%02x", currentTripColor.getRed(), currentTripColor.getGreen(), currentTripColor.getBlue()));
+        switch (type) {
+            case OSM_NODE:
+                fillEle.setAttribute("color", String.format("#%02x%02x%02x", 0, 0, 0)); //Black
+                break;
+            case ENTER_EXIT_PT:
+                fillEle.setAttribute("color", String.format("#%02x%02x%02x", 200, 0, 0)); //Red
+                break;
+            default :
+                fillEle.setAttribute("color", String.format("#%02x%02x%02x", currentTripColor.getRed(), currentTripColor.getGreen(), currentTripColor.getBlue()));
+                break;
         }
 
         fillEle.setAttribute("transparent", "false");
