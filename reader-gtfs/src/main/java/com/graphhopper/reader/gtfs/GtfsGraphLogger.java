@@ -95,8 +95,8 @@ class GtfsGraphLogger {
 
     public static void main(String[] args) throws Exception {
         final GtfsGraphLogger graphLogger = new GtfsGraphLogger();
-        graphLogger.addNode("node1", 0, 0, NodeLogType.DEPARTURE_STOP_TIME_NODE);
-        graphLogger.addNode("node2", 50, 50, NodeLogType.ARRIVAL_STOP_TIME_NODE);
+        graphLogger.addNode("node1", 0, 0, NodeLogType.DEPARTURE_STOP_TIME_NODE, "");
+        graphLogger.addNode("node2", 50, 50, NodeLogType.ARRIVAL_STOP_TIME_NODE, "");
         graphLogger.addEdge("HOP", "edge1", "node1", "node2");
         graphLogger.exportGraphmlToFile("/Users/mathieu.stpierre/Documents/Iterations/January2020/gtfs_graph_logger/gtfsGraph.graphml");
     }
@@ -120,6 +120,11 @@ class GtfsGraphLogger {
     private final Map<String, NodeInfo> insertedNodes = new HashMap<>();
     private int currentTripIndex = 0;
     private Color currentTripColor = new Color((int)(Math.random() * 0x1000000));
+    private static Color OSM_NODE_COLOR = new Color(0,0,0);
+    private static Color STOP_NODE_COLOR = new Color(200,0,0);
+    private static Color NODE_TEXT_COLOR = new Color(255,255, 255);
+
+
 
     private int OSM_NODE_Y_POS = -20;
     private int TRIP_HEIGHT_SPACE = 70;
@@ -263,17 +268,25 @@ class GtfsGraphLogger {
         return yBasePos;
     }
 
+    boolean areColorsSimilar(Color a, Color b, int threshold) {
+        return (Math.abs(a.getRed() - b.getRed()) + Math.abs(a.getGreen() - b.getGreen()) + Math.abs(a.getBlue() - b.getBlue())) < threshold;
+    }
+
+
 
     public void incrementTrip() {
         currentTripIndex++;
-        currentTripColor = new Color((int)(Math.random() * 0x1000000));
+        do {
+            currentTripColor = new Color((int) (Math.random() * 0x1000000));
+        } while (areColorsSimilar(currentTripColor, OSM_NODE_COLOR, 30) || areColorsSimilar(currentTripColor, STOP_NODE_COLOR, 30)
+                || areColorsSimilar(currentTripColor, NODE_TEXT_COLOR, 170));
     }
 
-    public void addNode(int id, double x, double y, NodeLogType type) {
-        addNode(String.valueOf(id), x, y, type);
+    public void addNode(int id, double x, double y, NodeLogType type, String nodeText) {
+        addNode(String.valueOf(id), x, y, type, nodeText);
     }
 
-    public void addNode(String id, double x, double y, NodeLogType type) {
+    public void addNode(String id, double x, double y, NodeLogType type, String nodeText) {
 
         //Avoid creating duplicate nodes.
         if (insertedNodes.containsKey(id)) {
@@ -304,8 +317,8 @@ class GtfsGraphLogger {
 
         Element geomEle = dom.createElement("y:Geometry");
         geomEle.setAttribute("key", "d6");
-        geomEle.setAttribute("height", "30.0");
-        geomEle.setAttribute("width", "30.0");
+        geomEle.setAttribute("height", "40.0");
+        geomEle.setAttribute("width", "75.0");
         geomEle.setAttribute("x", String.valueOf(xPos));
         geomEle.setAttribute("y", String.valueOf(yPos));
         shapeNodeEle.appendChild(geomEle);
@@ -314,10 +327,10 @@ class GtfsGraphLogger {
 
         switch (type) {
             case OSM_NODE:
-                fillEle.setAttribute("color", String.format("#%02x%02x%02x", 0, 0, 0)); //Black
+                fillEle.setAttribute("color", String.format("#%02x%02x%02x", OSM_NODE_COLOR.getRed(), OSM_NODE_COLOR.getGreen(), OSM_NODE_COLOR.getBlue())); //Black
                 break;
             case ENTER_EXIT_PT:
-                fillEle.setAttribute("color", String.format("#%02x%02x%02x", 200, 0, 0)); //Red
+                fillEle.setAttribute("color", String.format("#%02x%02x%02x", STOP_NODE_COLOR.getRed(), STOP_NODE_COLOR.getGreen(), STOP_NODE_COLOR.getBlue())); //Red
                 break;
             default :
                 fillEle.setAttribute("color", String.format("#%02x%02x%02x", currentTripColor.getRed(), currentTripColor.getGreen(), currentTripColor.getBlue()));
@@ -337,18 +350,24 @@ class GtfsGraphLogger {
         nodeLabelEle.setAttribute("alignment", "center");
         nodeLabelEle.setAttribute("autoSizePolicy", "content");
         nodeLabelEle.setAttribute("fontFamily", "Dialog");
-        nodeLabelEle.setAttribute("fontSize", "12");
+        nodeLabelEle.setAttribute("fontSize", "16");
         nodeLabelEle.setAttribute("fontStyle", "plain");
         nodeLabelEle.setAttribute("hasBackgroundColor", "false");
         nodeLabelEle.setAttribute("hasLineColor", "false");
-        nodeLabelEle.setAttribute("hasText", "false");
+        nodeLabelEle.setAttribute("hasText", "true");
         nodeLabelEle.setAttribute("height", "4.0");
         nodeLabelEle.setAttribute("modelName", "custom");
-        nodeLabelEle.setAttribute("textColor", "#000000");
+        nodeLabelEle.setAttribute("textColor", String.format("#%02x%02x%02x", NODE_TEXT_COLOR.getRed(), NODE_TEXT_COLOR.getGreen(), NODE_TEXT_COLOR.getBlue()));
         nodeLabelEle.setAttribute("visible", "true");
         nodeLabelEle.setAttribute("width", "4.0");
         nodeLabelEle.setAttribute("x", "13.0");
         nodeLabelEle.setAttribute("y", "13.0");
+
+        if (!nodeText.isEmpty()) {
+            Text textNode = dom.createTextNode(nodeText);
+            nodeLabelEle.appendChild(textNode);
+        }
+
         shapeNodeEle.appendChild(nodeLabelEle);
 
         Element labelModelEle = dom.createElement("y:LabelModel");
