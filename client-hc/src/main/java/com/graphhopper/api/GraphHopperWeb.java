@@ -205,7 +205,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
             JsonNode paths = json.get("paths");
 
             for (JsonNode path : paths) {
-                PathWrapper altRsp = PathWrapperDeserializer.createPathWrapper(objectMapper, path, tmpElevation, tmpTurnDescription);
+                PathWrapper altRsp = PathWrapperDeserializer.createPathWrapper(null, objectMapper, path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }
 
