@@ -279,7 +279,7 @@ class GtfsGraphLogger {
         do {
             currentTripColor = new Color((int) (Math.random() * 0x1000000));
         } while (areColorsSimilar(currentTripColor, OSM_NODE_COLOR, 30) || areColorsSimilar(currentTripColor, STOP_NODE_COLOR, 30)
-                || areColorsSimilar(currentTripColor, NODE_TEXT_COLOR, 170));
+                || areColorsSimilar(currentTripColor, NODE_TEXT_COLOR, 250));
     }
 
     public void addNode(int id, double x, double y, NodeLogType type, String nodeText) {
