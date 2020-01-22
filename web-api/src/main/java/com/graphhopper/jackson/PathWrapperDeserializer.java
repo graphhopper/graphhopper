@@ -17,6 +17,7 @@
  */
 package com.graphhopper.jackson;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -24,11 +25,14 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.Trip;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.*;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
 
 import java.io.IOException;
 import java.util.*;
@@ -36,10 +40,10 @@ import java.util.*;
 public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
     @Override
     public PathWrapper deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        return createPathWrapper((ObjectMapper) p.getCodec(), p.readValueAsTree(), false, true);
+        return createPathWrapper(p, (ObjectMapper) p.getCodec(), p.readValueAsTree(), false, true);
     }
 
-    public static PathWrapper createPathWrapper(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, boolean turnDescription) {
+    public static PathWrapper createPathWrapper(JsonParser jp, ObjectMapper objectMapper, JsonNode path, boolean hasElevation, boolean turnDescription) throws JsonParseException {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(objectMapper, path));
         if (pathWrapper.hasErrors())
@@ -78,75 +82,7 @@ public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
             pathWrapper.setPoints(pointList);
 
             if (path.has("instructions")) {
-                JsonNode instrArr = path.get("instructions");
-
-                InstructionList il = new InstructionList(null);
-                int viaCount = 1;
-                for (JsonNode jsonObj : instrArr) {
-                    double instDist = jsonObj.get("distance").asDouble();
-                    String text = turnDescription ? jsonObj.get("text").asText() : jsonObj.get("street_name").asText();
-                    long instTime = jsonObj.get("time").asLong();
-                    int sign = jsonObj.get("sign").asInt();
-                    JsonNode iv = jsonObj.get("interval");
-                    int from = iv.get(0).asInt();
-                    int to = iv.get(1).asInt();
-                    PointList instPL = new PointList(to - from, hasElevation);
-                    for (int j = from; j <= to; j++) {
-                        instPL.add(pointList, j);
-                    }
-
-                    InstructionAnnotation ia = InstructionAnnotation.EMPTY;
-                    if (jsonObj.has("annotation_importance") && jsonObj.has("annotation_text")) {
-                        ia = new InstructionAnnotation(jsonObj.get("annotation_importance").asInt(), jsonObj.get("annotation_text").asText());
-                    }
-
-                    Instruction instr;
-                    if (sign == Instruction.USE_ROUNDABOUT || sign == Instruction.LEAVE_ROUNDABOUT) {
-                        RoundaboutInstruction ri = new RoundaboutInstruction(sign, text, ia, instPL);
-
-                        if (jsonObj.has("exit_number")) {
-                            ri.setExitNumber(jsonObj.get("exit_number").asInt());
-                        }
-
-                        if (jsonObj.has("exited")) {
-                            if (jsonObj.get("exited").asBoolean())
-                                ri.setExited();
-                        }
-
-                        if (jsonObj.has("turn_angle")) {
-                            // TODO provide setTurnAngle setter
-                            double angle = jsonObj.get("turn_angle").asDouble();
-                            ri.setDirOfRotation(angle);
-                            ri.setRadian((angle < 0 ? -Math.PI : Math.PI) - angle);
-                        }
-
-                        instr = ri;
-                    } else if (sign == Instruction.REACHED_VIA) {
-                        ViaInstruction tmpInstr = new ViaInstruction(text, ia, instPL);
-                        tmpInstr.setViaCount(viaCount);
-                        viaCount++;
-                        instr = tmpInstr;
-                    } else if (sign == Instruction.FINISH) {
-                        instr = new FinishInstruction(text, instPL, 0);
-                    } else {
-                        instr = new Instruction(sign, text, ia, instPL);
-                        if (sign == Instruction.CONTINUE_ON_STREET) {
-                            if (jsonObj.has("heading")) {
-                                instr.setExtraInfo("heading", jsonObj.get("heading").asDouble());
-                            }
-                        }
-                    }
-
-                    // Usually, the translation is done from the routing service so just use the provided string
-                    // instead of creating a combination with sign and name etc.
-                    // This is called the turn description.
-                    // This can be changed by passing <code>turn_description=false</code>.
-                    if (turnDescription)
-                        instr.setUseRawName();
-
-                    instr.setDistance(instDist).setTime(instTime);
-                    il.add(instr);
-                }
+                InstructionList il = deserializeInstructionList(pointList, path.get("instructions"), hasElevation, turnDescription);
                 pathWrapper.setInstructions(il);
             }
 
@@ -167,6 +103,12 @@ public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
             }
         }
 
+        if (path.has("legs")) {
+            for (JsonNode jsonLeg : path.get("legs")) {
+                pathWrapper.getLegs().add(deserializeLeg(jp, objectMapper, jsonLeg));
+            }
+        }
+
         if (path.has("points_order")) {
             pathWrapper.setPointsOrder((List<Integer>) objectMapper.convertValue(path.get("points_order"), List.class));
         } else {
@@ -181,6 +123,123 @@ public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
         long time = path.get("time").asLong();
         pathWrapper.setDistance(distance).setTime(time);
         return pathWrapper;
+    }
+
+    private static InstructionList deserializeInstructionList(PointList pointList, JsonNode instrArr, boolean hasElevation, boolean turnDescription) {
+        InstructionList il = new InstructionList(null);
+        int viaCount = 1;
+        for (JsonNode jsonObj : instrArr) {
+            double instDist = jsonObj.get("distance").asDouble();
+            String text = turnDescription ? jsonObj.get("text").asText() : jsonObj.get("street_name").asText();
+            long instTime = jsonObj.get("time").asLong();
+            int sign = jsonObj.get("sign").asInt();
+            JsonNode iv = jsonObj.get("interval");
+            int from = iv.get(0).asInt();
+            int to = iv.get(1).asInt();
+            PointList instPL = new PointList(to - from, hasElevation);
+            for (int j = from; j <= to; j++) {
+                instPL.add(pointList, j);
+            }
+
+            InstructionAnnotation ia = InstructionAnnotation.EMPTY;
+            if (jsonObj.has("annotation_importance") && jsonObj.has("annotation_text")) {
+                ia = new InstructionAnnotation(jsonObj.get("annotation_importance").asInt(), jsonObj.get("annotation_text").asText());
+            }
+
+            Instruction instr;
+            if (sign == Instruction.USE_ROUNDABOUT || sign == Instruction.LEAVE_ROUNDABOUT) {
+                RoundaboutInstruction ri = new RoundaboutInstruction(sign, text, ia, instPL);
+
+                if (jsonObj.has("exit_number")) {
+                    ri.setExitNumber(jsonObj.get("exit_number").asInt());
+                }
+
+                if (jsonObj.has("exited")) {
+                    if (jsonObj.get("exited").asBoolean())
+                        ri.setExited();
+                }
+
+                if (jsonObj.has("turn_angle")) {
+                    // TODO provide setTurnAngle setter
+                    double angle = jsonObj.get("turn_angle").asDouble();
+                    ri.setDirOfRotation(angle);
+                    ri.setRadian((angle < 0 ? -Math.PI : Math.PI) - angle);
+                }
+
+                instr = ri;
+            } else if (sign == Instruction.REACHED_VIA) {
+                ViaInstruction tmpInstr = new ViaInstruction(text, ia, instPL);
+                tmpInstr.setViaCount(viaCount);
+                viaCount++;
+                instr = tmpInstr;
+            } else if (sign == Instruction.FINISH) {
+                instr = new FinishInstruction(text, instPL, 0);
+            } else {
+                instr = new Instruction(sign, text, ia, instPL);
+                if (sign == Instruction.CONTINUE_ON_STREET) {
+                    if (jsonObj.has("heading")) {
+                        instr.setExtraInfo("heading", jsonObj.get("heading").asDouble());
+                    }
+                }
+            }
+
+            // Usually, the translation is done from the routing service so just use the provided string
+            // instead of creating a combination with sign and name etc.
+            // This is called the turn description.
+            // This can be changed by passing <code>turn_description=false</code>.
+            if (turnDescription)
+                instr.setUseRawName();
+
+            instr.setDistance(instDist).setTime(instTime);
+            il.add(instr);
+        }
+        return il;
+    }
+
+    private static Trip.Leg deserializeLeg(JsonParser jp, ObjectMapper objectMapper, JsonNode jsonLeg) throws JsonParseException {
+        String type = jsonLeg.get("type").asText();
+        switch (type) {
+            case "walk":
+                Geometry lineString = objectMapper.convertValue(jsonLeg.get("geometry"), Geometry.class);
+                return new Trip.WalkLeg(
+                        jsonLeg.get("departureLocation").asText(),
+                        objectMapper.convertValue(jsonLeg.get("departureTime"), Date.class),
+                        lineString,
+                        jsonLeg.get("distance").asDouble(),
+                        deserializeInstructionList(PointList.fromLineString((LineString) lineString), jsonLeg.get("instructions"), true, true),
+                        objectMapper.convertValue(jsonLeg.get("arrivalTime"), Date.class)
+                );
+            case "pt":
+                List<Trip.Stop> stops = new ArrayList<>();
+                for (JsonNode jsonStop : jsonLeg.get("stops")) {
+                    stops.add(new Trip.Stop(
+                            jsonStop.get("stop_id").asText(),
+                            jsonStop.get("stop_name").asText(),
+                            objectMapper.convertValue(jsonStop.get("geometry"), Point.class),
+                            objectMapper.convertValue(jsonLeg.get("arrivalTime"), Date.class),
+                            objectMapper.convertValue(jsonLeg.get("plannedArrivalTime"), Date.class),
+                            objectMapper.convertValue(jsonLeg.get("predictedArrivalTime"), Date.class),
+                            jsonStop.get("arrivalCancelled").asBoolean(),
+                            objectMapper.convertValue(jsonLeg.get("departureTime"), Date.class),
+                            objectMapper.convertValue(jsonLeg.get("plannedDepartureTime"), Date.class),
+                            objectMapper.convertValue(jsonLeg.get("predictedDepartureTime"), Date.class),
+                            jsonStop.get("departureCancelled").asBoolean()
+                            ));
+                }
+                return new Trip.PtLeg(
+                        jsonLeg.get("feed_id").asText(),
+                        jsonLeg.get("isInSameVehicleAsPrevious").asBoolean(),
+                        jsonLeg.get("trip_id").asText(),
+                        jsonLeg.get("route_id").asText(),
+                        jsonLeg.get("trip_headsign").asText(),
+                        stops,
+                        jsonLeg.get("distance").asDouble(),
+                        jsonLeg.get("travelTime").asLong(),
+                        objectMapper.convertValue(jsonLeg.get("geometry"), Geometry.class)
+                );
+            default:
+                throw new JsonParseException(jp, "Unknown leg type: " + type);
+        }
     }
 
     private static PointList deserializePointList(ObjectMapper objectMapper, JsonNode jsonNode, boolean hasElevation) {

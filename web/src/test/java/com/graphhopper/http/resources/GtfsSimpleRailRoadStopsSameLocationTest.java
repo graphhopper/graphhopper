@@ -26,6 +26,7 @@ import java.io.File;
 import javax.ws.rs.core.Response;
 
 import com.graphhopper.GHResponse;
+import com.graphhopper.Trip;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.CmdArgs;
