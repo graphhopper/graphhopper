@@ -92,15 +92,15 @@ public class CHTurnCostTest {
     private List<CHProfile> createCHProfiles() {
         Set<CHProfile> profileSet = new LinkedHashSet<>(5);
         // the first one is always the one with infinite u-turn costs
-        profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, INFINITE_U_TURN_COSTS)), INFINITE_U_TURN_COSTS));
+        profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, INFINITE_U_TURN_COSTS))));
         // this one we also always add
-        profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 50)), 50));
+        profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 50))));
         // add more (distinct) profiles
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         while (profileSet.size() < 5) {
             int uTurnCosts = 10 + rnd.nextInt(90);
-            profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts)), uTurnCosts));
+            profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts))));
         }
         return new ArrayList<>(profileSet);
     }
@@ -1017,7 +1017,8 @@ public class CHTurnCostTest {
         long seed = System.nanoTime();
         LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_finiteUTurnCost: {}", seed);
         chProfile = chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1));
-        LOGGER.info("U-turn-costs: " + chProfile.getUTurnCostsInt());
+        // todonow: how to do this now ?
+//        LOGGER.info("U-turn-costs: " + chProfile.getUTurnCostsInt());
         compareWithDijkstraOnRandomGraph(seed);
     }
 
@@ -1049,7 +1050,8 @@ public class CHTurnCostTest {
         long seed = System.nanoTime();
         LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost: {}", seed);
         chProfile = chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1));
-        LOGGER.info("U-turn-costs: " + chProfile.getUTurnCostsInt());
+        // todonow: how to do this now?
+//        LOGGER.info("U-turn-costs: " + chProfile.getUTurnCostsInt());
         compareWithDijkstraOnRandomGraph_heuristic(seed);
     }
 

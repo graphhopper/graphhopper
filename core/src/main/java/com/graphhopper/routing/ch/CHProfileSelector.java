@@ -59,9 +59,10 @@ public class CHProfileSelector {
             if (edgeBased != null && p.isEdgeBased() != edgeBased) {
                 continue;
             }
-            if (uTurnCosts != null && p.getUTurnCostsInt() != uTurnCosts) {
-                continue;
-            }
+            // todonow: this should be covered by the weighting .to string now...
+//            if (uTurnCosts != null && p.getUTurnCostsInt() != uTurnCosts) {
+//                continue;
+//            }
             if (!p.getWeighting().matches(hintsMap)) {
                 continue;
             }
@@ -101,9 +102,9 @@ public class CHProfileSelector {
         sb.append("|");
         sb.append(hintsMap.getVehicle().isEmpty() ? "*" : hintsMap.getVehicle());
         sb.append("|");
-        sb.append("edge_based=").append(edgeBased != null ? edgeBased : "*");
-        sb.append("|");
         sb.append("u_turn_costs=").append(uTurnCosts != null ? uTurnCosts : "*");
+        sb.append("|");
+        sb.append("edge_based=").append(edgeBased != null ? edgeBased : "*");
         return sb.toString();
     }
 }

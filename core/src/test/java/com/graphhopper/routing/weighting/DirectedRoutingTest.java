@@ -103,7 +103,7 @@ public class DirectedRoutingTest {
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
-        chProfile = CHProfile.edgeBased(weighting, uTurnCosts);
+        chProfile = CHProfile.edgeBased(weighting);
         graph.addCHGraph(chProfile);
         graph.create(1000);
     }

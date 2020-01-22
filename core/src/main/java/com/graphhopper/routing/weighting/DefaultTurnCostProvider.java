@@ -27,10 +27,12 @@ import com.graphhopper.util.EdgeIterator;
 
 import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
     private final DecimalEncodedValue turnCostEnc;
     private final TurnCostStorage turnCostStorage;
+    private final int uTurnCostsInt;
     private final double uTurnCosts;
     private final IntsRef tcFlags = TurnCost.createFlags();
 
@@ -38,8 +40,16 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         this(encoder, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
     }
 
-    public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage, double uTurnCosts) {
-        // todonow: u-turn costs int for name ?
+    /**
+     * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
+     *                   will be infinite
+     */
+    public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage, int uTurnCosts) {
+        if (uTurnCosts < 0 && uTurnCosts != INFINITE_U_TURN_COSTS) {
+            throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
+        }
+        this.uTurnCostsInt = uTurnCosts;
+        this.uTurnCosts = uTurnCosts < 0 ? Double.POSITIVE_INFINITY : uTurnCosts;
         if (turnCostStorage == null) {
             throw new IllegalArgumentException("No storage set to calculate turn weight");
         }
@@ -47,7 +57,6 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         // if null the TurnCostProvider can be still useful for edge-based routing
         this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
         this.turnCostStorage = turnCostStorage;
-        this.uTurnCosts = uTurnCosts < 0 ? Double.POSITIVE_INFINITY : uTurnCosts;
     }
 
     @Override
@@ -69,5 +78,15 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     @Override
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
         return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
+    }
+
+    @Override
+    public String getName() {
+        return toString();
+    }
+
+    @Override
+    public String toString() {
+        return "u_turn_costs=" + uTurnCostsInt;
     }
 }

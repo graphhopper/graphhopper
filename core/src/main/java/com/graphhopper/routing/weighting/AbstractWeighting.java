@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.util.Helper.isEmpty;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
@@ -125,7 +126,11 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public boolean matches(HintsMap reqMap) {
+        // todonow: clean up (at least use string constants
+        String requestedUTurnCosts = reqMap.get("u_turn_costs", "");
         return (reqMap.getWeighting().isEmpty() || getName().equals(reqMap.getWeighting())) &&
+                // todonow: the u_turn_costs=... seems ugly
+                (requestedUTurnCosts.isEmpty() || turnCostProvider.getName().equals("u_turn_costs=" + requestedUTurnCosts)) &&
                 (reqMap.getVehicle().isEmpty() || flagEncoder.toString().equals(reqMap.getVehicle()));
     }
 
@@ -167,6 +172,11 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public String toString() {
-        return getName() + "|" + flagEncoder;
+        String turnCostProviderName = turnCostProvider.getName();
+        String result = getName() + "|" + flagEncoder;
+        if (!isEmpty(turnCostProviderName)) {
+            result += "|" + turnCostProviderName;
+        }
+        return result;
     }
 }

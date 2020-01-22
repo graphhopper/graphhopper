@@ -9,8 +9,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
-
 /**
  * Specifies all properties of a CH routing profile. Generally these properties cannot be changed after the CH
  * pre-processing is finished and are stored on disk along with the prepared graph data.
@@ -20,14 +18,18 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 public class CHProfile {
     private final Weighting weighting;
     private final boolean edgeBased;
-    private final int uTurnCosts;
 
     public static CHProfile nodeBased(Weighting weighting) {
-        return new CHProfile(weighting, TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS);
+        // todonow: should we do such a check (check if the weighting has turn costs ?)
+//        if (!edgeBased && uTurnCosts != INFINITE_U_TURN_COSTS) {
+//            throw new IllegalArgumentException("Finite u-turn costs are only allowed for edge-based CH");
+//        }
+        return new CHProfile(weighting, TraversalMode.NODE_BASED);
     }
 
-    public static CHProfile edgeBased(Weighting weighting, int uTurnCosts) {
-        return new CHProfile(weighting, TraversalMode.EDGE_BASED, uTurnCosts);
+    public static CHProfile edgeBased(Weighting weighting) {
+        // todonow: should we check/assure that the weighting must have some valid turn costs ?
+        return new CHProfile(weighting, TraversalMode.EDGE_BASED);
     }
 
     public static List<CHProfile> createProfilesForWeightings(Collection<? extends Weighting> weightings) {
@@ -38,24 +40,13 @@ public class CHProfile {
         return result;
     }
 
-    public CHProfile(Weighting weighting, TraversalMode traversalMode, int uTurnCosts) {
-        this(weighting, traversalMode.isEdgeBased(), uTurnCosts);
+    public CHProfile(Weighting weighting, TraversalMode traversalMode) {
+        this(weighting, traversalMode.isEdgeBased());
     }
 
-    /**
-     * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
-     *                   will be infinite
-     */
-    public CHProfile(Weighting weighting, boolean edgeBased, int uTurnCosts) {
-        if (!edgeBased && uTurnCosts != INFINITE_U_TURN_COSTS) {
-            throw new IllegalArgumentException("Finite u-turn costs are only allowed for edge-based CH");
-        }
+    public CHProfile(Weighting weighting, boolean edgeBased) {
         this.weighting = weighting;
         this.edgeBased = edgeBased;
-        if (uTurnCosts < 0 && uTurnCosts != INFINITE_U_TURN_COSTS) {
-            throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
-        }
-        this.uTurnCosts = uTurnCosts < 0 ? INFINITE_U_TURN_COSTS : uTurnCosts;
     }
 
     public Weighting getWeighting() {
@@ -66,23 +57,29 @@ public class CHProfile {
         return edgeBased;
     }
 
-    /**
-     * Use this method when u-turn costs are used to check CHProfile equality
-     */
-    public int getUTurnCostsInt() {
-        return uTurnCosts;
-    }
-
     public TraversalMode getTraversalMode() {
         return edgeBased ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
     }
 
     public String toFileName() {
-        return AbstractWeighting.weightingToFileName(weighting) + "_" + (edgeBased ? ("edge_utc" + uTurnCosts) : "node");
+        // todonow: this must go to turn cost provider ?
+//        return AbstractWeighting.weightingToFileName(weighting) + "_" + (edgeBased ? ("edge_utc" + uTurnCosts) : "node");
+        String result = AbstractWeighting.weightingToFileName(weighting);
+//        + "_" + (edgeBased ? "edge" : "node");
+        // turn this into legacy filename:
+        result = result.replaceAll("u_turn_costs=", "utc");
+        String[] parts = result.split("_");
+        result = parts[0] + "_" + parts[1] + "_" + (edgeBased ? "edge" : "node");
+        if (parts.length > 2) {
+            result += "_" + parts[2];
+        }
+        return result;
     }
 
     public String toString() {
-        return weighting + "|edge_based=" + edgeBased + "|u_turn_costs=" + uTurnCosts;
+        // todonow: do we need this u_turn_costs string we previously had somewhere ? get it in turn cost provider ?
+//        return weighting + "|edge_based=" + edgeBased + "|u_turn_costs=" + uTurnCosts;
+        return weighting + "|edge_based=" + edgeBased;
     }
 
     @Override
@@ -91,12 +88,11 @@ public class CHProfile {
         if (o == null || getClass() != o.getClass()) return false;
         CHProfile chProfile = (CHProfile) o;
         return edgeBased == chProfile.edgeBased &&
-                uTurnCosts == chProfile.uTurnCosts &&
                 Objects.equals(weighting, chProfile.weighting);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(weighting, edgeBased, uTurnCosts);
+        return Objects.hash(weighting, edgeBased);
     }
 }

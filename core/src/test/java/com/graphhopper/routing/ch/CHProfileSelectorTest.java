@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.*;
 
 public class CHProfileSelectorTest {
@@ -83,7 +82,7 @@ public class CHProfileSelectorTest {
     @Test
     public void onlyEdgeBasedPresent() {
         List<CHProfile> chProfiles = Collections.singletonList(
-                CHProfile.edgeBased(weightingFastestCarEdge, INFINITE_U_TURN_COSTS)
+                CHProfile.edgeBased(weightingFastestCarEdge)
         );
         assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, false, null);
         assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, false, 20);
@@ -95,7 +94,7 @@ public class CHProfileSelectorTest {
     public void edgeAndNodePresent() {
         List<CHProfile> chProfiles = Arrays.asList(
                 CHProfile.nodeBased(weightingFastestCar),
-                CHProfile.edgeBased(weightingFastestCarEdge, INFINITE_U_TURN_COSTS)
+                CHProfile.edgeBased(weightingFastestCarEdge)
         );
         // in case edge-based is not specified we prefer the edge-based profile over the node-based one
         assertProfileFound(chProfiles.get(1), chProfiles, null, null);
@@ -107,8 +106,8 @@ public class CHProfileSelectorTest {
     public void multipleEdgeBased() {
         List<CHProfile> chProfiles = Arrays.asList(
                 CHProfile.nodeBased(weightingFastestCar),
-                CHProfile.edgeBased(weightingFastestCarEdge30, 30),
-                CHProfile.edgeBased(weightingFastestCarEdge50, 50)
+                CHProfile.edgeBased(weightingFastestCarEdge30),
+                CHProfile.edgeBased(weightingFastestCarEdge50)
         );
         // when no u-turns are specified we throw
         assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, true, null);
@@ -148,7 +147,7 @@ public class CHProfileSelectorTest {
         List<CHProfile> chProfiles = Arrays.asList(
                 CHProfile.nodeBased(weightingFastestBike),
                 CHProfile.nodeBased(weightingShortestBike),
-                CHProfile.edgeBased(weightingFastestBikeEdge40, 40)
+                CHProfile.edgeBased(weightingFastestBikeEdge40)
         );
         // the vehicle is not given but only bike is used so its fine. note that we prefer edge-based because no edge_based parameter is specified
         assertProfileFound(chProfiles.get(2), chProfiles, "", "fastest", null, null);
@@ -164,8 +163,8 @@ public class CHProfileSelectorTest {
     public void missingWeightingMultipleProfiles() {
         List<CHProfile> chProfiles = Arrays.asList(
                 CHProfile.nodeBased(weightingFastestBike),
-                CHProfile.edgeBased(weightingFastestCarEdge10, 10),
-                CHProfile.edgeBased(weightingFastestBikeEdge40, 40)
+                CHProfile.edgeBased(weightingFastestCarEdge10),
+                CHProfile.edgeBased(weightingFastestBikeEdge40)
         );
         // the weighting is not given but only fastest is used so its fine. note that we prefer edge-based because no edge_based parameter is specified
         assertProfileFound(chProfiles.get(2), chProfiles, "bike", "", null, null);

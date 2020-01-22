@@ -142,10 +142,10 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private Weighting createWeighting() {
-        return createWeighting(carEncoder, Double.POSITIVE_INFINITY);
+        return createWeighting(carEncoder, Weighting.INFINITE_U_TURN_COSTS);
     }
 
-    private Weighting createWeighting(FlagEncoder encoder, double uTurnCosts) {
+    private Weighting createWeighting(FlagEncoder encoder, int uTurnCosts) {
         return new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, tcs, uTurnCosts));
     }
 

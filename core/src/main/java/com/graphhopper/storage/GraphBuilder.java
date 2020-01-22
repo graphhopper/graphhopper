@@ -171,7 +171,7 @@ public class GraphBuilder {
             } else {
                 throw new IllegalArgumentException("Weighting not supported using this method, maybe you can use setCHProfile instead: " + weightingStr);
             }
-            chProfiles.add(new CHProfile(weighting, edgeBased, uTurnCostsInt));
+            chProfiles.add(new CHProfile(weighting, edgeBased));
         }
 
     }

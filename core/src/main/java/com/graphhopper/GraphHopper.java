@@ -830,7 +830,7 @@ public class GraphHopper implements GraphHopperAPI {
                         chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null, new NoTurnCostProvider())));
                     }
                     if (edgeBasedCHMode != OFF && encoder.supportsTurnCosts()) {
-                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null, new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts)), uTurnCosts));
+                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null, new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts))));
                     }
                 }
             }
@@ -1052,13 +1052,12 @@ public class GraphHopper implements GraphHopperAPI {
                 if (ghRsp.hasErrors())
                     return Collections.emptyList();
 
-                final int uTurnCostInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-                if (uTurnCostInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
+                final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
                     throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
                 }
-                final double uTurnCosts = uTurnCostInt == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCostInt;
                 TurnCostProvider turnCostProvider = (encoder.supportsTurnCosts() && tMode.isEdgeBased())
-                        ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts)
+                        ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
                         : new NoTurnCostProvider();
 
                 RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);

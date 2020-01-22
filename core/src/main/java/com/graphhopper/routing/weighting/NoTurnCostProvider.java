@@ -28,4 +28,9 @@ public class NoTurnCostProvider implements TurnCostProvider {
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
         return 0;
     }
+
+    @Override
+    public String getName() {
+        return "";
+    }
 }
