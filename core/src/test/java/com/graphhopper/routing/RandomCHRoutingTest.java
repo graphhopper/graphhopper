@@ -61,7 +61,6 @@ public class RandomCHRoutingTest {
         dir = new RAMDirectory();
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
-        // todonow: was missing turn costs ?! why did this test even pass ?
         graph = new GraphBuilder(encodingManager)
                 .setCHProfileStrings("car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)
                 .create();
