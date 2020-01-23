@@ -49,8 +49,7 @@ public class GtfsWalkingHopBetweenTransitsTest {
                 put("datareader.file", "../core/files/prince-edward-island-latest.osm.pbf").
                 put("gtfs.file", "../core/files/with-type-2-transfer.zip").
                 put("graph.location", DIR).
-                put("prepare.ch.weightings", "no").
-                put("outing.max_visited_nodes", "1000000"));
+                put("prepare.ch.weightings", "no"));
     }
 
     @ClassRule
