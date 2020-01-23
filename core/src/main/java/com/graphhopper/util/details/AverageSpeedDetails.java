@@ -3,7 +3,6 @@ package com.graphhopper.util.details;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 
 import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
 
@@ -42,7 +41,7 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 
         prevEdgeId = edge.getEdge();
         if (Math.abs(tmpVal - decimalValue) >= precision) {
-            this.decimalValue =  Math.round(tmpVal / precision) * precision;
+            this.decimalValue = Math.round(tmpVal / precision) * precision;
             return true;
         }
         return false;

@@ -22,7 +22,10 @@ import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.Test;
@@ -127,8 +130,8 @@ public class FastestWeightingTest {
         EdgeIteratorState edge = graph.edge(1, 2, 100, true);
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
-        // todo: for the shortest weighting turn costs cannot be interpreted as seconds ? at least when they are added
-        // to the weight ? how much should they contribute ?
+        // todo: for the shortest weighting turn costs cannot be interpreted as seconds? at least when they are added
+        // to the weight? how much should they contribute ?
 //        assertEquals(105, AbstractWeighting.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals(6000 + 5000, AbstractWeighting.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
