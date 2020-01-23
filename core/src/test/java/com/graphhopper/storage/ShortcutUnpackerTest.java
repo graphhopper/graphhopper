@@ -8,7 +8,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
@@ -18,7 +17,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
@@ -49,9 +47,11 @@ public class ShortcutUnpackerTest {
         // use motorcycle to be able to set different fwd/bwd speeds
         encoder = new MotorcycleFlagEncoder(5, 5, 10);
         encodingManager = EncodingManager.create(encoder);
-        weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(encodingManager).setCHProfiles(new CHProfile(weighting, edgeBased, INFINITE_U_TURN_COSTS)).create();
+        graph = new GraphBuilder(encodingManager)
+                .setCHProfileStrings("motorcycle|fastest|" + (edgeBased ? "edge" : "node"))
+                .create();
         chGraph = graph.getCHGraph();
+        weighting = chGraph.getCHProfile().getWeighting();
     }
 
     @Test

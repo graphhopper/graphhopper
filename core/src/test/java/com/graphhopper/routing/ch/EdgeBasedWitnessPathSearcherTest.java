@@ -20,16 +20,17 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -44,11 +45,13 @@ public class EdgeBasedWitnessPathSearcherTest {
     public void setup() {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        weighting = new ShortestWeighting(encoder);
-        graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
+        graph = new GraphBuilder(encodingManager)
+                .setCHProfileStrings("car|shortest|edge")
+                .create();
+        chGraph = graph.getCHGraph();
+        weighting = chGraph.getCHProfile().getWeighting();
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
         chTurnWeighting = new TurnWeighting(weighting, turnCostStorage);
-        chGraph = graph.getCHGraph();
     }
 
     @Test
