@@ -91,7 +91,7 @@ public class CHTurnCostTest {
      * There is always a profile with infinite u-turn costs and one with u-turn-costs = 50.
      */
     private List<CHProfile> createCHProfiles() {
-        Set<CHProfile> profileSet = new HashSet<>(25);
+        Set<CHProfile> profileSet = new LinkedHashSet<>(5);
         // the first one is always the one with infinite u-turn costs
         profileSet.add(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
         // this one we also always add

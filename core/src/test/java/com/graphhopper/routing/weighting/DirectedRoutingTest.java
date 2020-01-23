@@ -38,7 +38,7 @@ import static org.junit.Assert.fail;
  * target edges, by comparing with {@link DijkstraBidirectionRef}
  *
  * @author easbar
- * @see BidirectionalRoutingTest
+ * @see RandomizedRoutingTest
  * @see DirectedBidirectionalDijkstraTest
  */
 @RunWith(Parameterized.class)

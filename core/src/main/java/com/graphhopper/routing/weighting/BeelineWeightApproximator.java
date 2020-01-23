@@ -56,6 +56,11 @@ public class BeelineWeightApproximator implements WeightApproximator {
     }
 
     @Override
+    public double getSlack() {
+        return 0;
+    }
+
+    @Override
     public double approximate(int fromNode) {
         double fromLat = nodeAccess.getLatitude(fromNode);
         double fromLon = nodeAccess.getLongitude(fromNode);
