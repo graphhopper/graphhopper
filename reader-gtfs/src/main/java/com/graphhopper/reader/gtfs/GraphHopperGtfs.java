@@ -31,9 +31,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.PointList;
 
 import java.io.File;
 import java.io.IOException;
@@ -141,6 +139,13 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                             t.transfer.min_transfer_time = (int) (t.time / 1000L);
                             gtfsFeed.transfers.put(t.id, t.transfer);
                         });
+                getTransfersInferredFromWalkNetwork(gtfsFeed)
+                        .forEach(t -> {
+                            System.out.println(t.transfer.from_stop_id + "-"+t.transfer.to_stop_id);
+                            t.transfer.transfer_type = 2;
+                            t.transfer.min_transfer_time = (int) (t.time / 1000L);
+                            gtfsFeed.transfers.put(t.id, t.transfer);
+                        });
                 try {
                     gtfsReader.buildPtNetwork();
                 } catch (Exception e) {
@@ -162,16 +167,8 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 .parallelStream()
                 .filter(e -> e.getValue().transfer_type == 0)
                 .map(e -> {
-                    PointList points = new PointList(2, false);
                     final int fromnode = getGtfsStorage().getStationNodes().get(e.getValue().from_stop_id);
-                    final QueryResult fromstation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
-                    fromstation.setClosestNode(fromnode);
-                    points.add(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
-
                     final int tonode = getGtfsStorage().getStationNodes().get(e.getValue().to_stop_id);
-                    final QueryResult tostation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
-                    tostation.setClosestNode(tonode);
-                    points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
 
                     QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
                     final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, 5.0, false);
@@ -195,6 +192,48 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                     transferWithTime.time = solution.currentTime;
                     return transferWithTime;
                 });
+    }
+
+    private Stream<TransferWithTime> getTransfersInferredFromWalkNetwork(GTFSFeed gtfsFeed) {
+        GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
+        RealtimeFeed realtimeFeed = RealtimeFeed.empty(getGtfsStorage());
+        PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
+        FastestWeighting accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
+        return gtfsFeed.stops.entrySet()
+                .parallelStream()
+                .filter(e -> e.getValue().location_type == 0)
+                .flatMap(e -> {
+                    final int fromnode = getGtfsStorage().getStationNodes().get(e.getValue().stop_id);
+
+                    QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
+                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, 5.0, false);
+
+                    Stream.Builder<TransferWithTime> result = Stream.builder();
+                    MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
+                    Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0), 0).iterator();
+                    while (iterator.hasNext()) {
+                        Label label = iterator.next();
+                        if (getGtfsStorage().getStationNodes().containsValue(label.adjNode)) {
+                            TransferWithTime transferWithTime = new TransferWithTime();
+                            transferWithTime.id = e.getKey()+"-"+label.adjNode;
+                            transferWithTime.transfer = new Transfer();
+                            transferWithTime.transfer.from_stop_id = e.getValue().stop_id;
+                            transferWithTime.transfer.to_stop_id = findStationByNodeId(label.adjNode);
+                            transferWithTime.time = label.currentTime;
+                            result.add(transferWithTime);
+                        }
+                    }
+                    return result.build();
+                });
+    }
+
+    String findStationByNodeId(int nodeId) {
+        for (Map.Entry<String, Integer> e : getGtfsStorage().getStationNodes().entrySet()) {
+            if (nodeId == e.getValue()) {
+                return e.getKey();
+            }
+        }
+        throw new RuntimeException();
     }
 
     @Override

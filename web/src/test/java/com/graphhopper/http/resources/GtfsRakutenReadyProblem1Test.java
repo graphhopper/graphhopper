@@ -17,26 +17,21 @@
  */
 package com.graphhopper.http.resources;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-
-import javax.ws.rs.core.Response;
-
 import com.graphhopper.GHResponse;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
-
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import io.dropwizard.testing.junit.DropwizardAppRule;
+import javax.ws.rs.core.Response;
+import java.io.File;
+
+import static org.junit.Assert.*;
 
 /**
  * Similar to PtRouteResourceTest, but tests the entire app, not the resource, so that the plugging-together
@@ -51,7 +46,7 @@ public class GtfsRakutenReadyProblem1Test {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "foot").
                 put("datareader.file", "../core/files/prince-edward-island-latest.osm.pbf").
-                put("gtfs.file", "../core/files/with-type-2-transfer.zip").
+                put("gtfs.file", "../core/files/simple-bus-rail-stops-diff-loc.zip").
                 put("graph.location", DIR).
                 put("prepare.ch.weightings", "no"));
     }
