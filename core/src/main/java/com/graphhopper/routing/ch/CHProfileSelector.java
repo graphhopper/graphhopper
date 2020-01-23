@@ -59,10 +59,6 @@ public class CHProfileSelector {
             if (edgeBased != null && p.isEdgeBased() != edgeBased) {
                 continue;
             }
-            // todonow: this should be covered by the weighting .to string now...
-//            if (uTurnCosts != null && p.getUTurnCostsInt() != uTurnCosts) {
-//                continue;
-//            }
             if (!p.getWeighting().matches(hintsMap)) {
                 continue;
             }

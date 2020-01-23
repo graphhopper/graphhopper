@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Specifies all properties of a CH routing profile. Generally these properties cannot be changed after the CH
@@ -62,23 +64,23 @@ public class CHProfile {
     }
 
     public String toFileName() {
-        // todonow: this must go to turn cost provider ?
-//        return AbstractWeighting.weightingToFileName(weighting) + "_" + (edgeBased ? ("edge_utc" + uTurnCosts) : "node");
         String result = AbstractWeighting.weightingToFileName(weighting);
-//        + "_" + (edgeBased ? "edge" : "node");
-        // turn this into legacy filename:
-        result = result.replaceAll("u_turn_costs=", "utc");
-        String[] parts = result.split("_");
-        result = parts[0] + "_" + parts[1] + "_" + (edgeBased ? "edge" : "node");
-        if (parts.length > 2) {
-            result += "_" + parts[2];
+        // keeping legacy file names for now, like fastest_edge_utc40 (instead of fastest_40_edge), because we will
+        // most likely use profile names soon: #1708
+        Pattern pattern = Pattern.compile("-?\\d+");
+        Matcher matcher = pattern.matcher(result);
+        if (matcher.find()) {
+            String turnCostPostfix = matcher.group();
+            result = result.replaceAll(turnCostPostfix, "");
+            result += edgeBased ? "edge" : "node";
+            result += "_utc" + turnCostPostfix;
+        } else {
+            result += edgeBased ? "_edge" : "_node";
         }
         return result;
     }
 
     public String toString() {
-        // todonow: do we need this u_turn_costs string we previously had somewhere ? get it in turn cost provider ?
-//        return weighting + "|edge_based=" + edgeBased + "|u_turn_costs=" + uTurnCosts;
         return weighting + "|edge_based=" + edgeBased;
     }
 

@@ -87,6 +87,6 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
 
     @Override
     public String toString() {
-        return "u_turn_costs=" + uTurnCostsInt;
+        return "" + uTurnCostsInt;
     }
 }

@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Parameters;
 
 import static com.graphhopper.util.Helper.isEmpty;
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -126,11 +127,9 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public boolean matches(HintsMap reqMap) {
-        // todonow: clean up (at least use string constants
-        String requestedUTurnCosts = reqMap.get("u_turn_costs", "");
+        String requestedUTurnCosts = reqMap.get(Parameters.Routing.U_TURN_COSTS, "");
         return (reqMap.getWeighting().isEmpty() || getName().equals(reqMap.getWeighting())) &&
-                // todonow: the u_turn_costs=... seems ugly
-                (requestedUTurnCosts.isEmpty() || turnCostProvider.getName().equals("u_turn_costs=" + requestedUTurnCosts)) &&
+                (requestedUTurnCosts.isEmpty() || turnCostProvider.getName().equals(requestedUTurnCosts)) &&
                 (reqMap.getVehicle().isEmpty() || flagEncoder.toString().equals(reqMap.getVehicle()));
     }
 
@@ -167,7 +166,9 @@ public abstract class AbstractWeighting implements Weighting {
      * Replaces all characters which are not numbers, characters or underscores with underscores
      */
     public static String weightingToFileName(Weighting w) {
-        return toLowerCase(w.toString()).replaceAll("\\|", "_");
+        String name = w.toString();
+        name = name.replaceAll("u_turn_costs=", "");
+        return toLowerCase(name).replaceAll("\\|", "_");
     }
 
     @Override
@@ -175,7 +176,7 @@ public abstract class AbstractWeighting implements Weighting {
         String turnCostProviderName = turnCostProvider.getName();
         String result = getName() + "|" + flagEncoder;
         if (!isEmpty(turnCostProviderName)) {
-            result += "|" + turnCostProviderName;
+            result += "|u_turn_costs=" + turnCostProviderName;
         }
         return result;
     }
