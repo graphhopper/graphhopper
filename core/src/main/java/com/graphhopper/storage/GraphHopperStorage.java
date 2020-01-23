@@ -87,21 +87,23 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      * Adds a {@link CHGraph} for the given {@link CHProfile}. You need to call this method before calling {@link #create(long)}
      * or {@link #loadExisting()}.
      */
-    public void addCHGraph(CHProfile chProfile) {
+    public GraphHopperStorage addCHGraph(CHProfile chProfile) {
         baseGraph.checkNotInitialized();
         if (getCHProfiles().contains(chProfile)) {
             throw new IllegalArgumentException("For the given CH profile a CHGraph already exists: " + chProfile);
         }
         chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph, segmentSize));
+        return this;
     }
 
     /**
      * @see #addCHGraph(CHProfile)
      */
-    public void addCHGraphs(List<CHProfile> chProfiles) {
+    public GraphHopperStorage addCHGraphs(List<CHProfile> chProfiles) {
         for (CHProfile chProfile : chProfiles) {
             addCHGraph(chProfile);
         }
+        return this;
     }
 
     public CHGraph getCHGraph() {

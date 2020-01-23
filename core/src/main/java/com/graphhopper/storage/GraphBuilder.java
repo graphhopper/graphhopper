@@ -18,10 +18,14 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
 /**
  * Used to build {@link GraphHopperStorage}
@@ -36,6 +40,7 @@ public class GraphBuilder {
     private boolean turnCosts;
     private long bytes = 100;
     private int segmentSize = -1;
+    private List<String> chProfileStrings = new ArrayList<>();
     private List<CHProfile> chProfiles = new ArrayList<>();
 
     public static GraphBuilder start(EncodingManager encodingManager) {
@@ -47,13 +52,25 @@ public class GraphBuilder {
         this.turnCosts = encodingManager.needsTurnCostsSupport();
     }
 
+    /**
+     * Convenience method to set the CH profiles using a string representation. This is will be convenient once the
+     * turn cost handling is moved into {@link AbstractWeighting} and {@link TurnWeighting} is gone, see #1820.
+     * attention: Currently this only supports a few weightings with limited extra options. The reason is that here the
+     * same should happen as in the 'real' GraphHopper graph, reading the real config, but this is likely to change
+     * soon, see #493
+     */
+    public GraphBuilder setCHProfileStrings(String... profileStrings) {
+        this.chProfileStrings = Arrays.asList(profileStrings);
+        return this;
+    }
+
     public GraphBuilder setCHProfiles(List<CHProfile> chProfiles) {
         this.chProfiles = chProfiles;
         return this;
     }
 
     public GraphBuilder setCHProfiles(CHProfile... chProfiles) {
-        return setCHProfiles(Arrays.asList(chProfiles));
+        return setCHProfiles(new ArrayList<>(Arrays.asList(chProfiles)));
     }
 
     public GraphBuilder setDir(Directory dir) {
@@ -104,6 +121,7 @@ public class GraphBuilder {
      */
     public GraphHopperStorage build() {
         GraphHopperStorage ghStorage = new GraphHopperStorage(dir, encodingManager, elevation, turnCosts, segmentSize);
+        addCHProfilesFromStrings();
         ghStorage.addCHGraphs(chProfiles);
         return ghStorage;
     }
@@ -113,5 +131,41 @@ public class GraphBuilder {
      */
     public GraphHopperStorage create() {
         return build().create(bytes);
+    }
+
+    private void addCHProfilesFromStrings() {
+        for (String profileString : chProfileStrings) {
+            String[] split = profileString.split("\\|");
+            if (split.length < 3) {
+                throw new IllegalArgumentException("Invalid CH profile string: " + profileString + ". Expected something like: car|fastest|node or bike|shortest|edge|40");
+            }
+            FlagEncoder encoder = encodingManager.getEncoder(split[0]);
+            String weightingStr = split[1];
+            String edgeOrNode = split[2];
+            int uTurnCostsInt = INFINITE_U_TURN_COSTS;
+            if (split.length == 4) {
+                uTurnCostsInt = Integer.parseInt(split[3]);
+            }
+            boolean edgeBased;
+            if (edgeOrNode.equals("edge")) {
+                edgeBased = true;
+            } else if (edgeOrNode.equals("node")) {
+                edgeBased = false;
+            } else {
+                throw new IllegalArgumentException("Invalid CH profile string: " + profileString);
+            }
+            Weighting weighting;
+            if (weightingStr.equalsIgnoreCase("fastest")) {
+                weighting = new FastestWeighting(encoder);
+            } else if (weightingStr.equalsIgnoreCase("shortest")) {
+                weighting = new ShortestWeighting(encoder);
+            } else if (weightingStr.equalsIgnoreCase("short_fastest")) {
+                weighting = new ShortFastestWeighting(encoder, 0.1);
+            } else {
+                throw new IllegalArgumentException("Weighting not supported using this method, maybe you can use setCHProfile instead: " + weightingStr);
+            }
+            chProfiles.add(new CHProfile(weighting, edgeBased, uTurnCostsInt));
+        }
+
     }
 }

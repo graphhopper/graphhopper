@@ -26,7 +26,6 @@ import java.util.*;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.assertEquals;
@@ -52,7 +51,6 @@ public class RandomizedRoutingTest {
     private CHGraph chGraph;
     private FlagEncoder encoder;
     private Weighting weighting;
-    private EncodingManager encodingManager;
     private PrepareContractionHierarchies pch;
     private PrepareLandmarks lm;
 
@@ -102,11 +100,13 @@ public class RandomizedRoutingTest {
     public void init() {
         dir = new RAMDirectory();
         encoder = new MotorcycleFlagEncoder(5, 5, 1);
-        encodingManager = EncodingManager.create(encoder);
-        weighting = new FastestWeighting(encoder);
-        chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
-        graph = createGraph();
-        chGraph = graph.getCHGraph(!traversalMode.isEdgeBased() ? chProfiles.get(0) : chProfiles.get(1));
+        EncodingManager encodingManager = EncodingManager.create(encoder);
+        graph = new GraphBuilder(encodingManager)
+                .setCHProfileStrings("motorcycle|fastest|node", "motorcycle|fastest|edge")
+                .setDir(dir)
+                .create();
+        chProfiles = graph.getCHProfiles();
+        weighting = traversalMode.isEdgeBased() ? chProfiles.get(1).getWeighting() : chProfiles.get(0).getWeighting();
     }
 
     private void preProcessGraph() {
@@ -359,10 +359,6 @@ public class RandomizedRoutingTest {
             strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refPath.calcNodes() + "\ngiven:    " + path.calcNodes());
         }
         return strictViolations;
-    }
-
-    private GraphHopperStorage createGraph() {
-        return new GraphBuilder(encodingManager).setCHProfiles(chProfiles).setDir(dir).withTurnCosts(true).create();
     }
 
     private int getRandom(Random rnd) {

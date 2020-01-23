@@ -7,17 +7,13 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
@@ -31,8 +27,9 @@ public class Path4CHTest {
     public void init() {
         encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
-        Weighting weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(em).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
+        graph = new GraphBuilder(em)
+                .setCHProfileStrings("motorcycle|fastest|edge")
+                .create();
         chGraph = graph.getCHGraph();
     }
 

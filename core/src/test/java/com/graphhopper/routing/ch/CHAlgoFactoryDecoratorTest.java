@@ -20,9 +20,6 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.ShortFastestWeighting;
-import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,17 +47,23 @@ public class CHAlgoFactoryDecoratorTest {
         Directory dir = new RAMDirectory();
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        profileNode1 = CHProfile.nodeBased(new FastestWeighting(encoder));
-        profileNode2 = CHProfile.nodeBased(new ShortestWeighting(encoder));
-        profileNode3 = CHProfile.nodeBased(new ShortFastestWeighting(encoder, 0.1));
-        profileEdge1 = CHProfile.edgeBased(new FastestWeighting(encoder), 30);
-        profileEdge2 = CHProfile.edgeBased(new ShortestWeighting(encoder), 30);
-        profileEdge3 = CHProfile.edgeBased(new ShortFastestWeighting(encoder, 0.1), 30);
-        ghStorage = new GraphBuilder(encodingManager)
-                .setCHProfiles(profileNode1, profileNode2, profileNode3, profileEdge1, profileEdge2, profileEdge3)
-                .setDir(dir)
-                .withTurnCosts(true)
+        ghStorage = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true)
+                .setCHProfileStrings(
+                        "car|fastest|node",
+                        "car|shortest|node",
+                        "car|short_fastest|node",
+                        "car|fastest|edge|30",
+                        "car|shortest|edge|30",
+                        "car|short_fastest|edge|30"
+                )
                 .create();
+        List<CHProfile> chProfiles = ghStorage.getCHProfiles();
+        profileNode1 = chProfiles.get(0);
+        profileNode2 = chProfiles.get(1);
+        profileNode3 = chProfiles.get(2);
+        profileEdge1 = chProfiles.get(3);
+        profileEdge2 = chProfiles.get(4);
+        profileEdge3 = chProfiles.get(5);
     }
 
     @Test
