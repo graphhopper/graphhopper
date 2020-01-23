@@ -123,5 +123,8 @@ public interface Graph {
      */
     TurnCostStorage getTurnCostStorage();
 
+    /**
+     * Wraps the given weighting into a weighting that can be used by this graph
+     */
     Weighting wrapWeighting(Weighting weighting);
 }

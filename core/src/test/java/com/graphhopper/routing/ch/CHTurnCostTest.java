@@ -1015,10 +1015,8 @@ public class CHTurnCostTest {
     @Test
     public void testFindPath_random_compareWithDijkstra_finiteUTurnCost() {
         long seed = System.nanoTime();
-        LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_finiteUTurnCost: {}", seed);
+        LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chProfile.getWeighting());
         chProfile = chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1));
-        // todonow: how to do this now ?
-//        LOGGER.info("U-turn-costs: " + chProfile.getUTurnCostsInt());
         compareWithDijkstraOnRandomGraph(seed);
     }
 
@@ -1048,10 +1046,8 @@ public class CHTurnCostTest {
     @Test
     public void testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost() {
         long seed = System.nanoTime();
-        LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost: {}", seed);
+        LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chProfile.getWeighting());
         chProfile = chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1));
-        // todonow: how to do this now?
-//        LOGGER.info("U-turn-costs: " + chProfile.getUTurnCostsInt());
         compareWithDijkstraOnRandomGraph_heuristic(seed);
     }
 

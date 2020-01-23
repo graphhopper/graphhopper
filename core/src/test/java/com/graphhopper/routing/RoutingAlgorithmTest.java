@@ -864,7 +864,6 @@ public class RoutingAlgorithmTest {
 
             @Override
             public String toString() {
-                // todonow: ugly we rely on toString here
                 return tmpW.getFlagEncoder().toString() + "_" + getName();
             }
         };

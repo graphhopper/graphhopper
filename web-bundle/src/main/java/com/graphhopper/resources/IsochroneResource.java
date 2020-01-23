@@ -90,7 +90,7 @@ public class IsochroneResource {
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
 
-        // todonow: isochrones with turn costs ?
+        // todo: isochrones with turn costs ?
         Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph, new NoTurnCostProvider());
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 

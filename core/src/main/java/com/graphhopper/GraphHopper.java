@@ -847,7 +847,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
             for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
-                // todonow: consider turn costs during LM preparation ?
+                // note that we do not consider turn costs during LM preparation ?
                 Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null, new NoTurnCostProvider());
                 lmFactoryDecorator.addWeighting(weighting);
             }

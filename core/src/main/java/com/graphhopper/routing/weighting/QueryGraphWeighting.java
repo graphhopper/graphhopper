@@ -61,18 +61,16 @@ public class QueryGraphWeighting implements Weighting {
         if (isVirtualNode(viaNode)) {
             if (isUTurn(inEdge, outEdge)) {
                 // do not allow u-turns at virtual nodes, otherwise the route depends on whether or not there are
-                // virtual via nodes, see #1672
+                // virtual via nodes, see #1672. note since we are turning between virtual edges here we need to compare
+                // the *virtual* edge ids (the orig edge would always be the same for all virtual edges at a virtual
+                // node), see #1593
                 return Double.POSITIVE_INFINITY;
             } else {
                 return 0;
             }
         }
-        // to calculate the actual turn costs we need to look at the original edge of the virtual edges.
-        // todonow: ??
-        //  for example
-        // also detecting a u-turn from a a virtual to a non-virtual edge requires looking at the original edge of the
-        // virtual edge. however when we are turning between virtual edges we need to compare the virtual edge ids
-        // see #1593
+        // to calculate the actual turn costs or detect u-turns we need to look at the original edge of each virtual
+        // edge, see #1593
         if (isVirtualEdge(inEdge)) {
             inEdge = getOriginalEdge(inEdge);
         }
