@@ -238,6 +238,29 @@ public class RandomizedRoutingTest {
     }
 
     @Test
+    public void lm_different_subnetworks() {
+        // 0-1-2    3-4
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.403463, 9.707209);
+        na.setNode(1, 49.405948, 9.706809);
+        na.setNode(2, 49.405522, 9.700245);
+        na.setNode(3, 49.405172, 9.706079);
+        na.setNode(4, 49.405096, 9.702603);
+        graph.edge(0, 1, 277.847000, true);
+        graph.edge(2, 1, 477.308000, true);
+        graph.edge(3, 4, 251.669000, true);
+        preProcessGraph();
+        // Nodes 4 and 1 belong to different subnetworks and no connection can be found. However, LM throws a
+        // ConnectionNotFoundException in LandmarkStorage#chooseActiveLandmarks while the other algorithms only set
+        // Path#found=false (and Path#weight=infinity)
+        int source = 4;
+        int target = 1;
+        Path refPath = new DijkstraBidirectionRef(graph, weighting, traversalMode).calcPath(source, target);
+        Path path = createAlgo().calcPath(source, target);
+        comparePaths(refPath, path, source, target, -1);
+    }
+
+    @Test
     @Repeat(times = 5)
     public void randomGraph() {
         final long seed = System.nanoTime();
