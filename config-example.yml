@@ -45,11 +45,18 @@ graphhopper:
   # calculate the weight in seconds. The u-turn costs will only be applied for edge_based, see below.
   prepare.ch.weightings: fastest
 
-  # To enable turn-costs in speed mode (contraction hierarchies) edge-based graph traversal and a more elaborate
-  # pre-processing is required. Using this option you can either turn off the edge-based pre-processing (choose 'off'),
-  # use edge-based pre-processing for all encoders/vehicles with turn_costs=true (choose 'edge_or_node') or use node-based
-  # pre-processing for all encoders/vehicles and additional edge-based pre-processing for all encoders/vehicles with
-  # turn_costs=true (choose 'edge_and_node').
+  # Turn costs can be enabled also for speed mode (contraction hierarchies), but this requires a special kind of graph
+  # preparation (which uses edge- instead of node-based graph traversal), which takes more time and memory than a
+  # node-based preparation. You can also perform both node- and edge-based preparation for the same vehicle. This will
+  # allow switching between faster node-based routing and slower edge-based routing which supports turn costs.
+  # Using the following option you can specify what kind of preparation shall be performed for the different vehicles.
+  # You can choose:
+  # 'off': there will be no edge-based preparation for any of the vehicles, you will not be able to use turn costs
+  #        with speed mode
+  # 'edge_or_node': use edge-based preparation for all vehicles with |turn_costs=true (see graph.flag_encoders) and
+  #                 node-based preparation for all others
+  # 'edge_and_node': use node-based preparation for all vehicles and additionally use edge-based preparation for all
+  #                  vehicles with |turn_costs=true
   prepare.ch.edge_based: off
 
 
