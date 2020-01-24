@@ -261,7 +261,7 @@ public class RandomizedRoutingTest {
                     .calcPath(source, target);
             strictViolations.addAll(comparePaths(refPath, path, source, target, seed));
         }
-        if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
+        if (strictViolations.size() > Math.max(1, 0.30 * numQueries)) {
             for (String strictViolation : strictViolations) {
                 System.out.println("strict violation: " + strictViolation);
             }
@@ -308,7 +308,7 @@ public class RandomizedRoutingTest {
         }
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
-        if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
+        if (strictViolations.size() > Math.max(1, 0.30 * numQueries)) {
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
     }
