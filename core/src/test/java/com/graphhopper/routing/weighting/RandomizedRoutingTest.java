@@ -1,5 +1,7 @@
 package com.graphhopper.routing.weighting;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
@@ -261,7 +263,7 @@ public class RandomizedRoutingTest {
                     .calcPath(source, target);
             strictViolations.addAll(comparePaths(refPath, path, source, target, seed));
         }
-        if (strictViolations.size() > Math.max(1, 0.30 * numQueries)) {
+        if (strictViolations.size() > 3) {
             for (String strictViolation : strictViolations) {
                 System.out.println("strict violation: " + strictViolation);
             }
@@ -308,7 +310,7 @@ public class RandomizedRoutingTest {
         }
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
-        if (strictViolations.size() > Math.max(1, 0.30 * numQueries)) {
+        if (strictViolations.size() > 3) {
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
     }
@@ -355,10 +357,32 @@ public class RandomizedRoutingTest {
         if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
             strictViolations.add("wrong time " + source + "->" + target + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
         }
-        if (!refPath.calcNodes().equals(path.calcNodes())) {
-            strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refPath.calcNodes() + "\ngiven:    " + path.calcNodes());
+        IntIndexedContainer refNodes = refPath.calcNodes();
+        IntIndexedContainer pathNodes = path.calcNodes();
+        if (!refNodes.equals(pathNodes)) {
+            // sometimes paths are only different because of a zero weight loop. we do not consider these as strict
+            // violations, see: #1864
+            if (!removeConsecutiveDuplicates(refNodes).equals(removeConsecutiveDuplicates(pathNodes))) {
+                strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refNodes + "\ngiven:    " + pathNodes);
+            }
         }
         return strictViolations;
+    }
+
+    private static IntIndexedContainer removeConsecutiveDuplicates(IntIndexedContainer arr) {
+        if (arr.size() < 2) {
+            return arr;
+        }
+        IntArrayList result = new IntArrayList();
+        int prev = arr.get(0);
+        for (int i = 1; i < arr.size(); i++) {
+            int val = arr.get(i);
+            if (val != prev) {
+                result.add(val);
+            }
+            prev = val;
+        }
+        return result;
     }
 
     private int getRandom(Random rnd) {
