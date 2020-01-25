@@ -1,0 +1,15 @@
+base: bike
+
+# let's assume cargo bikes are e-bikes and we should lower speed to prefer shorter and not faster routes automatically
+vehicle_max_speed: 25
+
+vehicle_height: 2.3
+vehicle_width: 1.2
+
+priority:
+  surface:
+    sand: 0.5
+  # prefer better tracks
+  track_type: { other: 1.1, grade1: 1.1 }
+  # prefer official bike routes
+  bike.network: { other: 0.5 }

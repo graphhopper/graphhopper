@@ -92,5 +92,10 @@ public class PriorityCustomConfig {
         public Double getValue(EdgeIteratorState iter, boolean reverse) {
             return (vehicleValue < (reverse ? iter.getReverse(ev) : iter.get(ev))) ? null : 0.0;
         }
+
+        @Override
+        public String toString() {
+            return ev.getName() + ": " + vehicleValue;
+        }
     }
 }

@@ -32,7 +32,8 @@ public class CustomWeightingRouteResourceTest {
                 put("graph.custom_models.directory", "./src/test/resources/com/graphhopper/http/").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
-                put("graph.encoded_values", "max_height").
+                // we need more than the default encoded values (truck.yml and cargo_bike.yml)
+                put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 put("graph.location", DIR));
     }
@@ -59,7 +60,7 @@ public class CustomWeightingRouteResourceTest {
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 600, 700);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 900, 1100);
         assertBetween("time wasn't correct", path.get("time").asLong() / 1000.0, 100, 200);
     }
 
@@ -73,6 +74,7 @@ public class CustomWeightingRouteResourceTest {
         JsonNode path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 600, 700);
 
+        // TODO NOW load cargo_bike from file
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "model:\n" +
                 "  base: bike\n" +

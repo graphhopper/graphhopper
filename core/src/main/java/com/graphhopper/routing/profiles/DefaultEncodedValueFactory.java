@@ -89,6 +89,14 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return Toll.class;
         if (TrackType.KEY.equals(name))
             return TrackType.class;
+        if (Hazmat.KEY.equals(name))
+            return Hazmat.class;
+        if (HazmatTunnel.KEY.equals(name))
+            return HazmatTunnel.class;
+        if (HazmatWater.KEY.equals(name))
+            return HazmatWater.class;
+        if (name.endsWith(EncodingManager.getKey("", RouteNetwork.EV_SUFFIX)))
+            return RouteNetwork.class;
 
         throw new IllegalArgumentException("Cannot find enum class " + name);
     }

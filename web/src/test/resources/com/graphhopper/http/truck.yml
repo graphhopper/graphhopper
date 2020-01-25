@@ -1,9 +1,52 @@
+# Specify a vehicle (FlagEncoder) or another custom profile like
 base: car
 
+# Trucks are slower so limit all speed to this value. In km/h
 vehicle_max_speed: 80
+# in meter
+vehicle_height: 3.8
+vehicle_width: 2.5
+# in tons
+vehicle_weight: 4.5
 
-speed_factor:
+# Let's change the estimated average speed for motorway to 100 km/h
+# Please note that in contrast to the other factors (like priority or speed_factor) the first match determines the value
+# I.e. if a road_class==motorway and road_environment==bridge, then the resulting average_speed=100
+# TODO average_speed is not that useful. The value could be from traffic sources and we would then completely overwrite it
+#  by such a simple condition like road_class==motorway. So instead a max_speed dependent on the road_class would help more I guess
+average_speed:
   road_class:
-    motorway: 0.9
-    primary: 0.7
+    motorway: 100
+    residential: 30
+  road_environment:
+    bridge: 90
+
+# The formula is defined in CustomWeighting, where the speed_factor can be used to increase speed and decrease speed
+# It is important to note that if two conditions are satisfied the values are multiplied e.g. if road_class==motorway
+# and road_environment==tunnel, then the resulting speed is average_speed*0.85*0.9. The minimum value is 0.
+speed_factor:
+  road_environment:
+    tunnel: 0.85
+  # trucks should be a bit slower on certain road classes compared to the 'base' car
+  # a more compact JSON-way to list the properties, fully YAML-compatible:
+  road_class: { motorway: 0.85, primary: 0.9 }
+
+# Now we want to set a preference without changing the speed. I.e. trucks shall prefer bigger roads and so we could
+# increase the speed for them, but this is ugly, so we use priority that does not influence the speed.
+# A priority of 1 won't change something and higher than 1 will prefer the road under the condition and lower than 1
+# will avoid it. If two conditions are met the values will be multiplied. The minimum value is 0.
+priority:
+  road_class:
+    motorway: 1.1
     residential: 0.5
+    # cars allow tracks so we should block them here, but in the example in CustomWeightingRouteResourceTest the bridge is only accessible through a track
+    # track: 0
+  # avoid toll roads (prefer roads with 'no' toll)
+  toll: { no: 1.5 }
+  # let's assume we transport gas: so NEVER go on restricted roads with hazmat==no
+  hazmat: { no: 0 }
+  # allow delivery access
+  road_access: { delivery: 1 }
+  # avoid turns if possible and links are one simple indication for that
+  # TODO booleans are not yet supported here
+  # road_class_link: 0.5
