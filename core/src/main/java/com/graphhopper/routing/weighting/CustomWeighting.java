@@ -20,11 +20,10 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.custom.AverageSpeedCustomConfig;
-import com.graphhopper.routing.weighting.custom.DelayCustomConfig;
 import com.graphhopper.routing.weighting.custom.PriorityCustomConfig;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -52,7 +51,6 @@ public class CustomWeighting implements Weighting {
     private double maxSpeed;
     private double distanceFactor;
     private AverageSpeedCustomConfig speedConfig;
-    private DelayCustomConfig delayConfig;
     private PriorityCustomConfig priorityConfig;
 
     public CustomWeighting(String name, CustomModel customModel, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, EncodedValueFactory factory) {
@@ -65,7 +63,6 @@ public class CustomWeighting implements Weighting {
         maxSpeed = customModel.getVehicleMaxSpeed() / CustomModel.SPEED_CONV;
 
         speedConfig = new AverageSpeedCustomConfig(customModel, lookup, factory);
-        delayConfig = new DelayCustomConfig(customModel, lookup, factory);
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
 
         distanceFactor = customModel.getDistanceFactor();
@@ -112,8 +109,7 @@ public class CustomWeighting implements Weighting {
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
 
-        double delay = delayConfig.calcDelay(edge, reverse, prevOrNextEdgeId);
-        return distance / speed * CustomModel.SPEED_CONV + delay;
+        return distance / speed * CustomModel.SPEED_CONV;
     }
 
     @Override

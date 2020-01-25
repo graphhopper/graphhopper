@@ -122,8 +122,4 @@ public class CustomModel {
     public Map<String, Object> getPriority() {
         return priorityMap;
     }
-
-    public Map<String, Object> getDelay() {
-        return delayMap;
-    }
 }
