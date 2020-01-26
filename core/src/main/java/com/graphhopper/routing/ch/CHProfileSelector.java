@@ -98,9 +98,9 @@ public class CHProfileSelector {
         sb.append("|");
         sb.append(hintsMap.getVehicle().isEmpty() ? "*" : hintsMap.getVehicle());
         sb.append("|");
-        sb.append("u_turn_costs=").append(uTurnCosts != null ? uTurnCosts : "*");
-        sb.append("|");
         sb.append("edge_based=").append(edgeBased != null ? edgeBased : "*");
+        sb.append("|");
+        sb.append("u_turn_costs=").append(uTurnCosts != null ? uTurnCosts : "*");
         return sb.toString();
     }
 }

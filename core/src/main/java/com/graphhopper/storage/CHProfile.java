@@ -66,7 +66,7 @@ public class CHProfile {
         Matcher matcher = pattern.matcher(result);
         if (matcher.find()) {
             String turnCostPostfix = matcher.group();
-            result = result.replaceAll(turnCostPostfix, "");
+            result = matcher.replaceAll("");
             result += edgeBased ? "edge" : "node";
             result += "_utc" + turnCostPostfix;
         } else {
@@ -76,7 +76,17 @@ public class CHProfile {
     }
 
     public String toString() {
-        return weighting + "|edge_based=" + edgeBased;
+        String result = weighting.toString();
+        Pattern pattern = Pattern.compile("\\|u_turn_costs=-?\\d+");
+        Matcher matcher = pattern.matcher(result);
+        if (matcher.find()) {
+            String uTurnCostPostFix = matcher.group();
+            result = matcher.replaceAll("");
+            result += "|edge_based=" + edgeBased + uTurnCostPostFix;
+        } else {
+            result += "|edge_based=" + edgeBased;
+        }
+        return result;
     }
 
     @Override
