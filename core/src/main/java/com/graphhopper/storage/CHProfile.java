@@ -22,15 +22,10 @@ public class CHProfile {
     private final boolean edgeBased;
 
     public static CHProfile nodeBased(Weighting weighting) {
-        // todonow: should we do such a check (check if the weighting has turn costs ?)
-//        if (!edgeBased && uTurnCosts != INFINITE_U_TURN_COSTS) {
-//            throw new IllegalArgumentException("Finite u-turn costs are only allowed for edge-based CH");
-//        }
         return new CHProfile(weighting, TraversalMode.NODE_BASED);
     }
 
     public static CHProfile edgeBased(Weighting weighting) {
-        // todonow: should we check/assure that the weighting must have some valid turn costs ?
         return new CHProfile(weighting, TraversalMode.EDGE_BASED);
     }
 
