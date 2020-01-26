@@ -66,7 +66,6 @@ public class Constants {
     private static final int JVM_MAJOR_VERSION;
     private static final int JVM_MINOR_VERSION;
 
-    // todonow: make sure this version is compatible also for older imports!
     public static final int VERSION_NODE = 5;
     public static final int VERSION_EDGE = 15;
     public static final int VERSION_SHORTCUT = 5;
