@@ -60,8 +60,8 @@ public class CustomWeightingRouteResourceTest {
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 900, 1100);
-        assertBetween("time wasn't correct", path.get("time").asLong() / 1000.0, 100, 200);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1400, 1600);
+        assertBetween("time wasn't correct", path.get("time").asLong() / 1000.0, 120, 180);
     }
 
     @Test

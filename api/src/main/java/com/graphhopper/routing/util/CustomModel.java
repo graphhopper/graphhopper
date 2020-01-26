@@ -33,13 +33,11 @@ public class CustomModel {
     private String base;
     // optional:
     private Double vehicleMaxSpeed, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
-    // max_priority and max_speed have a significant influence on the min_weight estimate, i.e. on quality vs. speed for A* with beeline
-    // it also limits possibility to prefer a road
-    private double distanceFactor = 1;
+    // the default is copied from ShortFastestWeighting
+    private double distanceFactor = 0.07;
     private Map<String, Object> speedFactor = new HashMap<>();
     private Map<String, Object> averageSpeed = new HashMap<>();
     private Map<String, Object> priorityMap = new HashMap<>();
-    private Map<String, Object> delayMap = new HashMap<>();
 
     public CustomModel() {
     }
