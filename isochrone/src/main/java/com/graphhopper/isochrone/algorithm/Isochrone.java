@@ -25,12 +25,12 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathExtractor;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.Coordinate;
 
@@ -244,12 +244,12 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 // todo: for #1776/#1835 move the access check into weighting
                 double tmpWeight = !filter.accept(iter)
                         ? Double.POSITIVE_INFINITY
-                        : (AbstractWeighting.calcWeightWithTurnWeight(weighting, iter, reverseFlow, currEdge.edge) + currEdge.weight);
+                        : (GHUtility.calcWeightWithTurnWeight(weighting, iter, reverseFlow, currEdge.edge) + currEdge.weight);
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
                 double tmpDistance = iter.getDistance() + currEdge.distance;
-                long tmpTime = AbstractWeighting.calcMillisWithTurnMillis(weighting, iter, reverseFlow, currEdge.edge) + currEdge.time;
+                long tmpTime = GHUtility.calcMillisWithTurnMillis(weighting, iter, reverseFlow, currEdge.edge) + currEdge.time;
                 int tmpNode = iter.getAdjNode();
                 IsoLabel nEdge = fromMap.get(tmpNode);
                 if (nEdge == null) {

@@ -17,10 +17,10 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.Parameters.Details.WEIGHT;
 
@@ -44,7 +44,7 @@ public class WeightDetails extends AbstractPathDetailsBuilder {
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         if (edge.getEdge() != edgeId) {
             edgeId = edge.getEdge();
-            weight = AbstractWeighting.calcWeightWithTurnWeight(weighting, edge, false, edgeId);
+            weight = GHUtility.calcWeightWithTurnWeight(weighting, edge, false, edgeId);
             return true;
         }
         return false;

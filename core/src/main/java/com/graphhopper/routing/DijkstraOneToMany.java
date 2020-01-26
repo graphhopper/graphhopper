@@ -20,13 +20,9 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 
 import java.util.Arrays;
 
@@ -177,7 +173,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
                 double tmpWeight = !outEdgeFilter.accept(iter)
                         ? Double.POSITIVE_INFINITY
-                        : (AbstractWeighting.calcWeightWithTurnWeight(weighting, iter, false, prevEdgeId) + weights[currNode]);
+                        : (GHUtility.calcWeightWithTurnWeight(weighting, iter, false, prevEdgeId) + weights[currNode]);
                 if (Double.isInfinite(tmpWeight))
                     continue;
 

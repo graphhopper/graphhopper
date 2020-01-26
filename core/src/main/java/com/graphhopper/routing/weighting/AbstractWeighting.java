@@ -21,7 +21,6 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 
@@ -60,44 +59,6 @@ public abstract class AbstractWeighting implements Weighting {
      */
     public abstract double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
-    /**
-     * Calculates the weight of a given edge like {@link #calcEdgeWeight} and adds the transition
-     * cost (the turn weight) associated with transitioning from/to the edge with ID prevOrNextEdgeId.
-     *
-     * @param prevOrNextEdgeId if reverse is false this has to be the previous edgeId, if true it
-     *                         has to be the next edgeId in the direction from start to end.
-     */
-    // todonow: move this method somewhere else?
-    public static double calcWeightWithTurnWeight(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        final double edgeWeight = weighting.calcEdgeWeight(edgeState, reverse);
-        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
-            return edgeWeight;
-        }
-        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
-        double turnWeight = reverse
-                ? weighting.calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
-                : weighting.calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
-        return edgeWeight + turnWeight;
-    }
-
-
-    /**
-     * @see #calcWeightWithTurnWeight(Weighting, EdgeIteratorState, boolean, int)
-     */
-    // todonow: move this method somewhere else?
-    public static long calcMillisWithTurnMillis(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        long edgeMillis = weighting.calcEdgeMillis(edgeState, reverse);
-        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
-            return edgeMillis;
-        }
-        // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
-        // todo: why no first/last orig edge here as in calcWeight ?
-        final int origEdgeId = edgeState.getEdge();
-        long turnMillis = reverse
-                ? weighting.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
-                : weighting.calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
-        return edgeMillis + turnMillis;
-    }
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {

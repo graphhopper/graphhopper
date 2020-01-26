@@ -109,8 +109,8 @@ public class FastestWeightingTest {
         EdgeIteratorState edge = graph.edge(1, 2, 100, true);
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
-        assertEquals(6 + 5, AbstractWeighting.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
-        assertEquals(6000 + 5000, AbstractWeighting.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+        assertEquals(6 + 5, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
+        assertEquals(6000 + 5000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
 
     @Test
@@ -118,8 +118,8 @@ public class FastestWeightingTest {
         Graph graph = new GraphBuilder(encodingManager).create();
         Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 40));
         EdgeIteratorState edge = graph.edge(0, 1, 100, true);
-        assertEquals(6 + 40, AbstractWeighting.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
-        assertEquals((6 + 40) * 1000, AbstractWeighting.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+        assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
+        assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
 
     @Test
@@ -133,7 +133,7 @@ public class FastestWeightingTest {
         // todo: for the shortest weighting turn costs cannot be interpreted as seconds? at least when they are added
         // to the weight? how much should they contribute ?
 //        assertEquals(105, AbstractWeighting.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
-        assertEquals(6000 + 5000, AbstractWeighting.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+        assertEquals(6000 + 5000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
 
     private void setTurnCost(Graph graph, int from, int via, int to, double turnCost) {

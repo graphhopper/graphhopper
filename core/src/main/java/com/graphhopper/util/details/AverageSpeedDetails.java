@@ -1,8 +1,8 @@
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
 
@@ -35,7 +35,7 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        double tmpVal = edge.getDistance() / AbstractWeighting.calcMillisWithTurnMillis(weighting, edge, false, prevEdgeId) * 3600;
+        double tmpVal = edge.getDistance() / GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdgeId) * 3600;
         if (Double.isInfinite(tmpVal))
             throw new IllegalStateException("average_speed was infinite for " + edge.fetchWayGeometry(3));
 

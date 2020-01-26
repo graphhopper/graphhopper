@@ -8,8 +8,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -325,9 +325,9 @@ public class ShortcutUnpackerTest {
             edgeIds.add(edge.getEdge());
             baseNodes.add(edge.getBaseNode());
             adjNodes.add(edge.getAdjNode());
-            weights.add(AbstractWeighting.calcWeightWithTurnWeight(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
+            weights.add(GHUtility.calcWeightWithTurnWeight(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
             distances.add(edge.getDistance());
-            times.add(AbstractWeighting.calcMillisWithTurnMillis(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
+            times.add(GHUtility.calcMillisWithTurnMillis(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
             prevOrNextEdgeIds.add(prevOrNextEdgeId);
         }
     }
@@ -338,8 +338,8 @@ public class ShortcutUnpackerTest {
 
         @Override
         public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-            time += AbstractWeighting.calcMillisWithTurnMillis(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId);
-            weight += AbstractWeighting.calcWeightWithTurnWeight(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId);
+            time += GHUtility.calcMillisWithTurnMillis(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId);
+            weight += GHUtility.calcWeightWithTurnWeight(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId);
         }
     }
 }
