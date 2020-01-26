@@ -123,8 +123,10 @@ GHRequest.prototype.getEarliestDepartureTime = function () {
 
 GHRequest.prototype.initVehicle = function (vehicle) {
     this.api_params.vehicle = vehicle;
-    var featureSet = this.features[vehicle];
-    this.api_params.elevation = featureSet && featureSet.elevation;
+    if(this.api_params.elevation !== false) {
+        var featureSet = this.features[vehicle];
+        this.api_params.elevation = featureSet && featureSet.elevation;
+    }
     this.hasTCSupport();
 };
 
