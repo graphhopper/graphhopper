@@ -12,8 +12,6 @@ vehicle_weight: 4.5
 # Let's change the estimated average speed for motorway to 100 km/h
 # Please note that in contrast to the other factors (like priority or speed_factor) the first match determines the value
 # I.e. if a road_class==motorway and road_environment==bridge, then the resulting average_speed=100
-# TODO average_speed is not that useful. The value could be from traffic sources and we would then completely overwrite it
-#  by such a simple condition like road_class==motorway. So instead a max_speed dependent on the road_class would help more I guess
 average_speed:
   road_class:
     motorway: 95

@@ -48,7 +48,7 @@ public class PriorityCustomConfig {
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(entry.getKey(), Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
                 Double[] values = Helper.createEnumToDoubleArray("priority", 0, Double.POSITIVE_INFINITY, enumClass, (Map<String, Object>) value);
-                calcMax(values);
+                maxPriority = pickMax(values, maxPriority);
                 priorityList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'priority'");
@@ -56,11 +56,13 @@ public class PriorityCustomConfig {
         }
     }
 
-    void calcMax(Double[] values) {
+    static double pickMax(Double[] values, double max) {
         for (Double val : values) {
-            maxPriority = val == null ? maxPriority : Math.max(maxPriority, val);
+            max = val == null ? max : Math.max(max, val);
         }
+        return max;
     }
+
 
     public double getMax() {
         return maxPriority;

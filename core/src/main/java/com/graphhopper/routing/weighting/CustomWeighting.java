@@ -60,9 +60,10 @@ public class CustomWeighting implements Weighting {
         baseVehicleProfile = customModel.getBase();
         if (customModel.getVehicleMaxSpeed() == null || customModel.getVehicleMaxSpeed() < 2)
             customModel.setVehicleMaxSpeed(baseFlagEncoder.getMaxSpeed());
-        maxSpeed = customModel.getVehicleMaxSpeed() / CustomModel.SPEED_CONV;
 
         speedConfig = new AverageSpeedCustomConfig(customModel, lookup, factory);
+        maxSpeed = speedConfig.getMaxSpeedFactor() * customModel.getVehicleMaxSpeed() / CustomModel.SPEED_CONV;
+
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
         maxPriority = priorityConfig.getMax();
         if (maxPriority < 1)

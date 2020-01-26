@@ -30,11 +30,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.pickMax;
+
 public class AverageSpeedCustomConfig {
     private List<ConfigMapEntry> speedFactorList = new ArrayList<>();
     private List<ConfigMapEntry> avgSpeedList = new ArrayList<>();
     private DecimalEncodedValue avgSpeedEnc;
     private CustomModel customModel;
+    private double maxSpeedFactor = 1;
 
     public AverageSpeedCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
         this.customModel = customModel;
@@ -50,6 +53,7 @@ public class AverageSpeedCustomConfig {
                 Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
                 Double[] values = Helper.createEnumToDoubleArray("average_speed", 0,
                         customModel.getVehicleMaxSpeed(), enumClass, (Map<String, Object>) value);
+                maxSpeedFactor = pickMax(values, maxSpeedFactor);
                 avgSpeedList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'average_speed'");
@@ -70,6 +74,11 @@ public class AverageSpeedCustomConfig {
             }
         }
     }
+
+    public double getMaxSpeedFactor() {
+        return maxSpeedFactor;
+    }
+
 
     /**
      * @return speed in km/h
