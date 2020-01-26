@@ -103,6 +103,9 @@ public class GraphHopperManaged implements Managed {
                 + ", encoded values:" + graphHopper.getEncodingManager().toEncodedValuesAsString()
                 + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
         osm = new OSM(graphHopper.getGraphHopperStorage().getDirectory().getDefaultType().isStoring() ? graphHopper.getGraphHopperStorage().getDirectory().getLocation()+"/osm.db" : null);
+        if (osm.ways.isEmpty()) {
+            osm.readFromFile(graphHopper.getDataReaderFile());
+        }
     }
 
     public GraphHopper getGraphHopper() {
