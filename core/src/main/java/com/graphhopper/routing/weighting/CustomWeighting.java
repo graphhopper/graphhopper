@@ -64,14 +64,13 @@ public class CustomWeighting implements Weighting {
 
         speedConfig = new AverageSpeedCustomConfig(customModel, lookup, factory);
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
+        maxPriority = priorityConfig.getMax();
+        if (maxPriority < 1)
+            throw new IllegalArgumentException("maximum priority cannot be smaller than 1 but was " + maxPriority);
 
         distanceFactor = customModel.getDistanceFactor();
         if (distanceFactor < 0)
             throw new IllegalArgumentException("distance_factor cannot be negative");
-
-        maxPriority = customModel.getMaxPriority();
-        if (maxPriority <= 0)
-            throw new IllegalArgumentException("min_priority cannot be 0 or negative");
     }
 
     @Override

@@ -33,7 +33,6 @@ public class CustomModel {
     private String base;
     // optional:
     private Double vehicleMaxSpeed, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
-    private double maxPriority = 10;
     // max_priority and max_speed have a significant influence on the min_weight estimate, i.e. on quality vs. speed for A* with beeline
     // it also limits possibility to prefer a road
     private double distanceFactor = 1;
@@ -93,14 +92,6 @@ public class CustomModel {
 
     public Double getVehicleMaxSpeed() {
         return vehicleMaxSpeed;
-    }
-
-    public void setMaxPriority(double maxPriority) {
-        this.maxPriority = maxPriority;
-    }
-
-    public double getMaxPriority() {
-        return maxPriority;
     }
 
     public void setDistanceFactor(double distanceFactor) {

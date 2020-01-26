@@ -2,7 +2,7 @@
 base: car
 
 # Trucks are slower so limit all speed to this value. In km/h
-vehicle_max_speed: 80
+vehicle_max_speed: 100
 # in meter
 vehicle_height: 3.8
 vehicle_width: 2.5
@@ -16,10 +16,10 @@ vehicle_weight: 4.5
 #  by such a simple condition like road_class==motorway. So instead a max_speed dependent on the road_class would help more I guess
 average_speed:
   road_class:
-    motorway: 100
+    motorway: 95
     residential: 30
   road_environment:
-    bridge: 90
+    bridge: 85
 
 # The formula is defined in CustomWeighting, where the speed_factor can be used to increase speed and decrease speed
 # It is important to note that if two conditions are satisfied the values are multiplied e.g. if road_class==motorway
@@ -33,8 +33,8 @@ speed_factor:
 
 # Now we want to set a preference without changing the speed. I.e. trucks shall prefer bigger roads and so we could
 # increase the speed for them, but this is ugly, so we use priority that does not influence the speed.
-# A priority of 1 won't change something and higher than 1 will prefer the road under the condition and lower than 1
-# will avoid it. If two conditions are met the values will be multiplied. The minimum value is 0.
+# The default priority 1 won't change something. Higher than 1 will prefer the road under the specified condition
+# and lower than 1 will avoid it. If two conditions are met the values will be multiplied. The minimum value is 0.
 priority:
   road_class:
     motorway: 1.1

@@ -29,7 +29,7 @@ public class CustomWeightingRouteResourceTest {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "bike,car").
                 put("routing.ch.disabling_allowed", "true").
-                put("graph.custom_models.directory", "./src/test/resources/com/graphhopper/http/").
+                put("graph.custom_models.directory", "./src/test/resources/com/graphhopper/http/resources/").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 // we need more than the default encoded values (truck.yml and cargo_bike.yml)
@@ -74,7 +74,7 @@ public class CustomWeightingRouteResourceTest {
         JsonNode path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 600, 700);
 
-        // TODO NOW load cargo_bike from file
+        // TODO load cargo_bike from file - but how to easily merge with the "points" array?
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "model:\n" +
                 "  base: bike\n" +

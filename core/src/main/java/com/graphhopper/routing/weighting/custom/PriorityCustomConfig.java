@@ -29,6 +29,7 @@ import java.util.Map;
 public class PriorityCustomConfig {
     private final CustomModel config;
     private List<ConfigMapEntry> priorityList = new ArrayList<>();
+    private double maxPriority;
 
     public PriorityCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
         this.config = customModel;
@@ -37,6 +38,8 @@ public class PriorityCustomConfig {
         add(lookup, customModel.getVehicleHeight(), "vehicle_height", MaxHeight.KEY);
         add(lookup, customModel.getVehicleLength(), "vehicle_length", MaxLength.KEY);
 
+        // default for priority is 1
+        maxPriority = 1;
         for (Map.Entry<String, Object> entry : customModel.getPriority().entrySet()) {
             if (!lookup.hasEncodedValue(entry.getKey()))
                 throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'priority'");
@@ -44,12 +47,23 @@ public class PriorityCustomConfig {
             if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(entry.getKey(), Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
-                Double[] values = Helper.createEnumToDoubleArray("priority", 0, enumClass, (Map<String, Object>) value);
+                Double[] values = Helper.createEnumToDoubleArray("priority", 0, Double.POSITIVE_INFINITY, enumClass, (Map<String, Object>) value);
+                calcMax(values);
                 priorityList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'priority'");
             }
         }
+    }
+
+    void calcMax(Double[] values) {
+        for (Double val : values) {
+            maxPriority = val == null ? maxPriority : Math.max(maxPriority, val);
+        }
+    }
+
+    public double getMax() {
+        return maxPriority;
     }
 
     void add(EncodedValueLookup lookup, Double value, String name, String encValue) {
@@ -74,7 +88,7 @@ public class PriorityCustomConfig {
                 priority *= value;
             }
         }
-        return Math.min(priority, config.getMaxPriority());
+        return Math.min(priority, maxPriority);
     }
 
     private static class MaxValueConfigMapEntry implements ConfigMapEntry {

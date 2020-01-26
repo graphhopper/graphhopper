@@ -20,5 +20,8 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.util.EdgeIteratorState;
 
 public interface ConfigMapEntry {
+    /**
+     * @return a double value or null if this entry should be skipped
+     */
     Double getValue(EdgeIteratorState iter, boolean reverse);
 }
