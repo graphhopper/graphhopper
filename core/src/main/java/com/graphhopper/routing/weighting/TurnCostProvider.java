@@ -18,10 +18,38 @@
 
 package com.graphhopper.routing.weighting;
 
+/**
+ * Implementations of this interface define how turn costs and turn times are calculated.
+ */
 public interface TurnCostProvider {
+    /**
+     * @return the turn weight of a transitions from the edge with id {@param inEdge} to the edge with id
+     * {@param outEdge} at the node with id {@param viaNode}
+     */
     double calcTurnWeight(int inEdge, int viaNode, int outEdge);
 
+    /**
+     * @return the time it takes to take a turn in milli-seconds
+     * @see #calcTurnWeight(int, int, int)
+     */
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 
     String getName();
+
+    TurnCostProvider NO_TURN_COST_PROVIDER = new TurnCostProvider() {
+        @Override
+        public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+            return 0;
+        }
+
+        @Override
+        public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+            return 0;
+        }
+
+        @Override
+        public String getName() {
+            return "";
+        }
+    };
 }

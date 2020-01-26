@@ -25,6 +25,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.util.Helper.isEmpty;
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -38,7 +39,7 @@ public abstract class AbstractWeighting implements Weighting {
     private final TurnCostProvider turnCostProvider;
 
     protected AbstractWeighting(FlagEncoder encoder) {
-        this(encoder, new NoTurnCostProvider());
+        this(encoder, NO_TURN_COST_PROVIDER);
     }
 
     protected AbstractWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {

@@ -21,6 +21,8 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+
 /**
  * Calculates the fastest route with distance influence controlled by a new parameter.
  * <p>
@@ -36,7 +38,7 @@ public class ShortFastestWeighting extends FastestWeighting {
     private final double timeFactor;
 
     public ShortFastestWeighting(FlagEncoder encoder, PMap map) {
-        this(encoder, map, new NoTurnCostProvider());
+        this(encoder, map, NO_TURN_COST_PROVIDER);
     }
 
     public ShortFastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
@@ -51,7 +53,7 @@ public class ShortFastestWeighting extends FastestWeighting {
     }
 
     public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor) {
-        this(encoder, distanceFactor, new NoTurnCostProvider());
+        this(encoder, distanceFactor, NO_TURN_COST_PROVIDER);
     }
 
     public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor, TurnCostProvider turnCostProvider) {

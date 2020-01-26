@@ -67,6 +67,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE;
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF;
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
@@ -827,7 +828,7 @@ public class GraphHopper implements GraphHopperAPI {
 
                     CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
                     if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supportsTurnCosts())) {
-                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null, new NoTurnCostProvider())));
+                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null, NO_TURN_COST_PROVIDER)));
                     }
                     if (edgeBasedCHMode != OFF && encoder.supportsTurnCosts()) {
                         chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null, new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts))));
@@ -848,7 +849,7 @@ public class GraphHopper implements GraphHopperAPI {
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
             for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
                 // note that we do not consider turn costs during LM preparation?
-                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null, new NoTurnCostProvider());
+                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null, NO_TURN_COST_PROVIDER);
                 lmFactoryDecorator.addWeighting(weighting);
             }
         }
@@ -1058,7 +1059,7 @@ public class GraphHopper implements GraphHopperAPI {
                 }
                 TurnCostProvider turnCostProvider = (encoder.supportsTurnCosts() && tMode.isEdgeBased())
                         ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
-                        : new NoTurnCostProvider();
+                        : NO_TURN_COST_PROVIDER;
 
                 RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
                 Weighting weighting;

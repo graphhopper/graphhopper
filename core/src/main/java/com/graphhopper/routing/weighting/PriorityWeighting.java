@@ -25,6 +25,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.util.PriorityCode.BEST;
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 /**
  * Special weighting for (motor)bike
@@ -37,7 +38,7 @@ public class PriorityWeighting extends FastestWeighting {
     private final DecimalEncodedValue priorityEnc;
 
     public PriorityWeighting(FlagEncoder encoder, PMap pMap) {
-        this(encoder, pMap, new NoTurnCostProvider());
+        this(encoder, pMap, NO_TURN_COST_PROVIDER);
     }
 
     public PriorityWeighting(FlagEncoder encoder, PMap pMap, TurnCostProvider turnCostProvider) {

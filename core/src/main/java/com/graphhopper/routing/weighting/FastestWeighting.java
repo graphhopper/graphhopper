@@ -25,6 +25,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+
 /**
  * Calculates the fastest route with the specified vehicle (VehicleEncoder). Calculates the weight
  * in seconds.
@@ -54,7 +56,7 @@ public class FastestWeighting extends AbstractWeighting {
     }
 
     public FastestWeighting(FlagEncoder encoder, PMap map) {
-        this(encoder, map, new NoTurnCostProvider());
+        this(encoder, map, NO_TURN_COST_PROVIDER);
     }
 
     public FastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {

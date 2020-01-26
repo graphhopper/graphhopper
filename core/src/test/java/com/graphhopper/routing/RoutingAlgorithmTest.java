@@ -25,8 +25,8 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.NoTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -59,8 +59,9 @@ import static org.junit.Assert.*;
 /**
  * This test tests the different routing algorithms on small user-defined sample graphs. It tests node- and edge-based
  * algorithms, but does *not* use turn costs, because otherwise node- and edge-based implementations would not be
- * comparable. For edge-based traversal u-turns cannot happen, even with {@link NoTurnCostProvider}, because
- * as long as we do not apply turn restrictions we will never take a u-turn.. All tests should follow the same pattern:
+ * comparable. For edge-based traversal u-turns cannot happen, even with {@link TurnCostProvider#NO_TURN_COST_PROVIDER},
+ * because as long as we do not apply turn restrictions we will never take a u-turn.
+ * All tests should follow the same pattern:
  * <p>
  * - create a GH storage, you need to pass all the weightings used in this test to {@link #createGHStorage}, such that
  * the according CHGraphs can be created

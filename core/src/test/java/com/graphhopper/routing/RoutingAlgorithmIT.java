@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.NoTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHProfile;
@@ -45,6 +44,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.Assert.assertTrue;
 
@@ -63,7 +63,7 @@ public class RoutingAlgorithmIT {
             addStr = "turn|";
 
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(hints.getVehicle());
-        TurnCostProvider turnCostProvider = tMode.isEdgeBased() ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage()) : new NoTurnCostProvider();
+        TurnCostProvider turnCostProvider = tMode.isEdgeBased() ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
         Weighting weighting = hopper.createWeighting(hints, encoder, hopper.getGraphHopperStorage(), turnCostProvider);
 
         HintsMap defaultHints = new HintsMap().put(Parameters.CH.DISABLE, true).put(Parameters.Landmark.DISABLE, true)

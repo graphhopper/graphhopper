@@ -9,7 +9,6 @@ import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.NoTurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
@@ -34,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 @Path("isochrone")
 public class IsochroneResource {
@@ -91,7 +92,7 @@ public class IsochroneResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
 
         // todo: isochrones with turn costs ?
-        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph, new NoTurnCostProvider());
+        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph, NO_TURN_COST_PROVIDER);
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {

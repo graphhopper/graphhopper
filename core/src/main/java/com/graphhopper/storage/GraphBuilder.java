@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
 /**
@@ -157,7 +158,7 @@ public class GraphBuilder {
                 turnCostProvider = new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCostsInt);
                 edgeBased = true;
             } else if (edgeOrNode.equals("node")) {
-                turnCostProvider = new NoTurnCostProvider();
+                turnCostProvider = NO_TURN_COST_PROVIDER;
             } else {
                 throw new IllegalArgumentException("Invalid CH profile string: " + profileString);
             }
