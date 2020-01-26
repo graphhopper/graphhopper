@@ -31,12 +31,12 @@ import java.io.PrintWriter;
 import java.util.Map;
 
 @Path("restrictions")
-public class RestrictionsResource {
+public class ConditionalTurnRestrictionsResource {
 
     private final OSM osm;
 
     @Inject
-    public RestrictionsResource(OSM osm) {
+    public ConditionalTurnRestrictionsResource(OSM osm) {
         this.osm = osm;
     }
 
