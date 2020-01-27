@@ -19,9 +19,9 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
@@ -55,10 +55,10 @@ public class CustomWeightingTest {
 
     @Test
     public void testBasic() {
-        EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(10).set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
-        EdgeIteratorState edge2 = graphHopperStorage.edge(1, 2).setDistance(10).set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
-        graphHopperStorage.edge(2, 3).setDistance(10).set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
-        graphHopperStorage.edge(3, 4).setDistance(10).set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 100).set(accessEnc, true).setReverse(accessEnc, true);
+        EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(10).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
+        EdgeIteratorState edge2 = graphHopperStorage.edge(1, 2).setDistance(10).
+                set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
 
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.setVehicleMaxSpeed(120d);
@@ -68,27 +68,27 @@ public class CustomWeightingTest {
         vehicleModel.getPriority().put(KEY, map);
 
         Weighting weighting = new CustomWeighting("custom", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
-        assertEquals(10.5, weighting.calcEdgeWeight(edge2, false), 0.1);
-        assertEquals(5.2, weighting.calcEdgeWeight(edge1, false), 0.1);
+        assertEquals(1.21, weighting.calcEdgeWeight(edge2, false), 0.01);
+        assertEquals(0.575, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         map.put(PRIMARY.toString(), 1.1);
         weighting = new CustomWeighting("custom", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
-        assertEquals(9.5, weighting.calcEdgeWeight(edge1, false), 0.11);
+        assertEquals(1.045, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         // force integer value
         map.put(PRIMARY.toString(), 1);
         weighting = new CustomWeighting("custom", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
-        assertEquals(10.5, weighting.calcEdgeWeight(edge1, false), 0.11);
+        assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
     }
-
 
     @Test
     public void testNoMaxSpeed() {
-        EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(10).set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
+        EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(10).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.setBase("car");
 
         Weighting weighting = new CustomWeighting("custom", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
-        assertEquals(10.5, weighting.calcEdgeWeight(edge1, false), 0.1);
+        assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
     }
 }
