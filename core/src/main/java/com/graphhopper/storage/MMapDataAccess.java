@@ -512,7 +512,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
             // windows does not allow changing the length of an open files
             if (!Constants.WINDOWS) {
                 // reduce file size
-                raFile.setLength(HEADER_OFFSET + remainingSegNo * segmentSizeInBytes);
+                raFile.setLength(HEADER_OFFSET + (long) remainingSegNo * segmentSizeInBytes);
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
