@@ -132,7 +132,11 @@ class GtfsGraphLogger {
                 keyEle.setAttribute(attVal[0], attVal[1]);
             }
         }
-        parentEle.appendChild(keyEle);
+
+        if (parentEle != null) {
+            parentEle.appendChild(keyEle);
+        }
+
         return keyEle;
     }
 
@@ -170,23 +174,12 @@ class GtfsGraphLogger {
         }
         catch (Exception e) {
         }
-        
 
         dbf = DocumentBuilderFactory.newInstance();
         db = dbf.newDocumentBuilder();
         dom = db.newDocument();
 
-        Element rootEle = dom.createElement("graphml");
-        rootEle.setAttribute("xmlns", "http://graphml.graphdrawing.org/xmlns");
-        rootEle.setAttribute("xmlns:java", "http://www.yworks.com/xml/yfiles-common/1.0/java");
-        rootEle.setAttribute("xmlns:sys", "http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0");
-        rootEle.setAttribute("xmlns:x", "http://www.yworks.com/xml/yfiles-common/markup/2.0");
-        rootEle.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-        rootEle.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-        rootEle.setAttribute("xmlns:y", "http://www.yworks.com/xml/graphml");
-        rootEle.setAttribute("xmlns:yed", "http://www.yworks.com/xml/yed/3");
-        rootEle.setAttribute("xsi:schemaLocation", "http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd");
-
+        Element rootEle = appendXmlNode(null, "graphml", "xmlns=http://graphml.graphdrawing.org/xmlns xmlns:java=http://www.yworks.com/xml/yfiles-common/1.0/java xmlns:sys=http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0 xmlns:x=http://www.yworks.com/xml/yfiles-common/markup/2.0 xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xmlns:y=http://www.yworks.com/xml/graphml xmlns:yed=http://www.yworks.com/xml/yed/3 xsi:schemaLocation=http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd");
         appendXmlNode(rootEle, "key", "attr.name=Description attr.type=string for=graph id=d0");
         appendXmlNode(rootEle, "key", "for=port id=d1 yfiles.type=portgraphics");
         appendXmlNode(rootEle, "key", "for=port id=d2 yfiles.type=portgeometry");
