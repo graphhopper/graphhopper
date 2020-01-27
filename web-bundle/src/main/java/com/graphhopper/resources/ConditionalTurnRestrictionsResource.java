@@ -19,8 +19,9 @@
 package com.graphhopper.resources;
 
 import com.conveyal.osmlib.OSM;
-import com.conveyal.osmlib.OSMEntity;
 import com.conveyal.osmlib.Relation;
+import com.graphhopper.TimeDependentAccessRestriction;
+import com.graphhopper.storage.GraphHopperStorage;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -28,29 +29,31 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.PrintWriter;
+import java.time.Instant;
 import java.util.Map;
 
 @Path("restrictions")
 public class ConditionalTurnRestrictionsResource {
 
     private final OSM osm;
+    private final GraphHopperStorage storage;
 
     @Inject
-    public ConditionalTurnRestrictionsResource(OSM osm) {
+    public ConditionalTurnRestrictionsResource(GraphHopperStorage storage, OSM osm) {
+        this.storage = storage;
         this.osm = osm;
     }
 
     @GET
     @Produces("text/plain")
     public StreamingOutput conditionalRelations() {
+        Instant linkEnterTime = Instant.now();
+        TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm);
         return output -> {
             PrintWriter printWriter = new PrintWriter(output);
             for (Map.Entry<Long, Relation> entry : osm.relations.entrySet()) {
                 if (entry.getValue().hasTag("type", "restriction")) {
-                    for (OSMEntity.Tag tag : entry.getValue().tags) {
-                        if (tag.key.equals("type")) continue;
-                        printWriter.println(entry.getKey() + "\t" + tag);
-                    }
+                    timeDependentAccessRestriction.printConditionalTurnRestriction(entry.getKey(), linkEnterTime, printWriter);
                 }
             }
             printWriter.flush();

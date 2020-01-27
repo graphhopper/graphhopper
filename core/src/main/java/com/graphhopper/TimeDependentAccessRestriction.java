@@ -25,6 +25,7 @@ import ch.poole.conditionalrestrictionparser.Restriction;
 import ch.poole.openinghoursparser.*;
 import com.conveyal.osmlib.OSM;
 import com.conveyal.osmlib.OSMEntity;
+import com.conveyal.osmlib.Relation;
 import com.conveyal.osmlib.Way;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -40,6 +41,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -87,6 +89,30 @@ public class TimeDependentAccessRestriction {
         }
     }
 
+    public void printConditionalTurnRestriction(long osmid, Instant when, PrintWriter out) {
+        final ZonedDateTime zonedDateTime = when.atZone(zoneId);
+        Relation relation = osm.relations.get(osmid);
+        Map<String, Object> tags = new HashMap<>();
+        for (OSMEntity.Tag tag : relation.tags) {
+            tags.put(tag.key, tag.value);
+        }
+        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
+                .collect(Collectors.toList());
+        if (!restrictionData.isEmpty()) {
+            out.printf("%d\n", osmid);
+            for (ConditionalTagData conditionalTagData : restrictionData) {
+                out.println(" "+conditionalTagData.tag);
+                for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
+                    out.println("  "+timeDependentRestrictionData.restriction);
+                    for (Rule rule : timeDependentRestrictionData.rules) {
+                        out.println("   " + rule + (matches(zonedDateTime, rule) ? " <===" : ""));
+                    }
+                }
+            }
+        }
+    }
+
+
     /**
      *
      * We use ReaderWay instead of Way as the domain type, because we also need these functions in the
@@ -101,7 +127,7 @@ public class TimeDependentAccessRestriction {
     }
 
     public static List<ConditionalTagData> getTimeDependentAccessConditions(ReaderWay way) {
-        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(way);
+        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(way.getTags());
         List<ConditionalTagData> accessRestrictionData = restrictionData.stream()
                 .filter(c -> c.tag.key.contains("access") || c.tag.key.contains("vehicle"))
                 .filter(c -> !c.tag.key.contains("lanes"))
@@ -121,9 +147,9 @@ public class TimeDependentAccessRestriction {
      * that have empty restrictionData.
      *
      */
-    public static List<ConditionalTagData> getConditionalTagDataWithTimeDependentConditions(ReaderWay way) {
+    public static List<ConditionalTagData> getConditionalTagDataWithTimeDependentConditions(Map<String, Object> tags) {
         List<ConditionalTagData> restrictionData = new ArrayList<>();
-        for (Map.Entry<String, Object> tag : way.getTags().entrySet()) {
+        for (Map.Entry<String, Object> tag : tags.entrySet()) {
             if (!(tag.getValue() instanceof String)) continue;
             String tagValue = (String) tag.getValue();
             if (tagValue.contains("@")) {
@@ -200,7 +226,7 @@ public class TimeDependentAccessRestriction {
         if (edgeState.get(property)) {
             long osmid = osmidParser.getOSMID(edgeState.getFlags());
             Way way = osm.ways.get(osmid);
-            List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(readerWay(osmid, way));
+            List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(readerWay(osmid, way).getTags());
             if (!conditionalTagDataWithTimeDependentConditions.isEmpty()) {
                 final ZonedDateTime zonedDateTime = linkEnterTime.atZone(zoneId);
                 for (ConditionalTagData conditionalTagData : conditionalTagDataWithTimeDependentConditions) {
