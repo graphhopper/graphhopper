@@ -462,3 +462,20 @@ td img.pic {
 .fullscreen-reverse-btn {
     background-image: url("../img/full-reverse.png");
 }
+
+#locationpoints {
+    counter-set: pointcounter -1;
+}
+
+#locationpoints>div {
+    counter-increment: pointcounter;
+}
+
+#locationpoints>div:nth-child(n+2):nth-last-child(n+3)::before {
+    content: counter(pointcounter);
+    position: absolute;
+    right: calc(100% - 1.2em);
+    text-align: right;
+    font-size: 70%;
+}
+}
