@@ -78,17 +78,18 @@ class GtfsGraphLogger {
     }
 
     public static void main(String[] args) throws Exception {
-        final GtfsGraphLogger graphLogger = new GtfsGraphLogger();
+        final GtfsGraphLogger graphLogger = new GtfsGraphLogger("/Users/mathieu.stpierre/Documents/Iterations/January2020/gtfs_graph_logger/gtfsGraph.graphml");
         graphLogger.addNode("node1", 0, 0, NodeLogType.DEPARTURE_STOP_TIME_NODE, "");
         graphLogger.addNode("node2", 50, 50, NodeLogType.ARRIVAL_STOP_TIME_NODE, "");
         graphLogger.addEdge("HOP", "edge1", "node1", "node2");
-        graphLogger.exportGraphmlToFile("/Users/mathieu.stpierre/Documents/Iterations/January2020/gtfs_graph_logger/gtfsGraph.graphml");
+        graphLogger.exportGraphmlToFile();
     }
 
     private DocumentBuilderFactory dbf;
     private DocumentBuilder db;
     private Document dom;
     private Element graphEle;
+    private String graphmlPath;
 
     class NodeInfo {
 
@@ -140,9 +141,11 @@ class GtfsGraphLogger {
         return keyEle;
     }
 
-    GtfsGraphLogger() throws ParserConfigurationException {
+    GtfsGraphLogger(String graphmlPath) throws ParserConfigurationException {
 
         try {
+            this.graphmlPath = graphmlPath;
+
             String val = System.getenv("GTFS_GRAPH_LOGGER_Y_SPACE_SCALE");
             
             if (val != null) {
@@ -342,7 +345,7 @@ class GtfsGraphLogger {
         appendXmlNode(polyEdgeEle, "y:BendStyle", "smoothed=false");
     }
 
-    void exportGraphmlToFile(final String filename) {
+    void exportGraphmlToFile() {
 
         try {
             Transformer tr = TransformerFactory.newInstance().newTransformer();
@@ -353,7 +356,7 @@ class GtfsGraphLogger {
             tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
             // send DOM to file
-            tr.transform(new DOMSource(dom), new StreamResult(new FileOutputStream(filename)));
+            tr.transform(new DOMSource(dom), new StreamResult(new FileOutputStream(graphmlPath)));
         } catch (TransformerException te) {
             System.out.println(te.getMessage());
         } catch (IOException ioe) {
