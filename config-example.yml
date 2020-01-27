@@ -29,7 +29,7 @@ graphhopper:
   # Other entries than 'priority' are 'speed_factor', 'delay' and 'average_sped' where the encoded values defined above like 'surface' can be used.
   # See the CustomWeighting class of how the different entries influence the weighting (cost function).
   #
-  # graph.custom_models.directory: ./profiles/
+  # graph.custom_profiles.directory: ./profiles/
 
   ##### Elevation #####
 

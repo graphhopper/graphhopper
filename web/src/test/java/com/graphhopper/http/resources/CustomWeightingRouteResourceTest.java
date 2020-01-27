@@ -29,7 +29,7 @@ public class CustomWeightingRouteResourceTest {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "bike,car").
                 put("routing.ch.disabling_allowed", "true").
-                put("graph.custom_models.directory", "./src/test/resources/com/graphhopper/http/resources/").
+                put("graph.custom_profiles.directory", "./src/test/resources/com/graphhopper/http/resources/").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 // we need more than the default encoded values (truck.yml and cargo_bike.yml)
