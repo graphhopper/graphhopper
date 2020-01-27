@@ -30,13 +30,13 @@ import com.graphhopper.util.EdgeIteratorState;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 /**
- * Every EncodedValue like road_environment can influence one or more aspects of this Weighting: the delay, the
+ * Every EncodedValue like road_environment can influence one or more aspects of this Weighting: the
  * speed_factor, the average_speed and the priority. The formula is basically:
  * <pre>
  * if no access to edge then return infinity
- * seconds = toSeconds(distance / speed) + delayInSeconds
+ * speed = pick_first(average_speed_map) * multiply_all(speed_factor_map)
  * distanceInfluence = distance * distanceFactor
- * weight = (seconds + distanceInfluence) / priority;
+ * weight = (toSeconds(distance / speed) + distanceInfluence) / priority;
  * return weight
  * </pre>
  */
@@ -103,7 +103,6 @@ public class CustomWeighting implements Weighting {
             return Double.POSITIVE_INFINITY;
 
         double speed = speedConfig.calcSpeed(edge, reverse, prevOrNextEdgeId);
-        // exit earlier without calculating delay
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
