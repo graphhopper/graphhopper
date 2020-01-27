@@ -55,11 +55,6 @@ class ProjFuncs {
 
     static String EPSG_WGS84 = "EPSG:4326";
     static String EPSG_GOOGLE_EARTH = "EPSG:3857";
-    //static String EPSG_TWD67 = "EPSG:3828";
-
-//    static String FUNC_WGS84 = "+proj=longlat +datum=WGS84 +no_defs";
-//    static String FUNC_TWD97 = "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=公尺 +no_defs";
-//    static String FUNC_TWD67 = "+proj=tmerc  +towgs84=-752,-358,-179,-.0000011698,.0000018398,.0000009822,.00002329 +lat_0=0 +lon_0=121 +x_0=250000 +y_0=0 +k=0.9999 +ellps=aust_SA  +units=公尺";
 
     public static ProjCoordinate latlonToGoogleEarthGcs(double lng, double lat) {
 
@@ -71,17 +66,6 @@ class ProjFuncs {
         p1.x = lng;
         p1.y = lat;
         trans.transform(p1, p2);
-
-
-//        CoordinateReferenceSystem crs1 = mCsFactory.createFromParameters(EPSG_WGS84, FUNC_WGS84);
-//        CoordinateReferenceSystem crs2 = mCsFactory.createFromParameters(EPSG_TWD97, FUNC_TWD97);
-//        CoordinateTransform trans = mCtFactory.createTransform(crs1, crs2);
-//        ProjCoordinate p1 = new ProjCoordinate();
-//        ProjCoordinate p2 = new ProjCoordinate();
-//        p1.x = latLng.longitude;
-//        p1.y = latLng.latitude;
-//        trans.transform(p1, p2);
-
         return p2;
     }
 }
@@ -124,8 +108,6 @@ class GtfsGraphLogger {
     private static Color STOP_NODE_COLOR = new Color(200,0,0);
     private static Color NODE_TEXT_COLOR = new Color(255,255, 255);
 
-
-
     private int OSM_NODE_Y_POS = -20;
     private int TRIP_HEIGHT_SPACE = 70;
     private int BOARD_NODE_Y_DISTANCE_FROM_BASE = 10;
@@ -153,7 +135,7 @@ class GtfsGraphLogger {
         parentEle.appendChild(keyEle);
         return keyEle;
     }
-    
+
     GtfsGraphLogger() throws ParserConfigurationException {
 
         try {
@@ -294,107 +276,51 @@ class GtfsGraphLogger {
         }
 
         ProjCoordinate coord = ProjFuncs.latlonToGoogleEarthGcs(x, y);
-        currentXPos = (int)coord.x;
+        currentXPos = (int) coord.x;
         int xPos = getXPos(type);
         int yPos = getYPos(type);
 
         insertedNodes.put(id, new NodeInfo(xPos, yPos));
 
-        Element nodeEle = dom.createElement("node");
-        nodeEle.setAttribute("id", id);
-        graphEle.appendChild(nodeEle);
+        Element nodeEle = appendXmlNode(graphEle, "node", "id=" + id);
+        appendXmlNode(graphEle, "data", "key=d0");
+        Element dataNodeEle = appendXmlNode(nodeEle, "data", "key=d6");
+        Element shapeNodeEle = appendXmlNode(dataNodeEle, "y:ShapeNode", "");
+        appendXmlNode(shapeNodeEle, "y:Geometry", "key=d6 height=40.0 width=75.0 x=" + String.valueOf(xPos) + " y=" + String.valueOf(yPos));
 
-        Element dataEle = dom.createElement("data");
-        dataEle.setAttribute("key", "d0");
-        graphEle.appendChild(dataEle);
-
-        Element dataNodeEle = dom.createElement("data");
-        dataNodeEle.setAttribute("key", "d6");
-        nodeEle.appendChild(dataNodeEle);
-
-        Element shapeNodeEle = dom.createElement("y:ShapeNode");
-        dataNodeEle.appendChild(shapeNodeEle);
-
-        Element geomEle = dom.createElement("y:Geometry");
-        geomEle.setAttribute("key", "d6");
-        geomEle.setAttribute("height", "40.0");
-        geomEle.setAttribute("width", "75.0");
-        geomEle.setAttribute("x", String.valueOf(xPos));
-        geomEle.setAttribute("y", String.valueOf(yPos));
-        shapeNodeEle.appendChild(geomEle);
-
-        Element fillEle = dom.createElement("y:Fill");
+        String fillEleAttrs = "transparent=false color=";
 
         switch (type) {
             case OSM_NODE:
-                fillEle.setAttribute("color", String.format("#%02x%02x%02x", OSM_NODE_COLOR.getRed(), OSM_NODE_COLOR.getGreen(), OSM_NODE_COLOR.getBlue())); //Black
+                fillEleAttrs += String.format("#%02x%02x%02x", OSM_NODE_COLOR.getRed(), OSM_NODE_COLOR.getGreen(), OSM_NODE_COLOR.getBlue()); //Black
                 break;
             case ENTER_EXIT_PT:
-                fillEle.setAttribute("color", String.format("#%02x%02x%02x", STOP_NODE_COLOR.getRed(), STOP_NODE_COLOR.getGreen(), STOP_NODE_COLOR.getBlue())); //Red
+                fillEleAttrs += String.format("#%02x%02x%02x", STOP_NODE_COLOR.getRed(), STOP_NODE_COLOR.getGreen(), STOP_NODE_COLOR.getBlue()); //Red
                 break;
-            default :
-                fillEle.setAttribute("color", String.format("#%02x%02x%02x", currentTripColor.getRed(), currentTripColor.getGreen(), currentTripColor.getBlue()));
+            default:
+                fillEleAttrs += String.format("#%02x%02x%02x", currentTripColor.getRed(), currentTripColor.getGreen(), currentTripColor.getBlue());
                 break;
         }
 
-        fillEle.setAttribute("transparent", "false");
-        shapeNodeEle.appendChild(fillEle);
+        appendXmlNode(shapeNodeEle, "y:Fill", fillEleAttrs);
+        appendXmlNode(shapeNodeEle, "y:BorderStyle", "color=#000000 type=line width=1.0");
 
-        Element borderStyleEle = dom.createElement("y:BorderStyle");
-        borderStyleEle.setAttribute("color", "#000000");
-        borderStyleEle.setAttribute("type", "line");
-        borderStyleEle.setAttribute("width", "1.0");
-        shapeNodeEle.appendChild(borderStyleEle);
-
-        Element nodeLabelEle = dom.createElement("y:NodeLabel");
-        nodeLabelEle.setAttribute("alignment", "center");
-        nodeLabelEle.setAttribute("autoSizePolicy", "content");
-        nodeLabelEle.setAttribute("fontFamily", "Dialog");
-        nodeLabelEle.setAttribute("fontSize", "16");
-        nodeLabelEle.setAttribute("fontStyle", "plain");
-        nodeLabelEle.setAttribute("hasBackgroundColor", "false");
-        nodeLabelEle.setAttribute("hasLineColor", "false");
-        nodeLabelEle.setAttribute("hasText", "true");
-        nodeLabelEle.setAttribute("height", "4.0");
-        nodeLabelEle.setAttribute("modelName", "custom");
-        nodeLabelEle.setAttribute("textColor", String.format("#%02x%02x%02x", NODE_TEXT_COLOR.getRed(), NODE_TEXT_COLOR.getGreen(), NODE_TEXT_COLOR.getBlue()));
-        nodeLabelEle.setAttribute("visible", "true");
-        nodeLabelEle.setAttribute("width", "4.0");
-        nodeLabelEle.setAttribute("x", "13.0");
-        nodeLabelEle.setAttribute("y", "13.0");
+        Element nodeLabelEle = appendXmlNode(shapeNodeEle, "y:NodeLabel", "alignment=center autoSizePolicy=content fontFamily=Dialog fontSize=16 fontStyle=plain hasBackgroundColor=false " +
+                                                                                            "hasLineColor=false hasText=true height=4.0 modelName=custom textColor=" +
+                                                                                             String.format("#%02x%02x%02x", NODE_TEXT_COLOR.getRed(), NODE_TEXT_COLOR.getGreen(), NODE_TEXT_COLOR.getBlue()) +
+                                                                                            " visible=true width=4.0 x=13.0 y=13.0");
 
         if (!nodeText.isEmpty()) {
             Text textNode = dom.createTextNode(nodeText);
             nodeLabelEle.appendChild(textNode);
         }
 
-        shapeNodeEle.appendChild(nodeLabelEle);
+        Element labelModelEle = appendXmlNode(nodeLabelEle, "y:LabelModel", "");
+        appendXmlNode(labelModelEle, "y:SmartNodeLabelModel", "distance=4.0");
 
-        Element labelModelEle = dom.createElement("y:LabelModel");
-        nodeLabelEle.appendChild(labelModelEle);
-
-        Element smartNodeLabelModel = dom.createElement("y:SmartNodeLabelModel");
-        smartNodeLabelModel.setAttribute("distance", "4.0");
-        labelModelEle.appendChild(smartNodeLabelModel);
-
-        Element modelParamEle = dom.createElement("y:ModelParameter");
-        nodeLabelEle.appendChild(modelParamEle);
-
-        Element smartNodeLabelModelEle = dom.createElement("y:SmartNodeLabelModelParameter");
-        smartNodeLabelModelEle.setAttribute("labelRatioX", "0.0");
-        smartNodeLabelModelEle.setAttribute("labelRatioY", "0.0");
-        smartNodeLabelModelEle.setAttribute("nodeRatioX", "0.0");
-        smartNodeLabelModelEle.setAttribute("nodeRatioY", "0.0");
-        smartNodeLabelModelEle.setAttribute("offsetX", "0.0");
-        smartNodeLabelModelEle.setAttribute("offsetY", "0.0");
-        smartNodeLabelModelEle.setAttribute("upX", "0.0");
-        smartNodeLabelModelEle.setAttribute("upY", "-1.0");
-        modelParamEle.appendChild(smartNodeLabelModelEle);
-
-        Element shapeEle = dom.createElement("y:Shape");
-        shapeEle.setAttribute("type", "ellipse");
-
-        shapeNodeEle.appendChild(shapeEle);
+        Element modelParamEle = appendXmlNode(nodeLabelEle, "y:ModelParameter", "");
+        appendXmlNode(modelParamEle, "y:SmartNodeLabelModelParameter", "labelRatioX=0.0 labelRatioY=0.0 nodeRatioX=0.0 nodeRatioY=0.0 offsetX=0.0 offsetY=0.0 upX=0.0 upY=-1.0");
+        appendXmlNode(shapeNodeEle, "y:Shape", "type=ellipse");
     }
 
     void addEdge(String edgeType, int id, int srcNodeId, int targetNodeId) {
@@ -411,7 +337,7 @@ class GtfsGraphLogger {
         appendXmlNode(polyEdgeEle, "y:Arrows", "source=none target=standard");
         Element edgeLabelEle = appendXmlNode(polyEdgeEle, "y:EdgeLabel", "alignment=center anchorX=27.526667606424326 anchorY=50.05534221010657 configuration=AutoFlippingLabel distance=2.0 fontFamily=Dialog fontSize=12 fontStyle=plain hasBackgroundColor=false hasLineColor=false height=18.1328125 modelName=custom preferredPlacement=anywhere ratio=0.5 textColor=#000000 upX=0.30976697067661274 upY=-0.9508125072157152 visible=true width=28.7734375 x=27.526667606424326 y=32.81443729410911");
 
-        Text textNode = dom.createTextNode(edgeType);
+        Text textNode = dom.createTextNode(edgeType + " " + id);
         edgeLabelEle.appendChild(textNode);
 
         Element labelModelEle = appendXmlNode(edgeLabelEle, "y:LabelModel", "");
