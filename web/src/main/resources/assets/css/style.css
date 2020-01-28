@@ -121,11 +121,7 @@ body {
     float: left;
 }
 
-#locationpoints {
-    counter-set: pointcounter -1;
-}
-
-#locationpoints>div {
+#locationpoints>div:nth-child(n+2) {
     counter-increment: pointcounter;
 }
 
