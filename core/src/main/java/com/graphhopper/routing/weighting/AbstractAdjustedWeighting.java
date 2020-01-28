@@ -21,8 +21,6 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-
 /**
  * The AdjustedWeighting wraps another Weighting.
  *
@@ -43,18 +41,23 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     }
 
     @Override
-    public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        return calcWeight(edgeState, reverse, NO_EDGE);
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        return superWeighting.calcEdgeWeight(edgeState, reverse);
     }
 
     @Override
-    public final long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        return calcMillis(edgeState, reverse, NO_EDGE);
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        return superWeighting.calcEdgeMillis(edgeState, reverse);
     }
 
     @Override
-    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        return superWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        return superWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        return superWeighting.calcTurnMillis(inEdge, viaNode, outEdge);
     }
 
     /**

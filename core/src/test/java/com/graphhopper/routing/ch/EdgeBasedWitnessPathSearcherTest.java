@@ -20,12 +20,10 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PMap;
 import org.junit.Before;
@@ -39,7 +37,6 @@ public class EdgeBasedWitnessPathSearcherTest {
     private GraphHopperStorage graph;
     private CHGraph chGraph;
     private Weighting weighting;
-    private TurnWeighting chTurnWeighting;
 
     @Before
     public void setup() {
@@ -50,8 +47,6 @@ public class EdgeBasedWitnessPathSearcherTest {
                 .create();
         chGraph = graph.getCHGraph();
         weighting = chGraph.getCHProfile().getWeighting();
-        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-        chTurnWeighting = new TurnWeighting(weighting, turnCostStorage);
     }
 
     @Test
@@ -129,7 +124,7 @@ public class EdgeBasedWitnessPathSearcherTest {
     }
 
     private EdgeBasedWitnessPathSearcher createFinder() {
-        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, weighting, chTurnWeighting);
+        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, weighting);
         return new EdgeBasedWitnessPathSearcher(prepareGraph, new PMap());
     }
 

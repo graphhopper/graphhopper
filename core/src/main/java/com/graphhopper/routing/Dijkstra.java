@@ -25,6 +25,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Parameters;
 
 import java.util.PriorityQueue;
@@ -79,7 +80,9 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                     continue;
 
                 // todo: for #1776/#1835 move the access check into weighting
-                double tmpWeight = !outEdgeFilter.accept(iter) ? Double.POSITIVE_INFINITY : (weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight);
+                double tmpWeight = !outEdgeFilter.accept(iter)
+                        ? Double.POSITIVE_INFINITY
+                        : (GHUtility.calcWeightWithTurnWeight(weighting, iter, false, currEdge.edge) + currEdge.weight);
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
                 }

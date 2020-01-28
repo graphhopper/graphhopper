@@ -19,8 +19,10 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
@@ -29,14 +31,15 @@ import com.graphhopper.util.Parameters.Routing;
 import org.junit.Test;
 
 import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;
+import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    EncodingManager encodingManager = EncodingManager.create("car");
-    private final FlagEncoder encoder = encodingManager.getEncoder("car");
+    private final FlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
+    private final EncodingManager encodingManager = EncodingManager.create(encoder);
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
@@ -97,4 +100,44 @@ public class FastestWeightingTest {
 
         g.close();
     }
+
+    @Test
+    public void calcWeightAndTime_withTurnCosts() {
+        Graph graph = new GraphBuilder(encodingManager).create();
+        Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
+        graph.edge(0, 1, 100, true);
+        EdgeIteratorState edge = graph.edge(1, 2, 100, true);
+        // turn costs are given in seconds
+        setTurnCost(graph, 0, 1, 2, 5);
+        assertEquals(6 + 5, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
+        assertEquals(6000 + 5000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+    }
+
+    @Test
+    public void calcWeightAndTime_uTurnCosts() {
+        Graph graph = new GraphBuilder(encodingManager).create();
+        Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 40));
+        EdgeIteratorState edge = graph.edge(0, 1, 100, true);
+        assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
+        assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+    }
+
+    @Test
+    public void calcWeightAndTime_withTurnCosts_shortest() {
+        Graph graph = new GraphBuilder(encodingManager).create();
+        Weighting weighting = new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
+        graph.edge(0, 1, 100, true);
+        EdgeIteratorState edge = graph.edge(1, 2, 100, true);
+        // turn costs are given in seconds
+        setTurnCost(graph, 0, 1, 2, 5);
+        // todo: for the shortest weighting turn costs cannot be interpreted as seconds? at least when they are added
+        // to the weight? how much should they contribute ?
+//        assertEquals(105, AbstractWeighting.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
+        assertEquals(6000 + 5000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+    }
+
+    private void setTurnCost(Graph graph, int from, int via, int to, double turnCost) {
+        graph.getTurnCostStorage().setExpensive(encoder.toString(), encodingManager, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnCost);
+    }
+
 }

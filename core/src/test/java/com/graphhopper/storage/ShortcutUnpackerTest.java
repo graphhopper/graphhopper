@@ -8,9 +8,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,9 +25,9 @@ public class ShortcutUnpackerTest {
     private final boolean edgeBased;
     private EncodingManager encodingManager;
     private FlagEncoder encoder;
-    private Weighting weighting;
     private GraphHopperStorage graph;
     private CHGraph chGraph;
+    private RoutingCHGraph routingCHGraph;
 
     @Parameterized.Parameters(name = "{0}")
     public static Object[] params() {
@@ -51,7 +50,7 @@ public class ShortcutUnpackerTest {
                 .setCHProfileStrings("motorcycle|fastest|" + (edgeBased ? "edge" : "node"))
                 .create();
         chGraph = graph.getCHGraph();
-        weighting = chGraph.getCHProfile().getWeighting();
+        routingCHGraph = new RoutingCHGraphImpl(chGraph, chGraph.getCHProfile().getWeighting());
     }
 
     @Test
@@ -295,7 +294,7 @@ public class ShortcutUnpackerTest {
     }
 
     private ShortcutUnpacker createShortcutUnpacker(ShortcutUnpacker.Visitor visitor) {
-        return new ShortcutUnpacker(new RoutingCHGraphImpl(chGraph, weighting), visitor, edgeBased);
+        return new ShortcutUnpacker(routingCHGraph, visitor, edgeBased);
     }
 
     private void setTurnCost(int fromEdge, int viaNode, int toEdge, double cost) {
@@ -326,22 +325,21 @@ public class ShortcutUnpackerTest {
             edgeIds.add(edge.getEdge());
             baseNodes.add(edge.getBaseNode());
             adjNodes.add(edge.getAdjNode());
-            weights.add(weighting.calcWeight(edge, reverse, prevOrNextEdgeId));
+            weights.add(GHUtility.calcWeightWithTurnWeight(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
             distances.add(edge.getDistance());
-            times.add(weighting.calcMillis(edge, reverse, prevOrNextEdgeId));
+            times.add(GHUtility.calcMillisWithTurnMillis(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
             prevOrNextEdgeIds.add(prevOrNextEdgeId);
         }
     }
 
     private class TurnWeightingVisitor implements ShortcutUnpacker.Visitor {
-        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, graph.getTurnCostStorage());
         private long time = 0;
         private double weight = 0;
 
         @Override
         public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-            time += turnWeighting.calcMillis(edge, reverse, prevOrNextEdgeId);
-            weight += turnWeighting.calcWeight(edge, reverse, prevOrNextEdgeId);
+            time += GHUtility.calcMillisWithTurnMillis(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId);
+            weight += GHUtility.calcWeightWithTurnWeight(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId);
         }
     }
 }

@@ -23,6 +23,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.StopWatch;
 
 public class PathExtractor {
@@ -78,7 +79,7 @@ public class PathExtractor {
     protected void onEdge(int edge, int adjNode, int prevEdge) {
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
         path.addDistance(edgeState.getDistance());
-        path.addTime(weighting.calcMillis(edgeState, false, prevEdge));
+        path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edgeState, false, prevEdge));
         path.addEdge(edge);
     }
 

@@ -23,8 +23,8 @@ import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIterator;
 import org.junit.Test;
@@ -77,7 +77,7 @@ public class BidirPathExtractorTest {
         SPTEntry bwdEntry = new SPTEntry(1, 2, 1.2);
         bwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 0);
 
-        Path p = BidirPathExtractor.extractPath(g, new TurnWeighting(new FastestWeighting(carEncoder), turnCostStorage), fwdEntry, bwdEntry, 0);
+        Path p = BidirPathExtractor.extractPath(g, new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, turnCostStorage)), fwdEntry, bwdEntry, 0);
         p.setWeight(5 + 1.8);
 
         assertEquals(IntArrayList.from(1, 2, 3), p.calcNodes());
