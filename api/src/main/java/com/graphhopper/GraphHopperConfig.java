@@ -47,6 +47,10 @@ public class GraphHopperConfig {
         return this;
     }
 
+    public boolean has(String key) {
+        return cmdArgs.has(key);
+    }
+
     public String get(String key, String _default) {
         return cmdArgs.get(key, _default);
     }
