@@ -41,6 +41,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
+import io.dropwizard.Configuration;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -50,6 +51,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
@@ -193,7 +195,13 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 }).collect(Collectors.toList());
             }
         }));
-        bootstrap.addBundle(new ViewBundle());
+        // Soll vermutlich eher in die Application
+        bootstrap.addBundle(new ViewBundle() {
+            @Override
+            public Map<String, Map<String, String>> getViewConfiguration(Configuration wurst) {
+                return ((GraphHopperBundleConfiguration) wurst).getViewRendererConfiguration();
+            }
+        });
     }
 
     @Override

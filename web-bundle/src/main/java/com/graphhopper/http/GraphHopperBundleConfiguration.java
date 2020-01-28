@@ -20,8 +20,11 @@ package com.graphhopper.http;
 
 import com.graphhopper.util.CmdArgs;
 
+import java.util.Map;
+
 public interface GraphHopperBundleConfiguration {
 
     CmdArgs getGraphHopperConfiguration();
 
+    Map<String, Map<String, String>> getViewRendererConfiguration();
 }

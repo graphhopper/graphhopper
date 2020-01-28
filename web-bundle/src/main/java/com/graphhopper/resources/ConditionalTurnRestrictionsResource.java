@@ -35,6 +35,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Path("restrictions")
 public class ConditionalTurnRestrictionsResource {
@@ -56,10 +57,6 @@ public class ConditionalTurnRestrictionsResource {
 
     public class ConditionalTurnRestrictionsView extends View {
 
-        public List<ConditionalTurnRestrictionView> getRestrictions() {
-            return restrictions;
-        }
-
         public final List<ConditionalTurnRestrictionView> restrictions = new ArrayList<>();
         private final Instant linkEnterTime;
         private final TimeDependentAccessRestriction timeDependentAccessRestriction;
@@ -68,28 +65,32 @@ public class ConditionalTurnRestrictionsResource {
             super("/assets/wurst.ftl");
             linkEnterTime = Instant.now();
             timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm);
-            for (Map.Entry<Long, Relation> entry : osm.relations.entrySet()) {
-                if (entry.getValue().hasTag("type", "restriction")) {
-                    long osmid = entry.getKey();
-                    Relation relation = osm.relations.get(osmid);
-                    Map<String, Object> tags = new HashMap<>();
-                    for (OSMEntity.Tag tag : relation.tags) {
-                        tags.put(tag.key, tag.value);
-                    }
-                    List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData = TimeDependentAccessRestriction.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
-                            .collect(Collectors.toList());
-                    if (!restrictionData.isEmpty()) {
-                        Optional<Relation.Member> via = relation.members.stream().filter(m -> m.role.equals("via")).findFirst();
-                        if (via.isPresent()) {
-                            ConditionalTurnRestrictionView view = new ConditionalTurnRestrictionView();
-                            view.osmid = osmid;
-                            view.node = osm.nodes.get(via.get().id);
-                            view.restrictionData = restrictionData;
-                            restrictions.add(view);
+        }
+
+        public Iterable<ConditionalTurnRestrictionView> getRestrictions() {
+            return () -> osm.relations.entrySet().stream()
+                    .filter(e -> e.getValue().hasTag("type", "restriction"))
+                    .flatMap(entry -> {
+                        long osmid = entry.getKey();
+                        Relation relation = osm.relations.get(osmid);
+                        Map<String, Object> tags = new HashMap<>();
+                        for (OSMEntity.Tag tag : relation.tags) {
+                            tags.put(tag.key, tag.value);
                         }
-                    }
-                }
-            }
+                        List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData = TimeDependentAccessRestriction.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
+                                .collect(Collectors.toList());
+                        if (!restrictionData.isEmpty()) {
+                            Optional<Relation.Member> via = relation.members.stream().filter(m -> m.role.equals("via")).findFirst();
+                            if (via.isPresent()) {
+                                ConditionalTurnRestrictionView view = new ConditionalTurnRestrictionView();
+                                view.osmid = osmid;
+                                view.node = osm.nodes.get(via.get().id);
+                                view.restrictionData = restrictionData;
+                                return Stream.of(view);
+                            }
+                        }
+                        return Stream.empty();
+                    }).iterator();
         }
 
         public boolean matches(Rule rule) {
