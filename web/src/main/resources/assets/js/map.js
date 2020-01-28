@@ -49,7 +49,7 @@ function adjustMapSize() {
     // somehow this does not work: map.invalidateSize();
 }
 
-function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer, useMiles) {
+function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer, useMiles, zoomToFit) {
     adjustMapSize();
     // console.log("init map at " + JSON.stringify(bounds));
 
@@ -111,6 +111,22 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         zoomInTitle: translate.tr('zoom_in'),
         zoomOutTitle: translate.tr('zoom_out')
     }).addTo(map);
+
+    L.Control.ZoomFit = L.Control.extend({
+        onAdd: function (map) {
+            var container = L.DomUtil.create('div', 'zoomfit-btn');
+            container.textContent = '🔍'
+            L.DomUtil.addClass(container, 'leaflet-control');
+            container.title = 'Zoom to Fit';
+            container.onmousedown = function(event) {
+                zoomToFit();
+            };
+
+            return container;
+        }
+    });
+    var zoomFitControl = new L.Control.ZoomFit({ position: 'topleft'}).addTo(map);
+
 
     var full = false;
     L.Control.Fullscreen = L.Control.extend({

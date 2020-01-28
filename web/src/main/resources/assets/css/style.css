@@ -462,10 +462,12 @@ td img.pic {
     cursor: pointer;
 }
 
-.fullscreen-reverse-btn, .fullscreen-btn {
+.fullscreen-reverse-btn, .fullscreen-btn, .zoomfit-btn {
     cursor: pointer;
     width: 30px;
     height: 30px;
+    line-height: 30px;
+    text-align: center;
     border-radius: 4px;
     background-color: white;
     background-position: 50% 50%;
@@ -474,7 +476,7 @@ td img.pic {
     border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
-.fullscreen-btn {
+.fullscreen-btn, .zoomfit-btn {
     background-image: url("../img/full.png");
 }
 

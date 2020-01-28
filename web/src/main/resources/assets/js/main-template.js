@@ -171,7 +171,7 @@ $(document).ready(function (e) {
                 }
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
 
-                mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
+                mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles, zoomToFit);
 
                 // execute query
                 initFromParams(urlParams, true);
@@ -510,12 +510,21 @@ function flagAll() {
     }
 }
 
+var zoomFitInfo = null;
+function zoomToFit() {
+    console.log(zoomFitInfo)
+    if (zoomFitInfo !== null) {
+        mapLayer.fitMapToBounds(zoomFitInfo);
+    }
+}
+
 function routeLatLng(request, doQuery) {
     var i;
 
     // do_zoom should not show up in the URL but in the request object to avoid zooming for history change
     var doZoom = request.do_zoom;
     request.do_zoom = true;
+
 
     var urlForHistory = request.createHistoryURL() + "&layer=" + tileLayers.activeLayerName;
 
@@ -531,6 +540,7 @@ function routeLatLng(request, doQuery) {
         History.pushState(params, messages.browserTitle, urlForHistory);
         return;
     }
+
     var infoDiv = $("#info");
     infoDiv.empty();
     infoDiv.show();
@@ -728,13 +738,15 @@ function routeLatLng(request, doQuery) {
         mapLayer.adjustMapSize();
         // TODO change bounding box on click
         var firstPath = json.paths[0];
-        if (firstPath.bbox && doZoom) {
+        if (firstPath.bbox) {
             var minLon = firstPath.bbox[0];
             var minLat = firstPath.bbox[1];
             var maxLon = firstPath.bbox[2];
             var maxLat = firstPath.bbox[3];
-            var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
-            mapLayer.fitMapToBounds(tmpB);
+            zoomFitInfo = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
+            if (doZoom) {
+                mapLayer.fitMapToBounds(zoomFitInfo);
+            }
         }
 
         $('.defaulting').each(function (index, element) {
