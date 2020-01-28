@@ -4,9 +4,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,14 +24,6 @@ public class CHProfile {
 
     public static CHProfile edgeBased(Weighting weighting) {
         return new CHProfile(weighting, TraversalMode.EDGE_BASED);
-    }
-
-    public static List<CHProfile> createProfilesForWeightings(Collection<? extends Weighting> weightings) {
-        List<CHProfile> result = new ArrayList<>(weightings.size());
-        for (Weighting weighting : weightings) {
-            result.add(nodeBased(weighting));
-        }
-        return result;
     }
 
     public CHProfile(Weighting weighting, TraversalMode traversalMode) {

@@ -115,10 +115,29 @@ body {
     padding-top: 20px;
     color: #666666
 }
+
 #locationpoints {
     padding-bottom: 10px;
     float: left;
 }
+
+#locationpoints {
+    counter-set: pointcounter -1;
+}
+
+#locationpoints>div {
+    counter-increment: pointcounter;
+}
+
+#locationpoints>div:nth-child(n+2):nth-last-child(n+3)::before {
+    content: counter(pointcounter);
+    position: absolute;
+    padding-top: 0.45em;
+    right: calc(100% - 1.2em);
+    text-align: right;
+    font-size: 60%;
+}
+
 .pointDiv {
     margin: 6px 0;
 }

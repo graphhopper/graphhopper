@@ -51,10 +51,6 @@ public interface RoutingTemplate {
      * This method merges the returned paths appropriately e.g. all paths from the list into one
      * PathWrapper of GHResponse or multiple (via / round trip).
      */
-    boolean isReady(PathMerger pathMerger, Translation tr);
+    void finish(PathMerger pathMerger, Translation tr);
 
-    /**
-     * This method returns the maximum number of full retries of these 3 steps
-     */
-    int getMaxRetries();
 }
