@@ -26,7 +26,6 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
@@ -59,7 +58,7 @@ public class TurnWeighting implements Weighting {
             throw new RuntimeException("No storage set to calculate turn weight");
         }
         FlagEncoder encoder = superWeighting.getFlagEncoder();
-        String key = getKey(encoder.toString(), EV_SUFFIX);
+        String key = TurnCost.key(encoder.toString());
         // if null the TurnWeighting can be still useful for edge-based routing
         this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
         this.superWeighting = superWeighting;

@@ -251,9 +251,8 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         private void _addEdgeTagParser(TagParser tagParser, boolean withNamespace, boolean insert) {
-            // TODO NOW when reordering encoded values (and including the next two lines) then PathTest fails!
-//            if (!em.edgeEncoders.isEmpty())
-//                throw new IllegalStateException("Avoid mixing encoded values from FlagEncoder with shared encoded values until we have a more clever mechanism, see #1862");
+            if (!em.edgeEncoders.isEmpty())
+                throw new IllegalStateException("Avoid mixing encoded values from FlagEncoder with shared encoded values until we have a more clever mechanism, see #1862");
 
             List<EncodedValue> list = new ArrayList<>();
             tagParser.createEncodedValues(em, list);
@@ -274,8 +273,7 @@ public class EncodingManager implements EncodedValueLookup {
             }
             em.relationTagParsers.add(tagParser);
 
-            // for simplicity add into edge-EncodedValue
-            _addEdgeTagParser(tagParser, true, false);
+            _addEdgeTagParser(tagParser, false, false);
         }
 
         private void _addTurnCostParser(TurnCostParser parser) {
@@ -324,9 +322,9 @@ public class EncodingManager implements EncodedValueLookup {
             if (!em.hasEncodedValue(RoadAccess.KEY))
                 _addEdgeTagParser(new OSMRoadAccessParser(), false, false);
 
+            // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or road_access
             // TODO can we avoid this hack without complex dependency management?
             boolean insert = true;
-            // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or road_access
             for (SpatialRuleParser srp : insertLater) {
                 _addEdgeTagParser(srp, false, insert);
             }
@@ -336,16 +334,18 @@ public class EncodingManager implements EncodedValueLookup {
 
             for (AbstractFlagEncoder encoder : flagEncoderList) {
                 if (encoder instanceof BikeCommonFlagEncoder) {
-                    if (!em.hasEncodedValue(getKey("bike", RouteNetwork.EV_SUFFIX)))
+                    if (!em.hasEncodedValue(RouteNetwork.key("bike")))
                         _addRelationTagParser(new OSMBikeNetworkTagParser());
                     if (!em.hasEncodedValue(GetOffBike.KEY))
                         _addEdgeTagParser(new OSMGetOffBikeParser(), false, false);
 
                 } else if (encoder instanceof FootFlagEncoder) {
-                    if (!em.hasEncodedValue(getKey("foot", RouteNetwork.EV_SUFFIX)))
+                    if (!em.hasEncodedValue(RouteNetwork.key("foot")))
                         _addRelationTagParser(new OSMFootNetworkTagParser());
                 }
+            }
 
+            for (AbstractFlagEncoder encoder : flagEncoderList) {
                 encoder.init(dateRangeParser);
                 em.addEncoder(encoder);
             }

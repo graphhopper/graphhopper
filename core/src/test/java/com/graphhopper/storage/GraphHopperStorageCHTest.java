@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,7 +42,7 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     private CHGraph getGraph(GraphHopperStorage ghStorage) {
-        return ghStorage.getCHGraph();
+        return ghStorage.getCHGraph(ghStorage.getCHProfiles().get(0));
     }
 
     @Override
@@ -59,8 +60,11 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     private GraphHopperStorage newGHStorage(Directory dir, boolean is3D, boolean forEdgeBasedTraversal, int segmentSize) {
-        CHProfile chProfile = new CHProfile(new FastestWeighting(carEncoder), forEdgeBasedTraversal, INFINITE_U_TURN_COSTS);
-        return new GraphBuilder(encodingManager).setCHProfiles(chProfile).setDir(dir).set3D(is3D).setSegmentSize(segmentSize).build();
+        List<CHProfile> chProfiles = new ArrayList<>();
+        for(FlagEncoder encoders : encodingManager.fetchEdgeEncoders()) {
+            chProfiles.add(new CHProfile(new FastestWeighting(encoders), forEdgeBasedTraversal, INFINITE_U_TURN_COSTS));
+        }
+        return new GraphBuilder(encodingManager).setCHProfiles(chProfiles).setDir(dir).set3D(is3D).setSegmentSize(segmentSize).build();
     }
 
     @Test
@@ -347,7 +351,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.edge(3, 4, 10, true);
         graph.freeze();
 
-        CHGraph lg = graph.getCHGraph();
+        CHGraph lg = getGraph(graph);
         lg.shortcut(1, 4, PrepareEncoder.getScFwdDir(), 3, NO_EDGE, NO_EDGE);
 
         EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
@@ -363,7 +367,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
         graph.freeze();
 
-        CHGraph lg = graph.getCHGraph();
+        CHGraph lg = getGraph(graph);
         lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 
         AllCHEdgesIterator iter = lg.getAllEdges();
@@ -383,7 +387,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
         graph.freeze();
 
-        CHGraph lg = graph.getCHGraph();
+        CHGraph lg = getGraph(graph);
         lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 10, edge1.getEdge(), edge2.getEdge());
 
         AllCHEdgesIterator iter = lg.getAllEdges();

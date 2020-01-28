@@ -29,8 +29,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIterator;
 import org.junit.Test;
 
-import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -66,7 +64,7 @@ public class BidirPathExtractorTest {
         // add some turn costs at node 2 where fwd&bwd searches meet. these costs have to be included in the
         // weight and the time of the path
         TurnCostStorage turnCostStorage = g.getTurnCostStorage();
-        DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(carEncoder.toString(), EV_SUFFIX));
+        DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(carEncoder.toString()));
         IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, 5);
         turnCostStorage.setTurnCost(tcFlags, 0, 2, 1);

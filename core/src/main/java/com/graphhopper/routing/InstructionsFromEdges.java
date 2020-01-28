@@ -100,7 +100,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
 
         // both EncodedValues are optional; And return annotation only when instructions for bike encoder is requested
-        String key = getKey("bike", RouteNetwork.EV_SUFFIX);
+        String key = RouteNetwork.key("bike");
         this.bikeRouteEnc = evLookup.hasEncodedValue(key) ? evLookup.getEnumEncodedValue(key, RouteNetwork.class) : null;
         this.getOffBikeEnc = encoder instanceof BikeCommonFlagEncoder && evLookup.hasEncodedValue(GetOffBike.KEY)
                 ? evLookup.getBooleanEncodedValue(GetOffBike.KEY) : null;
