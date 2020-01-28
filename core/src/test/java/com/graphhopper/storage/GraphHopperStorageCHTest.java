@@ -23,6 +23,7 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -62,7 +63,10 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         GraphHopperStorage graph = new GraphBuilder(encodingManager)
                 .setDir(dir).set3D(is3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-            FastestWeighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
+            TurnCostProvider turnCostProvider = forEdgeBasedTraversal
+                    ? new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())
+                    : TurnCostProvider.NO_TURN_COST_PROVIDER;
+            FastestWeighting weighting = new FastestWeighting(encoder, turnCostProvider);
             graph.addCHGraph(new CHProfile(weighting, forEdgeBasedTraversal));
         }
         return graph;
