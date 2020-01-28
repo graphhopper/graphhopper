@@ -397,6 +397,7 @@ function setIntermediateCoord(e) {
     });
     var index = routeManipulation.getIntermediatePointIndex(routeSegments, e.latlng);
     ghRequest.route.add(e.latlng.wrap(), index);
+    ghRequest.do_zoom = false;
     resolveIndex(index);
     routeIfAllResolved();
 }
