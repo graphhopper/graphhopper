@@ -23,7 +23,9 @@ import ch.poole.conditionalrestrictionparser.ConditionalRestrictionParser;
 import ch.poole.conditionalrestrictionparser.ParseException;
 import ch.poole.conditionalrestrictionparser.Restriction;
 import ch.poole.openinghoursparser.*;
-import com.conveyal.osmlib.*;
+import com.conveyal.osmlib.OSM;
+import com.conveyal.osmlib.OSMEntity;
+import com.conveyal.osmlib.Way;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
@@ -31,13 +33,14 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.io.ByteArrayInputStream;
-import java.io.PrintWriter;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TimeDependentAccessRestriction {
@@ -82,32 +85,13 @@ public class TimeDependentAccessRestriction {
         public List<Rule> rules;
     }
 
-    public void printConditionalAccess(long osmid, Instant when, PrintWriter out) {
-        final ZonedDateTime zonedDateTime = when.atZone(zoneId);
-        Way way = osm.ways.get(osmid);
-        ReaderWay readerWay = readerWay(osmid, way);
-        List<ConditionalTagData> timeDependentAccessConditions = getTimeDependentAccessConditions(readerWay);
-        if (!timeDependentAccessConditions.isEmpty()) {
-            out.printf("%d\n", osmid);
-            for (ConditionalTagData conditionalTagData : timeDependentAccessConditions) {
-                out.println(" "+conditionalTagData.tag);
-                for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
-                    out.println("  "+timeDependentRestrictionData.restriction);
-                    for (Rule rule : timeDependentRestrictionData.rules) {
-                        out.println("   " + rule + (matches(zonedDateTime, rule) ? " <===" : ""));
-                    }
-                }
-            }
-        }
-    }
-
 
     /**
      *
      * We use ReaderWay instead of Way as the domain type, because we also need these functions in the
      * OSM import, where we don't have the separate OSM database.
      */
-    private ReaderWay readerWay(long osmid, Way way) {
+    public ReaderWay readerWay(long osmid, Way way) {
         ReaderWay readerWay = new ReaderWay(osmid);
         for (OSMEntity.Tag tag : way.tags) {
             readerWay.setTag(tag.key, tag.value);

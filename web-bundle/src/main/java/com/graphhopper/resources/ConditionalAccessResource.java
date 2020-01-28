@@ -18,8 +18,11 @@
 
 package com.graphhopper.resources;
 
+import ch.poole.openinghoursparser.Rule;
 import com.conveyal.osmlib.OSM;
+import com.conveyal.osmlib.Way;
 import com.graphhopper.TimeDependentAccessRestriction;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
@@ -32,6 +35,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.PrintWriter;
 import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.List;
 
 @Path("conditional-access")
 public class ConditionalAccessResource {
@@ -62,7 +67,22 @@ public class ConditionalAccessResource {
                 if (allEdges.get(property)) {
                     long osmid = osmidParser.getOSMID(allEdges.getFlags());
                     if (osmid != prevOsmId) {
-                        timeDependentAccessRestriction.printConditionalAccess(osmid, linkEnterTime, printWriter);
+                        final ZonedDateTime zonedDateTime = linkEnterTime.atZone(timeDependentAccessRestriction.zoneId);
+                        Way way = osm.ways.get(osmid);
+                        ReaderWay readerWay = timeDependentAccessRestriction.readerWay(osmid, way);
+                        List<TimeDependentAccessRestriction.ConditionalTagData> timeDependentAccessConditions = TimeDependentAccessRestriction.getTimeDependentAccessConditions(readerWay);
+                        if (!timeDependentAccessConditions.isEmpty()) {
+                            printWriter.printf("%d\n", osmid);
+                            for (TimeDependentAccessRestriction.ConditionalTagData conditionalTagData : timeDependentAccessConditions) {
+                                printWriter.println(" "+conditionalTagData.tag);
+                                for (TimeDependentAccessRestriction.TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
+                                    printWriter.println("  "+timeDependentRestrictionData.restriction);
+                                    for (Rule rule : timeDependentRestrictionData.rules) {
+                                        printWriter.println("   " + rule + (timeDependentAccessRestriction.matches(zonedDateTime, rule) ? " <===" : ""));
+                                    }
+                                }
+                            }
+                        }
                     }
                     prevOsmId = osmid;
                 }
