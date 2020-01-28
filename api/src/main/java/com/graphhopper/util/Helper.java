@@ -294,11 +294,10 @@ public class Helper {
      * Converts into an integer to be compatible with the still limited DataAccess class (accepts
      * only integer values). But this conversion also reduces memory consumption where the precision
      * loss is acceptable. As +- 180° and +-90° are assumed as maximum values.
-     * <p>
      *
      * @return the integer of the specified degree
      */
-    public static final int degreeToInt(double deg) {
+    public static int degreeToInt(double deg) {
         if (deg >= Double.MAX_VALUE)
             return Integer.MAX_VALUE;
         if (deg <= -Double.MAX_VALUE)
@@ -308,11 +307,10 @@ public class Helper {
 
     /**
      * Converts back the integer value.
-     * <p>
      *
      * @return the degree value of the specified integer
      */
-    public static final double intToDegree(int storedInt) {
+    public static double intToDegree(int storedInt) {
         if (storedInt == Integer.MAX_VALUE)
             return Double.MAX_VALUE;
         if (storedInt == -Integer.MAX_VALUE)
@@ -323,7 +321,7 @@ public class Helper {
     /**
      * Converts elevation value (in meters) into integer for storage.
      */
-    public static final int eleToInt(double ele) {
+    public static int eleToInt(double ele) {
         if (ele >= Integer.MAX_VALUE)
             return Integer.MAX_VALUE;
         return (int) (ele * ELE_FACTOR);
@@ -333,7 +331,7 @@ public class Helper {
      * Converts the integer value retrieved from storage into elevation (in meters). Do not expect
      * more precision than meters although it currently is!
      */
-    public static final double intToEle(int integEle) {
+    public static double intToEle(int integEle) {
         if (integEle == Integer.MAX_VALUE)
             return Double.MAX_VALUE;
         return integEle / ELE_FACTOR;
@@ -357,7 +355,7 @@ public class Helper {
     /**
      * This methods returns the value or min if too small or max if too big.
      */
-    public static final double keepIn(double value, double min, double max) {
+    public static double keepIn(double value, double min, double max) {
         return Math.max(min, Math.min(value, max));
     }
 
@@ -369,15 +367,15 @@ public class Helper {
         return Math.round(value * factor) / factor;
     }
 
-    public static final double round6(double value) {
+    public static double round6(double value) {
         return Math.round(value * 1e6) / 1e6;
     }
 
-    public static final double round4(double value) {
+    public static double round4(double value) {
         return Math.round(value * 1e4) / 1e4;
     }
 
-    public static final double round2(double value) {
+    public static double round2(double value) {
         return Math.round(value * 100) / 100d;
     }
 
@@ -402,18 +400,18 @@ public class Helper {
      * This method handles the specified (potentially negative) int as unsigned bit representation
      * and returns the positive converted long.
      */
-    public static final long toUnsignedLong(int x) {
+    public static long toUnsignedLong(int x) {
         return ((long) x) & 0xFFFFffffL;
     }
 
     /**
      * Converts the specified long back into a signed int (reverse method for toUnsignedLong)
      */
-    public static final int toSignedInt(long x) {
+    public static int toSignedInt(long x) {
         return (int) x;
     }
 
-    public static final String camelCaseToUnderScore(String key) {
+    public static String camelCaseToUnderScore(String key) {
         if (key.isEmpty())
             return key;
 
@@ -429,7 +427,7 @@ public class Helper {
         return sb.toString();
     }
 
-    public static final String underScoreToCamelCase(String key) {
+    public static String underScoreToCamelCase(String key) {
         if (key.isEmpty())
             return key;
 
