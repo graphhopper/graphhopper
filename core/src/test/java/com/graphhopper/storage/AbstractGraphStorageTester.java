@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;

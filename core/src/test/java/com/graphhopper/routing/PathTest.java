@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
@@ -52,17 +53,16 @@ public class PathTest {
 
     @Test
     public void testFound() {
-        GraphHopperStorage g = new GraphBuilder(carManager).create();
+        Graph g = new GraphBuilder(carManager).create();
         Path p = new Path(g);
         assertFalse(p.isFound());
         assertEquals(0, p.getDistance(), 1e-7);
         assertEquals(0, p.calcNodes().size());
-        g.close();
     }
 
     @Test
     public void testWayList() {
-        GraphHopperStorage g = new GraphBuilder(carManager).create();
+        Graph g = new GraphBuilder(carManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0.0, 0.1);
         na.setNode(1, 1.0, 0.1);
@@ -171,7 +171,6 @@ public class PathTest {
         na.setNode(4, 7.5, 0.25);
         na.setNode(5, 5.0, 1.0);
 
-
         EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
         edge1.setWayGeometry(Helper.createPointList());
         edge1.setName("Street 1");
@@ -257,9 +256,6 @@ public class PathTest {
         }
     }
 
-    /**
-     * case starting in Roundabout
-     */
     @Test
     public void testCalcInstructionsRoundaboutBegin() {
         ShortestWeighting weighting = new ShortestWeighting(encoder);
@@ -273,9 +269,6 @@ public class PathTest {
                 tmpList);
     }
 
-    /**
-     * case with one node being containig already exit
-     */
     @Test
     public void testCalcInstructionsRoundaboutDirectExit() {
         roundaboutGraph.inverse3to9();
@@ -505,9 +498,6 @@ public class PathTest {
                 tmpList);
     }
 
-    /**
-     * clockwise roundabout
-     */
     @Test
     public void testCalcInstructionsRoundaboutClockwise() {
         roundaboutGraph.setRoundabout(true);
@@ -618,7 +608,7 @@ public class PathTest {
     }
 
     @Test
-    public void testCalcInstructionsEnterMotoway() {
+    public void testCalcInstructionsEnterMotorway() {
         final Graph g = new GraphBuilder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
@@ -647,7 +637,7 @@ public class PathTest {
     }
 
     @Test
-    public void testCalcInstructionsMotowayJunction() {
+    public void testCalcInstructionsMotorwayJunction() {
         final Graph g = new GraphBuilder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 

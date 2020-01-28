@@ -85,8 +85,7 @@ public class BridgeElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         EdgeIteratorState edge17 = graph.edge(1, 7, 10, true);
         EdgeIteratorState edge27 = graph.edge(2, 7, 10, true);
         EdgeIteratorState edge37 = graph.edge(3, 7, 10, true);
-        edge17.setWayGeometry(
-                Helper.createPointList3D(12, 2, 200, 14, 4, 400, 16, 6, 600, 18, 8, 800));
+        edge17.setWayGeometry(Helper.createPointList3D(12, 2, 200, 14, 4, 400, 16, 6, 600, 18, 8, 800));
 
         IntsRef relFlags = encodingManager.createRelationFlags();
         edge01.setFlags(encodingManager.handleWayTags(normalWay, ACCEPT_WAY, relFlags));
