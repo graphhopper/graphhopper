@@ -2,17 +2,27 @@ package com.graphhopper.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.jackson.Jackson;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import org.json.JSONException;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.junit.Assert.assertEquals;
 
 public class InstructionListRepresentationTest {
+
+    private void assertJsonEqualsNonStrict(String json1, String json2) {
+        try {
+            JSONAssert.assertEquals(json1, json2, false);
+        } catch (JSONException jse) {
+            throw new IllegalArgumentException(jse.getMessage());
+        }
+    }
 
     @Test
     public void testRoundaboutJsonIntegrity() throws IOException {
@@ -30,7 +40,7 @@ public class InstructionListRepresentationTest {
                 .setExitNumber(2)
                 .setExited();
         il.add(instr);
-        assertEquals(objectMapper.readTree(fixture("fixtures/roundabout1.json")).toString(), objectMapper.valueToTree(il).toString());
+        assertJsonEqualsNonStrict(objectMapper.readTree(fixture("fixtures/roundabout1.json")).toString(), objectMapper.valueToTree(il).toString());
     }
 
 
