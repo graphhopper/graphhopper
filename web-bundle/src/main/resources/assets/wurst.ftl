@@ -1,11 +1,11 @@
-<#-- @ftlvariable name="" type="com.graphhopper.resources.ConditionalTurnRestrictionsResource.ConditionalTurnRestrictionsView" -->
+<#-- @ftlvariable name="" type="com.graphhopper.view.ConditionalRestrictionsView" -->
 <!DOCTYPE html>
 <html>
 <#setting number_format="0.#####">
 <ul>
     <#list restrictions as restriction>
         <li>
-                <a href="/maps/?point=${restriction.node.lat},${restriction.node.lon}&point=${restriction.node.lat},${restriction.node.lon}&vehicle=car&weighting=fastest">${restriction.osmid}</a><br/>
+                <a href="/maps/?point=${restriction.coord.y},${restriction.coord.x}&point=${restriction.coord.y},${restriction.coord.x}&vehicle=car&weighting=fastest">${restriction.osmid}</a><br/>
                 <ul>
                 <#list restriction.restrictionData as conditionalTagData>
                         <li>

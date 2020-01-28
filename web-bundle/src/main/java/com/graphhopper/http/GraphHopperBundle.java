@@ -259,7 +259,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         environment.jersey().register(ConditionalTurnRestrictionsResource.class);
-        environment.jersey().register(ConditionalAccessResource.class);
+        environment.jersey().register(ConditionalAccessRestrictionsResource.class);
         environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopperManaged.getGraphHopper()));
     }
 }
