@@ -317,6 +317,28 @@ public class PathTest {
     }
 
     @Test
+    public void testCalcAverageSpeedDetailsWithShortDistances_issue1848() {
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 6);
+        assertTrue(p.isFound());
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+        assertTrue(details.size() == 1);
+        List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
+        assertEquals(4, averageSpeedDetails.size());
+
+        // reverse path includes 'null' value as first
+        p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(6, 1);
+        assertTrue(p.isFound());
+        details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+        assertTrue(details.size() == 1);
+        averageSpeedDetails = details.get(AVERAGE_SPEED);
+        assertEquals(5, averageSpeedDetails.size());
+        assertNull(averageSpeedDetails.get(0).getValue());
+    }
+
+    @Test
     public void testCalcStreetNameDetails() {
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
@@ -924,6 +946,7 @@ public class PathTest {
         na.setNode(3, 52.514, 13.350);
         na.setNode(4, 52.515, 13.349);
         na.setNode(5, 52.516, 13.3452);
+        na.setNode(6, 52.516, 13.344);
 
         ReaderWay w = new ReaderWay(1);
         w.setTag("highway", "tertiary");
@@ -944,6 +967,9 @@ public class PathTest {
 
         w.setTag("maxspeed", "10");
         tmpEdge = g.edge(3, 4, 10, true).setName("3-4");
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
+
+        tmpEdge = g.edge(5, 6, 0.01, true).setName("3-4");
         tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         return g;
