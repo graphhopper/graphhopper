@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.CHProfileConfig;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
@@ -65,7 +67,10 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     @Override
-    public void init(CmdArgs args) {
+    public void init(GraphHopperConfig ghConfig) {
+        CmdArgs args = ghConfig.getCmdArgs();
+        // we can use the profile list :)
+        List<CHProfileConfig> yayWeGotAListOfCHProfiles = ghConfig.getChProfiles();
         // throw explicit error for deprecated configs
         if (!args.get("prepare.threads", "").isEmpty())
             throw new IllegalStateException("Use " + CH.PREPARE + "threads instead of prepare.threads");

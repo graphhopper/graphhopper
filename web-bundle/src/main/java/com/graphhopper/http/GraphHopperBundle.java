@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
@@ -196,7 +197,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {
-                bind(configuration.getGraphHopperConfiguration()).to(CmdArgs.class);
+                bind(configuration.getGraphHopperConfiguration()).to(GraphHopperConfig.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopper.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
 
@@ -209,7 +210,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             }
         });
 
-        if (configuration.getGraphHopperConfiguration().getBool("web.change_graph.enabled", false)) {
+        if (configuration.getGraphHopperConfiguration().getCmdArgs().getBool("web.change_graph.enabled", false)) {
             environment.jersey().register(ChangeGraphResource.class);
         }
 
@@ -217,7 +218,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
         environment.jersey().register(IsochroneResource.class);
-        if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
+        if (configuration.getGraphHopperConfiguration().getCmdArgs().has("gtfs.file")) {
             // These are pt-specific implementations of /route and /isochrone, but the same API.
             // We serve them under different paths (/route-pt and /isochrone-pt), and forward
             // requests for ?vehicle=pt there.

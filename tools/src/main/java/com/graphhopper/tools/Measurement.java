@@ -18,10 +18,7 @@
 package com.graphhopper.tools;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
@@ -140,7 +137,7 @@ public class Measurement {
             }
         };
 
-        hopper.init(args).
+        hopper.init(new GraphHopperConfig(args)).
                 // use server to allow path simplification
                         forServer();
         if (cleanGraph) {

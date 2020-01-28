@@ -20,6 +20,7 @@ package com.graphhopper.tools;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
@@ -115,7 +116,7 @@ public class CHMeasurement {
         lmDecorator.setDisablingAllowed(true);
 
         LOGGER.info("Initializing graph hopper with args: {}", cmdArgs);
-        graphHopper.init(cmdArgs);
+        graphHopper.init(new GraphHopperConfig(cmdArgs));
 
         if (cleanup) {
             graphHopper.clean();

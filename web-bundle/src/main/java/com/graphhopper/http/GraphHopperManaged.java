@@ -21,6 +21,7 @@ package com.graphhopper.http;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -45,7 +46,8 @@ public class GraphHopperManaged implements Managed {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopper graphHopper;
 
-    public GraphHopperManaged(CmdArgs configuration, ObjectMapper objectMapper) {
+    public GraphHopperManaged(GraphHopperConfig ghConfig, ObjectMapper objectMapper) {
+        CmdArgs configuration = ghConfig.getCmdArgs();
         ObjectMapper localObjectMapper = objectMapper.copy();
         localObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         String splitAreaLocation = configuration.get(Parameters.Landmark.PREPARE + "split_area_location", "");
@@ -71,7 +73,7 @@ public class GraphHopperManaged implements Managed {
                 throw new RuntimeException(e);
             }
         }
-        graphHopper.init(configuration);
+        graphHopper.init(ghConfig);
     }
 
     @Override

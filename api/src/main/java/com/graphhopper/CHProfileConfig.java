@@ -15,22 +15,31 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
 
-import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.routing.util.HintsMap;
+package com.graphhopper;
 
-/**
- * @author Peter Karich
- */
-public interface RoutingAlgorithmFactoryDecorator {
-    void init(GraphHopperConfig ghConfig);
+public class CHProfileConfig {
+    private String vehicle = "";
+    private String weighting = "";
 
-    boolean isEnabled();
+    public void setVehicle(String vehicle) {
+        this.vehicle = vehicle;
+    }
 
-    /**
-     * This method returns the specified algoFactory unchanged, decorates it or completely replaces
-     * it depending on the specified optionsMap.
-     */
-    RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory algoFactory, HintsMap optionsMap);
+    public String getVehicle() {
+        return vehicle;
+    }
+
+    public void setWeighting(String weighting) {
+        this.weighting = weighting;
+    }
+
+    public String getWeighting() {
+        return weighting;
+    }
+
+    @Override
+    public String toString() {
+        return "CH profile: vechicle=" + vehicle + ", weighting=" + weighting;
+    }
 }

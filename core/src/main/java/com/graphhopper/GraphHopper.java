@@ -490,7 +490,8 @@ public class GraphHopper implements GraphHopperAPI {
      * Reads the configuration from a CmdArgs object which can be manually filled, or via
      * CmdArgs.read(String[] args)
      */
-    public GraphHopper init(CmdArgs args) {
+    public GraphHopper init(GraphHopperConfig ghConfig) {
+        final CmdArgs args = ghConfig.getCmdArgs();
         args.merge(CmdArgs.readFromSystemProperties());
         if (args.has("osmreader.osm"))
             throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see core/files/changelog.txt");
@@ -584,7 +585,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         // prepare CH, LM, ...
         for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators) {
-            decorator.init(args);
+            decorator.init(ghConfig);
         }
 
         // osm import
