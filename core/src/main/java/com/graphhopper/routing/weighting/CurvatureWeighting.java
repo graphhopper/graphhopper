@@ -23,6 +23,8 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+
 /**
  * This Class uses bendiness parameter to prefer curvy routes.
  */
@@ -33,7 +35,11 @@ public class CurvatureWeighting extends PriorityWeighting {
     private final DecimalEncodedValue avSpeedEnc;
 
     public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap) {
-        super(flagEncoder, pMap);
+        this(flagEncoder, pMap, NO_TURN_COST_PROVIDER);
+    }
+
+    public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap, TurnCostProvider turnCostProvider) {
+        super(flagEncoder, pMap, turnCostProvider);
 
         priorityEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "priority"));
         curvatureEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "curvature"));
@@ -49,7 +55,7 @@ public class CurvatureWeighting extends PriorityWeighting {
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         double priority = priorityEnc.getDecimal(false, edgeState.getFlags());
         double bendiness = curvatureEnc.getDecimal(false, edgeState.getFlags());
         double speed = getRoadSpeed(edgeState, reverse);

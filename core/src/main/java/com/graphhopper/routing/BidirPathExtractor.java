@@ -18,12 +18,12 @@
 
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.StopWatch;
 
 /**
@@ -113,7 +113,7 @@ public class BidirPathExtractor {
     protected void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
         path.addDistance(edgeState.getDistance());
-        path.addTime(weighting.calcMillis(edgeState, reverse, prevOrNextEdge));
+        path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edgeState, reverse, prevOrNextEdge));
         path.addEdge(edge);
     }
 
@@ -121,9 +121,7 @@ public class BidirPathExtractor {
         if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
             return;
         }
-        if (weighting instanceof TurnWeighting) {
-            path.addTime(((TurnWeighting) weighting).calcTurnMillis(inEdge, viaNode, outEdge));
-        }
+        path.addTime(weighting.calcTurnMillis(inEdge, viaNode, outEdge));
     }
 
 }

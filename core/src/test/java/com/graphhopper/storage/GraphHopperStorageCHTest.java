@@ -21,6 +21,7 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -32,7 +33,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.Assert.*;
 
@@ -59,8 +59,25 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     private GraphHopperStorage newGHStorage(Directory dir, boolean is3D, boolean forEdgeBasedTraversal, int segmentSize) {
-        CHProfile chProfile = new CHProfile(new FastestWeighting(carEncoder), forEdgeBasedTraversal, INFINITE_U_TURN_COSTS);
-        return new GraphBuilder(encodingManager).setCHProfiles(chProfile).setDir(dir).set3D(is3D).setSegmentSize(segmentSize).build();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager)
+                .setDir(dir).set3D(is3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
+        FastestWeighting weighting = new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, graph.getTurnCostStorage()));
+        graph.addCHGraph(new CHProfile(weighting, forEdgeBasedTraversal));
+        return graph;
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Override
+    public void testClone() {
+        // todo: implement graph copying in the presence of turn costs
+        super.testClone();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Override
+    public void testCopyTo() {
+        // todo: implement graph copying in the presence of turn costs
+        super.testCopyTo();
     }
 
     @Test

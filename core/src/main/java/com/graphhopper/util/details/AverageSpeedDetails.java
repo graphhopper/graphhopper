@@ -2,6 +2,7 @@ package com.graphhopper.util.details;
 
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
 
@@ -46,7 +47,7 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
             return true;
         }
 
-        double tmpVal = distance / weighting.calcMillis(edge, false, prevEdgeId) * 3600;
+        double tmpVal = distance / GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdgeId) * 3600;
         prevEdgeId = edge.getEdge();
         if (decimalValue == null || Math.abs(tmpVal - decimalValue) >= precision) {
             this.decimalValue = Math.round(tmpVal / precision) * precision;

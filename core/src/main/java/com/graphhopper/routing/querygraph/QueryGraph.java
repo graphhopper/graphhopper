@@ -22,6 +22,8 @@ import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.weighting.QueryGraphWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.ExtendedNodeAccess;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -81,11 +83,7 @@ public class QueryGraph implements Graph {
 
         graphModification = GraphModificationBuilder.build(graph, queryResults);
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
-
-        if (mainGraph.getTurnCostStorage() != null)
-            turnCostStorage = new QueryGraphTurnCostStorage(mainGraph, graphModification.getClosestEdges());
-        else
-            turnCostStorage = null;
+        turnCostStorage = mainGraph.getTurnCostStorage();
 
         // build data structures holding the virtual edges at all real/virtual nodes that are modified compared to the
         // mainGraph.
@@ -363,6 +361,11 @@ public class QueryGraph implements Graph {
     @Override
     public TurnCostStorage getTurnCostStorage() {
         return turnCostStorage;
+    }
+
+    @Override
+    public Weighting wrapWeighting(Weighting weighting) {
+        return new QueryGraphWeighting(weighting, mainGraph.getNodes(), mainGraph.getEdges(), graphModification.getClosestEdges());
     }
 
     @Override

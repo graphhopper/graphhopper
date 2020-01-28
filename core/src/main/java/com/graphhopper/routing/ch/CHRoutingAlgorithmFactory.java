@@ -19,7 +19,6 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 
@@ -53,8 +52,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
             }
-            TurnWeighting turnWeighting = new TurnWeighting(getWeighting(), turnCostStorage, chProfile.getUTurnCosts());
-            RoutingCHGraph g = new RoutingCHGraphImpl(graph, getWeighting(), turnWeighting);
+            RoutingCHGraph g = new RoutingCHGraphImpl(graph, graph.wrapWeighting(getWeighting()));
             return createAlgoEdgeBased(g, opts);
         } else {
             RoutingCHGraph g = new RoutingCHGraphImpl(graph, chProfile.getWeighting());
