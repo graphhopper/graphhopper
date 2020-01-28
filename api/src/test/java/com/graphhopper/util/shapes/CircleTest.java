@@ -17,11 +17,11 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointList;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -40,6 +40,38 @@ public class CircleTest {
 
         assertFalse(new Circle(10, 10, 110000).intersects(new BBox(9, 11, 8, 9)));
         assertFalse(new BBox(9, 11, 8, 9).intersects(new Circle(10, 10, 110000)));
+    }
+
+    @Test
+    public void testIntersectPointList() {
+        Circle circle = new Circle(1.5, 0.3, Helper.DIST_EARTH.calcDist(0, 0, 0, 0.7));
+        PointList pointList = new PointList();
+        pointList.add(5, 5);
+        pointList.add(5, 0);
+        assertFalse(circle.intersects(pointList));
+
+        pointList.add(-5, 0);
+        assertTrue(circle.intersects(pointList));
+
+        pointList = new PointList();
+        pointList.add(5, 1);
+        pointList.add(-1, 0);
+        assertTrue(circle.intersects(pointList));
+
+        pointList = new PointList();
+        pointList.add(5, 0);
+        pointList.add(-1, 3);
+        assertFalse(circle.intersects(pointList));
+
+        pointList = new PointList();
+        pointList.add(5, 0);
+        pointList.add(2, 0);
+        assertTrue(circle.intersects(pointList));
+
+        pointList = new PointList();
+        pointList.add(1.5, -2);
+        pointList.add(1.5, 2);
+        assertTrue(circle.intersects(pointList));
     }
 
     @Test

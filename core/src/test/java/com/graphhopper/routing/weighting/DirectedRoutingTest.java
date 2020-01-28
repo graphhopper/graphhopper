@@ -100,10 +100,12 @@ public class DirectedRoutingTest {
         // todonow: make this work with speed_both_directions=true!
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
-        weighting = new FastestWeighting(encoder);
-        chProfile = CHProfile.edgeBased(weighting, uTurnCosts);
-        graph = createGraph();
+        graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
+        weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
+        chProfile = CHProfile.edgeBased(weighting);
+        graph.addCHGraph(chProfile);
+        graph.create(1000);
     }
 
     private void preProcessGraph() {
@@ -130,21 +132,17 @@ public class DirectedRoutingTest {
     private BidirRoutingAlgorithm createAlgo(Graph graph) {
         switch (algo) {
             case ASTAR:
-                return new AStarBidirection(graph, createTurnWeighting(graph), TraversalMode.EDGE_BASED);
+                return new AStarBidirection(graph, graph.wrapWeighting(weighting), TraversalMode.EDGE_BASED);
             case CH_DIJKSTRA:
                 return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
             case CH_ASTAR:
                 return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM:
-                AStarBidirection astarbi = new AStarBidirection(graph, createTurnWeighting(graph), TraversalMode.EDGE_BASED);
+                AStarBidirection astarbi = new AStarBidirection(graph, graph.wrapWeighting(weighting), TraversalMode.EDGE_BASED);
                 return (BidirRoutingAlgorithm) lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }
-    }
-
-    private TurnWeighting createTurnWeighting(Graph g) {
-        return new TurnWeighting(weighting, g.getTurnCostStorage(), uTurnCosts);
     }
 
     @Test
@@ -165,7 +163,7 @@ public class DirectedRoutingTest {
             int sourceOutEdge = getSourceOutEdge(rnd, source, graph);
             int targetInEdge = getTargetInEdge(rnd, target, graph);
 //            System.out.println("source: " + source + ", target: " + target + ", sourceOutEdge: " + sourceOutEdge + ", targetInEdge: " + targetInEdge);
-            Path refPath = new DijkstraBidirectionRef(graph, createTurnWeighting(graph), TraversalMode.EDGE_BASED)
+            Path refPath = new DijkstraBidirectionRef(graph, ((Graph) graph).wrapWeighting(weighting), TraversalMode.EDGE_BASED)
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             Path path = createAlgo()
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
@@ -221,8 +219,7 @@ public class DirectedRoutingTest {
             int chSourceOutEdge = getSourceOutEdge(tmpRnd2, source, chQueryGraph);
             int chTargetInEdge = getTargetInEdge(tmpRnd2, target, chQueryGraph);
 
-            final TurnWeighting tw = createTurnWeighting(queryGraph);
-            Path refPath = new DijkstraBidirectionRef(queryGraph, tw, TraversalMode.EDGE_BASED)
+            Path refPath = new DijkstraBidirectionRef(queryGraph, ((Graph) queryGraph).wrapWeighting(weighting), TraversalMode.EDGE_BASED)
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             Path path = createAlgo(chQueryGraph)
                     .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
@@ -282,10 +279,6 @@ public class DirectedRoutingTest {
             strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refPath.calcNodes() + "\ngiven:    " + path.calcNodes());
         }
         return strictViolations;
-    }
-
-    private GraphHopperStorage createGraph() {
-        return new GraphBuilder(encodingManager).setDir(dir).setCHProfiles(chProfile).withTurnCosts(true).create();
     }
 
     private int getTargetInEdge(Random rnd, int node, Graph graph) {

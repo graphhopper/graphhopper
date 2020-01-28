@@ -216,19 +216,13 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     }
 
     @Override
-    public boolean isReady(PathMerger pathMerger, Translation tr) {
+    public void finish(PathMerger pathMerger, Translation tr) {
         if (ghRequest.getPoints().size() - 1 != pathList.size())
             throw new RuntimeException("There should be exactly one more points than paths. points:" + ghRequest.getPoints().size() + ", paths:" + pathList.size());
 
         altResponse.setWaypoints(getWaypoints());
         ghResponse.add(altResponse);
         pathMerger.doWork(altResponse, pathList, encodingManager, tr);
-        return true;
-    }
-
-    @Override
-    public int getMaxRetries() {
-        return 1;
     }
 
 }

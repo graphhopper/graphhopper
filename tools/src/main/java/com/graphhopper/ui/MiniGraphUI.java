@@ -52,6 +52,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.Random;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+
 /**
  * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
  * and spatial data structures. See e.g. this blog post:
@@ -143,7 +145,7 @@ public class MiniGraphUI {
             map.put(Parameters.CH.DISABLE, true);
 //            map.put(Parameters.Landmark.DISABLE, true);
             routingGraph = graph;
-            weighting = hopper.createWeighting(map, encoder, graph);
+            weighting = hopper.createWeighting(map, encoder, graph, NO_TURN_COST_PROVIDER);
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
             algoFactory = new RoutingAlgorithmFactory() {
 

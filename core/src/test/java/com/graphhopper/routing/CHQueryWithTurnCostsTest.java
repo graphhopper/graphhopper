@@ -23,7 +23,6 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
@@ -712,10 +711,9 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, graph.getTurnCostStorage());
         return "astar".equals(algoString) ?
-                new AStarBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting, turnWeighting)) :
-                new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting, turnWeighting));
+                new AStarBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting)) :
+                new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting));
     }
 
     private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {

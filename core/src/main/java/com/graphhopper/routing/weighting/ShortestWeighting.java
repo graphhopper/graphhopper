@@ -20,6 +20,8 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+
 /**
  * Calculates the shortest route - independent of a vehicle as the calculation is based on the
  * distance only.
@@ -29,7 +31,11 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class ShortestWeighting extends AbstractWeighting {
     public ShortestWeighting(FlagEncoder flagEncoder) {
-        super(flagEncoder);
+        this(flagEncoder, NO_TURN_COST_PROVIDER);
+    }
+
+    public ShortestWeighting(FlagEncoder flagEncoder, TurnCostProvider turnCostProvider) {
+        super(flagEncoder, turnCostProvider);
     }
 
     @Override
@@ -38,7 +44,7 @@ public class ShortestWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         return edgeState.getDistance();
     }
 

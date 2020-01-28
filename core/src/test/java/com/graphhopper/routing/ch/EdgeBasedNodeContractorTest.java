@@ -24,9 +24,8 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
@@ -36,12 +35,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.*;
 
 /**
@@ -55,11 +50,10 @@ public class EdgeBasedNodeContractorTest {
     private CHGraph chGraph;
     private CarFlagEncoder encoder;
     private GraphHopperStorage graph;
-    private int uTurnCosts;
-    private Weighting weighting;
 
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
+    private List<CHProfile> chProfiles;
 
     @Before
     public void setup() {
@@ -70,14 +64,14 @@ public class EdgeBasedNodeContractorTest {
     private void initialize() {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        uTurnCosts = INFINITE_U_TURN_COSTS;
         graph = new GraphBuilder(encodingManager)
                 .setCHProfileStrings(
-                        "car|shortest|edge|" + uTurnCosts
+                        "car|shortest|edge",
+                        "car|shortest|edge|60"
                 )
                 .create();
-        chGraph = graph.getCHGraph();
-        weighting = chGraph.getCHProfile().getWeighting();
+        chProfiles = graph.getCHProfiles();
+        chGraph = graph.getCHGraph(chProfiles.get(0));
     }
 
     @Test
@@ -1123,6 +1117,7 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     public void testFindPath_finiteUTurnCost() {
+        chGraph = graph.getCHGraph(chProfiles.get(1));
         // turning to 1 at node 3 when coming from 0 is forbidden, but taking the full loop 3-4-2-3 is very
         // expensive, so the best solution is to go straight to 4 and take a u-turn there
         //   1
@@ -1138,7 +1133,6 @@ public class EdgeBasedNodeContractorTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         setRestriction(0, 3, 1);
-        uTurnCosts = 60;
         contractNodes(4);
         checkShortcuts(
                 createShortcut(3, 2, 1, 2, 1, 2, 600),
@@ -1385,8 +1379,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor() {
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, graph.getTurnCostStorage(), uTurnCosts);
-        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, weighting, turnWeighting);
+        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, chGraph.getCHProfile().getWeighting());
         EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;

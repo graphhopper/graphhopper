@@ -182,7 +182,7 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
 
                     GHPoint center = getCoordinatesForIndex(xIdx, yIdx);
                     // TODO: Consider creating a new method in Polygon that does the 5 checks - p.partOfTile?
-                    if (polygon.contains(center) ||
+                    if (polygon.contains(center.lat, center.lon) ||
                             polygon.contains(center.getLat() - checkDiff, center.getLon() - checkDiff) ||
                             polygon.contains(center.getLat() - checkDiff, center.getLon() + checkDiff) ||
                             polygon.contains(center.getLat() + checkDiff, center.getLon() - checkDiff) ||

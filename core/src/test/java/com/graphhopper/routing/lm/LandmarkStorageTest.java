@@ -70,7 +70,7 @@ public class LandmarkStorageTest {
         EdgeIteratorState edge = ghStorage.edge(0, 1);
         int res = new LandmarkStorage(ghStorage, dir, new FastestWeighting(encoder) {
             @Override
-            public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
                 return Integer.MAX_VALUE * 2L;
             }
         }, 8).setMaximumWeight(LandmarkStorage.PRECISION).calcWeight(edge, false);
@@ -79,7 +79,7 @@ public class LandmarkStorageTest {
         dir = new RAMDirectory();
         res = new LandmarkStorage(ghStorage, dir, new FastestWeighting(encoder) {
             @Override
-            public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
                 return Double.POSITIVE_INFINITY;
             }
         }, 8).setMaximumWeight(LandmarkStorage.PRECISION).calcWeight(edge, false);
