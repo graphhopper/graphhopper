@@ -23,10 +23,7 @@ import ch.poole.conditionalrestrictionparser.ConditionalRestrictionParser;
 import ch.poole.conditionalrestrictionparser.ParseException;
 import ch.poole.conditionalrestrictionparser.Restriction;
 import ch.poole.openinghoursparser.*;
-import com.conveyal.osmlib.OSM;
-import com.conveyal.osmlib.OSMEntity;
-import com.conveyal.osmlib.Relation;
-import com.conveyal.osmlib.Way;
+import com.conveyal.osmlib.*;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
@@ -40,10 +37,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TimeDependentAccessRestriction {
@@ -51,7 +45,7 @@ public class TimeDependentAccessRestriction {
     private final BooleanEncodedValue property;
     private final OSMIDParser osmidParser;
     private final OSM osm;
-    private final ZoneId zoneId;
+    public final ZoneId zoneId;
 
     public TimeDependentAccessRestriction(GraphHopperStorage ghStorage, OSM osm) {
         zoneId = ZoneId.of("Europe/Berlin");
@@ -61,13 +55,31 @@ public class TimeDependentAccessRestriction {
     }
 
     public static class ConditionalTagData {
-        OSMEntity.Tag tag;
-        List<TimeDependentRestrictionData> restrictionData;
+        public OSMEntity.Tag getTag() {
+            return tag;
+        }
+
+        public OSMEntity.Tag tag;
+
+        public List<TimeDependentRestrictionData> getRestrictionData() {
+            return restrictionData;
+        }
+
+        public List<TimeDependentRestrictionData> restrictionData;
     }
 
-    static class TimeDependentRestrictionData {
-        Restriction restriction;
-        List<Rule> rules;
+    public static class TimeDependentRestrictionData {
+        public Restriction getRestriction() {
+            return restriction;
+        }
+
+        public Restriction restriction;
+
+        public List<Rule> getRules() {
+            return rules;
+        }
+
+        public List<Rule> rules;
     }
 
     public void printConditionalAccess(long osmid, Instant when, PrintWriter out) {
@@ -78,29 +90,6 @@ public class TimeDependentAccessRestriction {
         if (!timeDependentAccessConditions.isEmpty()) {
             out.printf("%d\n", osmid);
             for (ConditionalTagData conditionalTagData : timeDependentAccessConditions) {
-                out.println(" "+conditionalTagData.tag);
-                for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
-                    out.println("  "+timeDependentRestrictionData.restriction);
-                    for (Rule rule : timeDependentRestrictionData.rules) {
-                        out.println("   " + rule + (matches(zonedDateTime, rule) ? " <===" : ""));
-                    }
-                }
-            }
-        }
-    }
-
-    public void printConditionalTurnRestriction(long osmid, Instant when, PrintWriter out) {
-        final ZonedDateTime zonedDateTime = when.atZone(zoneId);
-        Relation relation = osm.relations.get(osmid);
-        Map<String, Object> tags = new HashMap<>();
-        for (OSMEntity.Tag tag : relation.tags) {
-            tags.put(tag.key, tag.value);
-        }
-        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
-                .collect(Collectors.toList());
-        if (!restrictionData.isEmpty()) {
-            out.printf("%d\n", osmid);
-            for (ConditionalTagData conditionalTagData : restrictionData) {
                 out.println(" "+conditionalTagData.tag);
                 for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
                     out.println("  "+timeDependentRestrictionData.restriction);
@@ -179,7 +168,7 @@ public class TimeDependentAccessRestriction {
         return restrictionData;
     }
 
-    private boolean matches(ZonedDateTime when, Rule rule) {
+    public boolean matches(ZonedDateTime when, Rule rule) {
         return matchesDays(when, rule) && matchesTimes(when, rule);
     }
 

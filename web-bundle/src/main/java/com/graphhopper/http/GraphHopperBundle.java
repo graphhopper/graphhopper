@@ -44,6 +44,7 @@ import com.graphhopper.util.TranslationMap;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.dropwizard.views.ViewBundle;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
@@ -192,6 +193,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 }).collect(Collectors.toList());
             }
         }));
+        bootstrap.addBundle(new ViewBundle());
     }
 
     @Override

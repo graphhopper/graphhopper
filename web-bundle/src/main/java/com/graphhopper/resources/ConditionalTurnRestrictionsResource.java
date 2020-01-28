@@ -18,19 +18,23 @@
 
 package com.graphhopper.resources;
 
+import ch.poole.openinghoursparser.Rule;
+import com.conveyal.osmlib.Node;
 import com.conveyal.osmlib.OSM;
+import com.conveyal.osmlib.OSMEntity;
 import com.conveyal.osmlib.Relation;
 import com.graphhopper.TimeDependentAccessRestriction;
 import com.graphhopper.storage.GraphHopperStorage;
+import io.dropwizard.views.View;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.StreamingOutput;
-import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.Map;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Path("restrictions")
 public class ConditionalTurnRestrictionsResource {
@@ -45,19 +49,77 @@ public class ConditionalTurnRestrictionsResource {
     }
 
     @GET
-    @Produces("text/plain")
-    public StreamingOutput conditionalRelations() {
-        Instant linkEnterTime = Instant.now();
-        TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm);
-        return output -> {
-            PrintWriter printWriter = new PrintWriter(output);
+    @Produces("text/html")
+    public ConditionalTurnRestrictionsView conditionalRelations() {
+        return new ConditionalTurnRestrictionsView();
+    }
+
+    public class ConditionalTurnRestrictionsView extends View {
+
+        public List<ConditionalTurnRestrictionView> getRestrictions() {
+            return restrictions;
+        }
+
+        public final List<ConditionalTurnRestrictionView> restrictions = new ArrayList<>();
+        private final Instant linkEnterTime;
+        private final TimeDependentAccessRestriction timeDependentAccessRestriction;
+
+        protected ConditionalTurnRestrictionsView() {
+            super("/assets/wurst.ftl");
+            linkEnterTime = Instant.now();
+            timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm);
             for (Map.Entry<Long, Relation> entry : osm.relations.entrySet()) {
                 if (entry.getValue().hasTag("type", "restriction")) {
-                    timeDependentAccessRestriction.printConditionalTurnRestriction(entry.getKey(), linkEnterTime, printWriter);
+                    long osmid = entry.getKey();
+                    Relation relation = osm.relations.get(osmid);
+                    Map<String, Object> tags = new HashMap<>();
+                    for (OSMEntity.Tag tag : relation.tags) {
+                        tags.put(tag.key, tag.value);
+                    }
+                    List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData = TimeDependentAccessRestriction.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
+                            .collect(Collectors.toList());
+                    if (!restrictionData.isEmpty()) {
+                        Optional<Relation.Member> via = relation.members.stream().filter(m -> m.role.equals("via")).findFirst();
+                        if (via.isPresent()) {
+                            ConditionalTurnRestrictionView view = new ConditionalTurnRestrictionView();
+                            view.osmid = osmid;
+                            view.node = osm.nodes.get(via.get().id);
+                            view.restrictionData = restrictionData;
+                            restrictions.add(view);
+                        }
+                    }
                 }
             }
-            printWriter.flush();
-        };
+        }
+
+        public boolean matches(Rule rule) {
+            return timeDependentAccessRestriction.matches(linkEnterTime.atZone(timeDependentAccessRestriction.zoneId), rule);
+        }
+
+        public class ConditionalTurnRestrictionView {
+            public Node getNode() {
+                return node;
+            }
+
+            public long getOsmid() {
+                return osmid;
+            }
+
+            public long osmid;
+            public Node node;
+
+            public List<TimeDependentAccessRestriction.ConditionalTagData> getRestrictionData() {
+                return restrictionData;
+            }
+
+            public List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData;
+            public final ZonedDateTime zonedDateTime;
+
+            public ConditionalTurnRestrictionView() {
+                zonedDateTime = linkEnterTime.atZone(timeDependentAccessRestriction.zoneId);
+            }
+        }
+
     }
 
 }
