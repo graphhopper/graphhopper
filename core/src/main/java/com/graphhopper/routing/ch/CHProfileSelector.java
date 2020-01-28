@@ -59,9 +59,6 @@ public class CHProfileSelector {
             if (edgeBased != null && p.isEdgeBased() != edgeBased) {
                 continue;
             }
-            if (uTurnCosts != null && p.getUTurnCostsInt() != uTurnCosts) {
-                continue;
-            }
             if (!p.getWeighting().matches(hintsMap)) {
                 continue;
             }

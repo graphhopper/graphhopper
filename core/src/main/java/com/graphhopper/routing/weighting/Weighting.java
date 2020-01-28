@@ -41,8 +41,7 @@ public interface Weighting {
     /**
      * This method calculates the weight of a given {@link EdgeIteratorState}. E.g. a high value indicates that the edge
      * should be avoided during shortest path search. Make sure that this method is very fast and optimized as this is
-     * called potentially millions of times for one route or a lot more for nearly any preprocessing phase. This
-     * method does not include any turn costs like {@link #calcWeight}.
+     * called potentially millions of times for one route or a lot more for nearly any preprocessing phase.
      *
      * @param edgeState the edge for which the weight should be calculated
      * @param reverse   if the specified edge is specified in reverse direction e.g. from the reverse
@@ -53,27 +52,14 @@ public interface Weighting {
     double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
     /**
-     * Calculates the weight of a given edge like {@link #calcEdgeWeight}, but potentially also adds the transition
-     * cost (the turn weight) associated with transitioning from/to the edge with ID prevOrNextEdgeId.
-     *
-     * @param prevOrNextEdgeId if reverse is false this has to be the previous edgeId, if true it
-     *                         has to be the next edgeId in the direction from start to end.
-     */
-    double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
-
-    /**
      * This method calculates the time taken (in milli seconds) to travel along the specified edgeState.
      * It is typically used for post-processing and on only a few thousand edges.
      */
     long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse);
 
-    /**
-     * Like {@link #calcEdgeMillis}, but potentially also includes the turn costs (in seconds) needed for the transition
-     * between the previous (or next) edgeId and this edge via prevOrNextEdgeId.
-     *
-     * @see #calcWeight
-     */
-    long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
+    double calcTurnWeight(int inEdge, int viaNode, int outEdge);
+
+    long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 
     FlagEncoder getFlagEncoder();
 

@@ -19,8 +19,8 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.BalancedWeightApproximator;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
-import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -59,7 +59,8 @@ import java.util.PriorityQueue;
  * @author jansoe
  */
 public class AStarBidirection extends AbstractNonCHBidirAlgo implements RecalculationHook {
-    private ConsistentWeightApproximator weightApprox;
+    private BalancedWeightApproximator weightApprox;
+    double stoppingCriterionOffset;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -70,9 +71,17 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
 
     @Override
     void init(int from, double fromWeight, int to, double toWeight) {
-        weightApprox.setFrom(from);
-        weightApprox.setTo(to);
+        weightApprox.setFromTo(from, to);
+        stoppingCriterionOffset = weightApprox.approximate(to, true) + weightApprox.getSlack();
         super.init(from, fromWeight, to, toWeight);
+    }
+
+    @Override
+    protected boolean finished() {
+        if (finishedFrom || finishedTo)
+            return true;
+
+        return currFrom.weight + currTo.weight >= bestWeight + stoppingCriterionOffset;
     }
 
     @Override
@@ -109,22 +118,14 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
         return weightApprox.getApproximation();
     }
 
-    /**
-     * @param approx if true it enables approximate distance calculation from lat,lon values
-     */
     public AStarBidirection setApproximation(WeightApproximator approx) {
-        weightApprox = new ConsistentWeightApproximator(approx);
+        weightApprox = new BalancedWeightApproximator(approx);
         return this;
     }
 
-    void setFromDataStructures(AStarBidirection astar) {
-        super.setFromDataStructures(astar);
-        weightApprox.setFrom(astar.currFrom.adjNode);
-    }
-
-    void setToDataStructures(AStarBidirection astar) {
-        super.setToDataStructures(astar);
-        weightApprox.setTo(astar.currTo.adjNode);
+    @Override
+    void setToDataStructures(AbstractBidirAlgo other) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -137,7 +138,7 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
         return Parameters.Algorithms.ASTAR_BI + "|" + weightApprox;
     }
 
-    public static void updatePriorityQueues(PriorityQueue<SPTEntry> pqOpenSetFrom, PriorityQueue<SPTEntry> pqOpenSetTo, ConsistentWeightApproximator weightApprox, boolean forward, boolean backward) {
+    public static void updatePriorityQueues(PriorityQueue<SPTEntry> pqOpenSetFrom, PriorityQueue<SPTEntry> pqOpenSetTo, BalancedWeightApproximator weightApprox, boolean forward, boolean backward) {
         if (forward) {
             // update PQ due to heuristic change (i.e. weight changed)
             if (!pqOpenSetFrom.isEmpty()) {

@@ -56,12 +56,12 @@ public class DirectedBidirectionalDijkstraTest {
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphHopperStorage(dir, encodingManager, false, true).create(1000);
         turnCostStorage = graph.getTurnCostStorage();
-        weighting = createWeighting(Double.POSITIVE_INFINITY);
+        weighting = createWeighting(Weighting.INFINITE_U_TURN_COSTS);
         turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
     }
 
-    private Weighting createWeighting(double defaultUTurnCosts) {
-        return new TurnWeighting(new FastestWeighting(encoder), turnCostStorage, defaultUTurnCosts);
+    private Weighting createWeighting(int uTurnCosts) {
+        return new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
     }
 
     @Test

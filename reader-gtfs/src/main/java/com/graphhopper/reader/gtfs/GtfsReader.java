@@ -603,7 +603,7 @@ class GtfsReader {
         while (i.next()) {
             if (i.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
                 GtfsStorageI.PlatformDescriptor routeId = gtfsStorage.getRoutes().get(i.getEdge());
-                if (from_route_id == null || GtfsStorageI.PlatformDescriptor.route(from_route_id).equals(routeId)) {
+                if (from_route_id == null || routeId instanceof GtfsStorageI.RouteTypePlatform || GtfsStorageI.PlatformDescriptor.route(from_route_id).equals(routeId)) {
                     EdgeIterator j = graph.createEdgeExplorer().setBaseNode(i.getAdjNode());
                     while (j.next()) {
                         if (j.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {

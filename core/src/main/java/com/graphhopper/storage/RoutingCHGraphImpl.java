@@ -19,7 +19,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -37,13 +36,8 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
      */
     private final Graph baseGraph;
     private final Weighting weighting;
-    private final TurnWeighting turnWeighting;
 
     public RoutingCHGraphImpl(Graph graph, Weighting weighting) {
-        this(graph, weighting, null);
-    }
-
-    public RoutingCHGraphImpl(Graph graph, Weighting weighting, TurnWeighting turnWeighting) {
         this.graph = graph;
         if (graph instanceof QueryGraph) {
             chGraph = (CHGraph) ((QueryGraph) graph).getMainGraph();
@@ -52,7 +46,6 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
         }
         baseGraph = chGraph.getBaseGraph();
         this.weighting = weighting;
-        this.turnWeighting = turnWeighting;
     }
 
     @Override
@@ -128,15 +121,12 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
 
     @Override
     public Weighting getWeighting() {
-        return turnWeighting != null ? turnWeighting : weighting;
+        return weighting;
     }
 
     @Override
     public double getTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
-        if (turnWeighting == null) {
-            return 0;
-        }
-        return turnWeighting.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
+        return weighting.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
     }
 
 }

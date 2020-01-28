@@ -30,7 +30,6 @@ import com.conveyal.gtfs.GTFSFeed;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Iterator;
 
 public class Agency extends Entity {
 
@@ -77,36 +76,6 @@ public class Agency extends Entity {
             feed.agency.put(a.agency_id, a);
         }
 
-    }
-
-    public static class Writer extends Entity.Writer<Agency> {
-        public Writer(GTFSFeed feed) {
-            super(feed, "agency");
-        }
-
-        @Override
-        public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"agency_id", "agency_name", "agency_url", "agency_lang",
-                    "agency_phone", "agency_timezone", "agency_fare_url", "agency_branding_url"});
-        }
-
-        @Override
-        public void writeOneRow(Agency a) throws IOException {
-            writeStringField(a.agency_id);
-            writeStringField(a.agency_name);
-            writeUrlField(a.agency_url);
-            writeStringField(a.agency_lang);
-            writeStringField(a.agency_phone);
-            writeStringField(a.agency_timezone);
-            writeUrlField(a.agency_fare_url);
-            writeUrlField(a.agency_branding_url);
-            endRecord();
-        }
-
-        @Override
-        public Iterator<Agency> iterator() {
-            return this.feed.agency.values().iterator();
-        }
     }
 
 }

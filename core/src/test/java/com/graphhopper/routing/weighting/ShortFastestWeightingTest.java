@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author Peter Karich
@@ -50,7 +50,7 @@ public class ShortFastestWeightingTest {
     public void testTooSmall() {
         try {
             new ShortFastestWeighting(encoder, new PMap("short_fastest.distance_factor=0|short_fastest.time_factor=0"));
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
         }
     }

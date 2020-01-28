@@ -20,16 +20,15 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -38,17 +37,16 @@ public class EdgeBasedWitnessPathSearcherTest {
     private GraphHopperStorage graph;
     private CHGraph chGraph;
     private Weighting weighting;
-    private TurnWeighting chTurnWeighting;
 
     @Before
     public void setup() {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        weighting = new ShortestWeighting(encoder);
-        graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
-        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-        chTurnWeighting = new TurnWeighting(weighting, turnCostStorage);
+        graph = new GraphBuilder(encodingManager)
+                .setCHProfileStrings("car|shortest|edge")
+                .create();
         chGraph = graph.getCHGraph();
+        weighting = chGraph.getCHProfile().getWeighting();
     }
 
     @Test
@@ -126,7 +124,7 @@ public class EdgeBasedWitnessPathSearcherTest {
     }
 
     private EdgeBasedWitnessPathSearcher createFinder() {
-        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, weighting, chTurnWeighting);
+        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, weighting);
         return new EdgeBasedWitnessPathSearcher(prepareGraph, new PMap());
     }
 

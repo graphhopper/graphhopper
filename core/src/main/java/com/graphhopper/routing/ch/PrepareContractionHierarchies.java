@@ -23,7 +23,6 @@ import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.Helper;
@@ -89,8 +88,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
             }
-            TurnWeighting turnWeighting = new TurnWeighting(chProfile.getWeighting(), turnCostStorage, chProfile.getUTurnCosts());
-            prepareGraph = PrepareCHGraph.edgeBased(chGraph, chProfile.getWeighting(), turnWeighting);
+            prepareGraph = PrepareCHGraph.edgeBased(chGraph, chProfile.getWeighting());
             nodeContractor = new EdgeBasedNodeContractor(prepareGraph, pMap);
         } else {
             prepareGraph = PrepareCHGraph.nodeBased(chGraph, chProfile.getWeighting());
