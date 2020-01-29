@@ -1,6 +1,8 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.profiles.RoadClass;
+
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
@@ -150,12 +152,13 @@ public class SpatialRuleLookupJTSTest {
         return new AbstractSpatialRule(p) {
             
             @Override
-            public double getMaxSpeed(String highwayTag, double _default) {
-                return _default;
+            public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
+                return currentMaxSpeed;
             }
 
             @Override
-            public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
+            public RoadAccess getAccess(RoadClass roadClass, TransportationMode transportationMode,
+                            RoadAccess currentRoadAccess) {
                 return RoadAccess.DESTINATION;
             }
 

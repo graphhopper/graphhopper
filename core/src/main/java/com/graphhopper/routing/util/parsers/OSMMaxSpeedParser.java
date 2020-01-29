@@ -22,6 +22,7 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.MaxSpeed;
+import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.storage.IntsRef;
@@ -59,7 +60,7 @@ public class OSMMaxSpeedParser implements TagParser {
             GHPoint estmCentre = way.getTag("estimated_center", null);
             SpatialRule spatialRule = way.getTag("spatial_rule", null);
             if (estmCentre != null && spatialRule != null)
-                maxSpeed = spatialRule.getMaxSpeed(way.getTag("highway", ""), maxSpeed);
+                maxSpeed = spatialRule.getMaxSpeed(RoadClass.find(way.getTag("highway", "")), maxSpeed);
         }
 
         double fwdSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:forward"));

@@ -23,6 +23,7 @@ import org.locationtech.jts.geom.Polygon;
 
 import com.graphhopper.routing.profiles.Country;
 import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
@@ -38,28 +39,28 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
     }
     
     @Override
-    public double getMaxSpeed(String highwayTag, double _default) {
+    public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
-        switch (highwayTag) {
-            case "trunk":
+        switch (roadClass) {
+            case TRUNK:
                 return 100;
-            case "residential":
+            case RESIDENTIAL:
                 return 50;
             default:
-                return super.getMaxSpeed(highwayTag, _default);
+                return super.getMaxSpeed(roadClass, currentMaxSpeed);
         }
     }
 
     @Override
-    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
+    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
         if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
-            if (highwayTag.equals("living_street"))
+            if (roadClass == RoadClass.LIVING_STREET)
                 return RoadAccess.DESTINATION;
-            if (highwayTag.equals("track"))
+            if (roadClass == RoadClass.TRACK)
                 return RoadAccess.FORESTRY;
         }
 
-        return super.getAccess(highwayTag, transportationMode, _default);
+        return super.getAccess(roadClass, transportationMode, currentRoadAccess);
     }
 
     @Override

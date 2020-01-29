@@ -23,6 +23,7 @@ import java.util.List;
 import org.locationtech.jts.geom.Polygon;
 
 import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.profiles.RoadClass;
 
 /**
  * @author Robin Boldt
@@ -44,48 +45,49 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     }
     
     @Override
-    public double getMaxSpeed(String highwayTag, double _default) {
+    public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
         // We tried to estimate reasonable values: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         // We did not always used the highest value available, but we used a high value
-        switch (highwayTag) {
-            case "motorway":
+        switch (roadClass) {
+            case MOTORWAY:
                 return 130;
-            case "trunk":
+            case TRUNK:
                 return 130;
-            case "primary":
+            case PRIMARY:
                 return 100;
-            case "secondary":
+            case SECONDARY:
                 return 100;
-            case "tertiary":
+            case TERTIARY:
                 return 100;
-            case "unclassified":
+            case UNCLASSIFIED:
                 return 100;
-            case "residential":
+            case RESIDENTIAL:
                 return 90;
-            case "living_street":
+            case LIVING_STREET:
                 return 20;
             default:
-                return _default;
+                return currentMaxSpeed;
         }
     }
 
     @Override
-    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
+    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
         // We tried to find generally forbidden tags
-        if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
-            switch (highwayTag) {
-                case "path":
-                case "bridleway":
-                case "cycleway":
-                case "footway":
-                case "pedestrian":
-                    return RoadAccess.NO;
-                default:
-                    return _default;
-            }
+        if (transportationMode != TransportationMode.MOTOR_VEHICLE) {
+            return currentRoadAccess;
         }
-        return _default;
+        
+        switch (roadClass) {
+            case PATH:
+            case BRIDLEWAY:
+            case CYCLEWAY:
+            case FOOTWAY:
+            case PEDESTRIAN:
+                return RoadAccess.NO;
+            default:
+                return currentRoadAccess;
+        }
     }
 
     @Override

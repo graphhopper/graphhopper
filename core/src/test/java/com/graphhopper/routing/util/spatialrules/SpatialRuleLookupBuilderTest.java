@@ -64,23 +64,23 @@ public class SpatialRuleLookupBuilderTest {
 
         // Berlin
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).
-                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).
-                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
         // Paris -> empty rule
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).
-                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).
-                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
         // Austria
         assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRule(48.204484, 16.107888).
-                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).
-                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(48.210033, 16.363449).
-                getAccess("living_street", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.LIVING_STREET, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
     }
 
     @Test
@@ -221,12 +221,14 @@ public class SpatialRuleLookupBuilderTest {
                 return new AbstractSpatialRule(borders) {
                     
                     @Override
-                    public double getMaxSpeed(String highway, double _default) {
+                    public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
                         return 100;
                     }
 
                     @Override
-                    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
+                    public RoadAccess getAccess(RoadClass roadClass,
+                                    TransportationMode transportationMode,
+                                    RoadAccess currentRoadAccess) {
                         return RoadAccess.YES;
                     }
 
