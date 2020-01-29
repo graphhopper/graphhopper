@@ -81,13 +81,7 @@ GHRequest.prototype.init = function (params) {
 
     // overwrite elevation e.g. important if not supported from feature set
     this.api_params.elevation = false;
-    var featureSet = this.features[this.api_params.vehicle];
-    if (featureSet && featureSet.elevation) {
-        if ('elevation' in params)
-            this.api_params.elevation = params.elevation;
-        else
-            this.api_params.elevation = true;
-    }
+    this.initVehicle(this.api_params.vehicle);
 
     if (params.q) {
         var qStr = params.q;
@@ -129,12 +123,11 @@ GHRequest.prototype.getEarliestDepartureTime = function () {
 
 GHRequest.prototype.initVehicle = function (vehicle) {
     this.api_params.vehicle = vehicle;
-    var featureSet = this.features[vehicle];
-
-    if (featureSet && featureSet.elevation)
-        this.api_params.elevation = true;
-    else
-        this.api_params.elevation = false;
+    if(this.api_params.elevation !== false) {
+        var featureSet = this.features[vehicle];
+        this.api_params.elevation = featureSet && featureSet.elevation;
+    }
+    this.hasTCSupport();
 };
 
 GHRequest.prototype.hasElevation = function () {

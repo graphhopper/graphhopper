@@ -24,7 +24,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.parsers.*;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -352,7 +351,7 @@ public class EncodingManager implements EncodedValueLookup {
 
             // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
             for (AbstractFlagEncoder encoder : flagEncoderList) {
-                if (encoder.supports(TurnWeighting.class) && !em.turnCostParsers.containsKey(encoder.toString()))
+                if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(encoder.toString()))
                     _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts()));
             }
 
@@ -524,6 +523,7 @@ public class EncodingManager implements EncodedValueLookup {
     public static class AcceptWay {
         private Map<String, Access> accessMap;
         boolean hasAccepted = false;
+        boolean isFerry = false;
 
         public AcceptWay() {
             this.accessMap = new HashMap<>(5);
@@ -541,6 +541,8 @@ public class EncodingManager implements EncodedValueLookup {
             accessMap.put(key, access);
             if (access != Access.CAN_SKIP)
                 hasAccepted = true;
+            if (access == Access.FERRY)
+                isFerry = true;
             return this;
         }
 
@@ -548,14 +550,18 @@ public class EncodingManager implements EncodedValueLookup {
             return accessMap.isEmpty();
         }
 
+        /**
+         * At least one of the entries is not CAN_SKIP
+         */
         public boolean hasAccepted() {
             return hasAccepted;
         }
 
-        public Access getAccess() {
-            if (accessMap.isEmpty())
-                throw new IllegalStateException("Cannot determine Access if map is empty");
-            return accessMap.values().iterator().next();
+        /**
+         * At least one of the entries is FERRY (usually all entries)
+         */
+        public boolean isFerry() {
+            return isFerry;
         }
     }
 
@@ -600,10 +606,8 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
-        // return if way or ferry
-        Access access = acceptWay.getAccess();
         for (TagParser parser : edgeTagParsers) {
-            parser.handleWayTags(edgeFlags, way, access, relationFlags);
+            parser.handleWayTags(edgeFlags, way, acceptWay.isFerry(), relationFlags);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
             encoder.handleWayTags(edgeFlags, way, acceptWay.get(encoder.toString()));
@@ -736,7 +740,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     public boolean needsTurnCostsSupport() {
         for (FlagEncoder encoder : edgeEncoders) {
-            if (encoder.supports(TurnWeighting.class))
+            if (encoder.supportsTurnCosts())
                 return true;
         }
         return false;

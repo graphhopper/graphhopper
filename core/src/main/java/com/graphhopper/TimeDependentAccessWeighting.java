@@ -39,7 +39,7 @@ public class TimeDependentAccessWeighting implements TDWeighting {
 
     @Override
     public long calcTDMillis(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId, long linkEnterTime) {
-        return calcMillis(edge, reverse, prevOrNextEdgeId);
+        return calcEdgeMillis(edge, reverse);
     }
 
     @Override
@@ -48,22 +48,32 @@ public class TimeDependentAccessWeighting implements TDWeighting {
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        return finalWeighting.calcEdgeWeight(edgeState, reverse);
     }
 
     @Override
     public double calcTDWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId, long linkEnterTimeMilli) {
         if (timeDependentAccessRestriction.accessible(edgeState, Instant.ofEpochMilli(linkEnterTimeMilli)).orElse(true)) {
-            return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+            return finalWeighting.calcEdgeWeight(edgeState, reverse);
         } else {
             return Double.POSITIVE_INFINITY;
         }
     }
 
     @Override
-    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        return finalWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        return finalWeighting.calcEdgeMillis(edgeState, reverse);
+    }
+
+    @Override
+    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        return finalWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        return finalWeighting.calcTurnMillis(inEdge, viaNode, outEdge);
     }
 
     @Override

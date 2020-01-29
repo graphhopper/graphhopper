@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TDWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -51,11 +50,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final BooleanEncodedValue roundaboutEnc;
     private final BooleanEncodedValue accessEnc;
     private final BooleanEncodedValue getOffBikeEnc;
+    private final BooleanEncodedValue roadClassLinkEnc;
     private final EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
     private final EnumEncodedValue<RoadAccess> roadAccessEnc;
     private final EnumEncodedValue<Toll> tollEnc;
+    private final DecimalEncodedValue maxSpeedEnc;
 
     /*
      * We need three points to make directions
@@ -107,6 +108,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         this.tollEnc = evLookup.hasEncodedValue(Toll.KEY) ? evLookup.getEnumEncodedValue(Toll.KEY, Toll.class) : null;
 
         this.roadClassEnc = evLookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        this.roadClassLinkEnc = evLookup.getBooleanEncodedValue(RoadClassLink.KEY);
+        this.maxSpeedEnc = evLookup.getDecimalEncodedValue(MaxSpeed.KEY);
         this.roadEnvEnc = evLookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         this.roadAccessEnc = evLookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         this.nodeAccess = graph.getNodeAccess();
@@ -136,21 +139,21 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     @Override
     public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
-        if (prevNode == -1) {
-            prevLat = this.nodeAccess.getLatitude(edge.getBaseNode());
-            prevLon = this.nodeAccess.getLongitude(edge.getBaseNode());
-        }
-
         // baseNode is the current node and adjNode is the next
         int adjNode = edge.getAdjNode();
         int baseNode = edge.getBaseNode();
-        IntsRef flags = edge.getFlags();
+
+        if (prevNode == -1) {
+            prevLat = this.nodeAccess.getLatitude(baseNode);
+            prevLon = this.nodeAccess.getLongitude(baseNode);
+        }
+
         double adjLat = nodeAccess.getLatitude(adjNode);
         double adjLon = nodeAccess.getLongitude(adjNode);
         double latitude, longitude;
 
         PointList wayGeo = edge.fetchWayGeometry(3);
-        boolean isRoundabout = roundaboutEnc.getBool(false, flags);
+        boolean isRoundabout = edge.get(roundaboutEnc);
 
         if (wayGeo.getSize() <= 2) {
             latitude = adjLat;
@@ -220,8 +223,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     // check if there is an exit at the same node the roundabout was entered
                     EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
                     while (edgeIter.next()) {
-                        if ((edgeIter.getAdjNode() != prevNode)
-                                && !roundaboutEnc.getBool(false, edgeIter.getFlags())) {
+                        if ((edgeIter.getAdjNode() != prevNode) && !edgeIter.get(roundaboutEnc)) {
                             roundaboutInstruction.increaseExitNumber();
                             break;
                         }
@@ -390,7 +392,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             forceInstruction = true;
         }
 
-        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, encoder, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
+        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, encoder, maxSpeedEnc, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.nrOfAllowedOutgoingEdges();
 
         // there is no other turn possible
@@ -429,9 +431,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             return sign;
         }
 
-        IntsRef flag = edge.getFlags();
-        IntsRef prevFlag = prevEdge.getFlags();
-
         boolean outgoingEdgesAreSlower = outgoingEdges.outgoingEdgesAreSlowerByFactor(1);
 
         // There is at least one other possibility to turn, and we are almost going straight
@@ -446,12 +445,26 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // Happens a lot for trunk_links
         // For _links, comparing flags works quite good, as links usually have different speeds => different flags
         if (otherContinue != null) {
-            //We are at a fork
+            // We are at a fork
             if (!InstructionsHelper.isNameSimilar(name, prevName)
                     || InstructionsHelper.isNameSimilar(otherContinue.getName(), prevName)
-                    || !prevFlag.equals(flag)
-                    || prevFlag.equals(otherContinue.getFlags())
                     || !outgoingEdgesAreSlower) {
+
+                final RoadClass roadClass = edge.get(roadClassEnc);
+                final RoadClass prevRoadClass = prevEdge.get(roadClassEnc);
+                final RoadClass otherRoadClass = otherContinue.get(roadClassEnc);
+                final boolean link = edge.get(roadClassLinkEnc);
+                final boolean prevLink = prevEdge.get(roadClassLinkEnc);
+                final boolean otherLink = otherContinue.get(roadClassLinkEnc);
+                // We know this is a fork, but we only need an instruction if highways are actually changing,
+                // this approach only works for major roads, for minor roads it can be hard to differentiate easily in real life
+                if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY || roadClass == RoadClass.SECONDARY || roadClass == RoadClass.TERTIARY) {
+                    if ((roadClass == prevRoadClass && link == prevLink) && (otherRoadClass != prevRoadClass || otherLink != prevLink)) {
+                        return returnForcedInstructionOrIgnore(forceInstruction, sign);
+                    }
+                }
+
+
                 GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
@@ -500,8 +513,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction.setTime(((TDWeighting) weighting).calcTDMillis(edge, false, EdgeIterator.NO_EDGE, prevInstruction.getTime())
                     + prevInstruction.getTime());
         } else {
-            prevInstruction.setTime(weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE)
-                    + prevInstruction.getTime());
+            // todo: why do we not account for turn times here ?
+            prevInstruction.setTime(weighting.calcEdgeMillis(edge, false) + prevInstruction.getTime());
         }
     }
 

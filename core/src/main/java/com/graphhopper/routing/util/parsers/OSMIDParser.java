@@ -54,7 +54,7 @@ public class OSMIDParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
         byte[] osmIdBytes = longToBytes(way.getId());
         for (int i=0; i<8; i++) {
             byteEncodedValue[i].setInt(false, edgeFlags, toUnsignedInt(osmIdBytes[i]));

@@ -190,11 +190,11 @@ public class RouteResourceTest {
         assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() < 21000);
 
         InstructionList instructions = arsp.getInstructions();
-        assertEquals(25, instructions.size());
+        assertEquals(24, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).getTurnDescription(null));
         assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
         assertEquals(true, instructions.get(4).getExtraInfoJSON().get("exited"));
-        assertEquals(false, instructions.get(23).getExtraInfoJSON().get("exited"));
+        assertEquals(false, instructions.get(22).getExtraInfoJSON().get("exited"));
     }
 
     @Test

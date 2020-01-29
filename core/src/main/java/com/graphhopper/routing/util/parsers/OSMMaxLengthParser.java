@@ -22,7 +22,6 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.MaxLength;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
@@ -36,7 +35,7 @@ public class OSMMaxLengthParser implements TagParser {
     public OSMMaxLengthParser() {
         this(MaxLength.create());
     }
-    
+
     public OSMMaxLengthParser(DecimalEncodedValue lengthEncoder) {
         this.lengthEncoder = lengthEncoder;
     }
@@ -47,7 +46,7 @@ public class OSMMaxLengthParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
         OSMValueExtractor.extractMeter(edgeFlags, way, lengthEncoder, Collections.singletonList("maxlength"));
         return edgeFlags;
     }

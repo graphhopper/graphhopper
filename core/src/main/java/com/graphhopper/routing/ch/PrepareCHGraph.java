@@ -19,13 +19,9 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -34,48 +30,44 @@ import com.graphhopper.util.EdgeIterator;
 public class PrepareCHGraph {
     private final CHGraph chGraph;
     private final Weighting weighting;
-    private final TurnWeighting turnWeighting;
-    private final FlagEncoder encoder;
 
     public static PrepareCHGraph nodeBased(CHGraph chGraph, Weighting weighting) {
         if (chGraph.getCHProfile().isEdgeBased()) {
             throw new IllegalArgumentException("Expected node-based CHGraph, but was edge-based");
         }
-        return new PrepareCHGraph(chGraph, weighting, null);
+        return new PrepareCHGraph(chGraph, weighting);
     }
 
-    public static PrepareCHGraph edgeBased(CHGraph chGraph, Weighting weighting, TurnWeighting turnWeighting) {
+    public static PrepareCHGraph edgeBased(CHGraph chGraph, Weighting weighting) {
         if (!chGraph.getCHProfile().isEdgeBased()) {
             throw new IllegalArgumentException("Expected edge-based CHGraph, but was node-based");
         }
-        return new PrepareCHGraph(chGraph, weighting, turnWeighting);
+        return new PrepareCHGraph(chGraph, weighting);
     }
 
-    private PrepareCHGraph(CHGraph chGraph, Weighting weighting, TurnWeighting turnWeighting) {
+    private PrepareCHGraph(CHGraph chGraph, Weighting weighting) {
         this.chGraph = chGraph;
-        this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
-        this.turnWeighting = turnWeighting;
     }
 
     public PrepareCHEdgeExplorer createInEdgeExplorer() {
-        return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.inEdges(chGraph.createEdgeExplorer(), weighting);
     }
 
     public PrepareCHEdgeExplorer createOutEdgeExplorer() {
-        return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.outEdges(chGraph.createEdgeExplorer(), weighting);
     }
 
     public PrepareCHEdgeExplorer createAllEdgeExplorer() {
-        return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder)), weighting);
+        return PrepareCHEdgeIteratorImpl.allEdges(chGraph.createEdgeExplorer(), weighting);
     }
 
-    public EdgeExplorer createOriginalInEdgeExplorer() {
-        return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+    public PrepareCHEdgeExplorer createOriginalInEdgeExplorer() {
+        return PrepareCHEdgeIteratorImpl.inEdges(chGraph.createOriginalEdgeExplorer(), weighting);
     }
 
-    public EdgeExplorer createOriginalOutEdgeExplorer() {
-        return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+    public PrepareCHEdgeExplorer createOriginalOutEdgeExplorer() {
+        return PrepareCHEdgeIteratorImpl.outEdges(chGraph.createOriginalEdgeExplorer(), weighting);
     }
 
     public int getNodes() {
@@ -115,10 +107,7 @@ public class PrepareCHGraph {
     }
 
     double getTurnWeight(int inEdge, int viaNode, int outEdge) {
-        if (turnWeighting == null) {
-            throw new IllegalStateException("Calculating turn weights is only allowed when using edge-based traversal mode");
-        }
-        return turnWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+        return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 
     public AllCHEdgesIterator getAllEdges() {
@@ -138,6 +127,7 @@ public class PrepareCHGraph {
      */
     public void disconnect(PrepareCHEdgeExplorer explorer, PrepareCHEdgeIterator edgeState) {
         // search edge with opposite direction but we need to know the previousEdge so we cannot simply do:
+        // EdgeIteratorState tmpIter = getEdgeIteratorState(edgeState.getEdge(), edgeState.getBaseNode());
         PrepareCHEdgeIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
         int prevEdge = EdgeIterator.NO_EDGE;
         while (tmpIter.next()) {

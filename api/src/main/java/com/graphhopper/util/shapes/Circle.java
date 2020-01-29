@@ -20,6 +20,7 @@ package com.graphhopper.util.shapes;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
+import com.graphhopper.util.PointList;
 
 /**
  * @author Peter Karich
@@ -30,7 +31,7 @@ public class Circle implements Shape {
     private final double lon;
     private final double normedDist;
     private final BBox bbox;
-    private DistanceCalc calc = Helper.DIST_EARTH;
+    private DistanceCalc calc;
 
     public Circle(double lat, double lon, double radiusInMeter) {
         this(lat, lon, radiusInMeter, Helper.DIST_EARTH);
@@ -81,6 +82,36 @@ public class Circle implements Shape {
         }
 
         return o.intersects(this);
+    }
+
+    @Override
+    public boolean intersects(PointList pointList) {
+        // similar code to LocationIndexTree.checkAdjacent
+        int len = pointList.getSize();
+        if (len == 0)
+            throw new IllegalArgumentException("PointList must not be empty");
+
+        double tmpLat = pointList.getLatitude(0);
+        double tmpLon = pointList.getLongitude(0);
+        if (len == 1)
+            return calc.calcNormalizedDist(lat, lon, tmpLat, tmpLon) <= normedDist;
+
+        for (int pointIndex = 1; pointIndex < len; pointIndex++) {
+            double wayLat = pointList.getLatitude(pointIndex);
+            double wayLon = pointList.getLongitude(pointIndex);
+
+            if (calc.validEdgeDistance(lat, lon, tmpLat, tmpLon, wayLat, wayLon)) {
+                if (calc.calcNormalizedEdgeDistance(lat, lon, tmpLat, tmpLon, wayLat, wayLon) <= normedDist)
+                    return true;
+            } else {
+                if (calc.calcNormalizedDist(lat, lon, tmpLat, tmpLon) <= normedDist
+                        || pointIndex + 1 == len && calc.calcNormalizedDist(lat, lon, wayLat, wayLon) <= normedDist)
+                    return true;
+            }
+            tmpLat = wayLat;
+            tmpLon = wayLon;
+        }
+        return false;
     }
 
     @Override

@@ -67,7 +67,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE;
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF;
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
@@ -826,11 +827,11 @@ public class GraphHopper implements GraphHopperAPI {
                     int uTurnCosts = config.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
 
                     CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
-                    if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supports(TurnWeighting.class))) {
-                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null)));
+                    if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supportsTurnCosts())) {
+                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null, NO_TURN_COST_PROVIDER)));
                     }
-                    if (edgeBasedCHMode != OFF && encoder.supports(TurnWeighting.class)) {
-                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null), uTurnCosts));
+                    if (edgeBasedCHMode != OFF && encoder.supportsTurnCosts()) {
+                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null, new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts))));
                     }
                 }
             }
@@ -847,7 +848,8 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
             for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
-                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null);
+                // note that we do not consider turn costs during LM preparation?
+                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null, NO_TURN_COST_PROVIDER);
                 lmFactoryDecorator.addWeighting(weighting);
             }
         }
@@ -936,25 +938,23 @@ public class GraphHopper implements GraphHopperAPI {
      * @return the weighting to be used for route calculation
      * @see HintsMap
      */
-    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
+    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph, TurnCostProvider turnCostProvider) {
         String weightingStr = toLowerCase(hintsMap.getWeighting());
         Weighting weighting = null;
 
-        if (encoder.supports(GenericWeighting.class)) {
-            weighting = new GenericWeighting((DataFlagEncoder) encoder, hintsMap);
-        } else if ("shortest".equalsIgnoreCase(weightingStr)) {
-            weighting = new ShortestWeighting(encoder);
+        if ("shortest".equalsIgnoreCase(weightingStr)) {
+            weighting = new ShortestWeighting(encoder, turnCostProvider);
         } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {
             if (encoder.supports(PriorityWeighting.class))
-                weighting = new PriorityWeighting(encoder, hintsMap);
+                weighting = new PriorityWeighting(encoder, hintsMap, turnCostProvider);
             else
-                weighting = new FastestWeighting(encoder, hintsMap);
+                weighting = new FastestWeighting(encoder, hintsMap, turnCostProvider);
         } else if ("curvature".equalsIgnoreCase(weightingStr)) {
             if (encoder.supports(CurvatureWeighting.class))
-                weighting = new CurvatureWeighting(encoder, hintsMap);
+                weighting = new CurvatureWeighting(encoder, hintsMap, turnCostProvider);
 
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
-            weighting = new ShortFastestWeighting(encoder, hintsMap);
+            weighting = new ShortFastestWeighting(encoder, hintsMap, turnCostProvider);
         }
 
         if (weighting == null)
@@ -967,16 +967,6 @@ public class GraphHopper implements GraphHopperAPI {
             return new BlockAreaWeighting(weighting, blockArea);
         }
 
-        return weighting;
-    }
-
-    /**
-     * Potentially wraps the specified weighting into a TurnWeighting instance.
-     */
-    public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode, double uTurnCosts) {
-        FlagEncoder encoder = weighting.getFlagEncoder();
-        if (encoder.supports(TurnWeighting.class) && tMode.isEdgeBased())
-            return new TurnWeighting(weighting, graph.getTurnCostStorage(), uTurnCosts);
         return weighting;
     }
 
@@ -1015,11 +1005,11 @@ public class GraphHopper implements GraphHopperAPI {
 
             // we use edge-based routing if the encoder supports turn-costs *unless* the edge_based parameter is set
             // explicitly.
-            TraversalMode tMode = encoder.supports(TurnWeighting.class) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
+            TraversalMode tMode = encoder.supportsTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
             if (hints.has(Routing.EDGE_BASED))
                 tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
-            if (tMode.isEdgeBased() && !encoder.supports(TurnWeighting.class)) {
+            if (tMode.isEdgeBased() && !encoder.supportsTurnCosts()) {
                 throw new IllegalArgumentException("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true");
             }
 
@@ -1052,31 +1042,32 @@ public class GraphHopper implements GraphHopperAPI {
             else
                 routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager);
 
-            List<Path> altPaths = null;
-            int maxRetries = routingTemplate.getMaxRetries();
-            Locale locale = request.getLocale();
-            Translation tr = trMap.getWithFallBack(locale);
-            for (int i = 0; i < maxRetries; i++) {
-                StopWatch sw = new StopWatch().start();
-                List<QueryResult> qResults = routingTemplate.lookup(points, encoder);
-                ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-                if (ghRsp.hasErrors())
-                    return Collections.emptyList();
+            StopWatch sw = new StopWatch().start();
+            List<QueryResult> qResults = routingTemplate.lookup(points, encoder);
+            ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+            if (ghRsp.hasErrors())
+                return Collections.emptyList();
 
-                RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
+            final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+            if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
+                throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
+            }
+            TurnCostProvider turnCostProvider = (encoder.supportsTurnCosts() && tMode.isEdgeBased())
+                    ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
+                    : NO_TURN_COST_PROVIDER;    RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
                 QueryGraph queryGraph;
 
-                if (chFactoryDecorator.isEnabled() && !disableCH) {
-                    if (request.hasFavoredHeading(0))
-                        throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
+            if (chFactoryDecorator.isEnabled() && !disableCH) {
+                if (request.hasFavoredHeading(0))
+                    throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
-                    if (request.getHints().getBool(Routing.PASS_THROUGH, false)) {
-                        throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
-                    }
-                    // if LM is enabled we have the LMFactory with the CH algo!
-                    RoutingAlgorithmFactory chAlgoFactory = tmpAlgoFactory;
-                    if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
-                        chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) tmpAlgoFactory).getDefaultAlgoFactory();
+                if (request.getHints().getBool(Routing.PASS_THROUGH, false)) {
+                    throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
+                }
+                // if LM is enabled we have the LMFactory with the CH algo!
+                RoutingAlgorithmFactory chAlgoFactory = tmpAlgoFactory;
+                if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
+                    chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) tmpAlgoFactory).getDefaultAlgoFactory();
 
                     if (chAlgoFactory instanceof CHRoutingAlgorithmFactory) {
                         CHProfile chProfile = ((CHRoutingAlgorithmFactory) chAlgoFactory).getCHProfile();
@@ -1088,50 +1079,39 @@ public class GraphHopper implements GraphHopperAPI {
                     checkNonChMaxWaypointDistance(points);
                     queryGraph = QueryGraph.lookup(ghStorage, qResults);
                 }
-                Weighting weighting = createWeighting(hints, encoder, queryGraph);
-                ghRsp.addDebugInfo("tmode:" + tMode.toString());
+                Weighting weighting = createWeighting(hints, encoder, queryGraph, turnCostProvider);
+            ghRsp.addDebugInfo("tmode:" + tMode.toString());
 
-                int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
-                if (maxVisitedNodesForRequest > maxVisitedNodes)
-                    throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
+            int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
+            if (maxVisitedNodesForRequest > maxVisitedNodes)
+                throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
 
-                int uTurnCostInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-                if (uTurnCostInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
-                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
-                }
-                double uTurnCosts = uTurnCostInt == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCostInt;
-                weighting = createTurnWeighting(queryGraph, weighting, tMode, uTurnCosts);
+            AlgorithmOptions algoOpts = AlgorithmOptions.start().
+                    algorithm(algoStr).traversalMode(tMode).weighting(weighting).
+                    maxVisitedNodes(maxVisitedNodesForRequest).
+                    hints(hints).
+                    build();
 
-                AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                        algorithm(algoStr).traversalMode(tMode).weighting(weighting).
-                        maxVisitedNodes(maxVisitedNodesForRequest).
-                        hints(hints).
-                        build();
+            // do the actual route calculation !
+            List<Path> altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts, encoder);
 
-                // do the actual route calculation !
-                altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts, encoder);
+            boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, getEncodingManager().isEnableInstructions());
+            boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
+            double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
 
-                boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, getEncodingManager().isEnableInstructions());
-                boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
-                double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
+            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
+            PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
+                    setCalcPoints(tmpCalcPoints).
+                    setDouglasPeucker(peucker).
+                    setEnableInstructions(tmpEnableInstructions).
+                    setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
+                    setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
-                DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
-                PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
-                        setCalcPoints(tmpCalcPoints).
-                        setDouglasPeucker(peucker).
-                        setEnableInstructions(tmpEnableInstructions).
-                        setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
-                        setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
+            if (request.hasFavoredHeading(0))
+                pathMerger.setFavoredHeading(request.getFavoredHeading(0));
 
-                if (request.hasFavoredHeading(0))
-                    pathMerger.setFavoredHeading(request.getFavoredHeading(0));
-
-                if (routingTemplate.isReady(pathMerger, tr))
-                    break;
-            }
-
+            routingTemplate.finish(pathMerger, trMap.getWithFallBack(request.getLocale()));
             return altPaths;
-
         } catch (IllegalArgumentException ex) {
             ghRsp.addError(ex);
             return Collections.emptyList();

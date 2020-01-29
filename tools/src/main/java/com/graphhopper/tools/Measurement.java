@@ -49,7 +49,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 
 /**
  * @author Peter Karich
@@ -95,6 +97,11 @@ public class Measurement {
         put("measurement.gitinfo", args.get("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
         put("measurement.map", args.get("datareader.file", "unknown"));
+
+        final boolean useMeasurementTimeAsRefTime = args.getBool("measurement.use_measurement_time_as_ref_time", false);
+        if (useMeasurementTimeAsRefTime && !useJson) {
+            throw new IllegalArgumentException("Using measurement time as reference time only works with json files");
+        }
 
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
@@ -162,9 +169,14 @@ public class Measurement {
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
+            String blockAreaStr = "49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512";
             if (runSlow) {
-                printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr,
-                        true, false, -1, true, false, false);
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing", vehicleStr, count / 20, isCH, isLM).
+                        withInstructions());
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", vehicleStr, count / 20, isCH, isLM).
+                        withInstructions().edgeBased());
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", vehicleStr, count / 20, isCH, isLM).
+                        withInstructions().blockArea(blockAreaStr));
             }
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
@@ -172,10 +184,15 @@ public class Measurement {
                 isLM = true;
                 int activeLMCount = 12;
                 for (; activeLMCount > 3; activeLMCount -= 4) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr,
-                            true, false, activeLMCount, true, false, false);
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, vehicleStr, count / 4, isCH, isLM).
+                            withInstructions().activeLandmarks(activeLMCount));
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", vehicleStr, count / 4, isCH, isLM).
+                            withInstructions().activeLandmarks(activeLMCount).edgeBased());
                 }
 
+                activeLMCount = 8;
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", vehicleStr, count / 4, isCH, isLM).
+                        withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
 
@@ -187,8 +204,8 @@ public class Measurement {
                     System.gc();
                     // try just one constellation, often ~4-6 is best
                     int lmCount = 5;
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr,
-                            true, false, lmCount, true, false, false);
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCHLM" + lmCount, vehicleStr, count, isCH, isLM).
+                            withInstructions().activeLandmarks(lmCount).sod());
                 }
 
                 isLM = false;
@@ -198,24 +215,26 @@ public class Measurement {
                     CHGraph lg = g.getCHGraph(chProfile);
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr,
-                            true, false, -1, true, false, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_with_hints", vehicleStr,
-                            true, true, -1, true, false, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr,
-                            true, false, -1, false, false, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr,
-                            false, false, -1, true, false, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_full", vehicleStr,
-                            true, true, -1, true, false, true);
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", vehicleStr, count, isCH, isLM).
+                            withInstructions().sod());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_alt", vehicleStr, count / 10, isCH, isLM).
+                            withInstructions().sod().alternative());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_with_hints", vehicleStr, count, isCH, isLM).
+                            withInstructions().sod().withPointHints());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_sod", vehicleStr, count, isCH, isLM).
+                            withInstructions());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_instr", vehicleStr, count, isCH, isLM).
+                            sod());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", vehicleStr, count, isCH, isLM).
+                            withInstructions().withPointHints().sod().simplify());
                 }
                 if (!hopper.getCHFactoryDecorator().getEdgeBasedCHProfiles().isEmpty()) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge", vehicleStr,
-                            true, false, -1, false, true, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_no_instr", vehicleStr,
-                            false, false, -1, false, true, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_full", vehicleStr,
-                            true, true, -1, false, true, true);
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", vehicleStr, count, isCH, isLM).
+                            edgeBased().withInstructions());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", vehicleStr, count, isCH, isLM).
+                            edgeBased());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", vehicleStr, count, isCH, isLM).
+                            edgeBased().withInstructions().withPointHints().simplify());
                 }
             }
         } catch (Exception ex) {
@@ -234,10 +253,67 @@ public class Measurement {
                 writeSummary(summaryLocation, propLocation);
             }
             if (useJson) {
-                storeJson(propLocation);
+                storeJson(propLocation, useMeasurementTimeAsRefTime);
             } else {
                 storeProperties(propLocation);
             }
+        }
+    }
+
+    private static class QuerySettings {
+        private final String prefix, vehicle;
+        private final int count;
+        final boolean ch, lm;
+        int activeLandmarks = -1;
+        boolean withInstructions, withPointHints, sod, edgeBased, simplify, alternative;
+        String blockArea;
+
+        QuerySettings(String prefix, String vehicle, int count, boolean isCH, boolean isLM) {
+            this.vehicle = vehicle;
+            this.prefix = prefix;
+            this.count = count;
+            this.ch = isCH;
+            this.lm = isLM;
+        }
+
+        QuerySettings withInstructions() {
+            this.withInstructions = true;
+            return this;
+        }
+
+        QuerySettings withPointHints() {
+            this.withPointHints = true;
+            return this;
+        }
+
+        QuerySettings sod() {
+            sod = true;
+            return this;
+        }
+
+        QuerySettings activeLandmarks(int alm) {
+            this.activeLandmarks = alm;
+            return this;
+        }
+
+        QuerySettings edgeBased() {
+            this.edgeBased = true;
+            return this;
+        }
+
+        QuerySettings simplify() {
+            this.simplify = true;
+            return this;
+        }
+
+        QuerySettings alternative() {
+            alternative = true;
+            return this;
+        }
+
+        QuerySettings blockArea(String str) {
+            blockArea = str;
+            return this;
         }
     }
 
@@ -444,20 +520,17 @@ public class Measurement {
         }
     }
 
-    private void printTimeOfRouteQuery(final GraphHopper hopper, final boolean ch, final boolean lm,
-                                       int count, String prefix, final String vehicle,
-                                       final boolean withInstructions, final boolean withPointHints,
-                                       final int activeLandmarks, final boolean sod, final boolean edgeBased,
-                                       final boolean simplify) {
+    private void printTimeOfRouteQuery(final GraphHopper hopper, final QuerySettings querySettings) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong distSum = new AtomicLong(0);
         final AtomicLong airDistSum = new AtomicLong(0);
+        final AtomicLong altCount = new AtomicLong(0);
         final AtomicInteger failedCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
 
-        final EdgeExplorer edgeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle)));
+        final EdgeExplorer edgeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(querySettings.vehicle)));
         final AtomicLong visitedNodesSum = new AtomicLong(0);
         final AtomicLong maxVisitedNodes = new AtomicLong(0);
 //        final AtomicLong extractTimeSum = new AtomicLong(0);
@@ -478,26 +551,32 @@ public class Measurement {
                 double toLon = na.getLongitude(to);
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                         setWeighting("fastest").
-                        setVehicle(vehicle);
+                        setVehicle(querySettings.vehicle);
 
-                req.getHints().put(CH.DISABLE, !ch).
-                        put("stall_on_demand", sod).
-                        put(Parameters.Routing.EDGE_BASED, edgeBased).
-                        put(Landmark.DISABLE, !lm).
-                        put(Landmark.ACTIVE_COUNT, activeLandmarks).
-                        put("instructions", withInstructions);
+                req.getHints().put(CH.DISABLE, !querySettings.ch).
+                        put("stall_on_demand", querySettings.sod).
+                        put(Parameters.Routing.EDGE_BASED, querySettings.edgeBased).
+                        put(Landmark.DISABLE, !querySettings.lm).
+                        put(Landmark.ACTIVE_COUNT, querySettings.activeLandmarks).
+                        put("instructions", querySettings.withInstructions);
 
-                if (withInstructions)
+                if (querySettings.alternative)
+                    req.setAlgorithm(ALT_ROUTE);
+
+                if (querySettings.withInstructions)
                     req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
 
-                if (simplify) {
+                if (querySettings.simplify) {
                     req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED, Parameters.Details.EDGE_ID, Parameters.Details.STREET_NAME));
                 } else {
                     // disable path simplification by setting the distance to zero
                     req.getHints().put(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
                 }
 
-                if (withPointHints) {
+                if (querySettings.blockArea != null)
+                    req.getHints().put(BLOCK_AREA, querySettings.blockArea);
+
+                if (querySettings.withPointHints) {
                     EdgeIterator iter = edgeExplorer.setBaseNode(from);
                     if (!iter.next())
                         throw new IllegalArgumentException("wrong 'from' when adding point hint");
@@ -550,23 +629,22 @@ public class Measurement {
                     if (dist < minDistance.get())
                         minDistance.set(dist);
 
-//                    extractTimeSum.addAndGet(p.getExtractTime());                    
-//                    long start = System.nanoTime();
-//                    size = p.calcPoints().getSize();
-//                    calcPointsTimeSum.addAndGet(System.nanoTime() - start);
+                    if (querySettings.alternative)
+                        altCount.addAndGet(rsp.getAll().size());
                 }
 
                 return arsp.getPoints().getSize();
             }
-        }.setIterations(count).start();
+        }.setIterations(querySettings.count).start();
 
-        count -= failedCount.get();
+        int count = querySettings.count - failedCount.get();
 
         // if using non-bidirectional algorithm make sure you exclude CH routing
-        String algoStr = (ch && !edgeBased) ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;
-        if (ch && !sod) {
+        String algoStr = (querySettings.ch && !querySettings.edgeBased) ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;
+        if (querySettings.ch && !querySettings.sod) {
             algoStr += "_no_sod";
         }
+        String prefix = querySettings.prefix;
         put(prefix + ".guessed_algorithm", algoStr);
         put(prefix + ".failed_count", failedCount.get());
         put(prefix + ".distance_min", minDistance.get());
@@ -575,17 +653,13 @@ public class Measurement {
         put(prefix + ".distance_max", maxDistance.get());
         put(prefix + ".visited_nodes_mean", (float) visitedNodesSum.get() / count);
         put(prefix + ".visited_nodes_max", (float) maxVisitedNodes.get());
-
-//        put(prefix + ".extractTime", (float) extractTimeSum.get() / count / 1000000f);
-//        put(prefix + ".calcPointsTime", (float) calcPointsTimeSum.get() / count / 1000000f);
-//        put(prefix + ".calcDistTime", (float) calcDistTimeSum.get() / count / 1000000f);
+        put(prefix + ".alternative_rate", (float) altCount.get() / count);
         print(prefix, miniPerf);
     }
 
     void print(String prefix, MiniPerfTest perf) {
         logger.info(prefix + ": " + perf.getReport());
         put(prefix + ".sum", perf.getSum());
-//        put(prefix+".rms", perf.getRMS());
         put(prefix + ".min", perf.getMin());
         put(prefix + ".mean", perf.getMean());
         put(prefix + ".max", perf.getMax());
@@ -595,10 +669,10 @@ public class Measurement {
         properties.put(key, val);
     }
 
-    private void storeJson(String jsonLocation) {
+    private void storeJson(String jsonLocation, boolean useMeasurementTimeAsRefTime) {
         logger.info("storing measurement json in " + jsonLocation);
-        Map<String, Object> result = new HashMap<>();
         Map<String, String> gitInfoMap = new HashMap<>();
+        // add git info if available
         if (Constants.GIT_INFO != null) {
             properties.remove("gh.gitinfo");
             gitInfoMap.put("commitHash", Constants.GIT_INFO.getCommitHash());
@@ -607,6 +681,17 @@ public class Measurement {
             gitInfoMap.put("branch", Constants.GIT_INFO.getBranch());
             gitInfoMap.put("dirty", String.valueOf(Constants.GIT_INFO.isDirty()));
         }
+        Map<String, Object> result = new HashMap<>();
+        // add measurement time, use same format as git commit time
+        String measurementTime = new SimpleDateFormat("yyy-MM-dd'T'HH:mm:ssZ").format(new Date());
+        result.put("measurementTime", measurementTime);
+        // set ref time, this is either the git commit time or the measurement time
+        if (Constants.GIT_INFO != null && !useMeasurementTimeAsRefTime) {
+            result.put("refTime", Constants.GIT_INFO.getCommitTime());
+        } else {
+            result.put("refTime", measurementTime);
+        }
+        result.put("periodicBuild", useMeasurementTimeAsRefTime);
         result.put("gitinfo", gitInfoMap);
         result.put("metrics", properties);
         try {

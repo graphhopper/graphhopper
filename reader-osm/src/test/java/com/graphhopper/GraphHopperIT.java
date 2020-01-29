@@ -54,7 +54,7 @@ public class GraphHopperIT {
     private static final String graphFileFoot = "target/graphhopperIT-foot";
     private static final String osmFile = DIR + "/monaco.osm.gz";
     private static final String importVehicles = "foot";
-    private static final String genericImportVehicles = "generic,foot";
+    private static final String importMultipleVehicles = "car,foot";
     private static final String vehicle = "foot";
     private static final String weightCalcStr = "shortest";
     private static GraphHopper hopper;
@@ -99,13 +99,13 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(3437.6, arsp.getDistance(), .1);
-        assertEquals(87, arsp.getPoints().getSize());
+        assertEquals(86, arsp.getPoints().getSize());
 
         assertEquals(43.7276852, arsp.getWaypoints().getLat(0), 1e-7);
         assertEquals(43.7495432, arsp.getWaypoints().getLat(1), 1e-7);
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(20, il.size());
+        assertEquals(15, il.size());
 
         // TODO roundabout fine tuning -> enter + leave roundabout (+ two roundabouts -> is it necessary if we do not leave the street?)
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
@@ -129,7 +129,7 @@ public class GraphHopperIT {
         assertEquals(7, il.get(4).getTime() / 1000);
         assertEquals(30, il.get(5).getTime() / 1000);
 
-        assertEquals(87, arsp.getPoints().size());
+        assertEquals(86, arsp.getPoints().size());
     }
 
     @Test
@@ -145,7 +145,7 @@ public class GraphHopperIT {
         routeRsp = hopper.route(request);
 
         assertTrue("there should not be more points if instructions are disabled due to simplify but was " + withInstructionsPoints + " vs " + routeRsp.getBest().getPoints().size(),
-                withInstructionsPoints > routeRsp.getBest().getPoints().size());
+                withInstructionsPoints >= routeRsp.getBest().getPoints().size());
     }
 
     @Test
@@ -232,7 +232,7 @@ public class GraphHopperIT {
             assertNotEquals(sum, 0);
             assertTrue("Too many nodes visited " + sum, sum < 120);
             assertEquals(3437.6, bestPath.getDistance(), .1);
-            assertEquals(87, bestPath.getPoints().getSize());
+            assertEquals(86, bestPath.getPoints().getSize());
         }
 
         if (lm) {
@@ -249,7 +249,7 @@ public class GraphHopperIT {
             assertNotEquals(sum, 0);
             assertTrue("Too many nodes visited " + sum, sum < 120);
             assertEquals(3437.6, bestPath.getDistance(), .1);
-            assertEquals(87, bestPath.getPoints().getSize());
+            assertEquals(86, bestPath.getPoints().getSize());
         }
 
         // flexible
@@ -265,7 +265,7 @@ public class GraphHopperIT {
         assertNotEquals(sum, 0);
         assertTrue("Too few nodes visited " + sum, sum > 120);
         assertEquals(3437.6, bestPath.getDistance(), .1);
-        assertEquals(87, bestPath.getPoints().getSize());
+        assertEquals(86, bestPath.getPoints().getSize());
 
         tmpHopper.close();
     }
@@ -397,20 +397,13 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), "car,generic").build());
+                setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), "car").build());
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
                 setVehicle("car").setWeighting("fastest");
 
         GHResponse rsp = tmpHopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(550, rsp.getBest().getDistance(), 1);
-
-        req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
-                setVehicle("generic").setWeighting("generic");
-
-        rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(550, rsp.getBest().getDistance(), 1);
     }
@@ -448,25 +441,32 @@ public class GraphHopperIT {
         req.getHints().put(Routing.BLOCK_AREA, someArea);
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(12173, rsp.getBest().getDistance(), 1);
+        assertEquals(13988, rsp.getBest().getDistance(), 1);
 
         // Add blocked point to above area, to increase detour        
         req.getHints().put(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(12787, rsp.getBest().getDistance(), 1);
+        assertEquals(14602, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small circular area
-        req.getHints().put(Routing.BLOCK_AREA, "49.981599,11.517448,100");
+        req.getHints().put(Routing.BLOCK_AREA, "49.979929,11.520066,200");
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(6879, rsp.getBest().getDistance(), 1);
+        assertEquals(12173, rsp.getBest().getDistance(), 1);
+
+        // TODO after #1324 this will work and should block both roads and return 12173m, currently it still routes
+        //  through one of the roads due to "disconnected" roads
+        req.getHints().put(Routing.BLOCK_AREA, "49.981502,11.51762,80");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(7383, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small rectangular area
-        req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.981088,11.519423");
+        req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(6879, rsp.getBest().getDistance(), 1);
+        assertEquals(12173, rsp.getBest().getDistance(), 1);
 
         // blocking works for all weightings
         req = new GHRequest(50.009504, 11.490669, 50.024726, 11.496162).
@@ -493,25 +493,25 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(6875.2, arsp.getDistance(), .1);
-        assertEquals(173, arsp.getPoints().getSize());
+        assertEquals(171, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(36, il.size());
+        assertEquals(29, il.size());
         assertEquals("continue onto Avenue des Guelfes", il.get(0).getTurnDescription(tr));
         assertEquals("continue onto Avenue des Papalins", il.get(1).getTurnDescription(tr));
         assertEquals("turn sharp right onto Quai Jean-Charles Rey", il.get(4).getTurnDescription(tr));
         assertEquals("turn left", il.get(5).getTurnDescription(tr));
         assertEquals("turn right onto Avenue Albert II", il.get(6).getTurnDescription(tr));
 
-        assertEquals("waypoint 1", il.get(19).getTurnDescription(tr));
-        assertEquals(Instruction.U_TURN_UNKNOWN, il.get(20).getSign());
+        assertEquals("waypoint 1", il.get(14).getTurnDescription(tr));
+        assertEquals(Instruction.U_TURN_UNKNOWN, il.get(15).getSign());
 
-        assertEquals("continue onto Avenue Albert II", il.get(29).getTurnDescription(tr));
-        assertEquals("turn left", il.get(30).getTurnDescription(tr));
-        assertEquals("turn right onto Quai Jean-Charles Rey", il.get(31).getTurnDescription(tr));
-        assertEquals("turn sharp left onto Avenue des Papalins", il.get(32).getTurnDescription(tr));
-        assertEquals("continue onto Avenue des Guelfes", il.get(34).getTurnDescription(tr));
-        assertEquals("arrive at destination", il.get(35).getTurnDescription(tr));
+        assertEquals("continue onto Avenue Albert II", il.get(22).getTurnDescription(tr));
+        assertEquals("turn left", il.get(23).getTurnDescription(tr));
+        assertEquals("turn right onto Quai Jean-Charles Rey", il.get(24).getTurnDescription(tr));
+        assertEquals("turn sharp left onto Avenue des Papalins", il.get(25).getTurnDescription(tr));
+        assertEquals("continue onto Avenue des Guelfes", il.get(27).getTurnDescription(tr));
+        assertEquals("arrive at destination", il.get(28).getTurnDescription(tr));
 
         assertEquals(11, il.get(0).getDistance(), 1);
         assertEquals(97, il.get(1).getDistance(), 1);
@@ -746,7 +746,7 @@ public class GraphHopperIT {
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
                 .setEncodingManager(EncodingManager.start().add(new OSMRoadEnvironmentParser() {
                     @Override
-                    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, IntsRef relationFlags) {
+                    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
                         // do not change RoadEnvironment to avoid triggering tunnel interpolation - is this a valid use case after #TODONOW?
                         return edgeFlags;
                     }
@@ -776,7 +776,7 @@ public class GraphHopperIT {
     public void testSRTMWithTunnelInterpolation() {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), genericImportVehicles).build());
+                .setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), importMultipleVehicles).build());
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
@@ -1006,7 +1006,7 @@ public class GraphHopperIT {
         assertNotEquals(sum, 0);
         assertTrue("Too many nodes visited " + sum, sum < 120);
         assertEquals(3437.6, bestPath.getDistance(), .1);
-        assertEquals(87, bestPath.getPoints().getSize());
+        assertEquals(86, bestPath.getPoints().getSize());
 
         tmpHopper.close();
     }
@@ -1035,7 +1035,7 @@ public class GraphHopperIT {
         PathWrapper pw = rsp.getBest();
         assertEquals(1.49, rsp.getBest().getDistance() / 1000f, .01);
         assertEquals(19, rsp.getBest().getTime() / 1000f / 60, 1);
-        assertEquals(68, pw.getPoints().size());
+        assertEquals(67, pw.getPoints().size());
     }
 
     @Test
@@ -1110,7 +1110,7 @@ public class GraphHopperIT {
         assertTrue("Too many visited nodes for ch mode " + chSum, chSum < 60);
         PathWrapper bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(89, bestPath.getPoints().getSize());
+        assertEquals(90, bestPath.getPoints().getSize());
 
         // request flex mode
         req.setAlgorithm(Parameters.Algorithms.ASTAR_BI);
@@ -1122,7 +1122,7 @@ public class GraphHopperIT {
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(89, bestPath.getPoints().getSize());
+        assertEquals(90, bestPath.getPoints().getSize());
 
         // request hybrid mode
         req.getHints().put(Landmark.DISABLE, false);
@@ -1136,7 +1136,7 @@ public class GraphHopperIT {
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(89, bestPath.getPoints().getSize());
+        assertEquals(90, bestPath.getPoints().getSize());
 
         // combining hybrid & speed mode is currently not possible and should be avoided: #1082
     }
@@ -1224,8 +1224,9 @@ public class GraphHopperIT {
         assertMoscowNodeBased(tmpHopper, "false", true);
         GHResponse rsp = runMoscow(tmpHopper, "true", true);
         assertEquals(1, rsp.getErrors().size());
-        assertTrue("unexpected error: " + rsp.getErrors().toString(), rsp.getErrors().toString().contains(
-                "Cannot find matching CH profile for your request.\nrequested:  *|car|edge_based=true|u_turn_costs=*\navailable: [fastest|car|edge_based=false|u_turn_costs=-1]"));
+        String expected = "Cannot find matching CH profile for your request.\nrequested:  *|car|edge_based=true|u_turn_costs=*\navailable: [fastest|car|edge_based=false]";
+        assertTrue("unexpected error:\n" + rsp.getErrors().toString() + "\nwhen expecting an error containing:\n" + expected,
+                rsp.getErrors().toString().contains(expected));
     }
 
     @Test
@@ -1325,8 +1326,8 @@ public class GraphHopperIT {
         final String adamSeiler = "Adam-Seiler-Straße";
         final String friedhof = "Friedhofsweg";
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 344, asList(itz, rotmain, rotmain));
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1564, asList(itz, rotmain, rotmain, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain));
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 1199, asList(itz, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, itz, rotmain, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1564, asList(itz, rotmain, rotmain, bayreuth, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 1199, asList(itz, bayreuth, adamSeiler, adamSeiler, friedhof, kulmbach, itz, rotmain, rotmain));
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 266, asList(itz, bayreuth, rotmain));
         // without restricting anything we get the shortest path
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 266, asList(itz, bayreuth, rotmain));
@@ -1348,8 +1349,8 @@ public class GraphHopperIT {
 
         // when going from p to p and one curbside is right and the other is left, we expect driving a loop back to
         // where we came from
-        assertCurbsidesPath(h, p, p, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1908, asList(itz, rotmain, rotmain, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain, rotmain, itz));
-        assertCurbsidesPath(h, p, p, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 855, asList(itz, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, itz));
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1908, asList(itz, rotmain, rotmain, bayreuth, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain, rotmain, itz));
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 855, asList(itz, bayreuth, adamSeiler, adamSeiler, friedhof, kulmbach, itz));
     }
 
     @Test

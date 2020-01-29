@@ -27,13 +27,10 @@ import com.graphhopper.util.PMap;
 public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
     @Override
     public FlagEncoder createFlagEncoder(String name, PMap configuration) {
-        if (name.equals(GENERIC))
-            return new DataFlagEncoder(configuration);
-
-        else if (name.equals(CAR))
+        if (name.equals(CAR))
             return new CarFlagEncoder(configuration);
 
-        else if (name.equals(CAR4WD))
+        if (name.equals(CAR4WD))
             return new Car4WDFlagEncoder(configuration);
 
         if (name.equals(BIKE))

@@ -19,6 +19,7 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.PointList;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -86,8 +87,39 @@ public class BBoxTest {
     }
 
     @Test
-    public void testCalculateIntersection() {
+    public void testPointListIntersect() {
+        BBox bbox = new BBox(-0.5, 1, 1, 2);
+        PointList pointList = new PointList();
+        pointList.add(5, 5);
+        pointList.add(5, 0);
+        assertFalse(bbox.intersects(pointList));
 
+        pointList.add(-5, 0);
+        assertTrue(bbox.intersects(pointList));
+
+        pointList = new PointList();
+        pointList.add(5, 1);
+        pointList.add(-1, 0);
+        assertTrue(bbox.intersects(pointList));
+
+        pointList = new PointList();
+        pointList.add(5, 0);
+        pointList.add(-1, 3);
+        assertFalse(bbox.intersects(pointList));
+
+        pointList = new PointList();
+        pointList.add(5, 0);
+        pointList.add(-1, 2);
+        assertTrue(bbox.intersects(pointList));
+
+        pointList = new PointList();
+        pointList.add(1.5, -2);
+        pointList.add(1.5, 2);
+        assertTrue(bbox.intersects(pointList));
+    }
+
+    @Test
+    public void testCalculateIntersection() {
         BBox b1 = new BBox(0, 2, 0, 1);
         BBox b2 = new BBox(-1, 1, -1, 2);
         BBox expected = new BBox(0, 1, 0, 1);

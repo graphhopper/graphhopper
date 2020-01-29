@@ -30,6 +30,7 @@ import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CmdArgs;
@@ -68,8 +69,8 @@ public class GraphHopperManaged implements Managed {
         } else {
             graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection) {
                 @Override
-                public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
-                    Weighting weighting = super.createWeighting(hintsMap, encoder, graph);
+                public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph, TurnCostProvider turnCostProvider) {
+                    Weighting weighting = super.createWeighting(hintsMap, encoder, graph, turnCostProvider);
                     if (hintsMap.has("block_property")) {
                         return getTimeDependentAccessWeighting(weighting);
                     }

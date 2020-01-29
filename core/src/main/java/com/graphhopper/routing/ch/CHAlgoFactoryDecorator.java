@@ -26,7 +26,6 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
@@ -361,16 +360,26 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             }
 
             @Override
-            public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-                if (blockedEdges.contains(edgeState.getEdge())) {
-                    return Double.POSITIVE_INFINITY;
-                }
-                return weighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                return 0;
             }
 
             @Override
-            public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-                return weighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                return 0;
+            }
+
+            @Override
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                if (blockedEdges.contains(edgeState.getEdge())) {
+                    return Double.POSITIVE_INFINITY;
+                }
+                return weighting.calcEdgeWeight(edgeState, reverse);
+            }
+
+            @Override
+            public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+                return weighting.calcEdgeMillis(edgeState, reverse);
             }
 
             @Override

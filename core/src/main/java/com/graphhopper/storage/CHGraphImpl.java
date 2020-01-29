@@ -25,6 +25,7 @@ import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
 import com.graphhopper.storage.BaseGraph.EdgeIterable;
 import com.graphhopper.util.*;
@@ -296,6 +297,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     @Override
     public TurnCostStorage getTurnCostStorage() {
         return baseGraph.getTurnCostStorage();
+    }
+
+    @Override
+    public Weighting wrapWeighting(Weighting weighting) {
+        return baseGraph.wrapWeighting(weighting);
     }
 
     @Override
@@ -782,10 +788,20 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        public boolean getFwdAccess() {
+            return (getShortcutFlags() & (edgeIterable.reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
+        }
+
+        @Override
+        public boolean getBwdAccess() {
+            return (getShortcutFlags() & (edgeIterable.reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
+        }
+
+        @Override
         public boolean get(BooleanEncodedValue property) {
             // TODO assert equality of "access boolean encoded value" that is specifically created for CHGraph to make it possible we can use other BooleanEncodedValue objects for CH too!
             if (isShortcut())
-                return (getShortcutFlags() & (edgeIterable.reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
+                return getFwdAccess();
 
             return property.getBool(edgeIterable.reverse, getFlags());
         }
@@ -793,7 +809,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public boolean getReverse(BooleanEncodedValue property) {
             if (isShortcut())
-                return (getShortcutFlags() & (edgeIterable.reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
+                return getBwdAccess();
 
             return property.getBool(!edgeIterable.reverse, getFlags());
         }

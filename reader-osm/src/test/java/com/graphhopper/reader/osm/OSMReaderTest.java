@@ -33,7 +33,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
-import com.graphhopper.routing.util.parsers.OSMRoadClassParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -562,10 +561,10 @@ public class OSMReaderTest {
     public void testRoadAttributes() {
         String fileRoadAttributes = "test-road-attributes.xml";
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
-        DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
+        CarFlagEncoder encoder = new CarFlagEncoder();
         hopper.setEncodingManager(new EncodingManager.Builder().
                 add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser()).
-                add(dataFlagEncoder).build());
+                add(encoder).build());
         hopper.importOrLoad();
 
         DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
@@ -573,7 +572,6 @@ public class OSMReaderTest {
         DecimalEncodedValue weightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWeight.KEY);
 
         Graph graph = hopper.getGraphHopperStorage();
-        DataFlagEncoder encoder = (DataFlagEncoder) hopper.getEncodingManager().getEncoder("generic");
         assertEquals(5, graph.getNodes());
 
         int na = AbstractGraphStorageTester.getIdOf(graph, 11.1, 50);
@@ -949,7 +947,7 @@ public class OSMReaderTest {
                     throw new RuntimeException(e);
                 }
             }
-        }.setEncodingManager(new EncodingManager.Builder().add(new CarFlagEncoder()).build()).
+        }.setEncodingManager(new EncodingManager.Builder().add(new CarFlagEncoder()).add(new BikeFlagEncoder()).build()).
                 setGraphHopperLocation(dir).setCHEnabled(false).
                 importOrLoad();
 

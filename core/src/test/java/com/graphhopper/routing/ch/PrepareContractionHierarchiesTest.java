@@ -178,7 +178,7 @@ public class PrepareContractionHierarchiesTest {
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         assertEquals(oldCount, lg.getOriginalEdges());
-        assertEquals(oldCount + 2,lg.getEdges());
+        assertEquals(oldCount + 2, lg.getEdges());
         RoutingAlgorithm algo = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(4, 2);
         assertEquals(3, p.getDistance(), 1e-6);
@@ -347,17 +347,28 @@ public class PrepareContractionHierarchiesTest {
                 return PrepareContractionHierarchiesTest.this.weighting.getMinWeight(distance);
             }
 
+
             @Override
-            public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-                if (blockedNodes.contains(edgeState.getBaseNode()) && blockedNodes.contains(edgeState.getAdjNode())) {
-                    return 1000 * PrepareContractionHierarchiesTest.this.weighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
-                }
-                return PrepareContractionHierarchiesTest.this.weighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                return 0;
             }
 
             @Override
-            public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-                return PrepareContractionHierarchiesTest.this.weighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                return 0;
+            }
+
+            @Override
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                if (blockedNodes.contains(edgeState.getBaseNode()) && blockedNodes.contains(edgeState.getAdjNode())) {
+                    return 1000 * PrepareContractionHierarchiesTest.this.weighting.calcEdgeWeight(edgeState, reverse);
+                }
+                return PrepareContractionHierarchiesTest.this.weighting.calcEdgeWeight(edgeState, reverse);
+            }
+
+            @Override
+            public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+                return PrepareContractionHierarchiesTest.this.weighting.calcEdgeMillis(edgeState, reverse);
             }
 
             @Override
@@ -420,24 +431,23 @@ public class PrepareContractionHierarchiesTest {
 
         int tmpEdgeId = edgeState01.getEdge();
         g.freeze();
-        int x = EdgeIterator.NO_EDGE;
-        double weight = w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x);
-        int sc0_2 = lg.shortcut(0, 2, oneDirFlags, w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x), tmpEdgeId, edgeState12.getEdge());
+        double weight = w.calcEdgeWeight(edgeState01, false) + w.calcEdgeWeight(edgeState12, false);
+        int sc0_2 = lg.shortcut(0, 2, oneDirFlags, w.calcEdgeWeight(edgeState01, false) + w.calcEdgeWeight(edgeState12, false), tmpEdgeId, edgeState12.getEdge());
 
         tmpEdgeId = sc0_2;
-        weight += w.calcWeight(edgeState23, false, x);
+        weight += w.calcEdgeWeight(edgeState23, false);
         int sc0_3 = lg.shortcut(0, 3, oneDirFlags, weight, tmpEdgeId, edgeState23.getEdge());
 
         tmpEdgeId = sc0_3;
-        weight += w.calcWeight(edgeState34, false, x);
+        weight += w.calcEdgeWeight(edgeState34, false);
         int sc0_4 = lg.shortcut(0, 4, oneDirFlags, weight, tmpEdgeId, edgeState34.getEdge());
 
         tmpEdgeId = sc0_4;
-        weight += w.calcWeight(edgeState45, false, x);
+        weight += w.calcEdgeWeight(edgeState45, false);
         int sc0_5 = lg.shortcut(0, 5, oneDirFlags, weight, tmpEdgeId, edgeState45.getEdge());
 
         tmpEdgeId = sc0_5;
-        weight += w.calcWeight(edgeState56, false, x);
+        weight += w.calcEdgeWeight(edgeState56, false);
         int sc0_6 = lg.shortcut(0, 6, oneDirFlags, weight, tmpEdgeId, edgeState56.getEdge());
 
         lg.setLevel(0, 10);
@@ -623,7 +633,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     private double getWeight(Graph graph, Weighting w, int from, int to, boolean incoming) {
-        return w.calcWeight(getEdge(graph, from, to, false), incoming, -1);
+        return w.calcEdgeWeight(getEdge(graph, from, to, false), incoming);
     }
 
     private EdgeIteratorState getEdge(Graph graph, int from, int to, boolean incoming) {

@@ -19,6 +19,9 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
+import com.graphhopper.util.PointList;
+import org.locationtech.jts.algorithm.RectangleLineIntersector;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 
 import java.util.ArrayList;
@@ -161,6 +164,29 @@ public class BBox implements Shape, Cloneable {
         throw new UnsupportedOperationException("unsupported shape");
     }
 
+    public static boolean intersects(RectangleLineIntersector intersector, PointList pointList) {
+        int len = pointList.getSize();
+        if (len == 0)
+            throw new IllegalArgumentException("PointList must not be empty");
+
+        Coordinate coords = new Coordinate(pointList.getLongitude(0), pointList.getLatitude(0));
+        if (len == 1)
+            return intersector.intersects(coords, coords);
+
+        for (int pointIndex = 1; pointIndex < len; pointIndex++) {
+            Coordinate nextCoords = new Coordinate(pointList.getLongitude(pointIndex), pointList.getLatitude(pointIndex));
+            if (intersector.intersects(coords, nextCoords))
+                return true;
+            coords = nextCoords;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean intersects(PointList pointList) {
+        return intersects(new RectangleLineIntersector(toEnvelope(this)), pointList);
+    }
+
     public boolean intersects(Circle s) {
         return s.intersects(this);
     }
@@ -287,6 +313,10 @@ public class BBox implements Shape, Cloneable {
         return new BBox(envelope.getMinX(), envelope.getMaxX(), envelope.getMinY(), envelope.getMaxY());
     }
 
+    public static Envelope toEnvelope(BBox bbox) {
+        return new Envelope(bbox.minLon, bbox.maxLon, bbox.minLat, bbox.maxLat);
+    }
+
     /**
      * @return an estimated area in m^2 using the mean value of latitudes for longitude distance
      */
@@ -312,20 +342,23 @@ public class BBox implements Shape, Cloneable {
 
         double maxLat = Double.parseDouble(splittedObject[2]);
         double maxLon = Double.parseDouble(splittedObject[3]);
+        return BBox.fromPoints(minLat, minLon, maxLat, maxLon);
+    }
 
-        if (minLat > maxLat) {
-            double tmp = minLat;
-            minLat = maxLat;
-            maxLat = tmp;
+    public static BBox fromPoints(double lat1, double lon1, double lat2, double lon2) {
+        if (lat1 > lat2) {
+            double tmp = lat1;
+            lat1 = lat2;
+            lat2 = tmp;
         }
 
-        if (minLon > maxLon) {
-            double tmp = minLon;
-            minLon = maxLon;
-            maxLon = tmp;
+        if (lon1 > lon2) {
+            double tmp = lon1;
+            lon1 = lon2;
+            lon2 = tmp;
         }
 
-        return new BBox(minLon, maxLon, minLat, maxLat);
+        return new BBox(lon1, lon2, lat1, lat2);
     }
 
     /**

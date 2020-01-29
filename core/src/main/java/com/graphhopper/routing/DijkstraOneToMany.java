@@ -22,10 +22,7 @@ import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 
 import java.util.Arrays;
 
@@ -93,7 +90,8 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             }
             EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, node);
             path.addDistance(edgeState.getDistance());
-            path.addTime(weighting.calcMillis(edgeState, false, EdgeIterator.NO_EDGE));
+            // todo: we do not yet account for turn times here!
+            path.addTime(weighting.calcEdgeMillis(edgeState, false));
             path.addEdge(edge);
             node = parents[node];
         }
@@ -166,14 +164,16 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
         while (true) {
             visitedNodes++;
-            EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
+            EdgeIterator iter = edgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
                 int adjNode = iter.getAdjNode();
                 int prevEdgeId = edgeIds[adjNode];
                 if (!accept(iter, prevEdgeId))
                     continue;
 
-                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + weights[currNode];
+                double tmpWeight = !outEdgeFilter.accept(iter)
+                        ? Double.POSITIVE_INFINITY
+                        : (GHUtility.calcWeightWithTurnWeight(weighting, iter, false, prevEdgeId) + weights[currNode]);
                 if (Double.isInfinite(tmpWeight))
                     continue;
 

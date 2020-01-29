@@ -88,6 +88,25 @@ public class AnotherAgencyIT {
     }
 
     @Test
+    public void testRoute2() {
+        Request ghRequest = new Request(
+                Arrays.asList(
+                        new GHStationLocation("JUSTICE_COURT"),
+                        new GHStationLocation("AIRPORT")
+                ),
+                LocalDateTime.of(2007,1,1,8,30,0).atZone(zoneId).toInstant()
+        );
+        ghRequest.setIgnoreTransfers(true);
+        ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
+        GHResponse route = ptRouteResource.route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertEquals(1, route.getAll().size());
+        PathWrapper transitSolution = route.getBest();
+        assertEquals("Expected total travel time == scheduled travel time + wait time", time(2, 10), transitSolution.getTime(), 0.1);
+    }
+
+    @Test
     public void noTransferEdgeBetweenFeeds() {
         // Make sure we don't accidentally create transfer edges between trips from different feeds.
         // The implementation doesn't allow it, and would produce subsequent failures, because

@@ -8,7 +8,6 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -31,16 +30,16 @@ public class OSMSurfaceParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(Surface.OTHER, surfaceEnc.getEnum(false, intsRef));
 
         readerWay.setTag("surface", "cobblestone");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, intsRef));
         assertTrue(Surface.COBBLESTONE.ordinal() > Surface.ASPHALT.ordinal());
 
         readerWay.setTag("surface", "earth");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, intsRef));
     }
 }

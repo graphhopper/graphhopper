@@ -22,7 +22,7 @@ public class PolygonTest {
         assertTrue(square.contains(10,10));
         assertTrue(square.contains(16,10));
         assertFalse(square.contains(10,-20));
-        assertTrue(square.contains(10,0));
+        assertTrue(square.contains(10,0.1));
         assertFalse(square.contains(10,20));
         assertTrue(square.contains(10,16));
         assertFalse(square.contains(20,20));

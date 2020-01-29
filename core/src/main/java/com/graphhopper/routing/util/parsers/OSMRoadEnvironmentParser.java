@@ -22,7 +22,6 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
@@ -43,9 +42,9 @@ public class OSMRoadEnvironmentParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
         RoadEnvironment roadEnvironment = OTHER;
-        if (access.isFerry())
+        if (ferry)
             roadEnvironment = FERRY;
         else if (readerWay.hasTag("bridge") && !readerWay.hasTag("bridge", "no"))
             roadEnvironment = BRIDGE;

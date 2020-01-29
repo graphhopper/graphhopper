@@ -18,12 +18,9 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.Roundabout;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -44,12 +41,9 @@ import static org.junit.Assert.*;
  */
 public class PathTest {
     private final FlagEncoder encoder = new CarFlagEncoder();
-    private final DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
     private final EncodingManager carManager = EncodingManager.create(encoder);
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();
-    private final EncodingManager dataFlagManager = new EncodingManager.Builder().add(dataFlagEncoder).build();
-    private final IntsRef edgeFlags = dataFlagManager.createEdgeFlags();
     private final EncodingManager mixedEncoders = EncodingManager.create(new CarFlagEncoder(), new FootFlagEncoder());
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
@@ -323,6 +317,28 @@ public class PathTest {
     }
 
     @Test
+    public void testCalcAverageSpeedDetailsWithShortDistances_issue1848() {
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 6);
+        assertTrue(p.isFound());
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+        assertTrue(details.size() == 1);
+        List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
+        assertEquals(4, averageSpeedDetails.size());
+
+        // reverse path includes 'null' value as first
+        p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(6, 1);
+        assertTrue(p.isFound());
+        details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+        assertTrue(details.size() == 1);
+        averageSpeedDetails = details.get(AVERAGE_SPEED);
+        assertEquals(5, averageSpeedDetails.size());
+        assertNull(averageSpeedDetails.get(0).getValue());
+    }
+
+    @Test
     public void testCalcStreetNameDetails() {
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
@@ -592,6 +608,38 @@ public class PathTest {
     }
 
     @Test
+    public void testCalcInstructionForMotorwayFork() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=48.909071%2C8.647136&point=48.908789%2C8.649244
+        // 1-2 & 2-4 is a motorway, 2-3 is a motorway_link
+        // We should skip the instruction here
+        //      1 ---- 2 ---- 4
+        //              \
+        //               3
+        na.setNode(1, 48.909071, 8.647136);
+        na.setNode(2, 48.908962, 8.647978);
+        na.setNode(3, 48.908867, 8.648155);
+        na.setNode(4, 48.908789, 8.649244);
+
+        EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        BooleanEncodedValue roadClassLinkEnc = carManager.getBooleanEncodedValue(RoadClassLink.KEY);
+
+        g.edge(1, 2, 5, true).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
+        g.edge(2, 4, 5, true).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
+        g.edge(2, 3, 5, true).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, true);
+
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
+                .calcPath(1, 4);
+        assertTrue(p.isFound());
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+
+        assertEquals(2, wayList.size());
+    }
+
+    @Test
     public void testCalcInstructionsEnterMotoway() {
         final Graph g = new GraphBuilder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
@@ -825,33 +873,6 @@ public class PathTest {
     }
 
     @Test
-    public void testCalcInstructionsForDataFlagEncoder() {
-        final Graph g = new GraphBuilder(dataFlagManager).create();
-        final NodeAccess na = g.getNodeAccess();
-
-        na.setNode(1, 48.982618, 13.122021);
-        na.setNode(2, 48.982565, 13.121597);
-        na.setNode(3, 48.982611, 13.121012);
-        na.setNode(4, 48.982336, 13.121002);
-
-        ReaderWay w = new ReaderWay(1);
-        w.setTag("highway", "tertiary");
-
-        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(edgeFlags, w,
-                EncodingManager.Access.WAY));
-        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(edgeFlags, w,
-                EncodingManager.Access.WAY));
-        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(edgeFlags, w,
-                EncodingManager.Access.WAY));
-
-        GenericWeighting weighting = new GenericWeighting(dataFlagEncoder, new HintsMap());
-        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 3);
-        assertTrue(p.isFound());
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, dataFlagManager, tr);
-        assertEquals(3, wayList.size());
-    }
-
-    @Test
     public void testCalcInstructionsForSlightTurnWithOtherSlightTurn() {
         // Test for a fork with two sligh turns. Since there are two sligh turns, show the turn instruction
         ShortestWeighting weighting = new ShortestWeighting(encoder);
@@ -925,6 +946,7 @@ public class PathTest {
         na.setNode(3, 52.514, 13.350);
         na.setNode(4, 52.515, 13.349);
         na.setNode(5, 52.516, 13.3452);
+        na.setNode(6, 52.516, 13.344);
 
         ReaderWay w = new ReaderWay(1);
         w.setTag("highway", "tertiary");
@@ -945,6 +967,9 @@ public class PathTest {
 
         w.setTag("maxspeed", "10");
         tmpEdge = g.edge(3, 4, 10, true).setName("3-4");
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
+
+        tmpEdge = g.edge(5, 6, 0.01, true).setName("3-4");
         tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         return g;

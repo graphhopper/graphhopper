@@ -25,7 +25,7 @@ import com.graphhopper.util.Parameters;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
 /**
  * This class is used to determine the appropriate CH profile given (or not given) some (request) parameters
@@ -57,9 +57,6 @@ public class CHProfileSelector {
         List<CHProfile> matchingProfiles = new ArrayList<>();
         for (CHProfile p : chProfiles) {
             if (edgeBased != null && p.isEdgeBased() != edgeBased) {
-                continue;
-            }
-            if (uTurnCosts != null && p.getUTurnCostsInt() != uTurnCosts) {
                 continue;
             }
             if (!p.getWeighting().matches(hintsMap)) {

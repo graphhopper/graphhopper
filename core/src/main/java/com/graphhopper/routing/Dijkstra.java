@@ -24,9 +24,9 @@ import com.graphhopper.routing.weighting.TDWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Parameters;
 
 import java.util.PriorityQueue;
@@ -85,23 +85,25 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
     }
 
     protected void runAlgo() {
-        EdgeExplorer explorer = outEdgeExplorer;
         while (true) {
             visitedNodes++;
             if (isMaxVisitedNodesExceeded() || finished())
                 break;
 
             int currNode = currEdge.adjNode;
-            EdgeIterator iter = explorer.setBaseNode(currNode);
+            EdgeIterator iter = edgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
                 if (!accept(iter, currEdge.edge))
                     continue;
 
+                // todo: for #1776/#1835 move the access check into weighting
                 double tmpWeight;
                 if (weighting instanceof TDWeighting) {
                     tmpWeight = ((TDWeighting) weighting).calcTDWeight(iter, false, currEdge.edge, currEdge.time) + currEdge.weight;
                 } else {
-                    tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
+                    tmpWeight = !outEdgeFilter.accept(iter)
+                        ? Double.POSITIVE_INFINITY
+                        : (GHUtility.calcWeightWithTurnWeight(weighting, iter, false, currEdge.edge) + currEdge.weight);
                 }
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
