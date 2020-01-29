@@ -132,8 +132,8 @@ graphhopper:
 
 
   # Spatial Rules require you to provide Polygons in which the rules are enforced
-  # The line below contains the default location for these rules
-  # spatial_rules.location: core/files/spatialrules/countries.geo.json
+  # The line below contains the default location for the files which define these borders
+  # spatial_rules.borders_directory: core/files/spatialrules
 
   # You can define the maximum BBox for which spatial rules are loaded.
   # You might want to do this if you are only importing a small area and don't need rules for other countries.
