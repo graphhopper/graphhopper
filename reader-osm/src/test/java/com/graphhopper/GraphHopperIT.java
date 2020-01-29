@@ -105,7 +105,7 @@ public class GraphHopperIT {
         assertEquals(43.7495432, arsp.getWaypoints().getLat(1), 1e-7);
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(15, il.size());
+        assertEquals(16, il.size());
 
         // TODO roundabout fine tuning -> enter + leave roundabout (+ two roundabouts -> is it necessary if we do not leave the street?)
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
@@ -496,22 +496,22 @@ public class GraphHopperIT {
         assertEquals(171, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(29, il.size());
+        assertEquals(30, il.size());
         assertEquals("continue onto Avenue des Guelfes", il.get(0).getTurnDescription(tr));
         assertEquals("continue onto Avenue des Papalins", il.get(1).getTurnDescription(tr));
         assertEquals("turn sharp right onto Quai Jean-Charles Rey", il.get(4).getTurnDescription(tr));
         assertEquals("turn left", il.get(5).getTurnDescription(tr));
         assertEquals("turn right onto Avenue Albert II", il.get(6).getTurnDescription(tr));
 
-        assertEquals("waypoint 1", il.get(14).getTurnDescription(tr));
-        assertEquals(Instruction.U_TURN_UNKNOWN, il.get(15).getSign());
+        assertEquals("waypoint 1", il.get(15).getTurnDescription(tr));
+        assertEquals(Instruction.U_TURN_UNKNOWN, il.get(16).getSign());
 
-        assertEquals("continue onto Avenue Albert II", il.get(22).getTurnDescription(tr));
-        assertEquals("turn left", il.get(23).getTurnDescription(tr));
-        assertEquals("turn right onto Quai Jean-Charles Rey", il.get(24).getTurnDescription(tr));
-        assertEquals("turn sharp left onto Avenue des Papalins", il.get(25).getTurnDescription(tr));
-        assertEquals("continue onto Avenue des Guelfes", il.get(27).getTurnDescription(tr));
-        assertEquals("arrive at destination", il.get(28).getTurnDescription(tr));
+        assertEquals("continue onto Avenue Albert II", il.get(23).getTurnDescription(tr));
+        assertEquals("turn left", il.get(24).getTurnDescription(tr));
+        assertEquals("turn right onto Quai Jean-Charles Rey", il.get(25).getTurnDescription(tr));
+        assertEquals("turn sharp left onto Avenue des Papalins", il.get(26).getTurnDescription(tr));
+        assertEquals("continue onto Avenue des Guelfes", il.get(28).getTurnDescription(tr));
+        assertEquals("arrive at destination", il.get(29).getTurnDescription(tr));
 
         assertEquals(11, il.get(0).getDistance(), 1);
         assertEquals(97, il.get(1).getDistance(), 1);
@@ -706,11 +706,11 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(1625.4, arsp.getDistance(), .1);
-        assertEquals(54, arsp.getPoints().getSize());
+        assertEquals(55, arsp.getPoints().getSize());
         assertTrue(arsp.getPoints().is3D());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(12, il.size());
+        assertEquals(13, il.size());
         assertTrue(il.get(0).getPoints().is3D());
 
         String str = arsp.getPoints().toString();
@@ -731,7 +731,7 @@ public class GraphHopperIT {
         assertEquals(99, arsp.getAscend(), 1e-1);
         assertEquals(150, arsp.getDescend(), 1e-1);
 
-        assertEquals(54, arsp.getPoints().size());
+        assertEquals(55, arsp.getPoints().size());
         assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 62.0), arsp.getPoints().get(0));
         assertEquals(new GHPoint3D(43.727680946587874, 7.4191987684222065, 11.0), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
