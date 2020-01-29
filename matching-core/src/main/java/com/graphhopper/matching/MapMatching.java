@@ -41,6 +41,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+
 /**
  * This class matches real world GPX entries to the digital road network stored
  * in GraphHopper. The Viterbi algorithm is used to compute the most likely
@@ -101,7 +103,7 @@ public class MapMatching {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();
         }
-        weighting = graphHopper.createWeighting(hints, graphHopper.getEncodingManager().getEncoder(hints.getVehicle()), null);
+        weighting = graphHopper.createWeighting(hints, graphHopper.getEncodingManager().getEncoder(hints.getVehicle()), null, NO_TURN_COST_PROVIDER);
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
     }
 
@@ -686,7 +688,7 @@ public class MapMatching {
             int prevEdge = EdgeIterator.NO_EDGE;
             for (EdgeIteratorState edge : edges) {
                 addDistance(edge.getDistance());
-                addTime(weighting.calcMillis(edge, false, prevEdge));
+                addTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdge));
                 addEdge(edge.getEdge());
                 prevEdge = edge.getEdge();
             }
