@@ -40,6 +40,10 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
     
     @Override
     public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
+        if (currentMaxSpeed > 0) {
+            return currentMaxSpeed;
+        }
+        
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (roadClass) {
             case TRUNK:
@@ -53,6 +57,10 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
 
     @Override
     public RoadAccess getAccess(RoadClass roadClass, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
+        if (currentRoadAccess != RoadAccess.YES) {
+            return currentRoadAccess;
+        }
+        
         if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
             if (roadClass == RoadClass.LIVING_STREET)
                 return RoadAccess.DESTINATION;

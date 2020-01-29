@@ -46,6 +46,10 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     
     @Override
     public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
+        if (currentMaxSpeed > 0) {
+            return currentMaxSpeed;
+        }
+
         // We tried to estimate reasonable values: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         // We did not always used the highest value available, but we used a high value
         switch (roadClass) {

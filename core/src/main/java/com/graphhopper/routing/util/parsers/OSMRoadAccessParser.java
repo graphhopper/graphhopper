@@ -61,11 +61,9 @@ public class OSMRoadAccessParser implements TagParser {
             }
         }
 
-        if (accessValue == RoadAccess.YES) {
-            SpatialRule spatialRule = readerWay.getTag("spatial_rule", null);
-            if (spatialRule != null)
-                accessValue = spatialRule.getAccess(RoadClass.find(readerWay.getTag("highway", "")), TransportationMode.MOTOR_VEHICLE, YES);
-        }
+        SpatialRule spatialRule = readerWay.getTag("spatial_rule", null);
+        if (spatialRule != null)
+            accessValue = spatialRule.getAccess(RoadClass.find(readerWay.getTag("highway", "")), TransportationMode.MOTOR_VEHICLE, YES);
 
         roadAccessEnc.setEnum(false, edgeFlags, accessValue);
         return edgeFlags;
