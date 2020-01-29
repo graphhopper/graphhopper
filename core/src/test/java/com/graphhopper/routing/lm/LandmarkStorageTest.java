@@ -21,7 +21,7 @@ import com.graphhopper.routing.RoutingAlgorithmTest;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -188,13 +188,13 @@ public class LandmarkStorageTest {
         RoutingAlgorithmTest.initBiGraph(ghStorage);
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMProfile(new FastestWeighting(encoder)), 2);
-        final SpatialRule ruleRight = new DefaultSpatialRule(Collections.<Polygon>emptyList()) {
+        final SpatialRule ruleRight = new AbstractSpatialRule(Collections.<Polygon>emptyList()) {
             @Override
             public String getId() {
                 return "right";
             }
         };
-        final SpatialRule ruleLeft = new DefaultSpatialRule(Collections.<Polygon>emptyList()) {
+        final SpatialRule ruleLeft = new AbstractSpatialRule(Collections.<Polygon>emptyList()) {
             @Override
             public String getId() {
                 return "left";

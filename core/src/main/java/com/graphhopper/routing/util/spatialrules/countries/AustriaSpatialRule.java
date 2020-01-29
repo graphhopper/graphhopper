@@ -23,7 +23,7 @@ import org.locationtech.jts.geom.Polygon;
 
 import com.graphhopper.routing.profiles.Country;
 import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
@@ -31,7 +31,7 @@ import com.graphhopper.routing.util.spatialrules.TransportationMode;
  *
  * @author Robin Boldt
  */
-public class AustriaSpatialRule extends DefaultSpatialRule {
+public class AustriaSpatialRule extends AbstractSpatialRule {
 
     public AustriaSpatialRule(List<Polygon> borders) {
         super(borders);

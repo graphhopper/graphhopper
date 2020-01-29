@@ -218,21 +218,11 @@ public class SpatialRuleLookupBuilderTest {
 
             @Override
             public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
-                return new SpatialRule() {
-
+                return new AbstractSpatialRule(borders) {
+                    
                     @Override
                     public double getMaxSpeed(String highway, double _default) {
                         return 100;
-                    }
-
-                    @Override
-                    public String getId() {
-                        return id;
-                    }
-
-                    @Override
-                    public List<Polygon> getBorders() {
-                        return borders;
                     }
 
                     @Override
@@ -241,8 +231,8 @@ public class SpatialRuleLookupBuilderTest {
                     }
 
                     @Override
-                    public String toString() {
-                        return getId();
+                    public String getId() {
+                        return id;
                     }
                 };
             }

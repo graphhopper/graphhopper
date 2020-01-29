@@ -22,6 +22,8 @@ import java.util.List;
 
 import org.locationtech.jts.geom.Polygon;
 
+import com.graphhopper.routing.profiles.RoadAccess;
+
 /**
  * @author Robin Boldt
  */
@@ -29,16 +31,61 @@ public abstract class AbstractSpatialRule implements SpatialRule {
 
     private final List<Polygon> borders;
     
-    public AbstractSpatialRule(Polygon border) {
-        this(Collections.singletonList(border));
-    }
-    
     public AbstractSpatialRule(List<Polygon> borders) {
         this.borders = borders;
+    }
+    
+    public AbstractSpatialRule(Polygon border) {
+        this(Collections.singletonList(border));
     }
 
     public List<Polygon> getBorders() {
         return borders;
+    }
+    
+    @Override
+    public double getMaxSpeed(String highwayTag, double _default) {
+        // We tried to estimate reasonable values: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
+        // We did not always used the highest value available, but we used a high value
+        switch (highwayTag) {
+            case "motorway":
+                return 130;
+            case "trunk":
+                return 130;
+            case "primary":
+                return 100;
+            case "secondary":
+                return 100;
+            case "tertiary":
+                return 100;
+            case "unclassified":
+                return 100;
+            case "residential":
+                return 90;
+            case "living_street":
+                return 20;
+            default:
+                return _default;
+        }
+    }
+
+    @Override
+    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
+        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
+        // We tried to find generally forbidden tags
+        if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
+            switch (highwayTag) {
+                case "path":
+                case "bridleway":
+                case "cycleway":
+                case "footway":
+                case "pedestrian":
+                    return RoadAccess.NO;
+                default:
+                    return _default;
+            }
+        }
+        return _default;
     }
 
     @Override
