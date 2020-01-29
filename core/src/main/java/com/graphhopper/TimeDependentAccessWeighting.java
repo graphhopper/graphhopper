@@ -54,7 +54,7 @@ public class TimeDependentAccessWeighting implements TDWeighting {
 
     @Override
     public double calcTDWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId, long linkEnterTimeMilli) {
-        if (timeDependentAccessRestriction.accessible(edgeState, Instant.ofEpochMilli(linkEnterTimeMilli))) {
+        if (timeDependentAccessRestriction.accessible(edgeState, Instant.ofEpochMilli(linkEnterTimeMilli)).orElse(true)) {
             return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
         } else {
             return Double.POSITIVE_INFINITY;

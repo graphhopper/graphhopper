@@ -81,8 +81,10 @@ public class ConditionalAccessRestrictionsResource {
                 if (!timeDependentAccessConditions.isEmpty()) {
                     ConditionalRestrictionView view = new ConditionalRestrictionView();
                     view.osmid = osmid;
-                    Node node = osm.nodes.get(way.nodes[0]);
-                    view.coord = new Coordinate(node.getLon(), node.getLat());
+                    Node from = osm.nodes.get(way.nodes[0]);
+                    Node to = osm.nodes.get(way.nodes[way.nodes.length-1]);
+                    view.from = new Coordinate(from.getLon(), from.getLat());
+                    view.to = new Coordinate(to.getLon(), to.getLat());
                     view.restrictionData = timeDependentAccessConditions;
                     return Stream.of(view);
                 } else {

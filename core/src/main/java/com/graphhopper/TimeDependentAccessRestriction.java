@@ -33,14 +33,12 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.io.ByteArrayInputStream;
-import java.time.DayOfWeek;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class TimeDependentAccessRestriction {
@@ -152,11 +150,29 @@ public class TimeDependentAccessRestriction {
         return restrictionData;
     }
 
-    public boolean matches(ZonedDateTime when, Rule rule) {
-        return matchesDays(when, rule) && matchesTimes(when, rule);
+    public boolean matches(Instant when, Rule rule) {
+        ZonedDateTime zonedWhen = when.atZone(zoneId);
+        return matchesYears(zonedWhen, rule) && matchesWeekdayRange(zonedWhen, rule) && matchesTimes(zonedWhen, rule);
     }
 
-    private boolean matchesDays(ZonedDateTime when, Rule rule) {
+    private boolean matchesYears(ZonedDateTime zonedWhen, Rule rule) {
+        if (rule.getDates() == null) return true;
+        for (DateRange dateRange : rule.getDates()) {
+            if (!(dateRange.getStartDate() != null && dateRange.getEndDate() != null)) continue;
+            if (!(isLikeJavaLocalDate(dateRange.getStartDate()) && isLikeJavaLocalDate(dateRange.getEndDate()))) continue;
+            try {
+                LocalDate start = toJavaLocalDate(dateRange.getStartDate());
+                LocalDate end = toJavaLocalDate((dateRange.getEndDate()));
+                if (!zonedWhen.toLocalDate().isBefore(start) && !zonedWhen.toLocalDate().isAfter(end)) {
+                    return true;
+                }
+            } catch (DateTimeException ignored) {
+            }
+        }
+        return false;
+    }
+
+    private boolean matchesWeekdayRange(ZonedDateTime when, Rule rule) {
         if (rule.getDays() == null) return true;
         for (WeekDayRange weekDayRange : rule.getDays()) {
             if (matches(when, weekDayRange)) return true;
@@ -177,6 +193,15 @@ public class TimeDependentAccessRestriction {
         return DayOfWeek.of(weekDay.ordinal()+1);
     }
 
+    private LocalDate toJavaLocalDate(DateWithOffset dateWithOffset) {
+        LocalDate localDate = LocalDate.of(dateWithOffset.getYear(), dateWithOffset.getMonth().ordinal()+1, dateWithOffset.getDay());
+        return localDate;
+    }
+
+    private boolean isLikeJavaLocalDate(DateWithOffset dateWithOffset) {
+        return dateWithOffset.getMonth() != null && !dateWithOffset.undefinedDay() && dateWithOffset.getYear() != YearRange.UNDEFINED_YEAR;
+    }
+
     private boolean matchesTimes(ZonedDateTime when, Rule rule) {
         if (rule.getTimes() == null) return true;
         for (TimeSpan timeSpan : rule.getTimes()) {
@@ -195,26 +220,39 @@ public class TimeDependentAccessRestriction {
         return false;
     }
 
-    public boolean accessible(EdgeIteratorState edgeState, Instant linkEnterTime) {
+    // For weighting
+    public Optional<Boolean> accessible(EdgeIteratorState edgeState, Instant linkEnterTime) {
         if (edgeState.get(property)) {
             long osmid = osmidParser.getOSMID(edgeState.getFlags());
-            Way way = osm.ways.get(osmid);
-            List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(readerWay(osmid, way).getTags());
-            if (!conditionalTagDataWithTimeDependentConditions.isEmpty()) {
-                final ZonedDateTime zonedDateTime = linkEnterTime.atZone(zoneId);
-                for (ConditionalTagData conditionalTagData : conditionalTagDataWithTimeDependentConditions) {
-                    for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
+            return accessible(osmid, linkEnterTime);
+        }
+        return Optional.empty();
+    }
+
+    public Optional<Boolean> accessible(long osmid, Instant linkEnterTime) {
+        Way way = osm.ways.get(osmid);
+        List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(readerWay(osmid, way).getTags());
+        for (ConditionalTagData conditionalTagData : conditionalTagDataWithTimeDependentConditions) {
+            for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
+                switch (timeDependentRestrictionData.restriction.getValue()) {
+                    case "yes":
                         for (Rule rule : timeDependentRestrictionData.rules) {
-                            if (matchesTimes(zonedDateTime, rule)) {
-                                return true;
+                            if (matches(linkEnterTime, rule)) {
+                                return Optional.of(true);
                             }
                         }
-                    }
+                        break;
+                    case "no":
+                        for (Rule rule : timeDependentRestrictionData.rules) {
+                            if (matches(linkEnterTime, rule)) {
+                                return Optional.of(false);
+                            }
+                        }
+                        break;
                 }
-                return false;
             }
         }
-        return true;
+        return Optional.empty();
     }
 
 }

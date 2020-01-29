@@ -26,7 +26,8 @@ import java.util.List;
 public class ConditionalRestrictionView {
 
     public long osmid;
-    public Coordinate coord;
+    public Coordinate from;
+    public Coordinate to;
 
     public List<TimeDependentAccessRestriction.ConditionalTagData> getRestrictionData() {
         return restrictionData;

@@ -72,7 +72,8 @@ public class ConditionalTurnRestrictionsResource {
                                 ConditionalRestrictionView view = new ConditionalRestrictionView();
                                 view.osmid = osmid;
                                 Node node = osm.nodes.get(via.get().id);
-                                view.coord = new Coordinate(node.getLon(), node.getLat());
+                                view.from = new Coordinate(node.getLon(), node.getLat());
+                                view.to = new Coordinate(node.getLon(), node.getLat());
                                 view.restrictionData = restrictionData;
                                 return Stream.of(view);
                             }

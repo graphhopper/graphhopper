@@ -23,6 +23,7 @@ import com.graphhopper.TimeDependentAccessRestriction;
 import io.dropwizard.views.View;
 
 import java.time.Instant;
+import java.util.Optional;
 
 public class ConditionalRestrictionsView extends View {
 
@@ -42,7 +43,11 @@ public class ConditionalRestrictionsView extends View {
     }
 
     public boolean matches(Rule rule) {
-        return timeDependentAccessRestriction.matches(linkEnterTime.atZone(timeDependentAccessRestriction.zoneId), rule);
+        return timeDependentAccessRestriction.matches(linkEnterTime, rule);
+    }
+
+    public Optional<Boolean> isAccessible(long osmid) {
+        return timeDependentAccessRestriction.accessible(osmid, linkEnterTime);
     }
 
 }
