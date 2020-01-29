@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.profiles;
 
-import com.graphhopper.util.Helper;
-
 /**
  * This enum defines the road class of an edge. It is heavily influenced from the highway tag in OSM that can be
  * primary, cycleway etc.
@@ -45,12 +43,15 @@ public enum RoadClass {
     }
 
     public static RoadClass find(String name) {
-        if (name == null)
+        if (name == null || name.isEmpty())
             return OTHER;
-        try {
-            return RoadClass.valueOf(Helper.toUpperCase(name));
-        } catch (IllegalArgumentException ex) {
-            return OTHER;
+        
+        for (RoadClass roadClass : values()) {
+            if (roadClass.name().equalsIgnoreCase(name)) {
+                return roadClass;
+            }
         }
+        
+        return OTHER;
     }
 }
