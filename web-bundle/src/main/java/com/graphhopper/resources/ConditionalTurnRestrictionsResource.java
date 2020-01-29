@@ -69,8 +69,9 @@ public class ConditionalTurnRestrictionsResource {
                         if (!restrictionData.isEmpty()) {
                             Optional<Relation.Member> via = relation.members.stream().filter(m -> m.role.equals("via")).findFirst();
                             if (via.isPresent()) {
-                                ConditionalRestrictionView view = new ConditionalRestrictionView();
+                                ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentAccessRestriction);
                                 view.osmid = osmid;
+                                view.tags = tags;
                                 Node node = osm.nodes.get(via.get().id);
                                 view.from = new Coordinate(node.getLon(), node.getLat());
                                 view.to = new Coordinate(node.getLon(), node.getLat());

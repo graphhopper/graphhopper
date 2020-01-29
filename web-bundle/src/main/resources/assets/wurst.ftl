@@ -6,7 +6,7 @@
     <#list restrictions as restriction>
         <li>
                 <a href="/maps/?point=${restriction.from.y},${restriction.from.x}&point=${restriction.to.y},${restriction.to.x}&vehicle=car&weighting=fastest&block_property=conditional&algorithm=astar&ch.disable=true">${restriction.osmid}</a><br/>
-                <#if isAccessible(restriction.osmid).present>accessible=<#if isAccessible(restriction.osmid).get()>yes<#else>no</#if></#if>
+                <#if restriction.accessible(linkEnterTime).present>accessible=<#if restriction.accessible(linkEnterTime).get()>yes<#else>no</#if></#if>
                 <ul>
                 <#list restriction.restrictionData as conditionalTagData>
                         <li>

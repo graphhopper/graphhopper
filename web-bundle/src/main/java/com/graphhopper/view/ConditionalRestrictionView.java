@@ -21,18 +21,31 @@ package com.graphhopper.view;
 import com.graphhopper.TimeDependentAccessRestriction;
 import org.locationtech.jts.geom.Coordinate;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class ConditionalRestrictionView {
 
     public long osmid;
+    public Map<String, Object> tags;
     public Coordinate from;
     public Coordinate to;
+    private TimeDependentAccessRestriction timeDependentAccessRestriction;
+
+    public ConditionalRestrictionView(TimeDependentAccessRestriction timeDependentAccessRestriction) {
+        this.timeDependentAccessRestriction = timeDependentAccessRestriction;
+    }
 
     public List<TimeDependentAccessRestriction.ConditionalTagData> getRestrictionData() {
         return restrictionData;
     }
 
     public List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData;
+
+    public Optional<Boolean> accessible(Instant linkEnterTime) {
+        return timeDependentAccessRestriction.accessible(tags, linkEnterTime);
+    }
 
 }

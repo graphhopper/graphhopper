@@ -46,8 +46,8 @@ public class ConditionalRestrictionsView extends View {
         return timeDependentAccessRestriction.matches(linkEnterTime, rule);
     }
 
-    public Optional<Boolean> isAccessible(long osmid) {
-        return timeDependentAccessRestriction.accessible(osmid, linkEnterTime);
+    public Instant getLinkEnterTime() {
+        return linkEnterTime;
     }
 
 }

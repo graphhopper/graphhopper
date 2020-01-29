@@ -231,7 +231,12 @@ public class TimeDependentAccessRestriction {
 
     public Optional<Boolean> accessible(long osmid, Instant linkEnterTime) {
         Way way = osm.ways.get(osmid);
-        List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(readerWay(osmid, way).getTags());
+        Map<String, Object> tags = readerWay(osmid, way).getTags();
+        return accessible(tags, linkEnterTime);
+    }
+
+    public Optional<Boolean> accessible(Map<String, Object> tags, Instant linkEnterTime) {
+        List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(tags);
         for (ConditionalTagData conditionalTagData : conditionalTagDataWithTimeDependentConditions) {
             for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
                 switch (timeDependentRestrictionData.restriction.getValue()) {
