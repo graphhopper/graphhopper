@@ -36,7 +36,7 @@ public abstract class AbstractWeighting implements Weighting {
     protected final DecimalEncodedValue avSpeedEnc;
     protected final BooleanEncodedValue accessEnc;
     private final TurnCostProvider turnCostProvider;
-    private String name;
+    private final String name;
 
     protected AbstractWeighting(String name, FlagEncoder encoder) {
         this(name, encoder, NO_TURN_COST_PROVIDER);

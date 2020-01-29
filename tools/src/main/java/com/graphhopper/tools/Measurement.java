@@ -198,7 +198,8 @@ public class Measurement {
                 activeLMCount = 8;
                 printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", vehicleStr, count / 4, isCH, isLM).
                         withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
-                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_custom", vehicleStr, count / 4, isCH, isLM).
+                // TODO NOW it does not seem to work!? I.e. it is not faster than routing_custom
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_custom", vehicleStr, count / 20, isCH, isLM).
                         withInstructions().activeLandmarks(activeLMCount).customModel(customModel));
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
