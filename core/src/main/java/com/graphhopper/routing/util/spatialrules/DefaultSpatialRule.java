@@ -22,7 +22,7 @@ import com.graphhopper.routing.profiles.RoadAccess;
 /**
  * Default implementation for the SpatialRule that contains the current default values
  */
-public class DefaultSpatialRule extends AbstractSpatialRule {
+public abstract class DefaultSpatialRule extends AbstractSpatialRule {
 
     @Override
     public double getMaxSpeed(String highwayTag, double _default) {
@@ -67,10 +67,5 @@ public class DefaultSpatialRule extends AbstractSpatialRule {
             }
         }
         return _default;
-    }
-
-    @Override
-    public String getId() {
-        throw new UnsupportedOperationException("No id for the DefaultSpatialRule");
     }
 }
