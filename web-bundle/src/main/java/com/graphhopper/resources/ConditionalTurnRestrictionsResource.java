@@ -18,10 +18,7 @@
 
 package com.graphhopper.resources;
 
-import com.conveyal.osmlib.Node;
-import com.conveyal.osmlib.OSM;
-import com.conveyal.osmlib.OSMEntity;
-import com.conveyal.osmlib.Relation;
+import com.conveyal.osmlib.*;
 import com.graphhopper.TimeDependentAccessRestriction;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.view.ConditionalRestrictionView;
@@ -67,14 +64,18 @@ public class ConditionalTurnRestrictionsResource {
                         List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData = TimeDependentAccessRestriction.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
                                 .collect(Collectors.toList());
                         if (!restrictionData.isEmpty()) {
-                            Optional<Relation.Member> via = relation.members.stream().filter(m -> m.role.equals("via")).findFirst();
-                            if (via.isPresent()) {
+                            Optional<Relation.Member> fromM = relation.members.stream().filter(m -> m.role.equals("from")).findFirst();
+                            Optional<Relation.Member> toM = relation.members.stream().filter(m -> m.role.equals("to")).findFirst();
+                            if (fromM.isPresent() && toM.isPresent()) {
                                 ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentAccessRestriction);
                                 view.osmid = osmid;
                                 view.tags = tags;
-                                Node node = osm.nodes.get(via.get().id);
-                                view.from = new Coordinate(node.getLon(), node.getLat());
-                                view.to = new Coordinate(node.getLon(), node.getLat());
+                                Way from = osm.ways.get(fromM.get().id);
+                                Way to = osm.ways.get(toM.get().id);
+                                Node fromNode = osm.nodes.get(from.nodes[from.nodes.length / 2]);
+                                Node toNode = osm.nodes.get(to.nodes[to.nodes.length / 2]);
+                                view.from = new Coordinate(fromNode.getLon(), fromNode.getLat());
+                                view.to = new Coordinate(toNode.getLon(), toNode.getLat());
                                 view.restrictionData = restrictionData;
                                 return Stream.of(view);
                             }
