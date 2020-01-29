@@ -122,8 +122,7 @@ public class SpatialRuleLookupBuilderTest {
         final GeometryFactory fac = new GeometryFactory();
         org.locationtech.jts.geom.Polygon polygon = fac.createPolygon(new Coordinate[]{
                 new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0)});
-        final GermanySpatialRule germany = new GermanySpatialRule();
-        germany.setBorders(Collections.singletonList(polygon));
+        final GermanySpatialRule germany = new GermanySpatialRule(Collections.singletonList(polygon));
 
         SpatialRuleLookup index = new SpatialRuleLookup() {
             @Override
@@ -196,7 +195,7 @@ public class SpatialRuleLookupBuilderTest {
         e2.setFlags(em.handleWayTags(way2, map, relFlags));
         assertEquals(RoadAccess.YES, e2.get(tmpRoadAccessEnc));
 
-        assertEquals(index.getSpatialId(new GermanySpatialRule()), e1.get(countrySpatialIdEnc));
+        assertEquals(index.getSpatialId(new GermanySpatialRule(Collections.singletonList(polygon))), e1.get(countrySpatialIdEnc));
         assertEquals(index.getSpatialId(SpatialRule.EMPTY), e2.get(countrySpatialIdEnc));
 
         ReaderWay livingStreet = new ReaderWay(29L);

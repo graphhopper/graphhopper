@@ -17,6 +17,10 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
+import java.util.List;
+
+import org.locationtech.jts.geom.Polygon;
+
 import com.graphhopper.routing.profiles.Country;
 import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
@@ -29,6 +33,10 @@ import com.graphhopper.routing.util.spatialrules.TransportationMode;
  */
 public class AustriaSpatialRule extends DefaultSpatialRule {
 
+    public AustriaSpatialRule(List<Polygon> borders) {
+        super(borders);
+    }
+    
     @Override
     public double getMaxSpeed(String highwayTag, double _default) {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar

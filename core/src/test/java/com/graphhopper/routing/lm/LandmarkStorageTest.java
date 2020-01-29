@@ -36,8 +36,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Polygon;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 
@@ -186,13 +188,13 @@ public class LandmarkStorageTest {
         RoutingAlgorithmTest.initBiGraph(ghStorage);
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMProfile(new FastestWeighting(encoder)), 2);
-        final SpatialRule ruleRight = new DefaultSpatialRule() {
+        final SpatialRule ruleRight = new DefaultSpatialRule(Collections.<Polygon>emptyList()) {
             @Override
             public String getId() {
                 return "right";
             }
         };
-        final SpatialRule ruleLeft = new DefaultSpatialRule() {
+        final SpatialRule ruleLeft = new DefaultSpatialRule(Collections.<Polygon>emptyList()) {
             @Override
             public String getId() {
                 return "left";

@@ -74,15 +74,17 @@ public class GraphHopperOSM extends GraphHopper {
 
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
             SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
-                    Collections.singletonList(landmarkSplittingFeatureCollection), "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
+                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
+                    new SpatialRuleLookupBuilder.SpatialRuleFactory() {
                         @Override
-                        public SpatialRule createSpatialRule(final String id, List<Polygon> polygons) {
-                            return new DefaultSpatialRule() {
+                        public SpatialRule createSpatialRule(final String id,
+                                        List<Polygon> polygons) {
+                            return new DefaultSpatialRule(polygons) {
                                 @Override
                                 public String getId() {
                                     return id;
                                 }
-                            }.setBorders(polygons);
+                            };
                         }
                     });
             for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {

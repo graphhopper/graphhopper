@@ -17,6 +17,10 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
+import java.util.List;
+
+import org.locationtech.jts.geom.Polygon;
+
 import com.graphhopper.routing.profiles.Country;
 import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
@@ -28,6 +32,10 @@ import com.graphhopper.routing.util.spatialrules.TransportationMode;
  * @author Robin Boldt
  */
 public class GermanySpatialRule extends DefaultSpatialRule {
+    
+    public GermanySpatialRule(List<Polygon> borders) {
+        super(borders);
+    }
 
     /**
      * Germany contains roads with no speed limit. For these roads, this method will return Integer.MAX_VALUE.

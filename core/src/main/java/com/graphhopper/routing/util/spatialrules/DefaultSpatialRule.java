@@ -17,12 +17,20 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
+import java.util.List;
+
+import org.locationtech.jts.geom.Polygon;
+
 import com.graphhopper.routing.profiles.RoadAccess;
 
 /**
  * Default implementation for the SpatialRule that contains the current default values
  */
 public abstract class DefaultSpatialRule extends AbstractSpatialRule {
+    
+    public DefaultSpatialRule(List<Polygon> borders) {
+        super(borders);
+    }
 
     @Override
     public double getMaxSpeed(String highwayTag, double _default) {
