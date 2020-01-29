@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
@@ -49,16 +48,6 @@ public class TestAlgoCollector {
                                             OneRun oneRun) {
         List<Path> altPaths = new ArrayList<>();
         QueryGraph queryGraph = QueryGraph.lookup(algoEntry.getForQueryGraph(), queryList);
-        AlgorithmOptions opts = algoEntry.getAlgorithmOptions();
-        FlagEncoder encoder = opts.getWeighting().getFlagEncoder();
-        if (encoder.supportsTurnCosts()) {
-            if (!opts.getTraversalMode().isEdgeBased()) {
-                errors.add("Cannot use TurnWeighting with node based traversal");
-                return this;
-            }
-            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), queryGraph.getTurnCostStorage())).build());
-        }
-
         RoutingAlgorithmFactory factory = algoEntry.createRoutingFactory();
         for (int i = 0; i < queryList.size() - 1; i++) {
             RoutingAlgorithm algo = factory.createAlgo(queryGraph, algoEntry.getAlgorithmOptions());

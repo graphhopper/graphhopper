@@ -21,6 +21,8 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+
 /**
  * Calculates the fastest route with distance influence controlled by a new parameter.
  * <p>
@@ -28,7 +30,6 @@ import com.graphhopper.util.PMap;
  * @author Peter Karich
  */
 public class ShortFastestWeighting extends FastestWeighting {
-    // For now keep parameters local within class
     private static final String NAME = "short_fastest";
     private static final String TIME_FACTOR = "short_fastest.time_factor";
     private static final String DISTANCE_FACTOR = "short_fastest.distance_factor";
@@ -36,7 +37,11 @@ public class ShortFastestWeighting extends FastestWeighting {
     private final double timeFactor;
 
     public ShortFastestWeighting(FlagEncoder encoder, PMap map) {
-        super(encoder);
+        this(encoder, map, NO_TURN_COST_PROVIDER);
+    }
+
+    public ShortFastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
+        super(NAME, encoder, map, turnCostProvider);
         timeFactor = checkBounds(TIME_FACTOR, map.getDouble(TIME_FACTOR, 1), 0, 10);
 
         // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km
@@ -47,7 +52,11 @@ public class ShortFastestWeighting extends FastestWeighting {
     }
 
     public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor) {
-        super(encoder);
+        this(encoder, distanceFactor, NO_TURN_COST_PROVIDER);
+    }
+
+    public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor, TurnCostProvider turnCostProvider) {
+        super(NAME, encoder, new PMap(), turnCostProvider);
         this.distanceFactor = checkBounds(DISTANCE_FACTOR, distanceFactor, 0, 10);
         this.timeFactor = 1;
     }
@@ -58,13 +67,8 @@ public class ShortFastestWeighting extends FastestWeighting {
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        double time = super.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        double time = super.calcEdgeWeight(edgeState, reverse);
         return time * timeFactor + edgeState.getDistance() * distanceFactor;
-    }
-
-    @Override
-    public String getName() {
-        return NAME;
     }
 }

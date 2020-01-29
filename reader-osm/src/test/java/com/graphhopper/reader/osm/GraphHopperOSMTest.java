@@ -989,8 +989,7 @@ public class GraphHopperOSMTest {
         CHAlgoFactoryDecorator decorator = new CHAlgoFactoryDecorator();
         Weighting fwSimpleTruck = new FastestWeighting(simpleTruck);
         Weighting fwTruck = new FastestWeighting(truck);
-        RAMDirectory ramDir = new RAMDirectory();
-        GraphHopperStorage storage = new GraphBuilder(em).setCHProfiles(CHProfile.createProfilesForWeightings(Arrays.asList(fwSimpleTruck, fwTruck))).setDir(ramDir).build();
+        GraphHopperStorage storage = new GraphBuilder(em).setCHProfiles(Arrays.asList(CHProfile.nodeBased(fwSimpleTruck), CHProfile.nodeBased(fwTruck))).build();
         decorator.addCHProfile(CHProfile.nodeBased(fwSimpleTruck));
         decorator.addCHProfile(CHProfile.nodeBased(fwTruck));
         decorator.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, CHProfile.nodeBased(fwSimpleTruck)));

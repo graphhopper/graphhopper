@@ -67,7 +67,7 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
     }
 
     @Override
-    public boolean isReady(PathMerger pathMerger, Translation tr) {
+    public void finish(PathMerger pathMerger, Translation tr) {
         if (pathList.isEmpty())
             throw new RuntimeException("Empty paths for alternative route calculation not expected");
 
@@ -82,6 +82,5 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
             ghResponse.add(tmpAltRsp);
             pathMerger.doWork(tmpAltRsp, Collections.singletonList(pathList.get(index)), encodingManager, tr);
         }
-        return true;
     }
 }

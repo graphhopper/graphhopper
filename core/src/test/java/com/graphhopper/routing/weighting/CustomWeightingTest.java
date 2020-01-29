@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.graphhopper.routing.profiles.RoadClass.*;
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static org.junit.Assert.assertEquals;
 
 public class CustomWeightingTest {
@@ -67,17 +68,17 @@ public class CustomWeightingTest {
         map.put(PRIMARY.toString(), 2.0);
         vehicleModel.getPriority().put(KEY, map);
 
-        Weighting weighting = new CustomWeighting("custom", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
+        Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.21, weighting.calcEdgeWeight(edge2, false), 0.01);
         assertEquals(0.575, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         map.put(PRIMARY.toString(), 1.1);
-        weighting = new CustomWeighting("custom", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
+        weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.045, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         // force integer value
         map.put(PRIMARY.toString(), 1);
-        weighting = new CustomWeighting("custom", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
+        weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
     }
 
@@ -88,7 +89,7 @@ public class CustomWeightingTest {
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.setBase("car");
 
-        Weighting weighting = new CustomWeighting("custom", vehicleModel, carFE, encodingManager, new DefaultEncodedValueFactory());
+        Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
     }
 }

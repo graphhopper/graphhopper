@@ -83,7 +83,7 @@ public class AverageSpeedCustomConfig {
     /**
      * @return speed in km/h
      */
-    public double calcSpeed(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+    public double calcSpeed(EdgeIteratorState edge, boolean reverse) {
         // this code is interpreting the yaml. We could try to make it faster using ANTLR with which we can create AST and compile using janino
         double speed = Double.NaN;
         for (int i = 0; i < avgSpeedList.size(); i++) {

@@ -40,22 +40,20 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
  * return weight
  * </pre>
  */
-public class CustomWeighting implements Weighting {
+public class CustomWeighting extends AbstractWeighting {
 
-    private FlagEncoder deprecatedFlagEncoder;
     private BooleanEncodedValue baseVehicleProfileAccessEnc;
     private String baseVehicleProfile;
 
-    private final String name;
     private final double maxPriority;
     private double maxSpeed;
     private double distanceFactor;
     private AverageSpeedCustomConfig speedConfig;
     private PriorityCustomConfig priorityConfig;
 
-    public CustomWeighting(String name, CustomModel customModel, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, EncodedValueFactory factory) {
-        this.name = name;
-        deprecatedFlagEncoder = baseFlagEncoder;
+    public CustomWeighting(String name, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
+                           EncodedValueFactory factory, TurnCostProvider turnCostProvider, CustomModel customModel) {
+        super(name, baseFlagEncoder, turnCostProvider);
         baseVehicleProfileAccessEnc = baseFlagEncoder.getAccessEnc();
         baseVehicleProfile = customModel.getBase();
         if (customModel.getVehicleMaxSpeed() == null || customModel.getVehicleMaxSpeed() < 2)
@@ -81,19 +79,14 @@ public class CustomWeighting implements Weighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        return calcWeight(edgeState, reverse, NO_EDGE);
-    }
-
-    @Override
-    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        double distance = edge.getDistance();
-        double seconds = calcSeconds(distance, edge, reverse, prevOrNextEdgeId);
+        double distance = edgeState.getDistance();
+        double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds))
             return Double.POSITIVE_INFINITY;
-        return (seconds + distance * distanceFactor) / priorityConfig.calcPriority(edge, reverse, prevOrNextEdgeId);
+        return (seconds + distance * distanceFactor) / priorityConfig.calcPriority(edgeState, reverse);
     }
 
-    double calcSeconds(double distance, EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+    double calcSeconds(double distance, EdgeIteratorState edge, boolean reverse) {
         // special case for loop edges: since they do not have a meaningful direction we always need to read them in forward direction
         if (edge.getBaseNode() == edge.getAdjNode())
             reverse = false;
@@ -102,7 +95,7 @@ public class CustomWeighting implements Weighting {
         if (reverse ? !edge.getReverse(baseVehicleProfileAccessEnc) : !edge.get(baseVehicleProfileAccessEnc))
             return Double.POSITIVE_INFINITY;
 
-        double speed = speedConfig.calcSpeed(edge, reverse, prevOrNextEdgeId);
+        double speed = speedConfig.calcSpeed(edge, reverse);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
@@ -113,17 +106,7 @@ public class CustomWeighting implements Weighting {
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        return calcMillis(edgeState, reverse, NO_EDGE);
-    }
-
-    @Override
-    public long calcMillis(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        return Math.round(calcSeconds(edge.getDistance(), edge, reverse, prevOrNextEdgeId) * 1000);
-    }
-
-    @Override
-    public FlagEncoder getFlagEncoder() {
-        return deprecatedFlagEncoder;
+        return Math.round(calcSeconds(edgeState.getDistance(), edgeState, reverse) * 1000);
     }
 
     @Override
@@ -133,12 +116,7 @@ public class CustomWeighting implements Weighting {
     }
 
     @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
     public String toString() {
-        return name;
+        return getName();
     }
 }

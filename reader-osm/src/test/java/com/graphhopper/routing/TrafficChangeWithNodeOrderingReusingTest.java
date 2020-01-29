@@ -175,7 +175,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         private final double maxDeviationPercentage;
 
         public RandomDeviationWeighting(Weighting baseWeighting, double maxDeviationPercentage) {
-            super(baseWeighting.getFlagEncoder());
+            super("random_deviation", baseWeighting.getFlagEncoder());
             this.baseWeighting = baseWeighting;
             this.maxDeviationPercentage = maxDeviationPercentage;
         }
@@ -187,8 +187,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         }
 
         @Override
-        public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-            double baseWeight = baseWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+        public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+            double baseWeight = baseWeighting.calcEdgeWeight(edgeState, reverse);
             if (edgeState instanceof CHEdgeIteratorState) {
                 // important! we may not change weights of shortcuts (the deviations are already included in their weight)
                 if (((CHEdgeIteratorState) edgeState).isShortcut()) {
@@ -208,11 +208,6 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                 throw new IllegalStateException("negative weights are not allowed: " + result);
             }
             return result;
-        }
-
-        @Override
-        public String getName() {
-            return "random_deviation";
         }
     }
 }

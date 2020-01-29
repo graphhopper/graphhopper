@@ -18,7 +18,9 @@ for some vehicles like `foot`.
 To enable turn restrictions when using the 'speed mode' additional graph preparation is required, because turn restrictions
 require edge-based (vs. node-based) traversal of the graph. First you have to set the weightings for which the graph 
 preparation should be run using e.g. `prepare.ch.weightings=fastest`, just like when you use the 'speed mode' without 
-turn restrictions. Additionally you need to set `prepare.ch.turn_costs` to `edge_or_node` or `edge_and_node`. You can
+turn restrictions. To use u-turn costs with speed mode you need to specify the time penalty for each u-turn like this:
+`prepare.ch.weightings=fastest|u_turn_costs=60`. 
+Additionally you need to set `prepare.ch.edge_based` to `edge_or_node` or `edge_and_node`. You can
 also specify a time penalty for taking u-turns (turning from one road back to the same road at a junction). Note that 
 this time-penalty only works reasonably when your weighting is time-based (like "fastest"). See 
 `config-example.yml` for further details regarding these configurations. If you prepare multiple 'speed mode' profiles you have to specify which

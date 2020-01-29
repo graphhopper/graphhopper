@@ -27,6 +27,7 @@ import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -49,8 +50,9 @@ import static com.graphhopper.util.Helper.nf;
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 class BaseGraph implements Graph {
-    // currently distances are stored as 4 byte integers. using a conversion factor of 1000 the minimum distance
-    // that is not considered zero is 0.0005m (=0.5mm) and the maximum distance per edge is about 2.147.483m=2147km
+    // Currently distances are stored as 4 byte integers. using a conversion factor of 1000 the minimum distance
+    // that is not considered zero is 0.0005m (=0.5mm) and the maximum distance per edge is about 2.147.483m=2147km.
+    // See OSMReader.addEdge and #1871.
     private static final double INT_DIST_FACTOR = 1000d;
     static double MAX_DIST = Integer.MAX_VALUE / INT_DIST_FACTOR;
 
@@ -839,6 +841,11 @@ class BaseGraph implements Graph {
     @Override
     public TurnCostStorage getTurnCostStorage() {
         return turnCostStorage;
+    }
+
+    @Override
+    public Weighting wrapWeighting(Weighting weighting) {
+        return weighting;
     }
 
     @Override

@@ -79,7 +79,7 @@ public class PriorityCustomConfig {
     /**
      * @return weight without unit. The lower the priority is the higher the weight of the specified edge will be.
      */
-    public double calcPriority(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+    public double calcPriority(EdgeIteratorState edge, boolean reverse) {
         double priority = 1;
         for (int i = 0; i < priorityList.size(); i++) {
             ConfigMapEntry entry = priorityList.get(i);

@@ -19,7 +19,6 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.NodeAccess;
@@ -31,26 +30,24 @@ import com.graphhopper.util.EdgeIterator;
 public class PrepareCHGraph {
     private final CHGraph chGraph;
     private final Weighting weighting;
-    private final TurnWeighting turnWeighting;
 
     public static PrepareCHGraph nodeBased(CHGraph chGraph, Weighting weighting) {
         if (chGraph.getCHProfile().isEdgeBased()) {
             throw new IllegalArgumentException("Expected node-based CHGraph, but was edge-based");
         }
-        return new PrepareCHGraph(chGraph, weighting, null);
+        return new PrepareCHGraph(chGraph, weighting);
     }
 
-    public static PrepareCHGraph edgeBased(CHGraph chGraph, Weighting weighting, TurnWeighting turnWeighting) {
+    public static PrepareCHGraph edgeBased(CHGraph chGraph, Weighting weighting) {
         if (!chGraph.getCHProfile().isEdgeBased()) {
             throw new IllegalArgumentException("Expected edge-based CHGraph, but was node-based");
         }
-        return new PrepareCHGraph(chGraph, weighting, turnWeighting);
+        return new PrepareCHGraph(chGraph, weighting);
     }
 
-    private PrepareCHGraph(CHGraph chGraph, Weighting weighting, TurnWeighting turnWeighting) {
+    private PrepareCHGraph(CHGraph chGraph, Weighting weighting) {
         this.chGraph = chGraph;
         this.weighting = weighting;
-        this.turnWeighting = turnWeighting;
     }
 
     public PrepareCHEdgeExplorer createInEdgeExplorer() {
@@ -110,10 +107,7 @@ public class PrepareCHGraph {
     }
 
     double getTurnWeight(int inEdge, int viaNode, int outEdge) {
-        if (turnWeighting == null) {
-            throw new IllegalStateException("Calculating turn weights is only allowed when using edge-based traversal mode");
-        }
-        return turnWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+        return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 
     public AllCHEdgesIterator getAllEdges() {
