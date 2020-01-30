@@ -71,18 +71,10 @@ class ProjFuncs {
 }
 
 
-class GtfsGraphLogger {
+public class GtfsGraphLogger {
 
     public enum NodeLogType {
         OSM_NODE, ENTER_EXIT_PT, BOARD_NODE, ARRIVAL_STOP_TIME_NODE, DEPARTURE_STOP_TIME_NODE, ALIGHT_NODE, BLOCK_TRANSFER_NODE
-    }
-
-    public static void main(String[] args) throws Exception {
-        final GtfsGraphLogger graphLogger = new GtfsGraphLogger("/Users/mathieu.stpierre/Documents/Iterations/January2020/gtfs_graph_logger/gtfsGraph.graphml");
-        graphLogger.addNode("node1", 0, 0, NodeLogType.DEPARTURE_STOP_TIME_NODE, "");
-        graphLogger.addNode("node2", 50, 50, NodeLogType.ARRIVAL_STOP_TIME_NODE, "");
-        graphLogger.addEdge("HOP", "edge1", "node1", "node2");
-        graphLogger.exportGraphmlToFile();
     }
 
     private DocumentBuilderFactory dbf;
@@ -141,7 +133,7 @@ class GtfsGraphLogger {
         return keyEle;
     }
 
-    GtfsGraphLogger(String graphmlPath) throws ParserConfigurationException {
+    public GtfsGraphLogger(String graphmlPath) throws ParserConfigurationException {
 
         try {
             this.graphmlPath = graphmlPath;
@@ -319,11 +311,11 @@ class GtfsGraphLogger {
         appendXmlNode(shapeNodeEle, "y:Shape", "type=ellipse");
     }
 
-    void addEdge(String edgeType, int id, int srcNodeId, int targetNodeId) {
+    public void addEdge(String edgeType, int id, int srcNodeId, int targetNodeId) {
         addEdge(edgeType, String.valueOf(id), String.valueOf(srcNodeId), String.valueOf(targetNodeId));
     }
 
-    void addEdge(String edgeType, String id, String srcNodeId, String targetNodeId) {
+    public void addEdge(String edgeType, String id, String srcNodeId, String targetNodeId) {
         Element edgeEle = appendXmlNode(graphEle, "edge", "id=" + id + " source=" + srcNodeId + " target=" + targetNodeId);
         Element dataEle = appendXmlNode(edgeEle, "data", "key=d10");
         Element polyEdgeEle = appendXmlNode(dataEle, "y:PolyLineEdge", "");
@@ -345,7 +337,7 @@ class GtfsGraphLogger {
         appendXmlNode(polyEdgeEle, "y:BendStyle", "smoothed=false");
     }
 
-    void exportGraphmlToFile() {
+    public void exportGraphmlToFile() {
 
         try {
             Transformer tr = TransformerFactory.newInstance().newTransformer();

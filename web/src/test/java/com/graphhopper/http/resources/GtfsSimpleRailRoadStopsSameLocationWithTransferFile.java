@@ -42,8 +42,9 @@ import io.dropwizard.testing.junit.DropwizardAppRule;
  * Similar to PtRouteResourceTest, but tests the entire app, not the resource, so that the plugging-together
  * of stuff (which is different for PT than for the rest) is under test, too.
  */
-public class GtfsWalkingHopBetweenTransitsTest {
-    private static final String DIR = "./target/gtfs_pei_simple_cache/";
+
+public class GtfsSimpleRailRoadStopsSameLocationWithTransferFileTest {
+    private static final String DIR = "./target/gtfs_pei_simple_with_transfers_txt_cache/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
@@ -51,7 +52,7 @@ public class GtfsWalkingHopBetweenTransitsTest {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "foot").
                 put("datareader.file", "../core/files/prince-edward-island-latest.osm.pbf").
-                put("gtfs.file", "../core/files/simple-bus-rail-stops-diff-loc.zip").
+                put("gtfs.file", "../core/files/simple-bus-rail-with-transfers-txt.zip").
                 put("graph.location", DIR).
                 put("prepare.ch.weightings", "no"));
     }
