@@ -40,7 +40,6 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -55,32 +54,40 @@ import static org.junit.Assert.assertEquals;
  */
 public class SpatialRuleLookupBuilderTest {
 
-    private static final long MAX_BENCHMARK_RUNTIME_MS = 10_000L;
     private static final String COUNTRIES_FILE = "../core/files/spatialrules/countries.geo.json";
 
     @Test
     public void testIndex() throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory());
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory());
 
         // Berlin
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).
+                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).
+                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
         // Paris -> empty rule
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).
+                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).
+                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
         // Austria
-        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRule(48.204484, 16.107888).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("living_street", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRule(48.204484, 16.107888).
+                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).
+                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(48.210033, 16.363449).
+                getAccess("living_street", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
     }
 
     @Test
     public void testBounds() throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory());
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory());
         Envelope almostWorldWide = new Envelope(-179, 179, -89, 89);
 
         // Might fail if a polygon is defined outside the above coordinates
@@ -94,14 +101,18 @@ public class SpatialRuleLookupBuilderTest {
          So the BBox should not contain a Point lying somewhere close in Germany.
         */
         final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory(), new Envelope(9, 10, 51, 52));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3",
+                new CountriesSpatialRuleFactory(), new Envelope(9, 10, 51, 52));
         assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
     }
 
     @Test
     public void testNoIntersection() throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory(), new Envelope(-180, -179, -90, -89));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3",
+                new CountriesSpatialRuleFactory(), new Envelope(-180, -179, -90, -89));
         assertEquals(SpatialRuleLookup.EMPTY, spatialRuleLookup);
     }
 
@@ -109,7 +120,8 @@ public class SpatialRuleLookupBuilderTest {
     @Test
     public void testSpatialId() {
         final GeometryFactory fac = new GeometryFactory();
-        org.locationtech.jts.geom.Polygon polygon = fac.createPolygon(new Coordinate[] { new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0) });
+        org.locationtech.jts.geom.Polygon polygon = fac.createPolygon(new Coordinate[]{
+                new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0)});
         final GermanySpatialRule germany = new GermanySpatialRule();
         germany.setBorders(Collections.singletonList(polygon));
 
@@ -204,31 +216,31 @@ public class SpatialRuleLookupBuilderTest {
     public void testSpeed() throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
         SpatialRuleFactory rulePerCountryFactory = new SpatialRuleFactory() {
-            
+
             @Override
             public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
                 return new SpatialRule() {
-                    
+
                     @Override
                     public double getMaxSpeed(String highway, double _default) {
                         return 100;
                     }
-                    
+
                     @Override
                     public String getId() {
                         return id;
                     }
-                    
+
                     @Override
                     public List<Polygon> getBorders() {
                         return borders;
                     }
-                    
+
                     @Override
                     public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
                         return RoadAccess.YES;
                     }
-                    
+
                     @Override
                     public String toString() {
                         return getId();
@@ -236,23 +248,23 @@ public class SpatialRuleLookupBuilderTest {
                 };
             }
         };
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", rulePerCountryFactory);
-    
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", rulePerCountryFactory);
+
         // generate random points in central Europe
-        List<GHPoint> randomPoints = new ArrayList<>();
-        for (int i = 0; i < 1_000_000; i++) {
+        int randomPoints = 250_000;
+        long start = System.nanoTime();
+        for (int i = 0; i < randomPoints; i++) {
             double lat = 46d + Math.random() * 7d;
             double lon = 6d + Math.random() * 21d;
-            randomPoints.add(new GHPoint(lat, lon));
+            spatialRuleLookup.lookupRule(new GHPoint(lat, lon));
         }
-        
-        long start = System.nanoTime();
-        for (GHPoint point : randomPoints) {
-            spatialRuleLookup.lookupRule(point);
-        }
+
         long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-        System.out.println("Lookup of " + randomPoints.size() + " points took " + duration + "ms");
-        System.out.println("Average lookup duration: " + ((double) duration) / randomPoints.size() + "ms");
-        assertTrue("Benchmark must be finished in less than " + MAX_BENCHMARK_RUNTIME_MS + "ms", duration < MAX_BENCHMARK_RUNTIME_MS);
+        // System.out.println("Lookup of " + randomPoints + " points took " + duration + "ms");
+        // System.out.println("Average lookup duration: " + ((double) duration) / randomPoints + "ms");
+        long maxBenchmarkRuntimeMs = 5_000L;
+        assertTrue("Benchmark must be finished in less than " + maxBenchmarkRuntimeMs + "ms",
+                duration < maxBenchmarkRuntimeMs);
     }
 }
