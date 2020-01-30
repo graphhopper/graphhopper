@@ -293,10 +293,14 @@ public class GtfsGraphLogger {
         appendXmlNode(shapeNodeEle, "y:Fill", fillEleAttrs);
         appendXmlNode(shapeNodeEle, "y:BorderStyle", "color=#000000 type=line width=1.0");
 
-        Element nodeLabelEle = appendXmlNode(shapeNodeEle, "y:NodeLabel", "alignment=center autoSizePolicy=content fontFamily=Dialog fontSize=16 fontStyle=plain hasBackgroundColor=false " +
-                                                                                            "hasLineColor=false hasText=true height=4.0 modelName=custom textColor=" +
-                                                                                             String.format("#%02x%02x%02x", NODE_TEXT_COLOR.getRed(), NODE_TEXT_COLOR.getGreen(), NODE_TEXT_COLOR.getBlue()) +
-                                                                                            " visible=true width=4.0 x=13.0 y=13.0");
+        //Split NodeLabel attributes to multiple lines to avoid busting the 500 line characters limit.
+        String attributes = "alignment=center autoSizePolicy=content fontFamily=Dialog fontSize=16 fontStyle=plain hasBackgroundColor=false " +
+                            "hasLineColor=false hasText=true height=4.0 modelName=custom ";
+
+        attributes += "textColor=" + String.format("#%02x%02x%02x", NODE_TEXT_COLOR.getRed(), NODE_TEXT_COLOR.getGreen(), NODE_TEXT_COLOR.getBlue()) +
+                      " visible=true width=4.0 x=13.0 y=13.0";
+
+        Element nodeLabelEle = appendXmlNode(shapeNodeEle, "y:NodeLabel", attributes);
 
         if (!nodeText.isEmpty()) {
             Text textNode = dom.createTextNode(nodeText);
