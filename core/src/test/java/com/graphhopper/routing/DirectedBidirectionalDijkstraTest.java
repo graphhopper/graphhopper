@@ -23,8 +23,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 
-import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.Assert.*;
@@ -57,7 +55,7 @@ public class DirectedBidirectionalDijkstraTest {
         graph = new GraphHopperStorage(dir, encodingManager, false, true).create(1000);
         turnCostStorage = graph.getTurnCostStorage();
         weighting = createWeighting(Weighting.INFINITE_U_TURN_COSTS);
-        turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
+        turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
     }
 
     private Weighting createWeighting(int uTurnCosts) {

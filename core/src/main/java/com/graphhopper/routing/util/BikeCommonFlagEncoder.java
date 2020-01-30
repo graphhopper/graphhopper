@@ -207,7 +207,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
         registerNewEncodedValue.add(priorityEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
 
-        bikeRouteEnc = getEnumEncodedValue(getKey("bike", EV_SUFFIX), RouteNetwork.class);
+        bikeRouteEnc = getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
     }
 
     @Override
@@ -474,7 +474,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if (pushingSectionsHighways.contains(highway)
                 || "parking_aisle".equals(service)) {
             int pushingSectionPrio = AVOID_IF_POSSIBLE.getValue();
-            if (way.hasTag("bicycle", "use_sidepath"))  {
+            if (way.hasTag("bicycle", "use_sidepath")) {
                 pushingSectionPrio = PREFER.getValue();
             }
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
