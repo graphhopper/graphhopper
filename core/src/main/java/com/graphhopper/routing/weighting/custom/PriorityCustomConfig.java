@@ -64,7 +64,7 @@ public class PriorityCustomConfig {
     }
 
 
-    public double getMax() {
+    public double getMaxPriority() {
         return maxPriority;
     }
 

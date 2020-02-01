@@ -27,9 +27,6 @@ import java.util.Map;
  */
 interface CustomModelMixIn {
 
-    @JsonProperty("vehicle_max_speed")
-    double getVehicleMaxSpeed();
-
     @JsonProperty("vehicle_weight")
     double getVehicleWeight();
 
@@ -51,6 +48,9 @@ interface CustomModelMixIn {
     @JsonProperty("speed_factor")
     Map<String, Object> getSpeedFactor();
 
-    @JsonProperty("average_speed")
-    Map<String, Object> getAverageSpeed();
+    @JsonProperty("max_speed")
+    Map<String, Object> getMaxSpeed();
+
+    @JsonProperty("max_speed_fallback")
+    double getMaxSpeedFallback();
 }

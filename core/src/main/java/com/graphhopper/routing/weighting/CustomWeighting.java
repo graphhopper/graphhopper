@@ -23,18 +23,16 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.weighting.custom.AverageSpeedCustomConfig;
+import com.graphhopper.routing.weighting.custom.SpeedCustomConfig;
 import com.graphhopper.routing.weighting.custom.PriorityCustomConfig;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-
 /**
  * Every EncodedValue like road_environment can influence one or more aspects of this Weighting: the
- * speed_factor, the average_speed and the priority. The formula is basically:
+ * speed_factor, the max_speed and the priority. The formula is basically:
  * <pre>
  * if no access to edge then return infinity
- * speed = pick_first(average_speed_map) * multiply_all(speed_factor_map)
+ * speed = reduce_to_max_speed(estimated speed) * multiply_all(speed_factor_map)
  * distanceInfluence = distance * distanceFactor
  * weight = (toSeconds(distance / speed) + distanceInfluence) / priority;
  * return weight
@@ -48,7 +46,7 @@ public class CustomWeighting extends AbstractWeighting {
     private final double maxPriority;
     private double maxSpeed;
     private double distanceFactor;
-    private AverageSpeedCustomConfig speedConfig;
+    private SpeedCustomConfig speedConfig;
     private PriorityCustomConfig priorityConfig;
 
     public CustomWeighting(String name, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
@@ -56,14 +54,12 @@ public class CustomWeighting extends AbstractWeighting {
         super(name, baseFlagEncoder, turnCostProvider);
         baseVehicleProfileAccessEnc = baseFlagEncoder.getAccessEnc();
         baseVehicleProfile = customModel.getBase();
-        if (customModel.getVehicleMaxSpeed() == null || customModel.getVehicleMaxSpeed() < 2)
-            customModel.setVehicleMaxSpeed(baseFlagEncoder.getMaxSpeed());
 
-        speedConfig = new AverageSpeedCustomConfig(customModel, lookup, factory);
-        maxSpeed = speedConfig.getMaxSpeedFactor() * customModel.getVehicleMaxSpeed() / CustomModel.SPEED_CONV;
+        speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, lookup, factory);
+        maxSpeed = speedConfig.getMaxSpeed() / CustomModel.SPEED_CONV;
 
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
-        maxPriority = priorityConfig.getMax();
+        maxPriority = priorityConfig.getMaxPriority();
         if (maxPriority < 1)
             throw new IllegalArgumentException("maximum priority cannot be smaller than 1 but was " + maxPriority);
 

@@ -32,11 +32,11 @@ public class CustomModel {
     // required
     private String base;
     // optional:
-    private Double vehicleMaxSpeed, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
+    private Double maxSpeedFallback, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
     // the default is copied from ShortFastestWeighting
     private double distanceFactor = 0.07;
     private Map<String, Object> speedFactor = new HashMap<>();
-    private Map<String, Object> averageSpeed = new HashMap<>();
+    private Map<String, Object> maxSpeed = new HashMap<>();
     private Map<String, Object> priorityMap = new HashMap<>();
 
     public CustomModel() {
@@ -84,14 +84,6 @@ public class CustomModel {
         return vehicleWidth;
     }
 
-    public void setVehicleMaxSpeed(Double vehicleMaxSpeed) {
-        this.vehicleMaxSpeed = vehicleMaxSpeed;
-    }
-
-    public Double getVehicleMaxSpeed() {
-        return vehicleMaxSpeed;
-    }
-
     public void setDistanceFactor(double distanceFactor) {
         this.distanceFactor = distanceFactor;
     }
@@ -104,8 +96,16 @@ public class CustomModel {
         return speedFactor;
     }
 
-    public Map<String, Object> getAverageSpeed() {
-        return averageSpeed;
+    public Map<String, Object> getMaxSpeed() {
+        return maxSpeed;
+    }
+
+    public void setMaxSpeedFallback(Double maxSpeedFallback) {
+        this.maxSpeedFallback = maxSpeedFallback;
+    }
+
+    public Double getMaxSpeedFallback() {
+        return maxSpeedFallback;
     }
 
     public Map<String, Object> getPriority() {

@@ -62,7 +62,6 @@ public class CustomWeightingTest {
                 set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.setVehicleMaxSpeed(120d);
         vehicleModel.setBase("car");
         Map map = new HashMap();
         map.put(PRIMARY.toString(), 2.0);
@@ -91,5 +90,23 @@ public class CustomWeightingTest {
 
         Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
+    }
+
+    @Test
+    public void testMaxSpeedMap() {
+        EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(10).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.setBase("car");
+
+        Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
+
+        // reduce speed for road class 'primary'
+        Map map = new HashMap();
+        map.put(PRIMARY.toString(), 60);
+        vehicleModel.getMaxSpeed().put(KEY, map);
+        weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        assertEquals(1.3, weighting.calcEdgeWeight(edge1, false), 0.01);
     }
 }

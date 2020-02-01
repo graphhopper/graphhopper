@@ -48,7 +48,7 @@ public class CustomWeightingRouteResourceTest {
     }
 
     @Test
-    public void testCHQuery() {
+    public void testCHTruckQuery() {
         String jsonQuery = "{" +
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"vehicle\": \"car\"," +

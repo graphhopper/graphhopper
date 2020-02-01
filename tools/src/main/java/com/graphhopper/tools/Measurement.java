@@ -725,7 +725,6 @@ public class Measurement {
     private CustomModel createCustomModel() {
         CustomModel customModel = new CustomModel();
         customModel.setBase("car");
-        customModel.setVehicleMaxSpeed(110.0);
         customModel.setVehicleHeight(3.8);
         customModel.setVehicleWidth(2.5);
         // the default distance_factor for custom requests is currently 1 which makes it too different regarding speed
@@ -747,6 +746,8 @@ public class Measurement {
         map.put("motorway", 0.85);
         map.put("primary", 0.9);
         customModel.getSpeedFactor().put("road_class", map);
+
+        customModel.setMaxSpeedFallback(110.0);
 
         return customModel;
     }

@@ -1,23 +1,22 @@
 # Specify a vehicle (FlagEncoder) or another custom profile like
 base: car
 
-# Trucks are slower so limit all speed to this value. In km/h
-vehicle_max_speed: 100
 # in meter
 vehicle_height: 3.8
 vehicle_width: 2.5
 # in tons
 vehicle_weight: 4.5
 
-# Let's change the estimated average speed for motorway to 100 km/h
-# Please note that in contrast to the other factors (like priority or speed_factor) the first match determines the value
-# I.e. if a road_class==motorway and road_environment==bridge, then the resulting average_speed=100
-average_speed:
+# You can lower the estimated average speed for certain conditions via max_speed e.g. for motorway to 95km/h
+max_speed:
   road_class:
     motorway: 95
     residential: 30
   road_environment:
     bridge: 85
+# Trucks are slower so limit all speed to this value. In km/h
+# If none of the conditions above apply use the fallback, if specified.
+max_speed_fallback: 100
 
 # The formula is defined in CustomWeighting, where the speed_factor can be used to increase speed and decrease speed
 # It is important to note that if two conditions are satisfied the values are multiplied e.g. if road_class==motorway
@@ -31,7 +30,7 @@ speed_factor:
 
 # Now we want to set a preference without changing the speed. I.e. trucks shall prefer bigger roads and so we could
 # increase the speed for them, but this is ugly, so we use priority that does not influence the speed.
-# The default priority 1 won't change something. Higher than 1 will prefer the road under the specified condition
+# The default priority 1 won't change something. Higher than 1 will prefer the road under the specified condition (TODO necessary?)
 # and lower than 1 will avoid it. If two conditions are met the values will be multiplied. The minimum value is 0.
 priority:
   road_class:

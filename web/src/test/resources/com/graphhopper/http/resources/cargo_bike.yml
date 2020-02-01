@@ -1,10 +1,15 @@
 base: bike
 
-# let's assume cargo bikes are e-bikes and we should lower speed to prefer shorter and not faster routes automatically
-vehicle_max_speed: 25
-
 vehicle_height: 2.3
 vehicle_width: 1.2
+
+# let's assume cargo bikes are e-bikes and we should lower speed to prefer shorter and not faster routes automatically
+max_speed:
+  road_class:
+    primary: 28
+
+# if no other condition matches
+max_speed_fallback: 25
 
 priority:
   surface:
