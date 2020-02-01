@@ -23,6 +23,7 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -41,7 +42,7 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     private CHGraph getGraph(GraphHopperStorage ghStorage) {
-        return ghStorage.getCHGraph();
+        return ghStorage.getCHGraph(ghStorage.getCHProfiles().get(0));
     }
 
     @Override
@@ -61,8 +62,13 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     private GraphHopperStorage newGHStorage(Directory dir, boolean is3D, boolean forEdgeBasedTraversal, int segmentSize) {
         GraphHopperStorage graph = new GraphBuilder(encodingManager)
                 .setDir(dir).set3D(is3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
-        FastestWeighting weighting = new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, graph.getTurnCostStorage()));
-        graph.addCHGraph(new CHProfile(weighting, forEdgeBasedTraversal));
+        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
+            TurnCostProvider turnCostProvider = forEdgeBasedTraversal
+                    ? new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())
+                    : TurnCostProvider.NO_TURN_COST_PROVIDER;
+            FastestWeighting weighting = new FastestWeighting(encoder, turnCostProvider);
+            graph.addCHGraph(new CHProfile(weighting, forEdgeBasedTraversal));
+        }
         return graph;
     }
 
@@ -364,7 +370,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.edge(3, 4, 10, true);
         graph.freeze();
 
-        CHGraph lg = graph.getCHGraph();
+        CHGraph lg = getGraph(graph);
         lg.shortcut(1, 4, PrepareEncoder.getScFwdDir(), 3, NO_EDGE, NO_EDGE);
 
         EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
@@ -380,7 +386,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
         graph.freeze();
 
-        CHGraph lg = graph.getCHGraph();
+        CHGraph lg = getGraph(graph);
         lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 
         AllCHEdgesIterator iter = lg.getAllEdges();
@@ -400,7 +406,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
         graph.freeze();
 
-        CHGraph lg = graph.getCHGraph();
+        CHGraph lg = getGraph(graph);
         lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 10, edge1.getEdge(), edge2.getEdge());
 
         AllCHEdgesIterator iter = lg.getAllEdges();

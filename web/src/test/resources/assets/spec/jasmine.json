@@ -1,5 +1,5 @@
 {
-    "spec_dir": "src/test/webapp/spec",
+    "spec_dir": "src/test/resources/assets/spec",
     "spec_files": [
         "**/*[sS]pec.js"
     ],

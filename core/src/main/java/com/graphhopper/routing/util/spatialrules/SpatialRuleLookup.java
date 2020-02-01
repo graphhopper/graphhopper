@@ -17,7 +17,8 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.geom.Envelope;
+
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
@@ -63,7 +64,7 @@ public interface SpatialRuleLookup {
     /**
      * @return the bounds of the SpatialRuleLookup
      */
-    BBox getBounds();
+    Envelope getBounds();
 
     SpatialRuleLookup EMPTY = new SpatialRuleLookup() {
         @Override
@@ -92,8 +93,8 @@ public interface SpatialRuleLookup {
         }
 
         @Override
-        public BBox getBounds() {
-            return new BBox(-180, 180, -90, 90);
+        public Envelope getBounds() {
+            return new Envelope(-180d, 180d, -90d, 90d);
         }
     };
 }

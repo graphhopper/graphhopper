@@ -23,22 +23,26 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.Polygon;
 import org.junit.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Polygon;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static junit.framework.TestCase.assertFalse;
@@ -55,27 +59,36 @@ public class SpatialRuleLookupBuilderTest {
     @Test
     public void testIndex() throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory());
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory());
 
         // Berlin
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).
+                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).
+                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
         // Paris -> empty rule
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).
+                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).
+                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
         // Austria
-        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRule(48.204484, 16.107888).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("living_street", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRule(48.204484, 16.107888).
+                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).
+                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(48.210033, 16.363449).
+                getAccess("living_street", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
     }
 
     @Test
     public void testBounds() throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), .1, new BBox(-180, 180, -90, 90));
-        BBox almostWorldWide = new BBox(-179, 179, -89, 89);
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory());
+        Envelope almostWorldWide = new Envelope(-179, 179, -89, 89);
 
         // Might fail if a polygon is defined outside the above coordinates
         assertTrue("BBox seems to be not contracted", almostWorldWide.contains(spatialRuleLookup.getBounds()));
@@ -88,28 +101,35 @@ public class SpatialRuleLookupBuilderTest {
          So the BBox should not contain a Point lying somewhere close in Germany.
         */
         final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), .1, new BBox(9, 10, 51, 52));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3",
+                new CountriesSpatialRuleFactory(), new Envelope(9, 10, 51, 52));
         assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
     }
 
     @Test
     public void testNoIntersection() throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), .1, new BBox(-180, -179, -90, -89));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3",
+                new CountriesSpatialRuleFactory(), new Envelope(-180, -179, -90, -89));
         assertEquals(SpatialRuleLookup.EMPTY, spatialRuleLookup);
     }
 
 
     @Test
     public void testSpatialId() {
+        final GeometryFactory fac = new GeometryFactory();
+        org.locationtech.jts.geom.Polygon polygon = fac.createPolygon(new Coordinate[]{
+                new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0)});
         final GermanySpatialRule germany = new GermanySpatialRule();
-        germany.setBorders(Collections.singletonList(new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0})));
+        germany.setBorders(Collections.singletonList(polygon));
 
         SpatialRuleLookup index = new SpatialRuleLookup() {
             @Override
             public SpatialRule lookupRule(double lat, double lon) {
                 for (Polygon polygon : germany.getBorders()) {
-                    if (polygon.contains(lat, lon)) {
+                    if (polygon.covers(fac.createPoint(new Coordinate(lon, lat)))) {
                         return germany;
                     }
                 }
@@ -141,8 +161,8 @@ public class SpatialRuleLookupBuilderTest {
             }
 
             @Override
-            public BBox getBounds() {
-                return new BBox(-180, 180, -90, 90);
+            public Envelope getBounds() {
+                return new Envelope(-180, 180, -90, 90);
             }
         };
 
@@ -190,5 +210,61 @@ public class SpatialRuleLookupBuilderTest {
         livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e4.setFlags(em.handleWayTags(livingStreet2, map, relFlags));
         assertEquals(MaxSpeed.UNSET_SPEED, e4.get(tmpCarMaxSpeedEnc), .1);
+    }
+
+    @Test
+    public void testSpeed() throws IOException {
+        final FileReader reader = new FileReader(COUNTRIES_FILE);
+        SpatialRuleFactory rulePerCountryFactory = new SpatialRuleFactory() {
+
+            @Override
+            public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
+                return new SpatialRule() {
+
+                    @Override
+                    public double getMaxSpeed(String highway, double _default) {
+                        return 100;
+                    }
+
+                    @Override
+                    public String getId() {
+                        return id;
+                    }
+
+                    @Override
+                    public List<Polygon> getBorders() {
+                        return borders;
+                    }
+
+                    @Override
+                    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
+                        return RoadAccess.YES;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return getId();
+                    }
+                };
+            }
+        };
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", rulePerCountryFactory);
+
+        // generate random points in central Europe
+        int randomPoints = 250_000;
+        long start = System.nanoTime();
+        for (int i = 0; i < randomPoints; i++) {
+            double lat = 46d + Math.random() * 7d;
+            double lon = 6d + Math.random() * 21d;
+            spatialRuleLookup.lookupRule(new GHPoint(lat, lon));
+        }
+
+        long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+        // System.out.println("Lookup of " + randomPoints + " points took " + duration + "ms");
+        // System.out.println("Average lookup duration: " + ((double) duration) / randomPoints + "ms");
+        long maxBenchmarkRuntimeMs = 5_000L;
+        assertTrue("Benchmark must be finished in less than " + maxBenchmarkRuntimeMs + "ms",
+                duration < maxBenchmarkRuntimeMs);
     }
 }

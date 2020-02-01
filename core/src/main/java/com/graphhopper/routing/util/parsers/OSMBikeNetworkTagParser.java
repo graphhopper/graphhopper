@@ -64,7 +64,7 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(bikeRouteEnc = new EnumEncodedValue<>(getKey("bike", RouteNetwork.EV_SUFFIX), RouteNetwork.class));
+        registerNewEncodedValue.add(bikeRouteEnc = new EnumEncodedValue<>(RouteNetwork.key("bike"), RouteNetwork.class));
     }
 
     @Override

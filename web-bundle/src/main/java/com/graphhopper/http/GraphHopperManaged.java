@@ -34,11 +34,19 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.lifecycle.Managed;
+import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.util.Helper.UTF_CS;
@@ -64,15 +72,25 @@ public class GraphHopperManaged implements Managed {
         } else {
             graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection).forServer();
         }
-        String spatialRuleLocation = configuration.get("spatial_rules.location", "");
-        if (!spatialRuleLocation.isEmpty()) {
+        if (!configuration.get("spatial_rules.location", "").isEmpty()) {
+            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
+        }
+        String spatialRuleBordersDirLocation = configuration.get("spatial_rules.borders_directory", "");
+        if (!spatialRuleBordersDirLocation.isEmpty()) {
             final BBox maxBounds = BBox.parseBBoxString(configuration.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
-            try (final InputStreamReader reader = new InputStreamReader(new FileInputStream(spatialRuleLocation), UTF_CS)) {
-                JsonFeatureCollection jsonFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-                SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, maxBounds, jsonFeatureCollection);
+            final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
+            List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
+                for (Path borderFile : stream) {
+                    try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
+                        JsonFeatureCollection jsonFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
+                        jsonFeatureCollections.add(jsonFeatureCollection);
+                    }
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
         }
 
         String customModelLocation = configuration.get("graph.custom_profiles.directory", "");
@@ -94,10 +112,10 @@ public class GraphHopperManaged implements Managed {
     @Override
     public void start() {
         graphHopper.importOrLoad();
-        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
-                + ", data_reader_file:" + graphHopper.getDataReaderFile()
-                + ", encoded values:" + graphHopper.getEncodingManager().toEncodedValuesAsString()
-                + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+        logger.info("loaded graph at:{}, data_reader_file:{}, encoded values:{}, {}",
+                graphHopper.getGraphHopperLocation(), graphHopper.getDataReaderFile(),
+                graphHopper.getEncodingManager().toEncodedValuesAsString(),
+                graphHopper.getGraphHopperStorage().toDetailsString());
     }
 
     public GraphHopper getGraphHopper() {

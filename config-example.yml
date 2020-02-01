@@ -13,10 +13,10 @@ graphhopper:
   # Enable turn restrictions for car or motorcycle.
   # graph.flag_encoders: car|turn_costs=true
 
-  # Add additional information to every edge. Used for path details.
-  # If road_environment is added and elevation is enabled then also a tunnel and bridge interpolation is done, see #798.
-  # More options are: surface,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type
-  graph.encoded_values: road_class,road_class_link,road_environment,max_speed,road_access
+  # Add additional information to every edge. Used for path details (#1548), better instructions (#1844) and tunnel/bridge interpolation (#798).
+  # Default values are: road_class,road_class_link,road_environment,max_speed,road_access (since #1805)
+  # More are: surface,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type
+  # graph.encoded_values: surface,toll,track_type
 
   # You can define your own customized vehicles via a yaml file that should be used 
   # for CH or LM preparation (see different modes below). For example:
@@ -145,8 +145,8 @@ graphhopper:
 
 
   # Spatial Rules require you to provide Polygons in which the rules are enforced
-  # The line below contains the default location for these rules
-  # spatial_rules.location: core/files/spatialrules/countries.geo.json
+  # The line below contains the default location for the files which define these borders
+  # spatial_rules.borders_directory: core/files/spatialrules
 
   # You can define the maximum BBox for which spatial rules are loaded.
   # You might want to do this if you are only importing a small area and don't need rules for other countries.
