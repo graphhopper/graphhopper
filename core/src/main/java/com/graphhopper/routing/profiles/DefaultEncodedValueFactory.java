@@ -94,7 +94,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return HazmatTunnel.class;
         if (HazmatWater.KEY.equals(name))
             return HazmatWater.class;
-        if (name.endsWith(EncodingManager.getKey("", RouteNetwork.EV_SUFFIX)))
+        if (name.endsWith(RouteNetwork.key("")))
             return RouteNetwork.class;
 
         throw new IllegalArgumentException("Cannot find enum class " + name);

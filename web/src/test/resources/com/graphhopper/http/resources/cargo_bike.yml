@@ -17,4 +17,4 @@ priority:
   # prefer better tracks
   track_type: { other: 1.1, grade1: 1.1 }
   # prefer official bike routes
-  bike.network: { other: 0.5 }
+  bike_network: { other: 0.5 }
