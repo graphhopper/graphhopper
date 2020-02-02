@@ -19,25 +19,23 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.BidirPathExtractor;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.ShortcutUnpacker;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 /**
  * @author easbar
  */
 public class EdgeBasedCHBidirPathExtractor extends BidirPathExtractor {
+    private final RoutingCHGraph routingGraph;
     private final ShortcutUnpacker shortcutUnpacker;
 
-    public EdgeBasedCHBidirPathExtractor(Graph routingGraph, Graph baseGraph, Weighting weighting) {
-        super(baseGraph, weighting);
-        shortcutUnpacker = createShortcutUnpacker(routingGraph, weighting);
-        if (!(weighting instanceof TurnWeighting)) {
-            throw new IllegalArgumentException("Need a TurnWeighting for edge-based CH");
-        }
+    public EdgeBasedCHBidirPathExtractor(RoutingCHGraph routingGraph) {
+        super(routingGraph.getGraph(), routingGraph.getWeighting());
+        this.routingGraph = routingGraph;
+        shortcutUnpacker = createShortcutUnpacker();
     }
 
     @Override
@@ -49,12 +47,12 @@ public class EdgeBasedCHBidirPathExtractor extends BidirPathExtractor {
         }
     }
 
-    private ShortcutUnpacker createShortcutUnpacker(Graph routingGraph, final Weighting weighting) {
+    private ShortcutUnpacker createShortcutUnpacker() {
         return new ShortcutUnpacker(routingGraph, new ShortcutUnpacker.Visitor() {
             @Override
             public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
                 path.addDistance(edge.getDistance());
-                path.addTime(weighting.calcMillis(edge, reverse, prevOrNextEdgeId));
+                path.addTime(GHUtility.calcMillisWithTurnMillis(routingGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
                 path.addEdge(edge.getEdge());
             }
         }, true);

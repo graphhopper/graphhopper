@@ -2,7 +2,7 @@ package com.graphhopper.util.details;
 
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
 
@@ -10,7 +10,7 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 
     private final Weighting weighting;
     private final double precision;
-    private double decimalValue = -1;
+    private Double decimalValue;
     // will include the turn time penalty
     private int prevEdgeId = -1;
 
@@ -35,13 +35,22 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        double tmpVal = edge.getDistance() / weighting.calcMillis(edge, false, prevEdgeId) * 3600;
-        if (Double.isInfinite(tmpVal))
-            throw new IllegalStateException("average_speed was infinite for " + edge.fetchWayGeometry(3));
+        // for very short edges we might not be able calculate a proper value for speed. dividing by calcMillis can
+        // even lead to speed=Infinity -> just ignore these cases here, see #1848
+        final double distance = edge.getDistance();
+        if (distance < 0.1) {
+            if (decimalValue != null)
+                return false;
 
+            // in case this is the first edge we have to return some value
+            decimalValue = null;
+            return true;
+        }
+
+        double tmpVal = distance / GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdgeId) * 3600;
         prevEdgeId = edge.getEdge();
-        if (Math.abs(tmpVal - decimalValue) >= precision) {
-            this.decimalValue =  Math.round(tmpVal / precision) * precision;
+        if (decimalValue == null || Math.abs(tmpVal - decimalValue) >= precision) {
+            this.decimalValue = Math.round(tmpVal / precision) * precision;
             return true;
         }
         return false;

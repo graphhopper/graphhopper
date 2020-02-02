@@ -9,6 +9,7 @@
 // BROWSERIFYSWAP_ENV='production' npm run watch
 // see also package.json and https://github.com/thlorenz/browserify-swap
 exports.options = {
+    with_tiles: true,
     environment: "development",
     routing: {host: '', api_key: ''},
     geocoding: {host: '', api_key: ''},

@@ -25,6 +25,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+
 /**
  * Calculates the fastest route with the specified vehicle (VehicleEncoder). Calculates the weight
  * in seconds.
@@ -45,8 +47,20 @@ public class FastestWeighting extends AbstractWeighting {
     // this factor puts a penalty on roads with a "destination"-only access, see #733
     private final double roadAccessPenalty;
 
+    public FastestWeighting(FlagEncoder encoder) {
+        this(encoder, new HintsMap(0));
+    }
+
+    public FastestWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
+        this(encoder, new HintsMap(0), turnCostProvider);
+    }
+
     public FastestWeighting(FlagEncoder encoder, PMap map) {
-        super(encoder);
+        this(encoder, map, NO_TURN_COST_PROVIDER);
+    }
+
+    public FastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
+        super(encoder, turnCostProvider);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
         maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
@@ -61,17 +75,13 @@ public class FastestWeighting extends AbstractWeighting {
         }
     }
 
-    public FastestWeighting(FlagEncoder encoder) {
-        this(encoder, new HintsMap(0));
-    }
-
     @Override
     public double getMinWeight(double distance) {
         return distance / maxSpeed;
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
@@ -90,14 +100,14 @@ public class FastestWeighting extends AbstractWeighting {
     }
 
     @Override
-    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
         // TODO move this to AbstractWeighting? see #485
         long time = 0;
         boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
         if (unfavoredEdge)
             time += headingPenaltyMillis;
 
-        return time + super.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+        return time + super.calcEdgeMillis(edgeState, reverse);
     }
 
     static double checkBounds(String key, double val, double from, double to) {

@@ -17,18 +17,18 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.util.shapes.Polygon;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.locationtech.jts.geom.Polygon;
 
 /**
  * @author Robin Boldt
  */
 public abstract class AbstractSpatialRule implements SpatialRule {
 
-    protected List<Polygon> polygons = Collections.EMPTY_LIST;
+    protected List<Polygon> polygons = Collections.emptyList();
 
     public List<Polygon> getBorders() {
         return polygons;

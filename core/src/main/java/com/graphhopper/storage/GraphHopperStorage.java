@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
@@ -87,21 +88,23 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      * Adds a {@link CHGraph} for the given {@link CHProfile}. You need to call this method before calling {@link #create(long)}
      * or {@link #loadExisting()}.
      */
-    public void addCHGraph(CHProfile chProfile) {
+    public GraphHopperStorage addCHGraph(CHProfile chProfile) {
         baseGraph.checkNotInitialized();
         if (getCHProfiles().contains(chProfile)) {
             throw new IllegalArgumentException("For the given CH profile a CHGraph already exists: " + chProfile);
         }
         chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph, segmentSize));
+        return this;
     }
 
     /**
      * @see #addCHGraph(CHProfile)
      */
-    public void addCHGraphs(List<CHProfile> chProfiles) {
+    public GraphHopperStorage addCHGraphs(List<CHProfile> chProfiles) {
         for (CHProfile chProfile : chProfiles) {
             addCHGraph(chProfile);
         }
+        return this;
     }
 
     public CHGraph getCHGraph() {
@@ -447,6 +450,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public TurnCostStorage getTurnCostStorage() {
         return baseGraph.getTurnCostStorage();
+    }
+
+    @Override
+    public Weighting wrapWeighting(Weighting weighting) {
+        return weighting;
     }
 
     @Override

@@ -149,13 +149,11 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     }
 
     @Override
-    public boolean isReady(PathMerger pathMerger, Translation tr) {
+    public void finish(PathMerger pathMerger, Translation tr) {
         PathWrapper altResponse = new PathWrapper();
         altResponse.setWaypoints(getWaypoints());
         ghResponse.add(altResponse);
         pathMerger.doWork(altResponse, pathList, lookup, tr);
-        // with potentially retrying, including generating new route points, for now disabled
-        return true;
     }
 
     private QueryResult generateValidPoint(GHPoint from, double distanceInMeters, double heading,
@@ -175,9 +173,4 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
         }
     }
 
-    @Override
-    public int getMaxRetries() {
-        // with potentially retrying, including generating new route points, for now disabled
-        return 1;
-    }
 }

@@ -1,16 +1,14 @@
 package com.graphhopper.routing.util.parsers;
 
-import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.HazmatTunnel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class OSMHazmatTunnelParserTest {
 
@@ -34,7 +32,7 @@ public class OSMHazmatTunnelParserTest {
         readerWay.setTag("hazmat:adr_tunnel_cat", "A");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatTunnel.A, hazTunnelEnc.getEnum(false, intsRef));
-        
+
         intsRef = em.createEdgeFlags();
         readerWay = new ReaderWay(1);
         readerWay.setTag("hazmat:adr_tunnel_cat", "B");
@@ -67,7 +65,7 @@ public class OSMHazmatTunnelParserTest {
         readerWay.setTag("hazmat:tunnel_cat", "A");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatTunnel.A, hazTunnelEnc.getEnum(false, intsRef));
-        
+
         intsRef = em.createEdgeFlags();
         readerWay = new ReaderWay(1);
         readerWay.setTag("hazmat:tunnel_cat", "B");
@@ -101,7 +99,7 @@ public class OSMHazmatTunnelParserTest {
         readerWay.setTag("hazmat:A", "no");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatTunnel.A, hazTunnelEnc.getEnum(false, intsRef));
-        
+
         intsRef = em.createEdgeFlags();
         readerWay = new ReaderWay(1);
         readerWay.setTag("tunnel", "yes");
@@ -130,7 +128,7 @@ public class OSMHazmatTunnelParserTest {
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatTunnel.E, hazTunnelEnc.getEnum(false, intsRef));
     }
-    
+
     @Test
     public void testOrder() {
         IntsRef intsRef = em.createEdgeFlags();
@@ -143,7 +141,7 @@ public class OSMHazmatTunnelParserTest {
         readerWay.setTag("hazmat:E", "no");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatTunnel.E, hazTunnelEnc.getEnum(false, intsRef));
-        
+
         intsRef = em.createEdgeFlags();
         readerWay = new ReaderWay(1);
         readerWay.setTag("tunnel", "yes");
@@ -152,7 +150,7 @@ public class OSMHazmatTunnelParserTest {
         readerWay.setTag("hazmat:C", "no");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatTunnel.C, hazTunnelEnc.getEnum(false, intsRef));
-        
+
         intsRef = em.createEdgeFlags();
         readerWay = new ReaderWay(1);
         readerWay.setTag("tunnel", "yes");
@@ -161,7 +159,7 @@ public class OSMHazmatTunnelParserTest {
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatTunnel.E, hazTunnelEnc.getEnum(false, intsRef));
     }
-    
+
     @Test
     public void testIgnoreNonTunnelSubtags() {
         IntsRef intsRef = em.createEdgeFlags();
@@ -170,7 +168,7 @@ public class OSMHazmatTunnelParserTest {
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
         assertEquals(HazmatTunnel.A, hazTunnelEnc.getEnum(false, intsRef));
     }
-    
+
     @Test
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);

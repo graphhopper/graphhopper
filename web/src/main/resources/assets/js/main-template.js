@@ -32,14 +32,12 @@ if (!host) {
 var AutoComplete = require('./autocomplete.js');
 if (ghenv.environment === 'development') {
     var autocomplete = AutoComplete.prototype.createStub();
-    GHRequest.prototype.hasTCSupport = function() {
-       var featureSet = this.features[this.api_params.vehicle];
-       this.api_params.turn_costs = featureSet && featureSet.turn_costs;
-    };
 } else {
     var autocomplete = new AutoComplete(ghenv.geocoding.host, ghenv.geocoding.api_key);
+    // overwrite default for production
     GHRequest.prototype.hasTCSupport = function() {
-       return new Set(["car", "truck", "small_truck", "scooter"]).has(this.api_params.vehicle);
+       if(this.api_params.turn_costs !== false)
+          this.api_params.turn_costs = new Set(["car", "truck", "small_truck", "scooter"]).has(this.api_params.vehicle);
     };
 }
 
@@ -54,6 +52,8 @@ var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
 var vehicleTools = require('./tools/vehicle.js');
 var tileLayers = require('./config/tileLayers.js');
+if(ghenv.with_tiles)
+   tileLayers.enableVectorTiles();
 
 var debug = false;
 var ghRequest = new GHRequest(host, ghenv.routing.api_key);
@@ -394,6 +394,7 @@ function setIntermediateCoord(e) {
     });
     var index = routeManipulation.getIntermediatePointIndex(routeSegments, e.latlng);
     ghRequest.route.add(e.latlng.wrap(), index);
+    ghRequest.do_zoom = false;
     resolveIndex(index);
     routeIfAllResolved();
 }

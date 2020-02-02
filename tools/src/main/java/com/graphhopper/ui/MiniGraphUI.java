@@ -23,18 +23,23 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.CHWeighting;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Algorithms;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +51,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.Random;
+
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 /**
  * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
@@ -106,8 +113,8 @@ public class MiniGraphUI {
                     private final GraphicsWrapper mg;
                     private Graphics2D g2;
 
-                    public TmpAlgo(Graph graph, Weighting type, GraphicsWrapper mg) {
-                        super(graph, type);
+                    public TmpAlgo(RoutingCHGraph graph, GraphicsWrapper mg) {
+                        super(graph);
                         this.mg = mg;
                     }
 
@@ -117,11 +124,11 @@ public class MiniGraphUI {
                     }
 
                     @Override
-                    public void updateBestPath(EdgeIteratorState es, SPTEntry entry, int traversalId, boolean reverse) {
+                    public void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
                         if (g2 != null)
                             mg.plotNode(g2, traversalId, Color.YELLOW, 6);
 
-                        super.updateBestPath(es, entry, traversalId, reverse);
+                        super.updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
                     }
                 }
 
@@ -129,8 +136,7 @@ public class MiniGraphUI {
                 public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                     // doable but ugly
                     Weighting w = ((PrepareContractionHierarchies) tmpFactory).getWeighting();
-                    return new TmpAlgo(g, new CHWeighting(w), mg).
-                            setEdgeFilter(new LevelEdgeFilter((CHGraph) routingGraph));
+                    return new TmpAlgo(new RoutingCHGraphImpl(routingGraph, w), mg);
                 }
             };
             algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
@@ -139,7 +145,7 @@ public class MiniGraphUI {
             map.put(Parameters.CH.DISABLE, true);
 //            map.put(Parameters.Landmark.DISABLE, true);
             routingGraph = graph;
-            weighting = hopper.createWeighting(map, encoder);
+            weighting = hopper.createWeighting(map, encoder, NO_TURN_COST_PROVIDER);
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
             algoFactory = new RoutingAlgorithmFactory() {
 

@@ -24,7 +24,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.parsers.*;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -252,6 +251,9 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         private void _addEdgeTagParser(TagParser tagParser, boolean withNamespace, boolean insert) {
+            if (!em.edgeEncoders.isEmpty())
+                throw new IllegalStateException("Avoid mixing encoded values from FlagEncoder with shared encoded values until we have a more clever mechanism, see #1862");
+
             List<EncodedValue> list = new ArrayList<>();
             tagParser.createEncodedValues(em, list);
             for (EncodedValue ev : list) {
@@ -271,8 +273,7 @@ public class EncodingManager implements EncodedValueLookup {
             }
             em.relationTagParsers.add(tagParser);
 
-            // for simplicity add into edge-EncodedValue
-            _addEdgeTagParser(tagParser, true, false);
+            _addEdgeTagParser(tagParser, false, false);
         }
 
         private void _addTurnCostParser(TurnCostParser parser) {
@@ -308,23 +309,24 @@ public class EncodingManager implements EncodedValueLookup {
                 em.addEncodedValue(ev, false);
             }
 
-            if (!em.encodedValueMap.containsKey(RoadAccess.KEY))
-                _addEdgeTagParser(new OSMRoadAccessParser(), false, true);
-            if (!em.encodedValueMap.containsKey(MaxSpeed.KEY))
-                _addEdgeTagParser(new OSMMaxSpeedParser(), false, true);
-            if (!em.encodedValueMap.containsKey(RoadEnvironment.KEY))
-                _addEdgeTagParser(new OSMRoadEnvironmentParser(), false, true);
-            if (!em.encodedValueMap.containsKey(RoadClassLink.KEY))
-                _addEdgeTagParser(new OSMRoadClassLinkParser(), false, true);
-            if (!em.encodedValueMap.containsKey(RoadClass.KEY))
-                _addEdgeTagParser(new OSMRoadClassParser(), false, true);
-            if (!em.encodedValueMap.containsKey(Roundabout.KEY))
-                _addEdgeTagParser(new OSMRoundaboutParser(), false, true);
+            if (!em.hasEncodedValue(Roundabout.KEY))
+                _addEdgeTagParser(new OSMRoundaboutParser(), false, false);
+            if (!em.hasEncodedValue(RoadClass.KEY))
+                _addEdgeTagParser(new OSMRoadClassParser(), false, false);
+            if (!em.hasEncodedValue(RoadClassLink.KEY))
+                _addEdgeTagParser(new OSMRoadClassLinkParser(), false, false);
+            if (!em.hasEncodedValue(RoadEnvironment.KEY))
+                _addEdgeTagParser(new OSMRoadEnvironmentParser(), false, false);
+            if (!em.hasEncodedValue(MaxSpeed.KEY))
+                _addEdgeTagParser(new OSMMaxSpeedParser(), false, false);
+            if (!em.hasEncodedValue(RoadAccess.KEY))
+                _addEdgeTagParser(new OSMRoadAccessParser(), false, false);
 
+            // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or road_access
             // TODO can we avoid this hack without complex dependency management?
-            // ensure that SpatialRuleParser come after required EncodedValues like max_speed or road_access
+            boolean insert = true;
             for (SpatialRuleParser srp : insertLater) {
-                _addEdgeTagParser(srp, false, true);
+                _addEdgeTagParser(srp, false, insert);
             }
 
             if (dateRangeParser == null)
@@ -332,16 +334,18 @@ public class EncodingManager implements EncodedValueLookup {
 
             for (AbstractFlagEncoder encoder : flagEncoderList) {
                 if (encoder instanceof BikeCommonFlagEncoder) {
-                    if (!em.hasEncodedValue(getKey("bike", RouteNetwork.EV_SUFFIX)))
+                    if (!em.hasEncodedValue(RouteNetwork.key("bike")))
                         _addRelationTagParser(new OSMBikeNetworkTagParser());
-                    if (!em.encodedValueMap.containsKey(GetOffBike.KEY))
+                    if (!em.hasEncodedValue(GetOffBike.KEY))
                         _addEdgeTagParser(new OSMGetOffBikeParser(), false, false);
 
                 } else if (encoder instanceof FootFlagEncoder) {
-                    if (!em.hasEncodedValue(getKey("foot", RouteNetwork.EV_SUFFIX)))
+                    if (!em.hasEncodedValue(RouteNetwork.key("foot")))
                         _addRelationTagParser(new OSMFootNetworkTagParser());
                 }
+            }
 
+            for (AbstractFlagEncoder encoder : flagEncoderList) {
                 encoder.init(dateRangeParser);
                 em.addEncoder(encoder);
             }
@@ -352,7 +356,7 @@ public class EncodingManager implements EncodedValueLookup {
 
             // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
             for (AbstractFlagEncoder encoder : flagEncoderList) {
-                if (encoder.supports(TurnWeighting.class) && !em.turnCostParsers.containsKey(encoder.toString()))
+                if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(encoder.toString()))
                     _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts()));
             }
 
@@ -470,7 +474,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
-        if (encodedValueMap.containsKey(ev.getName()))
+        if (hasEncodedValue(ev.getName()))
             throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
         if (!withNamespace && ev.getName().contains(SPECIAL_SEPARATOR))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain namespace character '" + SPECIAL_SEPARATOR + "'");
@@ -741,7 +745,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     public boolean needsTurnCostsSupport() {
         for (FlagEncoder encoder : edgeEncoders) {
-            if (encoder.supports(TurnWeighting.class))
+            if (encoder.supportsTurnCosts())
                 return true;
         }
         return false;

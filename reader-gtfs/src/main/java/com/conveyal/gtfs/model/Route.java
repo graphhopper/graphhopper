@@ -27,10 +27,10 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 
@@ -138,46 +138,5 @@ public class Route extends Entity { // implements Entity.Factory<Route>
             feed.routes.put(r.route_id, r);
         }
 
-    }
-
-    public static class Writer extends Entity.Writer<Route> {    	
-        public Writer (GTFSFeed feed) {
-            super(feed, "routes");
-        }
-
-        @Override
-        public void writeHeaders() throws IOException {
-            writeStringField("agency_id");
-            writeStringField("route_id");
-            writeStringField("route_short_name");
-            writeStringField("route_long_name");
-            writeStringField("route_desc");
-            writeStringField("route_type");
-            writeStringField("route_url");
-            writeStringField("route_color");
-            writeStringField("route_text_color");
-            writeStringField("route_branding_url");
-            endRecord();
-        }
-
-        @Override
-        public void writeOneRow(Route r) throws IOException {
-            writeStringField(r.agency_id);
-            writeStringField(r.route_id);
-            writeStringField(r.route_short_name);
-            writeStringField(r.route_long_name);
-            writeStringField(r.route_desc);
-            writeIntField(r.route_type);
-            writeUrlField(r.route_url);
-            writeStringField(r.route_color);
-            writeStringField(r.route_text_color);
-            writeUrlField(r.route_branding_url);
-            endRecord();
-        }
-
-        @Override
-        public Iterator<Route> iterator() {
-            return feed.routes.values().iterator();
-        }   	
     }
 }

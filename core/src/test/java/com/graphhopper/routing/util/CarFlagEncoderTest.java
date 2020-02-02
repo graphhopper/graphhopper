@@ -23,7 +23,6 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.Roundabout;
-import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.GHUtility;
@@ -227,11 +226,11 @@ public class CarFlagEncoderTest {
         EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
         assertTrue(em.acceptWay(way, acceptWay));
         IntsRef edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
-        assertEquals(60, weighting.calcWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false, -1), 0.1);
+        assertEquals(60, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
 
         way.setTag("vehicle", "destination");
         edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
-        assertEquals(600, weighting.calcWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false, -1), 0.1);
+        assertEquals(600, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
     }
 
     @Test

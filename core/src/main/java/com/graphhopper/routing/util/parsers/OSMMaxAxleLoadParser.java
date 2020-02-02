@@ -22,7 +22,6 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.MaxAxleLoad;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
@@ -36,7 +35,7 @@ public class OSMMaxAxleLoadParser implements TagParser {
     public OSMMaxAxleLoadParser() {
         this(MaxAxleLoad.create());
     }
-    
+
     public OSMMaxAxleLoadParser(DecimalEncodedValue maxAxleLoadEncoder) {
         this.maxAxleLoadEncoder = maxAxleLoadEncoder;
     }

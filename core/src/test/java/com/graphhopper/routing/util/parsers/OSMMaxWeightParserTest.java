@@ -8,7 +8,6 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
 import static org.junit.Assert.assertEquals;
 
 public class OSMMaxWeightParserTest {

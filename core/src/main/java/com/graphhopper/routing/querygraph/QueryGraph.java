@@ -22,6 +22,8 @@ import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.weighting.QueryGraphWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.ExtendedNodeAccess;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -81,11 +83,7 @@ public class QueryGraph implements Graph {
 
         graphModification = GraphModificationBuilder.build(graph, queryResults);
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
-
-        if (mainGraph.getTurnCostStorage() != null)
-            turnCostStorage = new QueryGraphTurnCostStorage(mainGraph, graphModification.getClosestEdges());
-        else
-            turnCostStorage = null;
+        turnCostStorage = mainGraph.getTurnCostStorage();
 
         // build data structures holding the virtual edges at all real/virtual nodes that are modified compared to the
         // mainGraph.
@@ -366,6 +364,11 @@ public class QueryGraph implements Graph {
     }
 
     @Override
+    public Weighting wrapWeighting(Weighting weighting) {
+        return new QueryGraphWeighting(weighting, mainGraph.getNodes(), mainGraph.getEdges(), graphModification.getClosestEdges());
+    }
+
+    @Override
     public int getOtherNode(int edge, int node) {
         if (isVirtualEdge(edge)) {
             return getEdgeIteratorState(edge, node).getBaseNode();
@@ -388,5 +391,9 @@ public class QueryGraph implements Graph {
 
     private UnsupportedOperationException exc() {
         return new UnsupportedOperationException("QueryGraph cannot be modified.");
+    }
+
+    public Graph getMainGraph() {
+        return mainGraph;
     }
 }

@@ -23,7 +23,6 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RouteNetwork;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -65,7 +64,7 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(bikeRouteEnc = new EnumEncodedValue<>(getKey("bike", RouteNetwork.EV_SUFFIX), RouteNetwork.class));
+        registerNewEncodedValue.add(bikeRouteEnc = new EnumEncodedValue<>(RouteNetwork.key("bike"), RouteNetwork.class));
     }
 
     @Override

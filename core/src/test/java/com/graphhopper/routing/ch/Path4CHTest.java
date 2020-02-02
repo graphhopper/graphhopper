@@ -1,25 +1,19 @@
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.AbstractBidirectionEdgeCHNoSOD;
-import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
+import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
@@ -28,14 +22,14 @@ public class Path4CHTest {
     private GraphHopperStorage graph;
     private CHGraph chGraph;
     private FlagEncoder encoder;
-    private Weighting weighting;
 
     @Before
     public void init() {
         encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
-        weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(em).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
+        graph = new GraphBuilder(em)
+                .setCHProfileStrings("motorcycle|fastest|edge")
+                .create();
         chGraph = graph.getCHGraph();
     }
 
@@ -151,12 +145,8 @@ public class Path4CHTest {
         assertEquals("wrong time", expectedWeight * 1000, path.getTime(), 1.e-3);
     }
 
-    private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnWeighting chTurnWeighting = new TurnWeighting(new CHWeighting(weighting), graph.getTurnCostStorage());
-        CHGraph lg = graph.getCHGraph();
-        AbstractBidirectionEdgeCHNoSOD algo = new DijkstraBidirectionEdgeCHNoSOD(lg, chTurnWeighting);
-        algo.setEdgeFilter(new LevelEdgeFilter(lg));
-        return algo;
+    private RoutingAlgorithm createAlgo() {
+        return new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, AlgorithmOptions.start().build());
     }
 
 }

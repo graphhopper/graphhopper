@@ -22,7 +22,6 @@ import java.util.Map;
 
 /**
  * Simple impl of Map.Entry. So that we can have ordered maps.
- * <p>
  *
  * @author Peter Karich
  */

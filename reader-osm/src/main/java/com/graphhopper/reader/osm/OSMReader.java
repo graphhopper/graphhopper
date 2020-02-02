@@ -698,11 +698,11 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                     pillarNodes.add(lat, lon);
             }
         }
-        if (towerNodeDistance < 0.0001) {
+        if (towerNodeDistance < 0.001) {
             // As investigation shows often two paths should have crossed via one identical point 
             // but end up in two very close points.
             zeroCounter++;
-            towerNodeDistance = 0.0001;
+            towerNodeDistance = 0.001;
         }
 
         double maxDistance = (Integer.MAX_VALUE - 1) / 1000d;

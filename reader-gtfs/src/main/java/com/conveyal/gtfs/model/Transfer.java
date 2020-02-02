@@ -29,7 +29,6 @@ package com.conveyal.gtfs.model;
 import com.conveyal.gtfs.GTFSFeed;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 public class Transfer extends Entity {
 
@@ -80,30 +79,4 @@ public class Transfer extends Entity {
 
     }
 
-    public static class Writer extends Entity.Writer<Transfer> {
-        public Writer (GTFSFeed feed) {
-            super(feed, "transfers");
-        }
-
-        @Override
-        protected void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"from_stop_id", "to_stop_id", "transfer_type", "min_transfer_time"});
-        }
-
-        @Override
-        protected void writeOneRow(Transfer t) throws IOException {
-            writeStringField(t.from_stop_id);
-            writeStringField(t.to_stop_id);
-            writeIntField(t.transfer_type);
-            writeIntField(t.min_transfer_time);
-            endRecord();
-        }
-
-        @Override
-        protected Iterator<Transfer> iterator() {
-            return feed.transfers.values().iterator();
-        }
-
-
-    }
 }

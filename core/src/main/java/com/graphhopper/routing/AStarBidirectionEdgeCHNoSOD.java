@@ -18,10 +18,12 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.AStarCHEntry;
-import com.graphhopper.routing.weighting.*;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.routing.weighting.BalancedWeightApproximator;
+import com.graphhopper.routing.weighting.BeelineWeightApproximator;
+import com.graphhopper.routing.weighting.WeightApproximator;
+import com.graphhopper.storage.RoutingCHEdgeIteratorState;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
 /**
@@ -29,17 +31,16 @@ import com.graphhopper.util.Helper;
  */
 public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD {
     private final boolean useHeuristicForNodeOrder = false;
-    private ConsistentWeightApproximator weightApprox;
+    private BalancedWeightApproximator weightApprox;
 
-    public AStarBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
-        super(graph, weighting);
-        setApproximation(new BeelineWeightApproximator(nodeAccess, weighting).setDistanceCalc(Helper.DIST_PLANE));
+    public AStarBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
+        super(graph);
+        setApproximation(new BeelineWeightApproximator(nodeAccess, graph.getWeighting()).setDistanceCalc(Helper.DIST_PLANE));
     }
 
     @Override
     public void init(int from, double fromWeight, int to, double toWeight) {
-        weightApprox.setFrom(from);
-        weightApprox.setTo(to);
+        weightApprox.setFromTo(from, to);
         super.init(from, fromWeight, to, toWeight);
     }
 
@@ -60,7 +61,7 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
     }
 
     @Override
-    protected SPTEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+    protected SPTEntry createEntry(RoutingCHEdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
         int neighborNode = edge.getAdjNode();
         double heapWeight = getHeapWeight(neighborNode, reverse, weight);
         AStarCHEntry entry = new AStarCHEntry(edge.getEdge(), incEdge, neighborNode, heapWeight, weight);
@@ -69,7 +70,7 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
     }
 
     @Override
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
+    protected void updateEntry(SPTEntry entry, RoutingCHEdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
         ((AStarCHEntry) entry).incEdge = edgeId;
         entry.weight = getHeapWeight(edge.getAdjNode(), reverse, weight);
@@ -82,7 +83,7 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
     }
 
     public AStarBidirectionEdgeCHNoSOD setApproximation(WeightApproximator weightApproximator) {
-        weightApprox = new ConsistentWeightApproximator(weightApproximator);
+        weightApprox = new BalancedWeightApproximator(weightApproximator);
         return this;
     }
 

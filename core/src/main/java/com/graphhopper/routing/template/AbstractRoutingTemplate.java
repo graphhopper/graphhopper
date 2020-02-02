@@ -11,8 +11,6 @@ import com.graphhopper.util.PointList;
 
 import java.util.List;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-
 /**
  * @author Peter Karich
  */
@@ -33,8 +31,8 @@ public abstract class AbstractRoutingTemplate {
         this.edgeFilter = new EdgeFilter() {
             @Override
             public boolean accept(EdgeIteratorState edgeState) {
-                return edgeState.get(accessEnc) && !Double.isInfinite(weighting.calcWeight(edgeState, false, NO_EDGE))
-                        || edgeState.getReverse(accessEnc) && !Double.isInfinite(weighting.calcWeight(edgeState, true, NO_EDGE));
+                return edgeState.get(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, false))
+                        || edgeState.getReverse(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, true));
             }
         };
     }

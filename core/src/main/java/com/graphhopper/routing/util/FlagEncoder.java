@@ -17,13 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.InstructionAnnotation;
-import com.graphhopper.util.Translation;
 
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
@@ -53,6 +49,8 @@ public interface FlagEncoder extends EncodedValueLookup {
      * This method returns the EncodedValue used for the average speed of this encoder.
      */
     DecimalEncodedValue getAverageSpeedEnc();
+
+    boolean supportsTurnCosts();
 
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.

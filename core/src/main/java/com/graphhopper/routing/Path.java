@@ -40,10 +40,10 @@ import java.util.List;
  * @author easbar
  */
 public class Path {
-    protected Graph graph;
-    protected double distance;
-    protected long time;
-    protected int endNode = -1;
+    Graph graph;
+    double distance;
+    long time;
+    int endNode = -1;
     private boolean reverseOrder = true;
     private List<String> description;
     private boolean found;

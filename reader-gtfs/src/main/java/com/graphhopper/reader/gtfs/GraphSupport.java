@@ -24,6 +24,7 @@ import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
@@ -294,6 +295,11 @@ class GraphSupport {
 
             @Override
             public TurnCostStorage getTurnCostStorage() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Weighting wrapWeighting(Weighting weighting) {
                 throw new UnsupportedOperationException();
             }
 
