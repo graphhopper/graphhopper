@@ -959,14 +959,6 @@ public class GraphHopper implements GraphHopperAPI {
         if (weighting == null)
             throw new IllegalArgumentException("weighting " + weightingStr + " not supported");
 
-        if (hintsMap.has(Routing.BLOCK_AREA)) {
-            String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
-            // TODO NOW throw error if area contains one of the query points
-            GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(getGraphHopperStorage(), getLocationIndex()).
-                    parseBlockArea(blockAreaStr, DefaultEdgeFilter.allEdges(encoder), hintsMap.getDouble("block_area.edge_id_max_area", 1000 * 1000));
-            return new BlockAreaWeighting(weighting, blockArea);
-        }
-
         return weighting;
     }
 
@@ -1067,6 +1059,8 @@ public class GraphHopper implements GraphHopperAPI {
             } else {
                 checkNonChMaxWaypointDistance(points);
                 weighting = createWeighting(hints, encoder, turnCostProvider);
+                if (hints.has(Routing.BLOCK_AREA))
+                    weighting = new BlockAreaWeighting(weighting, createBlockArea(points, hints, DefaultEdgeFilter.allEdges(encoder)));
             }
             ghRsp.addDebugInfo("tmode:" + tMode.toString());
 
@@ -1146,6 +1140,17 @@ public class GraphHopper implements GraphHopperAPI {
 
     protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
         return new ChangeGraphHelper(graph, locationIndex);
+    }
+
+    private GraphEdgeIdFinder.BlockArea createBlockArea(List<GHPoint> points, HintsMap hints, EdgeFilter edgeFilter) {
+        String blockAreaStr = hints.get(Parameters.Routing.BLOCK_AREA, "");
+        GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(getGraphHopperStorage(), getLocationIndex()).
+                parseBlockArea(blockAreaStr, edgeFilter, hints.getDouble(Routing.BLOCK_AREA + ".edge_id_max_area", 1000 * 1000));
+        for (GHPoint p : points) {
+            if (blockArea.contains(p))
+                throw new IllegalArgumentException("Request with " + Routing.BLOCK_AREA + " contained query point " + p + ". This is not allowed.");
+        }
+        return blockArea;
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {
