@@ -91,7 +91,7 @@ var availableTileLayers = {
 };
 
 var overlays;
-if(ghenv.environment === 'development') {
+module.exports.enableVectorTiles = function () {
     var omniscaleGray = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.grayscale/layers.world,buildings,landusages,labels/{z}/{x}/{y}.png?' + (retinaTiles ? '&hq=true' : ''), {
         layers: 'osm',
         attribution: osmAttr + ', &copy; <a href="https://maps.omniscale.com/">Omniscale</a>'

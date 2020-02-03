@@ -22,7 +22,6 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.util.EdgeIterator;
 
-import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
@@ -100,7 +99,7 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
      * This is a convenient setter method and should not be used in loops or where speed is important.
      */
     public void setExpensive(String name, EncodedValueLookup lookup, int fromEdge, int viaNode, int toEdge, double cost) {
-        set(lookup.getDecimalEncodedValue(getKey(name, EV_SUFFIX)), TurnCost.createFlags(), fromEdge, viaNode, toEdge, cost);
+        set(lookup.getDecimalEncodedValue(TurnCost.key(name)), TurnCost.createFlags(), fromEdge, viaNode, toEdge, cost);
     }
 
     /**
@@ -192,7 +191,7 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
      * This is a convenient getter method and should not be used in loops or where speed is important.
      */
     public double getExpensive(String name, EncodedValueLookup lookup, int fromEdge, int viaNode, int toEdge) {
-        return get(lookup.getDecimalEncodedValue(getKey(name, EV_SUFFIX)), TurnCost.createFlags(), fromEdge, viaNode, toEdge);
+        return get(lookup.getDecimalEncodedValue(TurnCost.key(name)), TurnCost.createFlags(), fromEdge, viaNode, toEdge);
     }
 
     /**

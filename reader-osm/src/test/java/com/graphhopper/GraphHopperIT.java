@@ -441,25 +441,32 @@ public class GraphHopperIT {
         req.getHints().put(Routing.BLOCK_AREA, someArea);
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(12173, rsp.getBest().getDistance(), 1);
+        assertEquals(13988, rsp.getBest().getDistance(), 1);
 
         // Add blocked point to above area, to increase detour        
         req.getHints().put(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(12787, rsp.getBest().getDistance(), 1);
+        assertEquals(14602, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small circular area
-        req.getHints().put(Routing.BLOCK_AREA, "49.981599,11.517448,100");
+        req.getHints().put(Routing.BLOCK_AREA, "49.979929,11.520066,200");
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(6879, rsp.getBest().getDistance(), 1);
+        assertEquals(12173, rsp.getBest().getDistance(), 1);
+
+        // TODO after #1324 this will work and should block both roads and return 12173m, currently it still routes
+        //  through one of the roads due to "disconnected" roads
+        req.getHints().put(Routing.BLOCK_AREA, "49.981502,11.51762,80");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(7383, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small rectangular area
-        req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.981088,11.519423");
+        req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(6879, rsp.getBest().getDistance(), 1);
+        assertEquals(12173, rsp.getBest().getDistance(), 1);
 
         // blocking works for all weightings
         req = new GHRequest(50.009504, 11.490669, 50.024726, 11.496162).
@@ -473,6 +480,25 @@ public class GraphHopperIT {
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(3363, rsp.getBest().getDistance(), 1);
+
+        // query point and snapped point are different => block snapped point only => show that block_area changes lookup
+        req = new GHRequest(49.984465, 11.507009, 49.986107, 11.507202);
+        rsp = tmpHopper.route(req);
+        assertEquals(11.506, rsp.getBest().getWaypoints().getLongitude(0), 0.001);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(155, rsp.getBest().getDistance(), 10);
+
+        req.getHints().put(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
+        rsp = tmpHopper.route(req);
+        assertEquals(11.508, rsp.getBest().getWaypoints().getLongitude(0), 0.001);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(1185, rsp.getBest().getDistance(), 10);
+
+        // first point is contained in block_area => error
+        req = new GHRequest(49.979, 11.516, 49.986107, 11.507202);
+        req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
+        rsp = tmpHopper.route(req);
+        assertTrue("expected errors", rsp.hasErrors());
     }
 
     @Test

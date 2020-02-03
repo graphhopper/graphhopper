@@ -23,9 +23,11 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.shapes.Polygon;
 
+import java.util.Collections;
 import java.util.List;
+
+import org.locationtech.jts.geom.Polygon;
 
 /**
  * This class is the simplified entry to all functionality if you import from OpenStreetMap data.
@@ -69,7 +71,7 @@ public class GraphHopperOSM extends GraphHopper {
             return;
 
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(landmarkSplittingFeatureCollection, "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
+            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(landmarkSplittingFeatureCollection), "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
                 @Override
                 public SpatialRule createSpatialRule(final String id, List<Polygon> polygons) {
                     return new DefaultSpatialRule() {

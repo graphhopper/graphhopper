@@ -17,10 +17,14 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.GraphHopper;
+import com.graphhopper.routing.util.BikeFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
@@ -59,7 +63,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void testSave_and_fileFormat() throws IOException {
+    public void testSave_and_fileFormat() {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
@@ -278,6 +282,43 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         assertEquals(44, iter.getFlags().ints[0]);
         assertEquals(13, edge1.getFlags().ints[0]);
+    }
+
+    @Test
+    public void testLoadGraph_implicitEncodedValues_issue1862() {
+        Helper.removeDir(new File(defaultGraphLoc));
+        encodingManager = new EncodingManager.Builder().add(createCarFlagEncoder()).add(new BikeFlagEncoder()).build();
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 12, 23);
+        na.setNode(1, 8, 13);
+        na.setNode(2, 2, 10);
+        na.setNode(3, 5, 9);
+        graph.edge(1, 2, 10, true);
+        graph.edge(1, 3, 10, true);
+        int nodes = graph.getNodes();
+        int edges = graph.getAllEdges().length();
+        graph.flush();
+        boolean ch = graph.isCHPossible();
+        Helper.close(graph);
+
+        // load without configured FlagEncoders
+        GraphHopper hopper = new GraphHopper().setCHEnabled(ch);
+        assertTrue(hopper.load(defaultGraphLoc));
+        graph = hopper.getGraphHopperStorage();
+        assertEquals(nodes, graph.getNodes());
+        assertEquals(edges, graph.getAllEdges().length());
+        Helper.close(graph);
+
+        // load via explicitly configured FlagEncoders
+        hopper = new GraphHopper().setCHEnabled(ch).setEncodingManager(encodingManager);
+        assertTrue(hopper.load(defaultGraphLoc));
+        graph = hopper.getGraphHopperStorage();
+        assertEquals(nodes, graph.getNodes());
+        assertEquals(edges, graph.getAllEdges().length());
+        Helper.close(graph);
+
+        Helper.removeDir(new File(defaultGraphLoc));
     }
 
 }

@@ -29,7 +29,7 @@ function printBashUsage {
   echo "-fd| --force-download     force the download of the OSM data file if needed"
   echo "-h | --help               display this message"
   echo "--host <host>             specify to which host the service should be bound"
-  echo "-i | --input <file>       path to the input map file or name of the file to download"
+  echo "-i | --input <file>       path to the input map file or name of the file to download. To download from geofabrik don't append 'latest.osm' and use _ instead of /, e.g. europe_ireland-and-northern-ireland.pbf"
   echo "--jar <file>              specify the jar file (useful if you want to reuse this script for custom builds)"
   echo "-o | --graph-cache <dir>  directory for graph cache output"
   echo "-p | --profiles <string>  comma separated list of vehicle profiles"
