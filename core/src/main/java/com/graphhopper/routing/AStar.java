@@ -115,6 +115,9 @@ public class AStar extends AbstractRoutingAlgorithm {
                 double tmpWeight;
                 if (weighting instanceof TDWeighting) {
                     tmpWeight = ((TDWeighting) weighting).calcTDWeight(iter, false, currEdge.edge, currEdge.time) + currEdge.weightOfVisitedPath;
+                    double turnWeight = weighting.calcTurnWeight(currEdge.edge, iter.getBaseNode(), iter.getOrigEdgeFirst());
+                    tmpWeight += turnWeight;
+                    if (!outEdgeFilter.accept(iter)) tmpWeight = Double.POSITIVE_INFINITY;
                 } else {
                     tmpWeight = !outEdgeFilter.accept(iter)
                         ? Double.POSITIVE_INFINITY

@@ -1009,10 +1009,6 @@ public class GraphHopper implements GraphHopperAPI {
             if (hints.has(Routing.EDGE_BASED))
                 tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
-            if (tMode.isEdgeBased() && !encoder.supportsTurnCosts()) {
-                throw new IllegalArgumentException("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true");
-            }
-
             if (!tMode.isEdgeBased() && !request.getCurbsides().isEmpty()) {
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
             }

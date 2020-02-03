@@ -72,7 +72,7 @@ public class GraphHopperManaged implements Managed {
                 public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph, TurnCostProvider turnCostProvider) {
                     Weighting weighting = super.createWeighting(hintsMap, encoder, graph, turnCostProvider);
                     if (hintsMap.has("block_property")) {
-                        return getTimeDependentAccessWeighting(weighting);
+                        return new TimeDependentAccessWeighting(osm, graphHopper, weighting);
                     }
                     return weighting;
                 }
@@ -90,10 +90,6 @@ public class GraphHopperManaged implements Managed {
             }
         }
         graphHopper.init(configuration);
-    }
-
-    private TimeDependentAccessWeighting getTimeDependentAccessWeighting(Weighting weighting) {
-        return new TimeDependentAccessWeighting(osm, graphHopper, weighting);
     }
 
     @Override
