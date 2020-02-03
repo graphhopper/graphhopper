@@ -40,7 +40,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
@@ -498,7 +497,7 @@ public class QueryGraphTest {
                 create(100);
         TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
         IntsRef tcFlags = TurnCost.createFlags();
-        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), EV_SUFFIX));
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);
         na.setNode(1, .00, .01);

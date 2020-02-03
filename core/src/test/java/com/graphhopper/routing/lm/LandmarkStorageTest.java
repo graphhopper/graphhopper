@@ -31,11 +31,11 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.locationtech.jts.geom.Envelope;
 
 import java.util.Arrays;
 
@@ -229,8 +229,8 @@ public class LandmarkStorageTest {
             }
 
             @Override
-            public BBox getBounds() {
-                return new BBox(-180, 180, -90, 90);
+            public Envelope getBounds() {
+                return new Envelope(-180d, 180d, -90d, 90d);
             }
         };
 

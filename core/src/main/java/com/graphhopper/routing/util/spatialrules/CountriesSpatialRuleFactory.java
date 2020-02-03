@@ -2,9 +2,10 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
-import com.graphhopper.util.shapes.Polygon;
 
 import java.util.List;
+
+import org.locationtech.jts.geom.Polygon;
 
 public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.SpatialRuleFactory {
     @Override

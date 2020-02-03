@@ -156,7 +156,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
         registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), speedTwoDirections));
 
-        footRouteEnc = getEnumEncodedValue(getKey("foot", EV_SUFFIX), RouteNetwork.class);
+        footRouteEnc = getEnumEncodedValue(RouteNetwork.key("foot"), RouteNetwork.class);
     }
 
     /**

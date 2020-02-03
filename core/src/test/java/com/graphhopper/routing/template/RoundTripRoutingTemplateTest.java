@@ -29,6 +29,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
@@ -52,6 +53,7 @@ import static org.junit.Assert.assertEquals;
 public class RoundTripRoutingTemplateTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = EncodingManager.create(carFE);
+    private final Weighting fastestWeighting = new FastestWeighting(carFE);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private final GHPoint ghPoint1 = new GHPoint(0, 0);
@@ -60,15 +62,15 @@ public class RoundTripRoutingTemplateTest {
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfGivenPointsNotOne() {
         RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
-                new GHRequest(Collections.singletonList(ghPoint1)), new GHResponse(), null, em, 1);
-        routingTemplate.lookup(Arrays.asList(ghPoint1, ghPoint2), carFE);
+                new GHRequest(Collections.singletonList(ghPoint1)), new GHResponse(), null, em, fastestWeighting, 1);
+        routingTemplate.lookup(Arrays.asList(ghPoint1, ghPoint2));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfPointsInRequestNotOne() {
         RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
-                new GHRequest(Arrays.asList(ghPoint1, ghPoint2)), new GHResponse(), null, em, 1);
-        routingTemplate.lookup(Collections.singletonList(ghPoint1), carFE);
+                new GHRequest(Arrays.asList(ghPoint1, ghPoint2)), new GHResponse(), null, em, fastestWeighting, 1);
+        routingTemplate.lookup(Collections.singletonList(ghPoint1));
     }
 
     @Test
@@ -86,17 +88,16 @@ public class RoundTripRoutingTemplateTest {
         ghRequest.getHints().put(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         RoundTripRoutingTemplate routingTemplate =
-                new RoundTripRoutingTemplate(ghRequest, new GHResponse(), locationIndex, em, 1);
-        List<QueryResult> stagePoints = routingTemplate.lookup(ghRequest.getPoints(), carFE);
+                new RoundTripRoutingTemplate(ghRequest, new GHResponse(), locationIndex, em, fastestWeighting, 1);
+        List<QueryResult> stagePoints = routingTemplate.lookup(ghRequest.getPoints());
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());
         assertEquals(6, stagePoints.get(1).getClosestNode());
         assertEquals(0, stagePoints.get(2).getClosestNode());
 
         QueryGraph queryGraph = QueryGraph.lookup(g, stagePoints);
-        Weighting weighting = new FastestWeighting(carFE);
         List<Path> paths = routingTemplate.calcPaths(
-                queryGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode), carFE);
+                queryGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
         // make sure the resulting paths are connected and form a round trip starting and ending at the start node 0
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(0, 7, 6, 5), paths.get(0).calcNodes());
@@ -105,11 +106,10 @@ public class RoundTripRoutingTemplateTest {
 
     @Test
     public void testCalcRoundTrip() {
-        Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph();
 
         RoundTripRoutingTemplate rTripRouting =
-                new RoundTripRoutingTemplate(new GHRequest(), new GHResponse(), null, em, 1);
+                new RoundTripRoutingTemplate(new GHRequest(), new GHResponse(), null, em, fastestWeighting, 1);
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         QueryResult qr4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
@@ -122,7 +122,7 @@ public class RoundTripRoutingTemplateTest {
         QueryGraph qGraph = QueryGraph.lookup(g, Arrays.asList(qr4, qr5));
         rTripRouting.setQueryResults(Arrays.asList(qr5, qr4, qr5));
         List<Path> paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(),
-                new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode), carFE);
+                new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(5, 6, 3, 4), paths.get(0).calcNodes());
         assertEquals(IntArrayList.from(4, 8, 7, 6, 5), paths.get(1).calcNodes());
@@ -130,7 +130,7 @@ public class RoundTripRoutingTemplateTest {
         qGraph = QueryGraph.lookup(g, Arrays.asList(qr4, qr6));
         rTripRouting.setQueryResults(Arrays.asList(qr6, qr4, qr6));
         paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(),
-                new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode), carFE);
+                new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(6, 3, 4), paths.get(0).calcNodes());
         assertEquals(IntArrayList.from(4, 8, 7, 6), paths.get(1).calcNodes());
@@ -149,9 +149,7 @@ public class RoundTripRoutingTemplateTest {
         // -1 | 6 5 4 
         // ---|------
         //    |-1 0 1
-        GraphHopperStorage graph =
-                new GraphHopperStorage(new RAMDirectory(), em, false);
-        graph.create(1000);
+        GraphHopperStorage graph = new GraphBuilder(em).create();
         for (int i = 0; i < 8; ++i) {
             graph.edge(i, (i + 1) % 8, 1, true);
         }

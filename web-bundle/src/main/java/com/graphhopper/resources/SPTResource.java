@@ -80,7 +80,7 @@ public class SPTResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
 
         // todo: /spt with turn costs ?
-        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph, NO_TURN_COST_PROVIDER);
+        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, NO_TURN_COST_PROVIDER);
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {

@@ -33,8 +33,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Helper.DIST_EARTH;
 
 /**
@@ -233,7 +231,7 @@ public class GHUtility {
         double pEdgePairHasTurnCosts = 0.6;
         double pCostIsRestriction = 0.1;
 
-        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
         EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
         IntsRef tcFlags = TurnCost.createFlags();
