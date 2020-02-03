@@ -20,7 +20,6 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.LMProfileConfig;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
@@ -77,9 +76,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     @Override
     public void init(GraphHopperConfig ghConfig) {
-        CmdArgs args = ghConfig.getCmdArgs();
-        // we can use the profile list :)
-        List<LMProfileConfig> yayWeGotAListOfLMProfiles = ghConfig.getLmProfiles();
+        final CmdArgs args = ghConfig.getCmdArgs();
         setPreparationThreads(args.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
 
         landmarkCount = args.getInt(Parameters.Landmark.COUNT, landmarkCount);

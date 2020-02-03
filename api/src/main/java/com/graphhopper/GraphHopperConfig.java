@@ -20,13 +20,8 @@ package com.graphhopper;
 
 import com.graphhopper.util.CmdArgs;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class GraphHopperConfig {
     private final CmdArgs cmdArgs;
-    private final List<CHProfileConfig> chProfiles;
-    private final List<LMProfileConfig> lmProfiles;
 
     public GraphHopperConfig() {
         this(new CmdArgs());
@@ -34,8 +29,6 @@ public class GraphHopperConfig {
 
     public GraphHopperConfig(CmdArgs cmdArgs) {
         this.cmdArgs = cmdArgs;
-        chProfiles = new ArrayList<>();
-        lmProfiles = new ArrayList<>();
     }
 
     public void merge(CmdArgs cmdArgs) {
@@ -59,19 +52,4 @@ public class GraphHopperConfig {
         return cmdArgs;
     }
 
-    public void addCHProfiles(List<CHProfileConfig> chProfiles) {
-        this.chProfiles.addAll(chProfiles);
-    }
-
-    public void addLMProfiles(List<LMProfileConfig> lmProfiles) {
-        this.lmProfiles.addAll(lmProfiles);
-    }
-
-    public List<CHProfileConfig> getChProfiles() {
-        return chProfiles;
-    }
-
-    public List<LMProfileConfig> getLmProfiles() {
-        return lmProfiles;
-    }
 }

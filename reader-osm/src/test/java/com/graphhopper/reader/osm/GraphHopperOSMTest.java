@@ -480,10 +480,11 @@ public class GraphHopperOSMTest {
             public int getVersion() {
                 return 0;
             }
-        })).init(new GraphHopperConfig().
-                put("datareader.file", testOsm3).
-                put("datareader.dataaccess", "RAM").
-                put(Parameters.CH.PREPARE + "weightings", "no")).
+        })).init(
+                new GraphHopperConfig().
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put(Parameters.CH.PREPARE + "weightings", "no")).
                 setDataReaderFile(testOsm3);
         try {
             instance.load(ghLoc);
