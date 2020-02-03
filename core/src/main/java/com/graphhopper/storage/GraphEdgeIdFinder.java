@@ -219,6 +219,14 @@ public class GraphEdgeIdFinder {
             blockedShapes.add(shape);
         }
 
+        public final boolean contains(GHPoint point) {
+            for (Shape shape : blockedShapes) {
+                if (shape.contains(point.lat, point.lon))
+                    return true;
+            }
+            return false;
+        }
+
         /**
          * @return true if the specified edgeState is part of this BlockArea
          */

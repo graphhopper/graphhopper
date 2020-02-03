@@ -828,10 +828,10 @@ public class GraphHopper implements GraphHopperAPI {
 
                     CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
                     if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supportsTurnCosts())) {
-                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null, NO_TURN_COST_PROVIDER)));
+                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, NO_TURN_COST_PROVIDER)));
                     }
                     if (edgeBasedCHMode != OFF && encoder.supportsTurnCosts()) {
-                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null, new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts))));
+                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts))));
                     }
                 }
             }
@@ -849,7 +849,7 @@ public class GraphHopper implements GraphHopperAPI {
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
             for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
                 // note that we do not consider turn costs during LM preparation?
-                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null, NO_TURN_COST_PROVIDER);
+                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, NO_TURN_COST_PROVIDER);
                 lmFactoryDecorator.addWeighting(weighting);
             }
         }
@@ -934,11 +934,10 @@ public class GraphHopper implements GraphHopperAPI {
      * @param hintsMap all parameters influencing the weighting. E.g. parameters coming via
      *                 GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
      * @param encoder  the required vehicle
-     * @param graph    The Graph enables the Weighting for NodeAccess and more
      * @return the weighting to be used for route calculation
      * @see HintsMap
      */
-    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph, TurnCostProvider turnCostProvider) {
+    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
         String weightingStr = toLowerCase(hintsMap.getWeighting());
         Weighting weighting = null;
 
@@ -959,13 +958,6 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (weighting == null)
             throw new IllegalArgumentException("weighting " + weightingStr + " not supported");
-
-        if (hintsMap.has(Routing.BLOCK_AREA)) {
-            String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
-            GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
-                    parseBlockArea(blockAreaStr, DefaultEdgeFilter.allEdges(encoder), hintsMap.getDouble("block_area.edge_id_max_area", 1000 * 1000));
-            return new BlockAreaWeighting(weighting, blockArea);
-        }
 
         return weighting;
     }
@@ -1034,20 +1026,6 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            RoutingTemplate routingTemplate;
-            if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, maxRoundTripRetries);
-            else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-                routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager);
-            else
-                routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager);
-
-            StopWatch sw = new StopWatch().start();
-            List<QueryResult> qResults = routingTemplate.lookup(points, encoder);
-            ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-            if (ghRsp.hasErrors())
-                return Collections.emptyList();
-
             final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
             if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
                 throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
@@ -1058,15 +1036,14 @@ public class GraphHopper implements GraphHopperAPI {
 
             RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
             Weighting weighting;
-            QueryGraph queryGraph;
-
+            Graph graph = ghStorage;
             if (chFactoryDecorator.isEnabled() && !disableCH) {
                 if (request.hasFavoredHeading(0))
                     throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
-                if (request.getHints().getBool(Routing.PASS_THROUGH, false)) {
+                if (request.getHints().getBool(Routing.PASS_THROUGH, false))
                     throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
-                }
+
                 // if LM is enabled we have the LMFactory with the CH algo!
                 RoutingAlgorithmFactory chAlgoFactory = tmpAlgoFactory;
                 if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
@@ -1074,18 +1051,34 @@ public class GraphHopper implements GraphHopperAPI {
 
                 if (chAlgoFactory instanceof CHRoutingAlgorithmFactory) {
                     CHProfile chProfile = ((CHRoutingAlgorithmFactory) chAlgoFactory).getCHProfile();
-                    queryGraph = QueryGraph.lookup(ghStorage.getCHGraph(chProfile), qResults);
                     weighting = chProfile.getWeighting();
+                    graph = ghStorage.getCHGraph(chProfile);
                 } else {
                     throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
                 }
             } else {
                 checkNonChMaxWaypointDistance(points);
-                queryGraph = QueryGraph.lookup(ghStorage, qResults);
-                weighting = createWeighting(hints, encoder, queryGraph, turnCostProvider);
+                weighting = createWeighting(hints, encoder, turnCostProvider);
+                if (hints.has(Routing.BLOCK_AREA))
+                    weighting = new BlockAreaWeighting(weighting, createBlockArea(points, hints, DefaultEdgeFilter.allEdges(encoder)));
             }
             ghRsp.addDebugInfo("tmode:" + tMode.toString());
 
+            RoutingTemplate routingTemplate;
+            if (ROUND_TRIP.equalsIgnoreCase(algoStr))
+                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, maxRoundTripRetries);
+            else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
+                routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
+            else
+                routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
+
+            StopWatch sw = new StopWatch().start();
+            List<QueryResult> qResults = routingTemplate.lookup(points);
+            ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+            if (ghRsp.hasErrors())
+                return Collections.emptyList();
+
+            QueryGraph queryGraph = QueryGraph.lookup(graph, qResults);
             int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
             if (maxVisitedNodesForRequest > maxVisitedNodes)
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
@@ -1097,7 +1090,7 @@ public class GraphHopper implements GraphHopperAPI {
                     build();
 
             // do the actual route calculation !
-            List<Path> altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts, encoder);
+            List<Path> altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
 
             boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, getEncodingManager().isEnableInstructions());
             boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
@@ -1147,6 +1140,17 @@ public class GraphHopper implements GraphHopperAPI {
 
     protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
         return new ChangeGraphHelper(graph, locationIndex);
+    }
+
+    private GraphEdgeIdFinder.BlockArea createBlockArea(List<GHPoint> points, HintsMap hints, EdgeFilter edgeFilter) {
+        String blockAreaStr = hints.get(Parameters.Routing.BLOCK_AREA, "");
+        GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(getGraphHopperStorage(), getLocationIndex()).
+                parseBlockArea(blockAreaStr, edgeFilter, hints.getDouble(Routing.BLOCK_AREA + ".edge_id_max_area", 1000 * 1000));
+        for (GHPoint p : points) {
+            if (blockArea.contains(p))
+                throw new IllegalArgumentException("Request with " + Routing.BLOCK_AREA + " contained query point " + p + ". This is not allowed.");
+        }
+        return blockArea;
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {
