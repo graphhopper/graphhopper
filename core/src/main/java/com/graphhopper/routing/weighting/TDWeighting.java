@@ -25,5 +25,6 @@ public interface TDWeighting extends Weighting {
 
     long calcTDMillis(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId, long linkEnterTime);
 
+    double calcTDTurnWeight(int inEdge, int viaNode, int outEdge, long turnTimeMilli);
 }
 

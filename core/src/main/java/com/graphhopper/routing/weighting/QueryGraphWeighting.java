@@ -100,6 +100,33 @@ public class QueryGraphWeighting implements TDWeighting {
     }
 
     @Override
+    public double calcTDTurnWeight(int inEdge, int viaNode, int outEdge, long turnTimeMilli) {
+        if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
+            return 0;
+        }
+        if (isVirtualNode(viaNode)) {
+            if (isUTurn(inEdge, outEdge)) {
+                // do not allow u-turns at virtual nodes, otherwise the route depends on whether or not there are
+                // virtual via nodes, see #1672. note since we are turning between virtual edges here we need to compare
+                // the *virtual* edge ids (the orig edge would always be the same for all virtual edges at a virtual
+                // node), see #1593
+                return Double.POSITIVE_INFINITY;
+            } else {
+                return 0;
+            }
+        }
+        // to calculate the actual turn costs or detect u-turns we need to look at the original edge of each virtual
+        // edge, see #1593
+        if (isVirtualEdge(inEdge)) {
+            inEdge = getOriginalEdge(inEdge);
+        }
+        if (isVirtualEdge(outEdge)) {
+            outEdge = getOriginalEdge(outEdge);
+        }
+        return ((TDWeighting) weighting).calcTDTurnWeight(inEdge, viaNode, outEdge, turnTimeMilli);
+    }
+
+    @Override
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
         // todo: here we do not allow calculating turn weights that aren't turn times, also see #1590
         return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));

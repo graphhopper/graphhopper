@@ -31,14 +31,12 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
+import org.mapdb.Fun;
 
 import java.io.ByteArrayInputStream;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TimeDependentAccessRestriction {
@@ -47,12 +45,22 @@ public class TimeDependentAccessRestriction {
     private final OSMIDParser osmidParser;
     private final OSM osm;
     public final ZoneId zoneId;
+    private GraphHopperStorage ghStorage;
 
     public TimeDependentAccessRestriction(GraphHopperStorage ghStorage, OSM osm) {
+        this.ghStorage = ghStorage;
         zoneId = ZoneId.of("Europe/Berlin");
         this.osm = osm;
         osmidParser = OSMIDParser.fromEncodingManager(ghStorage.getEncodingManager());
         property = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
+    }
+
+    public static Map<String, Object> getTags(OSMEntity relation) {
+        Map<String, Object> tags = new HashMap<>();
+        for (OSMEntity.Tag tag : relation.tags) {
+            tags.put(tag.key, tag.value);
+        }
+        return tags;
     }
 
     public static class ConditionalTagData {
@@ -221,39 +229,57 @@ public class TimeDependentAccessRestriction {
     }
 
     // For weighting
-    public Optional<Boolean> accessible(EdgeIteratorState edgeState, Instant linkEnterTime) {
+    public Optional<Boolean> accessible(EdgeIteratorState edgeState, Instant at) {
         if (edgeState.get(property)) {
             long osmid = osmidParser.getOSMID(edgeState.getFlags());
-            return accessible(osmid, linkEnterTime);
+            Way way = osm.ways.get(osmid);
+            Map<String, Object> tags = readerWay(osmid, way).getTags();
+            return accessible(tags, at);
         }
         return Optional.empty();
     }
 
-    public Optional<Boolean> accessible(long osmid, Instant linkEnterTime) {
-        Way way = osm.ways.get(osmid);
-        Map<String, Object> tags = readerWay(osmid, way).getTags();
-        return accessible(tags, linkEnterTime);
+    // For weighting
+    public Optional<Boolean> canTurn(int inEdge, int viaNode, int outEdge, Instant at) {
+        EdgeIteratorState inEdgeCursor = ghStorage.getEdgeIteratorState(inEdge, viaNode);
+        long inEdgeOsmId = osmidParser.getOSMID(inEdgeCursor.getFlags());
+        Way inWay = osm.ways.get(inEdgeOsmId);
+        EdgeIteratorState outEdgeCursor = ghStorage.getEdgeIteratorState(outEdge, viaNode);
+        long outEdgeOsmId = osmidParser.getOSMID(outEdgeCursor.getFlags());
+        Way outWay = osm.ways.get(outEdgeOsmId);
+        long viaNodeOsmId = findIntersectionNode(inWay, outWay);
+        System.out.println("in "+inEdgeOsmId+" via "+viaNodeOsmId+" out "+outEdgeOsmId);
+        SortedSet<Fun.Tuple2<Long, Long>> tuple2s = osm.relationsByNode.subSet(new Fun.Tuple2<>(viaNodeOsmId, 0L), new Fun.Tuple2<>(viaNodeOsmId, Long.MAX_VALUE));
+        return tuple2s.stream().map(t -> t.b).map(k -> osm.relations.get(k))
+                .filter(r -> r.hasTag("type", "restriction"))
+                .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("from") && m.id == inEdgeOsmId))
+                .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("to") && m.id == outEdgeOsmId))
+                .peek(System.out::println)
+                .flatMap(r -> accessible(getTags(r), at).stream())
+                .findFirst();
+    }
+
+    private long findIntersectionNode(Way inWay, Way outWay) {
+        return Arrays.stream(inWay.nodes).filter(n -> Arrays.stream(outWay.nodes).anyMatch(m -> n==m)).findFirst().getAsLong();
     }
 
     public Optional<Boolean> accessible(Map<String, Object> tags, Instant linkEnterTime) {
         List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(tags);
         for (ConditionalTagData conditionalTagData : conditionalTagDataWithTimeDependentConditions) {
             for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
-                switch (timeDependentRestrictionData.restriction.getValue()) {
-                    case "yes":
-                        for (Rule rule : timeDependentRestrictionData.rules) {
-                            if (matches(linkEnterTime, rule)) {
-                                return Optional.of(true);
-                            }
+                if (timeDependentRestrictionData.restriction.getValue().startsWith("yes")) {
+                    for (Rule rule : timeDependentRestrictionData.rules) {
+                        if (matches(linkEnterTime, rule)) {
+                            return Optional.of(true);
                         }
-                        break;
-                    case "no":
-                        for (Rule rule : timeDependentRestrictionData.rules) {
-                            if (matches(linkEnterTime, rule)) {
-                                return Optional.of(false);
-                            }
+                    }
+                }
+                if (timeDependentRestrictionData.restriction.getValue().startsWith("no")) {
+                    for (Rule rule : timeDependentRestrictionData.rules) {
+                        if (matches(linkEnterTime, rule)) {
+                            return Optional.of(false);
                         }
-                        break;
+                    }
                 }
             }
         }

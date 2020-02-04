@@ -68,11 +68,16 @@ public class TimeDependentAccessWeighting implements TDWeighting {
 
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        System.out.println("pups "+viaNode);
-        if (viaNode == 234315) {
-            return 10000.0;
-        }
         return finalWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public double calcTDTurnWeight(int inEdge, int viaNode, int outEdge, long turnTimeMilli) {
+        if (timeDependentAccessRestriction.canTurn(inEdge, viaNode, outEdge, Instant.ofEpochMilli(turnTimeMilli)).orElse(true)) {
+            return finalWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+        } else {
+            return Double.POSITIVE_INFINITY;
+        }
     }
 
     @Override

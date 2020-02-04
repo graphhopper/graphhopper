@@ -29,7 +29,6 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,10 +56,7 @@ public class ConditionalTurnRestrictionsResource {
                     .flatMap(entry -> {
                         long osmid = entry.getKey();
                         Relation relation = osm.relations.get(osmid);
-                        Map<String, Object> tags = new HashMap<>();
-                        for (OSMEntity.Tag tag : relation.tags) {
-                            tags.put(tag.key, tag.value);
-                        }
+                        Map<String, Object> tags = TimeDependentAccessRestriction.getTags(relation);
                         List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData = TimeDependentAccessRestriction.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
                                 .collect(Collectors.toList());
                         if (!restrictionData.isEmpty()) {
