@@ -22,7 +22,6 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -50,8 +49,8 @@ import java.util.List;
  * For the route from A->B->C and baseNode=B, adjacentNode=C:
  * - the previous edge is A->B
  * - the current edge is B->C
- * - the allowedAlternativeTurns are B->C => return value of {@link #nrOfAllowedTurns()} is 1
- * - the visibleAlternativeTurns are B->X and B->C => return values of {@link #nrOfVisibleTurns()} is 2
+ * - the allowedAlternativeTurns are B->C => return value of {@link #getAllowedTurns()} is 1
+ * - the visibleAlternativeTurns are B->X and B->C => return values of {@link #getVisibleTurns()} is 2
  *
  * @author Robin Boldt
  */
@@ -109,7 +108,7 @@ class InstructionsOutgoingEdges {
      * This method calculates the number of allowed outgoing edges, which could be considered the number of possible
      * roads one might take at the intersection. This excludes the road you are coming from and inaccessible roads.
      */
-    public int nrOfAllowedTurns() {
+    public int getAllowedTurns() {
         return 1 + allowedAlternativeTurns.size();
     }
 
@@ -117,7 +116,7 @@ class InstructionsOutgoingEdges {
      * This method calculates the number of all outgoing edges, which could be considered the number of roads you see
      * at the intersection. This excludes the road your are coming from.
      */
-    public int nrOfVisibleTurns() {
+    public int getVisibleTurns() {
         return 1 + visibleAlternativeTurns.size();
     }
 
