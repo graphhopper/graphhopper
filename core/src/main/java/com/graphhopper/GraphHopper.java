@@ -487,19 +487,18 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Reads the configuration from a CmdArgs object which can be manually filled, or via
-     * CmdArgs.read(String[] args)
+     * Reads the configuration from a {@link GraphHopperConfig} object which can be manually filled, or more typically
+     * is read from `config.yml`.
      */
-    public GraphHopper init(CmdArgs args) {
-        args.merge(CmdArgs.readFromSystemProperties());
-        if (args.has("osmreader.osm"))
+    public GraphHopper init(GraphHopperConfig ghConfig) {
+        if (ghConfig.has("osmreader.osm"))
             throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see core/files/changelog.txt");
 
-        String tmpOsmFile = args.get("datareader.file", "");
+        String tmpOsmFile = ghConfig.get("datareader.file", "");
         if (!isEmpty(tmpOsmFile))
             dataReaderFile = tmpOsmFile;
 
-        String graphHopperFolder = args.get("graph.location", "");
+        String graphHopperFolder = ghConfig.get("graph.location", "");
         if (isEmpty(graphHopperFolder) && isEmpty(ghLocation)) {
             if (isEmpty(dataReaderFile))
                 throw new IllegalArgumentException("If no graph.location is provided you need to specify an OSM file.");
@@ -509,55 +508,55 @@ public class GraphHopper implements GraphHopperAPI {
 
         // graph
         setGraphHopperLocation(graphHopperFolder);
-        defaultSegmentSize = args.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
+        defaultSegmentSize = ghConfig.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
 
-        String graphDATypeStr = args.get("graph.dataaccess", "RAM_STORE");
+        String graphDATypeStr = ghConfig.get("graph.dataaccess", "RAM_STORE");
         dataAccessType = DAType.fromString(graphDATypeStr);
 
-        sortGraph = args.getBool("graph.do_sort", sortGraph);
-        removeZipped = args.getBool("graph.remove_zipped", removeZipped);
+        sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
+        removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-        String flagEncodersStr = args.get("graph.flag_encoders", "");
-        String encodedValueStr = args.get("graph.encoded_values", "");
+        String flagEncodersStr = ghConfig.get("graph.flag_encoders", "");
+        String encodedValueStr = ghConfig.get("graph.encoded_values", "");
         if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {
             if (!encodedValueStr.isEmpty())
                 emBuilder.addAll(tagParserFactory, encodedValueStr);
             registerCustomEncodedValues(emBuilder);
             if (!flagEncodersStr.isEmpty())
                 emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
-            emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));
-            emBuilder.setPreferredLanguage(args.get("datareader.preferred_language", ""));
-            emBuilder.setDateRangeParser(DateRangeParser.createInstance(args.get("datareader.date_range_parser_day", "")));
+            emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
+            emBuilder.setPreferredLanguage(ghConfig.get("datareader.preferred_language", ""));
+            emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.get("datareader.date_range_parser_day", "")));
             // overwrite EncodingManager object from configuration file
             setEncodingManager(emBuilder.build());
         }
 
-        if (args.get("graph.locktype", "native").equals("simple"))
+        if (ghConfig.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
         else
             lockFactory = new NativeFSLockFactory();
 
         // elevation
-        String eleProviderStr = toLowerCase(args.get("graph.elevation.provider", "noop"));
-        this.smoothElevation = args.getBool("graph.elevation.smoothing", false);
+        String eleProviderStr = toLowerCase(ghConfig.get("graph.elevation.provider", "noop"));
+        this.smoothElevation = ghConfig.getBool("graph.elevation.smoothing", false);
 
         // keep fallback until 0.8
-        boolean eleCalcMean = args.has("graph.elevation.calcmean")
-                ? args.getBool("graph.elevation.calcmean", false)
-                : args.getBool("graph.elevation.calc_mean", false);
+        boolean eleCalcMean = ghConfig.has("graph.elevation.calcmean")
+                ? ghConfig.getBool("graph.elevation.calcmean", false)
+                : ghConfig.getBool("graph.elevation.calc_mean", false);
 
-        String cacheDirStr = args.get("graph.elevation.cache_dir", "");
+        String cacheDirStr = ghConfig.get("graph.elevation.cache_dir", "");
         if (cacheDirStr.isEmpty())
-            cacheDirStr = args.get("graph.elevation.cachedir", "");
+            cacheDirStr = ghConfig.get("graph.elevation.cachedir", "");
 
-        String baseURL = args.get("graph.elevation.base_url", "");
+        String baseURL = ghConfig.get("graph.elevation.base_url", "");
         if (baseURL.isEmpty())
-            args.get("graph.elevation.baseurl", "");
+            ghConfig.get("graph.elevation.baseurl", "");
 
-        boolean removeTempElevationFiles = args.getBool("graph.elevation.cgiar.clear", true);
-        removeTempElevationFiles = args.getBool("graph.elevation.clear", removeTempElevationFiles);
+        boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
+        removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
 
-        DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
+        DAType elevationDAType = DAType.fromString(ghConfig.get("graph.elevation.dataaccess", "MMAP"));
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm")) {
             tmpProvider = new SRTMProvider(cacheDirStr);
@@ -579,27 +578,27 @@ public class GraphHopper implements GraphHopperAPI {
         setElevationProvider(tmpProvider);
 
         // optimizable prepare
-        minNetworkSize = args.getInt("prepare.min_network_size", minNetworkSize);
-        minOneWayNetworkSize = args.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
+        minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
+        minOneWayNetworkSize = ghConfig.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
 
         // prepare CH, LM, ...
         for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators) {
-            decorator.init(args);
+            decorator.init(ghConfig);
         }
 
         // osm import
-        dataReaderWayPointMaxDistance = args.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, dataReaderWayPointMaxDistance);
+        dataReaderWayPointMaxDistance = ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, dataReaderWayPointMaxDistance);
 
-        dataReaderWorkerThreads = args.getInt("datareader.worker_threads", dataReaderWorkerThreads);
+        dataReaderWorkerThreads = ghConfig.getInt("datareader.worker_threads", dataReaderWorkerThreads);
 
         // index
-        preciseIndexResolution = args.getInt("index.high_resolution", preciseIndexResolution);
-        maxRegionSearch = args.getInt("index.max_region_search", maxRegionSearch);
+        preciseIndexResolution = ghConfig.getInt("index.high_resolution", preciseIndexResolution);
+        maxRegionSearch = ghConfig.getInt("index.max_region_search", maxRegionSearch);
 
         // routing
-        maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
-        maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
-        nonChMaxWaypointDistance = args.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
+        maxVisitedNodes = ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
+        maxRoundTripRetries = ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
+        nonChMaxWaypointDistance = ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
 
         return this;
     }

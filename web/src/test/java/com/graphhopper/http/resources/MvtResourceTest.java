@@ -19,7 +19,6 @@ package com.graphhopper.http.resources;
 
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.MvtReader;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.TagKeyValueMapConverter;
@@ -53,14 +52,14 @@ public class MvtResourceTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
                 put("graph.encoded_values", "road_class,road_environment,max_speed,surface").
                 put("prepare.ch.weightings", "no").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR));
+                put("graph.location", DIR);
     }
 
     @ClassRule

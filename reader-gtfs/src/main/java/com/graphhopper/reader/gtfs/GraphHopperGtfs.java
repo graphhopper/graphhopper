@@ -20,6 +20,7 @@ package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Transfer;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -32,7 +33,6 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PointList;
 
 import java.io.File;
@@ -44,11 +44,11 @@ import java.util.zip.ZipFile;
 
 public class GraphHopperGtfs extends GraphHopperOSM {
 
-    private final CmdArgs cmdArgs;
+    private final GraphHopperConfig ghConfig;
     private GtfsStorage gtfsStorage;
 
-    public GraphHopperGtfs(CmdArgs cmdArgs) {
-        this.cmdArgs = cmdArgs;
+    public GraphHopperGtfs(GraphHopperConfig ghConfig) {
+        this.ghConfig = ghConfig;
     }
 
     @Override
@@ -58,7 +58,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
 
     @Override
     protected DataReader importData() throws IOException {
-        if (cmdArgs.has("datareader.file")) {
+        if (ghConfig.has("datareader.file")) {
             return super.importData();
         } else {
             getGraphHopperStorage().create(1000);
@@ -123,7 +123,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
             getGtfsStorage().create();
             GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
             int idx = 0;
-            List<String> gtfsFiles = cmdArgs.has("gtfs.file") ? Arrays.asList(cmdArgs.get("gtfs.file", "").split(",")) : Collections.emptyList();
+            List<String> gtfsFiles = ghConfig.has("gtfs.file") ? Arrays.asList(ghConfig.get("gtfs.file", "").split(",")) : Collections.emptyList();
             for (String gtfsFile : gtfsFiles) {
                 try {
                     getGtfsStorage().loadGtfsFromZipFile("gtfs_" + idx++, new ZipFile(gtfsFile));

@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -45,11 +44,11 @@ public class IsochroneResourceTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("prepare.ch.weightings", "no").
                 put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR));
+                put("graph.location", DIR);
     }
 
     @ClassRule

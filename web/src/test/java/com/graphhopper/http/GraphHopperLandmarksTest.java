@@ -18,7 +18,6 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -42,7 +41,7 @@ public class GraphHopperLandmarksTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "fastest").
                 put("prepare.lm.weightings", "fastest").
@@ -52,7 +51,7 @@ public class GraphHopperLandmarksTest {
                 put("routing.ch.disabling_allowed", true).
                 put("routing.lm.disabling_allowed", true).
                 put("graph.location", DIR).
-                put("prepare.lm.min_network_size", 2)); // force landmark creation even for tiny networks
+                put("prepare.lm.min_network_size", 2); // force landmark creation even for tiny networks
     }
 
     @ClassRule
