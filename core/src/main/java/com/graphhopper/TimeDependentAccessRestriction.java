@@ -248,11 +248,13 @@ public class TimeDependentAccessRestriction {
         long outEdgeOsmId = osmidParser.getOSMID(outEdgeCursor.getFlags());
         Way outWay = osm.ways.get(outEdgeOsmId);
         long viaNodeOsmId = findIntersectionNode(inWay, outWay);
+        System.out.println("in "+inEdgeOsmId+" via "+viaNodeOsmId+" out "+outEdgeOsmId);
         SortedSet<Fun.Tuple2<Long, Long>> tuple2s = osm.relationsByNode.subSet(new Fun.Tuple2<>(viaNodeOsmId, 0L), new Fun.Tuple2<>(viaNodeOsmId, Long.MAX_VALUE));
         return tuple2s.stream().map(t -> t.b).map(k -> osm.relations.get(k))
                 .filter(r -> r.hasTag("type", "restriction"))
                 .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("from") && m.id == inEdgeOsmId))
                 .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("to") && m.id == outEdgeOsmId))
+                .peek(System.out::println)
                 .flatMap(r -> accessible(getTags(r), at).stream())
                 .findFirst();
     }
