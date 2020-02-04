@@ -55,7 +55,7 @@ public class AnotherAgencyIT {
         ghConfig.put("datareader.file", "files/beatty.osm");
         ghConfig.put("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopperGtfs = new GraphHopperGtfs(ghConfig.getCmdArgs());
+        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
         ptRouteResource = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())

@@ -18,38 +18,72 @@
 
 package com.graphhopper;
 
-import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.Profile;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+// todonow: docs
 public class GraphHopperConfig {
-    private final CmdArgs cmdArgs;
+    private final List<Profile> profiles = new ArrayList<>();
+    private final PMap map;
 
     public GraphHopperConfig() {
-        this(new CmdArgs());
+        this(new PMap());
     }
 
-    public GraphHopperConfig(CmdArgs cmdArgs) {
-        this.cmdArgs = cmdArgs;
+    public GraphHopperConfig(PMap pMap) {
+        this.map = pMap;
     }
 
-    public void merge(CmdArgs cmdArgs) {
-        this.cmdArgs.merge(cmdArgs);
-    }
-
-    public GraphHopperConfig put(String key, String value) {
-        cmdArgs.put(key, value);
+    public GraphHopperConfig put(String key, Object value) {
+        map.put(key, value);
         return this;
     }
 
     public boolean has(String key) {
-        return cmdArgs.has(key);
+        return map.has(key);
+    }
+
+    public List<Profile> getProfiles() {
+        return profiles;
+    }
+
+    public boolean getBool(String key, boolean _default) {
+        return map.getBool(key, _default);
+    }
+
+    public int getInt(String key, int _default) {
+        return map.getInt(key, _default);
+    }
+
+    public double getDouble(String key, double _default) {
+        return map.getDouble(key, _default);
     }
 
     public String get(String key, String _default) {
-        return cmdArgs.get(key, _default);
+        return map.get(key, _default);
     }
 
-    public CmdArgs getCmdArgs() {
-        return cmdArgs;
+    public PMap asPMap() {
+        return map;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("profiles:\n");
+        for (Profile profile : profiles) {
+            sb.append(profile);
+            sb.append("\n");
+        }
+        sb.append("properties:\n");
+        for (Map.Entry<String, String> entry : map.toMap().entrySet()) {
+            sb.append(entry.getKey()).append(": ").append(entry.getValue());
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
 }

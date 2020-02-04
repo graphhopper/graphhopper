@@ -58,7 +58,7 @@ public class CHMeasurement {
         // example args:
         // map=berlin.pbf stats_file=stats.dat period_updates=0 lazy_updates=100 neighbor_updates=0 contract_nodes=100 log_messages=20 edge_quotient_weight=1.0 orig_edge_quotient_weight=3.0 hierarchy_depth_weight=2.0 sigma_factor=3.0 min_max_settled_edges=100 reset_interval=10000 landmarks=0 cleanup=true turncosts=true threshold=0.1 seed=456 comp_iterations=10 perf_iterations=100 quick=false
         long start = nanoTime();
-        CmdArgs cmdArgs = CmdArgs.read(args);
+        PMap cmdArgs = PMap.read(args);
         LOGGER.info("Running analysis with parameters {}", cmdArgs);
         String osmFile = cmdArgs.get("map", "local/maps/unterfranken-latest.osm.pbf");
         cmdArgs.put("datareader.file", osmFile);

@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
@@ -67,17 +66,16 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     @Override
     public void init(GraphHopperConfig ghConfig) {
-        final CmdArgs args = ghConfig.getCmdArgs();
         // throw explicit error for deprecated configs
-        if (!args.get("prepare.threads", "").isEmpty())
+        if (!ghConfig.get("prepare.threads", "").isEmpty())
             throw new IllegalStateException("Use " + CH.PREPARE + "threads instead of prepare.threads");
-        if (!args.get("prepare.chWeighting", "").isEmpty() || !args.get("prepare.chWeightings", "").isEmpty())
+        if (!ghConfig.get("prepare.chWeighting", "").isEmpty() || !ghConfig.get("prepare.chWeightings", "").isEmpty())
             throw new IllegalStateException("Use " + CH.PREPARE + "weightings and a comma separated list instead of prepare.chWeighting or prepare.chWeightings");
 
-        setPreparationThreads(args.getInt(CH.PREPARE + "threads", getPreparationThreads()));
+        setPreparationThreads(ghConfig.getInt(CH.PREPARE + "threads", getPreparationThreads()));
 
         // default is enabled & fastest
-        String chWeightingsStr = args.get(CH.PREPARE + "weightings", "");
+        String chWeightingsStr = ghConfig.get(CH.PREPARE + "weightings", "");
         if (chWeightingsStr.contains("edge_based")) {
             throw new IllegalArgumentException("Adding 'edge_based` to " + (CH.PREPARE + "weightings") + " is not allowed, to enable edge-based CH use " + (CH.PREPARE + "edge_based") + " instead.");
         }
@@ -92,13 +90,13 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         boolean enableThis = !chProfileStrings.isEmpty();
         setEnabled(enableThis);
         if (enableThis)
-            setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
+            setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
-        String edgeBasedCHStr = args.get(CH.PREPARE + "edge_based", "off").trim();
+        String edgeBasedCHStr = ghConfig.get(CH.PREPARE + "edge_based", "off").trim();
         edgeBasedCHStr = edgeBasedCHStr.equals("false") ? "off" : edgeBasedCHStr;
         edgeBasedCHMode = EdgeBasedCHMode.valueOf(edgeBasedCHStr.toUpperCase(Locale.ROOT));
 
-        pMap = args;
+        pMap = ghConfig.asPMap();
     }
 
     @Override

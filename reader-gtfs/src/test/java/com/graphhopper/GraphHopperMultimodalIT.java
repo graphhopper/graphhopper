@@ -51,7 +51,7 @@ public class GraphHopperMultimodalIT {
         ghConfig.put("gtfs.file", "files/sample-feed.zip");
         ghConfig.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopperGtfs = new GraphHopperGtfs(ghConfig.getCmdArgs());
+        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
         locationIndex = graphHopperGtfs.getLocationIndex();

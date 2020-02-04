@@ -39,7 +39,6 @@ import com.graphhopper.resources.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
@@ -179,8 +178,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
     @Override
     public void run(GraphHopperBundleConfiguration configuration, Environment environment) {
-        configuration.getGraphHopperConfiguration().merge(CmdArgs.readFromSystemProperties());
-
         // If the "?type=gpx" parameter is present, sets a corresponding media type header
         environment.jersey().register(new TypeGPXFilter());
 
@@ -210,7 +207,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             }
         });
 
-        if (configuration.getGraphHopperConfiguration().getCmdArgs().getBool("web.change_graph.enabled", false)) {
+        if (configuration.getGraphHopperConfiguration().getBool("web.change_graph.enabled", false)) {
             environment.jersey().register(ChangeGraphResource.class);
         }
 

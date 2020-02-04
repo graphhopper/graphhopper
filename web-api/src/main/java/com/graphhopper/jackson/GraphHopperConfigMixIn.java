@@ -18,24 +18,11 @@
 
 package com.graphhopper.jackson;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.util.CmdArgs;
 
-import java.io.IOException;
-import java.util.Map;
+public interface GraphHopperConfigMixIn {
 
-public class GraphHopperConfigDeserializer extends JsonDeserializer<GraphHopperConfig> {
-
-    @Override
-    public GraphHopperConfig deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-        jsonParser.setCodec(new ObjectMapper());
-        Map<String, String> map = jsonParser.readValueAs(new TypeReference<Map<String, String>>() {
-        });
-        return new GraphHopperConfig(new CmdArgs(map));
-    }
+    @JsonAnySetter
+    GraphHopperConfig put(String key, Object value);
 }

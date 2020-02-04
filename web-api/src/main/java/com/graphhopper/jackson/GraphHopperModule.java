@@ -19,8 +19,8 @@ package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.graphhopper.*;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.Profile;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -29,6 +29,8 @@ public class GraphHopperModule extends SimpleModule {
 
     public GraphHopperModule() {
         setMixInAnnotation(GHRequest.class, GHRequestMixIn.class);
+        setMixInAnnotation(Profile.class, ProfileMixIn.class);
+        setMixInAnnotation(GraphHopperConfig.class, GraphHopperConfigMixIn.class);
         addDeserializer(GHResponse.class, new GHResponseDeserializer());
         addDeserializer(PathWrapper.class, new PathWrapperDeserializer());
         addDeserializer(BBox.class, new BBoxDeserializer());
@@ -38,8 +40,6 @@ public class GraphHopperModule extends SimpleModule {
         addDeserializer(PathDetail.class, new PathDetailDeserializer());
         addSerializer(PathDetail.class, new PathDetailSerializer());
         addSerializer(InstructionList.class, new InstructionListSerializer());
-        addDeserializer(GraphHopperConfig.class, new GraphHopperConfigDeserializer());
-        addDeserializer(CmdArgs.class, new CmdArgsDeserializer());
         addSerializer(MultiException.class, new MultiExceptionSerializer());
     }
 

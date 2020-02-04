@@ -52,12 +52,12 @@ public class RealtimeIT {
         ghConfig.put("gtfs.file", "files/sample-feed.zip");
         ghConfig.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopperGtfs = new GraphHopperGtfs(ghConfig.getCmdArgs());
+        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
         graphHopperGtfs.close();
         // Re-load read only
-        graphHopperGtfs = new GraphHopperGtfs(ghConfig.getCmdArgs());
+        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
         graphHopperFactory = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
