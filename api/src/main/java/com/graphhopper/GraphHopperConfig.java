@@ -22,7 +22,12 @@ import com.graphhopper.util.PMap;
 
 import java.util.Map;
 
-// todonow: docs
+/**
+ * This class represents the global configuration for the GraphHopper class, which is typically configured via the
+ * `config.yml` file. So far we are mapping the key-value pairs in the config file to a string-string map, but soon
+ * we will start adding hierarchical configurations (lists, nested objects etc.). We will also start adding the
+ * different configuration options as fields of this class including the default values.
+ */
 public class GraphHopperConfig {
     private final PMap map;
 
@@ -49,6 +54,14 @@ public class GraphHopperConfig {
 
     public int getInt(String key, int _default) {
         return map.getInt(key, _default);
+    }
+
+    public long getLong(String key, long _default) {
+        return map.getLong(key, _default);
+    }
+
+    public float getFloat(String key, float _default) {
+        return map.getFloat(key, _default);
     }
 
     public double getDouble(String key, double _default) {
