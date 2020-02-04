@@ -1,5 +1,6 @@
 1.0
-    removed GenericWeighting and DataFlagEncoder as a normal CarFlagEncoder does the job too. Or use the new CustomWeighting.
+    GraphHopper.init(CmdArgs)->GraphHopper.init(GraphHopperConfig), see #1879
+    removed GenericWeighting and DataFlagEncoder as a normal CarFlagEncoder does the job too. Or use the new CustomWeighting see #1841
     revert compression of landmark preparation data, see #1749 and #1376
     add required EncodedValues like road_class to EncodingManager if not added from user
     removed PathNative,PathBidirRef,Path4CH,EdgeBasedPathCH and moved path extraction code out of Path class, added PathExtractor,BidirPathExtractor(+subclasses for CH) instead, #1730

@@ -1,5 +1,6 @@
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -7,7 +8,6 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Parameters;
 import org.junit.Test;
 
@@ -40,21 +40,21 @@ public class LMAlgoFactoryDecoratorTest {
 
     @Test
     public void testPrepareWeightingNo() {
-        CmdArgs args = new CmdArgs();
-        args.put(Parameters.Landmark.PREPARE + "weightings", "fastest");
+        GraphHopperConfig ghConfig = new GraphHopperConfig();
+        ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "fastest");
         LMAlgoFactoryDecorator dec = new LMAlgoFactoryDecorator();
-        dec.init(args);
+        dec.init(ghConfig);
         assertTrue(dec.isEnabled());
 
         // See #1076
-        args.put(Parameters.Landmark.PREPARE + "weightings", "no");
+        ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "no");
         dec = new LMAlgoFactoryDecorator();
-        dec.init(args);
+        dec.init(ghConfig);
         assertFalse(dec.isEnabled());
 
-        args.put(Parameters.Landmark.PREPARE + "weightings", "false");
+        ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "false");
         dec = new LMAlgoFactoryDecorator();
-        dec.init(args);
+        dec.init(ghConfig);
         assertFalse(dec.isEnabled());
     }
 }

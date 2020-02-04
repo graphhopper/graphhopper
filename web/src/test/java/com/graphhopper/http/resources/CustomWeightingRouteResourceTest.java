@@ -3,7 +3,6 @@ package com.graphhopper.http.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -26,7 +25,7 @@ public class CustomWeightingRouteResourceTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "bike,car").
                 put("routing.ch.disabling_allowed", "true").
                 put("graph.custom_profiles.directory", "./src/test/resources/com/graphhopper/http/resources/").
@@ -35,7 +34,7 @@ public class CustomWeightingRouteResourceTest {
                 // we need more than the default encoded values (truck.yml and cargo_bike.yml)
                 put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
-                put("graph.location", DIR));
+                put("graph.location", DIR);
     }
 
     @ClassRule

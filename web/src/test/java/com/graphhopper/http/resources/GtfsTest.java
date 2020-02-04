@@ -21,7 +21,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.resources.InfoResource;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -44,11 +43,11 @@ public class GtfsTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "foot").
                 put("datareader.file", "../reader-gtfs/files/beatty.osm").
                 put("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
-                put("graph.location", DIR));
+                put("graph.location", DIR);
     }
 
     @ClassRule

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
@@ -29,7 +30,6 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
@@ -56,7 +56,7 @@ public class GraphHopperManaged implements Managed {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopper graphHopper;
 
-    public GraphHopperManaged(CmdArgs configuration, ObjectMapper objectMapper) {
+    public GraphHopperManaged(GraphHopperConfig configuration, ObjectMapper objectMapper) {
         ObjectMapper localObjectMapper = objectMapper.copy();
         localObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         String splitAreaLocation = configuration.get(Parameters.Landmark.PREPARE + "split_area_location", "");

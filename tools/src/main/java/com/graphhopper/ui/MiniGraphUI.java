@@ -19,6 +19,7 @@ package com.graphhopper.ui;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -35,7 +36,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.PointList;
@@ -385,8 +386,9 @@ public class MiniGraphUI {
     }
 
     public static void main(String[] strs) throws Exception {
-        CmdArgs args = CmdArgs.read(strs);
-        GraphHopper hopper = new GraphHopperOSM().init(args).importOrLoad();
+        PMap args = PMap.read(strs);
+        GraphHopperConfig ghConfig = new GraphHopperConfig(args);
+        GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
         boolean debug = args.getBool("minigraphui.debug", false);
         new MiniGraphUI(hopper, debug).visualize();
     }

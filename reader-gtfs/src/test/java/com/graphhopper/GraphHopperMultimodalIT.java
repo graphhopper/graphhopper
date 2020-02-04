@@ -22,7 +22,6 @@ import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.Request;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
@@ -46,14 +45,14 @@ public class GraphHopperMultimodalIT {
 
     @BeforeClass
     public static void init() {
-        CmdArgs cmdArgs = new CmdArgs();
-        cmdArgs.put("graph.flag_encoders", "car,foot");
-        cmdArgs.put("datareader.file", "files/beatty.osm");
-        cmdArgs.put("gtfs.file", "files/sample-feed.zip");
-        cmdArgs.put("graph.location", GRAPH_LOC);
+        GraphHopperConfig ghConfig = new GraphHopperConfig();
+        ghConfig.put("graph.flag_encoders", "car,foot");
+        ghConfig.put("datareader.file", "files/beatty.osm");
+        ghConfig.put("gtfs.file", "files/sample-feed.zip");
+        ghConfig.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopperGtfs = new GraphHopperGtfs(cmdArgs);
-        graphHopperGtfs.init(cmdArgs);
+        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
+        graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
         locationIndex = graphHopperGtfs.getLocationIndex();
         graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, locationIndex, graphHopperGtfs.getGtfsStorage())

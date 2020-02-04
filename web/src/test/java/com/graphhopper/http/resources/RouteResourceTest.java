@@ -28,7 +28,6 @@ import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.profiles.Surface;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.Parameters;
@@ -61,7 +60,7 @@ public class RouteResourceTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car,foot").
                 put("prepare.ch.weightings", "fastest").
                 put("routing.ch.disabling_allowed", "true").
@@ -69,7 +68,7 @@ public class RouteResourceTest {
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.encoded_values", "surface").
-                put("graph.location", DIR));
+                put("graph.location", DIR);
     }
 
     @ClassRule

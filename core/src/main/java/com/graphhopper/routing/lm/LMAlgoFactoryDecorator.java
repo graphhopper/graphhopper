@@ -19,6 +19,7 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
@@ -30,7 +31,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
@@ -74,19 +74,19 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     @Override
-    public void init(CmdArgs args) {
-        setPreparationThreads(args.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
+    public void init(GraphHopperConfig ghConfig) {
+        setPreparationThreads(ghConfig.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
 
-        landmarkCount = args.getInt(Parameters.Landmark.COUNT, landmarkCount);
-        activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
-        logDetails = args.getBool(Landmark.PREPARE + "log_details", false);
-        minNodes = args.getInt(Landmark.PREPARE + "min_network_size", -1);
+        landmarkCount = ghConfig.getInt(Parameters.Landmark.COUNT, landmarkCount);
+        activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
+        logDetails = ghConfig.getBool(Landmark.PREPARE + "log_details", false);
+        minNodes = ghConfig.getInt(Landmark.PREPARE + "min_network_size", -1);
 
-        for (String loc : args.get(Landmark.PREPARE + "suggestions_location", "").split(",")) {
+        for (String loc : ghConfig.get(Landmark.PREPARE + "suggestions_location", "").split(",")) {
             if (!loc.trim().isEmpty())
                 lmSuggestionsLocations.add(loc.trim());
         }
-        String lmWeightingsStr = args.get(Landmark.PREPARE + "weightings", "");
+        String lmWeightingsStr = ghConfig.get(Landmark.PREPARE + "weightings", "");
         if (!lmWeightingsStr.isEmpty() && !lmWeightingsStr.equalsIgnoreCase("no") && !lmWeightingsStr.equalsIgnoreCase("false")) {
             List<String> tmpLMWeightingList = Arrays.asList(lmWeightingsStr.split(","));
             setWeightingsAsStrings(tmpLMWeightingList);
@@ -95,7 +95,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         boolean enableThis = !weightingsAsStrings.isEmpty();
         setEnabled(enableThis);
         if (enableThis)
-            setDisablingAllowed(args.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
+            setDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
     }
 
     public int getLandmarks() {
