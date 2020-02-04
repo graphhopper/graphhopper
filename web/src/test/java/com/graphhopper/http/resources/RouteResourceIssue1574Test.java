@@ -20,7 +20,6 @@ package com.graphhopper.http.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -44,13 +43,13 @@ public class RouteResourceIssue1574Test {
 
     static {
         // this is the reason we put this test into an extra file: we can only reproduce the bug of issue 1574 by increasing the one-way-network size
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "fastest").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "12").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR));
+                put("graph.location", DIR);
     }
 
     @ClassRule

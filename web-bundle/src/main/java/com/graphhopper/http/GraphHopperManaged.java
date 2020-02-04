@@ -21,25 +21,20 @@ package com.graphhopper.http;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.lifecycle.Managed;
-
 import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -55,7 +50,7 @@ public class GraphHopperManaged implements Managed {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopper graphHopper;
 
-    public GraphHopperManaged(CmdArgs configuration, ObjectMapper objectMapper) {
+    public GraphHopperManaged(GraphHopperConfig configuration, ObjectMapper objectMapper) {
         ObjectMapper localObjectMapper = objectMapper.copy();
         localObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         String splitAreaLocation = configuration.get(Parameters.Landmark.PREPARE + "split_area_location", "");

@@ -18,7 +18,6 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -43,14 +42,14 @@ public class SpatialRulesTest {
     static {
      // The EncodedValue "country" requires the setting "spatial_rules.borders_directory" as "country" does not load via DefaultTagParserFactory
         // TODO should we automatically detect this somehow and include a default country file?
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
                 put("graph.encoded_values", "country,road_environment,road_class,road_access,max_speed").
                 put("prepare.ch.weightings", "no").
                 put("spatial_rules.borders_directory", "../core/files/spatialrules").
                 put("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
-                put("graph.location", DIR));
+                put("graph.location", DIR);
     }
 
     @ClassRule

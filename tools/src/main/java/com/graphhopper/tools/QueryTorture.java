@@ -60,17 +60,17 @@ public class QueryTorture {
     }
 
     public static void main(String[] args) {
-        new QueryTorture().start(CmdArgs.read(args));
+        new QueryTorture().start(PMap.read(args));
     }
 
-    public void start(CmdArgs cmdArgs) {
-        String logfile = cmdArgs.get("logfile", "");
-        int workers = cmdArgs.getInt("workers", 1);
-        baseUrl = cmdArgs.get("baseurl", "");
-        tooShortDistance = cmdArgs.getDouble("too_short_distance", 50d);
-        maxQueries = cmdArgs.getLong("maxqueries", 1000L);
-        timeout = cmdArgs.getInt("timeout", 3000);
-        logRequest = cmdArgs.getBool("log_request", false);
+    public void start(PMap args) {
+        String logfile = args.get("logfile", "");
+        int workers = args.getInt("workers", 1);
+        baseUrl = args.get("baseurl", "");
+        tooShortDistance = args.getDouble("too_short_distance", 50d);
+        maxQueries = args.getLong("maxqueries", 1000L);
+        timeout = args.getInt("timeout", 3000);
+        logRequest = args.getBool("log_request", false);
         statusUpdateCnt = maxQueries / 10;
         if (Helper.isEmpty(baseUrl))
             throw new IllegalArgumentException("baseUrl cannot be empty!?");

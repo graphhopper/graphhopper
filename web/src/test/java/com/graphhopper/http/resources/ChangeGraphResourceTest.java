@@ -20,7 +20,6 @@ package com.graphhopper.http.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -43,12 +42,12 @@ public class ChangeGraphResourceTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put(Parameters.CH.PREPARE + "weightings", "no").
                 put("graph.flag_encoders", "car").
                 put("web.change_graph.enabled", "true").
                 put("graph.location", DIR).
-                put("datareader.file", "../core/files/andorra.osm.pbf"));
+                put("datareader.file", "../core/files/andorra.osm.pbf");
     }
 
     @ClassRule

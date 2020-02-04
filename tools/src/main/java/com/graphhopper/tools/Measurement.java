@@ -18,10 +18,7 @@
 package com.graphhopper.tools;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
@@ -63,15 +60,15 @@ public class Measurement {
     private int maxNode;
 
     public static void main(String[] strs) throws IOException {
-        CmdArgs cmdArgs = CmdArgs.read(strs);
-        int repeats = cmdArgs.getInt("measurement.repeats", 1);
+        PMap args = PMap.read(strs);
+        int repeats = args.getInt("measurement.repeats", 1);
         for (int i = 0; i < repeats; ++i)
-            new Measurement().start(cmdArgs);
+            new Measurement().start(args);
     }
 
     // creates properties file in the format key=value
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
-    void start(CmdArgs args) throws IOException {
+    void start(PMap args) throws IOException {
         final String graphLocation = args.get("graph.location", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
@@ -141,7 +138,7 @@ public class Measurement {
             }
         };
 
-        hopper.init(args).
+        hopper.init(new GraphHopperConfig(args)).
                 // use server to allow path simplification
                         forServer();
         if (cleanGraph) {
