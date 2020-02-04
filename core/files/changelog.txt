@@ -1,4 +1,5 @@
 1.0
+    GraphHopper.init(CmdArgs)->GraphHopper.init(GraphHopperConfig), see #1879
     revert compression of landmark preparation data, see #1749 and #1376
     removed GenericWeighting and DataFlagEncoder as a normal CarFlagEncoder does the job too
     add required EncodedValues like road_class to EncodingManager if not added from user

@@ -23,6 +23,8 @@ import com.graphhopper.GraphHopperConfig;
 
 public interface GraphHopperConfigMixIn {
 
+    // We can add explicit configuration properties to GraphHopperConfig (for example to allow lists or nested objects),
+    // everything else is stored in a HashMap
     @JsonAnySetter
     GraphHopperConfig put(String key, Object value);
 }
