@@ -27,19 +27,14 @@ import java.util.List;
 import java.util.Map;
 
 public class PriorityCustomConfig {
-    private final CustomModel config;
     private List<ConfigMapEntry> priorityList = new ArrayList<>();
-    private double maxPriority;
 
     public PriorityCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
-        this.config = customModel;
         add(lookup, customModel.getVehicleWeight(), "vehicle_weight", MaxWeight.KEY);
         add(lookup, customModel.getVehicleWidth(), "vehicle_width", MaxWidth.KEY);
         add(lookup, customModel.getVehicleHeight(), "vehicle_height", MaxHeight.KEY);
         add(lookup, customModel.getVehicleLength(), "vehicle_length", MaxLength.KEY);
 
-        // default for priority is 1
-        maxPriority = 1;
         for (Map.Entry<String, Object> entry : customModel.getPriority().entrySet()) {
             if (!lookup.hasEncodedValue(entry.getKey()))
                 throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'priority'");
@@ -47,8 +42,9 @@ public class PriorityCustomConfig {
             if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(entry.getKey(), Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
-                Double[] values = Helper.createEnumToDoubleArray("priority", 0, Double.POSITIVE_INFINITY, enumClass, (Map<String, Object>) value);
-                maxPriority = pickMax(values, maxPriority);
+                double[] values = Helper.createEnumToDoubleArray("priority", 1, 0, 100,
+                        enumClass, (Map<String, Object>) value);
+                normalizeFactor(values);
                 priorityList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'priority'");
@@ -56,16 +52,21 @@ public class PriorityCustomConfig {
         }
     }
 
-    static double pickMax(Double[] values, double max) {
-        for (Double val : values) {
-            max = val == null ? max : Math.max(max, val);
+    /**
+     * Pick the maximum value and if it is greater than 1 we divide all values with it - i.e. normalize it.
+     * <p>
+     * The purpose of this method is to avoid factors above 1 which makes e.g. Weighting.getMinWeight simpler (as maximum priority is 1)
+     * and also ensures that the landmark algorithm still works (weight can only increased without effecting optimality).
+     */
+    static void normalizeFactor(double[] values) {
+        double max = 1;
+        for (int i = 0; i < values.length; i++) {
+            max = Math.max(max, values[i]);
         }
-        return max;
-    }
-
-
-    public double getMaxPriority() {
-        return maxPriority;
+        if (max > 1)
+            for (int i = 0; i < values.length; i++) {
+                values[i] = values[i] / max;
+            }
     }
 
     void add(EncodedValueLookup lookup, Double value, String name, String encValue) {
@@ -83,14 +84,11 @@ public class PriorityCustomConfig {
         double priority = 1;
         for (int i = 0; i < priorityList.size(); i++) {
             ConfigMapEntry entry = priorityList.get(i);
-            Double value = entry.getValue(edge, reverse);
-            if (value != null) {
-                if (value < 0)
-                    throw new IllegalStateException("Invalid priority_" + i + ": " + value);
+            double value = entry.getValue(edge, reverse);
+            if (value < 1)
                 priority *= value;
-            }
         }
-        return Math.min(priority, maxPriority);
+        return priority;
     }
 
     private static class MaxValueConfigMapEntry implements ConfigMapEntry {
@@ -98,15 +96,15 @@ public class PriorityCustomConfig {
         double vehicleValue;
 
         public MaxValueConfigMapEntry(String name, DecimalEncodedValue ev, double vehicleValue) {
-            if (vehicleValue < 0)
-                throw new IllegalArgumentException(name + " cannot be negative");
+            if (vehicleValue <= 0)
+                throw new IllegalArgumentException(name + " cannot be 0 or negative");
             this.ev = ev;
             this.vehicleValue = vehicleValue;
         }
 
         @Override
-        public Double getValue(EdgeIteratorState iter, boolean reverse) {
-            return (vehicleValue < (reverse ? iter.getReverse(ev) : iter.get(ev))) ? null : 0.0;
+        public double getValue(EdgeIteratorState iter, boolean reverse) {
+            return (vehicleValue <= (reverse ? iter.getReverse(ev) : iter.get(ev))) ? 1 : 0.0;
         }
 
         @Override

@@ -25,15 +25,15 @@ import java.util.Arrays;
 
 public final class EnumToValue implements ConfigMapEntry {
     private final IntEncodedValue eev;
-    private final Double[] values;
+    private final double[] values;
 
-    EnumToValue(EnumEncodedValue eev, Double[] values) {
+    EnumToValue(EnumEncodedValue eev, double[] values) {
         this.eev = eev;
         this.values = values;
     }
 
     @Override
-    public Double getValue(EdgeIteratorState iter, boolean reverse) {
+    public double getValue(EdgeIteratorState iter, boolean reverse) {
         int enumOrdinal = iter.get(eev);
         return values[enumOrdinal];
     }

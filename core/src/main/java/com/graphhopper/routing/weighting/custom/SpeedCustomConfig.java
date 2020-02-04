@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.pickMax;
+import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.normalizeFactor;
 
 public class SpeedCustomConfig {
     private List<ConfigMapEntry> speedFactorList = new ArrayList<>();
@@ -38,11 +38,13 @@ public class SpeedCustomConfig {
     private DecimalEncodedValue avgSpeedEnc;
     private final double maxSpeed;
     private final double maxSpeedFallback;
-    private double max_speedFactor = 1;
 
-    public SpeedCustomConfig(double maxSpeed, CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
+    public SpeedCustomConfig(final double maxSpeed, CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
         this.maxSpeed = maxSpeed;
         this.maxSpeedFallback = customModel.getMaxSpeedFallback() == null ? maxSpeed : customModel.getMaxSpeedFallback();
+        if (this.maxSpeedFallback > maxSpeed)
+            throw new IllegalArgumentException("max_speed_fallback cannot be bigger than max_speed " + maxSpeed);
+
         this.avgSpeedEnc = lookup.getDecimalEncodedValue(EncodingManager.getKey(customModel.getBase(), "average_speed"));
 
         // use max_speed to lower speed for the specified conditions
@@ -55,7 +57,8 @@ public class SpeedCustomConfig {
 
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(key, Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(key);
-                Double[] values = Helper.createEnumToDoubleArray("max_speed", 0, maxSpeed, enumClass, (Map<String, Object>) value);
+                double[] values = Helper.createEnumToDoubleArray("max_speed", maxSpeed, 0, maxSpeed,
+                        enumClass, (Map<String, Object>) value);
                 maxSpeedList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'max_speed'");
@@ -72,8 +75,9 @@ public class SpeedCustomConfig {
 
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(key, Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(key);
-                Double[] values = Helper.createEnumToDoubleArray("speed_factor", 0, 2, enumClass, (Map<String, Object>) value);
-                max_speedFactor = pickMax(values, max_speedFactor);
+                double[] values = Helper.createEnumToDoubleArray("speed_factor", 1, 0, 100,
+                        enumClass, (Map<String, Object>) value);
+                normalizeFactor(values);
                 speedFactorList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'speed_factor'");
@@ -82,7 +86,7 @@ public class SpeedCustomConfig {
     }
 
     public double getMaxSpeed() {
-        return maxSpeed * max_speedFactor;
+        return maxSpeed;
     }
 
     /**
@@ -96,23 +100,20 @@ public class SpeedCustomConfig {
         boolean applied = false;
         for (int i = 0; i < maxSpeedList.size(); i++) {
             ConfigMapEntry entry = maxSpeedList.get(i);
-            Double maxValue = entry.getValue(edge, reverse);
-            if (maxValue != null) {
+            double maxValue = entry.getValue(edge, reverse);
+            if (maxValue < speed) {
                 applied = true;
-                speed = Math.min(speed, maxValue);
+                speed = maxValue;
             }
         }
-        if (!applied)
-            speed = Math.min(speed, maxSpeedFallback);
+        if (!applied && maxSpeedFallback < speed)
+            speed = maxSpeedFallback;
 
-        applied = false;
         for (int i = 0; i < speedFactorList.size(); i++) {
             ConfigMapEntry entry = speedFactorList.get(i);
-            Double factorValue = entry.getValue(edge, reverse);
-            if (factorValue != null) {
-                applied = true;
+            double factorValue = entry.getValue(edge, reverse);
+            if (factorValue < 1)
                 speed *= factorValue;
-            }
         }
 
         return Math.min(speed, maxSpeed);

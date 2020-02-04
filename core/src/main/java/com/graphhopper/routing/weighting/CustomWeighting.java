@@ -23,8 +23,8 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.weighting.custom.SpeedCustomConfig;
 import com.graphhopper.routing.weighting.custom.PriorityCustomConfig;
+import com.graphhopper.routing.weighting.custom.SpeedCustomConfig;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -37,13 +37,14 @@ import com.graphhopper.util.EdgeIteratorState;
  * weight = (toSeconds(distance / speed) + distanceInfluence) / priority;
  * return weight
  * </pre>
+ * Please note that the max_speed map is capped to the maximum allowed speed. Also values in the speed_factor and
+ * priority maps are normalized to 1 if bigger than 1 to avoid problems with the landmark algorithm.
  */
 public class CustomWeighting extends AbstractWeighting {
 
     private BooleanEncodedValue baseVehicleProfileAccessEnc;
     private String baseVehicleProfile;
 
-    private final double maxPriority;
     private double maxSpeed;
     private double distanceFactor;
     private SpeedCustomConfig speedConfig;
@@ -59,9 +60,6 @@ public class CustomWeighting extends AbstractWeighting {
         maxSpeed = speedConfig.getMaxSpeed() / CustomModel.SPEED_CONV;
 
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
-        maxPriority = priorityConfig.getMaxPriority();
-        if (maxPriority < 1)
-            throw new IllegalArgumentException("maximum priority cannot be smaller than 1 but was " + maxPriority);
 
         distanceFactor = customModel.getDistanceFactor();
         if (distanceFactor < 0)
@@ -70,7 +68,7 @@ public class CustomWeighting extends AbstractWeighting {
 
     @Override
     public double getMinWeight(double distance) {
-        return (distance / maxSpeed + distance * distanceFactor) / maxPriority;
+        return (distance / maxSpeed + distance * distanceFactor);
     }
 
     @Override

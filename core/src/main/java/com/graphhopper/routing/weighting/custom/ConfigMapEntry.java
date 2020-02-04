@@ -23,5 +23,5 @@ public interface ConfigMapEntry {
     /**
      * @return a double value or null if this entry should be skipped
      */
-    Double getValue(EdgeIteratorState iter, boolean reverse);
+    double getValue(EdgeIteratorState iter, boolean reverse);
 }

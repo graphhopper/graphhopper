@@ -497,16 +497,17 @@ public class Helper {
         return enumClass.getEnumConstants()[0];
     }
 
-    public static Double[] createEnumToDoubleArray(String name, double min, double max, Class<? extends Enum> enumClass,
-                                                   Map<String, Object> map) {
-        Double[] tmp = new Double[enumClass.getEnumConstants().length];
+    public static double[] createEnumToDoubleArray(String name, double defaultValue, double minValue, double maxValue,
+                                                   Class<? extends Enum> enumClass, Map<String, Object> map) {
+        double[] tmp = new double[enumClass.getEnumConstants().length];
+        Arrays.fill(tmp, defaultValue);
         for (Map.Entry<String, Object> encValEntry : map.entrySet()) {
             Enum enumValue = getValueOf(enumClass, encValEntry.getKey());
             tmp[enumValue.ordinal()] = ((Number) encValEntry.getValue()).doubleValue();
-            if (tmp[enumValue.ordinal()] < min)
-                throw new IllegalArgumentException(name + " cannot be lower than " + min);
-            if (tmp[enumValue.ordinal()] > max)
-                throw new IllegalArgumentException(name + " cannot be bigger than " + max);
+            if (tmp[enumValue.ordinal()] < minValue)
+                throw new IllegalArgumentException(name + " cannot be lower than " + minValue);
+            if (tmp[enumValue.ordinal()] > maxValue)
+                throw new IllegalArgumentException(name + " cannot be bigger than " + maxValue);
         }
         return tmp;
     }

@@ -68,12 +68,12 @@ public class CustomWeightingTest {
         vehicleModel.getPriority().put(KEY, map);
 
         Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
-        assertEquals(1.21, weighting.calcEdgeWeight(edge2, false), 0.01);
-        assertEquals(0.575, weighting.calcEdgeWeight(edge1, false), 0.01);
+        assertEquals(2.43, weighting.calcEdgeWeight(edge2, false), 0.01);
+        assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         map.put(PRIMARY.toString(), 1.1);
         weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
-        assertEquals(1.045, weighting.calcEdgeWeight(edge1, false), 0.01);
+        assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         // force integer value
         map.put(PRIMARY.toString(), 1);
