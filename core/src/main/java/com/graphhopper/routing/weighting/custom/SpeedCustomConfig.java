@@ -97,6 +97,13 @@ public class SpeedCustomConfig {
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid estimated speed " + speed);
 
+        for (int i = 0; i < speedFactorList.size(); i++) {
+            ConfigMapEntry entry = speedFactorList.get(i);
+            double factorValue = entry.getValue(edge, reverse);
+            if (factorValue < 1)
+                speed *= factorValue;
+        }
+
         boolean applied = false;
         for (int i = 0; i < maxSpeedList.size(); i++) {
             ConfigMapEntry entry = maxSpeedList.get(i);
@@ -106,15 +113,9 @@ public class SpeedCustomConfig {
                 speed = maxValue;
             }
         }
-        if (!applied && maxSpeedFallback < speed)
-            speed = maxSpeedFallback;
 
-        for (int i = 0; i < speedFactorList.size(); i++) {
-            ConfigMapEntry entry = speedFactorList.get(i);
-            double factorValue = entry.getValue(edge, reverse);
-            if (factorValue < 1)
-                speed *= factorValue;
-        }
+        if (!applied && maxSpeedFallback < speed)
+            return maxSpeedFallback;
 
         return Math.min(speed, maxSpeed);
     }

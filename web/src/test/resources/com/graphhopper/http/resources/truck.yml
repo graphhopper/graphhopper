@@ -7,7 +7,20 @@ vehicle_width: 2.5
 # in tons
 vehicle_weight: 4.5
 
-# You can lower the estimated average speed for certain conditions via max_speed e.g. for motorway to 95km/h
+# The formula is defined in CustomWeighting, where the speed_factor can be used to increase and decrease speed.
+# If the value is higher than 1 the other values will be divided by this value to make the underlying routing
+# algorithm work (normalization) and still have the same effect. And if two conditions are satisfied the values are
+# multiplied e.g. if road_class==motorway and road_environment==tunnel, then the resulting speed is
+# average_speed*0.85*0.9. The minimum value is 0.
+speed_factor:
+  road_environment:
+    tunnel: 0.85
+  # trucks should be a bit slower on certain road classes compared to the 'base' car
+  # a more compact JSON-way to list the properties, fully YAML-compatible:
+  road_class: { motorway: 0.85, primary: 0.9 }
+
+# You can lower the average speed for certain conditions via the max_speed map. The speed_factor is applied before
+# this operation. See the following example that sets the maximum speed to 95km/h for motorways.
 max_speed:
   road_class:
     motorway: 95
@@ -18,20 +31,12 @@ max_speed:
 # If none of the conditions above apply use the fallback, if specified.
 max_speed_fallback: 100
 
-# The formula is defined in CustomWeighting, where the speed_factor can be used to increase speed and decrease speed
-# It is important to note that if two conditions are satisfied the values are multiplied e.g. if road_class==motorway
-# and road_environment==tunnel, then the resulting speed is average_speed*0.85*0.9. The minimum value is 0.
-speed_factor:
-  road_environment:
-    tunnel: 0.85
-  # trucks should be a bit slower on certain road classes compared to the 'base' car
-  # a more compact JSON-way to list the properties, fully YAML-compatible:
-  road_class: { motorway: 0.85, primary: 0.9 }
-
-# Now we want to set a preference without changing the speed. I.e. trucks shall prefer bigger roads and so we could
-# increase the speed for them, but this is ugly, so we use priority that does not influence the speed.
-# The default priority 1 won't change something. Higher than 1 will prefer the road under the specified condition (TODO necessary?)
-# and lower than 1 will avoid it. If two conditions are met the values will be multiplied. The minimum value is 0.
+# Now we want to set a preference without changing the taken time. I.e. trucks shall prefer bigger roads and so we could
+# increase the speed for them, but this influences time. The default priority 1 won't change something.
+# Higher than 1 will prefer the road under the specified condition and lower than 1 will avoid it.
+# If the value is higher than 1 the other values will be divided by this value to make the underlying routing algorithm
+# work (normalization) and still have the same effect. And if two conditions are met the values will be multiplied.
+# The minimum value is 0.
 priority:
   road_class:
     motorway: 1.1
@@ -42,8 +47,9 @@ priority:
   toll: { no: 1.5 }
   # let's assume we transport gas: so NEVER go on restricted roads with hazmat==no
   hazmat: { no: 0 }
-  # allow delivery access
-  road_access: { delivery: 1 }
+  # avoid destination-only roads
+  # TODO include private and delivery only access for base car profile so that we can avoid it here, but not exclude it
+  road_access: { destination: 0.1 }
   # avoid turns if possible and links are one simple indication for that
   # TODO booleans are not yet supported here
   # road_class_link: 0.5

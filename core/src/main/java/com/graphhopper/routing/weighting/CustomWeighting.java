@@ -29,26 +29,27 @@ import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Every EncodedValue like road_environment can influence one or more aspects of this Weighting: the
- * speed_factor, the max_speed and the priority. The formula is basically:
+ * speed_factor, the max_speed and the priority. The formula is basically as follows:
  * <pre>
- * if no access to edge then return infinity
- * speed = reduce_to_max_speed(estimated speed) * multiply_all(speed_factor_map)
+ * if edge is not accessible for base vehicle then return infinity
+ * speed = reduce_to_max_speed(estimated_average_speed * multiply_all(speed_factor_map))
  * distanceInfluence = distance * distanceFactor
  * weight = (toSeconds(distance / speed) + distanceInfluence) / priority;
  * return weight
  * </pre>
  * Please note that the max_speed map is capped to the maximum allowed speed. Also values in the speed_factor and
- * priority maps are normalized to 1 if bigger than 1 to avoid problems with the landmark algorithm.
+ * priority maps are normalized via the maximum value to 1 if one of the values is bigger than 1
+ * to avoid problems with the landmark algorithm, i.e. the edge weight is always increased and the heuristic always
+ * underestimates the weight.
  */
 public class CustomWeighting extends AbstractWeighting {
 
-    private BooleanEncodedValue baseVehicleProfileAccessEnc;
-    private String baseVehicleProfile;
-
-    private double maxSpeed;
-    private double distanceFactor;
-    private SpeedCustomConfig speedConfig;
-    private PriorityCustomConfig priorityConfig;
+    private final BooleanEncodedValue baseVehicleProfileAccessEnc;
+    private final String baseVehicleProfile;
+    private final double maxSpeed;
+    private final double distanceFactor;
+    private final SpeedCustomConfig speedConfig;
+    private final PriorityCustomConfig priorityConfig;
 
     public CustomWeighting(String name, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
                            EncodedValueFactory factory, TurnCostProvider turnCostProvider, CustomModel customModel) {
