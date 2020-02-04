@@ -515,20 +515,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
-        EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-        String flagEncodersStr = ghConfig.get("graph.flag_encoders", "");
-        String encodedValueStr = ghConfig.get("graph.encoded_values", "");
-        if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {
-            if (!encodedValueStr.isEmpty())
-                emBuilder.addAll(tagParserFactory, encodedValueStr);
-            registerCustomEncodedValues(emBuilder);
-            if (!flagEncodersStr.isEmpty())
-                emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
-            emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
-            emBuilder.setPreferredLanguage(ghConfig.get("datareader.preferred_language", ""));
-            emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.get("datareader.date_range_parser_day", "")));
+        EncodingManager encodingManager = createEncodingManager(ghConfig);
+        if (encodingManager != null) {
             // overwrite EncodingManager object from configuration file
-            setEncodingManager(emBuilder.build());
+            setEncodingManager(encodingManager);
         }
 
         if (ghConfig.get("graph.locktype", "native").equals("simple"))
@@ -537,45 +527,9 @@ public class GraphHopper implements GraphHopperAPI {
             lockFactory = new NativeFSLockFactory();
 
         // elevation
-        String eleProviderStr = toLowerCase(ghConfig.get("graph.elevation.provider", "noop"));
         this.smoothElevation = ghConfig.getBool("graph.elevation.smoothing", false);
-
-        // keep fallback until 0.8
-        boolean eleCalcMean = ghConfig.has("graph.elevation.calcmean")
-                ? ghConfig.getBool("graph.elevation.calcmean", false)
-                : ghConfig.getBool("graph.elevation.calc_mean", false);
-
-        String cacheDirStr = ghConfig.get("graph.elevation.cache_dir", "");
-        if (cacheDirStr.isEmpty())
-            cacheDirStr = ghConfig.get("graph.elevation.cachedir", "");
-
-        String baseURL = ghConfig.get("graph.elevation.base_url", "");
-        if (baseURL.isEmpty())
-            ghConfig.get("graph.elevation.baseurl", "");
-
-        boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
-        removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
-
-        DAType elevationDAType = DAType.fromString(ghConfig.get("graph.elevation.dataaccess", "MMAP"));
-        ElevationProvider tmpProvider = ElevationProvider.NOOP;
-        if (eleProviderStr.equalsIgnoreCase("srtm")) {
-            tmpProvider = new SRTMProvider(cacheDirStr);
-        } else if (eleProviderStr.equalsIgnoreCase("cgiar")) {
-            tmpProvider = new CGIARProvider(cacheDirStr);
-        } else if (eleProviderStr.equalsIgnoreCase("gmted")) {
-            tmpProvider = new GMTEDProvider(cacheDirStr);
-        } else if (eleProviderStr.equalsIgnoreCase("srtmgl1")) {
-            tmpProvider = new SRTMGL1Provider(cacheDirStr);
-        } else if (eleProviderStr.equalsIgnoreCase("multi")) {
-            tmpProvider = new MultiSourceElevationProvider(cacheDirStr);
-        }
-
-        tmpProvider.setAutoRemoveTemporaryFiles(removeTempElevationFiles);
-        tmpProvider.setCalcMean(eleCalcMean);
-        if (!baseURL.isEmpty())
-            tmpProvider.setBaseURL(baseURL);
-        tmpProvider.setDAType(elevationDAType);
-        setElevationProvider(tmpProvider);
+        ElevationProvider elevationProvider = createElevationProvider(ghConfig);
+        setElevationProvider(elevationProvider);
 
         // optimizable prepare
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
@@ -601,6 +555,66 @@ public class GraphHopper implements GraphHopperAPI {
         nonChMaxWaypointDistance = ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
 
         return this;
+    }
+
+    private EncodingManager createEncodingManager(GraphHopperConfig ghConfig) {
+        String flagEncodersStr = ghConfig.get("graph.flag_encoders", "");
+        String encodedValueStr = ghConfig.get("graph.encoded_values", "");
+        if (flagEncodersStr.isEmpty() && encodedValueStr.isEmpty()) {
+            return null;
+        } else {
+            EncodingManager.Builder emBuilder = new EncodingManager.Builder();
+            if (!encodedValueStr.isEmpty())
+                emBuilder.addAll(tagParserFactory, encodedValueStr);
+            registerCustomEncodedValues(emBuilder);
+            if (!flagEncodersStr.isEmpty())
+                emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
+            emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
+            emBuilder.setPreferredLanguage(ghConfig.get("datareader.preferred_language", ""));
+            emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.get("datareader.date_range_parser_day", "")));
+            return emBuilder.build();
+        }
+    }
+
+    private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
+        String eleProviderStr = toLowerCase(ghConfig.get("graph.elevation.provider", "noop"));
+
+        // keep fallback until 0.8
+        boolean eleCalcMean = ghConfig.has("graph.elevation.calcmean")
+                ? ghConfig.getBool("graph.elevation.calcmean", false)
+                : ghConfig.getBool("graph.elevation.calc_mean", false);
+
+        String cacheDirStr = ghConfig.get("graph.elevation.cache_dir", "");
+        if (cacheDirStr.isEmpty())
+            cacheDirStr = ghConfig.get("graph.elevation.cachedir", "");
+
+        String baseURL = ghConfig.get("graph.elevation.base_url", "");
+        if (baseURL.isEmpty())
+            ghConfig.get("graph.elevation.baseurl", "");
+
+        boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
+        removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
+
+        DAType elevationDAType = DAType.fromString(ghConfig.get("graph.elevation.dataaccess", "MMAP"));
+        ElevationProvider elevationProvider = ElevationProvider.NOOP;
+        if (eleProviderStr.equalsIgnoreCase("srtm")) {
+            elevationProvider = new SRTMProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("cgiar")) {
+            elevationProvider = new CGIARProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("gmted")) {
+            elevationProvider = new GMTEDProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("srtmgl1")) {
+            elevationProvider = new SRTMGL1Provider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("multi")) {
+            elevationProvider = new MultiSourceElevationProvider(cacheDirStr);
+        }
+
+        elevationProvider.setAutoRemoveTemporaryFiles(removeTempElevationFiles);
+        elevationProvider.setCalcMean(eleCalcMean);
+        if (!baseURL.isEmpty())
+            elevationProvider.setBaseURL(baseURL);
+        elevationProvider.setDAType(elevationDAType);
+        return elevationProvider;
     }
 
     private void printInfo() {
