@@ -92,7 +92,7 @@ public class IsochroneResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
 
         // todo: isochrones with turn costs ?
-        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph, NO_TURN_COST_PROVIDER, null);
+        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, NO_TURN_COST_PROVIDER, null);
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {

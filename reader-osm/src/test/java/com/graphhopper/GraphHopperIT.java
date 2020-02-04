@@ -480,6 +480,25 @@ public class GraphHopperIT {
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(3363, rsp.getBest().getDistance(), 1);
+
+        // query point and snapped point are different => block snapped point only => show that block_area changes lookup
+        req = new GHRequest(49.984465, 11.507009, 49.986107, 11.507202);
+        rsp = tmpHopper.route(req);
+        assertEquals(11.506, rsp.getBest().getWaypoints().getLongitude(0), 0.001);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(155, rsp.getBest().getDistance(), 10);
+
+        req.getHints().put(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
+        rsp = tmpHopper.route(req);
+        assertEquals(11.508, rsp.getBest().getWaypoints().getLongitude(0), 0.001);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(1185, rsp.getBest().getDistance(), 10);
+
+        // first point is contained in block_area => error
+        req = new GHRequest(49.979, 11.516, 49.986107, 11.507202);
+        req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
+        rsp = tmpHopper.route(req);
+        assertTrue("expected errors", rsp.hasErrors());
     }
 
     @Test

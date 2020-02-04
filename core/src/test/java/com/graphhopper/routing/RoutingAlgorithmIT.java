@@ -64,7 +64,7 @@ public class RoutingAlgorithmIT {
 
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(hints.getVehicle());
         TurnCostProvider turnCostProvider = tMode.isEdgeBased() ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
-        Weighting weighting = hopper.createWeighting(hints, encoder, hopper.getGraphHopperStorage(), turnCostProvider, null);
+        Weighting weighting = hopper.createWeighting(hints, encoder, turnCostProvider, null);
         HintsMap defaultHints = new HintsMap().put(Parameters.CH.DISABLE, true).put(Parameters.Landmark.DISABLE, true)
                 .setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());
 

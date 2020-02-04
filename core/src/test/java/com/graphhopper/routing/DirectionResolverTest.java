@@ -391,7 +391,7 @@ public class DirectionResolverTest {
     }
 
     private void checkResult(int node, double lat, double lon, DirectionResolverResult expectedResult) {
-        DirectionResolver resolver = new DirectionResolver(g, encoder);
+        DirectionResolver resolver = new DirectionResolver(g, encoder.getAccessEnc());
         assertEquals(expectedResult, resolver.resolveDirections(node, new GHPoint(lat, lon)));
     }
 
