@@ -19,8 +19,9 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -35,8 +36,8 @@ import java.util.List;
  * There are different sets of edges.
  * The previous edge is the edge we are coming from.
  * The current edge is the edge we turn on.
- * The allowedOutgoingEdges contains all edges that the current vehicle is allowed(*) to turn on to, excluding the prev edge and the current edge.
- * The allOutgoingEdges contains all edges surrounding this turn instruction, without the prev edge and the current edge.
+ * The allowedAlternativeTurns contains all edges that the current vehicle is allowed(*) to turn on to, excluding the prev edge and the current edge.
+ * The visibleAlternativeTurns contains all edges surrounding this turn instruction, without the prev edge and the current edge.
  * (*): This might not consider turn restrictions, but only simple access values.
  * Here is an example:
  * <pre>
@@ -48,8 +49,8 @@ import java.util.List;
  * For the route from A->B->C and baseNode=B, adjacentNode=C:
  * - the previous edge is A->B
  * - the current edge is B->C
- * - the allowedOutgoingEdges are B->C => return value of {@link #nrOfAllowedOutgoingEdges()} is 1
- * - the allOutgoingEdges are B->X and B->C => return values of {@link #nrOfAllOutgoingEdges()} is 2
+ * - the allowedAlternativeTurns are B->C => return value of {@link #getAllowedTurns()} is 1
+ * - the visibleAlternativeTurns are B->X and B->C => return values of {@link #getVisibleTurns()} is 2
  *
  * @author Robin Boldt
  */
@@ -58,17 +59,21 @@ class InstructionsOutgoingEdges {
     private final EdgeIteratorState prevEdge;
     private final EdgeIteratorState currentEdge;
     // Outgoing edges that we would be allowed to turn on
-    private final List<EdgeIteratorState> filteredOutgoingEdges;
+    private final List<EdgeIteratorState> allowedAlternativeTurns;
     // All outgoing edges, including oneways in the wrong direction
-    private final List<EdgeIteratorState> filteredEdges;
+    private final List<EdgeIteratorState> visibleAlternativeTurns;
     private final DecimalEncodedValue maxSpeedEnc;
     private final DecimalEncodedValue avgSpeedEnc;
+    private final EnumEncodedValue<RoadClass> roadClassEnc;
+    private final BooleanEncodedValue roadClassLinkEnc;
     private final NodeAccess nodeAccess;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
                                      EdgeIteratorState currentEdge,
                                      FlagEncoder encoder,
                                      DecimalEncodedValue maxSpeedEnc,
+                                     EnumEncodedValue<RoadClass> roadClassEnc,
+                                     BooleanEncodedValue roadClassLinkEnc,
                                      EdgeExplorer crossingExplorer,
                                      NodeAccess nodeAccess,
                                      int prevNode,
@@ -79,19 +84,21 @@ class InstructionsOutgoingEdges {
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         this.maxSpeedEnc = maxSpeedEnc;
         this.avgSpeedEnc = encoder.getAverageSpeedEnc();
+        this.roadClassEnc = roadClassEnc;
+        this.roadClassLinkEnc = roadClassLinkEnc;
         this.nodeAccess = nodeAccess;
 
         EdgeIteratorState tmpEdge;
 
-        filteredEdges = new ArrayList<>();
-        filteredOutgoingEdges = new ArrayList<>();
+        visibleAlternativeTurns = new ArrayList<>();
+        allowedAlternativeTurns = new ArrayList<>();
         EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
         while (edgeIter.next()) {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
                 tmpEdge = edgeIter.detach(false);
-                filteredEdges.add(tmpEdge);
+                visibleAlternativeTurns.add(tmpEdge);
                 if (tmpEdge.get(accessEnc)) {
-                    filteredOutgoingEdges.add(tmpEdge);
+                    allowedAlternativeTurns.add(tmpEdge);
                 }
             }
         }
@@ -101,16 +108,16 @@ class InstructionsOutgoingEdges {
      * This method calculates the number of allowed outgoing edges, which could be considered the number of possible
      * roads one might take at the intersection. This excludes the road you are coming from and inaccessible roads.
      */
-    public int nrOfAllowedOutgoingEdges() {
-        return 1 + filteredOutgoingEdges.size();
+    public int getAllowedTurns() {
+        return 1 + allowedAlternativeTurns.size();
     }
 
     /**
      * This method calculates the number of all outgoing edges, which could be considered the number of roads you see
      * at the intersection. This excludes the road your are coming from.
      */
-    public int nrOfAllOutgoingEdges() {
-        return 1 + filteredEdges.size();
+    public int getVisibleTurns() {
+        return 1 + visibleAlternativeTurns.size();
     }
 
 
@@ -129,7 +136,7 @@ class InstructionsOutgoingEdges {
 
         double maxSurroundingSpeed = -1;
 
-        for (EdgeIteratorState edge : filteredEdges) {
+        for (EdgeIteratorState edge : visibleAlternativeTurns) {
             tmpSpeed = getSpeed(edge);
             if (tmpSpeed < 1) {
                 // This might happen for the DataFlagEncoder, might create unnecessary turn instructions
@@ -162,7 +169,7 @@ class InstructionsOutgoingEdges {
      */
     public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation) {
         int tmpSign;
-        for (EdgeIteratorState edge : filteredOutgoingEdges) {
+        for (EdgeIteratorState edge : allowedAlternativeTurns) {
             GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
             tmpSign = InstructionsHelper.calculateSign(prevLat, prevLon, point.getLat(), point.getLon(), prevOrientation);
             if (Math.abs(tmpSign) <= 1) {
@@ -182,27 +189,23 @@ class InstructionsOutgoingEdges {
             return false;
         }
 
-        // If flags are changing, there might be a chance we find these flags on a different edge
-        boolean checkFlag = currentEdge.getFlags() != prevEdge.getFlags();
-        for (EdgeIteratorState edge : filteredOutgoingEdges) {
+        boolean roadClassOrLinkChange = !isTheSameRoadClassAndLink(prevEdge, currentEdge);
+        for (EdgeIteratorState edge : allowedAlternativeTurns) {
             String edgeName = edge.getName();
-            IntsRef edgeFlag = edge.getFlags();
-            // leave the current street || enter a different street
-            if (isTheSameStreet(prevName, prevEdge.getFlags(), edgeName, edgeFlag, checkFlag)
-                    || isTheSameStreet(name, currentEdge.getFlags(), edgeName, edgeFlag, checkFlag)) {
+            // leave the current street
+            if (InstructionsHelper.isNameSimilar(prevName, edgeName) || (roadClassOrLinkChange && isTheSameRoadClassAndLink(prevEdge, edge))) {
+                return true;
+            }
+            // enter a different street
+            if (InstructionsHelper.isNameSimilar(name, edgeName) || (roadClassOrLinkChange && isTheSameRoadClassAndLink(currentEdge, edge))) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean isTheSameStreet(String name1, IntsRef flags1, String name2, IntsRef flags2, boolean checkFlag) {
-        if (InstructionsHelper.isNameSimilar(name1, name2)) {
-            if (!checkFlag || flags1.equals(flags2)) {
-                return true;
-            }
-        }
-        return false;
+    private boolean isTheSameRoadClassAndLink(EdgeIteratorState edge1, EdgeIteratorState edge2) {
+        return edge1.get(roadClassEnc) == edge2.get(roadClassEnc) && edge1.get(roadClassLinkEnc) == edge2.get(roadClassLinkEnc);
     }
 
 }
