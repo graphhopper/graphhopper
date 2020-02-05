@@ -335,7 +335,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         // Under certain conditions we need to increase the speed of pushing sections to the speed of a "highway=cycleway"
         if (way.hasTag("highway", pushingSectionsHighways)
                 && ((way.hasTag("foot", "yes") && way.hasTag("segregated", "yes"))
-                || way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official")))
+                || way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "official")))
             highwaySpeed = getHighwaySpeed("cycleway");
 
         String s = way.getTag("surface");
@@ -375,7 +375,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                     speed = PUSHING_SECTION_SPEED / 2;
                 else
                     speed = PUSHING_SECTION_SPEED;
-            } else if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official")) {
+            } else if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") || way.hasTag("bicycle", "yes")) {
                 // Here we handle the cases where the OSM tagging results in something similar to "highway=cycleway"
                 speed = highwaySpeeds.get("cycleway");
             } else {
