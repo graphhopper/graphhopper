@@ -55,7 +55,7 @@ public class ConditionalTurnRestrictionsResource {
                     .filter(e -> e.getValue().hasTag("type", "restriction"))
                     .flatMap(entry -> {
                         long osmid = entry.getKey();
-                        Relation relation = osm.relations.get(osmid);
+                        Relation relation = entry.getValue();
                         Map<String, Object> tags = TimeDependentAccessRestriction.getTags(relation);
                         List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData = TimeDependentAccessRestriction.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
                                 .collect(Collectors.toList());

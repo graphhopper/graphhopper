@@ -106,7 +106,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
             EdgeIterator iter = edgeInExplorer.setBaseNode(viaNode);
 
             while (iter.next()) {
-                if (map.getOsmIdOfInternalEdge(iter.getEdge()) == osmTurnRelation.getOsmIdFrom()) {
+                if (map.getOsmIdOfEdge(iter.getEdge()) == osmTurnRelation.getOsmIdFrom()) {
                     edgeIdFrom = iter.getEdge();
                     break;
                 }
@@ -121,7 +121,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
             // for TYPE_NOT_*  we add ONE restriction  (from, via, to)
             while (iter.next()) {
                 int edgeId = iter.getEdge();
-                long wayId = map.getOsmIdOfInternalEdge(edgeId);
+                long wayId = map.getOsmIdOfEdge(edgeId);
                 if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRelation.Type.ONLY && wayId != osmTurnRelation.getOsmIdTo()
                         || osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT && wayId == osmTurnRelation.getOsmIdTo() && wayId >= 0) {
                     tcs.set(turnCostEnc, turnCostFlags, edgeIdFrom, viaNode, iter.getEdge(), Double.POSITIVE_INFINITY);

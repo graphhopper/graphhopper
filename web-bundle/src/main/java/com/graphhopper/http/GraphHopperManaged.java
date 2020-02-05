@@ -22,6 +22,7 @@ import com.conveyal.osmlib.OSM;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.TimeDependentAccessRestriction;
 import com.graphhopper.TimeDependentAccessWeighting;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
@@ -102,6 +103,8 @@ public class GraphHopperManaged implements Managed {
         osm = new OSM(graphHopper.getGraphHopperStorage().getDirectory().getDefaultType().isStoring() ? graphHopper.getGraphHopperStorage().getDirectory().getLocation()+"/osm.db" : null);
         if (osm.ways.isEmpty()) {
             osm.readFromFile(graphHopper.getDataReaderFile());
+            TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(graphHopper.getGraphHopperStorage(), osm);
+            timeDependentAccessRestriction.markEdgesAdjacentToConditionalTurnRestrictions();
         }
     }
 

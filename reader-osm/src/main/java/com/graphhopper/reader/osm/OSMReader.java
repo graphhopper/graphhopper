@@ -183,7 +183,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                         prepareWaysWithRelationInfo(relation);
 
                     if (relation.hasTag("type", "restriction")) {
-                        prepareRestrictionRelation(relation);
+                        rememberMemberWayIds(relation);
                     }
 
                     if (++tmpRelationCounter % 100_000 == 0) {
@@ -201,12 +201,11 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         }
     }
 
-    private void prepareRestrictionRelation(ReaderRelation relation) {
-        List<OSMTurnRelation> turnRelations = createTurnRelations(relation);
-        for (OSMTurnRelation turnRelation : turnRelations) {
-            osmWayIdSet.add(turnRelation.getOsmIdFrom());
-            osmWayIdSet.add(turnRelation.getOsmIdTo());
-        }
+    private void rememberMemberWayIds(ReaderRelation relation) {
+        long fromWayID = findMember(relation, ReaderElement.WAY, "from");
+        long toWayID = findMember(relation, ReaderElement.WAY, "to");
+        osmWayIdSet.add(fromWayID);
+        osmWayIdSet.add(toWayID);
     }
 
     private IntLongMap getEdgeIdToOsmWayIdMap() {
@@ -422,7 +421,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * order to reduce memory overhead.
      */
     @Override
-    public long getOsmIdOfInternalEdge(int edgeId) {
+    public long getOsmIdOfEdge(int edgeId) {
         return getEdgeIdToOsmWayIdMap().get(edgeId);
     }
 
@@ -717,17 +716,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
             iter.setWayGeometry(pillarNodes);
         }
-        storeOsmWayID(iter.getEdge(), wayOsmId);
-        return iter;
-    }
-
-    /**
-     * Stores only osmWayIds which are required for relations
-     */
-    protected void storeOsmWayID(int edgeId, long osmWayId) {
-        if (osmWayIdSet.contains(osmWayId)) {
-            getEdgeIdToOsmWayIdMap().put(edgeId, osmWayId);
+        if (osmWayIdSet.contains(wayOsmId)) {
+            getEdgeIdToOsmWayIdMap().put(iter.getEdge(), wayOsmId);
         }
+        return iter;
     }
 
     /**
@@ -816,21 +808,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      */
     List<OSMTurnRelation> createTurnRelations(ReaderRelation relation) {
         List<OSMTurnRelation> result = new ArrayList<>();
-        long fromWayID = -1;
-        long viaNodeID = -1;
-        long toWayID = -1;
-        for (ReaderRelation.Member member : relation.getMembers()) {
-            if (ReaderElement.WAY == member.getType()) {
-                if ("from".equals(member.getRole())) {
-                    fromWayID = member.getRef();
-                } else if ("to".equals(member.getRole())) {
-                    toWayID = member.getRef();
-                }
-            } else if (ReaderElement.NODE == member.getType() && "via".equals(member.getRole())) {
-                viaNodeID = member.getRef();
-            }
-        }
-        if (fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0) {
+        long fromWayID = findMember(relation, ReaderElement.WAY, "from");
+        long viaNodeID = findMember(relation, ReaderElement.NODE, "via");
+        long toWayID = findMember(relation, ReaderElement.WAY, "to");
+        if (fromWayID > 0 && toWayID > 0 && viaNodeID > 0) {
             List<String> vehicleTypesExcept = new ArrayList<>();
             if (relation.hasTag("except")) {
                 String tagExcept = relation.getTag("except");
@@ -855,6 +836,14 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             }
         }
         return result;
+    }
+
+    private long findMember(ReaderRelation relation, int type, String role) {
+        for (ReaderRelation.Member member : relation.getMembers()) {
+            if (member.getType() == type && member.getRole().equals(role))
+                return member.getRef();
+        }
+        return 0;
     }
 
     OSMTurnRelation createTurnRelation(long fromWayID, long viaNodeID, long toWayID, String restrictionType, String vehicleTypeRestricted, List<String> vehicleTypesExcept) {

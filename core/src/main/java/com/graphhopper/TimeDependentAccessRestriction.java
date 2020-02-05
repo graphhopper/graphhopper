@@ -25,9 +25,11 @@ import ch.poole.conditionalrestrictionparser.Restriction;
 import ch.poole.openinghoursparser.*;
 import com.conveyal.osmlib.OSM;
 import com.conveyal.osmlib.OSMEntity;
+import com.conveyal.osmlib.Relation;
 import com.conveyal.osmlib.Way;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
@@ -62,6 +64,32 @@ public class TimeDependentAccessRestriction {
             tags.put(tag.key, tag.value);
         }
         return tags;
+    }
+
+    public void markEdgesAdjacentToConditionalTurnRestrictions() {
+        BooleanEncodedValue conditional = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
+        Set<Long> collect = osm.relations.values().stream()
+                .filter(r -> r.hasTag("type", "restriction"))
+                .flatMap(relation -> {
+                    Map<String, Object> tags = TimeDependentAccessRestriction.getTags(relation);
+                    List<ConditionalTagData> restrictionData = TimeDependentAccessRestriction.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
+                            .collect(Collectors.toList());
+                    if (!restrictionData.isEmpty()) {
+                        Optional<Relation.Member> fromM = relation.members.stream().filter(m -> m.role.equals("from")).findFirst();
+                        Optional<Relation.Member> toM = relation.members.stream().filter(m -> m.role.equals("to")).findFirst();
+                        return Stream.of(fromM.get(), toM.get());
+                    }
+                    return Stream.empty();
+                })
+                .map(m -> m.id)
+                .collect(Collectors.toSet());
+        AllEdgesIterator allEdges = ghStorage.getAllEdges();
+        while (allEdges.next()) {
+            long osmid = osmidParser.getOSMID(allEdges.getFlags());
+            if (collect.contains(osmid)) {
+                allEdges.set(conditional, true);
+            }
+        }
     }
 
     public static class ConditionalTagData {

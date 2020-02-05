@@ -42,7 +42,7 @@ public class OSMTurnRelationParserTest {
             }
 
             @Override
-            public long getOsmIdOfInternalEdge(int edgeId) {
+            public long getOsmIdOfEdge(int edgeId) {
                 Long l = internalToOSMEdge.get(edgeId);
                 if (l == null)
                     return -1;

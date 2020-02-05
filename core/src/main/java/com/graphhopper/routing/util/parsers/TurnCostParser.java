@@ -43,6 +43,6 @@ public interface TurnCostParser {
     interface ExternalInternalMap {
         int getInternalNodeIdOfOsmNode(long nodeOsmId);
 
-        long getOsmIdOfInternalEdge(int edgeId);
+        long getOsmIdOfEdge(int edgeId);
     }
 }
