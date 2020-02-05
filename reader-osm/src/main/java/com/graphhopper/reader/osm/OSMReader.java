@@ -79,8 +79,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean smoothElevation = false;
     private final boolean exitOnlyPillarNodeException = true;
-    private final Map<String, EdgeExplorer> outExplorerMap = new HashMap<>();
-    private final Map<String, EdgeExplorer> inExplorerMap = new HashMap<>();
     protected long zeroCounter = 0;
     protected PillarInfo pillarInfo;
     private long locations;
@@ -131,7 +129,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     }
 
     @Override
-    public void readGraph() throws IOException {
+    public void readGraph() {
         if (encodingManager == null)
             throw new IllegalStateException("Encoding manager was not set.");
 
@@ -206,21 +204,14 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private void prepareRestrictionRelation(ReaderRelation relation) {
         List<OSMTurnRelation> turnRelations = createTurnRelations(relation);
         for (OSMTurnRelation turnRelation : turnRelations) {
-            getOsmWayIdSet().add(turnRelation.getOsmIdFrom());
-            getOsmWayIdSet().add(turnRelation.getOsmIdTo());
+            osmWayIdSet.add(turnRelation.getOsmIdFrom());
+            osmWayIdSet.add(turnRelation.getOsmIdTo());
         }
-    }
-
-    /**
-     * @return all required osmWayIds to process e.g. relations.
-     */
-    private LongSet getOsmWayIdSet() {
-        return osmWayIdSet;
     }
 
     private IntLongMap getEdgeIdToOsmWayIdMap() {
         if (edgeIdToOsmWayIdMap == null)
-            edgeIdToOsmWayIdMap = new GHIntLongHashMap(getOsmWayIdSet().size(), 0.5f);
+            edgeIdToOsmWayIdMap = new GHIntLongHashMap(osmWayIdSet.size(), 0.5f);
 
         return edgeIdToOsmWayIdMap;
     }
@@ -734,7 +725,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * Stores only osmWayIds which are required for relations
      */
     protected void storeOsmWayID(int edgeId, long osmWayId) {
-        if (getOsmWayIdSet().contains(osmWayId)) {
+        if (osmWayIdSet.contains(osmWayId)) {
             getEdgeIdToOsmWayIdMap().put(edgeId, osmWayId);
         }
     }
@@ -764,7 +755,11 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     }
 
     protected void finishedReading() {
-        printInfo("way");
+        LOGGER.info("finished way processing." + " nodes: " + graph.getNodes()
+                + ", osmIdMap.size:" + getNodeMap().getSize() + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
+                + ", nodeFlagsMap.size:" + getNodeFlagsMap().size() + ", relFlagsMap.size:" + getRelFlagsMapSize()
+                + ", zeroCounter:" + zeroCounter
+                + " " + Helper.getMemInfo());
         pillarInfo.clear();
         encodingManager.releaseParsers();
         eleProvider.release();
@@ -820,62 +815,55 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * Creates turn relations out of an unspecified OSM relation
      */
     List<OSMTurnRelation> createTurnRelations(ReaderRelation relation) {
-        List<OSMTurnRelation> osmTurnRelations = new ArrayList<>();
-        String vehicleTypeRestricted = "";
-        List<String> vehicleTypesExcept = new ArrayList<>();
-        if (relation.hasTag("except")) {
-            String tagExcept = relation.getTag("except");
-            if (!Helper.isEmpty(tagExcept)) {
-                List<String> vehicleTypes = new ArrayList<>(Arrays.asList(tagExcept.split(";")));
-                for (String vehicleType : vehicleTypes)
-                    vehicleTypesExcept.add(vehicleType.trim());
+        List<OSMTurnRelation> result = new ArrayList<>();
+        long fromWayID = -1;
+        long viaNodeID = -1;
+        long toWayID = -1;
+        for (ReaderRelation.Member member : relation.getMembers()) {
+            if (ReaderElement.WAY == member.getType()) {
+                if ("from".equals(member.getRole())) {
+                    fromWayID = member.getRef();
+                } else if ("to".equals(member.getRole())) {
+                    toWayID = member.getRef();
+                }
+            } else if (ReaderElement.NODE == member.getType() && "via".equals(member.getRole())) {
+                viaNodeID = member.getRef();
             }
         }
-        if (relation.hasTag("restriction")) {
-            OSMTurnRelation osmTurnRelation = createTurnRelation(relation, relation.getTag("restriction"), vehicleTypeRestricted, vehicleTypesExcept);
-            if (osmTurnRelation != null) {
-                osmTurnRelations.add(osmTurnRelation);
+        if (fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0) {
+            List<String> vehicleTypesExcept = new ArrayList<>();
+            if (relation.hasTag("except")) {
+                String tagExcept = relation.getTag("except");
+                if (!Helper.isEmpty(tagExcept)) {
+                    List<String> vehicleTypes = new ArrayList<>(Arrays.asList(tagExcept.split(";")));
+                    for (String vehicleType : vehicleTypes)
+                        vehicleTypesExcept.add(vehicleType.trim());
+                }
             }
-            return osmTurnRelations;
-        }
-        if (relation.hasTagWithKeyPrefix("restriction:")) {
-            List<String> vehicleTypesRestricted = relation.getKeysWithPrefix("restriction:");
-            for (String vehicleType : vehicleTypesRestricted) {
-                String restrictionType = relation.getTag(vehicleType);
-                vehicleTypeRestricted = vehicleType.replace("restriction:", "").trim();
-                OSMTurnRelation osmTurnRelation = createTurnRelation(relation, restrictionType, vehicleTypeRestricted, vehicleTypesExcept);
+            if (relation.hasTag("restriction")) {
+                OSMTurnRelation osmTurnRelation = createTurnRelation(fromWayID, viaNodeID, toWayID, relation.getTag("restriction"), "", vehicleTypesExcept);
                 if (osmTurnRelation != null) {
-                    osmTurnRelations.add(osmTurnRelation);
+                    result.add(osmTurnRelation);
+                }
+            }
+            for (String key : relation.getKeysWithPrefix("restriction:")) {
+                String keyWithoutRestrictionPrefix = key.replace("restriction:", "").trim();
+                OSMTurnRelation osmTurnRelation = createTurnRelation(fromWayID, viaNodeID, toWayID, relation.getTag(key), keyWithoutRestrictionPrefix, vehicleTypesExcept);
+                if (osmTurnRelation != null) {
+                    result.add(osmTurnRelation);
                 }
             }
         }
-        return osmTurnRelations;
+        return result;
     }
 
-    OSMTurnRelation createTurnRelation(ReaderRelation relation, String restrictionType, String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
+    OSMTurnRelation createTurnRelation(long fromWayID, long viaNodeID, long toWayID, String restrictionType, String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
         OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(restrictionType);
-        if (type != OSMTurnRelation.Type.UNSUPPORTED) {
-            long fromWayID = -1;
-            long viaNodeID = -1;
-            long toWayID = -1;
-
-            for (ReaderRelation.Member member : relation.getMembers()) {
-                if (ReaderElement.WAY == member.getType()) {
-                    if ("from".equals(member.getRole())) {
-                        fromWayID = member.getRef();
-                    } else if ("to".equals(member.getRole())) {
-                        toWayID = member.getRef();
-                    }
-                } else if (ReaderElement.NODE == member.getType() && "via".equals(member.getRole())) {
-                    viaNodeID = member.getRef();
-                }
-            }
-            if (fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0) {
-                OSMTurnRelation osmTurnRelation = new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
-                osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
-                osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
-                return osmTurnRelation;
-            }
+        if (type != null) {
+            OSMTurnRelation osmTurnRelation = new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
+            osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
+            osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
+            return osmTurnRelation;
         }
         return null;
     }
@@ -949,14 +937,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     public DataReader setFile(File osmFile) {
         this.osmFile = osmFile;
         return this;
-    }
-
-    private void printInfo(String str) {
-        LOGGER.info("finished " + str + " processing." + " nodes: " + graph.getNodes()
-                + ", osmIdMap.size:" + getNodeMap().getSize() + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
-                + ", nodeFlagsMap.size:" + getNodeFlagsMap().size() + ", relFlagsMap.size:" + getRelFlagsMapSize()
-                + ", zeroCounter:" + zeroCounter
-                + " " + Helper.getMemInfo());
     }
 
     @Override

@@ -20,14 +20,20 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.TimeDependentAccessRestriction;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
 public class OSMConditionalRestrictionParser implements TagParser {
+
+    public static BooleanEncodedValue fromEncodingManager(EncodingManager encodingManager) {
+        return encodingManager.getBooleanEncodedValue("conditional");
+    }
 
     private SimpleBooleanEncodedValue conditional;
 

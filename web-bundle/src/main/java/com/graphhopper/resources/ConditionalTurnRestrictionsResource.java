@@ -49,7 +49,7 @@ public class ConditionalTurnRestrictionsResource {
 
     @GET
     @Produces("text/html")
-    public ConditionalRestrictionsView conditionalRelations() {
+    public ConditionalRestrictionsView conditionalRestrictions() {
         return new ConditionalRestrictionsView(timeDependentAccessRestriction, () -> {
             Stream<ConditionalRestrictionView> conditionalRestrictionViewStream = osm.relations.entrySet().stream()
                     .filter(e -> e.getValue().hasTag("type", "restriction"))

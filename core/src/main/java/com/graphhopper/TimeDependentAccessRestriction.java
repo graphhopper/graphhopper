@@ -243,19 +243,22 @@ public class TimeDependentAccessRestriction {
     // For weighting
     public Optional<Boolean> canTurn(int inEdge, int viaNode, int outEdge, Instant at) {
         EdgeIteratorState inEdgeCursor = ghStorage.getEdgeIteratorState(inEdge, viaNode);
-        long inEdgeOsmId = osmidParser.getOSMID(inEdgeCursor.getFlags());
-        Way inWay = osm.ways.get(inEdgeOsmId);
-        EdgeIteratorState outEdgeCursor = ghStorage.getEdgeIteratorState(outEdge, viaNode);
-        long outEdgeOsmId = osmidParser.getOSMID(outEdgeCursor.getFlags());
-        Way outWay = osm.ways.get(outEdgeOsmId);
-        long viaNodeOsmId = findIntersectionNode(inWay, outWay);
-        SortedSet<Fun.Tuple2<Long, Long>> tuple2s = osm.relationsByNode.subSet(new Fun.Tuple2<>(viaNodeOsmId, 0L), new Fun.Tuple2<>(viaNodeOsmId, Long.MAX_VALUE));
-        return tuple2s.stream().map(t -> t.b).map(k -> osm.relations.get(k))
-                .filter(r -> r.hasTag("type", "restriction"))
-                .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("from") && m.id == inEdgeOsmId))
-                .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("to") && m.id == outEdgeOsmId))
-                .flatMap(r -> stream(accessible(getTags(r), at)))
-                .findFirst();
+        if (inEdgeCursor.get(property)) {
+            long inEdgeOsmId = osmidParser.getOSMID(inEdgeCursor.getFlags());
+            Way inWay = osm.ways.get(inEdgeOsmId);
+            EdgeIteratorState outEdgeCursor = ghStorage.getEdgeIteratorState(outEdge, viaNode);
+            long outEdgeOsmId = osmidParser.getOSMID(outEdgeCursor.getFlags());
+            Way outWay = osm.ways.get(outEdgeOsmId);
+            long viaNodeOsmId = findIntersectionNode(inWay, outWay);
+            SortedSet<Fun.Tuple2<Long, Long>> tuple2s = osm.relationsByNode.subSet(new Fun.Tuple2<>(viaNodeOsmId, 0L), new Fun.Tuple2<>(viaNodeOsmId, Long.MAX_VALUE));
+            return tuple2s.stream().map(t -> t.b).map(k -> osm.relations.get(k))
+                    .filter(r -> r.hasTag("type", "restriction"))
+                    .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("from") && m.id == inEdgeOsmId))
+                    .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("to") && m.id == outEdgeOsmId))
+                    .flatMap(r -> stream(accessible(getTags(r), at)))
+                    .findFirst();
+        }
+        return Optional.empty();
     }
 
     public <T> Stream<T> stream(Optional<T> optional) {

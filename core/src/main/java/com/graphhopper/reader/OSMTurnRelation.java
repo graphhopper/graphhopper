@@ -93,7 +93,7 @@ public class OSMTurnRelation {
     }
 
     public enum Type {
-        UNSUPPORTED, NOT, ONLY;
+        NOT, ONLY;
 
         private static final Map<String, Type> tags = new HashMap<>();
 
@@ -112,7 +112,7 @@ public class OSMTurnRelation {
             if (tag != null) {
                 result = tags.get(tag);
             }
-            return (result != null) ? result : UNSUPPORTED;
+            return result;
         }
     }
 

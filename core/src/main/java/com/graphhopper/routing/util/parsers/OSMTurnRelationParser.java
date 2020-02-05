@@ -28,7 +28,6 @@ import com.graphhopper.util.EdgeIterator;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
@@ -49,28 +48,20 @@ public class OSMTurnRelationParser implements TurnCostParser {
      *                     turn is forbidden and results in costs of positive infinity.
      */
     public OSMTurnRelationParser(String name, int maxTurnCosts) {
-        this(name, maxTurnCosts, Collections.<String>emptyList());
-    }
-
-    public OSMTurnRelationParser(String name, int maxTurnCosts, Collection<String> restrictions) {
         this.name = name;
         this.maxTurnCosts = maxTurnCosts;
-        if (restrictions.isEmpty()) {
-            // https://wiki.openstreetmap.org/wiki/Key:access
-            if (name.contains("car"))
-                this.restrictions = Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access");
-            else if (name.contains("motorbike") || name.contains("motorcycle"))
-                this.restrictions = Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access");
-            else if (name.contains("truck"))
-                this.restrictions = Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
-            else if (name.contains("bike") || name.contains("bicycle"))
-                this.restrictions = Arrays.asList("bicycle", "vehicle", "access");
-            else
-                // assume default is some motor_vehicle, exception is too strict
-                this.restrictions = Arrays.asList("motor_vehicle", "vehicle", "access");
-        } else {
-            this.restrictions = restrictions;
-        }
+        // https://wiki.openstreetmap.org/wiki/Key:access
+        if (name.contains("car"))
+            this.restrictions = Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access");
+        else if (name.contains("motorbike") || name.contains("motorcycle"))
+            this.restrictions = Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access");
+        else if (name.contains("truck"))
+            this.restrictions = Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
+        else if (name.contains("bike") || name.contains("bicycle"))
+            this.restrictions = Arrays.asList("bicycle", "vehicle", "access");
+        else
+            // assume default is some motor_vehicle, exception is too strict
+            this.restrictions = Arrays.asList("motor_vehicle", "vehicle", "access");
     }
 
     DecimalEncodedValue getTurnCostEnc() {
@@ -102,11 +93,6 @@ public class OSMTurnRelationParser implements TurnCostParser {
         return cachedOutExplorer == null ? cachedOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)) : cachedOutExplorer;
     }
 
-    /**
-     * Add the specified relation to the TurnCostStorage
-     *
-     * @return a collection of turn cost entries which can be used for testing
-     */
     void addRelationToTCStorage(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
                                 ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
