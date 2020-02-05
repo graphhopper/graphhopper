@@ -101,7 +101,7 @@ public class GraphHopperManaged implements Managed {
                     CustomModel customModel = yamlOM.readValue(entry.getValue(), CustomModel.class);
                     graphHopper.putCustomModel(entry.getKey(), customModel);
                 } catch (Exception ex) {
-                    throw new RuntimeException("Cannot custom_model from " + entry.getValue(), ex);
+                    throw new RuntimeException("Cannot load custom_model from " + entry.getValue(), ex);
                 }
             }
         }

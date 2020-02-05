@@ -44,6 +44,10 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class CustomWeighting extends AbstractWeighting {
 
+    public static final String key(String postfix) {
+        return "custom_" + postfix;
+    }
+
     private final BooleanEncodedValue baseVehicleProfileAccessEnc;
     private final String baseVehicleProfile;
     private final double maxSpeed;
@@ -53,7 +57,7 @@ public class CustomWeighting extends AbstractWeighting {
 
     public CustomWeighting(String name, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
                            EncodedValueFactory factory, TurnCostProvider turnCostProvider, CustomModel customModel) {
-        super(name, baseFlagEncoder, turnCostProvider);
+        super(key(name), baseFlagEncoder, turnCostProvider);
         baseVehicleProfileAccessEnc = baseFlagEncoder.getAccessEnc();
         baseVehicleProfile = customModel.getBase();
 

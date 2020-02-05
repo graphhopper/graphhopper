@@ -24,6 +24,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
@@ -138,6 +139,9 @@ public class Measurement {
             }
         };
 
+        CustomModel customModel = createCustomModel();
+        hopper.putCustomModel(customModel.toString(), customModel);
+
         // add more encoded values for CustomModel
         args.put("graph.encoded_values", "max_width,max_height,toll,hazmat");
         hopper.init(new GraphHopperConfig(args)).
@@ -151,7 +155,6 @@ public class Measurement {
         hopper.getLMFactoryDecorator().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        CustomModel customModel = createCustomModel();
         GraphHopperStorage g = hopper.getGraphHopperStorage();
         EncodingManager encodingManager = hopper.getEncodingManager();
         if (encodingManager.fetchEdgeEncoders().size() != 1) {
@@ -173,11 +176,11 @@ public class Measurement {
             if (runSlow) {
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing", vehicleStr, count / 20, isCH, isLM).
                         withInstructions());
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", vehicleStr, count / 20, isCH, isLM).
-                        withInstructions().customModel(customModel));
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", vehicleStr, count / 20, isCH, isLM).
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", vehicleStr, count / 30, isCH, isLM).
                         withInstructions().edgeBased());
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", vehicleStr, count / 20, isCH, isLM).
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", customModel.toString(), count / 30, isCH, isLM).
+                        withInstructions().customModel(customModel));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", vehicleStr, count / 30, isCH, isLM).
                         withInstructions().blockArea(blockAreaStr));
             }
 
@@ -185,7 +188,7 @@ public class Measurement {
                 System.gc();
                 isLM = true;
                 int activeLMCount = 12;
-                for (; activeLMCount > 3; activeLMCount -= 4) {
+                for (; activeLMCount > 7; activeLMCount -= 4) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, vehicleStr, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", vehicleStr, count / 4, isCH, isLM).
@@ -193,10 +196,9 @@ public class Measurement {
                 }
 
                 activeLMCount = 8;
-                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", vehicleStr, count / 4, isCH, isLM).
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", vehicleStr, count / 5, isCH, isLM).
                         withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
-                // TODO NOW it does not seem to work!? I.e. it is not faster than routing_custom
-                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_custom", vehicleStr, count / 20, isCH, isLM).
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_custom", customModel.toString(), count / 5, isCH, isLM).
                         withInstructions().activeLandmarks(activeLMCount).customModel(customModel));
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
@@ -544,8 +546,6 @@ public class Measurement {
         final AtomicLong altCount = new AtomicLong(0);
         final AtomicInteger failedCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
-
-        final EdgeExplorer edgeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(querySettings.vehicle)));
         final AtomicLong visitedNodesSum = new AtomicLong(0);
         final AtomicLong maxVisitedNodes = new AtomicLong(0);
 //        final AtomicLong extractTimeSum = new AtomicLong(0);
@@ -556,6 +556,8 @@ public class Measurement {
         final NodeAccess na = g.getNodeAccess();
 
         MiniPerfTest miniPerf = new MiniPerfTest() {
+            EdgeExplorer edgeExplorer;
+
             @Override
             public int doCalc(boolean warmup, int run) {
                 int from = rand.nextInt(maxNode);
@@ -564,9 +566,11 @@ public class Measurement {
                 double fromLon = na.getLongitude(from);
                 double toLat = na.getLatitude(to);
                 double toLon = na.getLongitude(to);
-                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setWeighting(querySettings.customModel() == null ? "fastest" : "custom").
-                        setVehicle(querySettings.vehicle);
+                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon);
+                if (querySettings.customModel == null)
+                    req.setWeighting("fastest").setVehicle(querySettings.vehicle);
+                else
+                    req.setWeighting(CustomWeighting.key(querySettings.vehicle));
 
                 req.getHints().put(CH.DISABLE, !querySettings.ch).
                         put("stall_on_demand", querySettings.sod).
@@ -592,6 +596,8 @@ public class Measurement {
                     req.getHints().put(BLOCK_AREA, querySettings.blockArea);
 
                 if (querySettings.withPointHints) {
+                    if (edgeExplorer == null)
+                        edgeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(querySettings.vehicle)));
                     EdgeIterator iter = edgeExplorer.setBaseNode(from);
                     if (!iter.next())
                         throw new IllegalArgumentException("wrong 'from' when adding point hint");
@@ -720,7 +726,12 @@ public class Measurement {
     }
 
     private CustomModel createCustomModel() {
-        CustomModel customModel = new CustomModel();
+        CustomModel customModel = new CustomModel() {
+            @Override
+            public String toString() {
+                return "truck";
+            }
+        };
         customModel.setBase("car");
         customModel.setVehicleHeight(3.8);
         customModel.setVehicleWidth(2.5);

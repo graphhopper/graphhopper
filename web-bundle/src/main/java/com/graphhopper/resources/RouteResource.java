@@ -22,8 +22,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.*;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.CustomRequest;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.weighting.CustomWeighting;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.StopWatch;
@@ -36,6 +38,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
 import java.util.ArrayList;
@@ -183,8 +186,9 @@ public class RouteResource {
         if (request instanceof CustomRequest) {
             if (!(graphHopper instanceof GraphHopper))
                 throw new IllegalStateException("CustomRequest requires GraphHopper base class");
-            request.setWeighting("custom").getHints().put("ch.disable", true);
-            ((GraphHopper) graphHopper).calcPaths(request, ghResponse, ((CustomRequest) request).getModel());
+            CustomModel model = ((CustomRequest) request).getModel();
+            request.setWeighting(CustomWeighting.key(model.getBase())).getHints().put("ch.disable", true);
+            ((GraphHopper) graphHopper).calcPaths(request, ghResponse, model);
         } else {
             ghResponse = graphHopper.route(request);
         }

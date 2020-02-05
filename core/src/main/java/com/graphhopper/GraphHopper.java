@@ -820,19 +820,33 @@ public class GraphHopper implements GraphHopperAPI {
         if (chFactoryDecorator.hasCHProfiles())
             return;
 
-        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-            for (String chWeightingStr : chFactoryDecorator.getCHProfileStrings()) {
-                // ghStorage is null at this point
+        for (String chWeightingStr : chFactoryDecorator.getCHProfileStrings()) {
+            // extract weighting string and u-turn-costs
+            String configStr = "";
+            if (chWeightingStr.contains("|")) {
+                configStr = chWeightingStr;
+                chWeightingStr = chWeightingStr.split("\\|")[0];
+            }
 
-                // extract weighting string and u-turn-costs
-                String configStr = "";
-                if (chWeightingStr.contains("|")) {
-                    configStr = chWeightingStr;
-                    chWeightingStr = chWeightingStr.split("\\|")[0];
-                }
-                PMap config = new PMap(configStr);
-                int uTurnCosts = config.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+            if (chWeightingStr.startsWith(CustomWeighting.key(""))) {
+                String modelName = chWeightingStr.substring(CustomWeighting.key("").length());
+                CustomModel model = importCustomModels.get(modelName);
+                if (!getEncodingManager().hasEncoder(model.getBase()))
+                    throw new IllegalArgumentException("For the CH preparation of custom_model " + modelName + " the specified base " +
+                            model.getBase() + " is required in the graph.flag_encoders list");
+                FlagEncoder baseEncoder = getEncodingManager().getEncoder(model.getBase());
 
+                // TODO NOW use the turn cost specified in customModel
+                Weighting weighting = new CustomWeighting(modelName,
+                        baseEncoder, encodingManager, encodedValueFactory, NO_TURN_COST_PROVIDER, model);
+                chFactoryDecorator.addCHProfile(CHProfile.nodeBased(weighting));
+
+                continue;
+            }
+            PMap config = new PMap(configStr);
+            int uTurnCosts = config.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+
+            for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
                 CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
                 if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supportsTurnCosts())) {
                     chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder,
@@ -844,17 +858,6 @@ public class GraphHopper implements GraphHopperAPI {
                 }
             }
         }
-
-        for (Map.Entry<String, CustomModel> entry : importCustomModels.entrySet()) {
-            if (!getEncodingManager().hasEncoder(entry.getValue().getBase()))
-                throw new IllegalArgumentException("For the custom_model " + entry.getKey() + " the specified base " +
-                        entry.getValue().getBase() + " is required in the graph.flag_encoders list");
-            FlagEncoder baseEncoder = getEncodingManager().getEncoder(entry.getValue().getBase());
-            // TODO NOW use the turn cost specified in customModel
-            Weighting weighting = new CustomWeighting("custom|" + entry.getKey(),
-                    baseEncoder, encodingManager, encodedValueFactory, NO_TURN_COST_PROVIDER, entry.getValue());
-            chFactoryDecorator.addCHProfile(CHProfile.nodeBased(weighting));
-        }
     }
 
     public final LMAlgoFactoryDecorator getLMFactoryDecorator() {
@@ -865,20 +868,25 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmFactoryDecorator.hasWeightings())
             return;
 
-        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-            for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
-                // note that we do not consider turn costs during LM preparation?
-                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, NO_TURN_COST_PROVIDER, null);
+        for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
+            if (lmWeightingStr.startsWith(CustomWeighting.key(""))) {
+                String modelName = lmWeightingStr.substring(CustomWeighting.key("").length());
+                CustomModel model = importCustomModels.get(modelName);
+                if (!getEncodingManager().hasEncoder(model.getBase()))
+                    throw new IllegalArgumentException("For the LM preparation of custom_model " + modelName + " the specified base " +
+                            model.getBase() + " is required in the graph.flag_encoders list");
+                FlagEncoder baseEncoder = getEncodingManager().getEncoder(model.getBase());
+                // TODO NOW use the turn cost specified in customModel
+                Weighting weighting = new CustomWeighting(modelName,
+                        baseEncoder, encodingManager, encodedValueFactory, NO_TURN_COST_PROVIDER, model);
                 lmFactoryDecorator.addWeighting(weighting);
+            } else {
+                for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
+                    // note that we do not consider turn costs during LM preparation?
+                    Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, NO_TURN_COST_PROVIDER, null);
+                    lmFactoryDecorator.addWeighting(weighting);
+                }
             }
-        }
-
-        for (Map.Entry<String, CustomModel> entry : importCustomModels.entrySet()) {
-            FlagEncoder baseEncoder = getEncodingManager().getEncoder(entry.getValue().getBase());
-            // TODO NOW use the turn cost specified in customModel
-            Weighting weighting = new CustomWeighting("custom|" + entry.getKey(),
-                    baseEncoder, encodingManager, encodedValueFactory, NO_TURN_COST_PROVIDER, entry.getValue());
-            lmFactoryDecorator.addWeighting(weighting);
         }
     }
 
@@ -927,11 +935,9 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
-
     }
 
     protected void importPublicTransit() {
-
     }
 
     private static final String INTERPOLATION_KEY = "prepare.elevation_interpolation.done";
@@ -965,30 +971,27 @@ public class GraphHopper implements GraphHopperAPI {
      * @see HintsMap
      */
     public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider, CustomModel customModel) {
-        String weightingStr = toLowerCase(hintsMap.getWeighting());
+        String weightingStr = hintsMap.getWeighting();
         Weighting weighting = null;
 
-        if ("custom".equalsIgnoreCase(weightingStr)) {
-            if (customModel == null) {
-                customModel = importCustomModels.get(hintsMap.getVehicle());
-                if (customModel == null)
-                    throw new IllegalArgumentException("Did you specify the 'model' entry in your request? It cannot be null. " +
-                            "Internal weighting=" + weightingStr + " and vehicle=" + hintsMap.getVehicle());
-            }
-            weighting = new CustomWeighting("custom|" + encoder.toString(), encoder, encodingManager,
+        if (weightingStr.startsWith(CustomWeighting.key(""))) {
+            if (customModel == null)
+                throw new IllegalArgumentException("Either specify a custom model that exists on the server-side (via the weighting) " +
+                        "or POST a request with the 'model' entry. Internal weighting=" + weightingStr + " and vehicle=" + hintsMap.getVehicle());
+            weighting = new CustomWeighting(encoder.toString(), encoder, encodingManager,
                     encodedValueFactory, turnCostProvider, customModel);
-        } else if ("shortest".equalsIgnoreCase(weightingStr)) {
+        } else if ("shortest".equals(weightingStr)) {
             weighting = new ShortestWeighting(encoder, turnCostProvider);
-        } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {
+        } else if ("fastest".equals(weightingStr) || weightingStr.isEmpty()) {
             if (encoder.supports(PriorityWeighting.class))
                 weighting = new PriorityWeighting("fastest", encoder, hintsMap, turnCostProvider);
             else
                 weighting = new FastestWeighting(encoder, hintsMap, turnCostProvider);
-        } else if ("curvature".equalsIgnoreCase(weightingStr)) {
+        } else if ("curvature".equals(weightingStr)) {
             if (encoder.supports(CurvatureWeighting.class))
                 weighting = new CurvatureWeighting(encoder, hintsMap, turnCostProvider);
 
-        } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
+        } else if ("short_fastest".equals(weightingStr)) {
             weighting = new ShortFastestWeighting(encoder, hintsMap, turnCostProvider);
         }
 
@@ -1019,6 +1022,14 @@ public class GraphHopper implements GraphHopperAPI {
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
 
+        HintsMap hints = request.getHints();
+        if (customModel == null && hints.getWeighting().startsWith(CustomWeighting.key(""))) {
+            String modelName = hints.getWeighting().substring(CustomWeighting.key("").length());
+            if ((customModel = importCustomModels.get(modelName)) == null)
+                throw new IllegalArgumentException("unknown custom model " + modelName + " (" + hints.getWeighting() + ")");
+            request.setVehicle(customModel.getBase());
+        }
+
         // default handling
         String vehicle = request.getVehicle();
         if (vehicle.isEmpty()) {
@@ -1033,7 +1044,6 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-            HintsMap hints = request.getHints();
 
             // we use edge-based routing if the encoder supports turn-costs *unless* the edge_based parameter is set
             // explicitly.

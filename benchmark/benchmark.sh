@@ -64,7 +64,7 @@ measurement.summaryfile=${RESULTS_DIR}summary_big.dat \
 measurement.repeats=1 \
 measurement.run_slow_routing=false \
 prepare.ch.weightings=fastest \
-prepare.lm.weightings=fastest \
+prepare.lm.weightings=fastest,custom_truck \
 "graph.flag_encoders=car|turn_costs=true" \
 prepare.ch.edge_based=off \
 graph.location=${TMP_DIR}measurement-big-gh \
