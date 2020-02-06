@@ -1030,6 +1030,14 @@ public class GraphHopper implements GraphHopperAPI {
             if (!lmFactoryDecorator.isDisablingAllowed() && disableLM)
                 throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
 
+            if (chFactoryDecorator.isEnabled() && !disableCH) {
+                if (request.hasFavoredHeading(0))
+                    throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
+
+                if (request.getHints().getBool(Routing.PASS_THROUGH, false))
+                    throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
+            }
+
             String algoStr = request.getAlgorithm();
             if (algoStr.isEmpty())
                 algoStr = chFactoryDecorator.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
@@ -1047,27 +1055,21 @@ public class GraphHopper implements GraphHopperAPI {
                     ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
                     : NO_TURN_COST_PROVIDER;
 
-            RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
+            RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(hints);
             Weighting weighting;
             Graph graph = ghStorage;
             if (chFactoryDecorator.isEnabled() && !disableCH) {
-                if (request.hasFavoredHeading(0))
-                    throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
-
-                if (request.getHints().getBool(Routing.PASS_THROUGH, false))
-                    throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
-
                 // if LM is enabled we have the LMFactory with the CH algo!
-                RoutingAlgorithmFactory chAlgoFactory = tmpAlgoFactory;
-                if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
-                    chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) tmpAlgoFactory).getDefaultAlgoFactory();
+                RoutingAlgorithmFactory chAlgoFactory = algorithmFactory;
+                if (algorithmFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
+                    chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) algorithmFactory).getDefaultAlgoFactory();
 
                 if (chAlgoFactory instanceof CHRoutingAlgorithmFactory) {
                     CHProfile chProfile = ((CHRoutingAlgorithmFactory) chAlgoFactory).getCHProfile();
                     weighting = chProfile.getWeighting();
                     graph = ghStorage.getCHGraph(chProfile);
                 } else {
-                    throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
+                    throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algorithmFactory);
                 }
             } else {
                 checkNonChMaxWaypointDistance(points);
@@ -1103,7 +1105,7 @@ public class GraphHopper implements GraphHopperAPI {
                     build();
 
             // do the actual route calculation !
-            List<Path> altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
+            List<Path> altPaths = routingTemplate.calcPaths(queryGraph, algorithmFactory, algoOpts);
 
             boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, getEncodingManager().isEnableInstructions());
             boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);

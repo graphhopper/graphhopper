@@ -120,7 +120,7 @@ public class GraphHopperOSMTest {
                 setDataReaderFile(testOsm);
         gh.importOrLoad();
 
-        assertFalse(gh.getAlgorithmFactory(new HintsMap("fastest")) instanceof PrepareContractionHierarchies);
+        assertFalse(gh.getAlgorithmFactory(new HintsMap("fastest")) instanceof CHRoutingAlgorithmFactory);
 
         GHResponse rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertFalse(rsp.hasErrors());
@@ -141,7 +141,7 @@ public class GraphHopperOSMTest {
                 setDataReaderFile(testOsm).
                 init(new GraphHopperConfig().put("graph.flag_encoders", "car").put(Parameters.CH.PREPARE + "weightings", "no"));
 
-        assertFalse(gh.getAlgorithmFactory(new HintsMap("fastest")) instanceof PrepareContractionHierarchies);
+        assertFalse(gh.getAlgorithmFactory(new HintsMap("fastest")) instanceof CHRoutingAlgorithmFactory);
         gh.close();
     }
 
