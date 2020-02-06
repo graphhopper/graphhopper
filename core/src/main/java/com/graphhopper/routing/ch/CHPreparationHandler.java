@@ -233,7 +233,7 @@ public class CHPreparationHandler {
      */
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         if (preparations.isEmpty())
-            throw new IllegalStateException("No Ch preparations added yet");
+            throw new IllegalStateException("No CH preparations added yet");
         return getPreparation(map).getRoutingAlgorithmFactory();
     }
 

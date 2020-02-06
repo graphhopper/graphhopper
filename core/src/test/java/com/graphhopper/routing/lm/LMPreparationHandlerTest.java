@@ -20,41 +20,42 @@ public class LMPreparationHandlerTest {
 
     @Test
     public void addWeighting() {
-        LMPreparationHandler dec = new LMPreparationHandler().setEnabled(true);
-        dec.addWeighting("fastest");
-        assertEquals(Arrays.asList("fastest"), dec.getWeightingsAsStrings());
+        LMPreparationHandler handler = new LMPreparationHandler();
+        handler.setEnabled(true);
+        handler.addWeighting("fastest");
+        assertEquals(Arrays.asList("fastest"), handler.getWeightingsAsStrings());
 
         // special parameters like the maximum weight
-        dec = new LMPreparationHandler().setEnabled(true);
-        dec.addWeighting("fastest|maximum=65000");
-        dec.addWeighting("shortest|maximum=20000");
-        assertEquals(Arrays.asList("fastest", "shortest"), dec.getWeightingsAsStrings());
+        handler = new LMPreparationHandler().setEnabled(true);
+        handler.addWeighting("fastest|maximum=65000");
+        handler.addWeighting("shortest|maximum=20000");
+        assertEquals(Arrays.asList("fastest", "shortest"), handler.getWeightingsAsStrings());
 
         FlagEncoder car = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(car);
-        dec.addWeighting(new FastestWeighting(car)).addWeighting(new ShortestWeighting(car));
-        dec.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false), null);
-        assertEquals(1, dec.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);
-        assertEquals(0.3, dec.getPreparations().get(1).getLandmarkStorage().getFactor(), .1);
+        handler.addWeighting(new FastestWeighting(car)).addWeighting(new ShortestWeighting(car));
+        handler.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false), null);
+        assertEquals(1, handler.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);
+        assertEquals(0.3, handler.getPreparations().get(1).getLandmarkStorage().getFactor(), .1);
     }
 
     @Test
     public void testPrepareWeightingNo() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "fastest");
-        LMPreparationHandler dec = new LMPreparationHandler();
-        dec.init(ghConfig);
-        assertTrue(dec.isEnabled());
+        LMPreparationHandler handler = new LMPreparationHandler();
+        handler.init(ghConfig);
+        assertTrue(handler.isEnabled());
 
         // See #1076
         ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "no");
-        dec = new LMPreparationHandler();
-        dec.init(ghConfig);
-        assertFalse(dec.isEnabled());
+        handler = new LMPreparationHandler();
+        handler.init(ghConfig);
+        assertFalse(handler.isEnabled());
 
         ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "false");
-        dec = new LMPreparationHandler();
-        dec.init(ghConfig);
-        assertFalse(dec.isEnabled());
+        handler = new LMPreparationHandler();
+        handler.init(ghConfig);
+        assertFalse(handler.isEnabled());
     }
 }

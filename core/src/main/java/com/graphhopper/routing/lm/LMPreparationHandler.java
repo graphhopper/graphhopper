@@ -217,6 +217,10 @@ public class LMPreparationHandler {
         return preparations;
     }
 
+    /**
+     * @return a {@link RoutingAlgorithmFactory} for LM or throw an error if no preparation is available for the given
+     * hints
+     */
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         if (preparations.isEmpty())
             throw new IllegalStateException("No LM preparations added yet");

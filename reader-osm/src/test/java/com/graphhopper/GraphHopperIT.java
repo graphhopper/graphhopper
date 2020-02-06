@@ -1118,74 +1118,89 @@ public class GraphHopperIT {
                 setDisablingAllowed(true);
 
         tmpHopper.importOrLoad();
+        GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setVehicle("car");
+        req.getHints().put(Landmark.DISABLE, true);
+        req.getHints().put(CH.DISABLE, false);
 
-        {
-            GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                    setVehicle("car");
-            req.getHints().put(Landmark.DISABLE, true);
-            req.getHints().put(CH.DISABLE, false);
+        GHResponse rsp = tmpHopper.route(req);
+        long chSum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertTrue("Too many visited nodes for ch mode " + chSum, chSum < 60);
+        PathWrapper bestPath = rsp.getBest();
+        assertEquals(3587, bestPath.getDistance(), 1);
+        assertEquals(90, bestPath.getPoints().getSize());
 
-            GHResponse rsp = tmpHopper.route(req);
-            long chSum = rsp.getHints().getLong("visited_nodes.sum", 0);
-            assertTrue("Too many visited nodes for ch mode " + chSum, chSum < 60);
-            PathWrapper bestPath = rsp.getBest();
-            assertEquals(3587, bestPath.getDistance(), 1);
-            assertEquals(90, bestPath.getPoints().getSize());
+        // request flex mode
+        req.setAlgorithm(Parameters.Algorithms.ASTAR_BI);
+        req.getHints().put(Landmark.DISABLE, true);
+        req.getHints().put(CH.DISABLE, true);
+        rsp = tmpHopper.route(req);
+        long flexSum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertTrue("Too few visited nodes for flex mode " + flexSum, flexSum > 60);
 
-            // request flex mode
-            req.setAlgorithm(Parameters.Algorithms.ASTAR_BI);
-            req.getHints().put(Landmark.DISABLE, true);
-            req.getHints().put(CH.DISABLE, true);
-            rsp = tmpHopper.route(req);
-            long flexSum = rsp.getHints().getLong("visited_nodes.sum", 0);
-            assertTrue("Too few visited nodes for flex mode " + flexSum, flexSum > 60);
+        bestPath = rsp.getBest();
+        assertEquals(3587, bestPath.getDistance(), 1);
+        assertEquals(90, bestPath.getPoints().getSize());
 
-            bestPath = rsp.getBest();
-            assertEquals(3587, bestPath.getDistance(), 1);
-            assertEquals(90, bestPath.getPoints().getSize());
+        // request hybrid mode
+        req.getHints().put(Landmark.DISABLE, false);
+        req.getHints().put(CH.DISABLE, true);
+        rsp = tmpHopper.route(req);
 
-            // request hybrid mode
-            req.getHints().put(Landmark.DISABLE, false);
-            req.getHints().put(CH.DISABLE, true);
-            rsp = tmpHopper.route(req);
+        long hSum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        // hybrid is better than CH: 40 vs. 42 !
+        assertTrue("Visited nodes for hybrid mode should be different to CH but " + hSum + "==" + chSum, hSum != chSum);
+        assertTrue("Too many visited nodes for hybrid mode " + hSum + ">=" + flexSum, hSum < flexSum);
 
-            long hSum = rsp.getHints().getLong("visited_nodes.sum", 0);
-            // hybrid is better than CH: 40 vs. 42 !
-            assertTrue("Visited nodes for hybrid mode should be different to CH but " + hSum + "==" + chSum, hSum != chSum);
-            assertTrue("Too many visited nodes for hybrid mode " + hSum + ">=" + flexSum, hSum < flexSum);
+        bestPath = rsp.getBest();
+        assertEquals(3587, bestPath.getDistance(), 1);
+        assertEquals(90, bestPath.getPoints().getSize());
 
-            bestPath = rsp.getBest();
-            assertEquals(3587, bestPath.getDistance(), 1);
-            assertEquals(90, bestPath.getPoints().getSize());
+        // note: combining hybrid & speed mode is currently not possible and should be avoided: #1082
+    }
 
-            // note: combining hybrid & speed mode is currently not possible and should be avoided: #1082
-        }
-        {
-            // request a weighting that was not prepared
-            GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                    setVehicle("car").
-                    setWeighting("short_fastest");
+    @Test
+    public void testPreparedProfileNotAvailable() {
+        GraphHopper hopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/monaco.osm.gz").
+                setStoreOnFlush(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car"));
 
-            req.getHints().put(CH.DISABLE, false);
-            req.getHints().put(Landmark.DISABLE, false);
-            GHResponse res = tmpHopper.route(req);
-            assertTrue(res.hasErrors());
-            assertTrue("there should be an error", res.getErrors().get(0).getMessage().contains("Cannot find matching CH profile for your request"));
+        hopper.getCHPreparationHandler().setEnabled(true).
+                setCHProfilesAsStrings(Collections.singletonList("fastest")).
+                setDisablingAllowed(true);
 
-            // try with LM
-            req.getHints().put(CH.DISABLE, true);
-            req.getHints().put(Landmark.DISABLE, false);
-            res = tmpHopper.route(req);
-            assertTrue(res.hasErrors());
-            assertTrue("there should be an error", res.getErrors().get(0).getMessage().contains("Cannot find matching LM profile for your request"));
+        hopper.getLMPreparationHandler().setEnabled(true).
+                setWeightingsAsStrings(Collections.singletonList("fastest|maximum=2000")).
+                setDisablingAllowed(true);
 
-            // falling back to non-prepared algo works
-            req.getHints().put(CH.DISABLE, true);
-            req.getHints().put(Landmark.DISABLE, true);
-            res = tmpHopper.route(req);
-            assertFalse(res.hasErrors());
-            assertEquals(3587, res.getBest().getDistance(), 1);
-        }
+        hopper.importOrLoad();
+        // request a weighting that was not prepared
+        GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setVehicle("car").
+                setWeighting("short_fastest");
+
+        // try with CH
+        req.getHints().put(CH.DISABLE, false);
+        req.getHints().put(Landmark.DISABLE, false);
+        GHResponse res = hopper.route(req);
+        assertTrue(res.hasErrors());
+        assertTrue("there should be an error", res.getErrors().get(0).getMessage().contains("Cannot find matching CH profile for your request"));
+
+        // try with LM
+        req.getHints().put(CH.DISABLE, true);
+        req.getHints().put(Landmark.DISABLE, false);
+        res = hopper.route(req);
+        assertTrue(res.hasErrors());
+        assertTrue("there should be an error", res.getErrors().get(0).getMessage().contains("Cannot find matching LM profile for your request"));
+
+        // falling back to non-prepared algo works
+        req.getHints().put(CH.DISABLE, true);
+        req.getHints().put(Landmark.DISABLE, true);
+        res = hopper.route(req);
+        assertFalse(res.hasErrors());
+        assertEquals(3587, res.getBest().getDistance(), 1);
     }
 
     @Test
