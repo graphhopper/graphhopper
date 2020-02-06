@@ -35,12 +35,12 @@ import java.util.concurrent.ExecutorService;
 import static com.graphhopper.util.Helper.*;
 
 /**
- * This class implements the CH decorator for the routing algorithm factory and provides several
- * helper methods related to CH preparation and its vehicle profiles.
+ * This class handles the different CH preparations and serves the corresponding {@link RoutingAlgorithmFactory}
  *
  * @author Peter Karich
+ * @author easbar
  */
-public class CHAlgoFactoryDecorator {
+public class CHPreparationHandler {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we need to decouple the CH profile objects from the list of CH profile strings
@@ -56,7 +56,7 @@ public class CHAlgoFactoryDecorator {
     private ExecutorService threadPool;
     private PMap pMap = new PMap();
 
-    public CHAlgoFactoryDecorator() {
+    public CHPreparationHandler() {
         setPreparationThreads(1);
         // use fastest by default
         setCHProfilesAsStrings(Collections.singletonList("fastest"));
@@ -103,7 +103,7 @@ public class CHAlgoFactoryDecorator {
     /**
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
      */
-    public final CHAlgoFactoryDecorator setEnabled(boolean enabled) {
+    public final CHPreparationHandler setEnabled(boolean enabled) {
         this.enabled = enabled;
         return this;
     }
@@ -115,7 +115,7 @@ public class CHAlgoFactoryDecorator {
     /**
      * This method specifies if it is allowed to disable CH routing at runtime via routing hints.
      */
-    public final CHAlgoFactoryDecorator setDisablingAllowed(boolean disablingAllowed) {
+    public final CHPreparationHandler setDisablingAllowed(boolean disablingAllowed) {
         this.disablingAllowed = disablingAllowed;
         return this;
     }
@@ -125,7 +125,7 @@ public class CHAlgoFactoryDecorator {
      *
      * @see EdgeBasedCHMode
      */
-    public final CHAlgoFactoryDecorator setEdgeBasedCHMode(EdgeBasedCHMode edgeBasedCHMode) {
+    public final CHPreparationHandler setEdgeBasedCHMode(EdgeBasedCHMode edgeBasedCHMode) {
         this.edgeBasedCHMode = edgeBasedCHMode;
         return this;
     }
@@ -134,12 +134,12 @@ public class CHAlgoFactoryDecorator {
      * Decouple CH profiles from PrepareContractionHierarchies as we need CH profiles for the
      * graphstorage and the graphstorage for the preparation.
      */
-    public CHAlgoFactoryDecorator addCHProfile(CHProfile chProfile) {
+    public CHPreparationHandler addCHProfile(CHProfile chProfile) {
         chProfiles.add(chProfile);
         return this;
     }
 
-    public CHAlgoFactoryDecorator addPreparation(PrepareContractionHierarchies pch) {
+    public CHPreparationHandler addPreparation(PrepareContractionHierarchies pch) {
         // we want to make sure that CH preparations are added in the same order as their corresponding profiles
         if (preparations.size() >= chProfiles.size()) {
             throw new IllegalStateException("You need to add the corresponding CH profiles before adding preparations.");
@@ -191,7 +191,7 @@ public class CHAlgoFactoryDecorator {
         return new ArrayList<>(chProfileStrings);
     }
 
-    public CHAlgoFactoryDecorator setCHProfileStrings(String... profileStrings) {
+    public CHPreparationHandler setCHProfileStrings(String... profileStrings) {
         return setCHProfilesAsStrings(Arrays.asList(profileStrings));
     }
 
@@ -199,7 +199,7 @@ public class CHAlgoFactoryDecorator {
      * @param profileStrings A list of multiple CH profile strings
      * @see #addCHProfileAsString(String)
      */
-    public CHAlgoFactoryDecorator setCHProfilesAsStrings(List<String> profileStrings) {
+    public CHPreparationHandler setCHProfilesAsStrings(List<String> profileStrings) {
         if (profileStrings.isEmpty())
             throw new IllegalArgumentException("It is not allowed to pass an empty list of CH profile strings");
 
@@ -218,7 +218,7 @@ public class CHAlgoFactoryDecorator {
      * @param profileString String representation of a CH profile like: "fastest", "shortest|edge_based=true",
      *                      "fastest|u_turn_costs=30 or your own weight-calculation type.
      */
-    public CHAlgoFactoryDecorator addCHProfileAsString(String profileString) {
+    public CHPreparationHandler addCHProfileAsString(String profileString) {
         chProfileStrings.add(profileString);
         return this;
     }
@@ -233,7 +233,7 @@ public class CHAlgoFactoryDecorator {
      */
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         if (preparations.isEmpty())
-            throw new IllegalStateException("No preparations added to this decorator");
+            throw new IllegalStateException("No Ch preparations added yet");
         return getPreparation(map).getRoutingAlgorithmFactory();
     }
 

@@ -135,7 +135,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
                 + ", nodes:" + graph.getNodes() + ", " + Helper.getMemInfo());
     }
 
-    public RoutingAlgorithm getDecoratedAlgorithm(Graph qGraph, RoutingAlgorithm algo, AlgorithmOptions opts) {
+    public RoutingAlgorithm getPreparedRoutingAlgorithm(Graph qGraph, RoutingAlgorithm algo, AlgorithmOptions opts) {
         int activeLM = Math.max(1, opts.getHints().getInt(Landmark.ACTIVE_COUNT, defaultActiveLandmarks));
         if (algo instanceof AStar) {
             if (!lms.isInitialized())

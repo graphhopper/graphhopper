@@ -20,7 +20,6 @@ package com.graphhopper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
@@ -40,6 +39,7 @@ import org.junit.*;
 import java.io.File;
 import java.util.*;
 
+import static com.graphhopper.routing.ch.CHPreparationHandler.EdgeBasedCHMode;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
 import static java.util.Arrays.asList;
@@ -190,10 +190,10 @@ public class GraphHopperIT {
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
         if (ch) {
-            tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr).setDisablingAllowed(true);
+            tmpHopper.getCHPreparationHandler().setCHProfileStrings(weightCalcStr).setDisablingAllowed(true);
         }
         if (lm) {
-            tmpHopper.getLMFactoryDecorator().
+            tmpHopper.getLMPreparationHandler().
                     setEnabled(true).
                     setWeightingsAsStrings(Collections.singletonList(weightCalcStr)).
                     setDisablingAllowed(true);
@@ -206,10 +206,10 @@ public class GraphHopperIT {
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
         if (ch) {
-            tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr).setDisablingAllowed(true);
+            tmpHopper.getCHPreparationHandler().setCHProfileStrings(weightCalcStr).setDisablingAllowed(true);
         }
         if (lm) {
-            tmpHopper.getLMFactoryDecorator().
+            tmpHopper.getLMPreparationHandler().
                     setEnabled(true).
                     setWeightingsAsStrings(Collections.singletonList(weightCalcStr)).
                     setDisablingAllowed(true);
@@ -887,7 +887,7 @@ public class GraphHopperIT {
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
 
-        assertEquals(2, tmpHopper.getCHFactoryDecorator().getPreparations().size());
+        assertEquals(2, tmpHopper.getCHPreparationHandler().getPreparations().size());
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.745084, 7.430513, 43.745247, 7.430347)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
@@ -927,7 +927,7 @@ public class GraphHopperIT {
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
 
-        assertEquals(2, tmpHopper.getCHFactoryDecorator().getPreparations().size());
+        assertEquals(2, tmpHopper.getCHPreparationHandler().getPreparations().size());
 
         GHResponse rsp = tmpHopper.route(new GHRequest(52.513505, 13.350443, 52.513505, 13.350245)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
@@ -1012,7 +1012,7 @@ public class GraphHopperIT {
                 setSortGraph(sort).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
-        tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
+        tmpHopper.getCHPreparationHandler().setCHProfileStrings(weightCalcStr);
         tmpHopper.importOrLoad();
 
         // same query as in testMonacoWithInstructions
@@ -1109,11 +1109,11 @@ public class GraphHopperIT {
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create("car"));
 
-        tmpHopper.getCHFactoryDecorator().setEnabled(true).
+        tmpHopper.getCHPreparationHandler().setEnabled(true).
                 setCHProfilesAsStrings(Collections.singletonList("fastest")).
                 setDisablingAllowed(true);
 
-        tmpHopper.getLMFactoryDecorator().setEnabled(true).
+        tmpHopper.getLMPreparationHandler().setEnabled(true).
                 setWeightingsAsStrings(Collections.singletonList("fastest|maximum=2000")).
                 setDisablingAllowed(true);
 
@@ -1186,8 +1186,8 @@ public class GraphHopperIT {
                 setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create("car|turn_costs=true"));
-        tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
-        tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_AND_NODE);
+        tmpHopper.getCHPreparationHandler().setDisablingAllowed(true);
+        tmpHopper.getCHPreparationHandler().setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_AND_NODE);
         tmpHopper.importOrLoad();
 
         // no edge_based parameter -> use edge-based (because its there)
@@ -1206,8 +1206,8 @@ public class GraphHopperIT {
                 setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create("car|turn_costs=true"));
-        tmpHopper.getCHFactoryDecorator()
-                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE)
+        tmpHopper.getCHPreparationHandler()
+                .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE)
                 .setDisablingAllowed(true);
         tmpHopper.importOrLoad();
 
@@ -1228,8 +1228,8 @@ public class GraphHopperIT {
                 setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create("car|turn_costs=true"));
-        tmpHopper.getCHFactoryDecorator()
-                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF)
+        tmpHopper.getCHPreparationHandler()
+                .setEdgeBasedCHMode(EdgeBasedCHMode.OFF)
                 .setDisablingAllowed(true);
         tmpHopper.importOrLoad();
 
@@ -1258,8 +1258,8 @@ public class GraphHopperIT {
                 setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create("car|turn_costs=true"));
-        tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
-        tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+        tmpHopper.getCHPreparationHandler().setDisablingAllowed(true);
+        tmpHopper.getCHPreparationHandler().setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
         tmpHopper.importOrLoad();
 
         // even when we omit the edge_based parameter we get edge-based CH, unless we disable it explicitly
@@ -1331,8 +1331,8 @@ public class GraphHopperIT {
                 setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create("car|turn_costs=true"));
-        h.getCHFactoryDecorator()
-                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+        h.getCHPreparationHandler()
+                .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
         h.importOrLoad();
 
         // depending on the curbside parameters we take very different routes
@@ -1379,8 +1379,8 @@ public class GraphHopperIT {
                 setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create("car|turn_costs=true"));
-        h.getCHFactoryDecorator()
-                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+        h.getCHPreparationHandler()
+                .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
         h.importOrLoad();
 
         // depending on the curbside parameters we take very different routes
@@ -1445,9 +1445,9 @@ public class GraphHopperIT {
                 setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create("car|turn_costs=true"));
-        h.getCHFactoryDecorator()
+        h.getCHPreparationHandler()
                 .setCHProfileStrings("fastest|u_turn_costs=40")
-                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+                .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
         h.importOrLoad();
 
         GHPoint p = new GHPoint(43.73397, 7.414173);

@@ -16,16 +16,16 @@ import java.util.Arrays;
 import static org.junit.Assert.*;
 
 
-public class LMAlgoFactoryDecoratorTest {
+public class LMPreparationHandlerTest {
 
     @Test
     public void addWeighting() {
-        LMAlgoFactoryDecorator dec = new LMAlgoFactoryDecorator().setEnabled(true);
+        LMPreparationHandler dec = new LMPreparationHandler().setEnabled(true);
         dec.addWeighting("fastest");
         assertEquals(Arrays.asList("fastest"), dec.getWeightingsAsStrings());
 
         // special parameters like the maximum weight
-        dec = new LMAlgoFactoryDecorator().setEnabled(true);
+        dec = new LMPreparationHandler().setEnabled(true);
         dec.addWeighting("fastest|maximum=65000");
         dec.addWeighting("shortest|maximum=20000");
         assertEquals(Arrays.asList("fastest", "shortest"), dec.getWeightingsAsStrings());
@@ -42,18 +42,18 @@ public class LMAlgoFactoryDecoratorTest {
     public void testPrepareWeightingNo() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "fastest");
-        LMAlgoFactoryDecorator dec = new LMAlgoFactoryDecorator();
+        LMPreparationHandler dec = new LMPreparationHandler();
         dec.init(ghConfig);
         assertTrue(dec.isEnabled());
 
         // See #1076
         ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "no");
-        dec = new LMAlgoFactoryDecorator();
+        dec = new LMPreparationHandler();
         dec.init(ghConfig);
         assertFalse(dec.isEnabled());
 
         ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "false");
-        dec = new LMAlgoFactoryDecorator();
+        dec = new LMPreparationHandler();
         dec.init(ghConfig);
         assertFalse(dec.isEnabled());
     }

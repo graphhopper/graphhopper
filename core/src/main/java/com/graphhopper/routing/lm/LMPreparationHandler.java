@@ -24,6 +24,7 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
+import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -46,12 +47,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.graphhopper.util.Helper.*;
 
 /**
- * This class implements the A*, landmark and triangulation (ALT) decorator.
+ * This class deals with the A*, landmark and triangulation (ALT) preparations.
  *
  * @author Peter Karich
  */
-public class LMAlgoFactoryDecorator {
-    private Logger LOGGER = LoggerFactory.getLogger(LMAlgoFactoryDecorator.class);
+public class LMPreparationHandler {
+    private Logger LOGGER = LoggerFactory.getLogger(LMPreparationHandler.class);
     private int landmarkCount = 16;
     private int activeLandmarkCount = 8;
 
@@ -69,7 +70,7 @@ public class LMAlgoFactoryDecorator {
     private ExecutorService threadPool;
     private boolean logDetails = false;
 
-    public LMAlgoFactoryDecorator() {
+    public LMPreparationHandler() {
         setPreparationThreads(1);
     }
 
@@ -101,7 +102,7 @@ public class LMAlgoFactoryDecorator {
         return landmarkCount;
     }
 
-    public LMAlgoFactoryDecorator setDisablingAllowed(boolean disablingAllowed) {
+    public LMPreparationHandler setDisablingAllowed(boolean disablingAllowed) {
         this.disablingAllowed = disablingAllowed;
         return this;
     }
@@ -111,9 +112,9 @@ public class LMAlgoFactoryDecorator {
     }
 
     /**
-     * Enables or disables this decorator. This speed-up mode is disabled by default.
+     * Enables or disables this handler. This speed-up mode is disabled by default.
      */
-    public final LMAlgoFactoryDecorator setEnabled(boolean enabled) {
+    public final LMPreparationHandler setEnabled(boolean enabled) {
         this.enabled = enabled;
         return this;
     }
@@ -141,7 +142,7 @@ public class LMAlgoFactoryDecorator {
      * @param weightingList A list containing multiple weightings like: "fastest", "shortest" or
      *                      your own weight-calculation type.
      */
-    public LMAlgoFactoryDecorator setWeightingsAsStrings(List<String> weightingList) {
+    public LMPreparationHandler setWeightingsAsStrings(List<String> weightingList) {
         if (weightingList.isEmpty())
             throw new IllegalArgumentException("It is not allowed to pass an emtpy weightingList");
 
@@ -161,7 +162,7 @@ public class LMAlgoFactoryDecorator {
         return this.weightingsAsStrings;
     }
 
-    public LMAlgoFactoryDecorator addWeighting(String weighting) {
+    public LMPreparationHandler addWeighting(String weighting) {
         String[] str = weighting.split("\\|");
         double value = -1;
         if (str.length > 1) {
@@ -178,12 +179,12 @@ public class LMAlgoFactoryDecorator {
      * Decouple weightings from PrepareLandmarks as we need weightings for the graphstorage and the
      * graphstorage for the preparation.
      */
-    public LMAlgoFactoryDecorator addWeighting(Weighting weighting) {
+    public LMPreparationHandler addWeighting(Weighting weighting) {
         weightings.add(weighting);
         return this;
     }
 
-    public LMAlgoFactoryDecorator addPreparation(PrepareLandmarks pch) {
+    public LMPreparationHandler addPreparation(PrepareLandmarks pch) {
         preparations.add(pch);
         int lastIndex = preparations.size() - 1;
         if (lastIndex >= weightings.size())
@@ -218,7 +219,7 @@ public class LMAlgoFactoryDecorator {
 
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         if (preparations.isEmpty())
-            throw new IllegalStateException("No preparations added to this decorator");
+            throw new IllegalStateException("No LM preparations added yet");
 
         // if no weighting or vehicle is specified for this request and there is only one preparation, use it
         if ((map.getWeighting().isEmpty() || map.getVehicle().isEmpty()) && preparations.size() == 1) {
@@ -259,7 +260,7 @@ public class LMAlgoFactoryDecorator {
         @Override
         public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
             RoutingAlgorithm algo = defaultAlgoFactory.createAlgo(g, opts);
-            return p.getDecoratedAlgorithm(g, algo, opts);
+            return p.getPreparedRoutingAlgorithm(g, algo, opts);
         }
     }
 
@@ -267,7 +268,7 @@ public class LMAlgoFactoryDecorator {
      * This method calculates the landmark data for all weightings (optionally in parallel) or if already existent loads it.
      *
      * @return true if the preparation data for at least one weighting was calculated.
-     * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties, boolean) for a very similar method
+     * @see CHPreparationHandler#prepare(StorableProperties, boolean) for a very similar method
      */
     public boolean loadOrDoWork(final StorableProperties properties, final boolean closeEarly) {
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);

@@ -921,7 +921,7 @@ public class OSMReaderTest {
                 .setDataReaderFile(getClass().getResource(file7).getFile())
                 .setEncodingManager(EncodingManager.create("car,motorcycle"))
                 .setGraphHopperLocation(dir);
-        hopper.getCHFactoryDecorator().setEnabled(false);
+        hopper.getCHPreparationHandler().setEnabled(false);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
                 setWeighting("curvature").

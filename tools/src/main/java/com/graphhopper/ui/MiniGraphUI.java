@@ -103,7 +103,7 @@ public class MiniGraphUI {
         boolean ch = true;
         if (ch) {
             map.put(Parameters.Landmark.DISABLE, true);
-            CHProfile chProfile = hopper.getCHFactoryDecorator().getNodeBasedCHProfiles().get(0);
+            CHProfile chProfile = hopper.getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
             weighting = chProfile.getWeighting();
             routingGraph = hopper.getGraphHopperStorage().getCHGraph(chProfile);
 
