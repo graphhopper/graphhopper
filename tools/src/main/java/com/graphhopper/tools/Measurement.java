@@ -194,17 +194,8 @@ public class Measurement {
 
             if (hopper.getCHFactoryDecorator().isEnabled()) {
                 isCH = true;
-//                compareCHWithAndWithoutSOD(hopper, vehicleStr, count/5);
-                if (hopper.getLMFactoryDecorator().isEnabled()) {
-                    isLM = true;
-                    System.gc();
-                    // try just one constellation, often ~4-6 is best
-                    int lmCount = 5;
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCHLM" + lmCount, vehicleStr, count, isCH, isLM).
-                            withInstructions().activeLandmarks(lmCount).sod());
-                }
-
                 isLM = false;
+//                compareCHWithAndWithoutSOD(hopper, vehicleStr, count/5);
                 System.gc();
                 if (!hopper.getCHFactoryDecorator().getNodeBasedCHProfiles().isEmpty()) {
                     CHProfile chProfile = hopper.getCHFactoryDecorator().getNodeBasedCHProfiles().get(0);
