@@ -179,17 +179,16 @@ public class Measurement {
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
                 isLM = true;
-                int activeLMCount = 12;
-                for (; activeLMCount > 3; activeLMCount -= 4) {
+                for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, vehicleStr, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", vehicleStr, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount).edgeBased());
                 }
 
-                activeLMCount = 8;
-                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", vehicleStr, count / 4, isCH, isLM).
-                        withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
+                final int blockAreaActiveLMCount = 8;
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + blockAreaActiveLMCount + "_block_area", vehicleStr, count / 4, isCH, isLM).
+                        withInstructions().activeLandmarks(blockAreaActiveLMCount).blockArea(blockAreaStr));
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
 
