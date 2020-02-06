@@ -41,8 +41,10 @@ import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import javax.inject.Inject;
+import javax.swing.text.html.Option;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.xml.parsers.ParserConfigurationException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -62,6 +64,45 @@ public final class PtRouteResource {
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final TripFromLabel tripFromLabel;
+
+    private static GtfsGraphLogger GH_GTFS_GRAPH_LOGGER_REVERSE = null;
+    private static GtfsGraphLogger GH_GTFS_GRAPH_LOGGER_FORWARD = null;
+    private static GtfsGraphLogger GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER = null;
+
+    static {
+        try {
+            String pathReverseRouteGraphml = System.getenv("GH_GTFS_GRAPH_LOGGER_OUTPUT_REVERSE_ROUTE");
+
+            if (pathReverseRouteGraphml != null) {
+                GH_GTFS_GRAPH_LOGGER_REVERSE = new GtfsGraphLogger(pathReverseRouteGraphml);
+            }
+
+        } catch (ParserConfigurationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+
+        try {
+            String pathForwardRouteGraphml = System.getenv("GH_GTFS_GRAPH_LOGGER_OUTPUT_FORWARD_ROUTE");
+
+            if (pathForwardRouteGraphml != null) {
+                GH_GTFS_GRAPH_LOGGER_FORWARD = new GtfsGraphLogger(pathForwardRouteGraphml);
+            }
+
+        } catch (ParserConfigurationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+
+        try {
+            String pathFoundRouteGraphml = System.getenv("GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER");
+
+            if (pathFoundRouteGraphml != null) {
+                GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER = new GtfsGraphLogger(pathFoundRouteGraphml);
+            }
+
+        } catch (ParserConfigurationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     @Inject
     public PtRouteResource(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
@@ -141,6 +182,7 @@ public final class PtRouteResource {
     }
 
     private class RequestHandler {
+
         private final int maxVisitedNodesForRequest;
         private final int limitSolutions;
         private final long maxProfileDuration = Duration.ofHours(4).toMillis();
@@ -265,6 +307,8 @@ public final class PtRouteResource {
             List<Label> stationLabels = new ArrayList<>();
             while (stationIterator.hasNext()) {
                 Label label = stationIterator.next();
+                Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph));
+
                 if (label.adjNode == startNode) {
                     stationLabels.add(label);
                     break;
@@ -297,6 +341,8 @@ public final class PtRouteResource {
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
+                Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_FORWARD).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph));
+
                 // For single-criterion or pareto queries, we run to the end.
                 //
                 // For profile queries, we need a limited time window. Limiting the number of solutions is not
@@ -345,6 +391,9 @@ public final class PtRouteResource {
                 }
             }
 
+            Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
+            Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_FORWARD).ifPresent(log -> log.exportGraphmlToFile());
+
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
                 Label originalSolution = originalSolutions.get(discoveredSolution);
@@ -380,7 +429,82 @@ public final class PtRouteResource {
             if (discoveredSolutions.isEmpty()) {
                 response.addError(new RuntimeException("No route found"));
             }
+
+            //exportPathsToGraphMl(paths);
+
+            List<Label.Transition> path = paths.get(0);
+
+            path.forEach(t -> {
+                Label.logLabel(GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER, t.label, false, ptEncodedValues, queryGraph);
+                });
+
+            GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER.exportGraphmlToFile();
+//
+//            Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
+
+
             return paths;
+
+
+//        private void exportPathsToGraphMl(List<List<Label.Transition>> paths) {
+//            List<Label.Transition> path = paths.get(0);
+//
+//            path.forEach(t -> {
+//
+//                    Label.logLabel(log, label, false, ptEncodedValues, queryGraph);
+//
+//                    String edgeLabelStr = "";
+//
+//                    switch (t.edge.) {
+//                        case HIGHWAY:
+//                            edgeLabelStr = "HIGHWAY";
+//                            break;
+//                        case ENTER_TIME_EXPANDED_NETWORK:
+//                            edgeLabelStr = "ENTER_TEN";
+//                            break;
+//                        case LEAVE_TIME_EXPANDED_NETWORK:
+//                            edgeLabelStr = "LEAVE_TEN";
+//                            break;
+//                        case ENTER_PT:
+//                            edgeLabelStr = "ENTER_PT";
+//                            break;
+//                        case EXIT_PT:
+//                            edgeLabelStr = "EXIT_PT";
+//                            break;
+//                        case HOP:
+//                            edgeLabelStr = "HOP";
+//                            break;
+//                        case DWELL:
+//                            edgeLabelStr = "DWELL";
+//                            break;
+//                        case BOARD:
+//                            edgeLabelStr = "BOARD";
+//                            break;
+//                        case ALIGHT:
+//                            edgeLabelStr = "ALIGHT";
+//                            break;
+//                        case OVERNIGHT:
+//                            edgeLabelStr = "OVERNIGHT";
+//                            break;
+//                        case TRANSFER:
+//                            edgeLabelStr = "TRANSFER";
+//                            break;
+//                        case WAIT:
+//                            edgeLabelStr = "WAIT";
+//                            break;
+//                        case WAIT_ARRIVAL:
+//                            edgeLabelStr = "WAIT_ARRIVAL";
+//                            break;
+//                    }
+//
+//                    logger.addNode(t.edge.edgeIteratorState.getBaseNode(), 0, 0, GtfsGraphLogger.NodeLogType.OSM_NODE, "");
+//                    logger.addNode(t.edge.edgeIteratorState.getAdjNode(), 0, 0, GtfsGraphLogger.NodeLogType.OSM_NODE, "");
+//                    logger.addEdge(edgeLabelStr, t.edge.edgeIteratorState.getEdge(), t.edge.edgeIteratorState.getBaseNode(), t.edge.edgeIteratorState.getAdjNode());
+//
+//
+//
+//
+//                    });
         }
 
         private boolean profileFinished(MultiCriteriaLabelSetting router, List<Label> discoveredSolutions, Label walkSolution) {

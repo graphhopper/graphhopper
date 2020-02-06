@@ -96,7 +96,7 @@ public class GtfsGraphLogger {
 
     private final Map<String, NodeInfo> insertedNodes = new HashMap<>();
     private int currentTripIndex = 0;
-    private Color currentTripColor = new Color((int)(Math.random() * 0x1000000));
+    private Color currentTripColor = null;
     private static Color OSM_NODE_COLOR = new Color(0,0,0);
     private static Color STOP_NODE_COLOR = new Color(200,0,0);
     private static Color NODE_TEXT_COLOR = new Color(255,255, 255);
@@ -134,6 +134,8 @@ public class GtfsGraphLogger {
     }
 
     public GtfsGraphLogger(String graphmlPath) throws ParserConfigurationException {
+
+        findNextTripColor();
 
         try {
             this.graphmlPath = graphmlPath;
@@ -238,18 +240,20 @@ public class GtfsGraphLogger {
         return yBasePos;
     }
 
-    boolean areColorsSimilar(Color a, Color b, int threshold) {
+    private boolean areColorsSimilar(Color a, Color b, int threshold) {
         return (Math.abs(a.getRed() - b.getRed()) + Math.abs(a.getGreen() - b.getGreen()) + Math.abs(a.getBlue() - b.getBlue())) < threshold;
     }
 
-
-
-    public void incrementTrip() {
-        currentTripIndex++;
+    private void findNextTripColor() {
         do {
             currentTripColor = new Color((int) (Math.random() * 0x1000000));
         } while (areColorsSimilar(currentTripColor, OSM_NODE_COLOR, 30) || areColorsSimilar(currentTripColor, STOP_NODE_COLOR, 30)
                 || areColorsSimilar(currentTripColor, NODE_TEXT_COLOR, 250));
+    }
+
+    public void incrementTrip() {
+        currentTripIndex++;
+        findNextTripColor();
     }
 
     public void addNode(int id, double x, double y, NodeLogType type, String nodeText) {

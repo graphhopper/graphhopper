@@ -135,4 +135,94 @@ public class Label {
                 edgeIteratorState.get(flagEncoder.getTransfersEnc()), edgeIteratorState.getDistance());
     }
 
+    public static void logLabel(GtfsGraphLogger logger, Label label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph) {
+
+        String logHighwayEdge = System.getenv("GH_GTFS_LOG_HIGHWAY_EDGE_GRAPH_LOGGER");
+        boolean reverseEdgeFlags = !arriveBy;
+
+        if (label.edge != -1) {
+            EdgeIteratorState edgeIteratorState = queryGraph.getEdgeIteratorState(label.edge, reverseEdgeFlags ? label.adjNode : label.parent.adjNode).detach(false);
+            EdgeLabel edgeLabel = Label.getEdgeLabel(edgeIteratorState, encoder);
+
+            String edgeLabelStr = "";
+            GtfsGraphLogger.NodeLogType baseNodeType = GtfsGraphLogger.NodeLogType.OSM_NODE;
+            GtfsGraphLogger.NodeLogType adjNodeType = GtfsGraphLogger.NodeLogType.OSM_NODE;
+
+
+            switch (edgeLabel.edgeType) {
+                case HIGHWAY:
+                    if (null != logHighwayEdge && logHighwayEdge.compareTo("0") == 0) {
+                        return;
+                    }
+                    edgeLabelStr = "HIGHWAY";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.OSM_NODE;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.OSM_NODE;
+                    break;
+                case ENTER_TIME_EXPANDED_NETWORK:
+                    edgeLabelStr = "ENTER_TEN";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.ENTER_EXIT_PT;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.BOARD_NODE;
+                    break;
+                case LEAVE_TIME_EXPANDED_NETWORK:
+                    edgeLabelStr = "LEAVE_TEN";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.ALIGHT_NODE;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.ENTER_EXIT_PT;
+                    break;
+                case ENTER_PT:
+                    edgeLabelStr = "ENTER_PT";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.OSM_NODE;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.ENTER_EXIT_PT;
+                    break;
+                case EXIT_PT:
+                    edgeLabelStr = "EXIT_PT";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.ENTER_EXIT_PT;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.OSM_NODE;
+                    break;
+                case HOP:
+                    edgeLabelStr = "HOP";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.DEPARTURE_STOP_TIME_NODE;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.ARRIVAL_STOP_TIME_NODE;
+                    break;
+                case DWELL:
+                    edgeLabelStr = "DWELL";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.ARRIVAL_STOP_TIME_NODE;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.DEPARTURE_STOP_TIME_NODE;
+                    break;
+                case BOARD:
+                    edgeLabelStr = "BOARD";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.BOARD_NODE;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.DEPARTURE_STOP_TIME_NODE;
+                    break;
+                case ALIGHT:
+                    edgeLabelStr = "ALIGHT";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.ARRIVAL_STOP_TIME_NODE;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.ALIGHT_NODE;
+                    logger.incrementTrip();
+                    break;
+                case OVERNIGHT:
+                    edgeLabelStr = "OVERNIGHT";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.BOARD_NODE;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.BOARD_NODE;
+                    break;
+                case TRANSFER:
+                    edgeLabelStr = "TRANSFER";
+                    baseNodeType = GtfsGraphLogger.NodeLogType.ALIGHT_NODE;
+                    adjNodeType = GtfsGraphLogger.NodeLogType.BOARD_NODE;
+                    break;
+                case WAIT:
+                    edgeLabelStr = "WAIT";
+                    break;
+                case WAIT_ARRIVAL:
+                    edgeLabelStr = "WAIT_ARRIVAL";
+                    break;
+            }
+
+            logger.addNode(edgeIteratorState.getBaseNode(), 0, 0, baseNodeType, "");
+            logger.addNode(edgeIteratorState.getAdjNode(), 0, 0, adjNodeType, "");
+            logger.addEdge(edgeLabelStr, edgeIteratorState.getEdge(), edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode());
+        }
+        else {
+            logger.addNode(label.adjNode, 0, 0, GtfsGraphLogger.NodeLogType.OSM_NODE, "");
+        }
+    }
 }
