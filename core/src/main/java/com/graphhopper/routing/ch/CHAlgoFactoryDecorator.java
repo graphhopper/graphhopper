@@ -19,7 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -34,7 +33,6 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 
 import static com.graphhopper.util.Helper.*;
-import static com.graphhopper.util.Parameters.CH.DISABLE;
 
 /**
  * This class implements the CH decorator for the routing algorithm factory and provides several
@@ -42,7 +40,7 @@ import static com.graphhopper.util.Parameters.CH.DISABLE;
  *
  * @author Peter Karich
  */
-public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator {
+public class CHAlgoFactoryDecorator {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we need to decouple the CH profile objects from the list of CH profile strings
@@ -64,7 +62,6 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         setCHProfilesAsStrings(Collections.singletonList("fastest"));
     }
 
-    @Override
     public void init(GraphHopperConfig ghConfig) {
         // throw explicit error for deprecated configs
         if (!ghConfig.get("prepare.threads", "").isEmpty())
@@ -99,7 +96,6 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         pMap = ghConfig.asPMap();
     }
 
-    @Override
     public final boolean isEnabled() {
         return enabled;
     }
@@ -231,15 +227,13 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return preparations;
     }
 
-    @Override
-    public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
-        boolean disableCH = map.getBool(DISABLE, false);
-        if (!isEnabled() || disablingAllowed && disableCH)
-            return defaultAlgoFactory;
-
+    /**
+     * @return a {@link RoutingAlgorithmFactory} for CH or throw an error if no preparation is available for the given
+     * hints
+     */
+    public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         if (preparations.isEmpty())
             throw new IllegalStateException("No preparations added to this decorator");
-
         return getPreparation(map).getRoutingAlgorithmFactory();
     }
 

@@ -24,7 +24,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -136,7 +136,7 @@ public class MiniGraphUI {
                 @Override
                 public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                     // doable but ugly
-                    Weighting w = ((PrepareContractionHierarchies) tmpFactory).getWeighting();
+                    Weighting w = ((CHRoutingAlgorithmFactory) tmpFactory).getWeighting();
                     return new TmpAlgo(new RoutingCHGraphImpl(routingGraph, w), mg);
                 }
             };

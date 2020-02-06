@@ -22,7 +22,7 @@ import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -31,7 +31,10 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
@@ -46,7 +49,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA;
@@ -835,64 +837,6 @@ public class GraphHopperOSMTest {
     }
 
     @Test
-    public void testCustomFactoryForNoneCH() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager em = EncodingManager.create(carEncoder);
-        // Weighting weighting = new FastestWeighting(carEncoder);
-        instance = new GraphHopperOSM().setStoreOnFlush(false).setCHEnabled(false).
-                setEncodingManager(em).
-                setGraphHopperLocation(ghLoc).
-                setDataReaderFile(testOsm);
-        final RoutingAlgorithmFactory af = new RoutingAlgorithmFactorySimple();
-        instance.addAlgorithmFactoryDecorator(new RoutingAlgorithmFactoryDecorator() {
-            @Override
-            public void init(GraphHopperConfig ghConfig) {
-            }
-
-            @Override
-            public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory algoFactory, HintsMap map) {
-                return af;
-            }
-
-            @Override
-            public boolean isEnabled() {
-                return true;
-            }
-        });
-        instance.importOrLoad();
-
-        assertSame(af, instance.getAlgorithmFactory(null));
-
-        // test that hints are passed to algorithm opts
-        final AtomicInteger cnt = new AtomicInteger(0);
-        instance.addAlgorithmFactoryDecorator(new RoutingAlgorithmFactoryDecorator() {
-            @Override
-            public void init(GraphHopperConfig ghConfig) {
-            }
-
-            public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory algoFactory, HintsMap map) {
-                return new RoutingAlgorithmFactorySimple() {
-                    @Override
-                    public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                        cnt.addAndGet(1);
-                        assertFalse(opts.getHints().getBool("test", true));
-                        return super.createAlgo(g, opts);
-                    }
-                };
-            }
-
-            @Override
-            public boolean isEnabled() {
-                return true;
-            }
-        });
-        GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);
-        req.getHints().put("test", false);
-        instance.route(req);
-        assertEquals(1, cnt.get());
-    }
-
-    @Test
     public void testMultipleCHPreparationsInParallel() {
         HashMap<String, Long> shortcutCountMap = new HashMap<>();
         // try all parallelization modes        
@@ -994,9 +938,9 @@ public class GraphHopperOSMTest {
 
         HintsMap wMap = new HintsMap("fastest");
         wMap.put("vehicle", "truck");
-        assertEquals("fastest|truck", ((CHRoutingAlgorithmFactory) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
+        assertEquals("fastest|truck", ((CHRoutingAlgorithmFactory) decorator.getAlgorithmFactory(wMap)).getWeighting().toString());
         wMap.put("vehicle", "simple_truck");
-        assertEquals("fastest|simple_truck", ((CHRoutingAlgorithmFactory) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
+        assertEquals("fastest|simple_truck", ((CHRoutingAlgorithmFactory) decorator.getAlgorithmFactory(wMap)).getWeighting().toString());
 
         // make sure weighting cannot be mixed
         decorator.addCHProfile(CHProfile.nodeBased(fwTruck));

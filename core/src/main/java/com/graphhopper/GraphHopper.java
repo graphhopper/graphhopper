@@ -21,7 +21,10 @@ import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
@@ -82,7 +85,6 @@ import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 public class GraphHopper implements GraphHopperAPI {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final String fileLockName = "gh.lock";
-    private final Set<RoutingAlgorithmFactoryDecorator> algoDecorators = new LinkedHashSet<>();
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
@@ -133,10 +135,6 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
         lmFactoryDecorator.setEnabled(false);
-
-        // order is important to use CH as base algo and set the approximation in the followed lm factory decorator
-        algoDecorators.add(chFactoryDecorator);
-        algoDecorators.add(lmFactoryDecorator);
     }
 
     /**
@@ -535,10 +533,9 @@ public class GraphHopper implements GraphHopperAPI {
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
         minOneWayNetworkSize = ghConfig.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
 
-        // prepare CH, LM, ...
-        for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators) {
-            decorator.init(ghConfig);
-        }
+        // prepare CH&LM
+        chFactoryDecorator.init(ghConfig);
+        lmFactoryDecorator.init(ghConfig);
 
         // osm import
         dataReaderWayPointMaxDistance = ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, dataReaderWayPointMaxDistance);
@@ -804,20 +801,23 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
-        RoutingAlgorithmFactory routingAlgorithmFactory = new RoutingAlgorithmFactorySimple();
-        for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators) {
-            if (decorator.isEnabled())
-                routingAlgorithmFactory = decorator.getDecoratedAlgorithmFactory(routingAlgorithmFactory, map);
+        boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
+        boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
+        if (disableCH && !chFactoryDecorator.isDisablingAllowed()) {
+            throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
+        }
+        if (disableLM && !lmFactoryDecorator.isDisablingAllowed()) {
+            throw new IllegalArgumentException("Disabling LM is not allowed on the server side");
         }
 
-        return routingAlgorithmFactory;
-    }
-
-    public GraphHopper addAlgorithmFactoryDecorator(RoutingAlgorithmFactoryDecorator algoFactoryDecorator) {
-        if (!algoDecorators.add(algoFactoryDecorator))
-            throw new IllegalArgumentException("Decorator was already added " + algoFactoryDecorator.getClass());
-
-        return this;
+        // for now do not allow mixing CH&LM #1082,#1889
+        if (chFactoryDecorator.isEnabled() && !disableCH) {
+            return chFactoryDecorator.getAlgorithmFactory(map);
+        } else if (lmFactoryDecorator.isEnabled() && !disableLM) {
+            return lmFactoryDecorator.getAlgorithmFactory(map);
+        } else {
+            return new RoutingAlgorithmFactorySimple();
+        }
     }
 
     public final CHAlgoFactoryDecorator getCHFactoryDecorator() {
@@ -1059,13 +1059,8 @@ public class GraphHopper implements GraphHopperAPI {
             Weighting weighting;
             Graph graph = ghStorage;
             if (chFactoryDecorator.isEnabled() && !disableCH) {
-                // if LM is enabled we have the LMFactory with the CH algo!
-                RoutingAlgorithmFactory chAlgoFactory = algorithmFactory;
-                if (algorithmFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
-                    chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) algorithmFactory).getDefaultAlgoFactory();
-
-                if (chAlgoFactory instanceof CHRoutingAlgorithmFactory) {
-                    CHProfile chProfile = ((CHRoutingAlgorithmFactory) chAlgoFactory).getCHProfile();
+                if (algorithmFactory instanceof CHRoutingAlgorithmFactory) {
+                    CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
                     weighting = chProfile.getWeighting();
                     graph = ghStorage.getCHGraph(chProfile);
                 } else {

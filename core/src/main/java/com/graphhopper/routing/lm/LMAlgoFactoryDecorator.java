@@ -23,7 +23,7 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -50,7 +50,7 @@ import static com.graphhopper.util.Helper.*;
  *
  * @author Peter Karich
  */
-public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator {
+public class LMAlgoFactoryDecorator {
     private Logger LOGGER = LoggerFactory.getLogger(LMAlgoFactoryDecorator.class);
     private int landmarkCount = 16;
     private int activeLandmarkCount = 8;
@@ -73,7 +73,6 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         setPreparationThreads(1);
     }
 
-    @Override
     public void init(GraphHopperConfig ghConfig) {
         setPreparationThreads(ghConfig.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
 
@@ -119,7 +118,6 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return this;
     }
 
-    @Override
     public final boolean isEnabled() {
         return enabled;
     }
@@ -164,7 +162,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public LMAlgoFactoryDecorator addWeighting(String weighting) {
-        String str[] = weighting.split("\\|");
+        String[] str = weighting.split("\\|");
         double value = -1;
         if (str.length > 1) {
             PMap map = new PMap(weighting);
@@ -218,37 +216,34 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return preparations;
     }
 
-    @Override
-    public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
-        // for now do not allow mixing CH&LM #1082
-        boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
-        boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
-        if (!isEnabled() || disablingAllowed && disableLM || !disableCH)
-            return defaultAlgoFactory;
-
+    public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         if (preparations.isEmpty())
             throw new IllegalStateException("No preparations added to this decorator");
 
         // if no weighting or vehicle is specified for this request and there is only one preparation, use it
         if ((map.getWeighting().isEmpty() || map.getVehicle().isEmpty()) && preparations.size() == 1) {
-            return new LMRAFactory(preparations.get(0), defaultAlgoFactory);
+            return new LMRAFactory(preparations.get(0), new RoutingAlgorithmFactorySimple());
         }
 
+        List<Weighting> lmWeightings = new ArrayList<>(preparations.size());
         for (final PrepareLandmarks p : preparations) {
+            lmWeightings.add(p.getWeighting());
             if (p.getWeighting().matches(map))
-                return new LMRAFactory(p, defaultAlgoFactory);
+                return new LMRAFactory(p, new RoutingAlgorithmFactorySimple());
         }
 
+        // todonow: what does that mean?
         // if the initial encoder&weighting has certain properties we could cross query it but for now avoid this
-        return defaultAlgoFactory;
+        String requestedString = (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) + "|" +
+                (map.getVehicle().isEmpty() ? "*" : map.getVehicle());
+        throw new IllegalArgumentException("Cannot find matching LM profile for your request." +
+                "\nrequested: " + requestedString + "\navailable: " + lmWeightings);
     }
 
     /**
-     * TODO needs to be public to pick defaultAlgoFactory.weighting if the defaultAlgoFactory is a CH one.
-     *
      * @see com.graphhopper.GraphHopper#calcPaths(GHRequest, GHResponse)
      */
-    public static class LMRAFactory implements RoutingAlgorithmFactory {
+    private static class LMRAFactory implements RoutingAlgorithmFactory {
         private RoutingAlgorithmFactory defaultAlgoFactory;
         private PrepareLandmarks p;
 
