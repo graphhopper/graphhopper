@@ -776,7 +776,6 @@ public class GraphHopper implements GraphHopperAPI {
 
         ghStorage.addCHGraphs(chProfiles);
 
-
         if (!new File(graphHopperFolder).exists())
             return false;
 
