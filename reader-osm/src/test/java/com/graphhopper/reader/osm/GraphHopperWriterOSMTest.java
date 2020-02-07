@@ -8,7 +8,6 @@ import com.graphhopper.storage.CHProfile;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -30,11 +29,9 @@ public class GraphHopperWriterOSMTest {
         // e.g. importPublicTransit() -> or would this be too inconvenient?
         ghWriter.getGraphHopperStorage();
 
-        List<CHProfile> chProfiles = Arrays.asList(CHProfile.nodeBased(new FastestWeighting(encoder)));
-        for (CHProfile chProfile : chProfiles) {
-            ghWriter.doAsyncPreparation(chProfile, CHProfileConfig.start().build());
-        }
-        ghWriter.waitForAsyncPreparations();
+        CHProfile chProfile = CHProfile.nodeBased(new FastestWeighting(encoder));
+        ghWriter.doAsyncPreparation(chProfile, CHProfileConfig.start().build()).
+                waitForAsyncPreparations();
 
         // one would expect a close of a writer but OSMReader closes automatically and the the other storages cannot be closed
         // ghWriter.close();
@@ -46,7 +43,7 @@ public class GraphHopperWriterOSMTest {
         // we can also implement Closable to use try-with-resources, but not sure if this is misleading as GraphHopperReader should be reusable (?)
         reader.close();
 
-        reader = GraphHopperReader.read(graphCache, graphConfig, chProfiles);
+        reader = GraphHopperReader.read(graphCache, graphConfig, Arrays.asList(chProfile));
         rsp = reader.route(new GHRequest(43.738775, 7.423754, 43.736872, 7.419548));
         assertFalse(rsp.toString(), rsp.hasErrors());
         assertEquals(1375, rsp.getBest().getDistance(), 1);

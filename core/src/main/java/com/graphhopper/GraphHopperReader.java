@@ -61,7 +61,6 @@ public final class GraphHopperReader {
                 encodingManager.needsTurnCostsSupport(), config.getDefaultSegmentSize());
 
         CHPreparationHandler chHandler = new CHPreparationHandler(ghStorage, chProfiles);
-
         if (!ghStorage.loadExisting())
             throw new RuntimeException("Cannot load Graph from " + graphCache);
 
