@@ -81,12 +81,11 @@ public final class GraphHopperWriter {
             graphHopperStorage = newGraph;
         }
 
-        // NOTE: this is different to the current processing order, but required now
-        graphHopperStorage.flush();
-
         if (graphConfig.hasElevation())
             interpolateBridgesAndOrTunnels();
 
+        // NOTE: this is different to the current processing order, but required now
+        graphHopperStorage.flush();
         state = GraphState.IMPORTED;
         return this;
     }
