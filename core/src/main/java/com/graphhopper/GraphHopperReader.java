@@ -47,7 +47,7 @@ public final class GraphHopperReader {
         this.locationIndex = locationIndex;
     }
 
-    public static GraphHopperReader read(String graphCache, GraphConfig config, List<CHProfile> chProfiles) {
+    public static GraphHopperReader loadExisting(String graphCache, GraphConfig config, List<CHProfile> chProfiles) {
         if (isEmpty(graphCache))
             throw new IllegalStateException("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before");
 
@@ -67,7 +67,7 @@ public final class GraphHopperReader {
         if (!locationIndex.loadExisting())
             throw new RuntimeException("Cannot load LocationIndex from " + graphCache);
 
-        CHPreparationHandler chHandler = CHPreparationHandler.read(graphHopperStorage, chProfiles);
+        CHPreparationHandler chHandler = CHPreparationHandler.loadExisting(graphHopperStorage, chProfiles);
         return new GraphHopperReader(encodingManager, graphHopperStorage, chHandler, locationIndex);
     }
 

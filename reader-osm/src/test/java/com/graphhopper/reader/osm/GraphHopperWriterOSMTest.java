@@ -51,7 +51,7 @@ public class GraphHopperWriterOSMTest {
         // we can also implement Closable to use try-with-resources, but not sure if this is misleading as GraphHopperReader should be reusable (?)
         reader.close();
 
-        reader = GraphHopperReader.read(graphCache, graphConfig, Arrays.asList(chProfile));
+        reader = GraphHopperReader.loadExisting(graphCache, graphConfig, Arrays.asList(chProfile));
         rsp = reader.route(new GHRequest(43.738775, 7.423754, 43.736872, 7.419548));
         assertFalse(rsp.toString(), rsp.hasErrors());
         assertEquals(1375, rsp.getBest().getDistance(), 1);

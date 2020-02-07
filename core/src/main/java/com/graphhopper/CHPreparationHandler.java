@@ -21,7 +21,7 @@ public class CHPreparationHandler {
     public CHPreparationHandler() {
     }
 
-    public static CHPreparationHandler read(GraphHopperStorage graphHopperStorage, List<CHProfile> chProfiles) {
+    public static CHPreparationHandler loadExisting(GraphHopperStorage graphHopperStorage, List<CHProfile> chProfiles) {
         CHPreparationHandler handler = new CHPreparationHandler();
         for (CHProfile chProfile : chProfiles) {
             handler.chProfiles.add(chProfile);
