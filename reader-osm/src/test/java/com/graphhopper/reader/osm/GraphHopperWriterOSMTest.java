@@ -23,7 +23,7 @@ public class GraphHopperWriterOSMTest {
         GraphConfig graphConfig = GraphConfig.start().graphCacheFolder(graphCache).build();
         GraphHopperWriter ghWriter = GraphHopperWriterOSM.create(EncodingManager.create(encoder), graphConfig).
                 readData(ReadDataConfig.start().dataReaderFile(osmFile).build()).
-                createIndex();
+                createLocationIndex();
 
         // Advantage: here we can do any post processing for the graph without the need to extend GraphHopperWriter
         // e.g. importPublicTransit() -> or would this be too inconvenient?

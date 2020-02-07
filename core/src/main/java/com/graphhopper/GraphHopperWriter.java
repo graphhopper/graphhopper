@@ -90,7 +90,7 @@ public final class GraphHopperWriter {
         return this;
     }
 
-    public GraphHopperWriter createIndex() {
+    public GraphHopperWriter createLocationIndex() {
         if (state != GraphState.IMPORTED)
             throw new IllegalStateException("wrong state: " + state);
         locationIndex = new LocationIndexTree(graphHopperStorage, graphHopperStorage.getDirectory());
