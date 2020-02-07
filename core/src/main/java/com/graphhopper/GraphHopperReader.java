@@ -19,7 +19,6 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.TranslationMap;
 
-import java.io.Closeable;
 import java.io.File;
 import java.util.List;
 
@@ -60,8 +59,8 @@ public final class GraphHopperReader {
         EncodingManager encodingManager = EncodingManager.create(new DefaultEncodedValueFactory(), new DefaultFlagEncoderFactory(), graphCache);
         GraphHopperStorage ghStorage = new GraphHopperStorage(dir, encodingManager, config.hasElevation(),
                 encodingManager.needsTurnCostsSupport(), config.getDefaultSegmentSize());
-        // TODO NOW CH prep are currently a noop
-        // ghStorage.addCHGraphs(chProfiles);
+
+        CHPreparationHandler chHandler = new CHPreparationHandler(ghStorage, chProfiles);
 
         if (!ghStorage.loadExisting())
             throw new RuntimeException("Cannot load Graph from " + graphCache);
@@ -69,7 +68,7 @@ public final class GraphHopperReader {
         LocationIndexTree locationIndex = new LocationIndexTree(ghStorage, dir);
         if (!locationIndex.loadExisting())
             throw new RuntimeException("Cannot load LocationIndex from " + graphCache);
-        CHPreparationHandler chHandler = new CHPreparationHandler();
+
         return new GraphHopperReader(encodingManager, ghStorage, chHandler, locationIndex);
     }
 
@@ -101,7 +100,7 @@ public final class GraphHopperReader {
 
         String vehicle = request.getVehicle();
         FlagEncoder encoder = vehicle.isEmpty() ? encodingManager.fetchEdgeEncoders().get(0) : encodingManager.getEncoder(vehicle);
-        request.setAlgorithm(request.getAlgorithm().isEmpty() ? "astar" : request.getAlgorithm());
+        request.setAlgorithm(request.getAlgorithm().isEmpty() ? "astarbi" : request.getAlgorithm());
 
         Weighting weighting;
         Graph graph = graphHopperStorage;
@@ -119,7 +118,6 @@ public final class GraphHopperReader {
         }
 
         ViaRoutingTemplate routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
-
         List<QueryResult> qResults = routingTemplate.lookup(request.getPoints());
         QueryGraph queryGraph = QueryGraph.lookup(graph, qResults);
 

@@ -1,13 +1,19 @@
 package com.graphhopper;
 
+import com.graphhopper.util.PMap;
+
 public class CHProfileConfig {
 
     private CHProfileConfig() {
     }
 
-    // add here parameters for the CH preparation like logging and algorithm paramaters
     public static Builder start() {
         return new Builder();
+    }
+
+    public PMap asMap() {
+        // add here parameters for the CH preparation like logging and algorithm paramaters
+        return new PMap();
     }
 
     public static class Builder {

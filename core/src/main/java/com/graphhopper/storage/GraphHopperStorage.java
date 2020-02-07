@@ -89,7 +89,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      * or {@link #loadExisting()}.
      */
     public GraphHopperStorage addCHGraph(CHProfile chProfile) {
-        baseGraph.checkNotInitialized();
+        // TODO NOW is it okay to comment this out? We want to allow adding chProfile at any time
+        //  baseGraph.checkNotInitialized();
         if (getCHProfiles().contains(chProfile)) {
             throw new IllegalArgumentException("For the given CH profile a CHGraph already exists: " + chProfile);
         }
@@ -315,6 +316,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     @Override
     public void flush() {
+        properties.put("graph.ch.profiles", getCHProfiles().toString());
         for (CHGraphImpl cg : chGraphs) {
             if (!cg.isClosed())
                 cg.flush();

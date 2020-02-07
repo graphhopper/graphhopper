@@ -30,11 +30,11 @@ public class GraphHopperWriterOSMTest {
         // e.g. importPublicTransit() -> or would this be too inconvenient?
         ghWriter.getGraphHopperStorage();
 
-        // TODO NOW currently CH preparation is only included here to show the API (not functional!)
         List<CHProfile> chProfiles = Arrays.asList(CHProfile.nodeBased(new FastestWeighting(encoder)));
         for (CHProfile chProfile : chProfiles) {
             ghWriter.doAsyncPreparation(chProfile, CHProfileConfig.start().build());
         }
+        ghWriter.waitForAsyncPreparations();
 
         // one would expect a close of a writer but OSMReader closes automatically and the the other storages cannot be closed
         // ghWriter.close();

@@ -16,7 +16,7 @@ import java.io.IOException;
 public final class GraphHopperWriter {
     private GraphState state = GraphState.INIT;
     private final EncodingManager encodingManager;
-    private final CHPreparationHandler chPreparationHandler = new CHPreparationHandler();
+    private final CHPreparationHandler chPreparationHandler;
     private GraphHopperStorage graphHopperStorage;
     private DataReader dataReader;
     private LocationIndexTree locationIndex;
@@ -30,6 +30,7 @@ public final class GraphHopperWriter {
         GHDirectory dir = new GHDirectory(graphConfig.getGraphCacheFolder(), graphConfig.getDAType());
         graphHopperStorage = new GraphHopperStorage(dir, encodingManager, graphConfig.hasElevation(),
                 encodingManager.needsTurnCostsSupport(), graphConfig.getDefaultSegmentSize());
+        this.chPreparationHandler = new CHPreparationHandler(graphHopperStorage);
     }
 
     public EncodingManager getEncodingManager() {
@@ -107,16 +108,19 @@ public final class GraphHopperWriter {
      * This method adds the specified CHProfile to the task queue. This means that as soon as a configuration of
      * a CHProfile is known we create it.
      */
-    public GraphHopperWriter doAsyncPreparation(CHProfile profile, CHProfileConfig config) {
+    public GraphHopperWriter doAsyncPreparation(CHProfile chProfile, CHProfileConfig config) {
         if (state != GraphState.LOC_INDEXED)
             throw new IllegalStateException("Wrong state: " + state + ". Did you call readData and createIndex before?");
 
         graphHopperStorage.freeze();
         state = GraphState.FROZEN;
-        chPreparationHandler.addPreparation(profile, config);
 
-        // TODO NOW do we need to call graphHopperStorage.flush() when we are finished? Would be ugly.
+        chPreparationHandler.doPreparation(chProfile, config);
         return this;
+    }
+
+    public void waitForAsyncPreparations() {
+        chPreparationHandler.waitForCompletion();
     }
 
     // TODO

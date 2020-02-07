@@ -53,7 +53,6 @@ public class CHProfileSelector {
     }
 
     private CHProfile select() {
-
         List<CHProfile> matchingProfiles = new ArrayList<>();
         for (CHProfile p : chProfiles) {
             if (edgeBased != null && p.isEdgeBased() != edgeBased) {

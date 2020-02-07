@@ -236,7 +236,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return edgeAccess.isAdjacentToNode(node, edgePointer);
     }
 
-    void _prepareForContraction() {
+    public void _prepareForContraction() {
         if (isReadyForContraction) {
             return;
         }
@@ -322,7 +322,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return g;
     }
 
-    void initStorage() {
+    public void initStorage() {
         EdgeAccess ea = baseGraph.edgeAccess;
         chEdgeAccess.init(ea.E_NODEA, ea.E_NODEB, ea.E_LINKA, ea.E_LINKB, ea.E_FLAGS);
         // shortcuts
