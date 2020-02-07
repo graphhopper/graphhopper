@@ -118,8 +118,9 @@ public final class GraphHopperWriter {
         return this;
     }
 
-    public void waitForAsyncPreparations() {
+    public GraphHopperWriter waitForAsyncPreparations() {
         chPreparationHandler.waitForCompletion();
+        return this;
     }
 
     // TODO
