@@ -57,18 +57,18 @@ public final class GraphHopperReader {
 
         GHDirectory dir = new GHDirectory(graphCache, config.getDAType());
         EncodingManager encodingManager = EncodingManager.create(new DefaultEncodedValueFactory(), new DefaultFlagEncoderFactory(), graphCache);
-        GraphHopperStorage ghStorage = new GraphHopperStorage(dir, encodingManager, config.hasElevation(),
+        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(dir, encodingManager, config.hasElevation(),
                 encodingManager.needsTurnCostsSupport(), config.getDefaultSegmentSize());
-
-        CHPreparationHandler chHandler = new CHPreparationHandler(ghStorage, chProfiles);
-        if (!ghStorage.loadExisting())
+        graphHopperStorage.addCHGraphs(chProfiles);
+        if (!graphHopperStorage.loadExisting())
             throw new RuntimeException("Cannot load Graph from " + graphCache);
 
-        LocationIndexTree locationIndex = new LocationIndexTree(ghStorage, dir);
+        LocationIndexTree locationIndex = new LocationIndexTree(graphHopperStorage, dir);
         if (!locationIndex.loadExisting())
             throw new RuntimeException("Cannot load LocationIndex from " + graphCache);
 
-        return new GraphHopperReader(encodingManager, ghStorage, chHandler, locationIndex);
+        CHPreparationHandler chHandler = CHPreparationHandler.read(graphHopperStorage, chProfiles);
+        return new GraphHopperReader(encodingManager, graphHopperStorage, chHandler, locationIndex);
     }
 
     // TODO NOW other customization mechanism than inheritance needed

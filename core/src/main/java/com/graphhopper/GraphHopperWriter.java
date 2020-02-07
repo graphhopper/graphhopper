@@ -1,6 +1,7 @@
 package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.CHProfile;
@@ -16,7 +17,7 @@ import java.io.IOException;
 public final class GraphHopperWriter {
     private GraphState state = GraphState.INIT;
     private final EncodingManager encodingManager;
-    private final CHPreparationHandler chPreparationHandler;
+    private final CHPreparationHandler chPreparationHandler = new CHPreparationHandler();
     private GraphHopperStorage graphHopperStorage;
     private DataReader dataReader;
     private LocationIndexTree locationIndex;
@@ -30,7 +31,6 @@ public final class GraphHopperWriter {
         GHDirectory dir = new GHDirectory(graphConfig.getGraphCacheFolder(), graphConfig.getDAType());
         graphHopperStorage = new GraphHopperStorage(dir, encodingManager, graphConfig.hasElevation(),
                 encodingManager.needsTurnCostsSupport(), graphConfig.getDefaultSegmentSize());
-        this.chPreparationHandler = new CHPreparationHandler(graphHopperStorage);
     }
 
     public EncodingManager getEncodingManager() {
@@ -114,12 +114,16 @@ public final class GraphHopperWriter {
         graphHopperStorage.freeze();
         state = GraphState.FROZEN;
 
-        chPreparationHandler.doPreparation(chProfile, config);
+        graphHopperStorage.addCHGraph(chProfile);
+        PrepareContractionHierarchies prep = PrepareContractionHierarchies.fromGraphHopperStorage(graphHopperStorage, chProfile).
+                setParams(config.asMap());
+        chPreparationHandler.doPreparation(graphHopperStorage.getCHGraph(chProfile), prep);
         return this;
     }
 
     public GraphHopperWriter waitForAsyncPreparations() {
         chPreparationHandler.waitForCompletion();
+        graphHopperStorage.flush();
         return this;
     }
 
