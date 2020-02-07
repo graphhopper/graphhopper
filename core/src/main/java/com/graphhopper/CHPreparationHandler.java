@@ -16,7 +16,6 @@ public class CHPreparationHandler {
     private final GraphHopperStorage graphHopperStorage;
     private final List<CHGraphImpl> chGraphs = new ArrayList<>();
     private final List<CHProfile> chProfiles = new ArrayList<>();
-    private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     private boolean enabled = true;
 
     public CHPreparationHandler(GraphHopperStorage graphHopperStorage) {
@@ -35,7 +34,6 @@ public class CHPreparationHandler {
         prep.setParams(chConfig.asMap());
 
         chProfiles.add(chProfile);
-        preparations.add(prep);
 
         // TODO NOW improve API -> is the separation of "init" and "prepared" still necessary?
         CHGraphImpl chGraphImpl = ((CHGraphImpl) graphHopperStorage.getCHGraph(chProfile));
@@ -72,6 +70,6 @@ public class CHPreparationHandler {
                 // this is nice: no need to have PrepareContractionHierarchies.getRoutingAlgorithmFactory
                 return new CHRoutingAlgorithmFactory(graphHopperStorage.getCHGraph(chProfile));
         }
-        throw new IllegalStateException("Could not find CH preparation for profile: " + chProfile + ", preparations:" + preparations);
+        throw new IllegalStateException("Could not find CH preparation for profile: " + chProfile + ", profiles: " + chProfiles);
     }
 }
