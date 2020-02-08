@@ -44,7 +44,7 @@ public class PriorityCustomConfig {
                 Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
                 double[] values = Helper.createEnumToDoubleArray("priority", 1, 0, 100,
                         enumClass, (Map<String, Object>) value);
-                normalizeFactor(values);
+                normalizeFactor(values, 1);
                 priorityList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'priority'");
@@ -53,19 +53,19 @@ public class PriorityCustomConfig {
     }
 
     /**
-     * Pick the maximum value and if it is greater than 1 we divide all values with it - i.e. normalize it.
+     * Pick the maximum value and if it is greater than the specified max we divide all values with it - i.e. normalize it.
      * <p>
-     * The purpose of this method is to avoid factors above 1 which makes e.g. Weighting.getMinWeight simpler (as maximum priority is 1)
+     * The purpose of this method is to avoid factors above max which makes e.g. Weighting.getMinWeight simpler (as maximum priority is 1)
      * and also ensures that the landmark algorithm still works (weight can only increased without effecting optimality).
      */
-    static void normalizeFactor(double[] values) {
-        double max = 1;
+    static void normalizeFactor(double[] values, final double max) {
+        double tmpMax = max;
         for (int i = 0; i < values.length; i++) {
-            max = Math.max(max, values[i]);
+            tmpMax = Math.max(tmpMax, values[i]);
         }
-        if (max > 1)
+        if (tmpMax > max)
             for (int i = 0; i < values.length; i++) {
-                values[i] = values[i] / max;
+                values[i] = values[i] / tmpMax;
             }
     }
 
@@ -85,8 +85,7 @@ public class PriorityCustomConfig {
         for (int i = 0; i < priorityList.size(); i++) {
             ConfigMapEntry entry = priorityList.get(i);
             double value = entry.getValue(edge, reverse);
-            if (value < 1)
-                priority *= value;
+            priority *= value;
         }
         return priority;
     }

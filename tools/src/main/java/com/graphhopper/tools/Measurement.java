@@ -737,7 +737,7 @@ public class Measurement {
         customModel.setVehicleWidth(2.5);
         // the default distance_factor for custom requests is currently 1 which makes it too different regarding speed
         // compared to a normal car request. So, set it to 0 for a fair speed comparison.
-        customModel.setDistanceFactor(0);
+        customModel.setDistanceFactorBase(0);
 
         Map<String, Object> map = new HashMap<>();
         map.put("motorway", 1.1);

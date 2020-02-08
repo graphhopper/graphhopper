@@ -28,8 +28,20 @@ max_speed:
   road_environment:
     bridge: 85
 # Trucks are slower so limit all speed to this value. In km/h
-# If none of the conditions above apply use the fallback, if specified.
+# If none of the conditions in the map above apply use the fallback, if specified:
 max_speed_fallback: 100
+
+# The distance_factor changes the influence of the distance. I.e. longer roads get a higher cost.
+distance_factor_base: 0.15
+# The distance_factor_base will be multiplied with the following value under the specified condition:
+distance_factor:
+  # avoid toll roads (prefer roads with 'no' toll)
+  toll: { no: 0.5 }
+  # in Germany toll is proportional to the length and only for certain road_class values, so avoid them too:
+  road_class:
+    motorway: 0.04
+    primary: 0.04
+    trunk: 0.04
 
 # Now we want to set a preference without changing the taken time. I.e. trucks shall prefer bigger roads and so we could
 # increase the speed for them, but this influences time. The default priority 1 won't change something.
@@ -43,8 +55,6 @@ priority:
     residential: 0.5
     # cars allow tracks so we should block them here, but in the example in CustomWeightingRouteResourceTest the bridge is only accessible through a track
     # track: 0
-  # avoid toll roads (prefer roads with 'no' toll)
-  toll: { no: 1.5 }
   # let's assume we transport gas: so NEVER go on restricted roads with hazmat==no
   hazmat: { no: 0 }
   # avoid destination-only roads

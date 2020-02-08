@@ -34,7 +34,7 @@ public class CustomWeightingRouteResourceTest {
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 // we need more than the default encoded values (truck.yml and cargo_bike.yml)
-                        put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
+                put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 put("graph.location", DIR);
     }

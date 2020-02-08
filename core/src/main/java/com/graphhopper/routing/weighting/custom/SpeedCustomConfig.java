@@ -77,7 +77,7 @@ public class SpeedCustomConfig {
                 Class<? extends Enum> enumClass = factory.findValues(key);
                 double[] values = Helper.createEnumToDoubleArray("speed_factor", 1, 0, 100,
                         enumClass, (Map<String, Object>) value);
-                normalizeFactor(values);
+                normalizeFactor(values, 1);
                 speedFactorList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'speed_factor'");
@@ -100,8 +100,7 @@ public class SpeedCustomConfig {
         for (int i = 0; i < speedFactorList.size(); i++) {
             ConfigMapEntry entry = speedFactorList.get(i);
             double factorValue = entry.getValue(edge, reverse);
-            if (factorValue < 1)
-                speed *= factorValue;
+            speed *= factorValue;
         }
 
         boolean applied = false;
