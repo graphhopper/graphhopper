@@ -4,7 +4,7 @@
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper GmbH licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
+ *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  *
  *       http://www.apache.org/licenses/LICENSE-2.0
@@ -714,6 +714,47 @@ public class PathTest {
 
         assertEquals(3, wayList.size());
         assertEquals(2, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionIssue1047() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=51.367105%2C14.491246&point=51.369048%2C14.483092
+        // 1-2 & 2-3 is a road that is turning right, 2-4 is a that is branching off.
+        // When driving 1-2-4, we should create an instruction notifying the user to continue straight instead of turning and following the road
+        // When driving 1-2-3, we should create an instruction as well
+        //
+        //      1 ---- 2 ---- 4
+        //             |
+        //             3
+        na.setNode(1, 51.367544, 14.488209);
+        na.setNode(2, 51.368046, 14.486525);
+        na.setNode(3, 51.36875, 14.487019);
+        na.setNode(4, 51.368428, 14.485173);
+
+        EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        BooleanEncodedValue roadClassLinkEnc = carManager.getBooleanEncodedValue(RoadClassLink.KEY);
+
+        g.edge(1, 2, 5, true).setName("B 156").set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
+        g.edge(2, 4, 5, true).setName("S 108").set(roadClassEnc, RoadClass.SECONDARY).set(roadClassLinkEnc, false);
+        g.edge(2, 3, 5, true).setName("B 156").set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
+
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
+                .calcPath(1, 4);
+        assertTrue(p.isFound());
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+
+        assertEquals(3, wayList.size());
+
+        p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
+                .calcPath(1, 3);
+        assertTrue(p.isFound());
+        wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+
+        assertEquals(3, wayList.size());
     }
 
     @Test
