@@ -138,7 +138,7 @@ public class CustomWeightingTest {
 
         // increase distance influence for road class 'motorway'
         Map map = new HashMap();
-        map.put(MOTORWAY.toString(), 10);
+        map.put(MOTORWAY.toString(), 0.1);
         vehicleModel.getDistanceFactor().put(KEY, map);
         CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
 

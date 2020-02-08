@@ -34,7 +34,7 @@ public class CustomModel {
     // optional:
     private Double maxSpeedFallback, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
-    private double distanceFactorBase = 0.07;
+    private double distanceFactorBase = 14.2857;
     private Map<String, Object> distanceFactor = new HashMap<>();
     private Map<String, Object> speedFactor = new HashMap<>();
     private Map<String, Object> maxSpeed = new HashMap<>();

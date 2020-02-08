@@ -28,13 +28,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.normalizeFactor;
+
 public class DistanceFactorCustomConfig {
     private final List<ConfigMapEntry> distanceFactorList = new ArrayList<>();
     private double baseDistanceFactor;
-    private double minDistanceFactor;
 
     public DistanceFactorCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
-        baseDistanceFactor = minDistanceFactor = customModel.getDistanceFactorBase();
+        baseDistanceFactor = customModel.getDistanceFactorBase();
         for (Map.Entry<String, Object> entry : customModel.getDistanceFactor().entrySet()) {
             if (!lookup.hasEncodedValue(entry.getKey()))
                 throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'distance_factor'");
@@ -45,19 +46,12 @@ public class DistanceFactorCustomConfig {
                 double[] values = Helper.createEnumToDoubleArray("distance_factor", 1, 0, 100,
                         enumClass, (Map<String, Object>) value);
                 // no need to normalize the values as increasing weight is fine (and distance_factor is proportional to weight)
-                minDistanceFactor = pickMin(values, minDistanceFactor);
+                normalizeFactor(values, 1);
                 distanceFactorList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'distance_factor'");
             }
         }
-    }
-
-    private double pickMin(double[] values, double min) {
-        for (int i = 0; i < values.length; i++) {
-            min = Math.min(min, values[i]);
-        }
-        return min;
     }
 
     /**
@@ -71,9 +65,5 @@ public class DistanceFactorCustomConfig {
             distanceFactor *= value;
         }
         return distanceFactor;
-    }
-
-    public double getMinDistanceFactor() {
-        return minDistanceFactor;
     }
 }

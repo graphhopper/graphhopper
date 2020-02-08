@@ -52,7 +52,7 @@ public class CustomWeighting extends AbstractWeighting {
     private final BooleanEncodedValue baseVehicleProfileAccessEnc;
     private final String baseVehicleProfile;
     private final double maxSpeed;
-    private final double minDistanceFactor;
+    private final double maxDistanceFactor;
     private final SpeedCustomConfig speedConfig;
     private final PriorityCustomConfig priorityConfig;
     private final DistanceFactorCustomConfig distanceFactorConfig;
@@ -69,14 +69,15 @@ public class CustomWeighting extends AbstractWeighting {
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
 
         distanceFactorConfig = new DistanceFactorCustomConfig(customModel, lookup, factory);
-        minDistanceFactor = distanceFactorConfig.getMinDistanceFactor();
-        if (minDistanceFactor < 0)
-            throw new IllegalArgumentException("minimum distance_factor cannot be negative " + minDistanceFactor);
+        // the distance_factor_base is the maximum as distance factors are normalized and always smaller than 1
+        maxDistanceFactor = customModel.getDistanceFactorBase();
+        if (maxDistanceFactor < 0)
+            throw new IllegalArgumentException("maximum distance_factor cannot be negative " + maxDistanceFactor);
     }
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / maxSpeed + distance * minDistanceFactor;
+        return distance / maxSpeed + distance / maxDistanceFactor;
     }
 
     @Override
@@ -85,7 +86,7 @@ public class CustomWeighting extends AbstractWeighting {
         double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds))
             return Double.POSITIVE_INFINITY;
-        double distanceInfluence = distance * distanceFactorConfig.calcDistanceFactor(edgeState, reverse);
+        double distanceInfluence = distance / distanceFactorConfig.calcDistanceFactor(edgeState, reverse);
         if (Double.isInfinite(distanceInfluence))
             return Double.POSITIVE_INFINITY;
         return (seconds + distanceInfluence) / priorityConfig.calcPriority(edgeState, reverse);

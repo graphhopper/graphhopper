@@ -32,12 +32,12 @@ max_speed:
 max_speed_fallback: 100
 
 # The distance_factor changes the influence of the distance. I.e. longer roads get a higher cost.
-distance_factor_base: 0.15
+distance_factor_base: 6.67
 # The distance_factor_base will be multiplied with the following value under the specified condition:
 distance_factor:
   # avoid toll roads (prefer roads with 'no' toll)
-  toll: { no: 0.5 }
-  # in Germany toll is proportional to the length and only for certain road_class values, so avoid them too:
+  toll: { no: 2 }
+  # in Germany toll is proportional to the length and only for certain road_class values, so avoid them:
   road_class:
     motorway: 0.04
     primary: 0.04
