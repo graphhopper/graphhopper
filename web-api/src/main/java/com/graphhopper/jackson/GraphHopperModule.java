@@ -29,7 +29,6 @@ public class GraphHopperModule extends SimpleModule {
 
     public GraphHopperModule() {
         setMixInAnnotation(GHRequest.class, GHRequestMixIn.class);
-        addDeserializer(CustomModel.class, new CustomModelDeserializer());
         setMixInAnnotation(GraphHopperConfig.class, GraphHopperConfigMixIn.class);
         addDeserializer(GHResponse.class, new GHResponseDeserializer());
         addDeserializer(PathWrapper.class, new PathWrapperDeserializer());

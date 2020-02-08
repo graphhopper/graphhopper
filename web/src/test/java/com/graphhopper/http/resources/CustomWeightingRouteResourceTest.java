@@ -14,8 +14,9 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.io.IOException;
 
-import static com.graphhopper.http.resources.RouteResourceTest.assertBetween;
+import static com.graphhopper.http.resources.CustomWeightingRouteResource2Test.assertBetween;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -33,7 +34,7 @@ public class CustomWeightingRouteResourceTest {
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 // we need more than the default encoded values (truck.yml and cargo_bike.yml)
-                put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
+                        put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 put("graph.location", DIR);
     }
@@ -53,6 +54,7 @@ public class CustomWeightingRouteResourceTest {
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"weighting\": \"custom_truck\"" +
                 "}";
+        // TODO NOW is it logical to use /route for this instead /custom?
         final Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -64,22 +66,18 @@ public class CustomWeightingRouteResourceTest {
     }
 
     @Test
-    public void testCargoBike() {
+    public void testCargoBike() throws IOException {
         String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
-                "model:\n" +
-                "  base: bike\n";
-        JsonNode yamlNode = app.client().target("http://localhost:8080/route").request().post(Entity.entity(yamlQuery,
+                "base: bike\n";
+        JsonNode yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 600, 700);
 
-        // TODO NOW load cargo_bike from file - but how to easily merge with the "points" array -> move model to root level?
-        yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
-                "model:\n" +
-                "  base: bike\n" +
-                // only one tunnel is mapped in this osm file with max_height=1.7 => https://www.openstreetmap.org/way/132908255
-                "  vehicle_height: 2\n";
-        yamlNode = app.client().target("http://localhost:8080/route").request().post(Entity.entity(yamlQuery,
+        // since CustomModel is in the root level of the request we can directly use the yml file:
+        String queryYamlFromFile = Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml"));
+        yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" + queryYamlFromFile;
+        yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1000, 2000);

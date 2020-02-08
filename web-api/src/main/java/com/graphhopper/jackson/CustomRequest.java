@@ -15,13 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.jackson;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.graphhopper.GHRequest;
+import com.graphhopper.routing.util.CustomModel;
 
 public class CustomRequest extends GHRequest {
     private CustomModel model;
 
+    @JsonUnwrapped
     public void setModel(CustomModel model) {
         this.model = model;
     }
