@@ -59,7 +59,6 @@ public abstract class AbstractWeighting implements Weighting {
      */
     public abstract double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
-
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
         // special case for loop edges: since they do not have a meaningful direction we always need to read them in

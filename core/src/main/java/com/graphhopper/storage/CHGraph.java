@@ -83,7 +83,6 @@ public interface CHGraph extends Graph {
     @Override
     AllCHEdgesIterator getAllEdges();
 
-
     void disconnectEdge(int edge, int adjNode, int prevEdge);
 
     /**

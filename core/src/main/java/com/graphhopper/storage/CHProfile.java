@@ -4,7 +4,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,22 +14,35 @@ import java.util.regex.Pattern;
  * @author easbar
  */
 public class CHProfile {
+    private final String profileName;
     private final Weighting weighting;
     private final boolean edgeBased;
 
     public static CHProfile nodeBased(Weighting weighting) {
-        return new CHProfile(weighting, TraversalMode.NODE_BASED);
+        return nodeBased(defaultName(weighting, false), weighting);
+    }
+
+    public static CHProfile nodeBased(String profileName, Weighting weighting) {
+        return new CHProfile(profileName, weighting, false);
     }
 
     public static CHProfile edgeBased(Weighting weighting) {
-        return new CHProfile(weighting, TraversalMode.EDGE_BASED);
+        return edgeBased(defaultName(weighting, true), weighting);
     }
 
-    public CHProfile(Weighting weighting, TraversalMode traversalMode) {
-        this(weighting, traversalMode.isEdgeBased());
+    public static CHProfile edgeBased(String profileName, Weighting weighting) {
+        return new CHProfile(profileName, weighting, true);
     }
 
     public CHProfile(Weighting weighting, boolean edgeBased) {
+        this(defaultName(weighting, edgeBased), weighting, edgeBased);
+    }
+
+    public CHProfile(String profileName, Weighting weighting, boolean edgeBased) {
+        if (!profileName.matches("^[a-z0-9_\\-]*$")) {
+            throw new IllegalArgumentException("CH profile names may only contain lower case letters, numbers, underscores and dashs, given: " + profileName);
+        }
+        this.profileName = profileName;
         this.weighting = weighting;
         this.edgeBased = edgeBased;
     }
@@ -48,20 +60,7 @@ public class CHProfile {
     }
 
     public String toFileName() {
-        String result = AbstractWeighting.weightingToFileName(weighting);
-        // keeping legacy file names for now, like fastest_edge_utc40 (instead of fastest_40_edge), because we will
-        // most likely use profile names soon: #1708
-        Pattern pattern = Pattern.compile("-?\\d+");
-        Matcher matcher = pattern.matcher(result);
-        if (matcher.find()) {
-            String turnCostPostfix = matcher.group();
-            result = matcher.replaceAll("");
-            result += edgeBased ? "edge" : "node";
-            result += "_utc" + turnCostPostfix;
-        } else {
-            result += edgeBased ? "_edge" : "_node";
-        }
-        return result;
+        return profileName;
     }
 
     public String toString() {
@@ -78,17 +77,36 @@ public class CHProfile {
         return result;
     }
 
+    public String getName() {
+        return profileName;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CHProfile chProfile = (CHProfile) o;
-        return edgeBased == chProfile.edgeBased &&
-                Objects.equals(weighting, chProfile.weighting);
+        return getName().equals(chProfile.getName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(weighting, edgeBased);
+        return getName().hashCode();
+    }
+
+    private static String defaultName(Weighting weighting, boolean edgeBased) {
+        String result = AbstractWeighting.weightingToFileName(weighting);
+        // this is how we traditionally named the files, something like 'fastest_edge_utc40'
+        Pattern pattern = Pattern.compile("-?\\d+");
+        Matcher matcher = pattern.matcher(result);
+        if (matcher.find()) {
+            String turnCostPostfix = matcher.group();
+            result = matcher.replaceAll("");
+            result += edgeBased ? "edge" : "node";
+            result += "_utc" + turnCostPostfix;
+        } else {
+            result += edgeBased ? "_edge" : "_node";
+        }
+        return result;
     }
 }
