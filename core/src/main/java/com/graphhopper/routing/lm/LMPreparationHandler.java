@@ -184,11 +184,11 @@ public class LMPreparationHandler {
         return this;
     }
 
-    public LMPreparationHandler addPreparation(PrepareLandmarks pch) {
-        preparations.add(pch);
+    public LMPreparationHandler addPreparation(PrepareLandmarks plm) {
+        preparations.add(plm);
         int lastIndex = preparations.size() - 1;
         if (lastIndex >= weightings.size())
-            throw new IllegalStateException("Cannot access weighting for PrepareLandmarks with " + pch.getWeighting()
+            throw new IllegalStateException("Cannot access weighting for PrepareLandmarks with " + plm.getWeighting()
                     + ". Call add(Weighting) before");
 
         if (preparations.get(lastIndex).getWeighting() != weightings.get(lastIndex))
@@ -227,14 +227,14 @@ public class LMPreparationHandler {
 
         // if no weighting or vehicle is specified for this request and there is only one preparation, use it
         if ((map.getWeighting().isEmpty() || map.getVehicle().isEmpty()) && preparations.size() == 1) {
-            return new LMRAFactory(preparations.get(0), new RoutingAlgorithmFactorySimple());
+            return new LMRoutingAlgorithmFactory(preparations.get(0), new RoutingAlgorithmFactorySimple());
         }
 
         List<Weighting> lmWeightings = new ArrayList<>(preparations.size());
         for (final PrepareLandmarks p : preparations) {
             lmWeightings.add(p.getWeighting());
             if (p.getWeighting().matches(map))
-                return new LMRAFactory(p, new RoutingAlgorithmFactorySimple());
+                return new LMRoutingAlgorithmFactory(p, new RoutingAlgorithmFactorySimple());
         }
 
         // There are situations where we can use the requested encoder/weighting with an existing LM preparation, even
@@ -250,11 +250,11 @@ public class LMPreparationHandler {
     /**
      * @see com.graphhopper.GraphHopper#calcPaths(GHRequest, GHResponse)
      */
-    private static class LMRAFactory implements RoutingAlgorithmFactory {
+    private static class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         private RoutingAlgorithmFactory defaultAlgoFactory;
         private PrepareLandmarks p;
 
-        public LMRAFactory(PrepareLandmarks p, RoutingAlgorithmFactory defaultAlgoFactory) {
+        public LMRoutingAlgorithmFactory(PrepareLandmarks p, RoutingAlgorithmFactory defaultAlgoFactory) {
             this.defaultAlgoFactory = defaultAlgoFactory;
             this.p = p;
         }
