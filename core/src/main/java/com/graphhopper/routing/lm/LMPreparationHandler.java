@@ -237,8 +237,10 @@ public class LMPreparationHandler {
                 return new LMRAFactory(p, new RoutingAlgorithmFactorySimple());
         }
 
-        // todonow: what does that mean?
-        // if the initial encoder&weighting has certain properties we could cross query it but for now avoid this
+        // There are situations where we can use the requested encoder/weighting with an existing LM preparation, even
+        // though the preparation was done with a different weighting. For example this works when the new weighting
+        // only yields higher (but never lower) weights than the one that was used for the preparation. However, its not
+        // trivial to check whether or not this is the case so we do not allow this for now.
         String requestedString = (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) + "|" +
                 (map.getVehicle().isEmpty() ? "*" : map.getVehicle());
         throw new IllegalArgumentException("Cannot find matching LM profile for your request." +
