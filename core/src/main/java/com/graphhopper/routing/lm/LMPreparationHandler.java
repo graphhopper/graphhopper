@@ -23,7 +23,8 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
+import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -46,12 +47,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.graphhopper.util.Helper.*;
 
 /**
- * This class implements the A*, landmark and triangulation (ALT) decorator.
+ * This class deals with the A*, landmark and triangulation (ALT) preparations.
  *
  * @author Peter Karich
  */
-public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator {
-    private Logger LOGGER = LoggerFactory.getLogger(LMAlgoFactoryDecorator.class);
+public class LMPreparationHandler {
+    private Logger LOGGER = LoggerFactory.getLogger(LMPreparationHandler.class);
     private int landmarkCount = 16;
     private int activeLandmarkCount = 8;
 
@@ -69,11 +70,10 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private ExecutorService threadPool;
     private boolean logDetails = false;
 
-    public LMAlgoFactoryDecorator() {
+    public LMPreparationHandler() {
         setPreparationThreads(1);
     }
 
-    @Override
     public void init(GraphHopperConfig ghConfig) {
         setPreparationThreads(ghConfig.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
 
@@ -102,7 +102,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return landmarkCount;
     }
 
-    public LMAlgoFactoryDecorator setDisablingAllowed(boolean disablingAllowed) {
+    public LMPreparationHandler setDisablingAllowed(boolean disablingAllowed) {
         this.disablingAllowed = disablingAllowed;
         return this;
     }
@@ -112,14 +112,13 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     /**
-     * Enables or disables this decorator. This speed-up mode is disabled by default.
+     * Enables or disables this handler. This speed-up mode is disabled by default.
      */
-    public final LMAlgoFactoryDecorator setEnabled(boolean enabled) {
+    public final LMPreparationHandler setEnabled(boolean enabled) {
         this.enabled = enabled;
         return this;
     }
 
-    @Override
     public final boolean isEnabled() {
         return enabled;
     }
@@ -143,7 +142,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * @param weightingList A list containing multiple weightings like: "fastest", "shortest" or
      *                      your own weight-calculation type.
      */
-    public LMAlgoFactoryDecorator setWeightingsAsStrings(List<String> weightingList) {
+    public LMPreparationHandler setWeightingsAsStrings(List<String> weightingList) {
         if (weightingList.isEmpty())
             throw new IllegalArgumentException("It is not allowed to pass an emtpy weightingList");
 
@@ -163,8 +162,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return this.weightingsAsStrings;
     }
 
-    public LMAlgoFactoryDecorator addWeighting(String weighting) {
-        String str[] = weighting.split("\\|");
+    public LMPreparationHandler addWeighting(String weighting) {
+        String[] str = weighting.split("\\|");
         double value = -1;
         if (str.length > 1) {
             PMap map = new PMap(weighting);
@@ -180,12 +179,12 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * Decouple weightings from PrepareLandmarks as we need weightings for the graphstorage and the
      * graphstorage for the preparation.
      */
-    public LMAlgoFactoryDecorator addWeighting(Weighting weighting) {
+    public LMPreparationHandler addWeighting(Weighting weighting) {
         weightings.add(weighting);
         return this;
     }
 
-    public LMAlgoFactoryDecorator addPreparation(PrepareLandmarks pch) {
+    public LMPreparationHandler addPreparation(PrepareLandmarks pch) {
         preparations.add(pch);
         int lastIndex = preparations.size() - 1;
         if (lastIndex >= weightings.size())
@@ -218,37 +217,40 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return preparations;
     }
 
-    @Override
-    public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
-        // for now do not allow mixing CH&LM #1082
-        boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
-        boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
-        if (!isEnabled() || disablingAllowed && disableLM || !disableCH)
-            return defaultAlgoFactory;
-
+    /**
+     * @return a {@link RoutingAlgorithmFactory} for LM or throw an error if no preparation is available for the given
+     * hints
+     */
+    public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         if (preparations.isEmpty())
-            throw new IllegalStateException("No preparations added to this decorator");
+            throw new IllegalStateException("No LM preparations added yet");
 
         // if no weighting or vehicle is specified for this request and there is only one preparation, use it
         if ((map.getWeighting().isEmpty() || map.getVehicle().isEmpty()) && preparations.size() == 1) {
-            return new LMRAFactory(preparations.get(0), defaultAlgoFactory);
+            return new LMRAFactory(preparations.get(0), new RoutingAlgorithmFactorySimple());
         }
 
+        List<Weighting> lmWeightings = new ArrayList<>(preparations.size());
         for (final PrepareLandmarks p : preparations) {
+            lmWeightings.add(p.getWeighting());
             if (p.getWeighting().matches(map))
-                return new LMRAFactory(p, defaultAlgoFactory);
+                return new LMRAFactory(p, new RoutingAlgorithmFactorySimple());
         }
 
-        // if the initial encoder&weighting has certain properties we could cross query it but for now avoid this
-        return defaultAlgoFactory;
+        // There are situations where we can use the requested encoder/weighting with an existing LM preparation, even
+        // though the preparation was done with a different weighting. For example this works when the new weighting
+        // only yields higher (but never lower) weights than the one that was used for the preparation. However, its not
+        // trivial to check whether or not this is the case so we do not allow this for now.
+        String requestedString = (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) + "|" +
+                (map.getVehicle().isEmpty() ? "*" : map.getVehicle());
+        throw new IllegalArgumentException("Cannot find matching LM profile for your request." +
+                "\nrequested: " + requestedString + "\navailable: " + lmWeightings);
     }
 
     /**
-     * TODO needs to be public to pick defaultAlgoFactory.weighting if the defaultAlgoFactory is a CH one.
-     *
      * @see com.graphhopper.GraphHopper#calcPaths(GHRequest, GHResponse)
      */
-    public static class LMRAFactory implements RoutingAlgorithmFactory {
+    private static class LMRAFactory implements RoutingAlgorithmFactory {
         private RoutingAlgorithmFactory defaultAlgoFactory;
         private PrepareLandmarks p;
 
@@ -264,7 +266,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         @Override
         public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
             RoutingAlgorithm algo = defaultAlgoFactory.createAlgo(g, opts);
-            return p.getDecoratedAlgorithm(g, algo, opts);
+            return p.getPreparedRoutingAlgorithm(g, algo, opts);
         }
     }
 
@@ -272,7 +274,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * This method calculates the landmark data for all weightings (optionally in parallel) or if already existent loads it.
      *
      * @return true if the preparation data for at least one weighting was calculated.
-     * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties, boolean) for a very similar method
+     * @see CHPreparationHandler#prepare(StorableProperties, boolean) for a very similar method
      */
     public boolean loadOrDoWork(final StorableProperties properties, final boolean closeEarly) {
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);

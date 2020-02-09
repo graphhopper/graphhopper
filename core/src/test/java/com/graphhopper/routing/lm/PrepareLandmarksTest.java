@@ -143,7 +143,7 @@ public class PrepareLandmarksTest {
         Path expectedPath = expectedAlgo.calcPath(41, 183);
 
         // landmarks with A*
-        RoutingAlgorithm oneDirAlgoWithLandmarks = prepare.getDecoratedAlgorithm(graph, new AStar(graph, weighting, tm), opts);
+        RoutingAlgorithm oneDirAlgoWithLandmarks = prepare.getPreparedRoutingAlgorithm(graph, new AStar(graph, weighting, tm), opts);
         Path path = oneDirAlgoWithLandmarks.calcPath(41, 183);
 
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
@@ -152,7 +152,7 @@ public class PrepareLandmarksTest {
 
         // landmarks with bidir A*
         opts.getHints().put("lm.recalc_count", 50);
-        RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getDecoratedAlgorithm(graph,
+        RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getPreparedRoutingAlgorithm(graph,
                 new AStarBidirection(graph, weighting, tm), opts);
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
@@ -164,7 +164,7 @@ public class PrepareLandmarksTest {
         QueryResult fromQR = index.findClosest(-0.0401, 0.2201, EdgeFilter.ALL_EDGES);
         QueryResult toQR = index.findClosest(-0.2401, 0.0601, EdgeFilter.ALL_EDGES);
         QueryGraph qGraph = QueryGraph.lookup(graph, fromQR, toQR);
-        RoutingAlgorithm qGraphOneDirAlgo = prepare.getDecoratedAlgorithm(qGraph,
+        RoutingAlgorithm qGraphOneDirAlgo = prepare.getPreparedRoutingAlgorithm(qGraph,
                 new AStar(qGraph, weighting, tm), opts);
         path = qGraphOneDirAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
 

@@ -82,7 +82,7 @@ public class RoutingAlgorithmIT {
         prepare.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
 
         // add additional preparations if CH and LM preparation are enabled
-        if (hopper.getLMFactoryDecorator().isEnabled()) {
+        if (hopper.getLMPreparationHandler().isEnabled()) {
             final HintsMap lmHints = new HintsMap(defaultHints).put(Parameters.Landmark.DISABLE, false);
             prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
@@ -92,19 +92,19 @@ public class RoutingAlgorithmIT {
             });
         }
 
-        if (hopper.getCHFactoryDecorator().isEnabled()) {
+        if (hopper.getCHPreparationHandler().isEnabled()) {
             final HintsMap chHints = new HintsMap(defaultHints);
             chHints.put(Parameters.CH.DISABLE, false);
             chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             CHProfile pickedProfile = null;
-            for (CHProfile chProfile : hopper.getCHFactoryDecorator().getCHProfiles()) {
+            for (CHProfile chProfile : hopper.getCHPreparationHandler().getCHProfiles()) {
                 if (chProfile.getWeighting().equals(weighting) && tMode.isEdgeBased() == chProfile.getTraversalMode().isEdgeBased()) {
                     pickedProfile = chProfile;
                     break;
                 }
             }
             if (pickedProfile == null)
-                throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHFactoryDecorator().getCHProfiles());
+                throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHPreparationHandler().getCHProfiles());
 
             prepare.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {

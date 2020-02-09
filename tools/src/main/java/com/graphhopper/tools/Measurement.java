@@ -108,17 +108,17 @@ public class Measurement {
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getEdges();
-                if (!getCHFactoryDecorator().getNodeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = getCHFactoryDecorator().getNodeBasedCHProfiles().get(0);
+                if (!getCHPreparationHandler().getNodeBasedCHProfiles().isEmpty()) {
+                    CHProfile chProfile = getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
                     int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "node.time", getCHFactoryDecorator().getPreparation(chProfile).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
                 }
-                if (!getCHFactoryDecorator().getEdgeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = getCHFactoryDecorator().getEdgeBasedCHProfiles().get(0);
+                if (!getCHPreparationHandler().getEdgeBasedCHProfiles().isEmpty()) {
+                    CHProfile chProfile = getCHPreparationHandler().getEdgeBasedCHProfiles().get(0);
                     int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "edge.time", getCHFactoryDecorator().getPreparation(chProfile).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
                 }
             }
 
@@ -145,8 +145,8 @@ public class Measurement {
             hopper.clean();
         }
 
-        hopper.getCHFactoryDecorator().setDisablingAllowed(true);
-        hopper.getLMFactoryDecorator().setDisablingAllowed(true);
+        hopper.getCHPreparationHandler().setDisablingAllowed(true);
+        hopper.getLMPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
@@ -176,7 +176,7 @@ public class Measurement {
                         withInstructions().blockArea(blockAreaStr));
             }
 
-            if (hopper.getLMFactoryDecorator().isEnabled()) {
+            if (hopper.getLMPreparationHandler().isEnabled()) {
                 System.gc();
                 isLM = true;
                 for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
@@ -192,22 +192,13 @@ public class Measurement {
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
 
-            if (hopper.getCHFactoryDecorator().isEnabled()) {
+            if (hopper.getCHPreparationHandler().isEnabled()) {
                 isCH = true;
-//                compareCHWithAndWithoutSOD(hopper, vehicleStr, count/5);
-                if (hopper.getLMFactoryDecorator().isEnabled()) {
-                    isLM = true;
-                    System.gc();
-                    // try just one constellation, often ~4-6 is best
-                    int lmCount = 5;
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCHLM" + lmCount, vehicleStr, count, isCH, isLM).
-                            withInstructions().activeLandmarks(lmCount).sod());
-                }
-
                 isLM = false;
+//                compareCHWithAndWithoutSOD(hopper, vehicleStr, count/5);
                 System.gc();
-                if (!hopper.getCHFactoryDecorator().getNodeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = hopper.getCHFactoryDecorator().getNodeBasedCHProfiles().get(0);
+                if (!hopper.getCHPreparationHandler().getNodeBasedCHProfiles().isEmpty()) {
+                    CHProfile chProfile = hopper.getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
                     CHGraph lg = g.getCHGraph(chProfile);
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
@@ -224,7 +215,7 @@ public class Measurement {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", vehicleStr, count, isCH, isLM).
                             withInstructions().withPointHints().sod().simplify());
                 }
-                if (!hopper.getCHFactoryDecorator().getEdgeBasedCHProfiles().isEmpty()) {
+                if (!hopper.getCHPreparationHandler().getEdgeBasedCHProfiles().isEmpty()) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", vehicleStr, count, isCH, isLM).
                             edgeBased().withInstructions());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", vehicleStr, count, isCH, isLM).

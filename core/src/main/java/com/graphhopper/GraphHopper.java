@@ -21,10 +21,13 @@ import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
+import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
-import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
+import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
@@ -65,8 +68,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE;
-import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF;
+import static com.graphhopper.routing.ch.CHPreparationHandler.EdgeBasedCHMode;
+import static com.graphhopper.routing.ch.CHPreparationHandler.EdgeBasedCHMode.EDGE_OR_NODE;
+import static com.graphhopper.routing.ch.CHPreparationHandler.EdgeBasedCHMode.OFF;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
@@ -82,7 +86,6 @@ import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 public class GraphHopper implements GraphHopperAPI {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final String fileLockName = "gh.lock";
-    private final Set<RoutingAlgorithmFactoryDecorator> algoDecorators = new LinkedHashSet<>();
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
@@ -112,11 +115,9 @@ public class GraphHopper implements GraphHopperAPI {
     private int minNetworkSize = 200;
     private int minOneWayNetworkSize = 0;
 
-    // for LM prepare
-    private final LMAlgoFactoryDecorator lmFactoryDecorator = new LMAlgoFactoryDecorator();
-
-    // for CH prepare
-    private final CHAlgoFactoryDecorator chFactoryDecorator = new CHAlgoFactoryDecorator();
+    // preparation handlers
+    private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
+    private final CHPreparationHandler chPreparationHandler = new CHPreparationHandler();
 
     // for data reader
     private String dataReaderFile;
@@ -131,12 +132,8 @@ public class GraphHopper implements GraphHopperAPI {
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     public GraphHopper() {
-        chFactoryDecorator.setEnabled(true);
-        lmFactoryDecorator.setEnabled(false);
-
-        // order is important to use CH as base algo and set the approximation in the followed lm factory decorator
-        algoDecorators.add(chFactoryDecorator);
-        algoDecorators.add(lmFactoryDecorator);
+        chPreparationHandler.setEnabled(true);
+        lmPreparationHandler.setEnabled(false);
     }
 
     /**
@@ -315,7 +312,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public final boolean isCHEnabled() {
-        return chFactoryDecorator.isEnabled();
+        return chPreparationHandler.isEnabled();
     }
 
     /**
@@ -323,7 +320,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public GraphHopper setCHEnabled(boolean enable) {
         ensureNotLoaded();
-        chFactoryDecorator.setEnabled(enable);
+        chPreparationHandler.setEnabled(enable);
         return this;
     }
 
@@ -535,10 +532,9 @@ public class GraphHopper implements GraphHopperAPI {
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
         minOneWayNetworkSize = ghConfig.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
 
-        // prepare CH, LM, ...
-        for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators) {
-            decorator.init(ghConfig);
-        }
+        // prepare CH&LM
+        chPreparationHandler.init(ghConfig);
+        lmPreparationHandler.init(ghConfig);
 
         // osm import
         dataReaderWayPointMaxDistance = ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, dataReaderWayPointMaxDistance);
@@ -761,15 +757,15 @@ public class GraphHopper implements GraphHopperAPI {
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
 
-        if (lmFactoryDecorator.isEnabled())
-            initLMAlgoFactoryDecorator();
+        if (lmPreparationHandler.isEnabled())
+            initLMPreparationHandler();
 
         ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
 
         List<CHProfile> chProfiles;
-        if (chFactoryDecorator.isEnabled()) {
-            initCHAlgoFactoryDecorator();
-            chProfiles = chFactoryDecorator.getCHProfiles();
+        if (chPreparationHandler.isEnabled()) {
+            initCHPreparationHandler();
+            chProfiles = chPreparationHandler.getCHProfiles();
         } else {
             chProfiles = Collections.emptyList();
         }
@@ -804,30 +800,33 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
-        RoutingAlgorithmFactory routingAlgorithmFactory = new RoutingAlgorithmFactorySimple();
-        for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators) {
-            if (decorator.isEnabled())
-                routingAlgorithmFactory = decorator.getDecoratedAlgorithmFactory(routingAlgorithmFactory, map);
+        boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
+        boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
+        if (disableCH && !chPreparationHandler.isDisablingAllowed()) {
+            throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
+        }
+        if (disableLM && !lmPreparationHandler.isDisablingAllowed()) {
+            throw new IllegalArgumentException("Disabling LM is not allowed on the server side");
         }
 
-        return routingAlgorithmFactory;
+        // for now do not allow mixing CH&LM #1082,#1889
+        if (chPreparationHandler.isEnabled() && !disableCH) {
+            return chPreparationHandler.getAlgorithmFactory(map);
+        } else if (lmPreparationHandler.isEnabled() && !disableLM) {
+            return lmPreparationHandler.getAlgorithmFactory(map);
+        } else {
+            return new RoutingAlgorithmFactorySimple();
+        }
     }
 
-    public GraphHopper addAlgorithmFactoryDecorator(RoutingAlgorithmFactoryDecorator algoFactoryDecorator) {
-        if (!algoDecorators.add(algoFactoryDecorator))
-            throw new IllegalArgumentException("Decorator was already added " + algoFactoryDecorator.getClass());
-
-        return this;
+    public final CHPreparationHandler getCHPreparationHandler() {
+        return chPreparationHandler;
     }
 
-    public final CHAlgoFactoryDecorator getCHFactoryDecorator() {
-        return chFactoryDecorator;
-    }
-
-    private void initCHAlgoFactoryDecorator() {
-        if (!chFactoryDecorator.hasCHProfiles()) {
+    private void initCHPreparationHandler() {
+        if (!chPreparationHandler.hasCHProfiles()) {
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-                for (String chWeightingStr : chFactoryDecorator.getCHProfileStrings()) {
+                for (String chWeightingStr : chPreparationHandler.getCHProfileStrings()) {
                     // ghStorage is null at this point
 
                     // extract weighting string and u-turn-costs
@@ -839,31 +838,31 @@ public class GraphHopper implements GraphHopperAPI {
                     PMap config = new PMap(configStr);
                     int uTurnCosts = config.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
 
-                    CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
+                    EdgeBasedCHMode edgeBasedCHMode = chPreparationHandler.getEdgeBasedCHMode();
                     if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supportsTurnCosts())) {
-                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, NO_TURN_COST_PROVIDER)));
+                        chPreparationHandler.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, NO_TURN_COST_PROVIDER)));
                     }
                     if (edgeBasedCHMode != OFF && encoder.supportsTurnCosts()) {
-                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts))));
+                        chPreparationHandler.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts))));
                     }
                 }
             }
         }
     }
 
-    public final LMAlgoFactoryDecorator getLMFactoryDecorator() {
-        return lmFactoryDecorator;
+    public final LMPreparationHandler getLMPreparationHandler() {
+        return lmPreparationHandler;
     }
 
-    private void initLMAlgoFactoryDecorator() {
-        if (lmFactoryDecorator.hasWeightings())
+    private void initLMPreparationHandler() {
+        if (lmPreparationHandler.hasWeightings())
             return;
 
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-            for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
+            for (String lmWeightingStr : lmPreparationHandler.getWeightingsAsStrings()) {
                 // note that we do not consider turn costs during LM preparation?
                 Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, NO_TURN_COST_PROVIDER);
-                lmFactoryDecorator.addWeighting(weighting);
+                lmPreparationHandler.addWeighting(weighting);
             }
         }
     }
@@ -902,12 +901,12 @@ public class GraphHopper implements GraphHopperAPI {
 
         importPublicTransit();
 
-        if (lmFactoryDecorator.isEnabled())
-            lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
+        if (lmPreparationHandler.isEnabled())
+            lmPreparationHandler.createPreparations(ghStorage, locationIndex);
         loadOrPrepareLM(closeEarly);
 
-        if (chFactoryDecorator.isEnabled())
-            chFactoryDecorator.createPreparations(ghStorage);
+        if (chPreparationHandler.isEnabled())
+            chPreparationHandler.createPreparations(ghStorage);
         if (!isCHPrepared())
             prepareCH(closeEarly);
     }
@@ -1023,14 +1022,14 @@ public class GraphHopper implements GraphHopperAPI {
             }
 
             boolean disableCH = hints.getBool(CH.DISABLE, false);
-            if (!chFactoryDecorator.isDisablingAllowed() && disableCH)
+            if (!chPreparationHandler.isDisablingAllowed() && disableCH)
                 throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
 
             boolean disableLM = hints.getBool(Landmark.DISABLE, false);
-            if (!lmFactoryDecorator.isDisablingAllowed() && disableLM)
+            if (!lmPreparationHandler.isDisablingAllowed() && disableLM)
                 throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
 
-            if (chFactoryDecorator.isEnabled() && !disableCH) {
+            if (chPreparationHandler.isEnabled() && !disableCH) {
                 if (request.hasFavoredHeading(0))
                     throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
@@ -1040,7 +1039,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             String algoStr = request.getAlgorithm();
             if (algoStr.isEmpty())
-                algoStr = chFactoryDecorator.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
+                algoStr = chPreparationHandler.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
 
             List<GHPoint> points = request.getPoints();
             // TODO Maybe we should think about a isRequestValid method that checks all that stuff that we could do to fail fast
@@ -1058,14 +1057,9 @@ public class GraphHopper implements GraphHopperAPI {
             RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(hints);
             Weighting weighting;
             Graph graph = ghStorage;
-            if (chFactoryDecorator.isEnabled() && !disableCH) {
-                // if LM is enabled we have the LMFactory with the CH algo!
-                RoutingAlgorithmFactory chAlgoFactory = algorithmFactory;
-                if (algorithmFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
-                    chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) algorithmFactory).getDefaultAlgoFactory();
-
-                if (chAlgoFactory instanceof CHRoutingAlgorithmFactory) {
-                    CHProfile chProfile = ((CHRoutingAlgorithmFactory) chAlgoFactory).getCHProfile();
+            if (chPreparationHandler.isEnabled() && !disableCH) {
+                if (algorithmFactory instanceof CHRoutingAlgorithmFactory) {
+                    CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
                     weighting = chProfile.getWeighting();
                     graph = ghStorage.getCHGraph(chProfile);
                 } else {
@@ -1139,7 +1133,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public ChangeGraphResponse changeGraph(Collection<JsonFeature> collection) {
         // TODO allow calling this method if called before CH preparation
-        if (getCHFactoryDecorator().isEnabled())
+        if (getCHPreparationHandler().isEnabled())
             throw new IllegalArgumentException("To use the changeGraph API you need to turn off CH");
 
         Lock writeLock = readWriteLock.writeLock();
@@ -1232,7 +1226,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     protected void prepareCH(boolean closeEarly) {
-        boolean tmpPrepare = chFactoryDecorator.isEnabled();
+        boolean tmpPrepare = chPreparationHandler.isEnabled();
         if (tmpPrepare) {
             ensureWriteAccess();
 
@@ -1243,7 +1237,7 @@ public class GraphHopper implements GraphHopperAPI {
             }
 
             ghStorage.freeze();
-            chFactoryDecorator.prepare(ghStorage.getProperties(), closeEarly);
+            chPreparationHandler.prepare(ghStorage.getProperties(), closeEarly);
             ghStorage.getProperties().put(CH.PREPARE + "done", true);
         }
     }
@@ -1252,11 +1246,11 @@ public class GraphHopper implements GraphHopperAPI {
      * For landmarks it is required to always call this method: either it creates the landmark data or it loads it.
      */
     protected void loadOrPrepareLM(boolean closeEarly) {
-        boolean tmpPrepare = lmFactoryDecorator.isEnabled() && !lmFactoryDecorator.getPreparations().isEmpty();
+        boolean tmpPrepare = lmPreparationHandler.isEnabled() && !lmPreparationHandler.getPreparations().isEmpty();
         if (tmpPrepare) {
             ensureWriteAccess();
             ghStorage.freeze();
-            if (lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties(), closeEarly))
+            if (lmPreparationHandler.loadOrDoWork(ghStorage.getProperties(), closeEarly))
                 ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
         }
     }
