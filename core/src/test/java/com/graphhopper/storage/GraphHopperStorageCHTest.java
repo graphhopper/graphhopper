@@ -592,6 +592,13 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(edgeBased ? 1 : 0, smallStorage.getCHProfiles(true).size());
         smallStorage.flush();
 
+        // now we create a new storage without any ch weightings, which should also be ok
+        GraphHopperStorage smallerStorage = createStorageWithWeightings();
+        smallerStorage.loadExisting();
+        assertEquals(0, smallerStorage.getCHProfiles(false).size());
+        assertEquals(0, smallerStorage.getCHProfiles(true).size());
+        smallerStorage.flush();
+
         // now we create yet another storage that uses both weightings again, which still works
         GraphHopperStorage fullStorage = createStorageWithWeightings(
                 "car|fastest|" + edgeOrNode,
