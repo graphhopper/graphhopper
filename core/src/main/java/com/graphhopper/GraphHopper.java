@@ -102,11 +102,8 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean fullyLoaded = false;
     private boolean smoothElevation = false;
     // for routing
-    private int maxRoundTripRetries = 3;
-    private boolean simplifyResponse = true;
-    private int maxVisitedNodes = Integer.MAX_VALUE;
+    private final RoutingConfig routingConfig = new RoutingConfig();
 
-    private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -123,7 +120,6 @@ public class GraphHopper implements GraphHopperAPI {
     private String dataReaderFile;
     private double dataReaderWayPointMaxDistance = 1;
     private int dataReaderWorkerThreads = 2;
-    private boolean calcPoints = true;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
@@ -325,7 +321,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public int getMaxVisitedNodes() {
-        return maxVisitedNodes;
+        return routingConfig.getMaxVisitedNodes();
     }
 
     /**
@@ -333,7 +329,7 @@ public class GraphHopper implements GraphHopperAPI {
      * the specified node count, important if none-CH routing is used.
      */
     public void setMaxVisitedNodes(int maxVisitedNodes) {
-        this.maxVisitedNodes = maxVisitedNodes;
+        routingConfig.setMaxVisitedNodes(maxVisitedNodes);
     }
 
     /**
@@ -355,7 +351,7 @@ public class GraphHopper implements GraphHopperAPI {
      * This methods enables gps point calculation. If disabled only distance will be calculated.
      */
     public GraphHopper setEnableCalcPoints(boolean b) {
-        calcPoints = b;
+        routingConfig.setCalcPoints(b);
         return this;
     }
 
@@ -364,7 +360,7 @@ public class GraphHopper implements GraphHopperAPI {
      * or similar algorithm.
      */
     private GraphHopper setSimplifyResponse(boolean doSimplify) {
-        this.simplifyResponse = doSimplify;
+        routingConfig.setSimplifyResponse(doSimplify);
         return this;
     }
 
@@ -546,9 +542,9 @@ public class GraphHopper implements GraphHopperAPI {
         maxRegionSearch = ghConfig.getInt("index.max_region_search", maxRegionSearch);
 
         // routing
-        maxVisitedNodes = ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
-        maxRoundTripRetries = ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
-        nonChMaxWaypointDistance = ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
+        routingConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes()));
+        routingConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routingConfig.getMaxRoundTripRetries()));
+        routingConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routingConfig.getNonChMaxWaypointDistance()));
 
         return this;
     }
@@ -950,28 +946,7 @@ public class GraphHopper implements GraphHopperAPI {
      * @see HintsMap
      */
     public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        String weightingStr = toLowerCase(hintsMap.getWeighting());
-        Weighting weighting = null;
-
-        if ("shortest".equalsIgnoreCase(weightingStr)) {
-            weighting = new ShortestWeighting(encoder, turnCostProvider);
-        } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {
-            if (encoder.supports(PriorityWeighting.class))
-                weighting = new PriorityWeighting(encoder, hintsMap, turnCostProvider);
-            else
-                weighting = new FastestWeighting(encoder, hintsMap, turnCostProvider);
-        } else if ("curvature".equalsIgnoreCase(weightingStr)) {
-            if (encoder.supports(CurvatureWeighting.class))
-                weighting = new CurvatureWeighting(encoder, hintsMap, turnCostProvider);
-
-        } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
-            weighting = new ShortFastestWeighting(encoder, hintsMap, turnCostProvider);
-        }
-
-        if (weighting == null)
-            throw new IllegalArgumentException("weighting " + weightingStr + " not supported");
-
-        return weighting;
+        return new DefaultWeightingFactory().createWeighting(hintsMap, encoder, turnCostProvider);
     }
 
     @Override
@@ -990,6 +965,9 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
+
+        if (locationIndex == null)
+            throw new IllegalStateException("Location index not initialized");
 
         // default handling
         String vehicle = request.getVehicle();
@@ -1075,7 +1053,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             RoutingTemplate routingTemplate;
             if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, maxRoundTripRetries);
+                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, routingConfig.getMaxRoundTripRetries());
             else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
                 routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
             else
@@ -1088,9 +1066,9 @@ public class GraphHopper implements GraphHopperAPI {
                 return Collections.emptyList();
 
             QueryGraph queryGraph = QueryGraph.lookup(graph, qResults);
-            int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
-            if (maxVisitedNodesForRequest > maxVisitedNodes)
-                throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
+            int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
+            if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
+                throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
 
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
                     algorithm(algoStr).traversalMode(tMode).weighting(weighting).
@@ -1101,8 +1079,8 @@ public class GraphHopper implements GraphHopperAPI {
             // do the actual route calculation !
             List<Path> altPaths = routingTemplate.calcPaths(queryGraph, algorithmFactory, algoOpts);
 
-            boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, getEncodingManager().isEnableInstructions());
-            boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
+            boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, encodingManager.isEnableInstructions());
+            boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, routingConfig.isCalcPoints());
             double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
 
             DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
@@ -1111,7 +1089,7 @@ public class GraphHopper implements GraphHopperAPI {
                     setDouglasPeucker(peucker).
                     setEnableInstructions(tmpEnableInstructions).
                     setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
-                    setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
+                    setSimplifyResponse(routingConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
 
             if (request.hasFavoredHeading(0))
                 pathMerger.setFavoredHeading(request.getFavoredHeading(0));
@@ -1153,7 +1131,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     private GraphEdgeIdFinder.BlockArea createBlockArea(List<GHPoint> points, HintsMap hints, EdgeFilter edgeFilter) {
         String blockAreaStr = hints.get(Parameters.Routing.BLOCK_AREA, "");
-        GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(getGraphHopperStorage(), getLocationIndex()).
+        GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(ghStorage, locationIndex).
                 parseBlockArea(blockAreaStr, edgeFilter, hints.getDouble(Routing.BLOCK_AREA + ".edge_id_max_area", 1000 * 1000));
         for (GHPoint p : points) {
             if (blockArea.contains(p))
@@ -1163,7 +1141,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {
-        BBox bounds = getGraphHopperStorage().getBounds();
+        BBox bounds = ghStorage.getBounds();
         for (int i = 0; i < points.size(); i++) {
             GHPoint point = points.get(i);
             if (!bounds.contains(point.getLat(), point.getLon())) {
@@ -1173,7 +1151,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void checkNonChMaxWaypointDistance(List<GHPoint> points) {
-        if (nonChMaxWaypointDistance == Integer.MAX_VALUE) {
+        if (routingConfig.getNonChMaxWaypointDistance() == Integer.MAX_VALUE) {
             return;
         }
         GHPoint lastPoint = points.get(0);
@@ -1183,7 +1161,7 @@ public class GraphHopper implements GraphHopperAPI {
         for (int i = 1; i < points.size(); i++) {
             point = points.get(i);
             dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
-            if (dist > nonChMaxWaypointDistance) {
+            if (dist > routingConfig.getNonChMaxWaypointDistance()) {
                 Map<String, Object> detailMap = new HashMap<>(2);
                 detailMap.put("from", i - 1);
                 detailMap.put("to", i);
@@ -1320,7 +1298,81 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
-        this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
+        routingConfig.setNonChMaxWaypointDistance(nonChMaxWaypointDistance);
     }
 
+    private static class DefaultWeightingFactory {
+        public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
+            String weightingStr = toLowerCase(hintsMap.getWeighting());
+            Weighting weighting = null;
+
+            if ("shortest".equalsIgnoreCase(weightingStr)) {
+                weighting = new ShortestWeighting(encoder, turnCostProvider);
+            } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {
+                if (encoder.supports(PriorityWeighting.class))
+                    weighting = new PriorityWeighting(encoder, hintsMap, turnCostProvider);
+                else
+                    weighting = new FastestWeighting(encoder, hintsMap, turnCostProvider);
+            } else if ("curvature".equalsIgnoreCase(weightingStr)) {
+                if (encoder.supports(CurvatureWeighting.class))
+                    weighting = new CurvatureWeighting(encoder, hintsMap, turnCostProvider);
+
+            } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
+                weighting = new ShortFastestWeighting(encoder, hintsMap, turnCostProvider);
+            }
+
+            if (weighting == null)
+                throw new IllegalArgumentException("weighting " + weightingStr + " not supported");
+
+            return weighting;
+        }
+    }
+
+    private static class RoutingConfig {
+        private int maxVisitedNodes = Integer.MAX_VALUE;
+        private int maxRoundTripRetries = 3;
+        private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
+        private boolean calcPoints = true;
+        private boolean simplifyResponse = true;
+
+        public int getMaxVisitedNodes() {
+            return maxVisitedNodes;
+        }
+
+        public void setMaxVisitedNodes(int maxVisitedNodes) {
+            this.maxVisitedNodes = maxVisitedNodes;
+        }
+
+        public int getMaxRoundTripRetries() {
+            return maxRoundTripRetries;
+        }
+
+        public void setMaxRoundTripRetries(int maxRoundTripRetries) {
+            this.maxRoundTripRetries = maxRoundTripRetries;
+        }
+
+        public int getNonChMaxWaypointDistance() {
+            return nonChMaxWaypointDistance;
+        }
+
+        public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
+            this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
+        }
+
+        public boolean isCalcPoints() {
+            return calcPoints;
+        }
+
+        public void setCalcPoints(boolean calcPoints) {
+            this.calcPoints = calcPoints;
+        }
+
+        public boolean isSimplifyResponse() {
+            return simplifyResponse;
+        }
+
+        public void setSimplifyResponse(boolean simplifyResponse) {
+            this.simplifyResponse = simplifyResponse;
+        }
+    }
 }
