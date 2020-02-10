@@ -207,8 +207,9 @@ public class GraphHopperOSMTest {
     }
 
     @Test
-    public void testLoadingWithDifferentCHConfig_issue471() {
-        // with CH should not be loadable without CH configured
+    public void testLoadingWithDifferentCHConfig_issue471_pr1488() {
+        // when there is a single CH profile we can also load GraphHopper without it
+        // in #471 this was forbidden, but later it was allowed again, see #1488
         GraphHopper gh = createGraphHopper("car").
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
@@ -221,12 +222,8 @@ public class GraphHopperOSMTest {
 
         gh = createGraphHopper("car").
                 setStoreOnFlush(true).setCHEnabled(false);
-        try {
-            gh.load(ghLoc);
-            fail();
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("You loaded a CH graph, but you did not specify any CH weightings in prepare.ch.weightings"));
-        }
+        gh.load(ghLoc);
+        // no error
 
         Helper.removeDir(new File(ghLoc));
 
