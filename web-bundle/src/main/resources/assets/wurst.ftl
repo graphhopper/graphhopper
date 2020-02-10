@@ -18,7 +18,7 @@
                                                 <ul>
                                                 <#list timeDependentRestrictionData.rules as rule>
                                                         <li>
-                                                                ${rule} <#if matches(rule)><===</#if>
+                                                                ${rule} <#if restriction.matches(linkEnterTime, rule)><===</#if>
                                                         </li>
                                                 </#list>
                                                 </ul>

@@ -18,24 +18,30 @@
 
 package com.graphhopper.view;
 
+import ch.poole.openinghoursparser.Rule;
 import com.graphhopper.TimeDependentAccessRestriction;
+import com.graphhopper.timezone.core.TimeZones;
 import org.locationtech.jts.geom.Coordinate;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TimeZone;
 
 public class ConditionalRestrictionView {
 
+    private final TimeZones timeZones;
     public long osmid;
     public Map<String, Object> tags;
     public Coordinate from;
     public Coordinate to;
     private TimeDependentAccessRestriction timeDependentAccessRestriction;
 
-    public ConditionalRestrictionView(TimeDependentAccessRestriction timeDependentAccessRestriction) {
+    public ConditionalRestrictionView(TimeDependentAccessRestriction timeDependentAccessRestriction, TimeZones timeZones) {
         this.timeDependentAccessRestriction = timeDependentAccessRestriction;
+        this.timeZones = timeZones;
     }
 
     public List<TimeDependentAccessRestriction.ConditionalTagData> getRestrictionData() {
@@ -45,7 +51,13 @@ public class ConditionalRestrictionView {
     public List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData;
 
     public Optional<Boolean> accessible(Instant linkEnterTime) {
-        return timeDependentAccessRestriction.accessible(tags, linkEnterTime);
+        TimeZone timeZone = timeZones.getTimeZone(from.y, from.x);
+        return timeDependentAccessRestriction.accessible(tags, linkEnterTime.atZone(timeZone.toZoneId()));
+    }
+
+    public boolean matches(Instant linkEnterTime, Rule rule) {
+        TimeZone timeZone = timeZones.getTimeZone(from.y, from.x);
+        return timeDependentAccessRestriction.matches(linkEnterTime.atZone(timeZone.toZoneId()), rule);
     }
 
 }

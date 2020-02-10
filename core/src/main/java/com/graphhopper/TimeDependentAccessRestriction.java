@@ -32,10 +32,12 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.EdgeIteratorState;
 import org.mapdb.Fun;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -47,13 +49,13 @@ public class TimeDependentAccessRestriction {
     private final BooleanEncodedValue property;
     private final OSMIDParser osmidParser;
     private final OSM osm;
-    public final ZoneId zoneId;
+    private TimeZones timeZones;
     private GraphHopperStorage ghStorage;
 
-    public TimeDependentAccessRestriction(GraphHopperStorage ghStorage, OSM osm) {
+    public TimeDependentAccessRestriction(GraphHopperStorage ghStorage, OSM osm, TimeZones timeZones) {
         this.ghStorage = ghStorage;
-        zoneId = ZoneId.of("Europe/Berlin");
         this.osm = osm;
+        this.timeZones = timeZones;
         osmidParser = OSMIDParser.fromEncodingManager(ghStorage.getEncodingManager());
         property = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
     }
@@ -187,8 +189,7 @@ public class TimeDependentAccessRestriction {
         return restrictionData;
     }
 
-    public boolean matches(Instant when, Rule rule) {
-        ZonedDateTime zonedWhen = when.atZone(zoneId);
+    public boolean matches(ZonedDateTime zonedWhen, Rule rule) {
         return matchesYears(zonedWhen, rule) && matchesWeekdayRange(zonedWhen, rule) && matchesTimes(zonedWhen, rule);
     }
 
@@ -250,7 +251,7 @@ public class TimeDependentAccessRestriction {
     private boolean matches(ZonedDateTime when, TimeSpan time) {
         int startMinute = time.getStart();
         int endMinute = time.getEnd();
-        int minuteOfDay = (int) ChronoUnit.MINUTES.between(when.toLocalDate().atStartOfDay(zoneId), when);
+        int minuteOfDay = (int) ChronoUnit.MINUTES.between(when.toLocalDate().atStartOfDay(when.getZone()), when);
         if (minuteOfDay >= startMinute && minuteOfDay <= endMinute) {
             return true;
         }
@@ -260,10 +261,11 @@ public class TimeDependentAccessRestriction {
     // For weighting
     public Optional<Boolean> accessible(EdgeIteratorState edgeState, Instant at) {
         if (edgeState.get(property)) {
+            TimeZone timeZone = timeZones.getTimeZone(ghStorage.getNodeAccess().getLat(edgeState.getBaseNode()), ghStorage.getNodeAccess().getLon(edgeState.getBaseNode()));
             long osmid = osmidParser.getOSMID(edgeState.getFlags());
             Way way = osm.ways.get(osmid);
             Map<String, Object> tags = readerWay(osmid, way).getTags();
-            return accessible(tags, at);
+            return accessible(tags, at.atZone(timeZone.toZoneId()));
         }
         return Optional.empty();
     }
@@ -272,6 +274,7 @@ public class TimeDependentAccessRestriction {
     public Optional<Boolean> canTurn(int inEdge, int viaNode, int outEdge, Instant at) {
         EdgeIteratorState inEdgeCursor = ghStorage.getEdgeIteratorState(inEdge, viaNode);
         if (inEdgeCursor.get(property)) {
+            TimeZone timeZone = timeZones.getTimeZone(ghStorage.getNodeAccess().getLat(inEdgeCursor.getBaseNode()), ghStorage.getNodeAccess().getLon(inEdgeCursor.getBaseNode()));
             long inEdgeOsmId = osmidParser.getOSMID(inEdgeCursor.getFlags());
             Way inWay = osm.ways.get(inEdgeOsmId);
             EdgeIteratorState outEdgeCursor = ghStorage.getEdgeIteratorState(outEdge, viaNode);
@@ -283,7 +286,7 @@ public class TimeDependentAccessRestriction {
                     .filter(r -> r.hasTag("type", "restriction"))
                     .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("from") && m.id == inEdgeOsmId))
                     .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("to") && m.id == outEdgeOsmId))
-                    .flatMap(r -> stream(accessible(getTags(r), at)))
+                    .flatMap(r -> stream(accessible(getTags(r), at.atZone(timeZone.toZoneId()))))
                     .findFirst();
         }
         return Optional.empty();
@@ -297,7 +300,7 @@ public class TimeDependentAccessRestriction {
         return Arrays.stream(inWay.nodes).filter(n -> Arrays.stream(outWay.nodes).anyMatch(m -> n==m)).findFirst().getAsLong();
     }
 
-    public Optional<Boolean> accessible(Map<String, Object> tags, Instant linkEnterTime) {
+    public Optional<Boolean> accessible(Map<String, Object> tags, ZonedDateTime linkEnterTime) {
         List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(tags);
         for (ConditionalTagData conditionalTagData : conditionalTagDataWithTimeDependentConditions) {
             for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {

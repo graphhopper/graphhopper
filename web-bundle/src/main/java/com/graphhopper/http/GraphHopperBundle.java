@@ -39,6 +39,7 @@ import com.graphhopper.resources.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 import io.dropwizard.Configuration;
@@ -169,6 +170,22 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
+    static class TimeZonesFactory implements Factory<TimeZones> {
+        @Inject
+        GraphHopperManaged graphHopperManaged;
+
+
+        @Override
+        public TimeZones provide() {
+            return graphHopperManaged.getTimeZones();
+        }
+
+        @Override
+        public void dispose(TimeZones instance) {
+
+        }
+    }
+
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
         // See #1440: avoids warning regarding com.fasterxml.jackson.module.afterburner.util.MyClassLoader
@@ -236,6 +253,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
                 bindFactory(GtfsStorageFactory.class).to(GtfsStorage.class);
                 bindFactory(OSMFactory.class).to(OSM.class);
+                bindFactory(TimeZonesFactory.class).to(TimeZones.class);
             }
         });
 

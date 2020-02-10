@@ -21,6 +21,7 @@ package com.graphhopper.resources;
 import com.conveyal.osmlib.*;
 import com.graphhopper.TimeDependentAccessRestriction;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.view.ConditionalRestrictionView;
 import com.graphhopper.view.ConditionalRestrictionsView;
 import org.locationtech.jts.geom.Coordinate;
@@ -40,11 +41,13 @@ public class ConditionalTurnRestrictionsResource {
 
     private final OSM osm;
     private final TimeDependentAccessRestriction timeDependentAccessRestriction;
+    private final TimeZones timeZones;
 
     @Inject
-    public ConditionalTurnRestrictionsResource(GraphHopperStorage storage, OSM osm) {
+    public ConditionalTurnRestrictionsResource(GraphHopperStorage storage, OSM osm, TimeZones timeZones) {
         this.osm = osm;
-        timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm);
+        this.timeZones = timeZones;
+        timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm, timeZones);
     }
 
     @GET
@@ -63,7 +66,7 @@ public class ConditionalTurnRestrictionsResource {
                             Optional<Relation.Member> fromM = relation.members.stream().filter(m -> m.role.equals("from")).findFirst();
                             Optional<Relation.Member> toM = relation.members.stream().filter(m -> m.role.equals("to")).findFirst();
                             if (fromM.isPresent() && toM.isPresent()) {
-                                ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentAccessRestriction);
+                                ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentAccessRestriction, timeZones);
                                 view.osmid = osmid;
                                 view.tags = tags;
                                 Way from = osm.ways.get(fromM.get().id);

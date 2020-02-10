@@ -30,6 +30,7 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.view.ConditionalRestrictionView;
@@ -54,18 +55,20 @@ public class ConditionalAccessRestrictionsResource {
 
     private final GraphHopperStorage storage;
     private final OSM osm;
+    private final TimeZones timeZones;
 
     @Inject
-    public ConditionalAccessRestrictionsResource(GraphHopperStorage storage, OSM osm) {
+    public ConditionalAccessRestrictionsResource(GraphHopperStorage storage, OSM osm, TimeZones timeZones) {
         this.storage = storage;
         this.osm = osm;
+        this.timeZones = timeZones;
     }
 
     @GET
     @Produces("text/html")
     public ConditionalRestrictionsView conditionalRelations() {
-        TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm);
-        return new ConditionalRestrictionsView(new TimeDependentAccessRestriction(storage, osm), () -> {
+        TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm, timeZones);
+        return new ConditionalRestrictionsView(new TimeDependentAccessRestriction(storage, osm, timeZones), () -> {
             final OSMIDParser osmidParser = OSMIDParser.fromEncodingManager(storage.getEncodingManager());
             final BooleanEncodedValue property = storage.getEncodingManager().getBooleanEncodedValue("conditional");
             return allEdges()
@@ -77,7 +80,7 @@ public class ConditionalAccessRestrictionsResource {
                 ReaderWay readerWay = timeDependentAccessRestriction.readerWay(osmid, way);
                 List<TimeDependentAccessRestriction.ConditionalTagData> timeDependentAccessConditions = TimeDependentAccessRestriction.getTimeDependentAccessConditions(readerWay);
                 if (!timeDependentAccessConditions.isEmpty()) {
-                    ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentAccessRestriction);
+                    ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentAccessRestriction, timeZones);
                     view.osmid = osmid;
                     view.tags = readerWay.getTags();
                     Node from = osm.nodes.get(way.nodes[0]);

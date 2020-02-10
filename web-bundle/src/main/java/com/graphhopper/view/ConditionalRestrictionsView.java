@@ -23,7 +23,7 @@ import com.graphhopper.TimeDependentAccessRestriction;
 import io.dropwizard.views.View;
 
 import java.time.Instant;
-import java.util.Optional;
+import java.time.ZonedDateTime;
 
 public class ConditionalRestrictionsView extends View {
 
@@ -40,10 +40,6 @@ public class ConditionalRestrictionsView extends View {
 
     public Iterable<ConditionalRestrictionView> getRestrictions() {
         return restrictions;
-    }
-
-    public boolean matches(Rule rule) {
-        return timeDependentAccessRestriction.matches(linkEnterTime, rule);
     }
 
     public Instant getLinkEnterTime() {

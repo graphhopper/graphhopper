@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.TDWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
@@ -32,9 +33,9 @@ public class TimeDependentAccessWeighting implements TDWeighting {
     private final TimeDependentAccessRestriction timeDependentAccessRestriction;
     private final Weighting finalWeighting;
 
-    public TimeDependentAccessWeighting(OSM osm, GraphHopper graphHopper, Weighting finalWeighting) {
+    public TimeDependentAccessWeighting(OSM osm, GraphHopper graphHopper, TimeZones timeZones, Weighting finalWeighting) {
         this.finalWeighting = finalWeighting;
-        timeDependentAccessRestriction = new TimeDependentAccessRestriction(graphHopper.getGraphHopperStorage(), osm);
+        timeDependentAccessRestriction = new TimeDependentAccessRestriction(graphHopper.getGraphHopperStorage(), osm, timeZones);
     }
 
     @Override

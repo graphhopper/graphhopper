@@ -34,6 +34,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
@@ -41,10 +42,7 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 
 import static com.graphhopper.util.Helper.UTF_CS;
 
@@ -53,6 +51,7 @@ public class GraphHopperManaged implements Managed {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopper graphHopper;
     private OSM osm;
+    private TimeZones timeZones;
 
     public GraphHopperManaged(CmdArgs configuration, ObjectMapper objectMapper) {
         ObjectMapper localObjectMapper = objectMapper.copy();
@@ -73,7 +72,7 @@ public class GraphHopperManaged implements Managed {
                 public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph, TurnCostProvider turnCostProvider) {
                     Weighting weighting = super.createWeighting(hintsMap, encoder, graph, turnCostProvider);
                     if (hintsMap.has("block_property")) {
-                        return new TimeDependentAccessWeighting(osm, graphHopper, weighting);
+                        return new TimeDependentAccessWeighting(osm, graphHopper, timeZones, weighting);
                     }
                     return weighting;
                 }
@@ -100,10 +99,16 @@ public class GraphHopperManaged implements Managed {
                 + ", data_reader_file:" + graphHopper.getDataReaderFile()
                 + ", encoded values:" + graphHopper.getEncodingManager().toEncodedValuesAsString()
                 + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+        timeZones = new TimeZones();
+        try {
+            timeZones.initWithWorldData(new File("world-data/tz_world.shp").toURI().toURL());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         osm = new OSM(graphHopper.getGraphHopperStorage().getDirectory().getDefaultType().isStoring() ? graphHopper.getGraphHopperStorage().getDirectory().getLocation()+"/osm.db" : null);
         if (osm.ways.isEmpty()) {
             osm.readFromFile(graphHopper.getDataReaderFile());
-            TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(graphHopper.getGraphHopperStorage(), osm);
+            TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(graphHopper.getGraphHopperStorage(), osm, timeZones);
             timeDependentAccessRestriction.markEdgesAdjacentToConditionalTurnRestrictions();
         }
     }
@@ -114,6 +119,10 @@ public class GraphHopperManaged implements Managed {
 
     public OSM getOsm() {
         return osm;
+    }
+
+    public TimeZones getTimeZones() {
+        return timeZones;
     }
 
     @Override
