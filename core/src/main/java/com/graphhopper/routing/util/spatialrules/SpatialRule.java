@@ -21,7 +21,6 @@ import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.profiles.RoadClass;
 
 import java.util.List;
-import java.util.Objects;
 
 import org.locationtech.jts.geom.Polygon;
 
@@ -61,6 +60,16 @@ public interface SpatialRule {
     List<Polygon> getBorders();
 
     /**
+     * Returns the priority of the rule. If multiple rules overlap they're
+     * processed in natural order of their priority.
+     * 
+     * @return the priority as an integer value between
+     *         {@link Integer#MIN_VALUE} (minimum priority) and
+     *         {@link Integer#MAX_VALUE} (maximum priority)
+     */
+    int getPriority();
+
+    /**
      * Returns the id for this rule, e.g. the ISO name of the country. The id has to be unique.
      */
     String getId();
@@ -75,6 +84,11 @@ public interface SpatialRule {
         @Override
         public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
             return currentRoadAccess;
+        }
+
+        @Override
+        public int getPriority() {
+            return Integer.MAX_VALUE;
         }
 
         // should we use Country.DEFAULT here?
@@ -95,12 +109,16 @@ public interface SpatialRule {
         
         @Override
         public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
             if (!(obj instanceof SpatialRule)) {
                 return false;
             }
-            return Objects.equals(getId(), ((SpatialRule) obj).getId());
+            SpatialRule other = (SpatialRule) obj;
+            return getId().equals(other.getId());
         }
-        
+
         @Override
         public int hashCode() {
             return getId().hashCode();

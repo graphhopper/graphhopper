@@ -29,6 +29,8 @@ import com.graphhopper.routing.profiles.RoadClass;
  * @author Robin Boldt
  */
 public abstract class AbstractSpatialRule implements SpatialRule {
+    
+    public static final int DEFAULT_PRIORITY = 100;
 
     private final List<Polygon> borders;
     
@@ -55,6 +57,11 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     }
 
     @Override
+    public int getPriority() {
+        return DEFAULT_PRIORITY;
+    }
+    
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -72,6 +79,12 @@ public abstract class AbstractSpatialRule implements SpatialRule {
 
     @Override
     public String toString() {
-        return getId();
+        StringBuilder builder = new StringBuilder();
+        builder.append("SpatialRule [getId()=");
+        builder.append(getId());
+        builder.append(", getPriority()=");
+        builder.append(getPriority());
+        builder.append("]");
+        return builder.toString();
     }
 }
