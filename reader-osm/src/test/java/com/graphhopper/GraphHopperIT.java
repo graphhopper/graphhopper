@@ -191,7 +191,7 @@ public class GraphHopperIT {
         if (lm) {
             tmpHopper.getLMPreparationHandler().
                     setEnabled(true).
-                    setWeightingsAsStrings(Collections.singletonList(weightCalcStr)).
+                    setLMProfileStrings(Collections.singletonList(weightCalcStr)).
                     setDisablingAllowed(true);
         }
         tmpHopper.importAndClose();
@@ -206,7 +206,7 @@ public class GraphHopperIT {
         if (lm) {
             tmpHopper.getLMPreparationHandler().
                     setEnabled(true).
-                    setWeightingsAsStrings(Collections.singletonList(weightCalcStr)).
+                    setLMProfileStrings(Collections.singletonList(weightCalcStr)).
                     setDisablingAllowed(true);
         }
         tmpHopper.importOrLoad();
@@ -1095,7 +1095,7 @@ public class GraphHopperIT {
                 setDisablingAllowed(true);
 
         tmpHopper.getLMPreparationHandler().setEnabled(true).
-                setWeightingsAsStrings(Collections.singletonList("fastest|maximum=2000")).
+                setLMProfileStrings(Collections.singletonList("fastest|maximum=2000")).
                 setDisablingAllowed(true);
 
         tmpHopper.importOrLoad();
@@ -1152,7 +1152,7 @@ public class GraphHopperIT {
                 setDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().setEnabled(true).
-                setWeightingsAsStrings(Collections.singletonList("fastest|maximum=2000")).
+                setLMProfileStrings(Collections.singletonList("fastest|maximum=2000")).
                 setDisablingAllowed(true);
 
         hopper.importOrLoad();
@@ -1193,7 +1193,7 @@ public class GraphHopperIT {
                 setGraphHopperLocation(tmpGraphFile);
         hopper.getCHPreparationHandler().setEnabled(false);
         hopper.getLMPreparationHandler().setEnabled(true).
-                setWeightingsAsStrings(Collections.singletonList("fastest|maximum=2000")).
+                setLMProfileStrings(Collections.singletonList("fastest|maximum=2000")).
                 setDisablingAllowed(true);
         hopper.importOrLoad();
 

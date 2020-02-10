@@ -49,7 +49,7 @@ public class GraphHopperStorageLMTest {
         graph.close();
 
         GraphHopper hopper = new GraphHopper().setGraphHopperLocation(defaultGraphLoc).setCHEnabled(false);
-        hopper.getLMPreparationHandler().setEnabled(true).setWeightingsAsStrings(Arrays.asList("fastest"));
+        hopper.getLMPreparationHandler().setEnabled(true).setLMProfileStrings(Arrays.asList("fastest"));
         // does lm preparation
         hopper.importOrLoad();
         EncodingManager em = hopper.getEncodingManager();
@@ -58,7 +58,7 @@ public class GraphHopperStorageLMTest {
         assertEquals(16, hopper.getLMPreparationHandler().getLandmarks());
 
         hopper = new GraphHopper().setGraphHopperLocation(defaultGraphLoc).setCHEnabled(false);
-        hopper.getLMPreparationHandler().setEnabled(true).setWeightingsAsStrings(Arrays.asList("fastest"));
+        hopper.getLMPreparationHandler().setEnabled(true).setLMProfileStrings(Arrays.asList("fastest"));
         // just loads the LM data
         hopper.importOrLoad();
         assertEquals(1, em.fetchEdgeEncoders().size());

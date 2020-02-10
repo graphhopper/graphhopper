@@ -28,6 +28,7 @@ import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMPreparationHandler;
+import com.graphhopper.routing.lm.LMProfile;
 import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
@@ -774,7 +775,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         GHLock lock = null;
         try {
-            // create locks only if writes are allowed, if they are not allowed a lock cannot be created 
+            // create locks only if writes are allowed, if they are not allowed a lock cannot be created
             // (e.g. on a read only filesystem locks would fail)
             if (ghStorage.getDirectory().getDefaultType().isStoring() && isAllowWrites()) {
                 lockFactory.setLockDir(new File(ghLocation));
@@ -821,6 +822,9 @@ public class GraphHopper implements GraphHopperAPI {
 
     private void initCHPreparationHandler() {
         if (!chPreparationHandler.hasCHProfiles()) {
+            if (chPreparationHandler.getCHProfileStrings().isEmpty())
+                throw new IllegalStateException("Potential bug: chProfileStrings is empty");
+
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
                 for (String chWeightingStr : chPreparationHandler.getCHProfileStrings()) {
                     // ghStorage is null at this point
@@ -851,14 +855,17 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void initLMPreparationHandler() {
-        if (lmPreparationHandler.hasWeightings())
+        if (lmPreparationHandler.hasLMProfiles())
             return;
 
+        if (lmPreparationHandler.getLMProfileStrings().isEmpty()) {
+            throw new IllegalStateException("Potential bug: lmProfileStrings is empty");
+        }
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-            for (String lmWeightingStr : lmPreparationHandler.getWeightingsAsStrings()) {
+            for (String lmWeightingStr : lmPreparationHandler.getLMProfileStrings()) {
                 // note that we do not consider turn costs during LM preparation?
                 Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, NO_TURN_COST_PROVIDER);
-                lmPreparationHandler.addWeighting(weighting);
+                lmPreparationHandler.addLMProfile(new LMProfile(weighting));
             }
         }
     }
