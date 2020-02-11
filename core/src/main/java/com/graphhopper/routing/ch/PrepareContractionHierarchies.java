@@ -19,7 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
-import com.carrotsearch.hppc.predicates.IntPredicate;
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
@@ -74,22 +73,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private float[] oldPriorities;
     private PMap pMap = new PMap();
     private int checkCounter;
-    private IntPredicate allowContraction = new IntPredicate() {
-        @Override
-        public boolean apply(int node) {
-            return true;
-        }
-    };
 
     public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHProfile chProfile) {
-        return new PrepareContractionHierarchies(ghStorage, chProfile, chProfile.getWeighting());
+        return new PrepareContractionHierarchies(ghStorage, chProfile);
     }
 
-    public static PrepareContractionHierarchies fromGraphHopperStorageWithWeightingForNodeBasedWitnessSearch(GraphHopperStorage ghStorage, CHProfile chProfile, Weighting nodeBasedWitnessSearchWeighting) {
-        return new PrepareContractionHierarchies(ghStorage, chProfile, nodeBasedWitnessSearchWeighting);
-    }
-
-    private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHProfile chProfile, Weighting nodeBasedWitnessSearchWeighting) {
+    private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHProfile chProfile) {
         this.chGraph = ghStorage.getCHGraph(chProfile);
         this.chProfile = chProfile;
         params = Params.forTraversalMode(chProfile.getTraversalMode());
@@ -102,7 +91,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             prepareGraph = PrepareCHGraph.edgeBased(chGraph, chProfile.getWeighting());
             nodeContractor = new EdgeBasedNodeContractor(prepareGraph, pMap);
         } else {
-            prepareGraph = PrepareCHGraph.nodeBased(chGraph, nodeBasedWitnessSearchWeighting);
+            prepareGraph = PrepareCHGraph.nodeBased(chGraph, chProfile.getWeighting());
             nodeContractor = new NodeBasedNodeContractor(prepareGraph, pMap);
         }
     }
@@ -129,11 +118,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
                             " must be equal to number of nodes in graph (" + prepareGraph.getNodes() + ").");
         }
         this.nodeOrderingProvider = nodeOrderingProvider;
-        return this;
-    }
-
-    public PrepareContractionHierarchies useNodeFilter(IntPredicate allowContraction) {
-        this.allowContraction = allowContraction;
         return this;
     }
 
@@ -244,7 +228,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
         while (!sortedNodes.isEmpty()) {
             stopIfInterrupted();
-
             // periodically update priorities of ALL nodes
             if (checkCounter > 0 && checkCounter % periodicUpdatesCount == 0) {
                 updatePrioritiesOfRemainingNodes();
@@ -259,10 +242,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
             checkCounter++;
             int polledNode = sortedNodes.pollKey();
-
-            if (!allowContraction.apply(polledNode)) {
-                continue;
-            }
 
             if (!sortedNodes.isEmpty() && sortedNodes.getSize() < lastNodesLazyUpdates) {
                 lazyUpdateSW.start();
@@ -436,11 +415,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     private float calculatePriority(int node) {
-        if (allowContraction.apply(node)) {
-            return nodeContractor.calculatePriority(node);
-        } else {
-            return Integer.MAX_VALUE;
-        }
+        return nodeContractor.calculatePriority(node);
     }
 
     @Override

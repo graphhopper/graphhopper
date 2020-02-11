@@ -18,10 +18,11 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.carrotsearch.hppc.predicates.IntPredicate;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -135,8 +136,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testReturnsCorrectWeighting() {
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertSame(weighting, prepare.getWeighting());
     }
@@ -145,8 +145,7 @@ public class PrepareContractionHierarchiesTest {
     public void testAddShortcuts() {
         initExampleGraph(g);
         int old = lg.getEdges();
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(old + 2, lg.getEdges());
     }
@@ -155,8 +154,7 @@ public class PrepareContractionHierarchiesTest {
     public void testMoreComplexGraph() {
         initShortcutsGraph(g);
         int oldCount = g.getEdges();
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount + 7, lg.getEdges());
@@ -173,8 +171,7 @@ public class PrepareContractionHierarchiesTest {
         g.freeze();
         int oldCount = lg.getEdges();
         assertEquals(6, oldCount);
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         assertEquals(oldCount, lg.getOriginalEdges());
@@ -190,8 +187,7 @@ public class PrepareContractionHierarchiesTest {
         initDirected2(g);
         int oldCount = g.getEdges();
         assertEquals(19, oldCount);
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
         assertEquals(oldCount, g.getEdges());
@@ -263,8 +259,7 @@ public class PrepareContractionHierarchiesTest {
     public void testRoundaboutUnpacking() {
         initRoundaboutGraph(g);
         int oldCount = g.getEdges();
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount, lg.getOriginalEdges());
@@ -273,145 +268,6 @@ public class PrepareContractionHierarchiesTest {
         Path p = algo.calcPath(4, 7);
         assertEquals(IntArrayList.from(4, 5, 6, 7), p.calcNodes());
     }
-
-    @Test
-    public void testCustomizableCore() {
-        GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getCHGraph();
-        //              roundabout:
-        //16-0-9-10--11   12<-13
-        //    \       \  /      \
-        //    17       \|        7-8-..
-        // -15-1--2--3--4       /     /
-        //     /         \-5->6/     /
-        //  -14            \________/
-
-        g.edge(16, 0, 1, true);
-        EdgeIteratorState edge0_9 = g.edge(0, 9, 1, true);
-        g.edge(0, 17, 1, true);
-        g.edge(9, 10, 1, true);
-        g.edge(10, 11, 1, true);
-        g.edge(11, 28, 1, true);
-        g.edge(28, 29, 1, true);
-        g.edge(29, 30, 1, true);
-        g.edge(30, 31, 1, true);
-        g.edge(31, 4, 1, true);
-
-        g.edge(17, 1, 1, true);
-        g.edge(15, 1, 1, true);
-        g.edge(14, 1, 1, true);
-        g.edge(14, 18, 1, true);
-        g.edge(18, 19, 1, true);
-        g.edge(19, 20, 1, true);
-        g.edge(20, 15, 1, true);
-        g.edge(19, 21, 1, true);
-        g.edge(21, 16, 1, true);
-        g.edge(1, 2, 1, true);
-        EdgeIteratorState edge2_3 = g.edge(2, 3, 1, true);
-        g.edge(3, 4, 1, true);
-
-        g.edge(4, 5, 1, false);
-        g.edge(5, 6, 1, false);
-        g.edge(6, 7, 1, false);
-        g.edge(7, 13, 1, false);
-        g.edge(13, 12, 1, false);
-        g.edge(12, 4, 1, false);
-
-        g.edge(7, 8, 1, true);
-        g.edge(8, 22, 1, true);
-        g.edge(22, 23, 1, true);
-        g.edge(23, 24, 1, true);
-        g.edge(24, 25, 1, true);
-        g.edge(25, 27, 1, true);
-        g.edge(27, 5, 1, true);
-        g.edge(25, 26, 1, false);
-        g.edge(26, 25, 1, false);
-
-        // So we want edge 2->3 to be customizable.
-        // For that to work, we have to do two independent things when we create the contraction hierarchies:
-        g.freeze();
-        // a) mark the incident nodes as 'core', meaning they are never contracted,
-        //    meaning that those edges are never part of shortcuts, so our customization
-        //    can't remain unnoticed.
-        final IntHashSet blockedNodes = new IntHashSet();
-        blockedNodes.add(2);
-        blockedNodes.add(3);
-        // b) give the edge a high weight in the witness search, so that it doesn't lie on any witness paths,
-        //    so that we don't prevent any shortcuts from being created
-        //    that become necessary only when our edge is customized.
-        //    The highest weight we want to customize the edge with
-        //    should work.
-        Weighting weightingForNodeBasedWitnessSearch = new Weighting() {
-            @Override
-            public double getMinWeight(double distance) {
-                return PrepareContractionHierarchiesTest.this.weighting.getMinWeight(distance);
-            }
-
-
-            @Override
-            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-                return 0;
-            }
-
-            @Override
-            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-                return 0;
-            }
-
-            @Override
-            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-                if (blockedNodes.contains(edgeState.getBaseNode()) && blockedNodes.contains(edgeState.getAdjNode())) {
-                    return 1000 * PrepareContractionHierarchiesTest.this.weighting.calcEdgeWeight(edgeState, reverse);
-                }
-                return PrepareContractionHierarchiesTest.this.weighting.calcEdgeWeight(edgeState, reverse);
-            }
-
-            @Override
-            public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-                return PrepareContractionHierarchiesTest.this.weighting.calcEdgeMillis(edgeState, reverse);
-            }
-
-            @Override
-            public FlagEncoder getFlagEncoder() {
-                return PrepareContractionHierarchiesTest.this.weighting.getFlagEncoder();
-            }
-
-            @Override
-            public String getName() {
-                return PrepareContractionHierarchiesTest.this.weighting.getName();
-            }
-
-            @Override
-            public boolean matches(HintsMap map) {
-                return PrepareContractionHierarchiesTest.this.weighting.matches(map);
-            }
-        };
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorageWithWeightingForNodeBasedWitnessSearch(g, lg.getCHProfile(), weightingForNodeBasedWitnessSearch);
-        prepare.useNodeFilter(new IntPredicate() {
-            @Override
-            public boolean apply(int node) {
-                return !blockedNodes.contains(node);
-            }
-        });
-        prepare.doWork();
-
-        // Shortest path for the uncustomized edge.
-        // This will already fail if the "core" doesn't work, since with the modified witness search weight,
-        // it's equivalent to having a customizable edge and making it faster.
-        Path pathBefore = new RoutingAlgorithmFactorySimple().createAlgo(g, new AlgorithmOptions(DIJKSTRA_BI, this.weighting, tMode)).calcPath(1, 4);
-        Path pathBeforeCH = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, this.weighting, tMode)).calcPath(1, 4);
-        assertEquals(IntArrayList.from(1, 2, 3, 4), pathBefore.calcNodes());
-        assertEquals(IntArrayList.from(1, 2, 3, 4), pathBeforeCH.calcNodes());
-
-        // Hackily customize our edge by making it 1000 times longer.
-        edge2_3.setDistance(1000.0);
-
-        Path pathAfter = new RoutingAlgorithmFactorySimple().createAlgo(g, new AlgorithmOptions(DIJKSTRA_BI, this.weighting, tMode)).calcPath(1, 4);
-        Path pathAfterCH = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, this.weighting, tMode)).calcPath(1, 4);
-        assertEquals(IntArrayList.from(1, 17, 0, 9, 10, 11, 28, 29, 30, 31, 4), pathAfter.calcNodes());
-        assertEquals(IntArrayList.from(1, 17, 0, 9, 10, 11, 28, 29, 30, 31, 4), pathAfterCH.calcNodes());
-    }
-
 
     private void initUnpackingGraph(GraphHopperStorage g, CHGraph lg, Weighting w) {
         final IntsRef edgeFlags = encodingManager.createEdgeFlags();
@@ -463,8 +319,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testUnpackingOrder() {
         initUnpackingGraph(g, lg, weighting);
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         // do not call prepare.doWork() here
         RoutingAlgorithm algo = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
@@ -477,8 +332,7 @@ public class PrepareContractionHierarchiesTest {
         Weighting w = new FastestWeighting(carEncoder);
         initUnpackingGraph(g, lg, w);
 
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         // do not call prepare.doWork() here
         RoutingAlgorithm algo = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
@@ -507,8 +361,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(2, 7, 1, false);
         g.freeze();
 
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile)
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g)
                 .useFixedNodeOrdering(new NodeOrderingProvider() {
                     @Override
                     public int getNodeIdForLevel(int level) {
@@ -595,8 +448,7 @@ public class PrepareContractionHierarchiesTest {
         edge24.setReverse(carEncoder.getAverageSpeedEnc(), 27.5);
 
         // prepare ch, use node ids as levels
-        g.freeze();
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, chProfile);
         pch.useFixedNodeOrdering(new NodeOrderingProvider() {
             @Override
             public int getNodeIdForLevel(int level) {
@@ -628,7 +480,7 @@ public class PrepareContractionHierarchiesTest {
         assertTrue("incoming shortcut weight 3->2 should be smaller than sptWeight at node 2 to make sure 2 gets stalled", scWeight23 < sptWeight2);
         assertTrue("sptWeight at node 4 should be smaller than shortcut weight 3->4 to make sure node 4 gets stalled", sptWeight4 < scWeight34);
 
-        Path path = pch.getRoutingAlgorithmFactory().createAlgo(queryGraph, AlgorithmOptions.start().weighting(chProfile.getWeighting()).build()).calcPath(0, 7);
+        Path path = pch.getRoutingAlgorithmFactory().createAlgo(queryGraph, AlgorithmOptions.start().build()).calcPath(0, 7);
         assertEquals("wrong or no path found", IntArrayList.from(0, 3, 8, 1, 2, 4, 5, 6, 7), path.calcNodes());
     }
 
@@ -656,8 +508,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(0, 1, 4, true);
         g.edge(0, 2, 10, true);
         g.edge(0, 3, 10, true);
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(0, prepare.getShortcuts());
     }
@@ -679,8 +530,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(3, 4, 1, true);
         g.edge(6, 3, 1, true);
 
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, chProfile);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
     }
@@ -818,14 +668,22 @@ public class PrepareContractionHierarchiesTest {
 
     private void checkPath(GraphHopperStorage g, CHProfile p, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
         CHGraph lg = g.getCHGraph(p);
-        g.freeze();
-        PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphHopperStorage(g, p);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, p);
         prepare.doWork();
         assertEquals(p.toString(), expShortcuts, prepare.getShortcuts());
         RoutingAlgorithm algo = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, p.getWeighting(), tMode));
         Path path = algo.calcPath(3, 12);
         assertEquals(path.toString(), expDistance, path.getDistance(), 1e-5);
         assertEquals(path.toString(), expNodes, path.calcNodes());
+    }
+
+    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g) {
+        return createPrepareContractionHierarchies(g, chProfile);
+    }
+
+    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHProfile p) {
+        g.freeze();
+        return PrepareContractionHierarchies.fromGraphHopperStorage(g, p);
     }
 
 }

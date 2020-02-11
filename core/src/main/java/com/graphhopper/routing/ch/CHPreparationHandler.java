@@ -17,19 +17,12 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.predicates.IntPredicate;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
@@ -324,80 +317,7 @@ public class CHPreparationHandler {
     }
 
     private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHProfile chProfile) {
-        BooleanEncodedValue conditional = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
-
-        AllEdgesIterator allEdges = ghStorage.getAllEdges();
-        int nConditional = 0;
-        while (allEdges.next()) {
-            if (allEdges.get(conditional)) {
-                nConditional++;
-            }
-        }
-        System.out.println(conditional);
-        System.out.println(nConditional + " of " + ghStorage.getEdges() + " are tagged with a conditional.");
-
-        final Weighting weighting = chProfile.getWeighting();
-        AllEdgesIterator edgeCursor = ghStorage.getAllEdges();
-        final IntHashSet blockedNodes = new IntHashSet();
-        final IntHashSet blockedEdges = new IntHashSet();
-        while (edgeCursor.next()) {
-            if (edgeCursor.get(conditional)) {
-                blockedNodes.add(edgeCursor.getBaseNode());
-                blockedNodes.add(edgeCursor.getAdjNode());
-                blockedEdges.add(edgeCursor.getEdge());
-            }
-        }
-        Weighting weightingForNodeBasedWitnessSearch = new Weighting() {
-            @Override
-            public double getMinWeight(double distance) {
-                return weighting.getMinWeight(distance);
-            }
-
-            @Override
-            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-                return 0;
-            }
-
-            @Override
-            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-                return 0;
-            }
-
-            @Override
-            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-                if (blockedEdges.contains(edgeState.getEdge())) {
-                    return Double.POSITIVE_INFINITY;
-                }
-                return weighting.calcEdgeWeight(edgeState, reverse);
-            }
-
-            @Override
-            public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-                return weighting.calcEdgeMillis(edgeState, reverse);
-            }
-
-            @Override
-            public FlagEncoder getFlagEncoder() {
-                return weighting.getFlagEncoder();
-            }
-
-            @Override
-            public String getName() {
-                return weighting.getName();
-            }
-
-            @Override
-            public boolean matches(HintsMap map) {
-                return weighting.matches(map);
-            }
-        };
-        PrepareContractionHierarchies tmpPrepareCH = PrepareContractionHierarchies.fromGraphHopperStorageWithWeightingForNodeBasedWitnessSearch(ghStorage, chProfile, weightingForNodeBasedWitnessSearch);
-        tmpPrepareCH.useNodeFilter(new IntPredicate() {
-            @Override
-            public boolean apply(int node) {
-                return !blockedNodes.contains(node);
-            }
-        });
+        PrepareContractionHierarchies tmpPrepareCH = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chProfile);
         tmpPrepareCH.setParams(pMap);
         return tmpPrepareCH;
     }
