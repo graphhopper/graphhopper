@@ -20,6 +20,7 @@ package com.graphhopper.matching.cli;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
@@ -85,15 +86,15 @@ public class MeasurementCommand extends Command {
     @Override
     public void run(Bootstrap bootstrap, Namespace args) {
         // read and initialize arguments:
-        CmdArgs graphHopperConfiguration = new CmdArgs();
+        GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
         graphHopperConfiguration.put("graph.location", "graph-cache");
         seed = args.getLong("seed");
         count = args.getInt("count");
 
         GraphHopper graphHopper = new GraphHopperOSM();
         graphHopper.init(graphHopperConfiguration).forDesktop();
-        graphHopper.getCHFactoryDecorator().setEnabled(false);
-        graphHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        graphHopper.getCHPreparationHandler().setEnabled(false);
+        graphHopper.getCHPreparationHandler().setDisablingAllowed(true);
         graphHopper.importOrLoad();
         
         // and map-matching stuff

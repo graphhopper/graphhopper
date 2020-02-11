@@ -19,7 +19,6 @@ package com.graphhopper.matching.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.http.WebHelper;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -43,11 +42,11 @@ public class MapMatchingResourceTest {
     private static final MapMatchingServerConfiguration config = new MapMatchingServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "no").
                 put("datareader.file", "../map-data/leipzig_germany.osm.pbf").
-                put("graph.location", DIR));
+                put("graph.location", DIR);
     }
 
     @ClassRule

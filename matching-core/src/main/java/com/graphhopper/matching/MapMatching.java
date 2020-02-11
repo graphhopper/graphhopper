@@ -103,7 +103,7 @@ public class MapMatching {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();
         }
-        weighting = graphHopper.createWeighting(hints, graphHopper.getEncodingManager().getEncoder(hints.getVehicle()), null, NO_TURN_COST_PROVIDER);
+        weighting = graphHopper.createWeighting(hints, graphHopper.getEncodingManager().getEncoder(hints.getVehicle()), NO_TURN_COST_PROVIDER);
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
     }
 

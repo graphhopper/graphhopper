@@ -2,6 +2,7 @@ package com.graphhopper.matching.cli;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
@@ -62,10 +63,10 @@ public class MatchCommand extends Command {
 
     @Override
     public void run(Bootstrap bootstrap, Namespace args) {
-        CmdArgs graphHopperConfiguration = new CmdArgs();
+        GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
         graphHopperConfiguration.put("graph.location", "graph-cache");
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
-        hopper.getCHFactoryDecorator().setEnabled(false);
+        hopper.getCHPreparationHandler().setEnabled(false);
         System.out.println("loading graph from cache");
         hopper.load(graphHopperConfiguration.get("graph.location", "graph-cache"));
 

@@ -47,7 +47,7 @@ public class MapMatching2Test {
         hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
         hopper.setGraphHopperLocation("../target/mapmatchingtest-13");
         hopper.setEncodingManager(EncodingManager.create(encoder));
-        hopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
         HintsMap opts = new HintsMap();
@@ -78,7 +78,7 @@ public class MapMatching2Test {
         hopper.setDataReaderFile("../map-data/issue-70.osm.gz");
         hopper.setGraphHopperLocation("../target/mapmatchingtest-70");
         hopper.setEncodingManager(EncodingManager.create(encoder));
-        hopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
         HintsMap opts = new HintsMap();
@@ -104,7 +104,7 @@ public class MapMatching2Test {
         hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
         hopper.setGraphHopperLocation("../target/mapmatchingtest-127");
         hopper.setEncodingManager(EncodingManager.create(encoder));
-        hopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
         HintsMap opts = new HintsMap();

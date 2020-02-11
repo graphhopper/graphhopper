@@ -1,8 +1,8 @@
 package com.graphhopper.matching.cli;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.util.CmdArgs;
 import io.dropwizard.cli.Command;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -27,13 +27,13 @@ public class ImportCommand extends Command {
 
     @Override
     public void run(Bootstrap<?> bootstrap, Namespace args) {
-        CmdArgs graphHopperConfiguration = new CmdArgs();
+        GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
         graphHopperConfiguration.put("graph.flag_encoders", args.getString("vehicle"));
         graphHopperConfiguration.put("datareader.file", args.getString("datasource"));
         graphHopperConfiguration.put("graph.location", "graph-cache");
 
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
-        hopper.getCHFactoryDecorator().setEnabled(false);
+        hopper.getCHPreparationHandler().setEnabled(false);
         hopper.importOrLoad();
     }
 

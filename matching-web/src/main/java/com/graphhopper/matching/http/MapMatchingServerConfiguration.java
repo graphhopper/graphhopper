@@ -19,8 +19,8 @@
 package com.graphhopper.matching.http;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.http.GraphHopperBundleConfiguration;
-import com.graphhopper.util.CmdArgs;
 import io.dropwizard.Configuration;
 import io.dropwizard.bundles.assets.AssetsBundleConfiguration;
 import io.dropwizard.bundles.assets.AssetsConfiguration;
@@ -32,7 +32,7 @@ public class MapMatchingServerConfiguration extends Configuration implements Gra
 
     @NotNull
     @JsonProperty
-    private final CmdArgs graphhopper = new CmdArgs();
+    private final GraphHopperConfig graphhopper = new GraphHopperConfig();
 
     @Valid
     @JsonProperty
@@ -42,7 +42,7 @@ public class MapMatchingServerConfiguration extends Configuration implements Gra
     }
 
     @Override
-    public CmdArgs getGraphHopperConfiguration() {
+    public GraphHopperConfig getGraphHopperConfiguration() {
         return graphhopper;
     }
 
