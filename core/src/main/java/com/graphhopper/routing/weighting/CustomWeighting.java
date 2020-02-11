@@ -23,7 +23,6 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.weighting.custom.DistanceTermCustomConfig;
 import com.graphhopper.routing.weighting.custom.PriorityCustomConfig;
 import com.graphhopper.routing.weighting.custom.SpeedCustomConfig;
 import com.graphhopper.util.EdgeIteratorState;
@@ -34,8 +33,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * <pre>
  * if edge is not accessible for base vehicle then return infinity
  * speed = reduce_to_max_speed(estimated_average_speed * multiply_all(speed_factor_map))
- * distanceInfluence = distance * (distance_factor_constant + sum_all(distance_term_map))
- * weight = (toSeconds(distance / speed) + distanceInfluence) / priority;
+ * weight = (toSeconds(distance / speed) + distance * distance_term_constant) / priority;
  * return weight
  * </pre>
  * Please note that the max_speed map is capped to the maximum allowed speed. Also values in the speed_factor and
@@ -55,7 +53,6 @@ public class CustomWeighting extends AbstractWeighting {
     private final double minDistanceTerm;
     private final SpeedCustomConfig speedConfig;
     private final PriorityCustomConfig priorityConfig;
-    private final DistanceTermCustomConfig distanceTermConfig;
 
     public CustomWeighting(String name, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
                            EncodedValueFactory factory, TurnCostProvider turnCostProvider, CustomModel customModel) {
@@ -68,7 +65,6 @@ public class CustomWeighting extends AbstractWeighting {
 
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
 
-        distanceTermConfig = new DistanceTermCustomConfig(customModel, lookup, factory);
         minDistanceTerm = customModel.getDistanceTermConstant();
         if (minDistanceTerm < 0)
             throw new IllegalArgumentException("maximum distance_term cannot be negative " + minDistanceTerm);
@@ -85,7 +81,7 @@ public class CustomWeighting extends AbstractWeighting {
         double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds))
             return Double.POSITIVE_INFINITY;
-        double distanceInfluence = distance * (minDistanceTerm + distanceTermConfig.calcDistanceTerm(edgeState, reverse));
+        double distanceInfluence = distance * minDistanceTerm;
         if (Double.isInfinite(distanceInfluence))
             return Double.POSITIVE_INFINITY;
         return (seconds + distanceInfluence) / priorityConfig.calcPriority(edgeState, reverse);

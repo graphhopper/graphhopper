@@ -32,14 +32,8 @@ max_speed:
 max_speed_fallback: 100
 
 # The distance term changes the influence of the distance. I.e. longer roads get a higher cost.
-# The distance_factor_constant is independent of the edge.
+# The distance_factor_constant is independent of the edge properties and does not influence the ETA.
 distance_term_constant: 0.07
-# The following terms will be added to distance_term_constant and only multiplied with the distance. This won't change
-# the ETA. The default value is 0. All higher values will avoid the condition and 'preferring' something
-# is currently not possible. For that use speed_factor or priority.
-distance_term:
-  # avoid toll roads
-  toll: { all: 0.1, hvg: 0.1 }
 
 # Now we want to set a preference without changing the taken time. I.e. trucks shall prefer bigger roads and so we could
 # increase the speed for them, but this influences time. The default priority 1 won't change something.
@@ -61,3 +55,5 @@ priority:
   # avoid turns if possible and links are one simple indication for that
   # TODO booleans are not yet supported here
   # road_class_link: 0.5
+  # avoid toll roads
+  toll: { no: 2 }
