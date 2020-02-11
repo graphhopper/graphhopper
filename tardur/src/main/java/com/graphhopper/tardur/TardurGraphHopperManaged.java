@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -33,19 +32,11 @@ import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.graphhopper.util.Helper.UTF_CS;
 
@@ -67,39 +58,17 @@ public class TardurGraphHopperManaged implements Managed {
             logger.error("Problem while reading border map GeoJSON. Skipping this.", e1);
             landmarkSplittingFeatureCollection = null;
         }
-        if (configuration.has("gtfs.file")) {
-            graphHopper = new GraphHopperGtfs(configuration);
-        } else {
-            graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection){
-                @Override
-                public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-                    Weighting weighting = super.createWeighting(hintsMap, encoder, turnCostProvider);
-                    if (hintsMap.has("block_property")) {
-                        return new TimeDependentAccessWeighting(osm, graphHopper, timeZones, weighting);
-                    }
-                    return weighting;
+        graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection){
+            @Override
+            public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
+                Weighting weighting = super.createWeighting(hintsMap, encoder, turnCostProvider);
+                if (hintsMap.has("block_property")) {
+                    return new TimeDependentAccessWeighting(osm, graphHopper, timeZones, weighting);
                 }
-            }.forServer();
-        }
-        if (!configuration.get("spatial_rules.location", "").isEmpty()) {
-            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
-        }
-        String spatialRuleBordersDirLocation = configuration.get("spatial_rules.borders_directory", "");
-        if (!spatialRuleBordersDirLocation.isEmpty()) {
-            final BBox maxBounds = BBox.parseBBoxString(configuration.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
-            final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
-            List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
-                for (Path borderFile : stream) {
-                    try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
-                        JsonFeatureCollection jsonFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-                        jsonFeatureCollections.add(jsonFeatureCollection);
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                return weighting;
             }
-        }
+        }.forServer();
+        graphHopper.setTagParserFactory(new TardurTagParserFactory());
         graphHopper.init(configuration);
     }
 
