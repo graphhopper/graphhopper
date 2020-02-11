@@ -16,14 +16,12 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.view;
+package com.graphhopper.tardur.view;
 
-import ch.poole.openinghoursparser.Rule;
-import com.graphhopper.TimeDependentAccessRestriction;
+import com.graphhopper.tardur.TimeDependentAccessRestriction;
 import io.dropwizard.views.View;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 
 public class ConditionalRestrictionsView extends View {
 

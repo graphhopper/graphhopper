@@ -88,6 +88,7 @@
         <module>web-api</module>
         <module>web</module>
         <module>client-hc</module>
+        <module>tardur</module>
     </modules>
 
     <repositories>

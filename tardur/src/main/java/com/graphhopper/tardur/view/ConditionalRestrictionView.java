@@ -16,15 +16,14 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.view;
+package com.graphhopper.tardur.view;
 
 import ch.poole.openinghoursparser.Rule;
-import com.graphhopper.TimeDependentAccessRestriction;
+import com.graphhopper.tardur.TimeDependentAccessRestriction;
 import com.graphhopper.timezone.core.TimeZones;
 import org.locationtech.jts.geom.Coordinate;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

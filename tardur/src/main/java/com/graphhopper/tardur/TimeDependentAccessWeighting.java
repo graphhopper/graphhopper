@@ -16,9 +16,10 @@
  *  limitations under the License.
  */
 
-package com.graphhopper;
+package com.graphhopper.tardur;
 
 import com.conveyal.osmlib.OSM;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.TDWeighting;

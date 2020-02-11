@@ -16,36 +16,29 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.resources;
+package com.graphhopper.tardur.resources;
 
-import ch.poole.openinghoursparser.Rule;
 import com.conveyal.osmlib.Node;
 import com.conveyal.osmlib.OSM;
-import com.conveyal.osmlib.OSMEntity;
 import com.conveyal.osmlib.Way;
-import com.graphhopper.TimeDependentAccessRestriction;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.tardur.TimeDependentAccessRestriction;
+import com.graphhopper.tardur.view.ConditionalRestrictionView;
+import com.graphhopper.tardur.view.ConditionalRestrictionsView;
 import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.view.ConditionalRestrictionView;
-import com.graphhopper.view.ConditionalRestrictionsView;
 import org.locationtech.jts.geom.Coordinate;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.StreamingOutput;
-import java.io.PrintWriter;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;

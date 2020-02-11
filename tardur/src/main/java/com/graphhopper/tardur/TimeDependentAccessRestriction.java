@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper;
+package com.graphhopper.tardur;
 
 import ch.poole.conditionalrestrictionparser.Condition;
 import ch.poole.conditionalrestrictionparser.ConditionalRestrictionParser;
@@ -37,7 +37,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import org.mapdb.Fun;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;

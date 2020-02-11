@@ -16,9 +16,12 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.resources;
+package com.graphhopper.tardur.resources;
 
-import com.conveyal.osmlib.*;
+import com.conveyal.osmlib.Node;
+import com.conveyal.osmlib.OSM;
+import com.conveyal.osmlib.Relation;
+import com.conveyal.osmlib.Way;
 import com.graphhopper.TimeDependentAccessRestriction;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.timezone.core.TimeZones;

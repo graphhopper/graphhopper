@@ -18,7 +18,6 @@
 
 package com.graphhopper.http;
 
-import com.conveyal.osmlib.OSM;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.SerializationConfig;
@@ -39,20 +38,16 @@ import com.graphhopper.resources.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
-import io.dropwizard.Configuration;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import io.dropwizard.views.ViewBundle;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
@@ -153,39 +148,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class OSMFactory implements Factory<OSM> {
-
-        @Inject
-        GraphHopperManaged graphHopperManaged;
-
-
-        @Override
-        public OSM provide() {
-            return graphHopperManaged.getOsm();
-        }
-
-        @Override
-        public void dispose(OSM instance) {
-
-        }
-    }
-
-    static class TimeZonesFactory implements Factory<TimeZones> {
-        @Inject
-        GraphHopperManaged graphHopperManaged;
-
-
-        @Override
-        public TimeZones provide() {
-            return graphHopperManaged.getTimeZones();
-        }
-
-        @Override
-        public void dispose(TimeZones instance) {
-
-        }
-    }
-
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
         // See #1440: avoids warning regarding com.fasterxml.jackson.module.afterburner.util.MyClassLoader
@@ -212,13 +174,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 }).collect(Collectors.toList());
             }
         }));
-        // Soll vermutlich eher in die Application
-        bootstrap.addBundle(new ViewBundle() {
-            @Override
-            public Map<String, Map<String, String>> getViewConfiguration(Configuration wurst) {
-                return ((GraphHopperBundleConfiguration) wurst).getViewRendererConfiguration();
-            }
-        });
     }
 
     @Override
@@ -242,7 +197,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             @Override
             protected void configure() {
                 bind(configuration.getGraphHopperConfiguration()).to(CmdArgs.class);
-                bind(graphHopperManaged).to(GraphHopperManaged.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopper.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
 
@@ -252,8 +206,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
                 bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
                 bindFactory(GtfsStorageFactory.class).to(GtfsStorage.class);
-                bindFactory(OSMFactory.class).to(OSM.class);
-                bindFactory(TimeZonesFactory.class).to(TimeZones.class);
             }
         });
 
@@ -276,8 +228,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(SPTResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
-        environment.jersey().register(ConditionalTurnRestrictionsResource.class);
-        environment.jersey().register(ConditionalAccessRestrictionsResource.class);
         environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopperManaged.getGraphHopper()));
     }
 }
