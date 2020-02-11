@@ -77,7 +77,7 @@ public class CustomWeighting extends AbstractWeighting {
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / maxSpeed + distance / maxDistanceFactor;
+        return distance / (maxSpeed + maxDistanceFactor);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class CustomWeighting extends AbstractWeighting {
         double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds))
             return Double.POSITIVE_INFINITY;
-        double distanceInfluence = distance / distanceFactorConfig.calcDistanceFactor(edgeState, reverse);
+        double distanceInfluence = distance / (maxDistanceFactor * distanceFactorConfig.calcDistanceFactor(edgeState, reverse));
         if (Double.isInfinite(distanceInfluence))
             return Double.POSITIVE_INFINITY;
         return (seconds + distanceInfluence) / priorityConfig.calcPriority(edgeState, reverse);
