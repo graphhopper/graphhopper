@@ -1037,10 +1037,12 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
 
         HintsMap hints = request.getHints();
-        if (customModel == null && hints.getWeighting().startsWith(CustomWeighting.key(""))) {
-            String modelName = hints.getWeighting().substring(CustomWeighting.key("").length());
-            if ((customModel = importCustomModels.get(modelName)) == null)
-                throw new IllegalArgumentException("unknown custom model " + modelName + " (" + hints.getWeighting() + ")");
+        if (hints.getWeighting().startsWith(CustomWeighting.key(""))) {
+            if (customModel == null) {
+                String modelName = hints.getWeighting().substring(CustomWeighting.key("").length());
+                if ((customModel = importCustomModels.get(modelName)) == null)
+                    throw new IllegalArgumentException("unknown custom model " + modelName + " (" + hints.getWeighting() + ")");
+            }
             request.setVehicle(customModel.getBase());
         }
 

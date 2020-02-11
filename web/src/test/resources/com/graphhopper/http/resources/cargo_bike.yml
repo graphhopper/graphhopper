@@ -12,9 +12,15 @@ max_speed:
 max_speed_fallback: 25
 
 priority:
+  # exclude steps
+  road_class:
+    steps: 0
+
   surface:
     sand: 0.5
   # prefer better tracks
   track_type: { other: 1.1, grade1: 1.1 }
   # prefer official bike routes
   bike_network: { other: 0.5 }
+  # avoid all situations where we have to get off the bike
+  get_off_bike: 0.5

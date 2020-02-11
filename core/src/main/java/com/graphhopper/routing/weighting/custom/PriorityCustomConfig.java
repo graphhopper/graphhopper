@@ -36,13 +36,18 @@ public class PriorityCustomConfig {
         add(lookup, customModel.getVehicleLength(), "vehicle_length", MaxLength.KEY);
 
         for (Map.Entry<String, Object> entry : customModel.getPriority().entrySet()) {
-            if (!lookup.hasEncodedValue(entry.getKey()))
-                throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'priority'");
+            String key = entry.getKey();
             Object value = entry.getValue();
-            if (value instanceof Map) {
-                EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(entry.getKey(), Enum.class);
-                Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
-                double[] values = Helper.createEnumToDoubleArray("priority", 1, 0, 100,
+            if (!lookup.hasEncodedValue(key))
+                throw new IllegalArgumentException("Cannot find '" + key + "' specified in 'priority'");
+
+            if (value instanceof Number) {
+                BooleanEncodedValue encodedValue = lookup.getBooleanEncodedValue(key);
+                priorityList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), 1));
+            } else if (value instanceof Map) {
+                EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(key, Enum.class);
+                Class<? extends Enum> enumClass = factory.findValues(key);
+                double[] values = Helper.createEnumToDoubleArray("priority." + key, 1, 0, 100,
                         enumClass, (Map<String, Object>) value);
                 normalizeFactor(values, 1);
                 priorityList.add(new EnumToValue(enumEncodedValue, values));

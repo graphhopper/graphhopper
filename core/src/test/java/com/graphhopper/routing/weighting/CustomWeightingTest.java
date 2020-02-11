@@ -111,6 +111,21 @@ public class CustomWeightingTest {
     }
 
     @Test
+    public void testSpeedFactorBooleanEV() {
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.setBase("car");
+
+        BooleanEncodedValue rcLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
+        vehicleModel.getPriority().put(RoadClassLink.KEY, 0.5);
+        CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+
+        assertEquals(3.1, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
+                set(rcLinkEnc, false).set(avSpeedEnc, 15).set(accessEnc, true), false), 0.01);
+        assertEquals(6.2, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
+                set(rcLinkEnc, true).set(avSpeedEnc, 15).set(accessEnc, true), false), 0.01);
+    }
+
+    @Test
     public void testPriority() {
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.setBase("car");

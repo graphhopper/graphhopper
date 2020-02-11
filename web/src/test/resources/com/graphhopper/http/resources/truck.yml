@@ -53,7 +53,6 @@ priority:
   # TODO include private and delivery only access for base car profile so that we can avoid it here, but not exclude it
   road_access: { destination: 0.1 }
   # avoid turns if possible and links are one simple indication for that
-  # TODO booleans are not yet supported here
-  # road_class_link: 0.5
+  road_class_link: 0.5
   # avoid toll roads
   toll: { no: 2 }

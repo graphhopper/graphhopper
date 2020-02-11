@@ -502,6 +502,11 @@ public class Helper {
         double[] tmp = new double[enumClass.getEnumConstants().length];
         Arrays.fill(tmp, defaultValue);
         for (Map.Entry<String, Object> encValEntry : map.entrySet()) {
+            if (encValEntry.getKey() == null)
+                throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
+            if (encValEntry.getValue() == null)
+                throw new IllegalArgumentException("value for " + name + " cannot be null, key: " + encValEntry.getKey());
+
             Enum enumValue = getValueOf(enumClass, encValEntry.getKey());
             tmp[enumValue.ordinal()] = ((Number) encValEntry.getValue()).doubleValue();
             if (tmp[enumValue.ordinal()] < minValue)

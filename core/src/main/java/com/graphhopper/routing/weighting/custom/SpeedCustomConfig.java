@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueFactory;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
@@ -51,13 +48,16 @@ public class SpeedCustomConfig {
         for (Map.Entry<String, Object> entry : customModel.getMaxSpeed().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            if (value instanceof Map) {
-                if (!lookup.hasEncodedValue(key))
-                    throw new IllegalArgumentException("Cannot find '" + key + "' specified in 'max_speed'");
+            if (!lookup.hasEncodedValue(key))
+                throw new IllegalArgumentException("Cannot find '" + key + "' specified in 'max_speed'");
 
+            if (value instanceof Number) {
+                BooleanEncodedValue encodedValue = lookup.getBooleanEncodedValue(key);
+                maxSpeedList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), maxSpeed));
+            } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(key, Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(key);
-                double[] values = Helper.createEnumToDoubleArray("max_speed", maxSpeed, 0, maxSpeed,
+                double[] values = Helper.createEnumToDoubleArray("max_speed." + key, maxSpeed, 0, maxSpeed,
                         enumClass, (Map<String, Object>) value);
                 maxSpeedList.add(new EnumToValue(enumEncodedValue, values));
             } else {
@@ -69,13 +69,16 @@ public class SpeedCustomConfig {
         for (Map.Entry<String, Object> entry : customModel.getSpeedFactor().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            if (value instanceof Map) {
-                if (!lookup.hasEncodedValue(key))
-                    throw new IllegalArgumentException("Cannot find '" + key + "' specified in 'speed_factor'");
+            if (!lookup.hasEncodedValue(key))
+                throw new IllegalArgumentException("Cannot find '" + key + "' specified in 'speed_factor'");
 
+            if (value instanceof Number) {
+                BooleanEncodedValue encodedValue = lookup.getBooleanEncodedValue(key);
+                speedFactorList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), 1));
+            } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(key, Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(key);
-                double[] values = Helper.createEnumToDoubleArray("speed_factor", 1, 0, 100,
+                double[] values = Helper.createEnumToDoubleArray("speed_factor." + key, 1, 0, 100,
                         enumClass, (Map<String, Object>) value);
                 normalizeFactor(values, 1);
                 speedFactorList.add(new EnumToValue(enumEncodedValue, values));
