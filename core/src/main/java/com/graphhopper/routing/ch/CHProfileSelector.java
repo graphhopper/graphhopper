@@ -93,14 +93,13 @@ public class CHProfileSelector {
     }
 
     private String getRequestAsString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(hintsMap.getWeighting().isEmpty() ? "*" : hintsMap.getWeighting());
-        sb.append("|");
-        sb.append(hintsMap.getVehicle().isEmpty() ? "*" : hintsMap.getVehicle());
-        sb.append("|");
-        sb.append("edge_based=").append(edgeBased != null ? edgeBased : "*");
-        sb.append("|");
-        sb.append("u_turn_costs=").append(uTurnCosts != null ? uTurnCosts : "*");
-        return sb.toString();
+        String sb = (hintsMap.getWeighting().isEmpty() ? "*" : hintsMap.getWeighting()) +
+                "|" +
+                (hintsMap.getVehicle().isEmpty() ? "*" : hintsMap.getVehicle()) +
+                "|" +
+                "edge_based=" + (edgeBased != null ? edgeBased : "*") +
+                "|" +
+                "u_turn_costs=" + (uTurnCosts != null ? uTurnCosts : "*");
+        return sb;
     }
 }

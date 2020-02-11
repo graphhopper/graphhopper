@@ -24,10 +24,9 @@ public enum RouteNetwork {
     OTHER("other"), INTERNATIONAL("international"), NATIONAL("national"), REGIONAL("regional"),
     LOCAL("local");
 
-    /**
-     * You need to call EncodingManager.getKey(prefix, EV_SUFFIX) as this EncodedValue can be used for e.g. bike and hike
-     */
-    public static final String EV_SUFFIX = "network";
+    public static String key(String prefix) {
+        return prefix + "_network";
+    }
 
     private final String name;
 

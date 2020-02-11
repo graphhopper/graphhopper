@@ -101,7 +101,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
 
         // both EncodedValues are optional; And return annotation only when instructions for bike encoder is requested
-        String key = getKey("bike", RouteNetwork.EV_SUFFIX);
+        String key = RouteNetwork.key("bike");
         this.bikeRouteEnc = evLookup.hasEncodedValue(key) ? evLookup.getEnumEncodedValue(key, RouteNetwork.class) : null;
         this.getOffBikeEnc = encoder instanceof BikeCommonFlagEncoder && evLookup.hasEncodedValue(GetOffBike.KEY)
                 ? evLookup.getBooleanEncodedValue(GetOffBike.KEY) : null;
@@ -392,12 +392,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             forceInstruction = true;
         }
 
-        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, encoder, maxSpeedEnc, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
-        int nrOfPossibleTurns = outgoingEdges.nrOfAllowedOutgoingEdges();
+        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, encoder, maxSpeedEnc, roadClassEnc, roadClassLinkEnc, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
+        int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
-            if (Math.abs(sign) > 1 && outgoingEdges.nrOfAllOutgoingEdges() > 1) {
+            if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1) {
                 // This is an actual turn because |sign| > 1
                 // There could be some confusion, if we would not create a turn instruction, even though it is the only
                 // possible turn, also see #1048

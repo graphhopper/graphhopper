@@ -18,13 +18,10 @@
 
 package com.graphhopper.http;
 
-import com.graphhopper.util.CmdArgs;
-
-import java.util.Map;
+import com.graphhopper.GraphHopperConfig;
 
 public interface GraphHopperBundleConfiguration {
 
-    CmdArgs getGraphHopperConfiguration();
+    GraphHopperConfig getGraphHopperConfiguration();
 
-    Map<String, Map<String, String>> getViewRendererConfiguration();
 }

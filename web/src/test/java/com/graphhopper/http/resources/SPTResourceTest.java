@@ -20,7 +20,6 @@ package com.graphhopper.http.resources;
 
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -42,12 +41,12 @@ public class SPTResourceTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("prepare.ch.weightings", "no").
                 put("graph.flag_encoders", "car").
                 put("graph.encoded_values", "max_speed,road_class").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR));
+                put("graph.location", DIR);
     }
 
     @ClassRule

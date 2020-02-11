@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
@@ -38,7 +39,6 @@ import com.graphhopper.resources.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
@@ -178,8 +178,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
     @Override
     public void run(GraphHopperBundleConfiguration configuration, Environment environment) {
-        configuration.getGraphHopperConfiguration().merge(CmdArgs.readFromSystemProperties());
-
         // If the "?type=gpx" parameter is present, sets a corresponding media type header
         environment.jersey().register(new TypeGPXFilter());
 
@@ -196,7 +194,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {
-                bind(configuration.getGraphHopperConfiguration()).to(CmdArgs.class);
+                bind(configuration.getGraphHopperConfiguration()).to(GraphHopperConfig.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopper.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
 

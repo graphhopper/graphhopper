@@ -19,10 +19,10 @@
 package com.graphhopper.tardur;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.dropwizard.RealtimeBundleConfiguration;
 import com.graphhopper.gtfs.dropwizard.RealtimeConfiguration;
 import com.graphhopper.http.GraphHopperBundleConfiguration;
-import com.graphhopper.util.CmdArgs;
 import io.dropwizard.Configuration;
 import io.dropwizard.bundles.assets.AssetsBundleConfiguration;
 import io.dropwizard.bundles.assets.AssetsConfiguration;
@@ -35,7 +35,7 @@ public class TardurConfiguration extends Configuration implements GraphHopperBun
 
     @NotNull
     @JsonProperty
-    private final CmdArgs graphhopper = new CmdArgs();
+    private final GraphHopperConfig graphhopper = new GraphHopperConfig();
 
     @Valid
     @JsonProperty
@@ -48,7 +48,7 @@ public class TardurConfiguration extends Configuration implements GraphHopperBun
     }
 
     @Override
-    public CmdArgs getGraphHopperConfiguration() {
+    public GraphHopperConfig getGraphHopperConfiguration() {
         return graphhopper;
     }
 

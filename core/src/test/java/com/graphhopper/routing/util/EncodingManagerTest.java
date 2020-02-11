@@ -144,7 +144,7 @@ public class EncodingManagerTest {
         manager.acceptWay(osmWay, map);
         IntsRef edgeFlags = manager.handleWayTags(osmWay, map, relFlags);
 
-        EnumEncodedValue enc = manager.getEnumEncodedValue(EncodingManager.getKey("bike", RouteNetwork.EV_SUFFIX), RouteNetwork.class);
+        EnumEncodedValue enc = manager.getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
 
         assertTrue(defaultBike.priorityEnc.getDecimal(false, edgeFlags)
                 > lessRelationCodes.priorityEnc.getDecimal(false, edgeFlags));

@@ -22,11 +22,11 @@ import com.conveyal.osmlib.Node;
 import com.conveyal.osmlib.OSM;
 import com.conveyal.osmlib.Relation;
 import com.conveyal.osmlib.Way;
-import com.graphhopper.TimeDependentAccessRestriction;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.tardur.TimeDependentAccessRestriction;
+import com.graphhopper.tardur.view.ConditionalRestrictionView;
+import com.graphhopper.tardur.view.ConditionalRestrictionsView;
 import com.graphhopper.timezone.core.TimeZones;
-import com.graphhopper.view.ConditionalRestrictionView;
-import com.graphhopper.view.ConditionalRestrictionsView;
 import org.locationtech.jts.geom.Coordinate;
 
 import javax.inject.Inject;

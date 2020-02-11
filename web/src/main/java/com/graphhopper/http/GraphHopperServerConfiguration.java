@@ -19,22 +19,21 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.dropwizard.RealtimeBundleConfiguration;
 import com.graphhopper.gtfs.dropwizard.RealtimeConfiguration;
-import com.graphhopper.util.CmdArgs;
 import io.dropwizard.Configuration;
 import io.dropwizard.bundles.assets.AssetsBundleConfiguration;
 import io.dropwizard.bundles.assets.AssetsConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.Map;
 
 public class GraphHopperServerConfiguration extends Configuration implements GraphHopperBundleConfiguration, RealtimeBundleConfiguration, AssetsBundleConfiguration {
 
     @NotNull
     @JsonProperty
-    private final CmdArgs graphhopper = new CmdArgs();
+    private final GraphHopperConfig graphhopper = new GraphHopperConfig();
 
     @Valid
     @JsonProperty
@@ -47,20 +46,8 @@ public class GraphHopperServerConfiguration extends Configuration implements Gra
     }
 
     @Override
-    public CmdArgs getGraphHopperConfiguration() {
+    public GraphHopperConfig getGraphHopperConfiguration() {
         return graphhopper;
-    }
-
-    private Map<String, Map<String, String>> viewRendererConfiguration;
-
-    @JsonProperty("viewRendererConfiguration")
-    public Map<String, Map<String, String>> getViewRendererConfiguration() {
-        return viewRendererConfiguration;
-    }
-
-    @JsonProperty("viewRendererConfiguration")
-    public void setViewRendererConfiguration(Map<String, Map<String, String>> viewRendererConfiguration) {
-        this.viewRendererConfiguration = viewRendererConfiguration;
     }
 
     @Override

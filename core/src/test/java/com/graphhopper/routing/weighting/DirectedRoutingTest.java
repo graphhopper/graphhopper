@@ -139,7 +139,7 @@ public class DirectedRoutingTest {
                 return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM:
                 AStarBidirection astarbi = new AStarBidirection(graph, graph.wrapWeighting(weighting), TraversalMode.EDGE_BASED);
-                return (BidirRoutingAlgorithm) lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+                return (BidirRoutingAlgorithm) lm.getPreparedRoutingAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }

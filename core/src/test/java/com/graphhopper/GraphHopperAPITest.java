@@ -20,7 +20,6 @@ package com.graphhopper;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -71,9 +70,9 @@ public class GraphHopperAPITest {
         graph.edge(0, 4, 40, true);
         graph.edge(4, 3, 40, true);
 
-        GraphHopper instance = new GraphHopper().
+        GraphHopper instance = createGraphHopper().
                 setStoreOnFlush(false).
-                setEncodingManager(encodingManager).setCHEnabled(false).
+                setCHEnabled(false).
                 loadGraph(graph);
         // 3 -> 0
         GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10));
@@ -95,16 +94,16 @@ public class GraphHopperAPITest {
         GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         initGraph(graph);
 
-        GraphHopper instance = new GraphHopper().
+        GraphHopper instance = createGraphHopper().
                 setStoreOnFlush(false).
-                setEncodingManager(encodingManager).setCHEnabled(false).
+                setCHEnabled(false).
                 loadGraph(graph);
         GHResponse rsp = instance.route(new GHRequest(42, 10, 42, 10.4));
         assertTrue(rsp.hasErrors());
 
         try {
             rsp.getBest().getPoints();
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
         }
 
@@ -129,7 +128,9 @@ public class GraphHopperAPITest {
         graph.edge(2, 3, 10, true);
 
         final AtomicInteger counter = new AtomicInteger(0);
-        GraphHopper instance = new GraphHopper().setEncodingManager(em).setElevation(true).setGraphHopperLocation(loc).setCHEnabled(false)
+        GraphHopper instance = new GraphHopper()
+                .setEncodingManager(em)
+                .setElevation(true).setGraphHopperLocation(loc).setCHEnabled(false)
                 .loadGraph(graph);
         instance.flush();
         instance.close();
@@ -164,20 +165,20 @@ public class GraphHopperAPITest {
 
     @Test
     public void testNoLoad() {
-        GraphHopper instance = new GraphHopper().
+        GraphHopper instance = createGraphHopper().
                 setStoreOnFlush(false).
-                setEncodingManager(encodingManager).setCHEnabled(false);
+                setCHEnabled(false);
         try {
             instance.route(new GHRequest(42, 10.4, 42, 10));
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
         }
 
-        instance = new GraphHopper().setEncodingManager(encodingManager);
+        instance = createGraphHopper();
         try {
             instance.route(new GHRequest(42, 10.4, 42, 10));
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
         }
@@ -243,5 +244,10 @@ public class GraphHopperAPITest {
         executorService.awaitTermination(3, TimeUnit.SECONDS);
 
         assertEquals(2, checkPointCounter.get());
+    }
+
+    private GraphHopper createGraphHopper() {
+        return new GraphHopper().
+                setEncodingManager(encodingManager);
     }
 }

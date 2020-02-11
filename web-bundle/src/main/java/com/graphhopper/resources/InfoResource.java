@@ -17,8 +17,8 @@
  */
 package com.graphhopper.resources;
 
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.shapes.BBox;
 
@@ -37,12 +37,12 @@ import java.util.*;
 @Produces(MediaType.APPLICATION_JSON)
 public class InfoResource {
 
-    private final CmdArgs config;
+    private final GraphHopperConfig config;
     private final GraphHopperStorage storage;
     private final boolean hasElevation;
 
     @Inject
-    public InfoResource(CmdArgs config, GraphHopperStorage storage, @Named("hasElevation") Boolean hasElevation) {
+    public InfoResource(GraphHopperConfig config, GraphHopperStorage storage, @Named("hasElevation") Boolean hasElevation) {
         this.config = config;
         this.storage = storage;
         this.hasElevation = hasElevation;

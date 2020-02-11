@@ -21,7 +21,6 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.Translation;
@@ -39,13 +38,13 @@ public interface RoutingTemplate {
     /**
      * This method takes the query points and returns the looked up QueryResults.
      */
-    List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder);
+    List<QueryResult> lookup(List<GHPoint> points);
 
     /**
      * This method returns a list of Path objects which then can be merged to serve one route with
      * via points or multiple alternative paths.
      */
-    List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts, FlagEncoder encoder);
+    List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts);
 
     /**
      * This method merges the returned paths appropriately e.g. all paths from the list into one

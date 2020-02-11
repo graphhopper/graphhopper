@@ -15,22 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.CmdArgs;
+package com.graphhopper.jackson;
 
-/**
- * @author Peter Karich
- */
-public interface RoutingAlgorithmFactoryDecorator {
-    void init(CmdArgs args);
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.graphhopper.GraphHopperConfig;
 
-    boolean isEnabled();
+public interface GraphHopperConfigMixIn {
 
-    /**
-     * This method returns the specified algoFactory unchanged, decorates it or completely replaces
-     * it depending on the specified optionsMap.
-     */
-    RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory algoFactory, HintsMap optionsMap);
+    // We can add explicit configuration properties to GraphHopperConfig (for example to allow lists or nested objects),
+    // everything else is stored in a HashMap
+    @JsonAnySetter
+    GraphHopperConfig put(String key, Object value);
 }
