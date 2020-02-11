@@ -119,7 +119,9 @@ $(document).ready(function (e) {
            try {
              contentType = 'application/json; charset=utf-8';
              var jsonModel = JSON.parse(inputText);
-             var jsonRequest = {"model": jsonModel, "points": points, "points_encoded": "false", "elevation": ghRequest.api_params.elevation};
+             jsonModel.points = points;
+             jsonModel.points_encoded = "false";
+             jsonModel.elevation = ghRequest.api_params.elevation;
              request = JSON.stringify(jsonRequest);
            } catch(ex) {
              routeResultsDiv.html("Cannot parse JSON " + ex);
@@ -130,7 +132,7 @@ $(document).ready(function (e) {
            var lines = inputText.split('\n');
            var modelText = "";
            for(var i = 0; i < lines.length; i++) {
-             modelText += " "+lines[i] + "\n";
+             modelText += lines[i] + "\n";
            }
            var pointsStr = "";
            for(var i = 0; i < points.length; i++) {
@@ -141,12 +143,12 @@ $(document).ready(function (e) {
            request = "points: [" + pointsStr + "]\n"
                    + "points_encoded: false\n"
                    + "elevation: " + ghRequest.api_params.elevation +"\n"
-                   + "model:\n" + modelText;
+                   + modelText;
            console.log(request)
        }
 
        $.ajax({
-           url: "/route",
+           url: "/custom",
            type: "POST",
            contentType: contentType,
            dataType: "json",
