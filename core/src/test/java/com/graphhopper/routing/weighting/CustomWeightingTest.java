@@ -139,15 +139,15 @@ public class CustomWeightingTest {
         // increase distance influence for road class 'motorway'
         Map map = new HashMap();
         map.put(MOTORWAY.toString(), 0.1);
-        vehicleModel.getDistanceFactor().put(KEY, map);
+        vehicleModel.getDistanceTerm().put(KEY, map);
         CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
 
         // similar to inverse priority but do not apply to time (left term)
-        assertEquals(2.4 + 7, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
+        assertEquals(2.4 + 1.7, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true), false), 0.01);
         assertEquals(2.4 + 0.7, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true), false), 0.01);
-        assertEquals(12 + 35.0, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(50).
+        assertEquals(12 + 8.5, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(50).
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true), false), 0.01);
         assertEquals(12 + 3.5, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(50).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true), false), 0.01);

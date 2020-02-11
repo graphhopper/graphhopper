@@ -31,17 +31,15 @@ max_speed:
 # If none of the conditions in the map above apply use the fallback, if specified:
 max_speed_fallback: 100
 
-# The distance_factor changes the influence of the distance. I.e. longer roads get a higher cost.
-distance_factor_base: 6.67
-# The distance_factor_base will be multiplied with the following value under the specified condition:
-distance_factor:
-  # avoid toll roads (prefer roads with 'no' toll)
-  toll: { no: 2 }
-  # in Germany toll is proportional to the length and only for certain road_class values, so avoid them:
-  road_class:
-    motorway: 0.04
-    primary: 0.04
-    trunk: 0.04
+# The distance term changes the influence of the distance. I.e. longer roads get a higher cost.
+# The distance_factor_constant is independent of the edge.
+distance_term_constant: 0.07
+# The following terms will be added to distance_term_constant and only multiplied with the distance. This won't change
+# the ETA. The default value is 0. All higher values will avoid the condition and 'preferring' something
+# is currently not possible. For that use speed_factor or priority.
+distance_term:
+  # avoid toll roads
+  toll: { all: 0.1, hvg: 0.1 }
 
 # Now we want to set a preference without changing the taken time. I.e. trucks shall prefer bigger roads and so we could
 # increase the speed for them, but this influences time. The default priority 1 won't change something.

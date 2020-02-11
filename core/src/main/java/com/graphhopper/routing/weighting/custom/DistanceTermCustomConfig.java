@@ -28,42 +28,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.normalizeFactor;
-
-public class DistanceFactorCustomConfig {
+public class DistanceTermCustomConfig {
     private final List<ConfigMapEntry> distanceFactorList = new ArrayList<>();
-    private double baseDistanceFactor;
 
-    public DistanceFactorCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
-        baseDistanceFactor = customModel.getDistanceFactorBase();
-        for (Map.Entry<String, Object> entry : customModel.getDistanceFactor().entrySet()) {
+    public DistanceTermCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
+        for (Map.Entry<String, Object> entry : customModel.getDistanceTerm().entrySet()) {
             if (!lookup.hasEncodedValue(entry.getKey()))
-                throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'distance_factor'");
+                throw new IllegalArgumentException("Cannot find '" + entry.getKey() + "' specified in 'distance_term'");
             Object value = entry.getValue();
             if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(entry.getKey(), Enum.class);
                 Class<? extends Enum> enumClass = factory.findValues(entry.getKey());
-                double[] values = Helper.createEnumToDoubleArray("distance_factor", 1, 0, 100,
+                double[] values = Helper.createEnumToDoubleArray("distance_factor", 0, 0, 100,
                         enumClass, (Map<String, Object>) value);
-                // no need to normalize the values as increasing weight is fine (and distance_factor is proportional to weight)
-                normalizeFactor(values, 1);
                 distanceFactorList.add(new EnumToValue(enumEncodedValue, values));
             } else {
-                throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'distance_factor'");
+                throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'distance_term'");
             }
         }
     }
 
-    /**
-     * @return weight without unit.
-     */
-    public double calcDistanceFactor(EdgeIteratorState edge, boolean reverse) {
-        double distanceFactor = baseDistanceFactor;
+    public double calcDistanceTerm(EdgeIteratorState edge, boolean reverse) {
+        double term = 0;
         for (int i = 0; i < distanceFactorList.size(); i++) {
             ConfigMapEntry entry = distanceFactorList.get(i);
             double value = entry.getValue(edge, reverse);
-            distanceFactor *= value;
+            term += value;
         }
-        return distanceFactor;
+        return term;
     }
 }
