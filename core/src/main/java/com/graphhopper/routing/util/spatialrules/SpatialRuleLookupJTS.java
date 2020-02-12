@@ -22,8 +22,6 @@ import java.util.*;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.index.strtree.STRtree;
 
-import com.graphhopper.util.shapes.GHPoint;
-
 /**
  * @author Thomas Butz
  */
@@ -80,16 +78,16 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
 
         index.build();
 
-        this.rules = new ArrayList<>(spatialRules);
-        Collections.sort(rules, RULE_COMP); // keep the spatial id stable
-        rules.add(0, SpatialRule.EMPTY);
+        List<SpatialRule> sortedRules = new ArrayList<>(spatialRules);
+        Collections.sort(sortedRules, RULE_COMP); // keep the spatial id stable
+        this.rules = Collections.unmodifiableList(sortedRules);
         this.maxBounds = maxBounds;
     }
 
     @Override
-    public SpatialRule lookupRule(double lat, double lon) {
+    public SpatialRuleSet lookupRules(double lat, double lon) {
         if (!maxBounds.covers(lon, lat)) {
-            return SpatialRule.EMPTY;
+            return SpatialRuleSet.EMPTY;
         }
 
         Envelope searchEnv = new Envelope(lon, lon, lat, lat);
@@ -98,7 +96,7 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
         List<SpatialRuleContainer> containers = index.query(searchEnv);
         
         if (containers.isEmpty()) {
-            return SpatialRule.EMPTY;
+            return SpatialRuleSet.EMPTY;
         }
         
         Point point = geometryFactory.createPoint(new Coordinate(lon, lat));
@@ -110,31 +108,19 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
         }
         
         if (applicableRules.isEmpty()) {
-            return SpatialRule.EMPTY;
+            return SpatialRuleSet.EMPTY;
         }
-
-        //TODO support multiple rules
-        return applicableRules.get(0);
-    }
-
-    @Override
-    public SpatialRule lookupRule(GHPoint point) {
-        return lookupRule(point.lat, point.lon);
+        
+        Collections.sort(applicableRules, RULE_COMP);
+        
+        int spatialId = rules.indexOf(applicableRules.get(applicableRules.size() - 1));
+        
+        return new SpatialRuleSet(applicableRules, spatialId);
     }
     
     @Override
-    public int getSpatialId(SpatialRule rule) {
-        return rules.indexOf(rule);
-    }
-    
-    @Override
-    public SpatialRule getSpatialRule(int spatialId) {
-        return rules.get(spatialId);
-    }
-
-    @Override
-    public int size() {
-        return rules.size();
+    public List<SpatialRule> getRules() {
+        return rules;
     }
 
     @Override

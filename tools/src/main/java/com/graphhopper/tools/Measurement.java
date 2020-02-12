@@ -518,7 +518,8 @@ public class Measurement {
         MiniPerfTest lookupPerfTest = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
-                return spatialRuleLookup.lookupRule(randomPoints.get(run)).hashCode();
+                GHPoint point = randomPoints.get(run);
+                return spatialRuleLookup.lookupRules(point.lat, point.lon).getRules().size();
             }
         }.setIterations(count).start();
         
