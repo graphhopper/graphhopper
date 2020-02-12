@@ -199,6 +199,10 @@ public class LMPreparationHandler {
         return preparations.size();
     }
 
+    public List<LMProfile> getLMProfiles() {
+        return lmProfiles;
+    }
+
     public List<PrepareLandmarks> getPreparations() {
         return preparations;
     }
