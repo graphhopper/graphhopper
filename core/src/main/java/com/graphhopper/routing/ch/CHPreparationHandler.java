@@ -225,6 +225,7 @@ public class CHPreparationHandler {
      * @return a {@link RoutingAlgorithmFactory} for CH or throw an error if no preparation is available for the given
      * hints
      */
+    // todonow: remove this and related methods
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         if (preparations.isEmpty())
             throw new IllegalStateException("No CH preparations added yet");
