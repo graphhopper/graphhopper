@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.CustomModel;
@@ -25,15 +26,21 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.shapes.BBox;
 import org.junit.Before;
 import org.junit.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.graphhopper.routing.profiles.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CustomWeightingTest {
 
@@ -144,5 +151,40 @@ public class CustomWeightingTest {
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true), false), 0.01);
         assertEquals(15.5, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(50).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true), false), 0.01);
+    }
+
+    @Test
+    public void testAvoidArea() {
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.setBase("car");
+
+        Map map = new HashMap();
+        map.put(MOTORWAY.toString(), 0.1);
+        String areaId = "blup";
+        vehicleModel.getPriority().put(KEY, map);
+        vehicleModel.getPriority().put("area_" + areaId, 0.5);
+
+        Coordinate[] coordinates = {new Coordinate(13.722, 51.053), new Coordinate(13.722, 51.055),
+                new Coordinate(13.731, 51.055), new Coordinate(13.731, 51.053), null};
+        coordinates[coordinates.length - 1] = coordinates[0];
+        Geometry poly = new GeometryFactory().createPolygon(coordinates);
+
+        JsonFeature area = new JsonFeature(areaId, "Polygon", new BBox(13.713684, 13.719864, 51.036213, 51.036591),
+                poly, Collections.<String, Object>emptyMap());
+        vehicleModel.getAreas().put(areaId, area);
+        CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+
+        graphHopperStorage.getNodeAccess().setNode(0, 51.036213, 13.713684);
+        graphHopperStorage.getNodeAccess().setNode(1, 51.036591, 13.719864);
+        // a bit in the north where the blup area is:
+        graphHopperStorage.getNodeAccess().setNode(2, 51.054506, 13.723432);
+        graphHopperStorage.getNodeAccess().setNode(3, 51.053589, 13.730679);
+        EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true);
+        assertEquals(155, weighting.calcEdgeWeight(edge1, false), 0.01);
+
+        // intersect polygon
+        EdgeIteratorState edge2 = graphHopperStorage.edge(2, 3).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true);
+        assertTrue(poly.intersects(edge2.fetchWayGeometry(3).toLineString(false)));
+        assertEquals(310, weighting.calcEdgeWeight(edge2, false), 0.01);
     }
 }

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.util.Helper;
 
 import java.util.HashMap;
@@ -38,6 +39,7 @@ public class CustomModel {
     private Map<String, Object> speedFactor = new HashMap<>();
     private Map<String, Object> maxSpeed = new HashMap<>();
     private Map<String, Object> priorityMap = new HashMap<>();
+    private Map<String, JsonFeature> areas = new HashMap<>();
 
     public CustomModel() {
     }
@@ -110,5 +112,13 @@ public class CustomModel {
 
     public double getDistanceTermConstant() {
         return distanceTermConstant;
+    }
+
+    public void setAreas(Map<String, JsonFeature> areas) {
+        this.areas = areas;
+    }
+
+    public Map<String, JsonFeature> getAreas() {
+        return areas;
     }
 }

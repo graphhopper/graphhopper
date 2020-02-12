@@ -56,3 +56,10 @@ priority:
   road_class_link: 0.5
   # avoid toll roads
   toll: { no: 2 }
+  # avoid a certain area
+  area_custom1: 0.5
+
+areas:
+  custom1:
+    type: "Feature"
+    geometry: { type: "Polygon", coordinates: [[[13.722, 51.053], [13.722, 51.055], [13.731, 51.055], [13.731, 51.053], [13.722, 51.053]]] }

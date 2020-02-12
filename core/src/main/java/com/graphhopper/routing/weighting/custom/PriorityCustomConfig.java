@@ -21,6 +21,8 @@ import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,14 +40,17 @@ public class PriorityCustomConfig {
         for (Map.Entry<String, Object> entry : customModel.getPriority().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            if (!lookup.hasEncodedValue(key))
-                throw new IllegalArgumentException("Cannot find '" + key + "' specified in 'priority'");
 
             if (value instanceof Number) {
-                BooleanEncodedValue encodedValue = lookup.getBooleanEncodedValue(key);
-                priorityList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), 1));
+                if (key.startsWith(GeoToValue.key(""))) {
+                    Geometry geometry = GeoToValue.pickGeo(customModel, key.substring(GeoToValue.key("").length()));
+                    priorityList.add(new GeoToValue(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
+                } else {
+                    BooleanEncodedValue encodedValue = getEV(lookup, "priority", key, BooleanEncodedValue.class);
+                    priorityList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), 1));
+                }
             } else if (value instanceof Map) {
-                EnumEncodedValue enumEncodedValue = lookup.getEnumEncodedValue(key, Enum.class);
+                EnumEncodedValue enumEncodedValue = getEV(lookup, "priority", key, EnumEncodedValue.class);
                 Class<? extends Enum> enumClass = factory.findValues(key);
                 double[] values = Helper.createEnumToDoubleArray("priority." + key, 1, 0, 100,
                         enumClass, (Map<String, Object>) value);
@@ -55,6 +60,12 @@ public class PriorityCustomConfig {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'priority'");
             }
         }
+    }
+
+    public static <T extends EncodedValue> T getEV(EncodedValueLookup lookup, String name, String key, Class<T> encodedValueType) {
+        if (!lookup.hasEncodedValue(key))
+            throw new IllegalArgumentException("Cannot find '" + key + "' specified in '" + name + "'");
+        return lookup.getEncodedValue(key, encodedValueType);
     }
 
     /**
