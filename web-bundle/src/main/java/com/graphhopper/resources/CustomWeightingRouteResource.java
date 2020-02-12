@@ -45,8 +45,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import static com.graphhopper.util.Parameters.Routing.CALC_POINTS;
-import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
+import static com.graphhopper.util.Parameters.Routing.*;
 
 /**
  * Resource to use GraphHopper in a remote client application like mobile or browser. Note: If type
@@ -84,6 +83,8 @@ public class CustomWeightingRouteResource {
         CustomModel model = request.getModel();
         if (model == null)
             throw new IllegalArgumentException("No custom model properties found");
+        if (request.getHints().has(BLOCK_AREA))
+            throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
 
         request.setWeighting(CustomWeighting.key(model.getBase())).getHints().put("ch.disable", true);
         ((GraphHopper) graphHopper).calcPaths(request, ghResponse, model);
