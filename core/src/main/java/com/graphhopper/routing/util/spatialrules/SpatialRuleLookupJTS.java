@@ -54,9 +54,6 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
         for (SpatialRule rule : spatialRules) {
             if (rule == null)
                 throw new IllegalArgumentException("rule cannot be null");
-
-            if (rule.equals(SpatialRule.EMPTY))
-                throw new IllegalArgumentException("rule cannot be EMPTY");
             
             if (!ruleIDs.add(rule.getId()))
                 throw new IllegalArgumentException("Duplicate rule ID: \"" + rule.getId() + "\"");

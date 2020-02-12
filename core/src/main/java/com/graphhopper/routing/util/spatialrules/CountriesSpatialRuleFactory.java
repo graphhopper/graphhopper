@@ -24,6 +24,6 @@ public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.Spa
         } catch (Exception ex) {
         }
 
-        return SpatialRule.EMPTY;
+        return null;
     }
 }
