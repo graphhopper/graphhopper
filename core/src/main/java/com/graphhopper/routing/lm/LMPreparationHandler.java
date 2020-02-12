@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithm;
@@ -231,13 +229,11 @@ public class LMPreparationHandler {
         // trivial to check whether or not this is the case so we do not allow this for now.
         String requestedString = (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) + "|" +
                 (map.getVehicle().isEmpty() ? "*" : map.getVehicle());
-        throw new IllegalArgumentException("Cannot find matching LM profile for your request." +
+        throw new IllegalArgumentException("Cannot find matching LM profile for your request. Please check your parameters." +
+                "\nYou can try disabling LM by setting " + Parameters.Landmark.DISABLE + "=true" +
                 "\nrequested: " + requestedString + "\navailable: " + lmProfiles);
     }
 
-    /**
-     * @see com.graphhopper.GraphHopper#calcPaths(GHRequest, GHResponse)
-     */
     private static class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         private RoutingAlgorithmFactory defaultAlgoFactory;
         private PrepareLandmarks p;
