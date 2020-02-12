@@ -161,7 +161,7 @@ public class TimeDependentAccessRestriction {
         for (Map.Entry<String, Object> tag : tags.entrySet()) {
             if (!(tag.getValue() instanceof String)) continue;
             String tagValue = (String) tag.getValue();
-            if (tagValue.contains("@")) {
+            if (tag.getKey().contains("conditional") && tagValue.contains("@")) {
                 ConditionalTagData conditionalTagData = new ConditionalTagData();
                 conditionalTagData.tag = new OSMEntity.Tag(tag.getKey(), tagValue);
                 conditionalTagData.restrictionData = new ArrayList<>();
