@@ -44,19 +44,19 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrepareLandmarks.class);
     private final Graph graph;
     private final LandmarkStorage lms;
-    private final Weighting weighting;
+    private final LMProfile lmProfile;
     private int defaultActiveLandmarks;
 
-    public PrepareLandmarks(Directory dir, GraphHopperStorage graph, Weighting weighting,
+    public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMProfile lmProfile,
                             int landmarks, int activeLandmarks) {
         if (activeLandmarks > landmarks)
             throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarks
                     + " should be less or equal to landmark count of " + landmarks);
         this.graph = graph;
         this.defaultActiveLandmarks = activeLandmarks;
-        this.weighting = weighting;
+        this.lmProfile = lmProfile;
 
-        lms = new LandmarkStorage(graph, dir, weighting, landmarks);
+        lms = new LandmarkStorage(graph, dir, lmProfile, landmarks);
     }
 
     /**
@@ -113,8 +113,8 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         return lms.getSubnetworksWithLandmarks();
     }
 
-    public Weighting getWeighting() {
-        return weighting;
+    public LMProfile getLMProfile() {
+        return lmProfile;
     }
 
     public boolean loadExisting() {
@@ -143,7 +143,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStar.EPSILON, 1);
             AStar astar = (AStar) algo;
-            astar.setApproximation(new LMApproximator(qGraph, weighting, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
+            astar.setApproximation(new LMApproximator(qGraph, lmProfile.getWeighting(), this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
             return algo;
         } else if (algo instanceof AStarBidirection) {
@@ -152,7 +152,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AStarBidirection astarbi = (AStarBidirection) algo;
-            astarbi.setApproximation(new LMApproximator(qGraph, weighting, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
+            astarbi.setApproximation(new LMApproximator(qGraph, lmProfile.getWeighting(), this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
             return algo;
         } else if (algo instanceof AlternativeRoute) {
@@ -161,7 +161,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AlternativeRoute altRoute = (AlternativeRoute) algo;
-            altRoute.setApproximation(new LMApproximator(qGraph, weighting, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
+            altRoute.setApproximation(new LMApproximator(qGraph, lmProfile.getWeighting(), this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
             // landmark algorithm follows good compromise between fast response and exploring 'interesting' paths so we
             // can decrease this exploration factor further (1->dijkstra, 0.8->bidir. A*)

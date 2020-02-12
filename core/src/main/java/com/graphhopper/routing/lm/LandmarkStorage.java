@@ -30,7 +30,6 @@ import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -78,6 +77,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private final GraphHopperStorage graph;
     private final FlagEncoder encoder;
     private final Weighting weighting;
+    private final LMProfile lmProfile;
     private Weighting lmSelectionWeighting;
     private final TraversalMode traversalMode;
     private boolean initialized;
@@ -91,11 +91,12 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      */
     static final long PRECISION = 1 << 16;
 
-    public LandmarkStorage(GraphHopperStorage graph, Directory dir, final Weighting weighting, int landmarks) {
+    public LandmarkStorage(GraphHopperStorage graph, Directory dir, final LMProfile lmProfile, int landmarks) {
         this.graph = graph;
         this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
+        this.lmProfile = lmProfile;
+        this.weighting = lmProfile.getWeighting();
         this.encoder = weighting.getFlagEncoder();
-        this.weighting = weighting;
         // allowing arbitrary weighting is too dangerous
         this.lmSelectionWeighting = new ShortestWeighting(encoder) {
             @Override
@@ -118,8 +119,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // Edge based is not really necessary because when adding turn costs while routing we can still
         // use the node based traversal as this is a smaller weight approximation and will still produce correct results
         this.traversalMode = TraversalMode.NODE_BASED;
-        final String name = AbstractWeighting.weightingToFileName(weighting);
-        this.landmarkWeightDA = dir.find("landmarks_" + name);
+        this.landmarkWeightDA = dir.find("landmarks_" + lmProfile.getName());
 
         this.landmarks = landmarks;
         // one short per landmark and two directions => 2*2 byte
@@ -127,7 +127,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.FROM_OFFSET = 0;
         this.TO_OFFSET = 2;
         this.landmarkIDs = new ArrayList<>();
-        this.subnetworkStorage = new SubnetworkStorage(dir, "landmarks_" + name);
+        this.subnetworkStorage = new SubnetworkStorage(dir, "landmarks_" + lmProfile.getName());
     }
 
     /**
@@ -395,7 +395,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 explorer.runAlgo();
                 tmpLandmarkNodeIds[lmIdx + 1] = explorer.getLastNode();
                 if (logDetails && lmIdx % logOffset == 0)
-                    LOGGER.info("Finding landmarks [" + weighting + "] in network [" + explorer.getVisitedNodes() + "]. "
+                    LOGGER.info("Finding landmarks [" + lmProfile + "] in network [" + explorer.getVisitedNodes() + "]. "
                             + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%, " + Helper.getMemInfo());
             }
 

@@ -28,7 +28,6 @@ import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHProfile;
@@ -884,7 +883,7 @@ public class GraphHopperOSMTest {
                     setGraphHopperLocation(ghLoc).
                     setDataReaderFile(testOsm);
             tmpGH.getLMPreparationHandler().
-                    addWeighting("fastest").
+                    addLMProfileAsString("fastest").
                     setEnabled(true).
                     setPreparationThreads(threadCount);
 
@@ -894,7 +893,7 @@ public class GraphHopperOSMTest {
             for (PrepareLandmarks prepLM : tmpGH.getLMPreparationHandler().getPreparations()) {
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", prepLM.isPrepared());
 
-                String name = AbstractWeighting.weightingToFileName(prepLM.getWeighting());
+                String name = prepLM.getLMProfile().getName();
                 Integer singleThreadShortcutCount = landmarkCount.get(name);
                 if (singleThreadShortcutCount == null)
                     landmarkCount.put(name, prepLM.getSubnetworksWithLandmarks());
