@@ -17,18 +17,12 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
@@ -79,6 +73,9 @@ public class LMPreparationHandler {
 
         landmarkCount = ghConfig.getInt(Parameters.Landmark.COUNT, landmarkCount);
         activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
+        if (activeLandmarkCount > landmarkCount)
+            throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount
+                    + " should be less or equal to landmark count of " + landmarkCount);
         logDetails = ghConfig.getBool(Landmark.PREPARE + "log_details", false);
         minNodes = ghConfig.getInt(Landmark.PREPARE + "min_network_size", -1);
 
@@ -222,19 +219,24 @@ public class LMPreparationHandler {
      * hints
      */
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
+        PrepareLandmarks preparation = getPreparation(map);
+        return new LMRoutingAlgorithmFactory(preparation.getLandmarkStorage(), activeLandmarkCount, preparation.getBaseNodes());
+    }
+
+    private PrepareLandmarks getPreparation(HintsMap map) {
         if (preparations.isEmpty())
             throw new IllegalStateException("No LM preparations added yet");
 
         // if no weighting or vehicle is specified for this request and there is only one preparation, use it
         if ((map.getWeighting().isEmpty() || map.getVehicle().isEmpty()) && preparations.size() == 1) {
-            return new LMRoutingAlgorithmFactory(preparations.get(0), new RoutingAlgorithmFactorySimple());
+            return preparations.get(0);
         }
 
         List<Weighting> lmWeightings = new ArrayList<>(preparations.size());
         for (final PrepareLandmarks p : preparations) {
             lmWeightings.add(p.getWeighting());
             if (p.getWeighting().matches(map))
-                return new LMRoutingAlgorithmFactory(p, new RoutingAlgorithmFactorySimple());
+                return p;
         }
 
         // There are situations where we can use the requested encoder/weighting with an existing LM preparation, even
@@ -245,29 +247,6 @@ public class LMPreparationHandler {
                 (map.getVehicle().isEmpty() ? "*" : map.getVehicle());
         throw new IllegalArgumentException("Cannot find matching LM profile for your request." +
                 "\nrequested: " + requestedString + "\navailable: " + lmWeightings);
-    }
-
-    /**
-     * @see com.graphhopper.GraphHopper#calcPaths(GHRequest, GHResponse)
-     */
-    private static class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
-        private RoutingAlgorithmFactory defaultAlgoFactory;
-        private PrepareLandmarks p;
-
-        public LMRoutingAlgorithmFactory(PrepareLandmarks p, RoutingAlgorithmFactory defaultAlgoFactory) {
-            this.defaultAlgoFactory = defaultAlgoFactory;
-            this.p = p;
-        }
-
-        public RoutingAlgorithmFactory getDefaultAlgoFactory() {
-            return defaultAlgoFactory;
-        }
-
-        @Override
-        public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-            RoutingAlgorithm algo = defaultAlgoFactory.createAlgo(g, opts);
-            return p.getPreparedRoutingAlgorithm(g, algo, opts);
-        }
     }
 
     /**
@@ -342,7 +321,7 @@ public class LMPreparationHandler {
                         "Couldn't find " + weighting.getName() + " in " + maximumWeights);
 
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
-                    weighting, landmarkCount, activeLandmarkCount).
+                    weighting, landmarkCount).
                     setLandmarkSuggestions(lmSuggestions).
                     setMaximumWeight(maximumWeight).
                     setLogDetails(logDetails);
