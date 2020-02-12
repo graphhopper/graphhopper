@@ -22,18 +22,18 @@ public class LMPreparationHandlerTest {
     public void addWeighting() {
         LMPreparationHandler handler = new LMPreparationHandler();
         handler.setEnabled(true);
-        handler.addWeighting("fastest");
-        assertEquals(Arrays.asList("fastest"), handler.getWeightingsAsStrings());
+        handler.addLMProfileAsString("fastest");
+        assertEquals(Arrays.asList("fastest"), handler.getLMProfileStrings());
 
         // special parameters like the maximum weight
         handler = new LMPreparationHandler().setEnabled(true);
-        handler.addWeighting("fastest|maximum=65000");
-        handler.addWeighting("shortest|maximum=20000");
-        assertEquals(Arrays.asList("fastest", "shortest"), handler.getWeightingsAsStrings());
+        handler.addLMProfileAsString("fastest|maximum=65000");
+        handler.addLMProfileAsString("shortest|maximum=20000");
+        assertEquals(Arrays.asList("fastest", "shortest"), handler.getLMProfileStrings());
 
         FlagEncoder car = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(car);
-        handler.addWeighting(new FastestWeighting(car)).addWeighting(new ShortestWeighting(car));
+        handler.addLMProfile(new LMProfile(new FastestWeighting(car))).addLMProfile(new LMProfile(new ShortestWeighting(car)));
         handler.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false), null);
         assertEquals(1, handler.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);
         assertEquals(0.3, handler.getPreparations().get(1).getLandmarkStorage().getFactor(), .1);

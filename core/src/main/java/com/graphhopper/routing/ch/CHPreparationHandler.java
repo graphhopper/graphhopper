@@ -79,19 +79,19 @@ public class CHPreparationHandler {
 
         if ("no".equals(chWeightingsStr) || "false".equals(chWeightingsStr)) {
             // default is fastest and we need to clear this explicitly
-            chProfileStrings.clear();
+            setCHProfilesAsStrings(Collections.<String>emptyList());
         } else if (!chWeightingsStr.isEmpty()) {
             setCHProfilesAsStrings(Arrays.asList(chWeightingsStr.split(",")));
         }
 
-        boolean enableThis = !chProfileStrings.isEmpty();
+        boolean enableThis = !getCHProfileStrings().isEmpty();
         setEnabled(enableThis);
         if (enableThis)
             setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
         String edgeBasedCHStr = ghConfig.get(CH.PREPARE + "edge_based", "off").trim();
         edgeBasedCHStr = edgeBasedCHStr.equals("false") ? "off" : edgeBasedCHStr;
-        edgeBasedCHMode = EdgeBasedCHMode.valueOf(edgeBasedCHStr.toUpperCase(Locale.ROOT));
+        setEdgeBasedCHMode(EdgeBasedCHMode.valueOf(edgeBasedCHStr.toUpperCase(Locale.ROOT)));
 
         pMap = ghConfig.asPMap();
     }
@@ -185,9 +185,6 @@ public class CHPreparationHandler {
     }
 
     public List<String> getCHProfileStrings() {
-        if (chProfileStrings.isEmpty())
-            throw new IllegalStateException("Potential bug: chProfileStrings is empty");
-
         return new ArrayList<>(chProfileStrings);
     }
 
@@ -200,9 +197,6 @@ public class CHPreparationHandler {
      * @see #addCHProfileAsString(String)
      */
     public CHPreparationHandler setCHProfilesAsStrings(List<String> profileStrings) {
-        if (profileStrings.isEmpty())
-            throw new IllegalArgumentException("It is not allowed to pass an empty list of CH profile strings");
-
         chProfileStrings.clear();
         for (String profileString : profileStrings) {
             profileString = toLowerCase(profileString);

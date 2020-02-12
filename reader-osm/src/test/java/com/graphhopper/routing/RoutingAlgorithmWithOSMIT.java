@@ -563,7 +563,7 @@ public class RoutingAlgorithmWithOSMIT {
             hopper.setWayPointMaxDistance(0);
 
             // always enable landmarks
-            hopper.getLMPreparationHandler().addWeighting(weightStr).
+            hopper.getLMPreparationHandler().addLMProfileAsString(weightStr).
                     setEnabled(true).setDisablingAllowed(true);
 
             if (withCH)

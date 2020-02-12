@@ -42,12 +42,12 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrepareLandmarks.class);
     private final Graph graph;
     private final LandmarkStorage lms;
-    private final Weighting weighting;
+    private final LMProfile lmProfile;
 
-    public PrepareLandmarks(Directory dir, GraphHopperStorage graph, Weighting weighting, int landmarks) {
+    public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMProfile lmProfile, int landmarks) {
         this.graph = graph;
-        this.weighting = weighting;
-        lms = new LandmarkStorage(graph, dir, weighting, landmarks);
+        this.lmProfile = lmProfile;
+        lms = new LandmarkStorage(graph, dir, lmProfile, landmarks);
     }
 
     /**
@@ -104,8 +104,8 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         return lms.getSubnetworksWithLandmarks();
     }
 
-    public Weighting getWeighting() {
-        return weighting;
+    public LMProfile getLMProfile() {
+        return lmProfile;
     }
 
     public boolean loadExisting() {

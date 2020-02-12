@@ -7,6 +7,7 @@ import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.lm.LMProfile;
 import com.graphhopper.routing.lm.PerfectApproximator;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -120,7 +121,7 @@ public class RandomizedRoutingTest {
             chGraph = graph.getCHGraph(chProfile);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, weighting, 16);
+            lm = new PrepareLandmarks(dir, graph, new LMProfile(weighting), 16);
             lm.setMaximumWeight(10000);
             lm.doWork();
         }
