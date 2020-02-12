@@ -90,6 +90,7 @@ public class TardurGraphHopperManaged implements Managed {
             osm.readFromFile(graphHopper.getDataReaderFile());
             TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(graphHopper.getGraphHopperStorage(), osm, timeZones);
             timeDependentAccessRestriction.markEdgesAdjacentToConditionalTurnRestrictions();
+            graphHopper.getGraphHopperStorage().flush();
         }
     }
 

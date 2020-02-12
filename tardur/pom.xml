@@ -77,7 +77,7 @@
         </dependency>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-web-bundle</artifactId>
+            <artifactId>graphhopper-web</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
