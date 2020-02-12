@@ -49,6 +49,7 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
         this.index = new STRtree();
         
         Map<Polygon, SpatialRuleContainer> containerMap = new HashMap<>();
+        List<SpatialRule> registeredRules = new ArrayList<>();
         Set<String> ruleIDs = new HashSet<>();
         for (SpatialRule rule : spatialRules) {
             if (rule == null)
@@ -60,6 +61,7 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
             if (!ruleIDs.add(rule.getId()))
                 throw new IllegalArgumentException("Duplicate rule ID: \"" + rule.getId() + "\"");
             
+            boolean registered = false;
             for (Polygon border : rule.getBorders()) {
                 Envelope borderEnvelope = border.getEnvelopeInternal();
                 if (!maxBounds.intersects(borderEnvelope)) {
@@ -73,14 +75,18 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
                     index.insert(borderEnvelope, container);
                 }
                 container.addRule(rule);
+                registered = true;
+            }
+            
+            if (registered) {
+                registeredRules.add(rule);
             }
         }
 
         index.build();
 
-        List<SpatialRule> sortedRules = new ArrayList<>(spatialRules);
-        Collections.sort(sortedRules, RULE_COMP); // keep the spatial id stable
-        this.rules = Collections.unmodifiableList(sortedRules);
+        Collections.sort(registeredRules, RULE_COMP); // keep the spatial id stable
+        this.rules = Collections.unmodifiableList(registeredRules);
         this.maxBounds = maxBounds;
     }
 
