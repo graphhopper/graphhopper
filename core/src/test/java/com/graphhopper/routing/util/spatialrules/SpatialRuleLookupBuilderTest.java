@@ -221,14 +221,12 @@ public class SpatialRuleLookupBuilderTest {
                 return new AbstractSpatialRule(borders) {
                     
                     @Override
-                    public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
+                    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
                         return 100;
                     }
 
                     @Override
-                    public RoadAccess getAccess(RoadClass roadClass,
-                                    TransportationMode transportationMode,
-                                    RoadAccess currentRoadAccess) {
+                    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
                         return RoadAccess.YES;
                     }
 

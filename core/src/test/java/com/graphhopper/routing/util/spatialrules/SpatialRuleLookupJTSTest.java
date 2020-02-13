@@ -152,13 +152,12 @@ public class SpatialRuleLookupJTSTest {
         return new AbstractSpatialRule(p) {
             
             @Override
-            public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
+            public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
                 return currentMaxSpeed;
             }
 
             @Override
-            public RoadAccess getAccess(RoadClass roadClass, TransportationMode transportationMode,
-                            RoadAccess currentRoadAccess) {
+            public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
                 return RoadAccess.DESTINATION;
             }
 

@@ -45,30 +45,30 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     }
     
     @Override
-    public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
+    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
         if (currentMaxSpeed > 0) {
             return currentMaxSpeed;
         }
         
-        return getDefaultMaxSpeed(roadClass);
+        return getDefaultMaxSpeed(roadClass, transport);
     }
     
     @Override
-    public double getDefaultMaxSpeed(RoadClass roadClass) {
+    public double getDefaultMaxSpeed(RoadClass roadClass, TransportationMode transport) {
         return -1;
     }
 
     @Override
-    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
+    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
         if (currentRoadAccess != RoadAccess.YES) {
             return currentRoadAccess;
         }
         
-        return getDefaultAccess(roadClass, transportationMode);
+        return getDefaultAccess(roadClass, transport);
     }
     
     @Override
-    public RoadAccess getDefaultAccess(RoadClass roadClass, TransportationMode transportationMode) {
+    public RoadAccess getDefaultAccess(RoadClass roadClass, TransportationMode transport) {
         return RoadAccess.YES;
     }
 

@@ -25,6 +25,7 @@ import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
@@ -56,9 +57,11 @@ public class OSMMaxSpeedParser implements TagParser {
         double maxSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
 
         SpatialRule spatialRule = way.getTag("spatial_rule", null);
-        if (spatialRule != null)
-            maxSpeed = spatialRule.getMaxSpeed(RoadClass.find(way.getTag("highway", "")), maxSpeed);
-
+        if (spatialRule != null) {
+            RoadClass roadClass = RoadClass.find(way.getTag("highway", ""));
+            maxSpeed = spatialRule.getMaxSpeed(roadClass, TransportationMode.MOTOR_VEHICLE, maxSpeed);
+        }
+            
         double fwdSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:forward"));
         if (fwdSpeed < 0 && maxSpeed > 0)
             fwdSpeed = maxSpeed;
