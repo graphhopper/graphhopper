@@ -25,13 +25,16 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 public class Jackson {
 
     public static ObjectMapper newObjectMapper() {
-        return initObjectMapper(new ObjectMapper());
+        return initObjectMapperWithSnake(new ObjectMapper());
+    }
+
+    public static ObjectMapper initObjectMapperWithSnake(ObjectMapper objectMapper) {
+        return initObjectMapper(objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE));
     }
 
     public static ObjectMapper initObjectMapper(ObjectMapper objectMapper) {
         objectMapper.registerModule(new GraphHopperModule());
         objectMapper.registerModule(new JtsModule());
-        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return objectMapper;
     }

@@ -17,24 +17,12 @@
  */
 package com.graphhopper.jackson;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.graphhopper.GHRequest;
-
-import java.util.List;
 
 /**
  * With this approach we avoid the jackson annotations dependency in core
  */
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-interface GHRequestMixIn {
-
-    // a good trick to serialize unknown properties into the HintsMap
-    @JsonAnySetter
-    void putHint(String fieldName, Object value);
-
-    @JsonProperty("details")
-    GHRequest setPathDetails(List<String> pathDetails);
+interface CustomModelMixIn {
 }

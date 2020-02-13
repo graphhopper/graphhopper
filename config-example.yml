@@ -164,28 +164,28 @@ graphhopper:
 
 # Dropwizard server configuration
 server:
-  application_connectors:
+  applicationConnectors:
   - type: http
     port: 8989
     # for security reasons bind to localhost
-    bind_host: localhost
+    bindHost: localhost
   requestLog:
       appenders: []
-  admin_connectors:
+  adminConnectors:
   - type: http
     port: 8990
-    bind_host: localhost
-
+    bindHost: localhost
+# See https://www.dropwizard.io/1.3.8/docs/manual/configuration.html#logging
 logging:
   appenders:
   - type: file
-    time_zone: UTC
-    current_log_filename: logs/graphhopper.log
-    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    timeZone: UTC
+    currentLogFilename: logs/graphhopper.log
+    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     archive: true
-    archived_log_filename_pattern: ./logs/graphhopper-%d.log.gz
-    archived_file_count: 30
-    never_block: true
+    archivedLogFilenamePattern: ./logs/graphhopper-%d.log.gz
+    archivedFileCount: 30
+    neverBlock: true
   - type: console
-    time_zone: UTC
-    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    timeZone: UTC
+    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
