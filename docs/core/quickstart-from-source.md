@@ -61,10 +61,14 @@ Main class: com.graphhopper.http.GraphHopperApplication
 VM options: -Xms1g -Xmx1g -server -Dgraphhopper.datareader.file=[your-area].osm.pbf -Dgraphhopper.graph.location=./[your-area].osm-gh
 Program arguments: server config.yml
 ```
-Settings -> Build,Execution,Deployment -> Compiler -> Java Compiler and disable: 
-Use '--release' option for cross compilation(java 9 and later)
-(otherwise Error:(46, 26) java: package sun.misc does not exist)
 
+In some cases IntelliJ might given an error similar to: 
+```
+Error:(46, 56) java: package sun.misc does not exist
+```
+To fix this go to `Settings -> Build,Execution,Deployment -> Compiler -> Java Compiler` and disable: 
+`Use '--release' option for cross compilation (java 9 and later)`.
+See #1854
 
 ### Contribute
 
