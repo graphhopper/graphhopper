@@ -86,7 +86,7 @@ $(document).ready(function (e) {
         mapLayer.adjustMapSize();
     });
 
-    var sendData = function() {
+    var sendCustomData = function() {
        mapLayer.clearElevation();
        mapLayer.clearLayers();
        flagAll();
@@ -164,9 +164,9 @@ $(document).ready(function (e) {
 
     $("#flex-input-text").keydown(function (e) {
         // CTRL+Enter
-        if (e.ctrlKey && e.keyCode == 13) sendData();
+        if (e.ctrlKey && e.keyCode == 13) sendCustomData();
     });
-    $("#flex-search-button").click(sendData);
+    $("#flex-search-button").click(sendCustomData);
 
     if (isProduction())
         $('#hosting').show();
@@ -191,6 +191,13 @@ $(document).ready(function (e) {
     });
 
     var urlParams = urlTools.parseUrlWithHisto();
+
+    var customURL = urlParams.load_custom;
+    if(customURL && ghenv.environment === 'development')
+        $.ajax(customURL).
+            done(function(data) { $("#flex-input-text").val(data); $("#flex-input-link").click(); }).
+            fail(function(err)  { console.log("Cannot load custom URL " + customURL); });
+
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
             .then(function (arg1, arg2) {
                 // init translation retrieved from first call (fetchTranslationMap)
