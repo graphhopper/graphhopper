@@ -18,7 +18,6 @@
 package com.graphhopper;
 
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -114,8 +113,7 @@ public class GraphHopperAPITest {
     public void testDoNotInterpolateTwice1645() {
         String loc = "./target/issue1645";
         Helper.removeDir(new File(loc));
-        EncodingManager em = new EncodingManager.Builder().add(new CarFlagEncoder()).build();
-        GraphHopperStorage graph = GraphBuilder.start(em).setRAM(loc, true).set3D(true).create();
+        GraphHopperStorage graph = GraphBuilder.start(encodingManager).setRAM(loc, true).set3D(true).create();
 
         // we need elevation
         NodeAccess na = graph.getNodeAccess();
@@ -128,33 +126,32 @@ public class GraphHopperAPITest {
         graph.edge(2, 3, 10, true);
 
         final AtomicInteger counter = new AtomicInteger(0);
-        GraphHopper instance = new GraphHopper()
-                .setEncodingManager(em)
+        GraphHopper instance = createGraphHopper()
                 .setElevation(true).setGraphHopperLocation(loc).setCHEnabled(false)
                 .loadGraph(graph);
         instance.flush();
         instance.close();
         assertEquals(0, counter.get());
 
-        instance = new GraphHopper() {
+        instance = setupGraphHopper(new GraphHopper() {
             @Override
             void interpolateBridgesAndOrTunnels() {
                 counter.incrementAndGet();
                 super.interpolateBridgesAndOrTunnels();
             }
-        }.setEncodingManager(em).setElevation(true).setCHEnabled(false);
+        }).setElevation(true).setCHEnabled(false);
         instance.load(loc);
         instance.flush();
         instance.close();
         assertEquals(1, counter.get());
 
-        instance = new GraphHopper() {
+        instance = setupGraphHopper(new GraphHopper() {
             @Override
             void interpolateBridgesAndOrTunnels() {
                 counter.incrementAndGet();
                 super.interpolateBridgesAndOrTunnels();
             }
-        }.setEncodingManager(em).setElevation(true).setCHEnabled(false);
+        }).setElevation(true).setCHEnabled(false);
         instance.load(loc);
         instance.flush();
         instance.close();
@@ -192,7 +189,7 @@ public class GraphHopperAPITest {
 
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicInteger checkPointCounter = new AtomicInteger(0);
-        final GraphHopper graphHopper = new GraphHopper() {
+        final GraphHopper graphHopper = setupGraphHopper(new GraphHopper() {
             @Override
             protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
                 return new ChangeGraphHelper(graph, locationIndex) {
@@ -210,7 +207,7 @@ public class GraphHopperAPITest {
                     }
                 };
             }
-        }.setStoreOnFlush(false).setEncodingManager(encodingManager).setCHEnabled(false).
+        }).setStoreOnFlush(false).setCHEnabled(false).
                 loadGraph(graph);
 
         GHResponse rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10));
@@ -247,7 +244,11 @@ public class GraphHopperAPITest {
     }
 
     private GraphHopper createGraphHopper() {
-        return new GraphHopper().
-                setEncodingManager(encodingManager);
+        return setupGraphHopper(new GraphHopper());
+    }
+
+    private GraphHopper setupGraphHopper(GraphHopper hopper) {
+        hopper.setEncodingManager(encodingManager);
+        return hopper;
     }
 }
