@@ -18,22 +18,9 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.PathWrapper;
-import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.routing.profiles.RoadClass;
-import com.graphhopper.routing.profiles.RoadEnvironment;
-import com.graphhopper.routing.profiles.Surface;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.exceptions.PointOutOfBoundsException;
-import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -44,17 +31,13 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class CustomWeightingRouteResource2Test {
+public class CustomWeightingRouteResourceLMTest {
     private static final String DIR = "./target/andorra-gh/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
@@ -62,8 +45,9 @@ public class CustomWeightingRouteResource2Test {
     static {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car,foot").
-                put("prepare.ch.weightings", "fastest").
-                put("routing.ch.disabling_allowed", "true").
+                put("prepare.ch.weightings", "no").
+                put("prepare.lm.weightings", "fastest").
+                put("routing.lm.disabling_allowed", "true").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").

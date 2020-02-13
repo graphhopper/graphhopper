@@ -16,7 +16,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 
-import static com.graphhopper.http.resources.CustomWeightingRouteResource2Test.assertBetween;
+import static com.graphhopper.http.resources.CustomWeightingRouteResourceLMTest.assertBetween;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 

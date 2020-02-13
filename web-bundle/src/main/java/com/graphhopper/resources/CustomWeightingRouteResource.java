@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.CustomRequest;
@@ -59,11 +58,11 @@ public class CustomWeightingRouteResource {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomWeightingRouteResource.class);
 
-    private final GraphHopperAPI graphHopper;
+    private final GraphHopper graphHopper;
     private final ObjectMapper yamlOM;
 
     @Inject
-    public CustomWeightingRouteResource(GraphHopperAPI graphHopper) {
+    public CustomWeightingRouteResource(GraphHopper graphHopper) {
         this.graphHopper = graphHopper;
         this.yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
     }
@@ -75,9 +74,6 @@ public class CustomWeightingRouteResource {
         if (request == null)
             throw new IllegalArgumentException("Empty request");
 
-        if (!(graphHopper instanceof GraphHopper))
-            throw new IllegalStateException("CustomRequest requires GraphHopper base class");
-
         StopWatch sw = new StopWatch().start();
         GHResponse ghResponse = new GHResponse();
         CustomModel model = request.getModel();
@@ -86,8 +82,13 @@ public class CustomWeightingRouteResource {
         if (request.getHints().has(BLOCK_AREA))
             throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
 
-        request.setWeighting(CustomWeighting.key(model.getBase())).getHints().put("ch.disable", true);
-        ((GraphHopper) graphHopper).calcPaths(request, ghResponse, model);
+        request.setWeighting(CustomWeighting.key(model.getBase()));
+
+        // if encoder does not exist we assume the base is a LM or CH profile:
+        if (graphHopper.getEncodingManager().hasEncoder(model.getBase()))
+            request.getHints().put("lm.disable", true).put("ch.disable", true);
+
+        graphHopper.calcPaths(request, ghResponse, model);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
         boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().get("type", "json"));
