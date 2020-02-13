@@ -43,36 +43,47 @@ public class GermanySpatialRule extends AbstractSpatialRule {
      * Your implementation should be able to handle these cases.
      */
     @Override
-    public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
-        if (currentMaxSpeed > 0) {
-            return currentMaxSpeed;
-        }
-        
+    public double getDefaultMaxSpeed(RoadClass roadClass) {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (roadClass) {
             case MOTORWAY:
             case TRUNK:
                 return Integer.MAX_VALUE;
+            case PRIMARY:
+                return 100;
+            case SECONDARY:
+                return 100;
+            case TERTIARY:
+                return 100;
+            case UNCLASSIFIED:
+                return 100;
             case RESIDENTIAL:
                 return 100;
             case LIVING_STREET:
                 return 4;
             default:
-                return super.getMaxSpeed(roadClass, currentMaxSpeed);
+                return -1;
         }
     }
-
+    
     @Override
-    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
-        if (currentRoadAccess != RoadAccess.YES) {
-            return currentRoadAccess;
-        }
-        
-        if (transportationMode == TransportationMode.MOTOR_VEHICLE && roadClass == RoadClass.TRACK) {
-            return RoadAccess.DESTINATION;
+    public RoadAccess getDefaultAccess(RoadClass roadClass, TransportationMode transportationMode) {
+        if (transportationMode != TransportationMode.MOTOR_VEHICLE) {
+            return RoadAccess.YES;
         }
 
-        return super.getAccess(roadClass, transportationMode, currentRoadAccess);
+        switch (roadClass) {
+        case TRACK:
+            return RoadAccess.DESTINATION;
+        case PATH:
+        case BRIDLEWAY:
+        case CYCLEWAY:
+        case FOOTWAY:
+        case PEDESTRIAN:
+            return RoadAccess.NO;
+        default:
+            return RoadAccess.YES;
+        }
     }
 
     @Override

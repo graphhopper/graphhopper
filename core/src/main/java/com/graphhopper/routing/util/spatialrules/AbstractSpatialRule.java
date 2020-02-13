@@ -49,49 +49,27 @@ public abstract class AbstractSpatialRule implements SpatialRule {
         if (currentMaxSpeed > 0) {
             return currentMaxSpeed;
         }
-
-        // We tried to estimate reasonable values: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
-        // We did not always used the highest value available, but we used a high value
-        switch (roadClass) {
-            case MOTORWAY:
-                return 130;
-            case TRUNK:
-                return 130;
-            case PRIMARY:
-                return 100;
-            case SECONDARY:
-                return 100;
-            case TERTIARY:
-                return 100;
-            case UNCLASSIFIED:
-                return 100;
-            case RESIDENTIAL:
-                return 90;
-            case LIVING_STREET:
-                return 20;
-            default:
-                return currentMaxSpeed;
-        }
+        
+        return getDefaultMaxSpeed(roadClass);
+    }
+    
+    @Override
+    public double getDefaultMaxSpeed(RoadClass roadClass) {
+        return -1;
     }
 
     @Override
     public RoadAccess getAccess(RoadClass roadClass, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
-        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
-        // We tried to find generally forbidden tags
-        if (transportationMode != TransportationMode.MOTOR_VEHICLE) {
+        if (currentRoadAccess != RoadAccess.YES) {
             return currentRoadAccess;
         }
         
-        switch (roadClass) {
-            case PATH:
-            case BRIDLEWAY:
-            case CYCLEWAY:
-            case FOOTWAY:
-            case PEDESTRIAN:
-                return RoadAccess.NO;
-            default:
-                return currentRoadAccess;
-        }
+        return getDefaultAccess(roadClass, transportationMode);
+    }
+    
+    @Override
+    public RoadAccess getDefaultAccess(RoadClass roadClass, TransportationMode transportationMode) {
+        return RoadAccess.YES;
     }
 
     @Override

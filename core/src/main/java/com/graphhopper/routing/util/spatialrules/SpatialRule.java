@@ -45,6 +45,14 @@ public interface SpatialRule {
     double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed);
 
     /**
+     * Return the default max speed for a certain road class.
+     *
+     * @param roadClass       The highway type, e.g. {@link RoadClass#MOTORWAY}
+     * @return the maximum speed value to be used as default or -1 if such a value can't be determined
+     */
+    double getDefaultMaxSpeed(RoadClass roadClass);
+    
+    /**
      * Returns the {@link RoadAccess} for a certain highway type and transportation mode.
      *
      * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
@@ -53,6 +61,15 @@ public interface SpatialRule {
      * @return the type of access to be used
      */
     RoadAccess getAccess(RoadClass roadClass, TransportationMode transportationMode, RoadAccess currentRoadAccess);
+
+    /**
+     * Returns the default {@link RoadAccess} for a certain highway type and transportation mode.
+     *
+     * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
+     * @param transportationMode The mode of transportation
+     * @return the type of access to be used as default or {@link RoadAccess#YES} if such a value can't be determined
+     */
+    RoadAccess getDefaultAccess(RoadClass roadClass, TransportationMode transportationMode);
 
     /**
      * Returns the borders in which the SpatialRule is valid
@@ -64,15 +81,26 @@ public interface SpatialRule {
      */
     String getId();
 
+
     SpatialRule EMPTY = new SpatialRule() {
         @Override
         public double getMaxSpeed(RoadClass roadClass, double currentMaxSpeed) {
             return currentMaxSpeed;
         }
+        
+        @Override
+        public double getDefaultMaxSpeed(RoadClass roadClass) {
+            return -1;
+        }
 
         @Override
         public RoadAccess getAccess(RoadClass roadClass, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
             return currentRoadAccess;
+        }
+        
+        @Override
+        public RoadAccess getDefaultAccess(RoadClass roadClass, TransportationMode transportationMode) {
+            return RoadAccess.YES;
         }
 
         // should we use Country.DEFAULT here?
