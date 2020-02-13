@@ -118,7 +118,7 @@ public class IsochroneResource {
         }
 
         ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
-        conformingDelaunayTriangulator.setConstraints(new ArrayList(), new ArrayList());
+        conformingDelaunayTriangulator.setConstraints(new ArrayList<>(), new ArrayList<>());
         conformingDelaunayTriangulator.formInitialDelaunay();
         conformingDelaunayTriangulator.enforceConstraints();
         Geometry convexHull = conformingDelaunayTriangulator.getConvexHull();

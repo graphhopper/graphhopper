@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
@@ -42,6 +41,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.graphhopper.GraphHopperIT.DIR;
+import static com.graphhopper.routing.ch.CHPreparationHandler.EdgeBasedCHMode;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.assertEquals;
@@ -563,14 +563,14 @@ public class RoutingAlgorithmWithOSMIT {
             hopper.setWayPointMaxDistance(0);
 
             // always enable landmarks
-            hopper.getLMFactoryDecorator().addWeighting(weightStr ).
+            hopper.getLMPreparationHandler().addLMProfileAsString(weightStr).
                     setEnabled(true).setDisablingAllowed(true);
 
             if (withCH)
-                hopper.getCHFactoryDecorator().
+                hopper.getCHPreparationHandler().
                         addCHProfileAsString(weightStr).
                         setEnabled(true).
-                        setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE).
+                        setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE).
                         setDisablingAllowed(true);
 
             if (is3D)

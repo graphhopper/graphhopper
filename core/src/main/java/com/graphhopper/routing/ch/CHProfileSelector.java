@@ -66,7 +66,9 @@ public class CHProfileSelector {
         }
 
         if (matchingProfiles.isEmpty()) {
-            throw new CHProfileSelectionException("Cannot find matching CH profile for your request.\nrequested:  " + getRequestAsString() + "\navailable: " + chProfiles);
+            throw new CHProfileSelectionException("Cannot find matching CH profile for your request. Please check your parameters." +
+                    "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
+                    "\nrequested:  " + getRequestAsString() + "\navailable: " + chProfiles);
         } else if (matchingProfiles.size() == 1) {
             return matchingProfiles.get(0);
         } else {
@@ -80,6 +82,7 @@ public class CHProfileSelector {
                 return match1.isEdgeBased() ? match1 : match2;
             }
             throw new CHProfileSelectionException("There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`edge_based` and/or `u_turn_costs` parameters to be more specific." +
+                    "\nYou can also try disabling CH altogether using " + Parameters.CH.DISABLE + "=true" +
                     "\nrequested:  " + getRequestAsString() + "\nmatched:   " + matchingProfiles + "\navailable: " + chProfiles);
         }
     }
@@ -93,14 +96,13 @@ public class CHProfileSelector {
     }
 
     private String getRequestAsString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(hintsMap.getWeighting().isEmpty() ? "*" : hintsMap.getWeighting());
-        sb.append("|");
-        sb.append(hintsMap.getVehicle().isEmpty() ? "*" : hintsMap.getVehicle());
-        sb.append("|");
-        sb.append("edge_based=").append(edgeBased != null ? edgeBased : "*");
-        sb.append("|");
-        sb.append("u_turn_costs=").append(uTurnCosts != null ? uTurnCosts : "*");
-        return sb.toString();
+        String sb = (hintsMap.getWeighting().isEmpty() ? "*" : hintsMap.getWeighting()) +
+                "|" +
+                (hintsMap.getVehicle().isEmpty() ? "*" : hintsMap.getVehicle()) +
+                "|" +
+                "edge_based=" + (edgeBased != null ? edgeBased : "*") +
+                "|" +
+                "u_turn_costs=" + (uTurnCosts != null ? uTurnCosts : "*");
+        return sb;
     }
 }

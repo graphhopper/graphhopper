@@ -149,7 +149,7 @@ public class CustomWeightingRouteResource2Test {
                 "    steps: 0\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 500, 600);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 300, 600);
     }
 
     static void assertBetween(String msg, double val, double from, double to) {
