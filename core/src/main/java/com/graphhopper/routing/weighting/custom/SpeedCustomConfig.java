@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.getEV;
-import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.normalizeFactor;
 
 final class SpeedCustomConfig {
     private List<ConfigMapEntry> speedFactorList = new ArrayList<>();
@@ -87,9 +86,8 @@ final class SpeedCustomConfig {
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "speed_factor", key, EnumEncodedValue.class);
                 Class<? extends Enum> enumClass = factory.findValues(key);
-                double[] values = Helper.createEnumToDoubleArray("speed_factor." + key, 1, 0, 100,
+                double[] values = Helper.createEnumToDoubleArray("speed_factor." + key, 1, 0, 1,
                         enumClass, (Map<String, Object>) value);
-                normalizeFactor(values, 1);
                 speedFactorList.add(new EnumToValue(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'speed_factor'");

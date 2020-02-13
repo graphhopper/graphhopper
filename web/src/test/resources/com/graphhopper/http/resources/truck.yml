@@ -7,11 +7,10 @@ vehicle_width: 2.5
 # in tons
 vehicle_weight: 4.5
 
-# The formula is defined in CustomWeighting, where the speed_factor can be used to increase and decrease speed.
-# If the value is higher than 1 the other values will be divided by this value to make the underlying routing
-# algorithm work (normalization) and still have the same effect. And if two conditions are satisfied the values are
+# The formula is defined in CustomWeighting, where the speed_factor can be used to decrease speed.
+# The minimum value is 0 and the maximum is 1. If two conditions are satisfied the values are
 # multiplied e.g. if road_class==motorway and road_environment==tunnel, then the resulting speed is
-# average_speed*0.85*0.9. The minimum value is 0.
+# average_speed*0.85*0.9.
 speed_factor:
   road_environment:
     tunnel: 0.85
@@ -19,7 +18,7 @@ speed_factor:
   # a more compact JSON-way to list the properties, fully YAML-compatible:
   road_class: { motorway: 0.85, primary: 0.9 }
 
-# You can lower the average speed for certain conditions via the max_speed map. The speed_factor is applied before
+# You can lower the average speed for certain conditions via this max_speed entry. The speed_factor is applied before
 # this operation. See the following example that sets the maximum speed to 95km/h for motorways.
 max_speed:
   road_class:
@@ -35,12 +34,11 @@ max_speed_fallback: 100
 # The distance_factor_constant is independent of the edge properties and does not influence the ETA.
 distance_term_constant: 0.07
 
-# Now we want to set a preference without changing the taken time. I.e. trucks shall prefer bigger roads and so we could
-# increase the speed for them, but this influences time. The default priority 1 won't change something.
+# Now we want to set a preference without changing the taken time. The default priority is 1 and does not change something.
 # Higher than 1 will prefer the road under the specified condition and lower than 1 will avoid it.
 # If the value is higher than 1 the other values will be divided by this value to make the underlying routing algorithm
 # work (normalization) and still have the same effect. And if two conditions are met the values will be multiplied.
-# The minimum value is 0.
+# The minimum value is 0 the maximum value is 100.
 priority:
   road_class:
     motorway: 1.1

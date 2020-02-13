@@ -54,7 +54,7 @@ public class CustomWeightingRouteResourceTest {
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"weighting\": \"custom_truck\"" +
                 "}";
-        // TODO NOW is it logical to use /route for this instead /custom?
+        // TODO NOW use profile instead of weighting
         final Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);

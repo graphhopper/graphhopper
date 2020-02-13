@@ -74,7 +74,7 @@ final class PriorityCustomConfig {
      * The purpose of this method is to avoid factors above max which makes e.g. Weighting.getMinWeight simpler (as maximum priority is 1)
      * and also ensures that the landmark algorithm still works (weight can only increased without effecting optimality).
      */
-    static void normalizeFactor(double[] values, final double max) {
+    private static void normalizeFactor(double[] values, final double max) {
         double tmpMax = max;
         for (int i = 0; i < values.length; i++) {
             tmpMax = Math.max(tmpMax, values[i]);
