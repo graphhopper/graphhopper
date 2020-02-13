@@ -27,7 +27,7 @@ import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.CustomRequest;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.routing.weighting.CustomWeighting;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.StopWatch;

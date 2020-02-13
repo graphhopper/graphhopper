@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Arrays;
 
-public final class EnumToValue implements ConfigMapEntry {
+final class EnumToValue implements ConfigMapEntry {
     private final IntEncodedValue eev;
     private final double[] values;
 

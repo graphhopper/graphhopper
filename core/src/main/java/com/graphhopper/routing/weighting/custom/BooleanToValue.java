@@ -20,7 +20,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
-public final class BooleanToValue implements ConfigMapEntry {
+final class BooleanToValue implements ConfigMapEntry {
     private final BooleanEncodedValue bev;
     private final double value, elseValue;
 

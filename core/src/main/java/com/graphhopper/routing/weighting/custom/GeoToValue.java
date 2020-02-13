@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 
-public final class GeoToValue implements ConfigMapEntry {
+final class GeoToValue implements ConfigMapEntry {
     public static String key(String postfix) {
         return "area_" + postfix;
     }

@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.weighting;
+package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
@@ -23,6 +23,8 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.weighting.AbstractWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.custom.PriorityCustomConfig;
 import com.graphhopper.routing.weighting.custom.SpeedCustomConfig;
 import com.graphhopper.util.EdgeIteratorState;
@@ -41,7 +43,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * to avoid problems with the landmark algorithm, i.e. the edge weight is always increased and the heuristic always
  * underestimates the weight.
  */
-public class CustomWeighting extends AbstractWeighting {
+public final class CustomWeighting extends AbstractWeighting {
 
     public static String key(String postfix) {
         return "custom_" + postfix;

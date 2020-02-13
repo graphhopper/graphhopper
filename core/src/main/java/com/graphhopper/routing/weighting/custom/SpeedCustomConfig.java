@@ -32,7 +32,7 @@ import java.util.Map;
 import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.getEV;
 import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.normalizeFactor;
 
-public class SpeedCustomConfig {
+final class SpeedCustomConfig {
     private List<ConfigMapEntry> speedFactorList = new ArrayList<>();
     private List<ConfigMapEntry> maxSpeedList = new ArrayList<>();
     private DecimalEncodedValue avgSpeedEnc;

@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class PriorityCustomConfig {
+final class PriorityCustomConfig {
     private List<ConfigMapEntry> priorityList = new ArrayList<>();
 
     public PriorityCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
