@@ -143,7 +143,8 @@ public class Measurement {
         hopper.putCustomModel(customModel.toString(), customModel);
 
         // add more encoded values for CustomModel
-        args.put("graph.encoded_values", "max_width,max_height,toll,hazmat");
+        if (!args.has("graph.encoded_values"))
+            args.put("graph.encoded_values", "max_width,max_height,toll,hazmat");
         hopper.init(new GraphHopperConfig(args)).
                 // use server to allow path simplification
                         forServer();

@@ -54,7 +54,7 @@ final class SpeedCustomConfig {
 
             if (value instanceof Number) {
                 if (key.startsWith(GeoToValue.key(""))) {
-                    Geometry geometry = GeoToValue.pickGeo(customModel, key.substring(GeoToValue.key("").length()));
+                    Geometry geometry = GeoToValue._pickGeo(customModel, key);
                     maxSpeedList.add(new GeoToValue(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), maxSpeed));
                 } else {
                     BooleanEncodedValue encodedValue = getEV(lookup, "max_speed", key, BooleanEncodedValue.class);
@@ -78,7 +78,7 @@ final class SpeedCustomConfig {
 
             if (value instanceof Number) {
                 if (key.startsWith(GeoToValue.key(""))) {
-                    Geometry geometry = GeoToValue.pickGeo(customModel, key.substring(GeoToValue.key("").length()));
+                    Geometry geometry = GeoToValue._pickGeo(customModel, key);
                     speedFactorList.add(new GeoToValue(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
                 } else {
                     BooleanEncodedValue encodedValue = getEV(lookup, "speed_factor", key, BooleanEncodedValue.class);

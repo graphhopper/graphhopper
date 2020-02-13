@@ -37,7 +37,8 @@ final class GeoToValue implements ConfigMapEntry {
         this.elseValue = elseValue;
     }
 
-    public static Geometry pickGeo(CustomModel customModel, String id) {
+    public static Geometry _pickGeo(CustomModel customModel, String key) {
+        String id = key.substring(GeoToValue.key("").length());
         JsonFeature feature = customModel.getAreas().get(id);
         if (feature == null)
             throw new IllegalArgumentException("Cannot find area " + id);

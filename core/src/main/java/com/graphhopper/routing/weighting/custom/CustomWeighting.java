@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.GHRequest;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -25,9 +26,9 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.routing.weighting.custom.PriorityCustomConfig;
-import com.graphhopper.routing.weighting.custom.SpeedCustomConfig;
 import com.graphhopper.util.EdgeIteratorState;
+
+import java.util.Map;
 
 /**
  * Every EncodedValue like road_environment can influence one or more aspects of this Weighting: the
@@ -45,8 +46,18 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public final class CustomWeighting extends AbstractWeighting {
 
-    public static String key(String postfix) {
-        return "custom_" + postfix;
+    /**
+     * @return the weighting name from the modelName
+     */
+    public static String key(String modelName) {
+        return "custom_" + modelName;
+    }
+
+    /**
+     * @return the modelName from the weigting
+     */
+    public static String modelName(String weighting) {
+        return weighting.substring(key("").length());
     }
 
     private final BooleanEncodedValue baseVehicleProfileAccessEnc;
@@ -70,6 +81,22 @@ public final class CustomWeighting extends AbstractWeighting {
         minDistanceTerm = customModel.getDistanceTermConstant();
         if (minDistanceTerm < 0)
             throw new IllegalArgumentException("maximum distance_term cannot be negative " + minDistanceTerm);
+    }
+
+    /**
+     * This method sets the vehicle of the specified request. It uses the importCustomModels if customModel is null.
+     */
+    public static CustomModel prepareRequest(GHRequest request, CustomModel customModel, Map<String, CustomModel> importCustomModels) {
+        HintsMap hints = request.getHints();
+        if (hints.getWeighting().startsWith(CustomWeighting.key(""))) {
+            if (customModel == null) {
+                String modelName = modelName(hints.getWeighting());
+                if ((customModel = importCustomModels.get(modelName)) == null)
+                    throw new IllegalArgumentException("unknown custom model " + modelName + " (" + hints.getWeighting() + ")");
+            }
+            request.setVehicle(customModel.getBase());
+        }
+        return customModel;
     }
 
     @Override

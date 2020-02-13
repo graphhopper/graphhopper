@@ -61,7 +61,7 @@ public class RouteResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car,foot").
+                put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "fastest").
                 put("routing.ch.disabling_allowed", "true").
                 put("prepare.min_network_size", "0").
@@ -242,10 +242,10 @@ public class RouteResourceTest {
         assertEquals(5, averageSpeedList.get(1).getLength());
 
         List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
-        assertEquals(78, edgeIdDetails.size());
-        assertEquals(915L, edgeIdDetails.get(0).getValue());
+        assertEquals(77, edgeIdDetails.size());
+        assertEquals(880L, edgeIdDetails.get(0).getValue());
         assertEquals(2, edgeIdDetails.get(0).getLength());
-        assertEquals(916L, edgeIdDetails.get(1).getValue());
+        assertEquals(881L, edgeIdDetails.get(1).getValue());
         assertEquals(8, edgeIdDetails.get(1).getLength());
 
         long expectedTime = rsp.getBest().getTime();
@@ -299,8 +299,8 @@ public class RouteResourceTest {
         JsonNode edgeIds = details.get("edge_id");
         int firstLink = edgeIds.get(0).get(2).asInt();
         int lastLink = edgeIds.get(edgeIds.size() - 1).get(2).asInt();
-        assertEquals(915, firstLink);
-        assertEquals(1547, lastLink);
+        assertEquals(880, firstLink);
+        assertEquals(1421, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
         assertEquals(-1, maxSpeed.get(0).get(2).asDouble(-1), .01);

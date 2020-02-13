@@ -43,7 +43,7 @@ final class PriorityCustomConfig {
 
             if (value instanceof Number) {
                 if (key.startsWith(GeoToValue.key(""))) {
-                    Geometry geometry = GeoToValue.pickGeo(customModel, key.substring(GeoToValue.key("").length()));
+                    Geometry geometry = GeoToValue._pickGeo(customModel, key);
                     priorityList.add(new GeoToValue(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
                 } else {
                     BooleanEncodedValue encodedValue = getEV(lookup, "priority", key, BooleanEncodedValue.class);
@@ -62,7 +62,7 @@ final class PriorityCustomConfig {
         }
     }
 
-    public static <T extends EncodedValue> T getEV(EncodedValueLookup lookup, String name, String key, Class<T> encodedValueType) {
+    static <T extends EncodedValue> T getEV(EncodedValueLookup lookup, String name, String key, Class<T> encodedValueType) {
         if (!lookup.hasEncodedValue(key))
             throw new IllegalArgumentException("Cannot find '" + key + "' specified in '" + name + "'");
         return lookup.getEncodedValue(key, encodedValueType);

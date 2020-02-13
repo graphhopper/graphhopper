@@ -844,7 +844,7 @@ public class GraphHopper implements GraphHopperAPI {
             }
 
             if (chWeightingStr.startsWith(CustomWeighting.key(""))) {
-                String modelName = chWeightingStr.substring(CustomWeighting.key("").length());
+                String modelName = CustomWeighting.modelName(chWeightingStr);
                 CustomModel model = importCustomModels.get(modelName);
                 if (!getEncodingManager().hasEncoder(model.getBase()))
                     throw new IllegalArgumentException("For the CH preparation of custom_model " + modelName + " the specified base " +
@@ -885,7 +885,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
             if (lmWeightingStr.startsWith(CustomWeighting.key(""))) {
-                String modelName = lmWeightingStr.substring(CustomWeighting.key("").length());
+                String modelName = CustomWeighting.modelName(lmWeightingStr);
                 CustomModel model = importCustomModels.get(modelName);
                 if (!getEncodingManager().hasEncoder(model.getBase()))
                     throw new IllegalArgumentException("For the LM preparation of custom_model " + modelName + " the specified base " +
@@ -1037,15 +1037,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
 
-        HintsMap hints = request.getHints();
-        if (hints.getWeighting().startsWith(CustomWeighting.key(""))) {
-            if (customModel == null) {
-                String modelName = hints.getWeighting().substring(CustomWeighting.key("").length());
-                if ((customModel = importCustomModels.get(modelName)) == null)
-                    throw new IllegalArgumentException("unknown custom model " + modelName + " (" + hints.getWeighting() + ")");
-            }
-            request.setVehicle(customModel.getBase());
-        }
+        customModel = CustomWeighting.prepareRequest(request, customModel, importCustomModels);
 
         // default handling
         String vehicle = request.getVehicle();
@@ -1061,6 +1053,7 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
+            HintsMap hints = request.getHints();
 
             // we use edge-based routing if the encoder supports turn-costs *unless* the edge_based parameter is set
             // explicitly.
