@@ -27,6 +27,7 @@ import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.tour.MultiPointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
@@ -61,7 +62,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     private List<Path> pathList;
 
     public RoundTripRoutingTemplate(GHRequest request, GHResponse ghRsp, LocationIndex locationIndex,
-                                    EncodedValueLookup lookup, Weighting weighting, int maxRetries) {
+                                    EncodingManager lookup, Weighting weighting, int maxRetries) {
         super(locationIndex, lookup, weighting);
         this.ghRequest = request;
         this.ghResponse = ghRsp;

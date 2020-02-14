@@ -27,8 +27,10 @@ import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.TDWeighting;
 import com.graphhopper.storage.index.LocationIndex;
@@ -61,7 +63,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
-    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, EncodedValueLookup lookup, final Weighting weighting) {
+    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, EncodingManager lookup, final Weighting weighting) {
         super(locationIndex, lookup, weighting);
         this.ghRequest = ghRequest;
         this.ghResponse = ghRsp;
@@ -172,14 +174,22 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
                 }
             } else if (algoOpts.getWeighting() instanceof TDWeighting) {
-                String departureTimeString = ghRequest.getHints().get("pt.earliest_departure_time", "");
-                final Instant departureTime;
-                if (departureTimeString.equals("")) {
-                    departureTime = Instant.now();
+                AlgorithmOptions pass1Options = AlgorithmOptions.start().weighting(new FastestWeighting(lookup.getEncoder(ghRequest.getVehicle()))).build();
+                RoutingAlgorithm algo1 = algoFactory.createAlgo(queryGraph, pass1Options);
+                Path path = algo1.calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode());
+                if (path.isFound()) {
+                    algo.setMaxVisitedNodes( (int) Math.pow(Math.sqrt(algo1.getVisitedNodes()) * 10, 2));
+                    String departureTimeString = ghRequest.getHints().get("pt.earliest_departure_time", "");
+                    final Instant departureTime;
+                    if (departureTimeString.equals("")) {
+                        departureTime = Instant.now();
+                    } else {
+                        departureTime = Instant.parse(departureTimeString);
+                    }
+                    tmpPathList = ((AbstractRoutingAlgorithm) algo).calcTDPaths(fromQResult.getClosestNode(), toQResult.getClosestNode(), departureTime.toEpochMilli());
                 } else {
-                    departureTime = Instant.parse(departureTimeString);
+                    tmpPathList = Collections.singletonList(path);
                 }
-                tmpPathList = ((AbstractRoutingAlgorithm) algo).calcTDPaths(fromQResult.getClosestNode(), toQResult.getClosestNode(), departureTime.toEpochMilli());
             } else {
                 tmpPathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
             }
