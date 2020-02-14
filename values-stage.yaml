@@ -1,0 +1,18 @@
+deployment:
+  probePath: /route?point=12.980269%2C77.694232&point=12.979178%2C77.69725&type=json&locale=en-GB&vehicle=car&weighting=fastest&elevation=false
+  probePort: 8989
+  resources:
+    limits:
+      cpu: 2
+      memory: 5000Mi
+    requests:
+      cpu: 1
+      memory: 3500Mi
+istio:
+  internal:
+    hosts:
+    - graphhopper.stage.cure.fit.internal
+  timeout: 360s
+service:
+  expose:
+  - 5202
