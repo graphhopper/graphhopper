@@ -34,9 +34,7 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.*;
 
 import java.io.File;
 import java.util.*;
@@ -45,8 +43,7 @@ import static com.graphhopper.routing.ch.CHPreparationHandler.EdgeBasedCHMode;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
 import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -62,7 +59,7 @@ public class GraphHopperIT {
     private static GraphHopper hopper;
     private final String tmpGraphFile = "target/graphhopperIT-tmp";
 
-    @BeforeAll
+    @BeforeClass
     public static void beforeClass() {
         // make sure we are using fresh graphhopper files with correct vehicle
         Helper.removeDir(new File(graphFileFoot));
@@ -75,29 +72,28 @@ public class GraphHopperIT {
                 importOrLoad();
     }
 
-    @AfterAll
+    @AfterClass
     public static void afterClass() {
         Helper.removeDir(new File(graphFileFoot));
     }
 
-    @BeforeEach
+    @Before
     public void setUp() {
         Helper.removeDir(new File(tmpGraphFile));
     }
 
-    @AfterEach
+    @After
     public void tearDown() {
         Helper.removeDir(new File(tmpGraphFile));
     }
 
-    @ParameterizedTest
-    @CsvSource({DIJKSTRA + ",1110", DIJKSTRA_BI + ",892", ASTAR + ",699", ASTAR_BI + ",396"})
-    public void testMonacoWithInstructions(String algo, int expectedVisitedNodes) {
+    @Test
+    public void testMonacoWithInstructions() {
         GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                setAlgorithm(algo).setVehicle(vehicle).setWeighting(weightCalcStr));
+                setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(expectedVisitedNodes, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(699, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(3437.6, arsp.getDistance(), .1);
@@ -1374,7 +1370,7 @@ public class GraphHopperIT {
         GHRequest req = new GHRequest(p, q);
         req.setVehicle("foot");
         GHResponse rsp = tmpHopper.route(req);
-        assertEquals(0, rsp.getErrors().size(), "there should not be an error, but was: " + rsp.getErrors());
+        assertEquals("there should not be an error, but was: " + rsp.getErrors(), 0, rsp.getErrors().size());
     }
 
     @Test
@@ -1589,22 +1585,6 @@ public class GraphHopperIT {
         assertEquals(expectedInterval, ((ShallowImmutablePointList) instruction.getPoints()).getIntervalString());
         assertEquals(expectedLength, instruction.getLength());
         assertEquals(expectedPoints, instruction.getPoints().size());
-    }
-
-    private void assertTrue(boolean condition) {
-        Assertions.assertTrue(condition);
-    }
-
-    private void assertTrue(String message, boolean condition) {
-        Assertions.assertTrue(condition, message);
-    }
-
-    private void assertFalse(boolean condition) {
-        Assertions.assertFalse(condition);
-    }
-
-    private void assertFalse(String message, boolean condition) {
-        Assertions.assertFalse(condition, message);
     }
 
     private void assertDetail(PathDetail detail, String expected) {
