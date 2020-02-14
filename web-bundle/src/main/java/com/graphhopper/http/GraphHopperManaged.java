@@ -67,11 +67,11 @@ public class GraphHopperManaged implements Managed {
             graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection).forServer();
         }
         if (!configuration.get("spatial_rules.location", "").isEmpty()) {
-            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
+            throw new RuntimeException("spatial_rules.location has been deprecated. Please use countries.borders_directory instead.");
         }
-        String spatialRuleBordersDirLocation = configuration.get("spatial_rules.borders_directory", "");
+        String spatialRuleBordersDirLocation = configuration.get("countries.borders_directory", "");
         if (!spatialRuleBordersDirLocation.isEmpty()) {
-            final BBox maxBounds = BBox.parseBBoxString(configuration.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
+            final BBox maxBounds = BBox.parseBBoxString(configuration.get("countries.max_bbox", "-180, 180, -90, 90"));
             final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
             List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
@@ -84,7 +84,8 @@ public class GraphHopperManaged implements Managed {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
+            SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper,
+                    new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
         }
         graphHopper.init(configuration);
     }
@@ -93,9 +94,9 @@ public class GraphHopperManaged implements Managed {
     public void start() {
         graphHopper.importOrLoad();
         logger.info("loaded graph at:{}, data_reader_file:{}, encoded values:{}, {}",
-                        graphHopper.getGraphHopperLocation(), graphHopper.getDataReaderFile(),
-                        graphHopper.getEncodingManager().toEncodedValuesAsString(),
-                        graphHopper.getGraphHopperStorage().toDetailsString());
+                graphHopper.getGraphHopperLocation(), graphHopper.getDataReaderFile(),
+                graphHopper.getEncodingManager().toEncodedValuesAsString(),
+                graphHopper.getGraphHopperStorage().toDetailsString());
     }
 
     public GraphHopper getGraphHopper() {

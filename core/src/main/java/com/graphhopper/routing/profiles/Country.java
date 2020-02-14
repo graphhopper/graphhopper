@@ -30,6 +30,10 @@ public enum Country {
         this.name = name;
     }
 
+    public static EnumEncodedValue<Country> create() {
+        return new EnumEncodedValue<>(Country.KEY, Country.class);
+    }
+
     @Override
     public String toString() {
         return name;
