@@ -29,10 +29,7 @@ import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LMProfile;
-import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
-import com.graphhopper.routing.profiles.EncodedValueFactory;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
@@ -1117,6 +1114,9 @@ public class GraphHopper implements GraphHopperAPI {
             if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
 
+            if (weighting instanceof CustomWeighting)
+                ((CustomWeighting) weighting).setQueryGraph(queryGraph);
+
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
                     algorithm(algoStr).traversalMode(tMode).weighting(weighting).
                     maxVisitedNodes(maxVisitedNodesForRequest).
@@ -1349,11 +1349,11 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private static class DefaultWeightingFactory {
-        private final EncodingManager encodingManager;
+        private final EncodedValueLookup lookup;
         private final EncodedValueFactory encodedValueFactory;
 
-        public DefaultWeightingFactory(EncodingManager encodingManager, EncodedValueFactory encodedValueFactory) {
-            this.encodingManager = encodingManager;
+        public DefaultWeightingFactory(EncodedValueLookup lookup, EncodedValueFactory encodedValueFactory) {
+            this.lookup = lookup;
             this.encodedValueFactory = encodedValueFactory;
         }
 
@@ -1365,8 +1365,7 @@ public class GraphHopper implements GraphHopperAPI {
                 if (customModel == null)
                     throw new IllegalArgumentException("Either specify a custom model that exists on the server-side (via the weighting) " +
                             "or POST a request with the 'model' entry. Internal weighting=" + weightingStr + " and vehicle=" + hintsMap.getVehicle());
-                weighting = new CustomWeighting(encoder.toString(), encoder, encodingManager,
-                        encodedValueFactory, turnCostProvider, customModel);
+                weighting = new CustomWeighting(encoder.toString(), encoder, lookup, encodedValueFactory, turnCostProvider, customModel);
             } else if ("shortest".equals(weightingStr)) {
                 weighting = new ShortestWeighting(encoder, turnCostProvider);
             } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {

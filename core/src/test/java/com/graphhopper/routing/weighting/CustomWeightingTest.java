@@ -75,17 +75,20 @@ public class CustomWeightingTest {
         map.put(PRIMARY.toString(), 2.0);
         vehicleModel.getPriority().put(KEY, map);
 
-        Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(),
+                NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(2.43, weighting.calcEdgeWeight(edge2, false), 0.01);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         map.put(PRIMARY.toString(), 1.1);
-        weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(),
+                NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         // force integer value
         map.put(PRIMARY.toString(), 1);
-        weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(),
+                NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
     }
 
@@ -96,7 +99,8 @@ public class CustomWeightingTest {
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.setBase("car");
 
-        Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(),
+                NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
     }
 
@@ -107,14 +111,16 @@ public class CustomWeightingTest {
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.setBase("car");
 
-        Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(),
+                NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         // reduce speed for road class 'primary'
         Map map = new HashMap();
         map.put(PRIMARY.toString(), 60);
         vehicleModel.getMaxSpeed().put(KEY, map);
-        weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(),
+                NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.3, weighting.calcEdgeWeight(edge1, false), 0.01);
     }
 
@@ -125,7 +131,8 @@ public class CustomWeightingTest {
 
         BooleanEncodedValue rcLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
         vehicleModel.getPriority().put(RoadClassLink.KEY, 0.5);
-        CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(),
+                NO_TURN_COST_PROVIDER, vehicleModel);
 
         assertEquals(3.1, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
                 set(rcLinkEnc, false).set(avSpeedEnc, 15).set(accessEnc, true), false), 0.01);
@@ -141,7 +148,8 @@ public class CustomWeightingTest {
         Map map = new HashMap();
         map.put(MOTORWAY.toString(), 0.1);
         vehicleModel.getPriority().put(KEY, map);
-        CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(),
+                NO_TURN_COST_PROVIDER, vehicleModel);
 
         // simple multiplication of the weight...
         assertEquals(31, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
@@ -173,7 +181,8 @@ public class CustomWeightingTest {
         JsonFeature area = new JsonFeature(areaId, "Polygon", new BBox(13.713684, 13.719864, 51.036213, 51.036591),
                 poly, Collections.<String, Object>emptyMap());
         vehicleModel.getAreas().put(areaId, area);
-        CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
+        CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(),
+                NO_TURN_COST_PROVIDER, vehicleModel);
 
         graphHopperStorage.getNodeAccess().setNode(0, 51.036213, 13.713684);
         graphHopperStorage.getNodeAccess().setNode(1, 51.036591, 13.719864);
@@ -187,5 +196,57 @@ public class CustomWeightingTest {
         EdgeIteratorState edge2 = graphHopperStorage.edge(2, 3).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true);
         assertTrue(poly.intersects(edge2.fetchWayGeometry(3).toLineString(false)));
         assertEquals(310, weighting.calcEdgeWeight(edge2, false), 0.01);
+    }
+
+
+    @Test
+    public void testLeftTurn() {
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.setBase("car");
+        vehicleModel.getTurnCosts().setRightTurn(0);
+        vehicleModel.getTurnCosts().setStraight(.1);
+        vehicleModel.getTurnCosts().setLeftTurn(1);
+
+        //       4   5
+        //   0 - 1 - 2
+        //       3   6
+
+        graphHopperStorage.getNodeAccess().setNode(0, 51.0362, 13.714);
+        graphHopperStorage.getNodeAccess().setNode(1, 51.0362, 13.720);
+        graphHopperStorage.getNodeAccess().setNode(2, 51.0362, 13.726);
+        graphHopperStorage.getNodeAccess().setNode(3, 51.0358, 13.720);
+        graphHopperStorage.getNodeAccess().setNode(4, 51.0366, 13.720);
+        graphHopperStorage.getNodeAccess().setNode(5, 51.0366, 13.726);
+        graphHopperStorage.getNodeAccess().setNode(6, 51.0358, 13.726);
+
+        CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(),
+                NO_TURN_COST_PROVIDER, vehicleModel).setQueryGraph(graphHopperStorage);
+
+        EdgeIteratorState edge0 = graphHopperStorage.edge(0, 1).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true);
+        EdgeIteratorState edge1 = graphHopperStorage.edge(1, 3).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true);
+        EdgeIteratorState edge2 = graphHopperStorage.edge(1, 4).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true);
+        EdgeIteratorState edge3 = graphHopperStorage.edge(2, 6).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true);
+        EdgeIteratorState edge4 = graphHopperStorage.edge(2, 5).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true);
+        EdgeIteratorState edge5 = graphHopperStorage.edge(1, 2).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true);
+
+        // from top to left => right turn
+        assertEquals(0, weighting.calcTurnWeight(edge2.getEdge(), 1, edge0.getEdge()), 0.01);
+        // top to down => straight
+        assertEquals(0.1, weighting.calcTurnWeight(edge2.getEdge(), 1, edge1.getEdge()), 0.01);
+        // top to right => left turn
+        assertEquals(1, weighting.calcTurnWeight(edge2.getEdge(), 1, edge5.getEdge()), 0.01);
+        // left to down => right turn
+        assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), 0.01);
+        // left to top => left turn
+        assertEquals(1, weighting.calcTurnWeight(edge0.getEdge(), 1, edge2.getEdge()), 0.01);
+
+        // T-junctions do not properly work with this approach. But maybe this is fine as topologically this is correct?
+        // problem: to avoid turns e.g. for bikes this is not really excepted
+        // left to top => left turn => here like 'straight'
+        // assertEquals(1, weighting.calcTurnWeight(edge5.getEdge(), 1, edge4.getEdge()), 0.01);
+        // down to left => left turn => here again like 'straight'
+        // assertEquals(1, weighting.calcTurnWeight(edge3.getEdge(), 1, edge5.getEdge()), 0.01);
+        // top to left => right turn
+        assertEquals(0, weighting.calcTurnWeight(edge4.getEdge(), 1, edge5.getEdge()), 0.01);
     }
 }

@@ -36,6 +36,7 @@ public class CustomModel {
     private Double maxSpeedFallback, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceTermConstant = 0.07;
+    private TurnCostConfig turnCosts = new TurnCostConfig();
     private Map<String, Object> speedFactor = new HashMap<>();
     private Map<String, Object> maxSpeed = new HashMap<>();
     private Map<String, Object> priorityMap = new HashMap<>();
@@ -120,5 +121,41 @@ public class CustomModel {
 
     public Map<String, JsonFeature> getAreas() {
         return areas;
+    }
+
+    public void setTurnCosts(TurnCostConfig turnCosts) {
+        this.turnCosts = turnCosts;
+    }
+
+    public TurnCostConfig getTurnCosts() {
+        return turnCosts;
+    }
+
+    public static class TurnCostConfig {
+        private double leftTurn, rightTurn, straight;
+
+        public void setLeftTurn(double leftTurn) {
+            this.leftTurn = leftTurn;
+        }
+
+        public double getLeftTurn() {
+            return leftTurn;
+        }
+
+        public void setRightTurn(double rightTurn) {
+            this.rightTurn = rightTurn;
+        }
+
+        public double getRightTurn() {
+            return rightTurn;
+        }
+
+        public void setStraight(double straight) {
+            this.straight = straight;
+        }
+
+        public double getStraight() {
+            return straight;
+        }
     }
 }

@@ -22,10 +22,12 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Map;
@@ -66,6 +68,8 @@ public final class CustomWeighting extends AbstractWeighting {
     private final double minDistanceTerm;
     private final SpeedCustomConfig speedConfig;
     private final PriorityCustomConfig priorityConfig;
+    private TurnCostCustomConfig turnCostConfig;
+    private final CustomModel customModel;
 
     public CustomWeighting(String name, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
                            EncodedValueFactory factory, TurnCostProvider turnCostProvider, CustomModel customModel) {
@@ -81,6 +85,18 @@ public final class CustomWeighting extends AbstractWeighting {
         minDistanceTerm = customModel.getDistanceTermConstant();
         if (minDistanceTerm < 0)
             throw new IllegalArgumentException("maximum distance_term cannot be negative " + minDistanceTerm);
+
+        this.customModel = customModel;
+    }
+
+    public CustomWeighting setQueryGraph(Graph graph) {
+        double left = customModel.getTurnCosts().getLeftTurn();
+        double right = customModel.getTurnCosts().getRightTurn();
+        double straight = customModel.getTurnCosts().getStraight();
+        if (left != 0 || right != 0 || straight != 0)
+            turnCostConfig = new TurnCostCustomConfig(graph.createEdgeExplorer(DefaultEdgeFilter.allEdges(getFlagEncoder())),
+                    graph.getNodeAccess(), left, right, straight);
+        return this;
     }
 
     /**
@@ -132,6 +148,11 @@ public final class CustomWeighting extends AbstractWeighting {
             throw new IllegalArgumentException("Speed cannot be negative");
 
         return distance / speed * CustomModel.SPEED_CONV;
+    }
+
+    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        double weight = super.calcTurnWeight(inEdge, viaNode, outEdge);
+        return turnCostConfig == null ? weight : turnCostConfig.calcAdditionalTurnCost(inEdge, viaNode, outEdge) + weight;
     }
 
     @Override
