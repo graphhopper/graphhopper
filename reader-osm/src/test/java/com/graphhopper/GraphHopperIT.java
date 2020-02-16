@@ -76,7 +76,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
@@ -128,7 +127,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         GHRequest request = new GHRequest().setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weighting);
@@ -150,9 +148,8 @@ public class GraphHopperIT {
         final String vehicle = "car";
         final String weighting = "shortest";
         GraphHopper hopper = createGraphHopper(vehicle).
-                setOSMFile(DIR + "/monaco.osm.gz").
-                setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION);
+                setOSMFile(MONACO).
+                setCHEnabled(false);
         hopper.importOrLoad();
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
 
@@ -182,8 +179,7 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(ch).
-                setSortGraph(sort).
-                setGraphHopperLocation(GH_LOCATION);
+                setSortGraph(sort);
         if (ch) {
             hopper.getCHPreparationHandler().setCHProfileStrings(weighting).setDisablingAllowed(true);
         }
@@ -197,8 +193,7 @@ public class GraphHopperIT {
         hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
-                setCHEnabled(ch).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(ch);
         if (ch) {
             hopper.getCHPreparationHandler().setCHProfileStrings(weighting).setDisablingAllowed(true);
         }
@@ -297,7 +292,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         GHRequest req = new GHRequest(43.729057, 7.41251, 43.740298, 7.423561).
@@ -326,11 +320,9 @@ public class GraphHopperIT {
         final String vehicle = "bike";
         final String weighting = "fastest";
 
-        GraphHopper hopper = new GraphHopperOSM().
+        GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
-                setEncodingManager(EncodingManager.create(vehicle));
+                setCHEnabled(false);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(50.028917, 11.496506, 49.985228, 11.600876).
@@ -353,11 +345,9 @@ public class GraphHopperIT {
         final String vehicle = "car";
         final String weighting = "fastest";
 
-        GraphHopper hopper = new GraphHopperOSM().
+        GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
-                setEncodingManager(EncodingManager.create(vehicle));
+                setCHEnabled(false);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
@@ -382,8 +372,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(LAUF).
-                setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(false);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.46553, 11.154669, 49.465244, 11.152577).
@@ -419,8 +408,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(false);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
@@ -438,8 +426,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(false);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -541,7 +528,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
@@ -624,7 +610,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         GHRequest request = new GHRequest();
@@ -655,7 +640,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         GHRequest req = new GHRequest().
@@ -678,7 +662,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         GHPoint from = new GHPoint(43.741069, 7.426854);
@@ -709,7 +692,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         GHPoint from = new GHPoint(43.741069, 7.426854);
@@ -741,7 +723,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         GHPoint from = new GHPoint(43.741069, 7.426854);
@@ -777,7 +758,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         GHRequest rq = new GHRequest().
@@ -811,8 +791,7 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
-                setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(false);
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
@@ -861,8 +840,11 @@ public class GraphHopperIT {
         final String vehicle = "foot";
         final String weighting = "shortest";
 
-        GraphHopper hopper = new GraphHopperOSM().setOSMFile(MONACO).setStoreOnFlush(true)
-                .setCHEnabled(false).setGraphHopperLocation(GH_LOCATION)
+        GraphHopper hopper = new GraphHopperOSM()
+                .setOSMFile(MONACO)
+                .setStoreOnFlush(true)
+                .setCHEnabled(false)
+                .setGraphHopperLocation(GH_LOCATION)
                 .setEncodingManager(EncodingManager.start().add(new OSMRoadEnvironmentParser() {
                     @Override
                     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
@@ -897,8 +879,9 @@ public class GraphHopperIT {
         final String weighting = "shortest";
 
         GraphHopper hopper = createGraphHopper("car,foot")
-                .setOSMFile(MONACO).setStoreOnFlush(true)
-                .setCHEnabled(false).setGraphHopperLocation(GH_LOCATION);
+                .setOSMFile(MONACO)
+                .setStoreOnFlush(true)
+                .setCHEnabled(false);
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
@@ -931,7 +914,6 @@ public class GraphHopperIT {
                 setOSMFile(KREMS).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
@@ -980,7 +962,6 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle + ",bike").
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         assertEquals(vehicle, hopper.getDefaultVehicle().toString());
@@ -1017,7 +998,6 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle + ",bike").
                 setOSMFile(BERLIN).
                 setStoreOnFlush(true).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         assertEquals(vehicle, hopper.getDefaultVehicle().toString());
@@ -1040,7 +1020,6 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle1 + "," + vehicle2).
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
         assertEquals(vehicle1, hopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(hopper);
@@ -1051,7 +1030,6 @@ public class GraphHopperIT {
         hopper = createGraphHopper(vehicle2 + ", " + vehicle1).
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
         assertEquals(vehicle2, hopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(hopper);
@@ -1105,8 +1083,7 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
-                setSortGraph(sort).
-                setGraphHopperLocation(GH_LOCATION);
+                setSortGraph(sort);
         hopper.getCHPreparationHandler().setCHProfileStrings(weighting);
         hopper.importOrLoad();
 
@@ -1142,7 +1119,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
 
         GHRequest rq = new GHRequest().
@@ -1168,8 +1144,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(false);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest().
@@ -1190,8 +1165,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(false);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest().
@@ -1211,8 +1185,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setStoreOnFlush(true).
-                setGraphHopperLocation(GH_LOCATION);
+                setStoreOnFlush(true);
 
         hopper.getCHPreparationHandler().setEnabled(true).
                 setCHProfilesAsStrings(Collections.singletonList(weighting)).
@@ -1272,8 +1245,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setStoreOnFlush(true).
-                setGraphHopperLocation(GH_LOCATION);
+                setStoreOnFlush(true);
 
         hopper.getCHPreparationHandler().setEnabled(true).
                 setCHProfilesAsStrings(Collections.singletonList(weighting)).
@@ -1320,8 +1292,7 @@ public class GraphHopperIT {
         // cars such that the number of visited nodes depends on the bike encoder added here or not, #1910
         GraphHopper hopper = createGraphHopper(vehicle + ",bike").
                 setOSMFile(MONACO).
-                setStoreOnFlush(true).
-                setGraphHopperLocation(GH_LOCATION);
+                setStoreOnFlush(true);
         hopper.getCHPreparationHandler().setEnabled(false);
         hopper.getLMPreparationHandler().setEnabled(true).
                 setLMProfileStrings(Collections.singletonList(weighting + "|maximum=2000")).
@@ -1347,8 +1318,7 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setStoreOnFlush(true).
-                setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(false);
         hopper.importOrLoad();
 
         // no edge_based parameter -> use edge-based (since encoder supports it and no CH)
@@ -1364,8 +1334,7 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setStoreOnFlush(true).
-                setCHEnabled(true).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(true);
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.getCHPreparationHandler().setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_AND_NODE);
         hopper.importOrLoad();
@@ -1383,8 +1352,7 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setStoreOnFlush(true).
-                setCHEnabled(true).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(true);
         hopper.getCHPreparationHandler()
                 .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE)
                 .setDisablingAllowed(true);
@@ -1404,8 +1372,7 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setStoreOnFlush(true).
-                setCHEnabled(true).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(true);
         hopper.getCHPreparationHandler()
                 .setEdgeBasedCHMode(EdgeBasedCHMode.OFF)
                 .setDisablingAllowed(true);
@@ -1435,8 +1402,7 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setStoreOnFlush(true).
-                setCHEnabled(true).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(true);
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.getCHPreparationHandler().setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
         hopper.importOrLoad();
@@ -1452,19 +1418,19 @@ public class GraphHopperIT {
                         "\nrequested:  *|car|edge_based=false|u_turn_costs=*\navailable: [fastest|car|edge_based=true|u_turn_costs=-1]"));
     }
 
-    private GHResponse assertMoscowNodeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
-        GHResponse rsp = runMoscow(tmpHopper, edgeBasedParam, ch);
+    private GHResponse assertMoscowNodeBased(GraphHopper hopper, String edgeBasedParam, boolean ch) {
+        GHResponse rsp = runMoscow(hopper, edgeBasedParam, ch);
         assertEquals(400, rsp.getBest().getDistance(), 1);
         return rsp;
     }
 
-    private GHResponse assertMoscowEdgeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
-        GHResponse rsp = runMoscow(tmpHopper, edgeBasedParam, ch);
+    private GHResponse assertMoscowEdgeBased(GraphHopper hopper, String edgeBasedParam, boolean ch) {
+        GHResponse rsp = runMoscow(hopper, edgeBasedParam, ch);
         assertEquals(1044, rsp.getBest().getDistance(), 1);
         return rsp;
     }
 
-    private GHResponse runMoscow(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
+    private GHResponse runMoscow(GraphHopper hopper, String edgeBasedParam, boolean ch) {
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         if (edgeBasedParam.equals("true") || edgeBasedParam.equals("false")) {
             req.getHints().put(Routing.EDGE_BASED, edgeBasedParam);
@@ -1472,7 +1438,7 @@ public class GraphHopperIT {
             req.getHints().remove(Routing.EDGE_BASED);
         }
         req.getHints().put(CH.DISABLE, !ch);
-        return tmpHopper.route(req);
+        return hopper.route(req);
     }
 
     @Test
@@ -1482,7 +1448,6 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
-                setGraphHopperLocation(GH_LOCATION).
                 importOrLoad();
         GHPoint p = new GHPoint(43.727687, 7.418737);
         GHPoint q = new GHPoint(43.74958, 7.436566);
@@ -1500,7 +1465,6 @@ public class GraphHopperIT {
         // see #1698
         GraphHopper hopper = createGraphHopper("foot,car|turn_costs=true").
                 setOSMFile(MOSCOW).
-                setGraphHopperLocation(GH_LOCATION).
                 setCHEnabled(false);
         hopper.importOrLoad();
         GHPoint p = new GHPoint(55.813357, 37.5958585);
@@ -1515,8 +1479,7 @@ public class GraphHopperIT {
     public void testCurbsides() {
         GraphHopper h = createGraphHopper("car|turn_costs=true").
                 setOSMFile(BAYREUTH).
-                setCHEnabled(true).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(true);
         h.getCHPreparationHandler()
                 .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
         h.importOrLoad();
@@ -1562,8 +1525,7 @@ public class GraphHopperIT {
     public void testForceCurbsides() {
         GraphHopper h = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MONACO).
-                setCHEnabled(true).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(true);
         h.getCHPreparationHandler()
                 .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
         h.importOrLoad();
@@ -1627,8 +1589,7 @@ public class GraphHopperIT {
     public void testCHWithFiniteUTurnCostsAndMissingWeighting() {
         GraphHopper h = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MONACO).
-                setCHEnabled(true).
-                setGraphHopperLocation(GH_LOCATION);
+                setCHEnabled(true);
         h.getCHPreparationHandler()
                 .setCHProfileStrings("fastest|u_turn_costs=40")
                 .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
@@ -1729,9 +1690,10 @@ public class GraphHopperIT {
         assertEquals(expected, detail.toString());
     }
 
-    private static GraphHopperOSM createGraphHopper(String vehicles) {
+    private static GraphHopperOSM createGraphHopper(String encodingManagerString) {
         GraphHopperOSM hopper = new GraphHopperOSM();
-        hopper.setEncodingManager(EncodingManager.create(vehicles));
+        hopper.setEncodingManager(EncodingManager.create(encodingManagerString));
+        hopper.setGraphHopperLocation(GH_LOCATION);
         return hopper;
     }
 
