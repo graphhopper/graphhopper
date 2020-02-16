@@ -34,7 +34,9 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.*;
@@ -961,8 +963,9 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle + ",bike").
                 setOSMFile(MONACO).
-                setStoreOnFlush(true).
-                importOrLoad();
+                setStoreOnFlush(true);
+        hopper.getCHPreparationHandler().setCHProfileStrings(weighting);
+        hopper.importOrLoad();
 
         assertEquals(vehicle, hopper.getDefaultVehicle().toString());
 
@@ -997,8 +1000,9 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle + ",bike").
                 setOSMFile(BERLIN).
-                setStoreOnFlush(true).
-                importOrLoad();
+                setStoreOnFlush(true);
+        hopper.getCHPreparationHandler().setCHProfileStrings(weighting);
+        hopper.importOrLoad();
 
         assertEquals(vehicle, hopper.getDefaultVehicle().toString());
 
@@ -1017,10 +1021,12 @@ public class GraphHopperIT {
     public void testMultipleVehiclesWithCH() {
         final String vehicle1 = "bike";
         final String vehicle2 = "car";
+        final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle1 + "," + vehicle2).
                 setOSMFile(MONACO).
-                setStoreOnFlush(true).
-                importOrLoad();
+                setStoreOnFlush(true);
+        hopper.getCHPreparationHandler().setCHProfileStrings(weighting);
+                hopper.importOrLoad();
         assertEquals(vehicle1, hopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(hopper);
         hopper.close();
@@ -1029,8 +1035,9 @@ public class GraphHopperIT {
         // new instance, try different order, resulting only in different default vehicle
         hopper = createGraphHopper(vehicle2 + ", " + vehicle1).
                 setOSMFile(MONACO).
-                setStoreOnFlush(true).
-                importOrLoad();
+                setStoreOnFlush(true);
+        hopper.getCHPreparationHandler().setCHProfileStrings(weighting);
+        hopper.importOrLoad();
         assertEquals(vehicle2, hopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(hopper);
         hopper.close();
@@ -1252,7 +1259,7 @@ public class GraphHopperIT {
                 setDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().setEnabled(true).
-                setLMProfileStrings(Collections.singletonList(weighting +"|maximum=2000")).
+                setLMProfileStrings(Collections.singletonList(weighting + "|maximum=2000")).
                 setDisablingAllowed(true);
 
         hopper.importOrLoad();
@@ -1331,10 +1338,12 @@ public class GraphHopperIT {
 
     @Test
     public void testTurnCostsOnOffCH() {
+        final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setStoreOnFlush(true).
                 setCHEnabled(true);
+        hopper.getCHPreparationHandler().setCHProfileStrings(weighting);
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.getCHPreparationHandler().setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_AND_NODE);
         hopper.importOrLoad();
@@ -1349,11 +1358,13 @@ public class GraphHopperIT {
 
     @Test
     public void testCHOnOffWithTurnCosts() {
+        final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setStoreOnFlush(true).
                 setCHEnabled(true);
         hopper.getCHPreparationHandler()
+                .setCHProfileStrings(weighting)
                 .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE)
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
@@ -1368,12 +1379,14 @@ public class GraphHopperIT {
 
     @Test
     public void testNodeBasedCHOnlyButTurnCostForNonCH() {
+        final String weighting = "fastest";
         // before edge-based CH was added a common case was to use edge-based without CH and CH for node-based
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setStoreOnFlush(true).
                 setCHEnabled(true);
         hopper.getCHPreparationHandler()
+                .setCHProfileStrings(weighting)
                 .setEdgeBasedCHMode(EdgeBasedCHMode.OFF)
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
@@ -1399,10 +1412,12 @@ public class GraphHopperIT {
     public void testEdgeBasedByDefaultIfOnlyEdgeBased() {
         // when there is only one edge-based CH profile, there is no need to specify edge_based=true explicitly,
         // see #1637
+        final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setStoreOnFlush(true).
                 setCHEnabled(true);
+        hopper.getCHPreparationHandler().setCHProfileStrings(weighting);
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.getCHPreparationHandler().setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
         hopper.importOrLoad();
@@ -1481,6 +1496,7 @@ public class GraphHopperIT {
                 setOSMFile(BAYREUTH).
                 setCHEnabled(true);
         h.getCHPreparationHandler()
+                .setCHProfileStrings("fastest")
                 .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
         h.importOrLoad();
 
@@ -1527,6 +1543,7 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setCHEnabled(true);
         h.getCHPreparationHandler()
+                .setCHProfileStrings("fastest")
                 .setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE);
         h.importOrLoad();
 
