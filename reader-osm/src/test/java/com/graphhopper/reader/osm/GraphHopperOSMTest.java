@@ -270,17 +270,20 @@ public class GraphHopperOSMTest {
         String vehicle = "car";
         GraphHopper instance1 = createGraphHopper(vehicle).
                 setStoreOnFlush(true).
+                setCHEnabled(false).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         instance1.importOrLoad();
 
         GraphHopper instance2 = createGraphHopper(vehicle).
                 setStoreOnFlush(true).
+                setCHEnabled(false).
                 setDataReaderFile(testOsm);
         instance2.load(ghLoc);
 
         GraphHopper instance3 = createGraphHopper(vehicle).
                 setStoreOnFlush(true).
+                setCHEnabled(false).
                 setDataReaderFile(testOsm);
         instance3.load(ghLoc);
 
@@ -305,6 +308,7 @@ public class GraphHopperOSMTest {
                 return super.importData();
             }
         }.setStoreOnFlush(true).
+                setCHEnabled(false).
                 setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);

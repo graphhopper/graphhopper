@@ -138,7 +138,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     protected GraphHopper loadGraph(GraphHopperStorage g) {
         this.ghStorage = g;
-        fullyLoaded = true;
+        setFullyLoaded();
         initLocationIndex();
         return this;
     }
@@ -300,19 +300,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * This method enabled or disables the speed mode (Contraction Hierarchies)
-     *
-     * @deprecated use {@link #setCHEnabled(boolean)} instead
-     */
-    public GraphHopper setCHEnable(boolean enable) {
-        return setCHEnabled(enable);
-    }
-
-    public final boolean isCHEnabled() {
-        return chPreparationHandler.isEnabled();
-    }
-
-    /**
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
      */
     public GraphHopper setCHEnabled(boolean enable) {
@@ -412,7 +399,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     public void setGraphHopperStorage(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
-        fullyLoaded = true;
+        setFullyLoaded();
     }
 
     /**
@@ -788,7 +775,7 @@ public class GraphHopper implements GraphHopperAPI {
                 return false;
 
             postProcessing(false);
-            fullyLoaded = true;
+            setFullyLoaded();
             return true;
         } finally {
             if (lock != null)
@@ -1261,7 +1248,7 @@ public class GraphHopper implements GraphHopperAPI {
                 + getMemInfo() + ")");
         ghStorage.flush();
         logger.info("flushed graph " + getMemInfo() + ")");
-        fullyLoaded = true;
+        setFullyLoaded();
     }
 
     /**
@@ -1306,6 +1293,10 @@ public class GraphHopper implements GraphHopperAPI {
 
     public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
         routingConfig.setNonChMaxWaypointDistance(nonChMaxWaypointDistance);
+    }
+
+    private void setFullyLoaded() {
+        fullyLoaded = true;
     }
 
     private static class DefaultWeightingFactory {

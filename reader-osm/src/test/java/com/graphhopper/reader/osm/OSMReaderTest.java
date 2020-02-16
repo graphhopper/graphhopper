@@ -732,6 +732,7 @@ public class OSMReaderTest {
 
         GraphHopper hopper = new GraphHopperOSM().
                 setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
+                setCHEnabled(false).
                 setGraphHopperLocation(dir).setEncodingManager(manager).importOrLoad();
 
         DecimalEncodedValue carTCEnc = manager.getDecimalEncodedValue(TurnCost.key("car"));
