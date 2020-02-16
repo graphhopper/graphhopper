@@ -619,7 +619,8 @@ public class RoutingAlgorithmWithOSMIT {
         final EncodingManager encodingManager = EncodingManager.create("car");
         final GraphHopper hopper = new GraphHopperOSM().
                 setStoreOnFlush(true).
-                setEncodingManager(encodingManager).setCHEnabled(false).
+                setEncodingManager(encodingManager).
+                setCHEnabled(false).
                 setWayPointMaxDistance(0).
                 setDataReaderFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
