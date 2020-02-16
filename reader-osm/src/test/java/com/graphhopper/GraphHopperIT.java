@@ -62,11 +62,12 @@ public class GraphHopperIT {
     private static final String MONACO = DIR + "/monaco.osm.gz";
     private static final String MOSCOW = DIR + "/moscow.osm.gz";
 
+    // when creating GH instances make sure to use this as the GH location such that it will be cleaned between tests
     private static final String GH_LOCATION = "target/graphhopper-it-gh";
 
     @Before
     @After
-    public void setUp() {
+    public void setup() {
         Helper.removeDir(new File(GH_LOCATION));
     }
 
@@ -1026,7 +1027,7 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler().setCHProfileStrings(weighting);
-                hopper.importOrLoad();
+        hopper.importOrLoad();
         assertEquals(vehicle1, hopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(hopper);
         hopper.close();
