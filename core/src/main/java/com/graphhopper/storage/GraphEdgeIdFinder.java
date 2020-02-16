@@ -205,14 +205,20 @@ public class GraphEdgeIdFinder {
     public static class BlockArea {
         final GHIntHashSet blockedEdges = new GHIntHashSet();
         final List<Shape> blockedShapes = new ArrayList<>();
-        private final NodeAccess na;
+        private NodeAccess na;
+        private final int baseEdgeCount;
+        private boolean prepared;
 
         public BlockArea(Graph g) {
+            baseEdgeCount = g.getAllEdges().length();
             na = g.getNodeAccess();
         }
 
         public void add(int edgeId) {
-            blockedEdges.addAll(edgeId);
+            if (edgeId >= baseEdgeCount)
+                throw new IllegalStateException("Virtual edges are not expected to be added to the edge cache");
+
+            blockedEdges.add(edgeId);
         }
 
         public void add(Shape shape) {
@@ -231,9 +237,9 @@ public class GraphEdgeIdFinder {
          * @return true if the specified edgeState is part of this BlockArea
          */
         public final boolean intersects(EdgeIteratorState edgeState) {
-            if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
+            // blockedEdges acts as cache that is only useful when filled and for non-virtual edges
+            if (!blockedEdges.isEmpty() && edgeState.getEdge() < baseEdgeCount && blockedEdges.contains(edgeState.getEdge()))
                 return true;
-            }
 
             // compromise: mostly avoid expensive fetchWayGeometry which isn't yet fast for being used in Weighting.calc
             BBox bbox = BBox.fromPoints(na.getLatitude(edgeState.getBaseNode()), na.getLongitude(edgeState.getBaseNode()),
@@ -248,6 +254,15 @@ public class GraphEdgeIdFinder {
                 }
             }
             return false;
+        }
+
+        public BlockArea setGraph(Graph queryGraph) {
+            if (prepared)
+                throw new IllegalStateException("setGraph cannot be called multiple times");
+
+            prepared = true;
+            na = queryGraph.getNodeAccess();
+            return this;
         }
     }
 }
