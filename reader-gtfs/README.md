@@ -17,10 +17,10 @@ wget http://download.geofabrik.de/europe/germany/brandenburg-latest.osm.pbf
 # The following process will take roughly 5 minutes on a modern laptop when it is executed for the first time.
 # It imports the previously downloaded OSM data of the Brandenburg area as well as the GTFS.
 java -Xmx8g -Xms8g \
+# todonow: this is a) outdated, and b) why no CH (when in tests its enabled?)
   -Dgraphhopper.datareader.file=brandenburg-latest.osm.pbf \
   -Dgraphhopper.gtfs.file=gtfs-vbb.zip \
   -Dgraphhopper.graph.flag_encoders=pt \
-  -Dgraphhopper.prepare.ch.weightings=no \
   -Dgraphhopper.graph.location=./graph-cache \
   -jar web/target/graphhopper-web-*.jar server config.yml
 # view the web UI e.g. via:

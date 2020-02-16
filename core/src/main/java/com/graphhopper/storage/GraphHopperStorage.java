@@ -284,7 +284,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         List<CHProfile> configured = getCHProfiles();
         for (CHProfile chProfile : configured) {
             if (!loaded.contains(chProfile.toString())) {
-                throw new IllegalStateException("Configured CH profile: " + chProfile.toString() + " is not contained in loaded weightings for CH" + loadedStr + ".\n" +
+                throw new IllegalStateException("Configured CH profile: " + chProfile.toString() + " is not contained in loaded CH profiles: " + loadedStr + ".\n" +
                         "You configured: " + configured);
             }
         }

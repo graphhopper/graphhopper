@@ -129,8 +129,6 @@ public class GraphHopper implements GraphHopperAPI {
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     public GraphHopper() {
-        chPreparationHandler.setEnabled(true);
-        lmPreparationHandler.setEnabled(false);
     }
 
     /**
@@ -296,15 +294,6 @@ public class GraphHopper implements GraphHopperAPI {
     private GraphHopper setUnsafeMemory() {
         ensureNotLoaded();
         dataAccessType = DAType.UNSAFE_STORE;
-        return this;
-    }
-
-    /**
-     * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
-     */
-    public GraphHopper setCHEnabled(boolean enable) {
-        ensureNotLoaded();
-        chPreparationHandler.setEnabled(enable);
         return this;
     }
 
@@ -786,10 +775,10 @@ public class GraphHopper implements GraphHopperAPI {
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
         boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
-        if (disableCH && !chPreparationHandler.isDisablingAllowed()) {
+        if (chPreparationHandler.isEnabled() && disableCH && !chPreparationHandler.isDisablingAllowed()) {
             throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
         }
-        if (disableLM && !lmPreparationHandler.isDisablingAllowed()) {
+        if (lmPreparationHandler.isEnabled() && disableLM && !lmPreparationHandler.isDisablingAllowed()) {
             throw new IllegalArgumentException("Disabling LM is not allowed on the server side");
         }
 
@@ -994,11 +983,11 @@ public class GraphHopper implements GraphHopperAPI {
             }
 
             boolean disableCH = hints.getBool(CH.DISABLE, false);
-            if (!chPreparationHandler.isDisablingAllowed() && disableCH)
+            if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
                 throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
 
             boolean disableLM = hints.getBool(Landmark.DISABLE, false);
-            if (!lmPreparationHandler.isDisablingAllowed() && disableLM)
+            if (lmPreparationHandler.isEnabled() && !lmPreparationHandler.isDisablingAllowed() && disableLM)
                 throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
 
             if (chPreparationHandler.isEnabled() && !disableCH) {

@@ -67,10 +67,10 @@ public class CHPreparationHandlerTest {
     }
 
     @Test
-    public void testDisablingAllowed() {
-        assertFalse(instance.isDisablingAllowed());
-        instance.setEnabled(false);
-        assertTrue(instance.isDisablingAllowed());
+    public void testEnabled() {
+        assertFalse(instance.isEnabled());
+        instance.setCHProfileStrings("fastest");
+        assertTrue(instance.isEnabled());
     }
 
     @Test(expected = IllegalStateException.class)
