@@ -74,7 +74,6 @@ public class CHPreparationHandler {
         }
 
         if ("no".equals(chWeightingsStr) || "false".equals(chWeightingsStr)) {
-            // default is fastest and we need to clear this explicitly
             setCHProfilesAsStrings(Collections.<String>emptyList());
         } else if (!chWeightingsStr.isEmpty()) {
             setCHProfilesAsStrings(Arrays.asList(chWeightingsStr.split(",")));
