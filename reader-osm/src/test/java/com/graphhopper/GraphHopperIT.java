@@ -659,7 +659,8 @@ public class GraphHopperIT {
         req.getHints().put(Routing.MAX_VISITED_NODES, 5);
         GHResponse rsp = hopper.route(req);
 
-        assertTrue(rsp.getErrors().toString(), rsp.hasErrors());
+        assertTrue(rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString(), rsp.getErrors().toString().contains("maximum nodes exceeded"));
 
         req = new GHRequest().
                 addPoint(from).
@@ -687,13 +688,15 @@ public class GraphHopperIT {
                 addPoint(to).
                 setVehicle(vehicle).setWeighting(weighting);
 
-        // Fail since points are too far
+        // Fail since points are too far apart
         hopper.setNonChMaxWaypointDistance(1000);
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
+        String errorString = rsp.getErrors().toString();
+        assertTrue(errorString, errorString.contains("Point 1 is too far from Point 0"));
 
-        // Suceed since points are not far anymore
+        // Succeed since points are not far anymore
         hopper.setNonChMaxWaypointDistance(Integer.MAX_VALUE);
         rsp = hopper.route(req);
 
@@ -724,10 +727,14 @@ public class GraphHopperIT {
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
+        String errorString = rsp.getErrors().toString();
+        assertTrue(errorString, errorString.contains("Point 2 is too far from Point 1"));
+
         PointDistanceExceededException exception = (PointDistanceExceededException) rsp.getErrors().get(0);
+        assertEquals(1, exception.getDetails().get("from"));
         assertEquals(2, exception.getDetails().get("to"));
 
-        // Suceed since points are not far anymore
+        // Succeed since points are not far anymore
         hopper.setNonChMaxWaypointDistance(Integer.MAX_VALUE);
         rsp = hopper.route(req);
 
@@ -1177,9 +1184,11 @@ public class GraphHopperIT {
                 setDisablingAllowed(true);
 
         hopper.importOrLoad();
+
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setVehicle(vehicle).
                 setWeighting(weighting);
+        // request speed mode
         req.getHints().put(Landmark.DISABLE, true);
         req.getHints().put(CH.DISABLE, false);
 
