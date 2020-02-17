@@ -23,9 +23,9 @@ import com.conveyal.osmlib.OSM;
 import com.conveyal.osmlib.Relation;
 import com.conveyal.osmlib.Way;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.tardur.TimeDependentAccessRestriction;
+import com.graphhopper.tardur.TimeDependentRestrictionsDAO;
 import com.graphhopper.tardur.view.ConditionalRestrictionView;
-import com.graphhopper.tardur.view.ConditionalRestrictionsView;
+import com.graphhopper.tardur.view.TimeDependentRestrictionsView;
 import com.graphhopper.timezone.core.TimeZones;
 import org.locationtech.jts.geom.Coordinate;
 
@@ -43,33 +43,33 @@ import java.util.stream.Stream;
 public class ConditionalTurnRestrictionsResource {
 
     private final OSM osm;
-    private final TimeDependentAccessRestriction timeDependentAccessRestriction;
+    private final TimeDependentRestrictionsDAO timeDependentRestrictionsDAO;
     private final TimeZones timeZones;
 
     @Inject
     public ConditionalTurnRestrictionsResource(GraphHopperStorage storage, OSM osm, TimeZones timeZones) {
         this.osm = osm;
         this.timeZones = timeZones;
-        timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm, timeZones);
+        timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(storage, osm, timeZones);
     }
 
     @GET
     @Produces("text/html")
-    public ConditionalRestrictionsView conditionalRestrictions() {
-        return new ConditionalRestrictionsView(timeDependentAccessRestriction, () -> {
+    public TimeDependentRestrictionsView timeDependentTurnRestrictions() {
+        return new TimeDependentRestrictionsView(timeDependentRestrictionsDAO, () -> {
             Stream<ConditionalRestrictionView> conditionalRestrictionViewStream = osm.relations.entrySet().stream()
                     .filter(e -> e.getValue().hasTag("type", "restriction"))
                     .flatMap(entry -> {
                         long osmid = entry.getKey();
                         Relation relation = entry.getValue();
-                        Map<String, Object> tags = TimeDependentAccessRestriction.getTags(relation);
-                        List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData = TimeDependentAccessRestriction.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
+                        Map<String, Object> tags = TimeDependentRestrictionsDAO.getTags(relation);
+                        List<TimeDependentRestrictionsDAO.ConditionalTagData> restrictionData = TimeDependentRestrictionsDAO.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
                                 .collect(Collectors.toList());
                         if (!restrictionData.isEmpty()) {
                             Optional<Relation.Member> fromM = relation.members.stream().filter(m -> m.role.equals("from")).findFirst();
                             Optional<Relation.Member> toM = relation.members.stream().filter(m -> m.role.equals("to")).findFirst();
                             if (fromM.isPresent() && toM.isPresent()) {
-                                ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentAccessRestriction, timeZones);
+                                ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentRestrictionsDAO, timeZones);
                                 view.osmid = osmid;
                                 view.tags = tags;
                                 Way from = osm.ways.get(fromM.get().id);

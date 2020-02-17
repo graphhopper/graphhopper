@@ -45,7 +45,7 @@ public class OSMConditionalRestrictionParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        List<TimeDependentAccessRestriction.ConditionalTagData> timeDependentAccessConditions = TimeDependentAccessRestriction.getTimeDependentAccessConditions(way);
+        List<TimeDependentRestrictionsDAO.ConditionalTagData> timeDependentAccessConditions = TimeDependentRestrictionsDAO.getTimeDependentAccessConditions(way);
         if (!timeDependentAccessConditions.isEmpty()) {
             conditional.setBool(false, edgeFlags, true);
         }

@@ -31,12 +31,12 @@ import java.time.Instant;
 
 public class TimeDependentAccessWeighting implements TDWeighting {
 
-    private final TimeDependentAccessRestriction timeDependentAccessRestriction;
+    private final TimeDependentRestrictionsDAO timeDependentRestrictionsDAO;
     private final Weighting finalWeighting;
 
     public TimeDependentAccessWeighting(OSM osm, GraphHopper graphHopper, TimeZones timeZones, Weighting finalWeighting) {
         this.finalWeighting = finalWeighting;
-        timeDependentAccessRestriction = new TimeDependentAccessRestriction(graphHopper.getGraphHopperStorage(), osm, timeZones);
+        timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(graphHopper.getGraphHopperStorage(), osm, timeZones);
     }
 
     @Override
@@ -56,7 +56,7 @@ public class TimeDependentAccessWeighting implements TDWeighting {
 
     @Override
     public double calcTDWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId, long linkEnterTimeMilli) {
-        if (timeDependentAccessRestriction.accessible(edgeState, Instant.ofEpochMilli(linkEnterTimeMilli)).orElse(true)) {
+        if (timeDependentRestrictionsDAO.accessible(edgeState, Instant.ofEpochMilli(linkEnterTimeMilli)).orElse(true)) {
             return finalWeighting.calcEdgeWeight(edgeState, reverse);
         } else {
             return Double.POSITIVE_INFINITY;
@@ -75,7 +75,7 @@ public class TimeDependentAccessWeighting implements TDWeighting {
 
     @Override
     public double calcTDTurnWeight(int inEdge, int viaNode, int outEdge, long turnTimeMilli) {
-        if (timeDependentAccessRestriction.canTurn(inEdge, viaNode, outEdge, Instant.ofEpochMilli(turnTimeMilli)).orElse(true)) {
+        if (timeDependentRestrictionsDAO.canTurn(inEdge, viaNode, outEdge, Instant.ofEpochMilli(turnTimeMilli)).orElse(true)) {
             return finalWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
         } else {
             return Double.POSITIVE_INFINITY;

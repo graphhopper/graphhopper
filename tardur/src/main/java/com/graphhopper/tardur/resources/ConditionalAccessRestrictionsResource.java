@@ -25,9 +25,9 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.tardur.TimeDependentAccessRestriction;
+import com.graphhopper.tardur.TimeDependentRestrictionsDAO;
 import com.graphhopper.tardur.view.ConditionalRestrictionView;
-import com.graphhopper.tardur.view.ConditionalRestrictionsView;
+import com.graphhopper.tardur.view.TimeDependentRestrictionsView;
 import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -59,9 +59,9 @@ public class ConditionalAccessRestrictionsResource {
 
     @GET
     @Produces("text/html")
-    public ConditionalRestrictionsView conditionalRelations() {
-        TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm, timeZones);
-        return new ConditionalRestrictionsView(new TimeDependentAccessRestriction(storage, osm, timeZones), () -> {
+    public TimeDependentRestrictionsView timeDependentAccessRestrictions() {
+        TimeDependentRestrictionsDAO timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(storage, osm, timeZones);
+        return new TimeDependentRestrictionsView(new TimeDependentRestrictionsDAO(storage, osm, timeZones), () -> {
             final OSMIDParser osmidParser = OSMIDParser.fromEncodingManager(storage.getEncodingManager());
             final BooleanEncodedValue property = storage.getEncodingManager().getBooleanEncodedValue("conditional");
             return allEdges()
@@ -70,10 +70,10 @@ public class ConditionalAccessRestrictionsResource {
                     .distinct()
                     .flatMap(osmid -> {
                 Way way = osm.ways.get(osmid);
-                ReaderWay readerWay = timeDependentAccessRestriction.readerWay(osmid, way);
-                List<TimeDependentAccessRestriction.ConditionalTagData> timeDependentAccessConditions = TimeDependentAccessRestriction.getTimeDependentAccessConditions(readerWay);
+                ReaderWay readerWay = timeDependentRestrictionsDAO.readerWay(osmid, way);
+                List<TimeDependentRestrictionsDAO.ConditionalTagData> timeDependentAccessConditions = TimeDependentRestrictionsDAO.getTimeDependentAccessConditions(readerWay);
                 if (!timeDependentAccessConditions.isEmpty()) {
-                    ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentAccessRestriction, timeZones);
+                    ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentRestrictionsDAO, timeZones);
                     view.osmid = osmid;
                     view.tags = readerWay.getTags();
                     Node from = osm.nodes.get(way.nodes[0]);

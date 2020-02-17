@@ -43,7 +43,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class TimeDependentAccessRestriction {
+public class TimeDependentRestrictionsDAO {
 
     private final BooleanEncodedValue property;
     private final OSMIDParser osmidParser;
@@ -51,7 +51,7 @@ public class TimeDependentAccessRestriction {
     private TimeZones timeZones;
     private GraphHopperStorage ghStorage;
 
-    public TimeDependentAccessRestriction(GraphHopperStorage ghStorage, OSM osm, TimeZones timeZones) {
+    public TimeDependentRestrictionsDAO(GraphHopperStorage ghStorage, OSM osm, TimeZones timeZones) {
         this.ghStorage = ghStorage;
         this.osm = osm;
         this.timeZones = timeZones;
@@ -72,8 +72,8 @@ public class TimeDependentAccessRestriction {
         Set<Long> collect = osm.relations.values().stream()
                 .filter(r -> r.hasTag("type", "restriction"))
                 .flatMap(relation -> {
-                    Map<String, Object> tags = TimeDependentAccessRestriction.getTags(relation);
-                    List<ConditionalTagData> restrictionData = TimeDependentAccessRestriction.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
+                    Map<String, Object> tags = TimeDependentRestrictionsDAO.getTags(relation);
+                    List<ConditionalTagData> restrictionData = TimeDependentRestrictionsDAO.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
                             .collect(Collectors.toList());
                     if (!restrictionData.isEmpty()) {
                         Optional<Relation.Member> fromM = relation.members.stream().filter(m -> m.role.equals("from")).findFirst();

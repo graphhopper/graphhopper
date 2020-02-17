@@ -1,4 +1,4 @@
-<#-- @ftlvariable name="" type="com.graphhopper.tardur.view.ConditionalRestrictionsView" -->
+<#-- @ftlvariable name="" type="com.graphhopper.tardur.view.TimeDependentRestrictionsView" -->
 <!DOCTYPE html>
 <html>
 <#setting number_format="0.#####">

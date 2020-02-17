@@ -19,7 +19,7 @@
 package com.graphhopper.tardur.view;
 
 import ch.poole.openinghoursparser.Rule;
-import com.graphhopper.tardur.TimeDependentAccessRestriction;
+import com.graphhopper.tardur.TimeDependentRestrictionsDAO;
 import com.graphhopper.timezone.core.TimeZones;
 import org.locationtech.jts.geom.Coordinate;
 
@@ -36,27 +36,27 @@ public class ConditionalRestrictionView {
     public Map<String, Object> tags;
     public Coordinate from;
     public Coordinate to;
-    private TimeDependentAccessRestriction timeDependentAccessRestriction;
+    private TimeDependentRestrictionsDAO timeDependentRestrictionsDAO;
 
-    public ConditionalRestrictionView(TimeDependentAccessRestriction timeDependentAccessRestriction, TimeZones timeZones) {
-        this.timeDependentAccessRestriction = timeDependentAccessRestriction;
+    public ConditionalRestrictionView(TimeDependentRestrictionsDAO timeDependentRestrictionsDAO, TimeZones timeZones) {
+        this.timeDependentRestrictionsDAO = timeDependentRestrictionsDAO;
         this.timeZones = timeZones;
     }
 
-    public List<TimeDependentAccessRestriction.ConditionalTagData> getRestrictionData() {
+    public List<TimeDependentRestrictionsDAO.ConditionalTagData> getRestrictionData() {
         return restrictionData;
     }
 
-    public List<TimeDependentAccessRestriction.ConditionalTagData> restrictionData;
+    public List<TimeDependentRestrictionsDAO.ConditionalTagData> restrictionData;
 
     public Optional<Boolean> accessible(Instant linkEnterTime) {
         TimeZone timeZone = timeZones.getTimeZone(from.y, from.x);
-        return timeDependentAccessRestriction.accessible(tags, linkEnterTime.atZone(timeZone.toZoneId()));
+        return timeDependentRestrictionsDAO.accessible(tags, linkEnterTime.atZone(timeZone.toZoneId()));
     }
 
     public boolean matches(Instant linkEnterTime, Rule rule) {
         TimeZone timeZone = timeZones.getTimeZone(from.y, from.x);
-        return timeDependentAccessRestriction.matches(linkEnterTime.atZone(timeZone.toZoneId()), rule);
+        return timeDependentRestrictionsDAO.matches(linkEnterTime.atZone(timeZone.toZoneId()), rule);
     }
 
 }

@@ -88,8 +88,8 @@ public class TardurGraphHopperManaged implements Managed {
         osm = new OSM(graphHopper.getGraphHopperStorage().getDirectory().getDefaultType().isStoring() ? graphHopper.getGraphHopperStorage().getDirectory().getLocation()+"/osm.db" : null);
         if (osm.ways.isEmpty()) {
             osm.readFromFile(graphHopper.getDataReaderFile());
-            TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(graphHopper.getGraphHopperStorage(), osm, timeZones);
-            timeDependentAccessRestriction.markEdgesAdjacentToConditionalTurnRestrictions();
+            TimeDependentRestrictionsDAO timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(graphHopper.getGraphHopperStorage(), osm, timeZones);
+            timeDependentRestrictionsDAO.markEdgesAdjacentToConditionalTurnRestrictions();
             graphHopper.getGraphHopperStorage().flush();
         }
     }

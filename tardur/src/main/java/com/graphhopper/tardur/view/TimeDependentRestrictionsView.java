@@ -18,21 +18,21 @@
 
 package com.graphhopper.tardur.view;
 
-import com.graphhopper.tardur.TimeDependentAccessRestriction;
+import com.graphhopper.tardur.TimeDependentRestrictionsDAO;
 import io.dropwizard.views.View;
 
 import java.time.Instant;
 
-public class ConditionalRestrictionsView extends View {
+public class TimeDependentRestrictionsView extends View {
 
     private final Instant linkEnterTime;
-    private final TimeDependentAccessRestriction timeDependentAccessRestriction;
+    private final TimeDependentRestrictionsDAO timeDependentRestrictionsDAO;
     private final Iterable<ConditionalRestrictionView> restrictions;
 
-    public ConditionalRestrictionsView(TimeDependentAccessRestriction timeDependentAccessRestriction, Iterable<ConditionalRestrictionView> restrictionViews) {
+    public TimeDependentRestrictionsView(TimeDependentRestrictionsDAO timeDependentRestrictionsDAO, Iterable<ConditionalRestrictionView> restrictionViews) {
         super("/assets/wurst.ftl");
         linkEnterTime = Instant.now();
-        this.timeDependentAccessRestriction = timeDependentAccessRestriction;
+        this.timeDependentRestrictionsDAO = timeDependentRestrictionsDAO;
         this.restrictions = restrictionViews;
     }
 
