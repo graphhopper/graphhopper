@@ -556,9 +556,6 @@ public class RoutingAlgorithmWithOSMIT {
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), importVehicles).build());
 
-            if (withCH) {
-                hopper.getCHPreparationHandler().setCHProfileStrings("fastest");
-            }
             if (osmFile.contains("krautsand"))
                 hopper.setMinNetworkSize(0, 0);
             // avoid that path.getDistance is too different to path.getPoint.calcDistance
