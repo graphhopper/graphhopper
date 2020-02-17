@@ -385,7 +385,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public String toString() {
-        return "CHGraph|" + chProfile.toString();
+        return "CHGraph|" + chProfile.getName() + "|" + chProfile.toString();
     }
 
     public void debugPrint() {

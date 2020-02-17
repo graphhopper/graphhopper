@@ -18,6 +18,9 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
@@ -41,7 +44,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.graphhopper.GraphHopperIT.DIR;
-import static com.graphhopper.routing.ch.CHPreparationHandler.EdgeBasedCHMode;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.assertEquals;
@@ -539,7 +541,7 @@ public class RoutingAlgorithmWithOSMIT {
      *               preparation and takes a bit longer
      */
     Graph runAlgo(TestAlgoCollector testCollector, String osmFile,
-                  String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
+                  String graphFile, List<OneRun> runs, String importVehicles,
                   boolean withCH, String vehicle, String weightStr, boolean is3D) {
 
         // for different weightings we need a different storage, otherwise we would need to remove the graph folder
@@ -550,11 +552,19 @@ public class RoutingAlgorithmWithOSMIT {
         OneRun tmpOneRun = null;
         try {
             Helper.removeDir(new File(graphFile));
+            EncodingManager em = EncodingManager.create(importVehicles);
+            List<ProfileConfig> profiles = new ArrayList<>();
+            for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
+                String vehicleName = encoder.toString();
+                profiles.add(new ProfileConfig(vehicleName + "_profile")
+                        .setVehicle(vehicleName).setWeighting(weightStr).setTurnCosts(encoder.supportsTurnCosts()));
+            }
             GraphHopper hopper = new GraphHopperOSM().
                     setStoreOnFlush(true).
                     setDataReaderFile(osmFile).
+                    setProfiles(profiles).
                     setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), importVehicles).build());
+                    setEncodingManager(em);
 
             if (osmFile.contains("krautsand"))
                 hopper.setMinNetworkSize(0, 0);
@@ -563,14 +573,13 @@ public class RoutingAlgorithmWithOSMIT {
 
             // always enable landmarks
             hopper.getLMPreparationHandler().
-                    addLMProfileAsString(weightStr).
+                    setLMProfileConfigs(new LMProfileConfig(vehicle + "_profile")).
                     setDisablingAllowed(true);
 
             if (withCH) {
                 assert !Helper.isEmpty(weightStr);
                 hopper.getCHPreparationHandler().
-                        addCHProfileAsString(weightStr).
-                        setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE).
+                        setCHProfileConfigs(new CHProfileConfig(vehicle + "_profile")).
                         setDisablingAllowed(true);
             }
 
@@ -593,7 +602,7 @@ public class RoutingAlgorithmWithOSMIT {
                 }
                 algoEntry = entry;
                 LocationIndex idx = entry.getIdx();
-                for (OneRun oneRun : forEveryAlgo) {
+                for (OneRun oneRun : runs) {
                     tmpOneRun = oneRun;
                     List<QueryResult> list = oneRun.getList(idx, edgeFilter);
                     testCollector.assertDistance(hopper.getEncodingManager(), algoEntry, list, oneRun);
