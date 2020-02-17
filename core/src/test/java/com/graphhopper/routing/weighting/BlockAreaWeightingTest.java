@@ -1,5 +1,6 @@
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -46,7 +47,8 @@ public class BlockAreaWeightingTest {
         BlockAreaWeighting instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         assertEquals(94.35, instance.calcEdgeWeight(edge, false), .01);
 
-        bArea.add(0);
+        GHIntHashSet set = bArea.add(null);
+        set.add(0);
         instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         assertEquals(Double.POSITIVE_INFINITY, instance.calcEdgeWeight(edge, false), .01);
     }
@@ -72,8 +74,8 @@ public class BlockAreaWeightingTest {
     public void testBlockVirtualEdges_QueryGraph() {
         GraphEdgeIdFinder.BlockArea bArea = new GraphEdgeIdFinder.BlockArea(graph);
         // add base graph edge to fill caches and trigger edgeId cache search (without virtual edges)
-        bArea.add(0);
-        bArea.add(new Circle(0.0025, 0.0025, 1));
+        GHIntHashSet set = bArea.add(new Circle(0.0025, 0.0025, 1));
+        set.add(0);
 
         LocationIndex index = new LocationIndexTree(graph, graph.getDirectory()).prepareIndex();
         QueryResult qr = index.findClosest(0.005, 0.005, EdgeFilter.ALL_EDGES);
