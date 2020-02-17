@@ -41,7 +41,6 @@ public class NavigateResponseConverterTest {
         hopper = new GraphHopperOSM().
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
-                setCHEnabled(false).
                 setGraphHopperLocation(graphFileFoot).
                 setEncodingManager(EncodingManager.create(importVehicles)).
                 importOrLoad();
