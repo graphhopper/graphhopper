@@ -1,6 +1,6 @@
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.storage.Graph;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -16,8 +16,8 @@ public class BlockAreaWeighting extends AbstractAdjustedWeighting {
         this.blockArea = blockArea;
     }
 
-    public BlockAreaWeighting setQueryGraph(Graph queryGraph) {
-        blockArea.setGraph(queryGraph);
+    public BlockAreaWeighting setQueryGraph(QueryGraph queryGraph) {
+        blockArea.setQueryGraph(queryGraph);
         return this;
     }
 

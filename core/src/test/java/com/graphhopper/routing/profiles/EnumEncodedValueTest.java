@@ -11,8 +11,8 @@ public class EnumEncodedValueTest {
     public void testInit() {
         EnumEncodedValue<RoadClass> prop = new EnumEncodedValue<>("road_class", RoadClass.class);
         EncodedValue.InitializerConfig init = new EncodedValue.InitializerConfig();
-        assertEquals(4, prop.init(init));
-        assertEquals(4, prop.bits);
+        assertEquals(5, prop.init(init));
+        assertEquals(5, prop.bits);
         assertEquals(0, init.dataIndex);
         assertEquals(0, init.shift);
         IntsRef ref = new IntsRef(1);

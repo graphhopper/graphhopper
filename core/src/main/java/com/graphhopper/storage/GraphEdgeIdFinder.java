@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
@@ -214,7 +215,7 @@ public class GraphEdgeIdFinder {
             return false;
         }
 
-        public BlockArea setGraph(Graph queryGraph) {
+        public BlockArea setQueryGraph(QueryGraph queryGraph) {
             if (prepared)
                 throw new IllegalStateException("setGraph cannot be called multiple times");
 

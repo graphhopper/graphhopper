@@ -21,12 +21,11 @@ public class LMPreparationHandlerTest {
     @Test
     public void addWeighting() {
         LMPreparationHandler handler = new LMPreparationHandler();
-        handler.setEnabled(true);
         handler.addLMProfileAsString("fastest");
         assertEquals(Arrays.asList("fastest"), handler.getLMProfileStrings());
 
         // special parameters like the maximum weight
-        handler = new LMPreparationHandler().setEnabled(true);
+        handler = new LMPreparationHandler();
         handler.addLMProfileAsString("fastest|maximum=65000");
         handler.addLMProfileAsString("shortest|maximum=20000");
         assertEquals(Arrays.asList("fastest", "shortest"), handler.getLMProfileStrings());
