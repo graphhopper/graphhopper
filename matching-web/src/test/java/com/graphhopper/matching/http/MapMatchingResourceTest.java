@@ -44,13 +44,12 @@ public class MapMatchingResourceTest {
     static {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
-                put("prepare.ch.weightings", "no").
                 put("datareader.file", "../map-data/leipzig_germany.osm.pbf").
                 put("graph.location", DIR);
     }
 
     @ClassRule
-    public static final DropwizardAppRule<MapMatchingServerConfiguration> app = new DropwizardAppRule(MapMatchingApplication.class, config);
+    public static final DropwizardAppRule<MapMatchingServerConfiguration> app = new DropwizardAppRule<>(MapMatchingApplication.class, config);
 
     @AfterClass
     public static void cleanUp() {

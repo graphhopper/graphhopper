@@ -93,8 +93,6 @@ public class MeasurementCommand extends Command {
 
         GraphHopper graphHopper = new GraphHopperOSM();
         graphHopper.init(graphHopperConfiguration).forDesktop();
-        graphHopper.getCHPreparationHandler().setEnabled(false);
-        graphHopper.getCHPreparationHandler().setDisablingAllowed(true);
         graphHopper.importOrLoad();
         
         // and map-matching stuff

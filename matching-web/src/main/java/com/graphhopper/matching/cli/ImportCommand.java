@@ -33,7 +33,6 @@ public class ImportCommand extends Command {
         graphHopperConfiguration.put("graph.location", "graph-cache");
 
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
-        hopper.getCHPreparationHandler().setEnabled(false);
         hopper.importOrLoad();
     }
 

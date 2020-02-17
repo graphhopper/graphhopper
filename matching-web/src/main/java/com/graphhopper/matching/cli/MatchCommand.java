@@ -66,7 +66,6 @@ public class MatchCommand extends Command {
         GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
         graphHopperConfiguration.put("graph.location", "graph-cache");
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
-        hopper.getCHPreparationHandler().setEnabled(false);
         System.out.println("loading graph from cache");
         hopper.load(graphHopperConfiguration.get("graph.location", "graph-cache"));
 

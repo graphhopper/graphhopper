@@ -68,6 +68,7 @@ public class MapMatchingTest {
         graphHopper.setDataReaderFile("../map-data/leipzig_germany.osm.pbf");
         graphHopper.setGraphHopperLocation("../target/mapmatchingtest-ch");
         graphHopper.setEncodingManager(EncodingManager.create(encoder));
+        graphHopper.getCHPreparationHandler().setCHProfileStrings("fastest");
         graphHopper.getCHPreparationHandler().setDisablingAllowed(true);
         graphHopper.importOrLoad();
     }
