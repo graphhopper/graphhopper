@@ -20,11 +20,16 @@ package com.graphhopper.jackson;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 public class Jackson {
 
     public static ObjectMapper newObjectMapper() {
         return initObjectMapper(new ObjectMapper());
+    }
+
+    public static ObjectMapper initObjectMapperWithSnake(ObjectMapper objectMapper) {
+        return initObjectMapper(objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE));
     }
 
     public static ObjectMapper initObjectMapper(ObjectMapper objectMapper) {
