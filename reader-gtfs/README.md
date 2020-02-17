@@ -20,7 +20,6 @@ java -Xmx8g -Xms8g \
   -Ddw.graphhopper.datareader.file=brandenburg-latest.osm.pbf \
   -Ddw.graphhopper.gtfs.file=gtfs-vbb.zip \
   -Ddw.graphhopper.graph.flag_encoders=pt \
-  -Ddw.graphhopper.prepare.ch.weightings=no \
   -Ddw.graphhopper.graph.location=./graph-cache \
   -jar web/target/graphhopper-web-*.jar server config.yml
 # view the web UI e.g. via:

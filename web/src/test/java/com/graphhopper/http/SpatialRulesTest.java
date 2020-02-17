@@ -45,7 +45,6 @@ public class SpatialRulesTest {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
                 put("graph.encoded_values", "country,road_environment,road_class,road_access,max_speed").
-                put("prepare.ch.weightings", "no").
                 put("spatial_rules.borders_directory", "../core/files/spatialrules").
                 put("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
