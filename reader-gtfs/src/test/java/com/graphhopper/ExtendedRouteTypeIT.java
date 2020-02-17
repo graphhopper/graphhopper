@@ -48,8 +48,6 @@ public class ExtendedRouteTypeIT {
         ghConfig.put("graph.flag_encoders", "car,foot");
         ghConfig.put("graph.location", GRAPH_LOC);
         ghConfig.put("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
-        // todonow: do we want the (previously by default) CH profiles here? (same question for all GraphHopperGtfs basically
-        ghConfig.put("prepare.ch.weightings", "fastest");
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
