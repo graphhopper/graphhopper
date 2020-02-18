@@ -220,8 +220,8 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         return edgeFrom == edgeTo;
     }
 
-    public boolean isUTurnAllowed(int node) {
-        return true;
+    public boolean isUTurnAllowed(DecimalEncodedValue turnCostEnc, IntsRef tcFlags, int node, int edge) {
+        return get(turnCostEnc, tcFlags, edge, node, edge) != Double.POSITIVE_INFINITY;
     }
 
     private void nextCostFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
