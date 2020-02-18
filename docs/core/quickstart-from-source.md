@@ -58,7 +58,7 @@ Then open the project in your IDE, first class IDEs are NetBeans and IntelliJ wh
 Go to `Run->Edit Configurations...` and set the following to run GraphHopper from within IntelliJ:
 ```
 Main class: com.graphhopper.http.GraphHopperApplication
-VM options: -Xms1g -Xmx1g -server -Dgraphhopper.datareader.file=[your-area].osm.pbf -Dgraphhopper.graph.location=./[your-area].osm-gh
+VM options: -Xms1g -Xmx1g -server -Ddw.graphhopper.datareader.file=[your-area].osm.pbf -Ddw.graphhopper.graph.location=./[your-area].osm-gh
 Program arguments: server config.yml
 ```
 

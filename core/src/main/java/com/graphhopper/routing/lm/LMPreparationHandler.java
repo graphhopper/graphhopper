@@ -58,7 +58,6 @@ public class LMPreparationHandler {
     private final List<String> lmProfileStrings = new ArrayList<>();
     private final List<LMProfile> lmProfiles = new ArrayList<>();
     private final Map<String, Double> maximumWeights = new HashMap<>();
-    private boolean enabled = false;
     private int minNodes = -1;
     private boolean disablingAllowed = false;
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
@@ -88,10 +87,7 @@ public class LMPreparationHandler {
             setLMProfileStrings(tmpLMWeightingList);
         }
 
-        boolean enableThis = !getLMProfileStrings().isEmpty();
-        setEnabled(enableThis);
-        if (enableThis)
-            setDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
+        setDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
     }
 
     public int getLandmarks() {
@@ -107,16 +103,8 @@ public class LMPreparationHandler {
         return disablingAllowed || !isEnabled();
     }
 
-    /**
-     * Enables or disables this handler. This speed-up mode is disabled by default.
-     */
-    public final LMPreparationHandler setEnabled(boolean enabled) {
-        this.enabled = enabled;
-        return this;
-    }
-
     public final boolean isEnabled() {
-        return enabled;
+        return !lmProfileStrings.isEmpty() || !lmProfiles.isEmpty() || !preparations.isEmpty();
     }
 
     public int getPreparationThreads() {
@@ -189,10 +177,6 @@ public class LMPreparationHandler {
 
     public boolean hasLMProfiles() {
         return !lmProfiles.isEmpty();
-    }
-
-    public boolean hasPreparations() {
-        return !preparations.isEmpty();
     }
 
     public int size() {
