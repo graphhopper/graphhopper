@@ -71,7 +71,6 @@ public class GraphHopperAPITest {
 
         GraphHopper instance = createGraphHopper(vehicle).
                 setStoreOnFlush(false).
-                setCHEnabled(false).
                 loadGraph(graph);
         // 3 -> 0
         GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10).setVehicle(vehicle).setWeighting(weighting));
@@ -97,7 +96,6 @@ public class GraphHopperAPITest {
 
         GraphHopper instance = createGraphHopper(vehicle).
                 setStoreOnFlush(false).
-                setCHEnabled(false).
                 loadGraph(graph);
         GHResponse rsp = instance.route(new GHRequest(42, 10, 42, 10.4).setVehicle(vehicle).setWeighting(weighting));
         assertTrue(rsp.hasErrors());
@@ -133,7 +131,6 @@ public class GraphHopperAPITest {
         GraphHopper instance = createGraphHopper(vehicle)
                 .setElevation(true)
                 .setGraphHopperLocation(loc)
-                .setCHEnabled(false)
                 .loadGraph(graph);
         instance.flush();
         instance.close();
@@ -147,7 +144,7 @@ public class GraphHopperAPITest {
             }
         }
                 .setEncodingManager(encodingManager)
-                .setElevation(true).setCHEnabled(false);
+                .setElevation(true);
         instance.load(loc);
         instance.flush();
         instance.close();
@@ -161,7 +158,7 @@ public class GraphHopperAPITest {
             }
         }
                 .setEncodingManager(encodingManager)
-                .setElevation(true).setCHEnabled(false);
+                .setElevation(true);
         instance.load(loc);
         instance.flush();
         instance.close();
@@ -175,8 +172,7 @@ public class GraphHopperAPITest {
         String vehicle = "car";
         String weighting = "fastest";
         GraphHopper instance = createGraphHopper(vehicle).
-                setStoreOnFlush(false).
-                setCHEnabled(false);
+                setStoreOnFlush(false);
         try {
             instance.route(new GHRequest(42, 10.4, 42, 10).setVehicle(vehicle).setWeighting(weighting));
             fail();
@@ -225,7 +221,6 @@ public class GraphHopperAPITest {
         }
                 .setEncodingManager(encodingManager)
                 .setStoreOnFlush(false).
-                        setCHEnabled(false).
                         loadGraph(graph);
 
         GHResponse rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10).setVehicle(vehicle).setWeighting(weighting));

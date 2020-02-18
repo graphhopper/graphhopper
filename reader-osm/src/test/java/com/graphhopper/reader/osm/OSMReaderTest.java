@@ -921,7 +921,6 @@ public class OSMReaderTest {
                 .setDataReaderFile(getClass().getResource(file7).getFile())
                 .setEncodingManager(EncodingManager.create("car,motorcycle"))
                 .setGraphHopperLocation(dir);
-        hopper.getCHPreparationHandler().setEnabled(false);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
                 setWeighting("curvature").
@@ -946,9 +945,8 @@ public class OSMReaderTest {
                 }
             }
         }.setEncodingManager(EncodingManager.create("car,bike")).
-                setGraphHopperLocation(dir)
-                .setCHEnabled(false).
-                        importOrLoad();
+                setGraphHopperLocation(dir).
+                importOrLoad();
 
         GHResponse response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
                 .setVehicle("car").setWeighting("fastest")
@@ -973,7 +971,6 @@ public class OSMReaderTest {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
-            setCHEnabled(false);
 
             BikeFlagEncoder bikeEncoder;
             if (turnCosts) {

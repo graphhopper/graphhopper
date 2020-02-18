@@ -552,7 +552,6 @@ public class RoutingAlgorithmWithOSMIT {
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopperOSM().
                     setStoreOnFlush(true).
-                    setCHEnabled(withCH).
                     setDataReaderFile(osmFile).
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), importVehicles).build());
@@ -563,15 +562,17 @@ public class RoutingAlgorithmWithOSMIT {
             hopper.setWayPointMaxDistance(0);
 
             // always enable landmarks
-            hopper.getLMPreparationHandler().addLMProfileAsString(weightStr).
-                    setEnabled(true).setDisablingAllowed(true);
+            hopper.getLMPreparationHandler().
+                    addLMProfileAsString(weightStr).
+                    setDisablingAllowed(true);
 
-            if (withCH)
+            if (withCH) {
+                assert !Helper.isEmpty(weightStr);
                 hopper.getCHPreparationHandler().
                         addCHProfileAsString(weightStr).
-                        setEnabled(true).
                         setEdgeBasedCHMode(EdgeBasedCHMode.EDGE_OR_NODE).
                         setDisablingAllowed(true);
+            }
 
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider(DIR));
@@ -620,7 +621,6 @@ public class RoutingAlgorithmWithOSMIT {
         final GraphHopper hopper = new GraphHopperOSM().
                 setStoreOnFlush(true).
                 setEncodingManager(encodingManager).
-                setCHEnabled(false).
                 setWayPointMaxDistance(0).
                 setDataReaderFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).

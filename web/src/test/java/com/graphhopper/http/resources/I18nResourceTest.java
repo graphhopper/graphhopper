@@ -21,7 +21,6 @@ public class I18nResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("prepare.ch.weightings", "no").
                 put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", DIR);
