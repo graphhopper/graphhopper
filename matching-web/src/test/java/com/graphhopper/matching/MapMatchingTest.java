@@ -26,17 +26,16 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -53,24 +52,31 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class MapMatchingTest {
 
+    private static final String GH_LOCATION = "../target/mapmatchingtest-ch";
     private final TranslationMap translationMap = new TranslationMap().doImport();
     private final XmlMapper xmlMapper = new XmlMapper();
 
     private final String parameterName;
-    private GraphHopper graphHopper;
+    private static GraphHopper graphHopper;
     private final HintsMap algoOptions;
 
 
-    @Before
-    public void setup() {
+    @BeforeClass
+    public static void setup() {
+        Helper.removeDir(new File(GH_LOCATION));
         CarFlagEncoder encoder = new CarFlagEncoder();
         graphHopper = new GraphHopperOSM();
         graphHopper.setDataReaderFile("../map-data/leipzig_germany.osm.pbf");
-        graphHopper.setGraphHopperLocation("../target/mapmatchingtest-ch");
+        graphHopper.setGraphHopperLocation(GH_LOCATION);
         graphHopper.setEncodingManager(EncodingManager.create(encoder));
         graphHopper.getCHPreparationHandler().setCHProfileStrings("fastest");
         graphHopper.getCHPreparationHandler().setDisablingAllowed(true);
         graphHopper.importOrLoad();
+    }
+
+    @AfterClass
+    public static void after() {
+        Helper.removeDir(new File(GH_LOCATION));
     }
 
     @Parameterized.Parameters(name = "{0}")

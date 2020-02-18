@@ -25,8 +25,12 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.Helper;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -37,15 +41,21 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class MapMatching2Test {
-
+    private static final String GH_LOCATION = "../target/mapmatchingtest2-gh";
     private XmlMapper xmlMapper = new XmlMapper();
+
+    @Before
+    @After
+    public void clean() {
+        Helper.removeDir(new File(GH_LOCATION));
+    }
 
     @Test
     public void testIssue13() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopperOSM();
         hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
-        hopper.setGraphHopperLocation("../target/mapmatchingtest-13");
+        hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
@@ -76,7 +86,7 @@ public class MapMatching2Test {
         CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopperOSM();
         hopper.setDataReaderFile("../map-data/issue-70.osm.gz");
-        hopper.setGraphHopperLocation("../target/mapmatchingtest-70");
+        hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
@@ -102,7 +112,7 @@ public class MapMatching2Test {
         CarFlagEncoder encoder = new CarFlagEncoder();
         GraphHopper hopper = new GraphHopperOSM();
         hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
-        hopper.setGraphHopperLocation("../target/mapmatchingtest-127");
+        hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();

@@ -24,9 +24,12 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,14 +39,16 @@ import static org.hamcrest.core.Is.is;
 
 public class RoutingAdditivityTest {
 
+    private static final String GH_LOCATION = "../target/routing-additivity-test-gh";
     private GraphHopper graphHopper;
 
     @Before
     public void setup() {
+        Helper.removeDir(new File(GH_LOCATION));
         CarFlagEncoder encoder = new CarFlagEncoder();
         graphHopper = new GraphHopperOSM();
         graphHopper.setDataReaderFile("../map-data/leipzig_germany.osm.pbf");
-        graphHopper.setGraphHopperLocation("../target/mapmatchingtest-ch");
+        graphHopper.setGraphHopperLocation(GH_LOCATION);
         graphHopper.setEncodingManager(EncodingManager.create(encoder));
         graphHopper.getCHPreparationHandler().setDisablingAllowed(true);
         graphHopper.importOrLoad();
@@ -67,7 +72,7 @@ public class RoutingAdditivityTest {
         assertThat(route1.getTime(), is(equalTo(route2.getTime())));
 
         long travelTime = 0L;
-        for (int i = 0; i < route2.getPoints().size()-1; i++) {
+        for (int i = 0; i < route2.getPoints().size() - 1; i++) {
             PathWrapper segment = graphHopper.route(new GHRequest(
                     route2.getPoints().get(i),
                     route2.getPoints().get(i + 1))
