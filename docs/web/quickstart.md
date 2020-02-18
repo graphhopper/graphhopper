@@ -9,7 +9,7 @@ as jar file and download this [config-example.yml](https://raw.githubusercontent
  3. Copy an OSM file to the same directory. For example [berlin-latest.osm.pbf](http://download.geofabrik.de/europe/germany/berlin.html)
  4. Start GraphHopper Maps via: 
     ```bash
-    java -Dgraphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
+    java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
     ```
  5. After you see 'Started server at HTTP 8989' go to [http://localhost:8989/](http://localhost:8989/) and you should see a map of Berlin. You should be able to click on the map and a route appears.
 

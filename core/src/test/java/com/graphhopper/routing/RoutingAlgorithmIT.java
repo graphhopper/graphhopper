@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.PrincetonReader;
+import com.graphhopper.routing.ch.CHProfileSelector;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
@@ -96,16 +97,7 @@ public class RoutingAlgorithmIT {
             final HintsMap chHints = new HintsMap(defaultHints);
             chHints.put(Parameters.CH.DISABLE, false);
             chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
-            CHProfile pickedProfile = null;
-            for (CHProfile chProfile : hopper.getCHPreparationHandler().getCHProfiles()) {
-                if (chProfile.getWeighting().equals(weighting) && tMode.isEdgeBased() == chProfile.getTraversalMode().isEdgeBased()) {
-                    pickedProfile = chProfile;
-                    break;
-                }
-            }
-            if (pickedProfile == null)
-                throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHPreparationHandler().getCHProfiles());
-
+            CHProfile pickedProfile = CHProfileSelector.select(hopper.getCHPreparationHandler().getCHProfiles(), chHints);
             prepare.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
                 @Override
@@ -139,7 +131,6 @@ public class RoutingAlgorithmIT {
         new PrincetonReader(graph).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream(bigFile))).read();
         GraphHopper hopper = new GraphHopper() {
             {
-                setCHEnabled(false);
                 setEncodingManager(eManager);
                 loadGraph(graph);
             }

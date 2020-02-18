@@ -42,7 +42,6 @@ public class SPTResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("prepare.ch.weightings", "no").
                 put("graph.flag_encoders", "car").
                 put("graph.encoded_values", "max_speed,road_class").
                 put("datareader.file", "../core/files/andorra.osm.pbf").

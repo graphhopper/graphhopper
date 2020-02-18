@@ -303,7 +303,10 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         Helper.close(graph);
 
         // load without configured FlagEncoders
-        GraphHopper hopper = new GraphHopper().setCHEnabled(ch);
+        GraphHopper hopper = new GraphHopper();
+        if (ch) {
+            hopper.getCHPreparationHandler().setCHProfileStrings("fastest");
+        }
         assertTrue(hopper.load(defaultGraphLoc));
         graph = hopper.getGraphHopperStorage();
         assertEquals(nodes, graph.getNodes());
@@ -311,7 +314,10 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         Helper.close(graph);
 
         // load via explicitly configured FlagEncoders
-        hopper = new GraphHopper().setCHEnabled(ch).setEncodingManager(encodingManager);
+        hopper = new GraphHopper().setEncodingManager(encodingManager);
+        if (ch) {
+            hopper.getCHPreparationHandler().setCHProfileStrings("fastest");
+        }
         assertTrue(hopper.load(defaultGraphLoc));
         graph = hopper.getGraphHopperStorage();
         assertEquals(nodes, graph.getNodes());
