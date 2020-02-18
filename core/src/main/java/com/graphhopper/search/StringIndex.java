@@ -17,7 +17,6 @@
  */
 package com.graphhopper.search;
 
-import com.carrotsearch.hppc.ByteArrayList;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Storable;
@@ -47,10 +46,10 @@ public class StringIndex implements Storable<StringIndex> {
     // array.indexOf could be faster than hashmap.get if not too many keys or even sort keys and use binarySearch
     private final Map<String, Integer> keysInMem = new LinkedHashMap<>();
     private final List<String> keyList = new ArrayList<>();
-    private final Map<ByteArrayList, Long> smallCache;
+    private final Map<String, Long> smallCache;
     private long bytePointer = START_POINTER;
     private long lastEntryPointer = -1;
-    private Map<String, ByteArrayList> lastEntryMap;
+    private Map<String, String> lastEntryMap;
 
     public StringIndex(Directory dir) {
         this(dir, 1000);
@@ -63,9 +62,9 @@ public class StringIndex implements Storable<StringIndex> {
         keys = dir.find("string_index_keys");
         keys.setSegmentSize(10 * 1024);
         vals = dir.find("string_index_vals");
-        smallCache = new LinkedHashMap<ByteArrayList, Long>(cacheSize, 0.75f, true) {
+        smallCache = new LinkedHashMap<String, Long>(cacheSize, 0.75f, true) {
             @Override
-            protected boolean removeEldestEntry(Map.Entry<ByteArrayList, Long> entry) {
+            protected boolean removeEldestEntry(Map.Entry<String, Long> entry) {
                 return size() > cacheSize;
             }
         };
@@ -112,20 +111,12 @@ public class StringIndex implements Storable<StringIndex> {
         return keysInMem.keySet();
     }
 
-    public long add(Map<String, String> entryMap) {
-        HashMap<String, ByteArrayList> map = new HashMap<>();
-        for (Map.Entry<String, String> entry : entryMap.entrySet()) {
-            map.put(entry.getKey(), ByteArrayList.from(getBytesForString("Value for key" + entry.getKey(), entry.getValue())));
-        }
-        return addBinary(map);
-    }
-
     /**
      * This method writes the specified key-value pairs into the storage.
      *
      * @return entryPointer to later fetch the entryMap via get
      */
-    public long addBinary(Map<String, ByteArrayList> entryMap) {
+    public long add(Map<String, String> entryMap) {
         if (entryMap.isEmpty())
             return EMPTY_POINTER;
         else if (entryMap.size() > 200)
@@ -143,9 +134,8 @@ public class StringIndex implements Storable<StringIndex> {
         vals.ensureCapacity(currentPointer + 1);
         vals.setByte(currentPointer, (byte) entryMap.size());
         currentPointer += 1;
-        for (Map.Entry<String, ByteArrayList> entry : entryMap.entrySet()) {
-            String key = entry.getKey();
-            ByteArrayList value = entry.getValue();
+        for (Map.Entry<String, String> entry : entryMap.entrySet()) {
+            String key = entry.getKey(), value = entry.getValue();
             Integer keyIndex = keysInMem.get(key);
             if (keyIndex == null) {
                 keyIndex = keysInMem.size();
@@ -155,7 +145,7 @@ public class StringIndex implements Storable<StringIndex> {
                 keyList.add(key);
             }
 
-            if (value == null || value.size() == 0) {
+            if (value == null || value.isEmpty()) {
                 vals.ensureCapacity(currentPointer + 3);
                 vals.setShort(currentPointer, keyIndex.shortValue());
                 // ensure that also in case of MMap value is set to 0
@@ -180,17 +170,18 @@ public class StringIndex implements Storable<StringIndex> {
                     }
                 }
 
+                byte[] valueBytes = getBytesForString("Value for key" + key, value);
                 // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
-                if (value.size() > 3)
+                if (valueBytes.length > 3)
                     smallCache.put(value, currentPointer);
 
-                vals.ensureCapacity(currentPointer + 2 + 1 + value.size());
+                vals.ensureCapacity(currentPointer + 2 + 1 + valueBytes.length);
                 vals.setShort(currentPointer, keyIndex.shortValue());
                 currentPointer += 2;
-                vals.setByte(currentPointer, (byte) value.size());
+                vals.setByte(currentPointer, (byte) valueBytes.length);
                 currentPointer++;
-                vals.setBytes(currentPointer, value.toArray(), value.size());
-                currentPointer += value.size();
+                vals.setBytes(currentPointer, valueBytes, valueBytes.length);
+                currentPointer += valueBytes.length;
             }
         }
         bytePointer = currentPointer;
@@ -252,19 +243,11 @@ public class StringIndex implements Storable<StringIndex> {
     }
 
     public String get(final long entryPointer, String key) {
-        ByteArrayList blob = getBinary(entryPointer, key);
-        if (blob == null)
-            return null;
-
-        return new String(blob.toArray(), Helper.UTF_CS);
-    }
-
-    public ByteArrayList getBinary(final long entryPointer, String key) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access StringIndex cannot be negative:" + entryPointer);
 
         if (entryPointer == EMPTY_POINTER)
-            ByteArrayList.from();
+            return "";
 
         int keyCount = vals.getByte(entryPointer) & 0xFF;
         if (keyCount == 0)
@@ -291,12 +274,12 @@ public class StringIndex implements Storable<StringIndex> {
 
                 int valueLength = vals.getByte(tmpPointer) & 0xFF;
                 if (valueLength == 0)
-                    return ByteArrayList.from();
+                    return "";
 
                 tmpPointer++;
                 byte[] valueBytes = new byte[valueLength];
                 vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-                return ByteArrayList.from(valueBytes);
+                return new String(valueBytes, Helper.UTF_CS);
             }
             int valueLength = vals.getByte(tmpPointer) & 0xFF;
             tmpPointer += 1 + valueLength;
