@@ -59,15 +59,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     public FootFlagEncoder(PMap properties) {
-        this(properties.get("name", "foot"),
-                properties.getInt("speed_bits", 4),
+        this(properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 1));
         this.setBlockFords(properties.getBool("block_fords", false));
         this.speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 
-    public FootFlagEncoder(String name, int speedBits, double speedFactor) {
-        super(name, speedBits, speedFactor, 0);
+    public FootFlagEncoder(int speedBits, double speedFactor) {
+        super(speedBits, speedFactor, 0);
         restrictions.addAll(Arrays.asList("foot", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");
@@ -308,5 +307,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return SHORT_TRIP_FERRY_SPEED;
         }
         return speed;
+    }
+
+    @Override
+    public String toString() {
+        return "foot";
     }
 }

@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchiesTest {
-    private final CarFlagEncoder carEncoder = new CarFlagEncoder("car", true, 5, 5, 0);
+    private final CarFlagEncoder carEncoder = new CarFlagEncoder(true, 5, 5, 0);
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
     private final CHProfile chProfile = CHProfile.nodeBased(weighting);

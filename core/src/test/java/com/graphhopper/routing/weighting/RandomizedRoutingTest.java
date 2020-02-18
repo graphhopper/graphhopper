@@ -102,7 +102,7 @@ public class RandomizedRoutingTest {
     @Before
     public void init() {
         dir = new RAMDirectory();
-        encoder = new CarFlagEncoder("car", true, 5, 5, 1);
+        encoder = new CarFlagEncoder(true, 5, 5, 1);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHProfileStrings("car|fastest|node", "car|fastest|edge")

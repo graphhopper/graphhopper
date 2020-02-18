@@ -50,15 +50,14 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     }
 
     public MotorcycleFlagEncoder(PMap properties) {
-        this(properties.get("name", "motorcycle"),
-                properties.getInt("speed_bits", 5),
+        this(properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public MotorcycleFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
-        super(name, true, speedBits, speedFactor, maxTurnCosts);
+    public MotorcycleFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+        super(true, speedBits, speedFactor, maxTurnCosts);
         restrictions.remove("motorcar");
         //  moped, mofa
         restrictions.add("motorcycle");
@@ -294,5 +293,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         }
 
         return PriorityWeighting.class.isAssignableFrom(feature);
+    }
+
+    @Override
+    public String toString() {
+        return "motorcycle";
     }
 }

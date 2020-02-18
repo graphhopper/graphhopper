@@ -914,8 +914,18 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testGetWeightingForCH() {
-        FlagEncoder truck = new CarFlagEncoder(new PMap("name=truck"));
-        FlagEncoder simpleTruck = new CarFlagEncoder(new PMap("name=simple_truck"));
+        FlagEncoder truck = new CarFlagEncoder() {
+            @Override
+            public String toString() {
+                return "truck";
+            }
+        };
+        FlagEncoder simpleTruck = new CarFlagEncoder() {
+            @Override
+            public String toString() {
+                return "simple_truck";
+            }
+        };
 
         // use simple truck first
         EncodingManager em = EncodingManager.create(simpleTruck, truck);

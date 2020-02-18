@@ -38,15 +38,14 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public MountainBikeFlagEncoder(PMap properties) {
-        this(properties.get("name", "mtb"),
-                properties.getInt("speed_bits", 4),
+        this(properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public MountainBikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
-        super(name, speedBits, speedFactor, maxTurnCosts);
+    public MountainBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+        super(speedBits, speedFactor, maxTurnCosts);
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 16); // now unpaved ...
         setTrackTypeSpeed("grade3", 12);
@@ -156,5 +155,10 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
         // other scales are too dangerous even for MTB, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
         return "hiking".equals(sacScale) || "mountain_hiking".equals(sacScale)
                 || "demanding_mountain_hiking".equals(sacScale) || "alpine_hiking".equals(sacScale);
+    }
+
+    @Override
+    public String toString() {
+        return "mtb";
     }
 }

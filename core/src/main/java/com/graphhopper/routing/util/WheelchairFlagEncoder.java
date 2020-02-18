@@ -49,14 +49,13 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     public WheelchairFlagEncoder(PMap properties) {
-        this(properties.get("name", "wheelchair"),
-                properties.getInt("speed_bits", 4),
+        this(properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 1));
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public WheelchairFlagEncoder(String name, int speedBits, double speedFactor) {
-        super(name, speedBits, speedFactor);
+    public WheelchairFlagEncoder(int speedBits, double speedFactor) {
+        super(speedBits, speedFactor);
         restrictions.add("wheelchair");
 
         setBlockByDefault(false);
@@ -276,5 +275,10 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         }
 
         return weightToPrioMap.lastEntry().getValue();
+    }
+
+    @Override
+    public String toString() {
+        return "wheelchair";
     }
 }

@@ -721,8 +721,13 @@ public class OSMReaderTest {
     @Test
     public void testTurnFlagCombination() {
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
-        CarFlagEncoder truck = new CarFlagEncoder("truck", false, 5, 5, 24);
-        BikeFlagEncoder bike = new BikeFlagEncoder("bike", 4, 2, 24);
+        CarFlagEncoder truck = new CarFlagEncoder(false, 5, 5, 24) {
+            @Override
+            public String toString() {
+                return "truck";
+            }
+        };
+        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
         EncodingManager manager = new EncodingManager.Builder().add(bike).add(truck).add(car).build();
 
         GraphHopper hopper = new GraphHopperOSM().
@@ -968,7 +973,7 @@ public class OSMReaderTest {
             BikeFlagEncoder bikeEncoder;
             if (turnCosts) {
                 carEncoder = new CarFlagEncoder(5, 5, 1);
-                bikeEncoder = new BikeFlagEncoder("bike", 4, 2, 1);
+                bikeEncoder = new BikeFlagEncoder(4, 2, 1);
             } else {
                 carEncoder = new CarFlagEncoder();
                 bikeEncoder = new BikeFlagEncoder();

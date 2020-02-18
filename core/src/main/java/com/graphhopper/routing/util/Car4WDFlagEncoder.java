@@ -27,7 +27,7 @@ import com.graphhopper.util.PMap;
 public class Car4WDFlagEncoder extends CarFlagEncoder {
 
     public Car4WDFlagEncoder(PMap properties) {
-        super(properties.has("name") ? properties : properties.put("name", "car4wd"));
+        super(properties);
         trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
         trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
     }
@@ -35,5 +35,10 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
     @Override
     public int getVersion() {
         return 2;
+    }
+
+    @Override
+    public String toString() {
+        return "car4wd";
     }
 }

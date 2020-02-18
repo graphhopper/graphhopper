@@ -51,8 +51,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     public CarFlagEncoder(PMap properties) {
-        this(properties.get("name", "car"),
-                properties.getBool("speed_two_directions", false),
+        this(properties.getBool("speed_two_directions", false),
                 properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
@@ -61,11 +60,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        this("car", false, speedBits, speedFactor, maxTurnCosts);
+        this(false, speedBits, speedFactor, maxTurnCosts);
     }
 
-    public CarFlagEncoder(String name, boolean speedTwoDirections, int speedBits, double speedFactor, int maxTurnCosts) {
-        super(name, speedBits, speedFactor, maxTurnCosts);
+    public CarFlagEncoder(boolean speedTwoDirections, int speedBits, double speedFactor, int maxTurnCosts) {
+        super(speedBits, speedFactor, maxTurnCosts);
         this.speedTwoDirections = speedTwoDirections;
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("private");
@@ -300,5 +299,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         if (badSurfaceSpeed > 0 && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
             speed = badSurfaceSpeed;
         return speed;
+    }
+
+    @Override
+    public String toString() {
+        return "car";
     }
 }

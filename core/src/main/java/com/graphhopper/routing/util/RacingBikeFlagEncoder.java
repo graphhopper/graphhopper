@@ -37,15 +37,14 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public RacingBikeFlagEncoder(PMap properties) {
-        this(properties.get("name", "racingbike"),
-                (int) properties.getLong("speed_bits", 4),
+        this(properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public RacingBikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
-        super(name, speedBits, speedFactor, maxTurnCosts);
+    public RacingBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+        super(speedBits, speedFactor, maxTurnCosts);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
@@ -147,5 +146,10 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     @Override
     public int getVersion() {
         return 2;
+    }
+
+    @Override
+    public String toString() {
+        return "racingbike";
     }
 }

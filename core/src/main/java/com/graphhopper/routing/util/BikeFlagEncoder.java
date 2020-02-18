@@ -31,15 +31,14 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public BikeFlagEncoder(PMap properties) {
-        this(properties.get("name", "bike"),
-                properties.getInt("speed_bits", 4),
+        this(properties.getInt("speed_bits", 4),
                 properties.getInt("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public BikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
-        super(name, speedBits, speedFactor, maxTurnCosts);
+    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+        super(speedBits, speedFactor, maxTurnCosts);
         addPushingSection("path");
         addPushingSection("footway");
         addPushingSection("pedestrian");
@@ -67,5 +66,10 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     @Override
     public int getVersion() {
         return 2;
+    }
+
+    @Override
+    public String toString() {
+        return "bike";
     }
 }
