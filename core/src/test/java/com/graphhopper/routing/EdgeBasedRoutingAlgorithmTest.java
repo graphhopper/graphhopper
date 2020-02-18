@@ -414,6 +414,26 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     @Test
+    public void testUTurnRestriction() {
+        //    4
+        //    |
+        // 0--1--2--3
+        final GraphHopperStorage g = createStorage(createEncodingManager(false));
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(1, 4, 1, true);
+
+        setTurnCost(g, Double.POSITIVE_INFINITY, 0, 1, 4);
+        setTurnCost(g, Double.POSITIVE_INFINITY, 1, 2, 1);
+
+        FastestWeighting weighting = new FastestWeighting(carEncoder,
+                new DefaultTurnCostProvider(carEncoder, tcs, 30));
+        Path p = createAlgo(g, weighting, EDGE_BASED).calcPath(0, 4);
+        assertEquals(IntArrayList.from(0, 1, 2, 3, 2, 1, 4), p.calcNodes());
+    }
+
+    @Test
     public void testLoopEdge() {
         //   o
         // 3-2-4
