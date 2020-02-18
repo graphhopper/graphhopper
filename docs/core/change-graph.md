@@ -16,7 +16,7 @@ unless you call `graphHopperStorage.flush()`.
 ### Getting started
 
 First, enable the `/change` endpoint. On a Unix system, open the terminal and go to the GraphHopper directory.
-Type `export GH_WEB_OPTS=-Dgraphhopper.web.change_graph.enabled=true`.
+Type `export GH_WEB_OPTS=-Ddw.graphhopper.web.change_graph.enabled=true`.
 Start graphhopper by typing `./graphhopper.sh -a web -i <your-pbf>`.
 In this example we use `baden-wuerttemberg-latest.osm.pbf`.
 
