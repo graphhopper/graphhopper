@@ -186,8 +186,10 @@ public class Measurement {
                 for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, vehicleStr, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", vehicleStr, count / 4, isCH, isLM).
-                            withInstructions().activeLandmarks(activeLMCount).edgeBased());
+                    if (encoder.supportsTurnCosts()) {
+                        printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", vehicleStr, count / 4, isCH, isLM).
+                                withInstructions().activeLandmarks(activeLMCount).edgeBased());
+                    }
                 }
 
                 final int blockAreaActiveLMCount = 8;
