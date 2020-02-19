@@ -174,8 +174,10 @@ public class Measurement {
             if (runSlow) {
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing", vehicleStr, count / 20, isCH, isLM).
                         withInstructions());
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", vehicleStr, count / 20, isCH, isLM).
-                        withInstructions().edgeBased());
+                if (encoder.supportsTurnCosts()) {
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", vehicleStr, count / 20, isCH, isLM).
+                            withInstructions().edgeBased());
+                }
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", vehicleStr, count / 20, isCH, isLM).
                         withInstructions().blockArea(blockAreaStr));
             }
