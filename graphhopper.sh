@@ -52,18 +52,18 @@ while [ ! -z $1 ]; do
     -i|--input) FILE="$2"; shift 2;;
     --jar) JAR="$2"; shift 2;;
     -o|--graph-cache) GRAPH="$2"; shift 2;;
-    -p|--profiles) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.graph.flag_encoders=$2"; shift 2;;
+    -p|--profiles) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.graphhopper.graph.flag_encoders=$2"; shift 2;;
     --port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
     -v|--version) echo $VERSION
     	exit 2;;
     # forward VM options, here we assume no spaces ie. just one parameter!?
     -D*)
        GH_WEB_OPTS="$GH_WEB_OPTS $1"; shift 1;;
-    # forward parameter via replacing first two characters of the key with -Dgraphhopper.
+    # forward parameter via replacing first two characters of the key with -Ddw.graphhopper.
     *=*)
        echo "Old parameter assignment not allowed $1"; exit 2;;
     --*)
-       GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.${1:2}=$2"; shift 2;;
+       GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.graphhopper.${1:2}=$2"; shift 2;;
     -*) echo "Option unknown: $1"
         echo
         printBashUsage
@@ -246,7 +246,7 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 if [[ "$ACTION" = "web" ]]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
   if [[ "$RUN_BACKGROUND" == "true" ]]; then
-    exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
+    exec "$JAVA" $JAVA_OPTS -Ddw.graphhopper.datareader.file="$OSM_FILE" -Ddw.graphhopper.graph.location="$GRAPH" \
                  $GH_WEB_OPTS -jar "$JAR" server $CONFIG <&- &
     
     if [[ "$GH_PID_FILE" != "" ]]; then
@@ -255,13 +255,13 @@ if [[ "$ACTION" = "web" ]]; then
     exit $?
   else
     # TODO how to avoid duplicative command for foreground and background?
-    exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
+    exec "$JAVA" $JAVA_OPTS -Ddw.graphhopper.datareader.file="$OSM_FILE" -Ddw.graphhopper.graph.location="$GRAPH" \
                  $GH_WEB_OPTS -jar "$JAR" server $CONFIG
     # foreground => we never reach this here
   fi
 
 elif [ "$ACTION" = "import" ]; then
-  "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
+  "$JAVA" $JAVA_OPTS -Ddw.graphhopper.datareader.file="$OSM_FILE" -Ddw.graphhopper.graph.location="$GRAPH" \
          $GH_IMPORT_OPTS -jar "$JAR" import $CONFIG
 
 elif [ "$ACTION" = "torture" ]; then

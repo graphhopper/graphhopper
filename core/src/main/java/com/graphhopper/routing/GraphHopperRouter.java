@@ -141,11 +141,11 @@ public class GraphHopperRouter {
         }
 
         boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
-        if (!chDisablingAllowed && disableCH)
+        if (chEnabled && !chDisablingAllowed && disableCH)
             throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
 
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
-        if (!lmDisablingAllowed && disableLM)
+        if (lmEnabled && !lmDisablingAllowed && disableLM)
             throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
 
         if (chEnabled && !disableCH) {
@@ -242,10 +242,10 @@ public class GraphHopperRouter {
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
         boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
-        if (disableCH && !chDisablingAllowed) {
+        if (chEnabled && disableCH && !chDisablingAllowed) {
             throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
         }
-        if (disableLM && !lmDisablingAllowed) {
+        if (lmEnabled && disableLM && !lmDisablingAllowed) {
             throw new IllegalArgumentException("Disabling LM is not allowed on the server side");
         }
 

@@ -49,8 +49,6 @@ public class CHPreparationHandler {
     private final List<CHProfile> chProfiles = new ArrayList<>();
     private final Set<String> chProfileStrings = new LinkedHashSet<>();
     private boolean disablingAllowed = false;
-    // for backward compatibility enable CH by default.
-    private boolean enabled = true;
     private EdgeBasedCHMode edgeBasedCHMode = EdgeBasedCHMode.OFF;
     private int preparationThreads;
     private ExecutorService threadPool;
@@ -58,8 +56,6 @@ public class CHPreparationHandler {
 
     public CHPreparationHandler() {
         setPreparationThreads(1);
-        // use fastest by default
-        setCHProfilesAsStrings(Collections.singletonList("fastest"));
     }
 
     public void init(GraphHopperConfig ghConfig) {
@@ -78,16 +74,12 @@ public class CHPreparationHandler {
         }
 
         if ("no".equals(chWeightingsStr) || "false".equals(chWeightingsStr)) {
-            // default is fastest and we need to clear this explicitly
             setCHProfilesAsStrings(Collections.<String>emptyList());
         } else if (!chWeightingsStr.isEmpty()) {
             setCHProfilesAsStrings(Arrays.asList(chWeightingsStr.split(",")));
         }
 
-        boolean enableThis = !getCHProfileStrings().isEmpty();
-        setEnabled(enableThis);
-        if (enableThis)
-            setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
+        setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
         String edgeBasedCHStr = ghConfig.get(CH.PREPARE + "edge_based", "off").trim();
         edgeBasedCHStr = edgeBasedCHStr.equals("false") ? "off" : edgeBasedCHStr;
@@ -97,19 +89,11 @@ public class CHPreparationHandler {
     }
 
     public final boolean isEnabled() {
-        return enabled;
-    }
-
-    /**
-     * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
-     */
-    public final CHPreparationHandler setEnabled(boolean enabled) {
-        this.enabled = enabled;
-        return this;
+        return !chProfiles.isEmpty() || !chProfileStrings.isEmpty() || !preparations.isEmpty();
     }
 
     public final boolean isDisablingAllowed() {
-        return disablingAllowed || !isEnabled();
+        return disablingAllowed;
     }
 
     /**

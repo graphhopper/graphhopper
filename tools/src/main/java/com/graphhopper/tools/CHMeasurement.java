@@ -113,7 +113,6 @@ public class CHMeasurement {
         ghConfig.put(SETTLED_EDGES_RESET_INTERVAL, resetInterval);
 
         LMPreparationHandler lmHandler = graphHopper.getLMPreparationHandler();
-        lmHandler.setEnabled(landmarks > 0);
         lmHandler.setDisablingAllowed(true);
 
         LOGGER.info("Initializing graph hopper with args: {}", ghConfig);
