@@ -54,7 +54,7 @@ public final class CustomWeighting extends AbstractWeighting {
     }
 
     /**
-     * @return the modelName from the weigting
+     * @return the modelName from the weighting
      */
     public static String modelName(String weighting) {
         return weighting.substring(key("").length());
