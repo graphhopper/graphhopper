@@ -277,8 +277,10 @@ public class Measurement {
         if (useCHEdge)
             chProfiles.add(new CHProfileConfig("profile_tc"));
         ghConfig.setCHProfiles(chProfiles);
-        if (useLM)
-            ghConfig.setLMProfiles(Collections.singletonList(new LMProfileConfig("profile_tc")));
+        if (useLM) {
+            String lmProfile = turnCosts ? "profile_tc" : "profile_no_tc";
+            ghConfig.setLMProfiles(Collections.singletonList(new LMProfileConfig(lmProfile)));
+        }
         return ghConfig;
     }
 
