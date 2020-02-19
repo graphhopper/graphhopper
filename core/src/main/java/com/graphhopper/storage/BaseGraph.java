@@ -107,7 +107,7 @@ class BaseGraph implements Graph {
         this.intsForFlags = encodingManager.getIntsForFlags();
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
-        this.stringIndex = new StringIndex(dir);
+        this.stringIndex = new StringIndex(dir, "string_index");
         this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
         this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;

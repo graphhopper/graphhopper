@@ -18,6 +18,7 @@
 
 package com.graphhopper.tardur;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.routing.util.parsers.TagParser;
@@ -25,11 +26,16 @@ import com.graphhopper.util.PMap;
 
 public class TardurTagParserFactory extends DefaultTagParserFactory {
 
+    private final GraphHopper graphHopper;
+
+    public TardurTagParserFactory(GraphHopper graphHopper) {
+        this.graphHopper = graphHopper;
+    }
 
     @Override
     public TagParser create(String name, PMap configuration) {
         if (name.equals("conditional"))
-            return new OSMConditionalRestrictionParser();
+            return new OSMConditionalRestrictionParser(graphHopper);
         else if (name.equals("osmid"))
             return new OSMIDParser();
         return super.create(name, configuration);

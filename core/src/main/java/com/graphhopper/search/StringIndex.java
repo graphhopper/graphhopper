@@ -51,21 +51,14 @@ public class StringIndex implements Storable<StringIndex> {
     private long lastEntryPointer = -1;
     private Map<String, String> lastEntryMap;
 
-    public StringIndex(Directory dir) {
-        this(dir, 1000);
-    }
-
-    /**
-     * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
-     */
-    public StringIndex(Directory dir, final int cacheSize) {
-        keys = dir.find("string_index_keys");
+    public StringIndex(Directory dir, String name) {
+        keys = dir.find(name +"_keys");
         keys.setSegmentSize(10 * 1024);
-        vals = dir.find("string_index_vals");
-        smallCache = new LinkedHashMap<String, Long>(cacheSize, 0.75f, true) {
+        vals = dir.find(name +"_vals");
+        smallCache = new LinkedHashMap<String, Long>(1000, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, Long> entry) {
-                return size() > cacheSize;
+                return size() > 1000;
             }
         };
     }

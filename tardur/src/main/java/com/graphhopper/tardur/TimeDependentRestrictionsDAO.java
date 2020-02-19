@@ -29,8 +29,10 @@ import com.conveyal.osmlib.Relation;
 import com.conveyal.osmlib.Way;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
+import com.graphhopper.search.StringIndex;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.EdgeIteratorState;
@@ -48,8 +50,10 @@ public class TimeDependentRestrictionsDAO {
     private final BooleanEncodedValue property;
     private final OSMIDParser osmidParser;
     private final OSM osm;
+    private final IntEncodedValue tagPointer;
     private TimeZones timeZones;
     private GraphHopperStorage ghStorage;
+    private final StringIndex tagStore;
 
     public TimeDependentRestrictionsDAO(GraphHopperStorage ghStorage, OSM osm, TimeZones timeZones) {
         this.ghStorage = ghStorage;
@@ -57,6 +61,8 @@ public class TimeDependentRestrictionsDAO {
         this.timeZones = timeZones;
         osmidParser = OSMIDParser.fromEncodingManager(ghStorage.getEncodingManager());
         property = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
+        tagPointer = ghStorage.getEncodingManager().getIntEncodedValue("tagpointer");
+        tagStore = ghStorage.getTagStore();
     }
 
     public static Map<String, Object> getTags(OSMEntity relation) {
@@ -261,9 +267,8 @@ public class TimeDependentRestrictionsDAO {
     public Optional<Boolean> accessible(EdgeIteratorState edgeState, Instant at) {
         if (edgeState.get(property)) {
             TimeZone timeZone = timeZones.getTimeZone(ghStorage.getNodeAccess().getLat(edgeState.getBaseNode()), ghStorage.getNodeAccess().getLon(edgeState.getBaseNode()));
-            long osmid = osmidParser.getOSMID(edgeState.getFlags());
-            Way way = osm.ways.get(osmid);
-            Map<String, Object> tags = readerWay(osmid, way).getTags();
+            int pointer = edgeState.get(tagPointer);
+            Map tags = tagStore.getAll(pointer);
             return accessible(tags, at.atZone(timeZone.toZoneId()));
         }
         return Optional.empty();

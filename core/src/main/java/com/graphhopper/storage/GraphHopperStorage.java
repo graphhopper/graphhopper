@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
@@ -48,6 +49,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     // same flush order etc
     private final Collection<CHGraphImpl> chGraphs;
     private final int segmentSize;
+    private final StringIndex tagStore;
 
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation) {
         this(dir, encodingManager, withElevation, false);
@@ -82,6 +84,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         };
         baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, withTurnCosts, segmentSize);
         chGraphs = new ArrayList<>();
+        tagStore = new StringIndex(dir, "tag_store");
     }
 
     /**
@@ -190,6 +193,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         properties.putCurrentVersions();
 
         baseGraph.create(initSize);
+        tagStore.create(initSize);
 
         for (CHGraphImpl cg : chGraphs) {
             cg.create(byteCount);
@@ -265,6 +269,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
+            tagStore.loadExisting();
 
             checkIfConfiguredAndLoadedWeightingsCompatible();
 
@@ -316,6 +321,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         }
 
         baseGraph.flush();
+        tagStore.flush();
         properties.flush();
     }
 
@@ -323,6 +329,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public void close() {
         properties.close();
         baseGraph.close();
+        tagStore.close();
 
         for (CHGraphImpl cg : chGraphs) {
             if (!cg.isClosed())
@@ -467,5 +474,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      */
     public void flushAndCloseEarly() {
         baseGraph.flushAndCloseGeometryAndNameStorage();
+    }
+
+    public StringIndex getTagStore() {
+        return tagStore;
     }
 }

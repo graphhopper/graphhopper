@@ -68,7 +68,7 @@ public class TardurGraphHopperManaged implements Managed {
                 return weighting;
             }
         }.forServer();
-        graphHopper.setTagParserFactory(new TardurTagParserFactory());
+        graphHopper.setTagParserFactory(new TardurTagParserFactory(graphHopper));
         graphHopper.init(configuration);
     }
 
