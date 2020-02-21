@@ -129,7 +129,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
      * Convenience method to obtain a routing algo factory from the preparation.
      */
     public RoutingAlgorithmFactory getRoutingAlgorithmFactory(int defaultActiveLandmarks) {
-        return new LMRoutingAlgorithmFactory(getLandmarkStorage(), defaultActiveLandmarks, getBaseNodes());
+        return new LMRoutingAlgorithmFactory(getLandmarkStorage(), defaultActiveLandmarks);
     }
 
     /**
@@ -139,7 +139,4 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         this.lms.close();
     }
 
-    public int getBaseNodes() {
-        return graph.getNodes();
-    }
 }
