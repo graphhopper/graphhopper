@@ -19,8 +19,6 @@ package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.graphhopper.GHRequest;
 
 import java.util.List;
