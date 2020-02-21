@@ -2,18 +2,14 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
-
+import com.graphhopper.util.Helper;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -24,13 +20,6 @@ public class SpatialRuleLookupBuilder {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(SpatialRuleLookupBuilder.class);
-    
-    private static final Comparator<SpatialRule> SPATIAL_ID_COMP = new Comparator<SpatialRule>() {
-        @Override
-        public int compare(SpatialRule o1, SpatialRule o2) {
-            return o1.getId().compareTo(o2.getId());
-        }
-    };
 
     /**
      * Builds a SpatialRuleLookup by passing the provided JSON features into the provided
@@ -51,13 +40,16 @@ public class SpatialRuleLookupBuilder {
                                                SpatialRuleFactory spatialRuleFactory, Envelope maxBBox) {
         Envelope envelope = new Envelope();
         List<SpatialRule> spatialRules = new ArrayList<>();
-
+        Map<String, JsonFeature> featureMap = new HashMap<>();
         for (JsonFeatureCollection featureCollection : jsonFeatureCollections) {
             for (JsonFeature jsonFeature : featureCollection.getFeatures()) {
                 String id = jsonIdField.isEmpty() || toLowerCase(jsonIdField).equals("id") ? jsonFeature.getId() : (String) jsonFeature.getProperty(jsonIdField);
                 if (id == null || id.isEmpty())
                     throw new IllegalArgumentException("ID cannot be empty but was for JsonFeature " + featureCollection.getFeatures().indexOf(jsonFeature));
 
+                JsonFeature old = featureMap.put(id, jsonFeature);
+                if (old != null)
+                    throw new IllegalStateException("SpatialRule with ID " + id + " already exists: " + old.getProperties());
                 List<Polygon> borders = new ArrayList<>();
                 for (int i = 0; i < jsonFeature.getGeometry().getNumGeometries(); i++) {
                     Geometry poly = jsonFeature.getGeometry().getGeometryN(i);
@@ -66,8 +58,8 @@ public class SpatialRuleLookupBuilder {
                     else
                         throw new IllegalArgumentException("Geometry for " + id + " (" + i + ") not supported " + poly.getClass().getSimpleName());
                 }
-                
-                SpatialRule spatialRule = spatialRuleFactory.createSpatialRule(id, borders);
+
+                SpatialRule spatialRule = spatialRuleFactory.createSpatialRule(Helper.toLowerCase(id), borders);
                 if (spatialRule != SpatialRule.EMPTY) {
                     spatialRules.add(spatialRule);
                     for (Polygon polygon : spatialRule.getBorders()) {
@@ -81,13 +73,8 @@ public class SpatialRuleLookupBuilder {
         if (calculatedBounds.isNull())
             return SpatialRuleLookup.EMPTY;
 
-
-        // ensure that the spatial ID is stable
-        Collections.sort(spatialRules, SPATIAL_ID_COMP);
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupJTS(spatialRules, calculatedBounds);
-
         logger.info("Created the SpatialRuleLookup with the following rules: {}", Arrays.toString(spatialRules.toArray()));
-
         return spatialRuleLookup;
     }
 
