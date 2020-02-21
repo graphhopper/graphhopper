@@ -67,11 +67,11 @@ public class GraphHopperManaged implements Managed {
             graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection).forServer();
         }
         if (!configuration.get("spatial_rules.location", "").isEmpty()) {
-            throw new RuntimeException("spatial_rules.location has been deprecated. Please use countries.borders_directory instead.");
+            throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
         }
-        String spatialRuleBordersDirLocation = configuration.get("countries.borders_directory", "");
+        String spatialRuleBordersDirLocation = configuration.get("spatial_rules.borders_directory", "");
         if (!spatialRuleBordersDirLocation.isEmpty()) {
-            final BBox maxBounds = BBox.parseBBoxString(configuration.get("countries.max_bbox", "-180, 180, -90, 90"));
+            final BBox maxBounds = BBox.parseBBoxString(configuration.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
             final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
             List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
