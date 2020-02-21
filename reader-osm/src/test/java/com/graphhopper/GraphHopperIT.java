@@ -89,6 +89,7 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
+                .setCHProfileStrings(weighting)
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566)
