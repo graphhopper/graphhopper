@@ -129,7 +129,7 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.graphhopper.http.GraphHopperApplication</mainClass>
+                                    <mainClass>com.graphhopper.tardur.TardurApplication</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
