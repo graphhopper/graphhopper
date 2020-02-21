@@ -65,7 +65,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
         else if (name.equals(HazmatWater.KEY))
             return new OSMHazmatWaterParser();
         else if (name.equals(Country.KEY))
-            throw new IllegalArgumentException("The property countries.borders_directory is required in the configuration when using 'country'");
+            throw new IllegalArgumentException("The property spatial_rules.borders_directory is required in the configuration " +
+                    "when using 'country' in encoded_values");
 
         throw new IllegalArgumentException("entry in encoder list not supported " + name);
     }
