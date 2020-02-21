@@ -21,8 +21,10 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.util.shapes.*;
@@ -84,6 +86,18 @@ public class GraphEdgeIdFinder {
                 findEdgesInShape(edgeIds, new Circle(coordinate.y, coordinate.x, P_RADIUS), filter);
             }
         }
+    }
+
+    public static GraphEdgeIdFinder.BlockArea createBlockArea(Graph graph, LocationIndex locationIndex,
+                                                              List<GHPoint> points, HintsMap hints, EdgeFilter edgeFilter) {
+        String blockAreaStr = hints.get(Parameters.Routing.BLOCK_AREA, "");
+        GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
+                parseBlockArea(blockAreaStr, edgeFilter, hints.getDouble(Parameters.Routing.BLOCK_AREA + ".edge_id_max_area", 1000 * 1000));
+        for (GHPoint p : points) {
+            if (blockArea.contains(p))
+                throw new IllegalArgumentException("Request with " + Parameters.Routing.BLOCK_AREA + " contained query point " + p + ". This is not allowed.");
+        }
+        return blockArea;
     }
 
     /**
