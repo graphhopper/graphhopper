@@ -117,24 +117,25 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         }
     }
 
+    public CHGraph getCHGraph(CHProfile chProfile) {
+        return getCHGraph(chProfile.getName());
+    }
+
     /**
-     * @return the {@link CHGraph} for the specified {@link CHProfile}
+     * @return the {@link CHGraph} for the specified profile name
      */
-    public CHGraph getCHGraph(CHProfile profile) {
+    public CHGraph getCHGraph(String profileName) {
         if (chGraphs.isEmpty())
             throw new IllegalStateException("There is no CHGraph");
 
-        if (profile == null)
-            throw new IllegalStateException("Cannot find CHGraph with null CHProfile");
-
-        List<CHProfile> existing = new ArrayList<>();
+        List<String> existing = new ArrayList<>();
         for (CHGraphImpl cg : chGraphs) {
-            if (cg.getCHProfile().equals(profile))
+            if (cg.getCHProfile().getName().equals(profileName))
                 return cg;
-            existing.add(cg.getCHProfile());
+            existing.add(cg.getCHProfile().getName());
         }
 
-        throw new IllegalStateException("Cannot find CHGraph for the specified profile: " + profile + ", existing:" + existing);
+        throw new IllegalStateException("Cannot find CHGraph for the specified profile: " + profileName + ", existing:" + existing);
     }
 
     public boolean isCHPossible() {
@@ -281,15 +282,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         String loadedStr = properties.get("graph.ch.profiles");
         List<String> loaded = parseList(loadedStr);
         List<CHProfile> configured = getCHProfiles();
-        // todo: not entirely sure here. when no ch is configured at all (neither edge nor node), but there are any
-        // ch graphs (edge or node) we throw an error ? previously we threw an error when no ch weighting was configured
-        // even though there was a ch graph.
-        if (configured.isEmpty() && !loaded.isEmpty()) {
-            throw new IllegalStateException("You loaded a CH graph, but you did not specify any CH weightings in prepare.ch.weightings");
-        }
         for (CHProfile chProfile : configured) {
             if (!loaded.contains(chProfile.toString())) {
-                throw new IllegalStateException("Configured CH profile: " + chProfile.toString() + " is not contained in loaded weightings for CH" + loadedStr + ".\n" +
+                throw new IllegalStateException("Configured CH profile: " + chProfile.toString() + " is not contained in loaded CH profiles: " + loadedStr + ".\n" +
                         "You configured: " + configured);
             }
         }

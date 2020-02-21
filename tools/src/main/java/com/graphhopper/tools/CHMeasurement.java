@@ -22,8 +22,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
-import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
+import com.graphhopper.routing.ch.CHPreparationHandler;
+import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -98,8 +98,8 @@ public class CHMeasurement {
             ghConfig.put("graph.flag_encoders", "car");
             ghConfig.put("prepare.ch.weightings", "no");
         }
-        CHAlgoFactoryDecorator chDecorator = graphHopper.getCHFactoryDecorator();
-        chDecorator.setDisablingAllowed(true);
+        CHPreparationHandler chHandler = graphHopper.getCHPreparationHandler();
+        chHandler.setDisablingAllowed(true);
         ghConfig.put(PERIODIC_UPDATES, periodicUpdates);
         ghConfig.put(LAST_LAZY_NODES_UPDATES, lazyUpdates);
         ghConfig.put(NEIGHBOR_UPDATES, neighborUpdates);
@@ -112,9 +112,8 @@ public class CHMeasurement {
         ghConfig.put(MIN_MAX_SETTLED_EDGES, minMaxSettledEdges);
         ghConfig.put(SETTLED_EDGES_RESET_INTERVAL, resetInterval);
 
-        LMAlgoFactoryDecorator lmDecorator = graphHopper.getLMFactoryDecorator();
-        lmDecorator.setEnabled(landmarks > 0);
-        lmDecorator.setDisablingAllowed(true);
+        LMPreparationHandler lmHandler = graphHopper.getLMPreparationHandler();
+        lmHandler.setDisablingAllowed(true);
 
         LOGGER.info("Initializing graph hopper with args: {}", ghConfig);
         graphHopper.init(ghConfig);

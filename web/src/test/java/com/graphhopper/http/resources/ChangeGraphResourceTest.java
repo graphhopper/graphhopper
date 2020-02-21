@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -43,7 +42,6 @@ public class ChangeGraphResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put(Parameters.CH.PREPARE + "weightings", "no").
                 put("graph.flag_encoders", "car").
                 put("web.change_graph.enabled", "true").
                 put("graph.location", DIR).

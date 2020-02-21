@@ -6,6 +6,7 @@ import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.lm.LMProfile;
 import com.graphhopper.routing.lm.PerfectApproximator;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -120,7 +121,7 @@ public class RandomizedRoutingTest {
             chGraph = graph.getCHGraph(chProfile);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
+            lm = new PrepareLandmarks(dir, graph, new LMProfile(weighting), 16, 8);
             lm.setMaximumWeight(10000);
             lm.doWork();
         }
@@ -144,10 +145,10 @@ public class RandomizedRoutingTest {
                 return pch.getRoutingAlgorithmFactory().createAlgo(graph instanceof QueryGraph ? graph : chGraph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM_BIDIR:
                 AStarBidirection astarbi = new AStarBidirection(graph, weighting, traversalMode);
-                return lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+                return lm.getPreparedRoutingAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
             case LM_UNIDIR:
                 AStar astar = new AStar(graph, weighting, traversalMode);
-                return lm.getDecoratedAlgorithm(graph, astar, AlgorithmOptions.start().build());
+                return lm.getPreparedRoutingAlgorithm(graph, astar, AlgorithmOptions.start().build());
             case PERFECT_ASTAR:
                 AStarBidirection perfectastarbi = new AStarBidirection(graph, weighting, traversalMode);
                 perfectastarbi.setApproximation(new PerfectApproximator(graph, weighting, traversalMode, false));

@@ -19,7 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -34,15 +33,14 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 
 import static com.graphhopper.util.Helper.*;
-import static com.graphhopper.util.Parameters.CH.DISABLE;
 
 /**
- * This class implements the CH decorator for the routing algorithm factory and provides several
- * helper methods related to CH preparation and its vehicle profiles.
+ * This class handles the different CH preparations and serves the corresponding {@link RoutingAlgorithmFactory}
  *
  * @author Peter Karich
+ * @author easbar
  */
-public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator {
+public class CHPreparationHandler {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we need to decouple the CH profile objects from the list of CH profile strings
@@ -51,20 +49,15 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private final List<CHProfile> chProfiles = new ArrayList<>();
     private final Set<String> chProfileStrings = new LinkedHashSet<>();
     private boolean disablingAllowed = false;
-    // for backward compatibility enable CH by default.
-    private boolean enabled = true;
     private EdgeBasedCHMode edgeBasedCHMode = EdgeBasedCHMode.OFF;
     private int preparationThreads;
     private ExecutorService threadPool;
     private PMap pMap = new PMap();
 
-    public CHAlgoFactoryDecorator() {
+    public CHPreparationHandler() {
         setPreparationThreads(1);
-        // use fastest by default
-        setCHProfilesAsStrings(Collections.singletonList("fastest"));
     }
 
-    @Override
     public void init(GraphHopperConfig ghConfig) {
         // throw explicit error for deprecated configs
         if (!ghConfig.get("prepare.threads", "").isEmpty())
@@ -81,45 +74,32 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         }
 
         if ("no".equals(chWeightingsStr) || "false".equals(chWeightingsStr)) {
-            // default is fastest and we need to clear this explicitly
-            chProfileStrings.clear();
+            setCHProfilesAsStrings(Collections.<String>emptyList());
         } else if (!chWeightingsStr.isEmpty()) {
             setCHProfilesAsStrings(Arrays.asList(chWeightingsStr.split(",")));
         }
 
-        boolean enableThis = !chProfileStrings.isEmpty();
-        setEnabled(enableThis);
-        if (enableThis)
-            setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
+        setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
         String edgeBasedCHStr = ghConfig.get(CH.PREPARE + "edge_based", "off").trim();
         edgeBasedCHStr = edgeBasedCHStr.equals("false") ? "off" : edgeBasedCHStr;
-        edgeBasedCHMode = EdgeBasedCHMode.valueOf(edgeBasedCHStr.toUpperCase(Locale.ROOT));
+        setEdgeBasedCHMode(EdgeBasedCHMode.valueOf(edgeBasedCHStr.toUpperCase(Locale.ROOT)));
 
         pMap = ghConfig.asPMap();
     }
 
-    @Override
     public final boolean isEnabled() {
-        return enabled;
-    }
-
-    /**
-     * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
-     */
-    public final CHAlgoFactoryDecorator setEnabled(boolean enabled) {
-        this.enabled = enabled;
-        return this;
+        return !chProfiles.isEmpty() || !chProfileStrings.isEmpty() || !preparations.isEmpty();
     }
 
     public final boolean isDisablingAllowed() {
-        return disablingAllowed || !isEnabled();
+        return disablingAllowed;
     }
 
     /**
      * This method specifies if it is allowed to disable CH routing at runtime via routing hints.
      */
-    public final CHAlgoFactoryDecorator setDisablingAllowed(boolean disablingAllowed) {
+    public final CHPreparationHandler setDisablingAllowed(boolean disablingAllowed) {
         this.disablingAllowed = disablingAllowed;
         return this;
     }
@@ -129,7 +109,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      *
      * @see EdgeBasedCHMode
      */
-    public final CHAlgoFactoryDecorator setEdgeBasedCHMode(EdgeBasedCHMode edgeBasedCHMode) {
+    public final CHPreparationHandler setEdgeBasedCHMode(EdgeBasedCHMode edgeBasedCHMode) {
         this.edgeBasedCHMode = edgeBasedCHMode;
         return this;
     }
@@ -138,12 +118,12 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * Decouple CH profiles from PrepareContractionHierarchies as we need CH profiles for the
      * graphstorage and the graphstorage for the preparation.
      */
-    public CHAlgoFactoryDecorator addCHProfile(CHProfile chProfile) {
+    public CHPreparationHandler addCHProfile(CHProfile chProfile) {
         chProfiles.add(chProfile);
         return this;
     }
 
-    public CHAlgoFactoryDecorator addPreparation(PrepareContractionHierarchies pch) {
+    public CHPreparationHandler addPreparation(PrepareContractionHierarchies pch) {
         // we want to make sure that CH preparations are added in the same order as their corresponding profiles
         if (preparations.size() >= chProfiles.size()) {
             throw new IllegalStateException("You need to add the corresponding CH profiles before adding preparations.");
@@ -189,13 +169,10 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public List<String> getCHProfileStrings() {
-        if (chProfileStrings.isEmpty())
-            throw new IllegalStateException("Potential bug: chProfileStrings is empty");
-
         return new ArrayList<>(chProfileStrings);
     }
 
-    public CHAlgoFactoryDecorator setCHProfileStrings(String... profileStrings) {
+    public CHPreparationHandler setCHProfileStrings(String... profileStrings) {
         return setCHProfilesAsStrings(Arrays.asList(profileStrings));
     }
 
@@ -203,10 +180,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * @param profileStrings A list of multiple CH profile strings
      * @see #addCHProfileAsString(String)
      */
-    public CHAlgoFactoryDecorator setCHProfilesAsStrings(List<String> profileStrings) {
-        if (profileStrings.isEmpty())
-            throw new IllegalArgumentException("It is not allowed to pass an empty list of CH profile strings");
-
+    public CHPreparationHandler setCHProfilesAsStrings(List<String> profileStrings) {
         chProfileStrings.clear();
         for (String profileString : profileStrings) {
             profileString = toLowerCase(profileString);
@@ -222,7 +196,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * @param profileString String representation of a CH profile like: "fastest", "shortest|edge_based=true",
      *                      "fastest|u_turn_costs=30 or your own weight-calculation type.
      */
-    public CHAlgoFactoryDecorator addCHProfileAsString(String profileString) {
+    public CHPreparationHandler addCHProfileAsString(String profileString) {
         chProfileStrings.add(profileString);
         return this;
     }
@@ -231,15 +205,13 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return preparations;
     }
 
-    @Override
-    public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
-        boolean disableCH = map.getBool(DISABLE, false);
-        if (!isEnabled() || disablingAllowed && disableCH)
-            return defaultAlgoFactory;
-
+    /**
+     * @return a {@link RoutingAlgorithmFactory} for CH or throw an error if no preparation is available for the given
+     * hints
+     */
+    public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         if (preparations.isEmpty())
-            throw new IllegalStateException("No preparations added to this decorator");
-
+            throw new IllegalStateException("No CH preparations added yet");
         return getPreparation(map).getRoutingAlgorithmFactory();
     }
 

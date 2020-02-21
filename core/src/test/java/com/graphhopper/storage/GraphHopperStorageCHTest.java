@@ -592,6 +592,13 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(edgeBased ? 1 : 0, smallStorage.getCHProfiles(true).size());
         smallStorage.flush();
 
+        // now we create a new storage without any ch weightings, which should also be ok
+        GraphHopperStorage smallerStorage = createStorageWithWeightings();
+        smallerStorage.loadExisting();
+        assertEquals(0, smallerStorage.getCHProfiles(false).size());
+        assertEquals(0, smallerStorage.getCHProfiles(true).size());
+        smallerStorage.flush();
+
         // now we create yet another storage that uses both weightings again, which still works
         GraphHopperStorage fullStorage = createStorageWithWeightings(
                 "car|fastest|" + edgeOrNode,
@@ -631,6 +638,43 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(1, mixedStorage.getCHProfiles(false).size());
         assertEquals(1, mixedStorage.getCHProfiles(true).size());
         mixedStorage.flush();
+    }
+
+    @Test
+    public void testCHProfilesWithDifferentNames() {
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        // creating multiple profiles with the same name is an error
+        {
+            try {
+                new GraphBuilder(encodingManager)
+                        .setCHProfiles(
+                                CHProfile.nodeBased("a", weighting),
+                                CHProfile.nodeBased("b", weighting),
+                                CHProfile.nodeBased("a", weighting)
+                        )
+                        .create();
+                fail("creating mulitple profiles with the same name should be an error");
+            } catch (Exception e) {
+                assertTrue("unexpected error: " + e.getMessage(), e.getMessage().contains("a CHGraph already exists"));
+            }
+        }
+        // ... but using multiple profiles with different names is fine even when their properties/weighting are the same
+        {
+            GraphHopperStorage storage = new GraphBuilder(encodingManager)
+                    .setCHProfiles(
+                            CHProfile.nodeBased("a", weighting),
+                            CHProfile.nodeBased("b", weighting),
+                            CHProfile.nodeBased("c", weighting)
+                    )
+                    .create();
+            assertSame(storage.getCHGraph("a"), storage.getCHGraph("a"));
+            assertNotNull(storage.getCHGraph("a"));
+            assertNotNull(storage.getCHGraph("b"));
+            assertNotNull(storage.getCHGraph("c"));
+            assertNotSame(storage.getCHGraph("a"), storage.getCHGraph("b"));
+            assertNotSame(storage.getCHGraph("b"), storage.getCHGraph("c"));
+            assertNotSame(storage.getCHGraph("a"), storage.getCHGraph("c"));
+        }
     }
 
     private GraphHopperStorage createStorageWithWeightings(String... profileStrings) {

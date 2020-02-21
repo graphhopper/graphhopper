@@ -10,7 +10,7 @@ public class SpatialRuleParserTest {
 
     @Test
     public void testMixParserAdding() {
-        EncodingManager em = new EncodingManager.Builder().add(new SpatialRuleParser(null)).build();
+        EncodingManager em = new EncodingManager.Builder().add(new SpatialRuleParser(null, Country.create())).build();
         assertTrue(em.hasEncodedValue(Country.KEY));
     }
 }

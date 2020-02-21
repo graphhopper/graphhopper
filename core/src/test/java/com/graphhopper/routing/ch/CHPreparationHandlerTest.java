@@ -31,8 +31,8 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class CHAlgoFactoryDecoratorTest {
-    private CHAlgoFactoryDecorator instance;
+public class CHPreparationHandlerTest {
+    private CHPreparationHandler instance;
     private CHProfile profileNode1;
     private CHProfile profileNode2;
     private CHProfile profileNode3;
@@ -43,7 +43,7 @@ public class CHAlgoFactoryDecoratorTest {
 
     @Before
     public void setup() {
-        instance = new CHAlgoFactoryDecorator();
+        instance = new CHPreparationHandler();
         Directory dir = new RAMDirectory();
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
@@ -67,10 +67,10 @@ public class CHAlgoFactoryDecoratorTest {
     }
 
     @Test
-    public void testDisablingAllowed() {
-        assertFalse(instance.isDisablingAllowed());
-        instance.setEnabled(false);
-        assertTrue(instance.isDisablingAllowed());
+    public void testEnabled() {
+        assertFalse(instance.isEnabled());
+        instance.setCHProfileStrings("fastest");
+        assertTrue(instance.isEnabled());
     }
 
     @Test(expected = IllegalStateException.class)
