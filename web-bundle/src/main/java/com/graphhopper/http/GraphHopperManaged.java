@@ -96,7 +96,7 @@ public class GraphHopperManaged implements Managed {
 
         String customModelLocation = configuration.get("graph.custom_profiles.directory", "");
         if (!customModelLocation.isEmpty()) {
-            ObjectMapper yamlOM = Jackson.initObjectMapperWithSnake(new ObjectMapper(new YAMLFactory()));
+            ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
             for (Map.Entry<String, File> entry : Helper.listFiles(new File(customModelLocation), Arrays.asList("yaml", "yml"))) {
                 try {
                     CustomModel customModel = yamlOM.readValue(entry.getValue(), CustomModel.class);

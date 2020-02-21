@@ -28,7 +28,6 @@ import java.util.List;
 /**
  * With this approach we avoid the jackson annotations dependency in core
  */
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 interface GHRequestMixIn {
 
     // a good trick to serialize unknown properties into the HintsMap

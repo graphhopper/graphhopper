@@ -25,11 +25,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 public class Jackson {
 
     public static ObjectMapper newObjectMapper() {
-        return initObjectMapperWithSnake(new ObjectMapper());
-    }
-
-    public static ObjectMapper initObjectMapperWithSnake(ObjectMapper objectMapper) {
-        return initObjectMapper(objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE));
+        return initObjectMapper(new ObjectMapper());
     }
 
     public static ObjectMapper initObjectMapper(ObjectMapper objectMapper) {
