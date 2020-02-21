@@ -1,12 +1,14 @@
 graphhopper:
 
-  # OpenStreetMap input file
-  # datareader.file: some.pbf
+  # OpenStreetMap input file PBF or XML, can be changed via command line -Ddw.graphhopper.datareader.file=some.pbf
+  datareader.file: ""
+  # Local folder used by graphhopper to store its data
+  graph.location: graph-cache
 
   ##### Vehicles #####
 
 
-  # More options: foot,bike,bike2,mtb,racingbike,motorcycle (comma separated)
+  # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,car4wd,wheelchair (comma separated)
   # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
   graph.flag_encoders: car
 
@@ -151,28 +153,28 @@ graphhopper:
 
 # Dropwizard server configuration
 server:
-  applicationConnectors:
+  application_connectors:
   - type: http
     port: 8989
     # for security reasons bind to localhost
-    bindHost: localhost
-  requestLog:
+    bind_host: localhost
+  request_log:
       appenders: []
-  adminConnectors:
+  admin_connectors:
   - type: http
     port: 8990
-    bindHost: localhost
+    bind_host: localhost
 # See https://www.dropwizard.io/1.3.8/docs/manual/configuration.html#logging
 logging:
   appenders:
   - type: file
-    timeZone: UTC
-    currentLogFilename: logs/graphhopper.log
-    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    time_zone: UTC
+    current_log_filename: logs/graphhopper.log
+    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     archive: true
-    archivedLogFilenamePattern: ./logs/graphhopper-%d.log.gz
-    archivedFileCount: 30
-    neverBlock: true
+    archived_log_filename_pattern: ./logs/graphhopper-%d.log.gz
+    archived_file_count: 30
+    never_block: true
   - type: console
-    timeZone: UTC
-    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    time_zone: UTC
+    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

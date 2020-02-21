@@ -32,15 +32,6 @@ interface GHRequestMixIn {
     @JsonAnySetter
     void putHint(String fieldName, Object value);
 
-    @JsonProperty("point_hints")
-    GHRequest setPointHints(List<String> pointHints);
-
-    @JsonProperty("snap_preventions")
-    GHRequest setSnapPreventions(List<String> snapPreventions);
-
     @JsonProperty("details")
     GHRequest setPathDetails(List<String> pathDetails);
-
-    @JsonProperty("curbsides")
-    GHRequest setCurbsides(List<String> curbsides);
 }
