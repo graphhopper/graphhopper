@@ -34,7 +34,6 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -160,7 +159,7 @@ public class PrepareLandmarksTest {
 
         // landmarks with bidir A*
         RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory(activeLandmarks).createAlgo(graph,
-                AlgorithmOptions.start().algorithm(ASTAR_BI).weighting(weighting).traversalMode(tm).hints(new PMap("lm.recalc_count=50")).build());
+                AlgorithmOptions.start().algorithm(ASTAR_BI).weighting(weighting).traversalMode(tm).build());
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
