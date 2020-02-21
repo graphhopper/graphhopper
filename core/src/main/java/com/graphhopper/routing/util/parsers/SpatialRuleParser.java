@@ -34,10 +34,6 @@ public class SpatialRuleParser implements TagParser {
     private final IntEncodedValue spatialRuleEnc;
     private SpatialRuleLookup spatialRuleLookup;
 
-    public SpatialRuleParser(SpatialRuleLookup spatialRuleLookup) {
-        this(spatialRuleLookup, new EnumEncodedValue<>(Country.KEY, Country.class));
-    }
-
     public SpatialRuleParser(SpatialRuleLookup spatialRuleLookup, IntEncodedValue spatialRuleEnc) {
         this.spatialRuleLookup = spatialRuleLookup;
         this.spatialRuleEnc = spatialRuleEnc;

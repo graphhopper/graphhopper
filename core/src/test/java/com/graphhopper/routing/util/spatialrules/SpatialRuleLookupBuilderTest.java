@@ -166,7 +166,7 @@ public class SpatialRuleLookupBuilderTest {
             }
         };
 
-        EncodingManager em = new EncodingManager.Builder().add(new SpatialRuleParser(index)).add(new CarFlagEncoder(new PMap())).build();
+        EncodingManager em = new EncodingManager.Builder().add(new SpatialRuleParser(index, Country.create())).add(new CarFlagEncoder(new PMap())).build();
         IntEncodedValue countrySpatialIdEnc = em.getIntEncodedValue(Country.KEY);
         EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
@@ -184,13 +184,13 @@ public class SpatialRuleLookupBuilderTest {
 
         IntsRef relFlags = em.createRelationFlags();
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put("car", EncodingManager.Access.WAY);
-        ReaderWay way = new ReaderWay(27l);
+        ReaderWay way = new ReaderWay(27L);
         way.setTag("highway", "track");
         way.setTag("estimated_center", new GHPoint(0.005, 0.005));
         e1.setFlags(em.handleWayTags(way, map, relFlags));
         assertEquals(RoadAccess.DESTINATION, e1.get(tmpRoadAccessEnc));
 
-        ReaderWay way2 = new ReaderWay(28l);
+        ReaderWay way2 = new ReaderWay(28L);
         way2.setTag("highway", "track");
         way2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e2.setFlags(em.handleWayTags(way2, map, relFlags));
@@ -199,13 +199,13 @@ public class SpatialRuleLookupBuilderTest {
         assertEquals(index.getSpatialId(new GermanySpatialRule()), e1.get(countrySpatialIdEnc));
         assertEquals(index.getSpatialId(SpatialRule.EMPTY), e2.get(countrySpatialIdEnc));
 
-        ReaderWay livingStreet = new ReaderWay(29l);
+        ReaderWay livingStreet = new ReaderWay(29L);
         livingStreet.setTag("highway", "living_street");
         livingStreet.setTag("estimated_center", new GHPoint(0.005, 0.005));
         e3.setFlags(em.handleWayTags(livingStreet, map, relFlags));
         assertEquals(5, e3.get(tmpCarMaxSpeedEnc), .1);
 
-        ReaderWay livingStreet2 = new ReaderWay(30l);
+        ReaderWay livingStreet2 = new ReaderWay(30L);
         livingStreet2.setTag("highway", "living_street");
         livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e4.setFlags(em.handleWayTags(livingStreet2, map, relFlags));
