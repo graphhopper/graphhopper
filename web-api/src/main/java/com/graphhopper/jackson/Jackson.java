@@ -35,6 +35,7 @@ public class Jackson {
     public static ObjectMapper initObjectMapper(ObjectMapper objectMapper) {
         objectMapper.registerModule(new GraphHopperModule());
         objectMapper.registerModule(new JtsModule());
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return objectMapper;
     }

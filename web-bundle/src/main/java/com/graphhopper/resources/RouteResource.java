@@ -107,6 +107,8 @@ public class RouteResource {
         if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size())
             throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
                     + "or equal to the number of points (" + requestPoints.size() + ")");
+
+        // TODO these checks should be only necessary once in the core, e.g. pointHints problems are currently ignored for POST requests
         if (pointHints.size() > 0 && pointHints.size() != requestPoints.size())
             throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
         if (curbsides.size() > 0 && curbsides.size() != requestPoints.size())

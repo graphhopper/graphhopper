@@ -1,4 +1,5 @@
 1.0
+    Properties in config.yml have to follow the snake_case, #1918, easy convert via https://github.com/karussell/snake_case
     GraphHopper class no longer enables CH by default, #1914
     replaced command line arguments -Dgraphhopper.. with -Ddw.graphhopper.. due to #1879, see also #1897
     GraphHopper.init(CmdArgs)->GraphHopper.init(GraphHopperConfig), see #1879

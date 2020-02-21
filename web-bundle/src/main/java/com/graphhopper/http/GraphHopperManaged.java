@@ -90,7 +90,8 @@ public class GraphHopperManaged implements Managed {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
+            SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper,
+                    new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
         }
 
         String customModelLocation = configuration.get("graph.custom_profiles.directory", "");
