@@ -111,7 +111,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         ignoreSet.add("points_encoded");
         ignoreSet.add("pointsencoded");
         ignoreSet.add("type");
-        objectMapper = Jackson.initObjectMapperWithSnake(new ObjectMapper());
+        objectMapper = Jackson.newObjectMapper();
     }
 
     public GraphHopperWeb setDownloader(OkHttpClient downloader) {
