@@ -1,0 +1,25 @@
+graphhopper:
+  datareader.file: germany-latest.osm.pbf
+  graph.location: graphs/germany/graph
+  graph.encoded_values: conditional,osmid
+  graph.flag_encoders: car
+  prepare.ch.weightings: no
+  prepare.lm.weightings: fastest
+  prepare.lm.landmarks: 8
+
+server:
+  applicationConnectors:
+  - type: http
+    port: 8989
+    # for security reasons bind to localhost
+    bindHost: localhost
+  #requestLog:
+  #    appenders: []
+  adminConnectors:
+  - type: http
+    port: 8990
+    bindHost: localhost
+
+viewRendererConfiguration:
+  freemarker:
+    objectWrapper: DefaultObjectWrapper(2.3.28, exposeFields=true, iterableSupport=true)
