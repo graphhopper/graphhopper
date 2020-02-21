@@ -1,1 +1,1 @@
-web: java -Xmx6000m -jar target/vrnrfr-1.0-SNAPSHOT.jar server config.yml
+web: java -Xmx6000m -jar tardur/target/graphhopper-tardur-1.0-SNAPSHOT.jar server config-tardur.yml
