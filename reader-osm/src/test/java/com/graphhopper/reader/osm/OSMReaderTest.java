@@ -22,6 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperIT;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
@@ -920,11 +921,15 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperOSM()
                 .setDataReaderFile(getClass().getResource(file7).getFile())
                 .setEncodingManager(EncodingManager.create("car,motorcycle"))
+                .setProfiles(
+                        new ProfileConfig("profile1").setVehicle("car").setWeighting("fastest"),
+                        new ProfileConfig("profile2").setVehicle("motorcycle").setWeighting("curvature")
+                )
                 .setGraphHopperLocation(dir);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
-                setWeighting("curvature").
-                setVehicle("motorcycle");
+                setVehicle("motorcycle").
+                setWeighting("curvature");
 
         GHResponse ghRsp = hopper.route(req);
         assertFalse(ghRsp.getErrors().toString(), ghRsp.hasErrors());
@@ -945,19 +950,20 @@ public class OSMReaderTest {
                 }
             }
         }.setEncodingManager(EncodingManager.create("car,bike")).
+                setProfiles(new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")).
                 setGraphHopperLocation(dir).
                 importOrLoad();
 
         GHResponse response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
                 .setVehicle("car").setWeighting("fastest")
-                .setPathDetails(Arrays.asList(RoadClass.KEY)));
+                .setPathDetails(Collections.singletonList(RoadClass.KEY)));
         List<PathDetail> list = response.getBest().getPathDetails().get(RoadClass.KEY);
         assertEquals(3, list.size());
         assertEquals(RoadClass.MOTORWAY.toString(), list.get(0).getValue());
 
         response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
                 .setVehicle("car").setWeighting("fastest")
-                .setPathDetails(Arrays.asList(Toll.KEY)));
+                .setPathDetails(Collections.singletonList(Toll.KEY)));
         Throwable ex = response.getErrors().get(0);
         assertTrue(ex.getMessage(), ex.getMessage().contains("You requested the details [toll]"));
     }

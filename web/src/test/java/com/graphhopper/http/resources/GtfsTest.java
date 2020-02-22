@@ -18,6 +18,7 @@
 package com.graphhopper.http.resources;
 
 import com.graphhopper.GHResponse;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.resources.InfoResource;
@@ -30,6 +31,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 
@@ -47,7 +49,8 @@ public class GtfsTest {
                 put("graph.flag_encoders", "foot").
                 put("datareader.file", "../reader-gtfs/files/beatty.osm").
                 put("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
-                put("graph.location", DIR);
+                put("graph.location", DIR).
+                setProfiles(Collections.singletonList(new ProfileConfig("profile").setVehicle("foot").setWeighting("fastest")));
     }
 
     @ClassRule

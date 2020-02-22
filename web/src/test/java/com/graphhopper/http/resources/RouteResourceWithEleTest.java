@@ -18,6 +18,7 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.Helper;
@@ -28,6 +29,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 
@@ -46,11 +48,12 @@ public class RouteResourceWithEleTest {
                 put("prepare.min_one_way_network_size", "0").
                 put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/monaco.osm.gz").
-                put("graph.location", dir);
+                put("graph.location", dir)
+                .setProfiles(Collections.singletonList(new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")));
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
             GraphHopperApplication.class, config);
 
 

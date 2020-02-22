@@ -836,6 +836,7 @@ public class GraphHopper implements GraphHopperAPI {
             try {
                 createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER);
             } catch (IllegalArgumentException e) {
+                // todonow: catching illegal argument is bad as it could be something else
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with an unknown weighting '" + profile.getWeighting() + "'");
             }
         }
@@ -1023,6 +1024,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
+
+        if (profiles.isEmpty()) {
+            throw new IllegalArgumentException("XXX");
+        }
 
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");

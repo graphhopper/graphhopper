@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
@@ -57,6 +58,7 @@ public class GraphHopperAPITest {
 
     @Test
     public void testLoad() {
+        final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";
         GraphHopperStorage graph = new GraphBuilder(EncodingManager.create(vehicle)).create();
@@ -70,6 +72,7 @@ public class GraphHopperAPITest {
         graph.edge(4, 3, 40, true);
 
         GraphHopper instance = createGraphHopper(vehicle).
+                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(false).
                 loadGraph(graph);
         // 3 -> 0
@@ -89,12 +92,14 @@ public class GraphHopperAPITest {
 
     @Test
     public void testDisconnected179() {
+        final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";
         GraphHopperStorage graph = new GraphBuilder(EncodingManager.create(vehicle)).create();
         initGraph(graph);
 
         GraphHopper instance = createGraphHopper(vehicle).
+                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(false).
                 loadGraph(graph);
         GHResponse rsp = instance.route(new GHRequest(42, 10, 42, 10.4).setVehicle(vehicle).setWeighting(weighting));
@@ -169,9 +174,11 @@ public class GraphHopperAPITest {
 
     @Test
     public void testNoLoad() {
+        String profile = "profile";
         String vehicle = "car";
         String weighting = "fastest";
         GraphHopper instance = createGraphHopper(vehicle).
+                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setVehicle(weighting)).
                 setStoreOnFlush(false);
         try {
             instance.route(new GHRequest(42, 10.4, 42, 10).setVehicle(vehicle).setWeighting(weighting));
@@ -191,6 +198,7 @@ public class GraphHopperAPITest {
 
     @Test
     public void testConcurrentGraphChange() throws InterruptedException {
+        final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";
         EncodingManager encodingManager = EncodingManager.create(vehicle);
@@ -220,6 +228,7 @@ public class GraphHopperAPITest {
             }
         }
                 .setEncodingManager(encodingManager)
+                .setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting))
                 .setStoreOnFlush(false).
                         loadGraph(graph);
 
