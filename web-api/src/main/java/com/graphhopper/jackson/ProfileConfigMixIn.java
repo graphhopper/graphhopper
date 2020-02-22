@@ -19,7 +19,6 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @see GHRequestMixIn
@@ -27,8 +26,4 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public interface ProfileConfigMixIn {
     @JsonAnySetter
     void putHint(String key, Object value);
-
-    // todonow: use snake_case module instead?
-    @JsonProperty("turn_costs")
-    void setTurnCosts(boolean turnCosts);
 }
