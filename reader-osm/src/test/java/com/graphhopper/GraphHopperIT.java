@@ -510,12 +510,10 @@ public class GraphHopperIT {
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
-        // TODO after #1324 this will work and should block both roads and return 12173m, currently it still routes
-        //  through one of the roads due to "disconnected" roads
-        req.getHints().put(Routing.BLOCK_AREA, "49.981502,11.51762,80");
+        req.getHints().put(Routing.BLOCK_AREA, "49.980868,11.516397,150");
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(7383, rsp.getBest().getDistance(), 1);
+        assertEquals(12173, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small rectangular area
         req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
@@ -530,8 +528,7 @@ public class GraphHopperIT {
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(1807, rsp.getBest().getDistance(), 1);
 
-        // block point 49.985759,11.50687
-        req.getHints().put(Routing.BLOCK_AREA, "50.018274,11.492558");
+        req.getHints().put(Routing.BLOCK_AREA, "50.018277,11.492336");
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(3363, rsp.getBest().getDistance(), 1);
