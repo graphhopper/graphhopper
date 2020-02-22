@@ -196,7 +196,7 @@ public class LMPreparationHandler {
      */
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         PrepareLandmarks preparation = getPreparation(map);
-        return new LMRoutingAlgorithmFactory(preparation.getLandmarkStorage(), activeLandmarkCount);
+        return preparation.getRoutingAlgorithmFactory().setDefaultActiveLandmarks(activeLandmarkCount);
     }
 
     private PrepareLandmarks getPreparation(HintsMap map) {

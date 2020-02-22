@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.Weighting;
@@ -128,8 +127,8 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     /**
      * Convenience method to obtain a routing algo factory from the preparation.
      */
-    public RoutingAlgorithmFactory getRoutingAlgorithmFactory(int defaultActiveLandmarks) {
-        return new LMRoutingAlgorithmFactory(getLandmarkStorage(), defaultActiveLandmarks);
+    public LMRoutingAlgorithmFactory getRoutingAlgorithmFactory() {
+        return new LMRoutingAlgorithmFactory(getLandmarkStorage());
     }
 
     /**

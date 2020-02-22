@@ -27,15 +27,20 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final RoutingAlgorithmFactory defaultAlgoFactory;
     private final LandmarkStorage lms;
     private final Weighting prepareWeighting;
-    private final int defaultActiveLandmarks;
     private final int numBaseNodes;
+    private int defaultActiveLandmarks;
 
-    public LMRoutingAlgorithmFactory(LandmarkStorage lms, int defaultActiveLandmarks) {
+    public LMRoutingAlgorithmFactory(LandmarkStorage lms) {
         this.defaultAlgoFactory = new RoutingAlgorithmFactorySimple();
         this.lms = lms;
-        this.defaultActiveLandmarks = defaultActiveLandmarks;
         this.prepareWeighting = lms.getWeighting();
         this.numBaseNodes = lms.getBaseNodes();
+        this.defaultActiveLandmarks = Math.max(1, Math.min(lms.getLandmarkCount() / 2, 12));
+    }
+
+    public LMRoutingAlgorithmFactory setDefaultActiveLandmarks(int defaultActiveLandmarks) {
+        this.defaultActiveLandmarks = defaultActiveLandmarks;
+        return this;
     }
 
     @Override

@@ -34,6 +34,8 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -145,11 +147,12 @@ public class PrepareLandmarksTest {
         AStar expectedAlgo = new AStar(graph, weighting, tm);
         Path expectedPath = expectedAlgo.calcPath(41, 183);
 
-        final int activeLandmarks = 2;
+        PMap hints = new PMap();
+        hints.put(Parameters.Landmark.ACTIVE_COUNT, 2);
 
         // landmarks with A*
-        RoutingAlgorithm oneDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory(activeLandmarks).createAlgo(graph,
-                AlgorithmOptions.start().algorithm(ASTAR).weighting(weighting).traversalMode(tm).build());
+        RoutingAlgorithm oneDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph,
+                AlgorithmOptions.start().algorithm(ASTAR).weighting(weighting).traversalMode(tm).hints(hints).build());
 
         Path path = oneDirAlgoWithLandmarks.calcPath(41, 183);
 
@@ -158,8 +161,8 @@ public class PrepareLandmarksTest {
         assertEquals(expectedAlgo.getVisitedNodes() - 133, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
-        RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory(activeLandmarks).createAlgo(graph,
-                AlgorithmOptions.start().algorithm(ASTAR_BI).weighting(weighting).traversalMode(tm).build());
+        RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph,
+                AlgorithmOptions.start().algorithm(ASTAR_BI).weighting(weighting).traversalMode(tm).hints(hints).build());
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
@@ -170,8 +173,8 @@ public class PrepareLandmarksTest {
         QueryResult fromQR = index.findClosest(-0.0401, 0.2201, EdgeFilter.ALL_EDGES);
         QueryResult toQR = index.findClosest(-0.2401, 0.0601, EdgeFilter.ALL_EDGES);
         QueryGraph qGraph = QueryGraph.lookup(graph, fromQR, toQR);
-        RoutingAlgorithm qGraphOneDirAlgo = prepare.getRoutingAlgorithmFactory(activeLandmarks).createAlgo(qGraph,
-                AlgorithmOptions.start().algorithm(ASTAR).weighting(weighting).traversalMode(tm).build());
+        RoutingAlgorithm qGraphOneDirAlgo = prepare.getRoutingAlgorithmFactory().createAlgo(qGraph,
+                AlgorithmOptions.start().algorithm(ASTAR).weighting(weighting).traversalMode(tm).hints(hints).build());
         path = qGraphOneDirAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
 
         expectedAlgo = new AStar(qGraph, weighting, tm);
