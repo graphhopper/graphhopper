@@ -78,10 +78,10 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
-        assertEquals(14, encoder.getSpeed(way));
+        assertEquals(10, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
         way.setTag("segregated", "no");
-        assertEquals(14 , encoder.getSpeed(way));
+        assertEquals(10 , encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
         way.setTag("segregated", "yes");
         assertEquals(18, encoder.getSpeed(way));
@@ -91,9 +91,9 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "footway");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "yes");
-        assertEquals(14, encoder.getSpeed(way));
-        way.setTag("surface", "gravel");
-        assertEquals(12, encoder.getSpeed(way));
+        assertEquals(10, encoder.getSpeed(way));
+        way.setTag("surface", "cobblestone");
+        assertEquals(8, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
         way.setTag("segregated", "yes");
         way.setTag("surface", "paved");
@@ -104,7 +104,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "platform");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "yes");
-        assertEquals(14, encoder.getSpeed(way));
+        assertEquals(10, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
         way.setTag("segregated", "yes");
         assertEquals(18, encoder.getSpeed(way));
@@ -147,7 +147,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         assertPriority(VERY_NICE.getValue(), way);
 
         way.setTag("bicycle", "yes");
-        assertEquals(14, encoder.getSpeed(way));
+        assertEquals(10, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
 
         way.setTag("segregated", "yes");

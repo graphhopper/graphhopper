@@ -385,7 +385,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                         speed = highwaySpeeds.get("cycleway");
                     else
                         if  (way.hasTag("bicycle", "yes"))
-                            speed = highwaySpeeds.get("cycleway")-PUSHING_SECTION_SPEED;
+                            speed = 10;
                         else
                             speed = highwaySpeeds.get("cycleway");
                 if ((surfaceSpeed>0) && (surfaceSpeed < speed))
