@@ -17,14 +17,14 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.coll.GHBitSet;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.coll.GHTBitSet;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.BreadthFirstSearch;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.util.shapes.*;
@@ -32,6 +32,7 @@ import org.locationtech.jts.algorithm.RectangleLineIntersector;
 import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.util.shapes.BBox.toEnvelope;
@@ -43,6 +44,7 @@ import static com.graphhopper.util.shapes.BBox.toEnvelope;
  */
 public class GraphEdgeIdFinder {
 
+    private final static int P_RADIUS = 5;
     private final Graph graph;
     private final LocationIndex locationIndex;
 
@@ -52,94 +54,50 @@ public class GraphEdgeIdFinder {
     }
 
     /**
-     * This method fills the edgeIds hash with edgeIds found close (exact match) to the specified point
-     */
-    public void findClosestEdgeToPoint(GHIntHashSet edgeIds, GHPoint point, EdgeFilter filter) {
-        findClosestEdge(edgeIds, point.getLat(), point.getLon(), filter);
-    }
-
-    /**
-     * This method fills the edgeIds hash with edgeIds found close (exact match) to the specified lat,lon
-     */
-    public void findClosestEdge(GHIntHashSet edgeIds, double lat, double lon, EdgeFilter filter) {
-        QueryResult qr = locationIndex.findClosest(lat, lon, filter);
-        if (qr.isValid())
-            edgeIds.add(qr.getClosestEdge().getEdge());
-    }
-
-    /**
      * This method fills the edgeIds hash with edgeIds found inside the specified shape
      */
     public void findEdgesInShape(final GHIntHashSet edgeIds, final Shape shape, EdgeFilter filter) {
-        GHPoint center = shape.getCenter();
-        QueryResult qr = locationIndex.findClosest(center.getLat(), center.getLon(), filter);
-        // TODO: this is suboptimal and will be fixed in #1324
-        if (!qr.isValid())
-            throw new IllegalArgumentException("Shape '" + shape + "' does not cover graph. Center: " + center);
-
-        if (shape.contains(qr.getSnappedPoint().lat, qr.getSnappedPoint().lon))
-            edgeIds.add(qr.getClosestEdge().getEdge());
-
-        final boolean isPolygon = shape instanceof Polygon;
-
-        BreadthFirstSearch bfs = new BreadthFirstSearch() {
-            final NodeAccess na = graph.getNodeAccess();
-            final Shape localShape = shape;
-
+        locationIndex.query(shape.getBounds(), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer(filter)) {
             @Override
-            protected GHBitSet createBitSet() {
-                return new GHTBitSet();
-            }
-
-            @Override
-            protected boolean goFurther(int nodeId) {
-                if (isPolygon) return isInsideBBox(nodeId);
-
-                return localShape.contains(na.getLatitude(nodeId), na.getLongitude(nodeId));
-            }
-
-            @Override
-            protected boolean checkAdjacent(EdgeIteratorState edge) {
-                int adjNodeId = edge.getAdjNode();
-
-                if (localShape.contains(na.getLatitude(adjNodeId), na.getLongitude(adjNodeId))) {
+            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
+                if (shape.intersects(edge.fetchWayGeometry(3).makeImmutable()))
                     edgeIds.add(edge.getEdge());
-                    return true;
-                }
-                return isPolygon && isInsideBBox(adjNodeId);
             }
-
-            private boolean isInsideBBox(int nodeId) {
-                BBox bbox = localShape.getBounds();
-                double lat = na.getLatitude(nodeId);
-                double lon = na.getLongitude(nodeId);
-                return lat <= bbox.maxLat && lat >= bbox.minLat && lon <= bbox.maxLon && lon >= bbox.minLon;
-            }
-        };
-        bfs.start(graph.createEdgeExplorer(filter), qr.getClosestNode());
+        });
     }
 
     /**
      * This method fills the edgeIds hash with edgeIds found inside the specified geometry
      */
-    public void fillEdgeIDs(GHIntHashSet edgeIds, Geometry geometry, EdgeFilter filter) {
+    public void fillEdgeIDs(final GHIntHashSet edgeIds, final Geometry geometry, EdgeFilter filter) {
         if (geometry instanceof Point) {
-            GHPoint point = GHPoint.create((Point) geometry);
-            findClosestEdgeToPoint(edgeIds, point, filter);
+            Point p = (Point) geometry;
+            findEdgesInShape(edgeIds, new Circle(p.getY(), p.getX(), P_RADIUS), filter);
         } else if (geometry instanceof LineString) {
-            PointList pl = PointList.fromLineString((LineString) geometry);
-            // TODO do map matching or routing
-            int lastIdx = pl.size() - 1;
-            if (pl.size() >= 2) {
-                double meanLat = (pl.getLatitude(0) + pl.getLatitude(lastIdx)) / 2;
-                double meanLon = (pl.getLongitude(0) + pl.getLongitude(lastIdx)) / 2;
-                findClosestEdge(edgeIds, meanLat, meanLon, filter);
-            }
+            locationIndex.query(BBox.fromEnvelope(geometry.getEnvelopeInternal()), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer(filter)) {
+                @Override
+                public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
+                    if (geometry.intersects(edge.fetchWayGeometry(3).toLineString(false)))
+                        edgeIds.add(edge.getEdge());
+                }
+            });
         } else if (geometry instanceof MultiPoint) {
             for (Coordinate coordinate : geometry.getCoordinates()) {
-                findClosestEdge(edgeIds, coordinate.y, coordinate.x, filter);
+                findEdgesInShape(edgeIds, new Circle(coordinate.y, coordinate.x, P_RADIUS), filter);
             }
         }
+    }
+
+    public static GraphEdgeIdFinder.BlockArea createBlockArea(Graph graph, LocationIndex locationIndex,
+                                                              List<GHPoint> points, HintsMap hints, EdgeFilter edgeFilter) {
+        String blockAreaStr = hints.get(Parameters.Routing.BLOCK_AREA, "");
+        GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
+                parseBlockArea(blockAreaStr, edgeFilter, hints.getDouble(Parameters.Routing.BLOCK_AREA + ".edge_id_max_area", 1000 * 1000));
+        for (GHPoint p : points) {
+            if (blockArea.contains(p))
+                throw new IllegalArgumentException("Request with " + Parameters.Routing.BLOCK_AREA + " contained query point " + p + ". This is not allowed.");
+        }
+        return blockArea;
     }
 
     /**
@@ -162,9 +120,9 @@ public class GraphEdgeIdFinder {
                 // always add the shape as we'll need this for virtual edges and for debugging.
                 if (splittedObject.length > 4) {
                     final Polygon polygon = Polygon.parsePoints(objectAsString);
-                    blockArea.add(polygon);
+                    GHIntHashSet blockedEdges = blockArea.add(polygon);
                     if (polygon.calculateArea() <= useEdgeIdsUntilAreaSize)
-                        findEdgesInShape(blockArea.blockedEdges, polygon, filter);
+                        findEdgesInShape(blockedEdges, polygon, filter);
                 } else if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);
                     final RectangleLineIntersector cachedIntersector = new RectangleLineIntersector(toEnvelope(bbox));
@@ -174,22 +132,24 @@ public class GraphEdgeIdFinder {
                             return BBox.intersects(cachedIntersector, pointList);
                         }
                     };
-                    blockArea.add(preparedBBox);
+                    GHIntHashSet blockedEdges = blockArea.add(preparedBBox);
                     if (bbox.calculateArea() <= useEdgeIdsUntilAreaSize)
-                        findEdgesInShape(blockArea.blockedEdges, preparedBBox, filter);
+                        findEdgesInShape(blockedEdges, preparedBBox, filter);
                 } else if (splittedObject.length == 3) {
                     double lat = Double.parseDouble(splittedObject[0]);
                     double lon = Double.parseDouble(splittedObject[1]);
                     int radius = Integer.parseInt(splittedObject[2]);
                     Circle circle = new Circle(lat, lon, radius);
-                    blockArea.add(circle);
+                    GHIntHashSet blockedEdges = blockArea.add(circle);
                     if (circle.calculateArea() <= useEdgeIdsUntilAreaSize)
-                        findEdgesInShape(blockArea.blockedEdges, circle, filter);
+                        findEdgesInShape(blockedEdges, circle, filter);
 
                 } else if (splittedObject.length == 2) {
                     double lat = Double.parseDouble(splittedObject[0]);
                     double lon = Double.parseDouble(splittedObject[1]);
-                    findClosestEdge(blockArea.blockedEdges, lat, lon, filter);
+                    Circle circle = new Circle(lat, lon, P_RADIUS);
+                    GHIntHashSet blockedEdges = blockArea.add(circle);
+                    findEdgesInShape(blockedEdges, circle, filter);
                 } else {
                     throw new IllegalArgumentException(objectAsString + " at index " + i + " need to be defined as lat,lon "
                             + "or as a circle lat,lon,radius or rectangular lat1,lon1,lat2,lon2");
@@ -203,20 +163,35 @@ public class GraphEdgeIdFinder {
      * This class handles edges and areas where access should be blocked.
      */
     public static class BlockArea {
-        final GHIntHashSet blockedEdges = new GHIntHashSet();
-        final List<Shape> blockedShapes = new ArrayList<>();
-        private final NodeAccess na;
+        private final List<GHIntHashSet> edgesList = new ArrayList<>();
+        private final List<Shape> blockedShapes = new ArrayList<>();
+        private NodeAccess na;
+        private final int baseEdgeCount;
+        private boolean prepared;
 
         public BlockArea(Graph g) {
+            baseEdgeCount = g.getAllEdges().length();
             na = g.getNodeAccess();
         }
 
-        public void add(int edgeId) {
-            blockedEdges.addAll(edgeId);
+        public boolean hasCachedEdgeIds(int shapeIndex) {
+            return !edgesList.get(shapeIndex).isEmpty();
         }
 
-        public void add(Shape shape) {
+        public String toString(int shapeIndex) {
+            List<Integer> returnList = new ArrayList<>();
+            for (IntCursor intCursor : edgesList.get(shapeIndex)) {
+                returnList.add(intCursor.value);
+            }
+            Collections.sort(returnList);
+            return returnList.toString();
+        }
+
+        public GHIntHashSet add(Shape shape) {
             blockedShapes.add(shape);
+            GHIntHashSet set = new GHIntHashSet();
+            edgesList.add(set);
+            return set;
         }
 
         public final boolean contains(GHPoint point) {
@@ -231,15 +206,19 @@ public class GraphEdgeIdFinder {
          * @return true if the specified edgeState is part of this BlockArea
          */
         public final boolean intersects(EdgeIteratorState edgeState) {
-            if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
-                return true;
-            }
-
-            // compromise: mostly avoid expensive fetchWayGeometry which isn't yet fast for being used in Weighting.calc
-            BBox bbox = BBox.fromPoints(na.getLatitude(edgeState.getBaseNode()), na.getLongitude(edgeState.getBaseNode()),
-                    na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()));
             PointList pointList = null;
-            for (Shape shape : blockedShapes) {
+            for (int shapeIdx = 0; shapeIdx < blockedShapes.size(); shapeIdx++) {
+                GHIntHashSet blockedEdges = edgesList.get(shapeIdx);
+                // blockedEdges acts as cache that is only useful when filled and for non-virtual edges
+                if (!blockedEdges.isEmpty() && edgeState.getEdge() < baseEdgeCount) {
+                    if (blockedEdges.contains(edgeState.getEdge()))
+                        return true;
+                    continue;
+                }
+
+                // compromise: mostly avoid expensive fetchWayGeometry which isn't yet fast for being used in Weighting.calc
+                BBox bbox = createBBox(na, edgeState);
+                Shape shape = blockedShapes.get(shapeIdx);
                 if (shape.getBounds().intersects(bbox)) {
                     if (pointList == null)
                         pointList = edgeState.fetchWayGeometry(3).makeImmutable();
@@ -249,5 +228,19 @@ public class GraphEdgeIdFinder {
             }
             return false;
         }
+
+        public BlockArea setQueryGraph(QueryGraph queryGraph) {
+            if (prepared)
+                throw new IllegalStateException("setGraph cannot be called multiple times");
+
+            prepared = true;
+            na = queryGraph.getNodeAccess();
+            return this;
+        }
+    }
+
+    private static BBox createBBox(NodeAccess na, EdgeIteratorState edgeState) {
+        return BBox.fromPoints(na.getLatitude(edgeState.getBaseNode()), na.getLongitude(edgeState.getBaseNode()),
+                na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()));
     }
 }
