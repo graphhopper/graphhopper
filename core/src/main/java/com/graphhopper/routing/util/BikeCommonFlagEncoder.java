@@ -378,20 +378,22 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                     speed = PUSHING_SECTION_SPEED;
             } else if (way.hasTag("bicycle", "designated") || 
                        way.hasTag("bicycle", "official")   || 
-                       way.hasTag("segregated", "yes")    ||
-                       way.hasTag("bicycle", "yes")) {
-                // Here we handle the cases where the OSM tagging results in something similar to "highway=cycleway"
-                    if (way.hasTag("segregated", "yes"))
-                        speed = highwaySpeeds.get("cycleway");
-                    else
-                        if  (way.hasTag("bicycle", "yes"))
-                            speed = 10;
-                        else
-                            speed = highwaySpeeds.get("cycleway");
-                if ((surfaceSpeed>0) && (surfaceSpeed < speed))
-                    //Here we overwrite our speed again in case we have a valid surface speed and if it is smaller as computed so far
-                    speed = surfaceSpeed;
-            } 
+                       way.hasTag("segregated", "yes")     ||
+                       way.hasTag("bicycle", "yes"))   {
+                          // Here we handle the cases where the OSM tagging results in something similar to "highway=cycleway"
+                          if (way.hasTag("segregated", "yes"))
+                              speed = highwaySpeeds.get("cycleway");
+                          else   {
+                              if  (way.hasTag("bicycle", "yes"))
+                                  speed = 10;
+                              else
+                                  speed = highwaySpeeds.get("cycleway");
+                          }
+                          if ((surfaceSpeed>0) && (surfaceSpeed < speed))   {
+                              //Here we overwrite our speed again in case we have a valid surface speed and if it is smaller as computed so far
+                              speed = surfaceSpeed;
+                          }
+                       }
         }
         return speed;
     }
