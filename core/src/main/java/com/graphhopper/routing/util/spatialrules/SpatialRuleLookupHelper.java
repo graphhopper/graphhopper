@@ -18,18 +18,19 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.profiles.Country;
-import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.parsers.TagParser;
+import com.graphhopper.routing.util.parsers.TagParserFactory;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
-
-import java.util.List;
-
 import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Helper class to build the spatial rule index. This is kind of an ugly plugin mechanism to avoid requiring a
@@ -40,9 +41,43 @@ import org.slf4j.LoggerFactory;
 public class SpatialRuleLookupHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(SpatialRuleLookupHelper.class);
+    static String JSON_ID_FIELD = "ISO_A3";
 
-    public static void buildAndInjectSpatialRuleIntoGH(GraphHopper graphHopper, Envelope maxBounds, List<JsonFeatureCollection> jsonFeatureCollections) {
-        final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO_A3", new CountriesSpatialRuleFactory(), maxBounds);
+    /**
+     * This method limits the JsonFeatures to the specified subset
+     */
+    static List<JsonFeatureCollection> reorder(List<JsonFeatureCollection> jsonFeatureCollections, List<String> subset) {
+        Map<String, JsonFeature> map = new LinkedHashMap<>();
+        for (JsonFeatureCollection featureCollection : jsonFeatureCollections) {
+            for (JsonFeature jsonFeature : featureCollection.getFeatures()) {
+                String id = (String) jsonFeature.getProperty(JSON_ID_FIELD);
+                if (!Helper.isEmpty(id))
+                    map.put(Helper.toLowerCase(id), jsonFeature);
+            }
+        }
+        if (map.isEmpty())
+            throw new IllegalArgumentException("Input JsonFeatureCollection cannot be empty. Subset: " + subset + ", original.size:" + jsonFeatureCollections.size());
+
+        List<JsonFeature> newCollection = new ArrayList<>();
+        for (String val : subset) {
+            JsonFeature jsonFeature = map.get(val);
+            if (jsonFeature == null)
+                throw new IllegalArgumentException("SpatialRule does not exist. ID: " + val);
+            newCollection.add(jsonFeature);
+        }
+        JsonFeatureCollection coll = new JsonFeatureCollection();
+        coll.getFeatures().addAll(newCollection);
+        return Arrays.asList(coll);
+    }
+
+    public static void buildAndInjectCountrySpatialRules(GraphHopper graphHopper, Envelope maxBounds, List<JsonFeatureCollection> jsonFeatureCollections) {
+        List<String> subset = new ArrayList<>();
+        for (Country c : Country.values()) {
+            if (c != Country.DEFAULT)
+                subset.add(c.toString());
+        }
+        final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(reorder(jsonFeatureCollections, subset),
+                JSON_ID_FIELD, new CountriesSpatialRuleFactory(), maxBounds);
         logger.info("Set spatial rule lookup with {} rules", index.size());
         final TagParserFactory oldTPF = graphHopper.getTagParserFactory();
         graphHopper.setTagParserFactory(new TagParserFactory() {
@@ -50,7 +85,7 @@ public class SpatialRuleLookupHelper {
             @Override
             public TagParser create(String name, PMap configuration) {
                 if (name.equals(Country.KEY))
-                    return new SpatialRuleParser(index);
+                    return new SpatialRuleParser(index, Country.create());
 
                 return oldTPF.create(name, configuration);
             }

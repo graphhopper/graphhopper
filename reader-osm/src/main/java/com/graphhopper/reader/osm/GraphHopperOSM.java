@@ -73,17 +73,18 @@ public class GraphHopperOSM extends GraphHopper {
             return;
 
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(landmarkSplittingFeatureCollection), "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
-                @Override
-                public SpatialRule createSpatialRule(final String id, List<Polygon> polygons) {
-                    return new DefaultSpatialRule() {
+            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
+                    Collections.singletonList(landmarkSplittingFeatureCollection), "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
                         @Override
-                        public String getId() {
-                            return id;
+                        public SpatialRule createSpatialRule(final String id, List<Polygon> polygons) {
+                            return new DefaultSpatialRule() {
+                                @Override
+                                public String getId() {
+                                    return id;
+                                }
+                            }.setBorders(polygons);
                         }
-                    }.setBorders(polygons);
-                }
-            });
+                    });
             for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
                 // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
                 if (ruleLookup != null && ruleLookup.size() > 0) {

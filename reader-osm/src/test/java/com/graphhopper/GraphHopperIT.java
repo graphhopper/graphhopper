@@ -37,18 +37,20 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.File;
 import java.util.*;
 
+import static com.graphhopper.Junit4To5Assertions.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -68,10 +70,48 @@ public class GraphHopperIT {
     // when creating GH instances make sure to use this as the GH location such that it will be cleaned between tests
     private static final String GH_LOCATION = "target/graphhopper-it-gh";
 
-    @Before
-    @After
+    @BeforeEach
+    @AfterEach
     public void setup() {
         Helper.removeDir(new File(GH_LOCATION));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            DIJKSTRA + ",false,501",
+            ASTAR + ",false,439",
+            DIJKSTRA_BI + ",false,208",
+            ASTAR_BI + ",false,172",
+            DIJKSTRA_BI + ",true,29",
+            ASTAR_BI + ",true,29"
+    })
+    public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
+        final String vehicle = "car";
+        final String weighting = "fastest";
+        GraphHopper hopper = createGraphHopper(vehicle).
+                setOSMFile(MONACO).
+                setProfiles(new ProfileConfig("profile").setVehicle(vehicle).setWeighting(weighting)).
+                setStoreOnFlush(true);
+        hopper.getCHPreparationHandler()
+                .setCHProfileConfigs(new CHProfileConfig("profile"))
+                .setDisablingAllowed(true);
+        hopper.importOrLoad();
+        GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566)
+                .setAlgorithm(algo)
+                .setVehicle(vehicle)
+                .setWeighting(weighting);
+        req.putHint(CH.DISABLE, !withCH);
+        GHResponse rsp = hopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(expectedVisitedNodes, rsp.getHints().getLong("visited_nodes.sum", 0));
+
+        PathWrapper res = rsp.getBest();
+        assertEquals(3587.9, res.getDistance(), .1);
+        assertEquals(277173, res.getTime(), 10);
+        assertEquals(90, res.getPoints().getSize());
+
+        assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
+        assertEquals(43.7495432, res.getWaypoints().getLat(1), 1e-7);
     }
 
     @Test
