@@ -34,15 +34,14 @@ public class GraphHopperProfileConfigTest {
     @Test
     public void duplicateProfileName_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
-        hopper.setProfiles(
-                new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest"),
-                new ProfileConfig("your_profile").setVehicle("car").setWeighting("short_fastest"),
-                new ProfileConfig("my_profile").setVehicle("car").setWeighting("shortest")
-        );
         assertIllegalArgument("Profile names must be unique. Duplicate name: 'my_profile'", new Runnable() {
             @Override
             public void run() {
-                hopper.load(GH_LOCATION);
+                hopper.setProfiles(
+                        new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest"),
+                        new ProfileConfig("your_profile").setVehicle("car").setWeighting("short_fastest"),
+                        new ProfileConfig("my_profile").setVehicle("car").setWeighting("shortest")
+                );
             }
         });
     }

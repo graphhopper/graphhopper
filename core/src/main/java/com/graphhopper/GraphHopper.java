@@ -86,7 +86,7 @@ import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
  */
 public class GraphHopper implements GraphHopperAPI {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final List<ProfileConfig> profiles = new ArrayList<>();
+    private final Map<String, ProfileConfig> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
@@ -303,8 +303,13 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public GraphHopper setProfiles(List<ProfileConfig> profiles) {
-        this.profiles.clear();
-        this.profiles.addAll(profiles);
+        this.profilesByName.clear();
+        for (ProfileConfig profile : profiles) {
+            ProfileConfig previous = this.profilesByName.put(profile.getName(), profile);
+            if (previous != null) {
+                throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
+            }
+        }
         return this;
     }
 
@@ -789,12 +794,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void checkProfilesConsistency() {
-        Set<String> profileSet = new LinkedHashSet<>(profiles.size());
-        for (ProfileConfig profile : profiles) {
-            boolean added = profileSet.add(profile.getName());
-            if (!added) {
-                throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
-            }
+        for (ProfileConfig profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure to add all vehicle used in profiles to 'graph.flag_encoders'");
             }
@@ -816,7 +816,7 @@ public class GraphHopper implements GraphHopperAPI {
             if (!added) {
                 throw new IllegalArgumentException("Duplicate CH reference to profile '" + chConfig.getProfile() + "'");
             }
-            if (!profileSet.contains(chConfig.getProfile())) {
+            if (!profilesByName.containsKey(chConfig.getProfile())) {
                 throw new IllegalArgumentException("CH profile references unknown profile '" + chConfig.getProfile() + "'");
             }
         }
@@ -826,7 +826,7 @@ public class GraphHopper implements GraphHopperAPI {
             if (!added) {
                 throw new IllegalArgumentException("Duplicate LM reference to profile '" + lmConfig.getProfile() + "'");
             }
-            if (!profileSet.contains(lmConfig.getProfile())) {
+            if (!profilesByName.containsKey(lmConfig.getProfile())) {
                 throw new IllegalArgumentException("LM profile references unknown profile '" + lmConfig.getProfile() + "'");
             }
         }
@@ -861,7 +861,6 @@ public class GraphHopper implements GraphHopperAPI {
             return;
         }
 
-        Map<String, ProfileConfig> profilesByName = getProfilesByName();
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(chConfig.getProfile());
             assert profile != null : "there is no profile " + chConfig.getProfile();
@@ -885,7 +884,6 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmPreparationHandler.hasLMProfiles())
             return;
 
-        Map<String, ProfileConfig> profilesByName = getProfilesByName();
         for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
             assert profile != null : "there is no profile " + lmConfig.getProfile();
@@ -894,15 +892,6 @@ public class GraphHopper implements GraphHopperAPI {
             Weighting weighting = createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER);
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
-    }
-
-    private Map<String, ProfileConfig> getProfilesByName() {
-        Map<String, ProfileConfig> result = new HashMap<>(profiles.size());
-        for (ProfileConfig profile : profiles) {
-            result.put(profile.getName(), profile);
-        }
-        assert result.size() == profiles.size() : "there are duplicate profile names";
-        return result;
     }
 
     /**
