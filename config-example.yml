@@ -24,10 +24,10 @@ graphhopper:
 
   # Routing can be done for the following list of profiles. The fields of each profile are as follows:
   # - name (required): a unique string identifier for the profile
-  # - vehicle (required): refers to the `graph.flag_encoder` used for this profile
+  # - vehicle (required): refers to the `graph.flag_encoders` used for this profile
   # - weighting (required): the weighting used for this profile, e.g. fastest,shortest or short_fastest
   # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
-  #   this will only work if the `graph.flag_encoder` for the given `vehicle` is configured with `|turn_costs=true`.
+  #   this will only work if the `graph.flag_encoders` for the given `vehicle` is configured with `|turn_costs=true`.
   #
   # Depending on the above fields there are other properties that can be used, e.g.
   # - distance_factor: 0.1 (can be used to fine tune the time/distance trade-off of short_fastest weighting)
