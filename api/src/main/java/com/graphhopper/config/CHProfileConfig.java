@@ -23,7 +23,7 @@ import java.util.Objects;
 import static com.graphhopper.config.ProfileConfig.validateProfileName;
 
 public class CHProfileConfig {
-    private String profile = "unset_ch_profile";
+    private String profile = "";
 
     private CHProfileConfig() {
         // default constructor needed for jackson

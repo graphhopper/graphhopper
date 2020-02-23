@@ -21,7 +21,7 @@ package com.graphhopper.config;
 import static com.graphhopper.config.ProfileConfig.validateProfileName;
 
 public class LMProfileConfig {
-    private String profile = "unset_lm_profile";
+    private String profile = "";
     private double maximumLMWeight = -1;
 
     private LMProfileConfig() {
