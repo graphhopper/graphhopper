@@ -372,28 +372,19 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 && (way.hasTag("highway", pushingSectionsHighways) || way.hasTag("bicycle", "dismount"))) {
             if (!way.hasTag("bicycle", intendedValues)) {
                 // Here we set the speed for pushing sections and set speed for steps as even lower:
-                if (way.hasTag("highway", "steps"))
-                    speed = PUSHING_SECTION_SPEED / 2;
+                speed = way.hasTag("highway", "steps") ? PUSHING_SECTION_SPEED / 2 : PUSHING_SECTION_SPEED;
+            } else if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") ||
+                    way.hasTag("segregated", "yes") || way.hasTag("bicycle", "yes")) {
+                // Here we handle the cases where the OSM tagging results in something similar to "highway=cycleway"
+                if (way.hasTag("segregated", "yes"))
+                    speed = highwaySpeeds.get("cycleway");
                 else
-                    speed = PUSHING_SECTION_SPEED;
-            } else if (way.hasTag("bicycle", "designated") || 
-                       way.hasTag("bicycle", "official")   || 
-                       way.hasTag("segregated", "yes")     ||
-                       way.hasTag("bicycle", "yes"))   {
-                          // Here we handle the cases where the OSM tagging results in something similar to "highway=cycleway"
-                          if (way.hasTag("segregated", "yes"))
-                              speed = highwaySpeeds.get("cycleway");
-                          else   {
-                              if  (way.hasTag("bicycle", "yes"))
-                                  speed = 10;
-                              else
-                                  speed = highwaySpeeds.get("cycleway");
-                          }
-                          if ((surfaceSpeed>0) && (surfaceSpeed < speed))   {
-                              //Here we overwrite our speed again in case we have a valid surface speed and if it is smaller as computed so far
-                              speed = surfaceSpeed;
-                          }
-                       }
+                    speed = way.hasTag("bicycle", "yes") ? 10 : highwaySpeeds.get("cycleway");
+
+                // overwrite our speed again in case we have a valid surface speed and if it is smaller as computed so far
+                if ((surfaceSpeed > 0) && (surfaceSpeed < speed))
+                    speed = surfaceSpeed;
+            }
         }
         return speed;
     }
