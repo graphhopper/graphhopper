@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
+import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMProfile;
@@ -29,8 +30,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -121,7 +121,7 @@ public class RandomizedRoutingTest {
             chGraph = graph.getCHGraph(chProfile);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, new LMProfile(weighting), 16, 8);
+            lm = new PrepareLandmarks(dir, graph, new LMProfile(weighting), 16);
             lm.setMaximumWeight(10000);
             lm.doWork();
         }
@@ -144,11 +144,9 @@ public class RandomizedRoutingTest {
             case CH_ASTAR:
                 return pch.getRoutingAlgorithmFactory().createAlgo(graph instanceof QueryGraph ? graph : chGraph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM_BIDIR:
-                AStarBidirection astarbi = new AStarBidirection(graph, weighting, traversalMode);
-                return lm.getPreparedRoutingAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+                return lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(traversalMode).build());
             case LM_UNIDIR:
-                AStar astar = new AStar(graph, weighting, traversalMode);
-                return lm.getPreparedRoutingAlgorithm(graph, astar, AlgorithmOptions.start().build());
+                return lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR).traversalMode(traversalMode).build());
             case PERFECT_ASTAR:
                 AStarBidirection perfectastarbi = new AStarBidirection(graph, weighting, traversalMode);
                 perfectastarbi.setApproximation(new PerfectApproximator(graph, weighting, traversalMode, false));
