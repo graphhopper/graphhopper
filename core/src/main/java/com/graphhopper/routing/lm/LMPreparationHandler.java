@@ -19,8 +19,6 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.util.HintsMap;
@@ -71,7 +69,7 @@ public class LMPreparationHandler {
     public void init(GraphHopperConfig ghConfig) {
         // throw explicit error for deprecated configs
         if (ghConfig.has("prepare.lm.weightings")) {
-            throw new IllegalStateException("Use profiles_lm instead of prepare.lm.weightings");
+            throw new IllegalStateException("Use profiles_lm instead of prepare.lm.weightings, see #1922");
         }
 
         setPreparationThreads(ghConfig.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
