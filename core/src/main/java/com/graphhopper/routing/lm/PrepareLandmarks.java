@@ -137,5 +137,4 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     void close() {
         this.lms.close();
     }
-
 }
