@@ -863,7 +863,6 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(chConfig.getProfile());
-            assert profile != null : "there is no profile " + chConfig.getProfile();
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             if (profile.isTurnCosts()) {
                 assert encoder.supportsTurnCosts() : "encoder " + encoder + " should support turn costs";
@@ -886,7 +885,6 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
-            assert profile != null : "there is no profile " + lmConfig.getProfile();
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             // note that we do not consider turn costs during LM preparation?
             Weighting weighting = createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER);
