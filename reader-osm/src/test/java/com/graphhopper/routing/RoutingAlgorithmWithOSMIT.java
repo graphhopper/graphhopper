@@ -403,8 +403,7 @@ public class RoutingAlgorithmWithOSMIT {
     public void testKremsBikeRelation() {
         List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
-        // 3109m is better as cyclepath is used
-        list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3112, 87));
+        list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3077, 79));
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 94));
 
         runAlgo(testCollector, DIR + "/krems.osm.gz", "target/krems-gh",
