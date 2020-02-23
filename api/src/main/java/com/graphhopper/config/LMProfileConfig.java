@@ -36,7 +36,7 @@ public class LMProfileConfig {
         return profile;
     }
 
-    public void setProfile(String profile) {
+    void setProfile(String profile) {
         validateProfileName(profile);
         this.profile = profile;
     }

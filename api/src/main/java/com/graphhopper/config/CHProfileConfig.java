@@ -37,7 +37,7 @@ public class CHProfileConfig {
         return profile;
     }
 
-    public CHProfileConfig setProfile(String profile) {
+    CHProfileConfig setProfile(String profile) {
         validateProfileName(profile);
         this.profile = profile;
         return this;
