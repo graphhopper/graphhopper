@@ -39,9 +39,9 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
     }
     
     @Override
-    public double getDefaultMaxSpeed(RoadClass roadClass, TransportationMode transport) {
-        if (transport != TransportationMode.MOTOR_VEHICLE) {
-            return -1;
+    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
+        if (currentMaxSpeed > 0 || transport != TransportationMode.MOTOR_VEHICLE) {
+            return currentMaxSpeed;
         }
         
         switch (roadClass) {
@@ -67,7 +67,11 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
     }
     
     @Override
-    public RoadAccess getDefaultAccess(RoadClass roadClass, TransportationMode transport) {
+    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
+        if (currentRoadAccess != RoadAccess.YES) {
+            return currentRoadAccess;
+        }
+        
         if (transport != TransportationMode.MOTOR_VEHICLE) {
             return RoadAccess.YES;
         }

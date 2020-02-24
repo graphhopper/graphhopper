@@ -39,37 +39,19 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     public AbstractSpatialRule(Polygon border) {
         this(Collections.singletonList(border));
     }
-
-    public List<Polygon> getBorders() {
-        return borders;
-    }
     
     @Override
     public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-        if (currentMaxSpeed > 0) {
-            return currentMaxSpeed;
-        }
-        
-        return getDefaultMaxSpeed(roadClass, transport);
-    }
-    
-    @Override
-    public double getDefaultMaxSpeed(RoadClass roadClass, TransportationMode transport) {
-        return -1;
+        return currentMaxSpeed;
     }
 
     @Override
     public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-        if (currentRoadAccess != RoadAccess.YES) {
-            return currentRoadAccess;
-        }
-        
-        return getDefaultAccess(roadClass, transport);
+        return currentRoadAccess;
     }
     
-    @Override
-    public RoadAccess getDefaultAccess(RoadClass roadClass, TransportationMode transport) {
-        return RoadAccess.YES;
+    public List<Polygon> getBorders() {
+        return borders;
     }
 
     @Override

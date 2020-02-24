@@ -43,9 +43,9 @@ public class GermanySpatialRule extends AbstractSpatialRule {
      * Your implementation should be able to handle these cases.
      */
     @Override
-    public double getDefaultMaxSpeed(RoadClass roadClass, TransportationMode transport) {
-        if (transport != TransportationMode.MOTOR_VEHICLE) {
-            return -1;
+    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
+        if (currentMaxSpeed > 0 || transport != TransportationMode.MOTOR_VEHICLE) {
+            return currentMaxSpeed;
         }
         
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
@@ -71,7 +71,11 @@ public class GermanySpatialRule extends AbstractSpatialRule {
     }
     
     @Override
-    public RoadAccess getDefaultAccess(RoadClass roadClass, TransportationMode transport) {
+    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
+        if (currentRoadAccess != RoadAccess.YES) {
+            return currentRoadAccess;
+        }
+        
         if (transport != TransportationMode.MOTOR_VEHICLE) {
             return RoadAccess.YES;
         }
