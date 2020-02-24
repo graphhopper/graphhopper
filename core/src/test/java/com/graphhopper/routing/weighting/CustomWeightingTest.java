@@ -76,7 +76,7 @@ public class CustomWeightingTest {
         vehicleModel.getPriority().put(KEY, map);
 
         Weighting weighting = new CustomWeighting("custom", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
-        assertEquals(2.43, weighting.calcEdgeWeight(edge2, false), 0.01);
+        assertEquals(1.73, weighting.calcEdgeWeight(edge2, false), 0.01);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
 
         map.put(PRIMARY.toString(), 1.1);
@@ -129,7 +129,7 @@ public class CustomWeightingTest {
 
         assertEquals(3.1, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
                 set(rcLinkEnc, false).set(avSpeedEnc, 15).set(accessEnc, true), false), 0.01);
-        assertEquals(6.2, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
+        assertEquals(5.5, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
                 set(rcLinkEnc, true).set(avSpeedEnc, 15).set(accessEnc, true), false), 0.01);
     }
 
@@ -144,11 +144,11 @@ public class CustomWeightingTest {
         CustomWeighting weighting = new CustomWeighting("car_based", carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
 
         // simple multiplication of the weight...
-        assertEquals(31, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
+        assertEquals(24.7, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true), false), 0.01);
         assertEquals(3.1, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true), false), 0.01);
-        assertEquals(155, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(50).
+        assertEquals(123.5, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(50).
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true), false), 0.01);
         assertEquals(15.5, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(50).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 15).set(accessEnc, true).setReverse(accessEnc, true), false), 0.01);
@@ -183,9 +183,9 @@ public class CustomWeightingTest {
         EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true);
         assertEquals(155, weighting.calcEdgeWeight(edge1, false), 0.01);
 
-        // intersect polygon
+        // intersect polygon => nearly double weight (would be exactly doubled if vehicleModel.setDistanceTermConstant(0);)
         EdgeIteratorState edge2 = graphHopperStorage.edge(2, 3).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true);
         assertTrue(poly.intersects(edge2.fetchWayGeometry(3).toLineString(false)));
-        assertEquals(310, weighting.calcEdgeWeight(edge2, false), 0.01);
+        assertEquals(275, weighting.calcEdgeWeight(edge2, false), 0.01);
     }
 }

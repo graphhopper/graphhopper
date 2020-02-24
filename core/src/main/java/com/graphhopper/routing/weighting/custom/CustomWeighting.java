@@ -32,16 +32,16 @@ import java.util.Map;
 
 /**
  * Every EncodedValue like road_environment can influence one or more aspects of this Weighting: the
- * speed_factor, the max_speed and the priority. The formula is basically as follows:
+ * speed_factor, the max_speed and the priority. The formula is as follows:
  * <pre>
- * if edge is not accessible for base vehicle then return infinity
+ * if the edge is not accessible for the base vehicle then return 'infinity'
  * speed = reduce_to_max_speed(estimated_average_speed * multiply_all(speed_factor_map))
- * weight = (toSeconds(distance / speed) + distance * distance_term_constant) / priority;
+ * weight = toSeconds(distance / speed) / multiply_all(priority_map) + distance * distance_term_constant;
  * return weight
  * </pre>
  * Please note that the max_speed map is capped to the maximum allowed speed. Also values in the speed_factor and
  * priority maps are normalized via the maximum value to 1 if one of the values is bigger than 1
- * to avoid problems with the landmark algorithm, i.e. the edge weight is always increased and the heuristic always
+ * to avoid problems with the landmark algorithm, i.e. the edge weight is always increased so that the heuristic always
  * underestimates the weight.
  */
 public final class CustomWeighting extends AbstractWeighting {
@@ -113,7 +113,7 @@ public final class CustomWeighting extends AbstractWeighting {
         double distanceInfluence = distance * minDistanceTerm;
         if (Double.isInfinite(distanceInfluence))
             return Double.POSITIVE_INFINITY;
-        return (seconds + distanceInfluence) / priorityConfig.calcPriority(edgeState, reverse);
+        return seconds / priorityConfig.calcPriority(edgeState, reverse) + distanceInfluence;
     }
 
     double calcSeconds(double distance, EdgeIteratorState edge, boolean reverse) {

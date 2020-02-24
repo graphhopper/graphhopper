@@ -102,6 +102,8 @@ final class PriorityCustomConfig {
             ConfigMapEntry entry = priorityList.get(i);
             double value = entry.getValue(edge, reverse);
             priority *= value;
+            if (priority <= 0)
+                return priority;
         }
         return priority;
     }

@@ -111,6 +111,8 @@ final class SpeedCustomConfig {
             ConfigMapEntry entry = speedFactorList.get(i);
             double factorValue = entry.getValue(edge, reverse);
             speed *= factorValue;
+            if (speed <= 0)
+                break;
         }
 
         boolean applied = false;

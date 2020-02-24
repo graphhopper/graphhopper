@@ -36,9 +36,7 @@ distance_term_constant: 0.07
 
 # Now we want to set a preference without changing the taken time. The default priority is 1 and does not change something.
 # Higher than 1 will prefer the road under the specified condition and lower than 1 will avoid it.
-# If the value is higher than 1 the other values will be divided by this value to make the underlying routing algorithm
-# work (normalization) and still have the same effect. And if two conditions are met the values will be multiplied.
-# The minimum value is 0 the maximum value is 100.
+# If two conditions are met the values will be multiplied. The minimum value is 0 (block access) the maximum value is 100.
 priority:
   road_class:
     motorway: 1.1
