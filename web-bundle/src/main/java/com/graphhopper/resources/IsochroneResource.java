@@ -9,10 +9,13 @@ import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.*;
@@ -29,10 +32,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
@@ -74,9 +74,8 @@ public class IsochroneResource {
         if (!encodingManager.hasEncoder(vehicle))
             throw new IllegalArgumentException("vehicle not supported:" + vehicle);
 
-        if (respType != null && !respType.equalsIgnoreCase("json") && !respType.equalsIgnoreCase("geojson")) {
+        if (respType != null && !respType.equalsIgnoreCase("json") && !respType.equalsIgnoreCase("geojson"))
             throw new IllegalArgumentException("Format not supported:" + respType);
-        }
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
@@ -93,6 +92,9 @@ public class IsochroneResource {
 
         // todo: isochrones with turn costs ?
         Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, NO_TURN_COST_PROVIDER);
+        if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
+            weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
+                    Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {

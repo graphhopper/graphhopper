@@ -270,7 +270,7 @@ elif [ "$ACTION" = "torture" ]; then
   "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $@
 
 elif [ "$ACTION" = "measurement" ]; then
-  ARGS="$GH_WEB_OPTS graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest prepare.lm.weightings=fastest graph.flag_encoders=car \
+  ARGS="$GH_WEB_OPTS graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest prepare.lm.weightings=fastest graph.flag_encoders=car|turn_costs=true \
        prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
 
  function startMeasurement {

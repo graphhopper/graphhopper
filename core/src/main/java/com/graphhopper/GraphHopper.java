@@ -1020,6 +1020,9 @@ public class GraphHopper implements GraphHopperAPI {
             Graph graph = ghStorage;
             if (chPreparationHandler.isEnabled() && !disableCH) {
                 if (algorithmFactory instanceof CHRoutingAlgorithmFactory) {
+                    if (hints.has(Routing.BLOCK_AREA))
+                        throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
+
                     CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
                     weighting = chProfile.getWeighting();
                     graph = ghStorage.getCHGraph(chProfile);
@@ -1030,7 +1033,8 @@ public class GraphHopper implements GraphHopperAPI {
                 checkNonChMaxWaypointDistance(points);
                 weighting = createWeighting(hints, encoder, turnCostProvider);
                 if (hints.has(Routing.BLOCK_AREA))
-                    weighting = new BlockAreaWeighting(weighting, createBlockArea(points, hints, DefaultEdgeFilter.allEdges(encoder)));
+                    weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
+                            points, hints, DefaultEdgeFilter.allEdges(encoder)));
             }
             ghRsp.addDebugInfo("tmode:" + tMode.toString());
 
@@ -1043,6 +1047,9 @@ public class GraphHopper implements GraphHopperAPI {
                 return Collections.emptyList();
 
             QueryGraph queryGraph = QueryGraph.lookup(graph, qResults);
+            if (weighting instanceof BlockAreaWeighting)
+                ((BlockAreaWeighting) weighting).setQueryGraph(queryGraph);
+
             int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
             if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
@@ -1115,17 +1122,6 @@ public class GraphHopper implements GraphHopperAPI {
 
     protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
         return new ChangeGraphHelper(graph, locationIndex);
-    }
-
-    private GraphEdgeIdFinder.BlockArea createBlockArea(List<GHPoint> points, HintsMap hints, EdgeFilter edgeFilter) {
-        String blockAreaStr = hints.get(Parameters.Routing.BLOCK_AREA, "");
-        GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(ghStorage, locationIndex).
-                parseBlockArea(blockAreaStr, edgeFilter, hints.getDouble(Routing.BLOCK_AREA + ".edge_id_max_area", 1000 * 1000));
-        for (GHPoint p : points) {
-            if (blockArea.contains(p))
-                throw new IllegalArgumentException("Request with " + Routing.BLOCK_AREA + " contained query point " + p + ". This is not allowed.");
-        }
-        return blockArea;
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {

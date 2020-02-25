@@ -1,11 +1,18 @@
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.Circle;
 import org.junit.Before;
@@ -20,7 +27,7 @@ public class BlockAreaWeightingTest {
 
     private FlagEncoder encoder = new CarFlagEncoder();
     private EncodingManager em;
-    private Graph graph;
+    private GraphHopperStorage graph;
 
     @Before
     public void setUp() {
@@ -40,7 +47,8 @@ public class BlockAreaWeightingTest {
         BlockAreaWeighting instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         assertEquals(94.35, instance.calcEdgeWeight(edge, false), .01);
 
-        bArea.add(0);
+        GHIntHashSet set = bArea.add(null);
+        set.add(0);
         instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         assertEquals(Double.POSITIVE_INFINITY, instance.calcEdgeWeight(edge, false), .01);
     }
@@ -62,10 +70,27 @@ public class BlockAreaWeightingTest {
         assertEquals(94.35, instance.calcEdgeWeight(edge, false), .01);
     }
 
-
     @Test
-    public void testNullGraph() {
-        // TODO is there an equivalent to check?
-        // BlockAreaWeighting weighting = new BlockAreaWeighting(new FastestWeighting(encoder));
+    public void testBlockVirtualEdges_QueryGraph() {
+        GraphEdgeIdFinder.BlockArea bArea = new GraphEdgeIdFinder.BlockArea(graph);
+        // add base graph edge to fill caches and trigger edgeId cache search (without virtual edges)
+        GHIntHashSet set = bArea.add(new Circle(0.0025, 0.0025, 1));
+        set.add(0);
+
+        LocationIndex index = new LocationIndexTree(graph, graph.getDirectory()).prepareIndex();
+        QueryResult qr = index.findClosest(0.005, 0.005, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
+        bArea.setQueryGraph(queryGraph);
+
+        BlockAreaWeighting instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
+        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());
+        int blockedEdges = 0, totalEdges = 0;
+        while (iter.next()) {
+            if (Double.isInfinite(instance.calcEdgeWeight(iter, false)))
+                blockedEdges++;
+            totalEdges++;
+        }
+        assertEquals(1, blockedEdges);
+        assertEquals(2, totalEdges);
     }
 }

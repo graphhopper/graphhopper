@@ -84,7 +84,8 @@ public class GraphHopperManaged implements Managed {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
+            SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper,
+                    new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
         }
         graphHopper.init(configuration);
     }
@@ -93,9 +94,9 @@ public class GraphHopperManaged implements Managed {
     public void start() {
         graphHopper.importOrLoad();
         logger.info("loaded graph at:{}, data_reader_file:{}, encoded values:{}, {}",
-                        graphHopper.getGraphHopperLocation(), graphHopper.getDataReaderFile(),
-                        graphHopper.getEncodingManager().toEncodedValuesAsString(),
-                        graphHopper.getGraphHopperStorage().toDetailsString());
+                graphHopper.getGraphHopperLocation(), graphHopper.getDataReaderFile(),
+                graphHopper.getEncodingManager().toEncodedValuesAsString(),
+                graphHopper.getGraphHopperStorage().toDetailsString());
     }
 
     public GraphHopper getGraphHopper() {
