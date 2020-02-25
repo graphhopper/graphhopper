@@ -40,7 +40,9 @@ public class GermanySpatialRule extends AbstractSpatialRule {
     }
 
     /**
-     * Germany contains roads with no speed limit. For these roads, this method will return Integer.MAX_VALUE.
+     * Germany contains roads with no speed limit. For these roads, this method
+     * will return {@link MaxSpeed#UNLIMITED_SIGN_SPEED}.
+     * <p>
      * Your implementation should be able to handle these cases.
      */
     @Override
