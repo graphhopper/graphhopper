@@ -21,7 +21,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
@@ -74,15 +74,17 @@ public class GraphHopperOSM extends GraphHopper {
 
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
             SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
-                    Collections.singletonList(landmarkSplittingFeatureCollection), "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
+                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
+                    new SpatialRuleLookupBuilder.SpatialRuleFactory() {
                         @Override
-                        public SpatialRule createSpatialRule(final String id, List<Polygon> polygons) {
-                            return new DefaultSpatialRule() {
+                        public SpatialRule createSpatialRule(final String id,
+                                        List<Polygon> polygons) {
+                            return new AbstractSpatialRule(polygons) {
                                 @Override
                                 public String getId() {
                                     return id;
                                 }
-                            }.setBorders(polygons);
+                            };
                         }
                     });
             for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
