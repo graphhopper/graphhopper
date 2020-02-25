@@ -188,6 +188,22 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
         return readFile(file);
     }
 
+    protected String getPaddedLonString(int lonInt) {
+        lonInt = Math.abs(lonInt);
+        String lonString = lonInt < 100 ? "0" : "";
+        if (lonInt < 10)
+            lonString += "0";
+        lonString += lonInt;
+        return lonString;
+    }
+
+    protected String getPaddedLatString(int latInt) {
+        latInt = Math.abs(latInt);
+        String latString = latInt < 10 ? "0" : "";
+        latString += latInt;
+        return latString;
+    }
+
     abstract byte[] readFile(File file) throws IOException;
 
 }

@@ -112,26 +112,10 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
         return (int) (Math.floor((180 + lon) / lonDegree) * lonDegree) - 180;
     }
 
-    private String getLonString(int lonInt) {
-        lonInt = Math.abs(lonInt);
-        String lonString = lonInt < 100 ? "0" : "";
-        if (lonInt < 10)
-            lonString += "0";
-        lonString += lonInt;
-        return lonString;
-    }
-
-    private String getLatString(int latInt) {
-        latInt = Math.abs(latInt);
-        String latString = latInt < 10 ? "0" : "";
-        latString += latInt;
-        return latString;
-    }
-
     String getFileName(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
-        return toLowerCase(getNorthString(latInt) + getLatString(latInt) + getEastString(lonInt) + getLonString(lonInt));
+        return toLowerCase(getNorthString(latInt) + getPaddedLatString(latInt) + getEastString(lonInt) + getPaddedLonString(lonInt));
     }
 
     String getDownloadURL(double lat, double lon) {
@@ -149,7 +133,7 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
             dir = "South/";
         }
 
-        return dir + north + getLatString(latInt) + getEastString(lonInt) + getLonString(lonInt) + ".hgt";
+        return dir + north + getPaddedLatString(latInt) + getEastString(lonInt) + getPaddedLonString(lonInt) + ".hgt";
     }
 
     private String getNorthString(int lat) {

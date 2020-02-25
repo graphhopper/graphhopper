@@ -78,12 +78,12 @@ public class SkadiProvider extends AbstractSRTMElevationProvider {
 
     private String getLatString(double lat) {
         int minLat = (int) Math.floor(lat);
-        return (minLat < 0 ? "S" : "N") + String.format("%02d", Math.abs(minLat));
+        return (minLat < 0 ? "S" : "N") + getPaddedLatString(minLat);
     }
 
     private String getLonString(double lon) {
         int minLon = (int) Math.floor(lon);
-        return (minLon < 0 ? "W" : "E") + String.format("%03d", Math.abs(minLon));
+        return (minLon < 0 ? "W" : "E") + getPaddedLonString(minLon);
     }
 
     String getFileName(double lat, double lon) {

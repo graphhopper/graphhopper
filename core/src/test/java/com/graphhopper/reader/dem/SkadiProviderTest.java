@@ -7,7 +7,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class SkadiProviderTest {
-    private double precision = .1;
     SkadiProvider instance;
 
     @Before
