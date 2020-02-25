@@ -302,6 +302,27 @@ public class GraphHopper implements GraphHopperAPI {
      * Sets the routing profiles that can be used for CH/LM preparation. So far adding these profiles is only required
      * so we can refer to them when configuring the CH/LM preparations, later it will be required to specify all
      * routing profiles that shall be supported by this GraphHopper instance here.
+     * <p>
+     * Here is an example how to setup two CH profiles and one LM profile (via the Java API)
+     *
+     * <pre>
+     * {@code
+     *   // make sure the encoding manager contains a "car" and a "bike" flag encoder
+     *   hopper.setProfiles(
+     *     new ProfileConfig("my_car").setVehicle("car").setWeighting("shortest"),
+     *     new ProfileConfig("your_bike").setVehicle("bike").setWeighting("fastest")
+     *   );
+     *   hopper.getCHPreparationHandler().setCHProfileConfigs(
+     *     new CHProfileConfig("my_car"),
+     *     new CHProfileConfig("your_bike")
+     *   );
+     *   hopper.getLMPreparationHandler().setLMProfileConfigs(
+     *     new LMProfileConfig("your_bike")
+     *   );
+     * }
+     * </pre>>
+     * <p>
+     * See also https://github.com/graphhopper/graphhopper/pull/1922.
      *
      * @see CHPreparationHandler#setCHProfileConfigs
      * @see LMPreparationHandler#setLMProfileConfigs
