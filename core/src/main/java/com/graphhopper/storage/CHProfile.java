@@ -7,6 +7,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.graphhopper.config.ProfileConfig.validateProfileName;
+
 /**
  * Specifies all properties of a CH routing profile. Generally these properties cannot be changed after the CH
  * pre-processing is finished and are stored on disk along with the prepared graph data.
@@ -39,9 +41,7 @@ public class CHProfile {
     }
 
     public CHProfile(String profileName, Weighting weighting, boolean edgeBased) {
-        if (!profileName.matches("^[a-z0-9_\\-]*$")) {
-            throw new IllegalArgumentException("CH profile names may only contain lower case letters, numbers, underscores and dashs, given: " + profileName);
-        }
+        validateProfileName(profileName);
         this.profileName = profileName;
         this.weighting = weighting;
         this.edgeBased = edgeBased;

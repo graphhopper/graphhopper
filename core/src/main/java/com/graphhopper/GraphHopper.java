@@ -17,6 +17,9 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
@@ -69,9 +72,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.graphhopper.routing.ch.CHPreparationHandler.EdgeBasedCHMode;
-import static com.graphhopper.routing.ch.CHPreparationHandler.EdgeBasedCHMode.EDGE_OR_NODE;
-import static com.graphhopper.routing.ch.CHPreparationHandler.EdgeBasedCHMode.OFF;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
@@ -86,6 +86,7 @@ import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
  */
 public class GraphHopper implements GraphHopperAPI {
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Map<String, ProfileConfig> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
@@ -297,6 +298,50 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
+    /**
+     * Sets the routing profiles that can be used for CH/LM preparation. So far adding these profiles is only required
+     * so we can refer to them when configuring the CH/LM preparations, later it will be required to specify all
+     * routing profiles that shall be supported by this GraphHopper instance here.
+     * <p>
+     * Here is an example how to setup two CH profiles and one LM profile (via the Java API)
+     *
+     * <pre>
+     * {@code
+     *   // make sure the encoding manager contains a "car" and a "bike" flag encoder
+     *   hopper.setProfiles(
+     *     new ProfileConfig("my_car").setVehicle("car").setWeighting("shortest"),
+     *     new ProfileConfig("your_bike").setVehicle("bike").setWeighting("fastest")
+     *   );
+     *   hopper.getCHPreparationHandler().setCHProfileConfigs(
+     *     new CHProfileConfig("my_car"),
+     *     new CHProfileConfig("your_bike")
+     *   );
+     *   hopper.getLMPreparationHandler().setLMProfileConfigs(
+     *     new LMProfileConfig("your_bike")
+     *   );
+     * }
+     * </pre>>
+     * <p>
+     * See also https://github.com/graphhopper/graphhopper/pull/1922.
+     *
+     * @see CHPreparationHandler#setCHProfileConfigs
+     * @see LMPreparationHandler#setLMProfileConfigs
+     */
+    public GraphHopper setProfiles(ProfileConfig... profiles) {
+        return setProfiles(Arrays.asList(profiles));
+    }
+
+    public GraphHopper setProfiles(List<ProfileConfig> profiles) {
+        this.profilesByName.clear();
+        for (ProfileConfig profile : profiles) {
+            ProfileConfig previous = this.profilesByName.put(profile.getName(), profile);
+            if (previous != null) {
+                throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
+            }
+        }
+        return this;
+    }
+
     public int getMaxVisitedNodes() {
         return routingConfig.getMaxVisitedNodes();
     }
@@ -504,6 +549,9 @@ public class GraphHopper implements GraphHopperAPI {
         // optimizable prepare
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
         minOneWayNetworkSize = ghConfig.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
+
+        // profiles
+        setProfiles(ghConfig.getProfiles());
 
         // prepare CH&LM
         chPreparationHandler.init(ghConfig);
@@ -725,15 +773,17 @@ public class GraphHopper implements GraphHopperAPI {
         if (encodingManager == null)
             setEncodingManager(EncodingManager.create(encodedValueFactory, flagEncoderFactory, ghLocation));
 
+        checkProfilesConsistency();
+
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
 
+        ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+
         if (lmPreparationHandler.isEnabled())
             initLMPreparationHandler();
-
-        ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
 
         List<CHProfile> chProfiles;
         if (chPreparationHandler.isEnabled()) {
@@ -772,6 +822,45 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
+    private void checkProfilesConsistency() {
+        for (ProfileConfig profile : profilesByName.values()) {
+            if (!encodingManager.hasEncoder(profile.getVehicle())) {
+                throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure to add all vehicle used in profiles to 'graph.flag_encoders'");
+            }
+            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+            if (profile.isTurnCosts() && !encoder.supportsTurnCosts()) {
+                throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
+                        "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
+                        "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
+            }
+            try {
+                createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with an unknown weighting '" + profile.getWeighting() + "'");
+            }
+        }
+        Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
+        for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
+            boolean added = chProfileSet.add(chConfig.getProfile());
+            if (!added) {
+                throw new IllegalArgumentException("Duplicate CH reference to profile '" + chConfig.getProfile() + "'");
+            }
+            if (!profilesByName.containsKey(chConfig.getProfile())) {
+                throw new IllegalArgumentException("CH profile references unknown profile '" + chConfig.getProfile() + "'");
+            }
+        }
+        Set<String> lmProfileSet = new LinkedHashSet<>(lmPreparationHandler.getLMProfileConfigs().size());
+        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
+            boolean added = lmProfileSet.add(lmConfig.getProfile());
+            if (!added) {
+                throw new IllegalArgumentException("Duplicate LM reference to profile '" + lmConfig.getProfile() + "'");
+            }
+            if (!profilesByName.containsKey(lmConfig.getProfile())) {
+                throw new IllegalArgumentException("LM profile references unknown profile '" + lmConfig.getProfile() + "'");
+            }
+        }
+    }
+
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
         boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
@@ -797,31 +886,20 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void initCHPreparationHandler() {
-        if (!chPreparationHandler.hasCHProfiles()) {
-            if (chPreparationHandler.getCHProfileStrings().isEmpty())
-                throw new IllegalStateException("Potential bug: chProfileStrings is empty");
+        if (chPreparationHandler.hasCHProfiles()) {
+            return;
+        }
 
-            for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-                for (String chWeightingStr : chPreparationHandler.getCHProfileStrings()) {
-                    // ghStorage is null at this point
-
-                    // extract weighting string and u-turn-costs
-                    String configStr = "";
-                    if (chWeightingStr.contains("|")) {
-                        configStr = chWeightingStr;
-                        chWeightingStr = chWeightingStr.split("\\|")[0];
-                    }
-                    PMap config = new PMap(configStr);
-                    int uTurnCosts = config.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-
-                    EdgeBasedCHMode edgeBasedCHMode = chPreparationHandler.getEdgeBasedCHMode();
-                    if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supportsTurnCosts())) {
-                        chPreparationHandler.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, NO_TURN_COST_PROVIDER)));
-                    }
-                    if (edgeBasedCHMode != OFF && encoder.supportsTurnCosts()) {
-                        chPreparationHandler.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts))));
-                    }
-                }
+        for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
+            ProfileConfig profile = profilesByName.get(chConfig.getProfile());
+            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+            if (profile.isTurnCosts()) {
+                assert encoder.supportsTurnCosts() : "encoder " + encoder + " should support turn costs";
+                int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
+                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(new HintsMap(profile.getWeighting()), encoder, turnCostProvider)));
+            } else {
+                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER)));
             }
         }
     }
@@ -834,15 +912,12 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmPreparationHandler.hasLMProfiles())
             return;
 
-        if (lmPreparationHandler.getLMProfileStrings().isEmpty()) {
-            throw new IllegalStateException("Potential bug: lmProfileStrings is empty");
-        }
-        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-            for (String lmWeightingStr : lmPreparationHandler.getLMProfileStrings()) {
-                // note that we do not consider turn costs during LM preparation?
-                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, NO_TURN_COST_PROVIDER);
-                lmPreparationHandler.addLMProfile(new LMProfile(weighting));
-            }
+        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
+            ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
+            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+            // note that we do not consider turn costs during LM preparation?
+            Weighting weighting = createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER);
+            lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
 

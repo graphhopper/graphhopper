@@ -18,13 +18,13 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
 import org.slf4j.Logger;
@@ -36,7 +36,8 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.util.Helper.createFormatter;
+import static com.graphhopper.util.Helper.getMemInfo;
 
 /**
  * This class deals with the A*, landmark and triangulation (ALT) preparations.
@@ -49,9 +50,9 @@ public class LMPreparationHandler {
     private int activeLandmarkCount = 8;
 
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
-    // input weighting list from configuration file
-    // one such entry can result into multiple Weighting objects e.g. fastest & car,foot => fastest|car and fastest|foot
-    private final List<String> lmProfileStrings = new ArrayList<>();
+    // we first add the profile configs and later read them to create the actual profile objects (because they require
+    // the actual Weightings)
+    private final List<LMProfileConfig> lmProfileConfigs = new ArrayList<>();
     private final List<LMProfile> lmProfiles = new ArrayList<>();
     private final Map<String, Double> maximumWeights = new HashMap<>();
     private int minNodes = -1;
@@ -66,7 +67,14 @@ public class LMPreparationHandler {
     }
 
     public void init(GraphHopperConfig ghConfig) {
+        // throw explicit error for deprecated configs
+        if (ghConfig.has("prepare.lm.weightings")) {
+            throw new IllegalStateException("Use profiles_lm instead of prepare.lm.weightings, see #1922");
+        }
+
         setPreparationThreads(ghConfig.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
+        setDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
+        setLMProfileConfigs(ghConfig.getLMProfiles());
 
         landmarkCount = ghConfig.getInt(Parameters.Landmark.COUNT, landmarkCount);
         activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
@@ -80,13 +88,6 @@ public class LMPreparationHandler {
             if (!loc.trim().isEmpty())
                 lmSuggestionsLocations.add(loc.trim());
         }
-        String lmWeightingsStr = ghConfig.get(Landmark.PREPARE + "weightings", "");
-        if (!lmWeightingsStr.isEmpty() && !lmWeightingsStr.equalsIgnoreCase("no") && !lmWeightingsStr.equalsIgnoreCase("false")) {
-            List<String> tmpLMWeightingList = Arrays.asList(lmWeightingsStr.split(","));
-            setLMProfileStrings(tmpLMWeightingList);
-        }
-
-        setDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
     }
 
     public int getLandmarks() {
@@ -103,7 +104,7 @@ public class LMPreparationHandler {
     }
 
     public final boolean isEnabled() {
-        return !lmProfileStrings.isEmpty() || !lmProfiles.isEmpty() || !preparations.isEmpty();
+        return !lmProfileConfigs.isEmpty() || !lmProfiles.isEmpty() || !preparations.isEmpty();
     }
 
     public int getPreparationThreads() {
@@ -119,37 +120,25 @@ public class LMPreparationHandler {
         this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
+    public LMPreparationHandler setLMProfileConfigs(LMProfileConfig... lmProfileConfigs) {
+        return setLMProfileConfigs(Arrays.asList(lmProfileConfigs));
+    }
+
     /**
      * Enables the use of landmarks to reduce query times.
-     *
-     * @param lmProfilesStrings A list containing multiple lm profiles like: "fastest", "shortest" or
-     *                          your own weight-calculation type.
      */
-    public LMPreparationHandler setLMProfileStrings(List<String> lmProfilesStrings) {
-        lmProfileStrings.clear();
-        for (String profileStr : lmProfilesStrings) {
-            profileStr = toLowerCase(profileStr);
-            profileStr = profileStr.trim();
-            addLMProfileAsString(profileStr);
+    public LMPreparationHandler setLMProfileConfigs(Collection<LMProfileConfig> lmProfileConfigs) {
+        this.lmProfileConfigs.clear();
+        this.maximumWeights.clear();
+        for (LMProfileConfig config : lmProfileConfigs) {
+            maximumWeights.put(config.getProfile(), config.getMaximumLMWeight());
         }
+        this.lmProfileConfigs.addAll(lmProfileConfigs);
         return this;
     }
 
-    public List<String> getLMProfileStrings() {
-        return lmProfileStrings;
-    }
-
-    public LMPreparationHandler addLMProfileAsString(String profile) {
-        String[] str = profile.split("\\|");
-        double value = -1;
-        if (str.length > 1) {
-            PMap map = new PMap(profile);
-            value = map.getDouble("maximum", -1);
-        }
-
-        lmProfileStrings.add(str[0]);
-        maximumWeights.put(str[0], value);
-        return this;
+    public List<LMProfileConfig> getLMProfileConfigs() {
+        return lmProfileConfigs;
     }
 
     /**
@@ -292,7 +281,7 @@ public class LMPreparationHandler {
         }
 
         for (LMProfile lmProfile : lmProfiles) {
-            Double maximumWeight = maximumWeights.get(lmProfile.getWeighting().getName());
+            Double maximumWeight = maximumWeights.get(lmProfile.getName());
             if (maximumWeight == null)
                 throw new IllegalStateException("maximumWeight cannot be null. Default should be just negative. " +
                         "Couldn't find " + lmProfile.getName() + " in " + maximumWeights);

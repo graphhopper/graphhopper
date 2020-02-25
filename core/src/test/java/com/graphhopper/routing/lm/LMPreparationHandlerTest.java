@@ -1,6 +1,8 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -8,10 +10,9 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.Parameters;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 
@@ -19,20 +20,25 @@ import static org.junit.Assert.*;
 public class LMPreparationHandlerTest {
 
     @Test
-    public void addWeighting() {
+    public void testEnabled() {
+        LMPreparationHandler instance = new LMPreparationHandler();
+        assertFalse(instance.isEnabled());
+        instance.setLMProfileConfigs(new LMProfileConfig("myconfig"));
+        assertTrue(instance.isEnabled());
+    }
+
+    @Test
+    public void maximumLMWeight() {
         LMPreparationHandler handler = new LMPreparationHandler();
-        handler.addLMProfileAsString("fastest");
-        assertEquals(Arrays.asList("fastest"), handler.getLMProfileStrings());
-
-        // special parameters like the maximum weight
-        handler = new LMPreparationHandler();
-        handler.addLMProfileAsString("fastest|maximum=65000");
-        handler.addLMProfileAsString("shortest|maximum=20000");
-        assertEquals(Arrays.asList("fastest", "shortest"), handler.getLMProfileStrings());
-
+        handler.setLMProfileConfigs(
+                new LMProfileConfig("prof1").setMaximumLMWeight(65_000),
+                new LMProfileConfig("prof2").setMaximumLMWeight(20_000)
+        );
         FlagEncoder car = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(car);
-        handler.addLMProfile(new LMProfile(new FastestWeighting(car))).addLMProfile(new LMProfile(new ShortestWeighting(car)));
+        handler
+                .addLMProfile(new LMProfile("prof1", new FastestWeighting(car)))
+                .addLMProfile(new LMProfile("prof2", new ShortestWeighting(car)));
         handler.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false), null);
         assertEquals(1, handler.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);
         assertEquals(0.3, handler.getPreparations().get(1).getLandmarkStorage().getFactor(), .1);
@@ -41,18 +47,14 @@ public class LMPreparationHandlerTest {
     @Test
     public void testPrepareWeightingNo() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "fastest");
+        ghConfig.setProfiles(Collections.singletonList(new ProfileConfig("profile")));
+        ghConfig.setLMProfiles(Collections.singletonList(new LMProfileConfig("profile")));
         LMPreparationHandler handler = new LMPreparationHandler();
         handler.init(ghConfig);
         assertTrue(handler.isEnabled());
 
         // See #1076
-        ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "no");
-        handler = new LMPreparationHandler();
-        handler.init(ghConfig);
-        assertFalse(handler.isEnabled());
-
-        ghConfig.put(Parameters.Landmark.PREPARE + "weightings", "false");
+        ghConfig.setLMProfiles(Collections.<LMProfileConfig>emptyList());
         handler = new LMPreparationHandler();
         handler.init(ghConfig);
         assertFalse(handler.isEnabled());
