@@ -22,6 +22,12 @@ import java.util.Objects;
 
 import static com.graphhopper.config.ProfileConfig.validateProfileName;
 
+/**
+ * Corresponds to an entry in the `profiles_ch` section in config.yml and specifies a routing profile that shall be
+ * prepared using Contraction Hierarchies (CH)
+ *
+ * @see ProfileConfig
+ */
 public class CHProfileConfig {
     private String profile = "";
 

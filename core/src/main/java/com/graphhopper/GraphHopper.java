@@ -298,6 +298,14 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
+    /**
+     * Sets the routing profiles that can be used for CH/LM preparation. So far adding these profiles is only required
+     * so we can refer to them when configuring the CH/LM preparations, later it will be required to specify all
+     * routing profiles that shall be supported by this GraphHopper instance here.
+     *
+     * @see CHPreparationHandler#setCHProfileConfigs
+     * @see LMPreparationHandler#setLMProfileConfigs
+     */
     public GraphHopper setProfiles(ProfileConfig... profiles) {
         return setProfiles(Arrays.asList(profiles));
     }

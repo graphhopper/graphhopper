@@ -20,6 +20,13 @@ package com.graphhopper.config;
 
 import com.graphhopper.util.PMap;
 
+/**
+ * Corresponds to the `profile` section in `config.yml` and specifies the properties of a routing profile. The name
+ * used here needs to be used when setting up CH/LM preparations. See also the documentation in `config-example.yml'
+ *
+ * @see CHProfileConfig
+ * @see LMProfileConfig
+ */
 public class ProfileConfig {
     private String name = "car";
     private String vehicle = "car";
@@ -28,6 +35,8 @@ public class ProfileConfig {
     private PMap hints = new PMap();
 
     public static void validateProfileName(String profileName) {
+        // currently allowing dash/minus, maybe remove later
+        // https://github.com/graphhopper/graphhopper/pull/1922#discussion_r383033522
         if (!profileName.matches("^[a-z0-9_\\-]*$")) {
             throw new IllegalArgumentException("Profile names may only contain lower case letters, numbers, underscores and dashs, given: " + profileName);
         }

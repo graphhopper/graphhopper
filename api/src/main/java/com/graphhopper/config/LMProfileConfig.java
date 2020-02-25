@@ -20,6 +20,12 @@ package com.graphhopper.config;
 
 import static com.graphhopper.config.ProfileConfig.validateProfileName;
 
+/**
+ * Corresponds to an entry in the `profiles_lm` section in config.yml and specifies a routing profile that shall be
+ * prepared using Landmarks (LM)
+ *
+ * @see ProfileConfig
+ */
 public class LMProfileConfig {
     private String profile = "";
     private double maximumLMWeight = -1;
