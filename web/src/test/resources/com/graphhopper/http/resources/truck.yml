@@ -30,9 +30,9 @@ max_speed:
 # If none of the conditions in the map above apply use the fallback, if specified:
 max_speed_fallback: 100
 
-# The distance term changes the influence of the distance. I.e. longer roads get a higher cost.
-# The distance_factor_constant is independent of the edge properties and does not influence the ETA.
-distance_term_constant: 0.07
+# This term changes the influence of the distance. I.e. longer roads get a higher cost.
+# The distance_influence is independent of the edge properties and does not influence the ETA.
+distance_influence: 0.07
 
 # Now we want to set a preference without changing the taken time. The default priority is 1 and does not change something.
 # Higher than 1 will prefer the road under the specified condition and lower than 1 will avoid it.

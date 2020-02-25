@@ -15,7 +15,6 @@ priority:
   # exclude steps
   road_class:
     steps: 0
-
   surface:
     sand: 0.5
   # prefer better tracks

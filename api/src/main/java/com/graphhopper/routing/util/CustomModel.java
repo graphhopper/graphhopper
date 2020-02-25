@@ -35,7 +35,7 @@ public class CustomModel {
     // optional:
     private Double maxSpeedFallback, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
-    private double distanceTermConstant = 0.07;
+    private double distanceInfluence = 0.07;
     private Map<String, Object> speedFactor = new HashMap<>();
     private Map<String, Object> maxSpeed = new HashMap<>();
     private Map<String, Object> priorityMap = new HashMap<>();
@@ -106,12 +106,12 @@ public class CustomModel {
         return priorityMap;
     }
 
-    public void setDistanceTermConstant(double distanceFactor) {
-        this.distanceTermConstant = distanceFactor;
+    public void setDistanceInfluence(double distanceFactor) {
+        this.distanceInfluence = distanceFactor;
     }
 
-    public double getDistanceTermConstant() {
-        return distanceTermConstant;
+    public double getDistanceInfluence() {
+        return distanceInfluence;
     }
 
     public void setAreas(Map<String, JsonFeature> areas) {

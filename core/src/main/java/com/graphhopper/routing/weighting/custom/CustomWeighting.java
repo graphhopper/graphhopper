@@ -78,7 +78,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
 
-        minDistanceTerm = customModel.getDistanceTermConstant();
+        minDistanceTerm = customModel.getDistanceInfluence();
         if (minDistanceTerm < 0)
             throw new IllegalArgumentException("maximum distance_term cannot be negative " + minDistanceTerm);
     }
