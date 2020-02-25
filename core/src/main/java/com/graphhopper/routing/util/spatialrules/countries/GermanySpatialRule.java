@@ -22,6 +22,7 @@ import java.util.List;
 import org.locationtech.jts.geom.Polygon;
 
 import com.graphhopper.routing.profiles.Country;
+import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
@@ -52,7 +53,7 @@ public class GermanySpatialRule extends AbstractSpatialRule {
         switch (roadClass) {
             case MOTORWAY:
             case TRUNK:
-                return Integer.MAX_VALUE;
+                return MaxSpeed.UNLIMITED_SIGN_SPEED;
             case PRIMARY:
                 return 100;
             case SECONDARY:
