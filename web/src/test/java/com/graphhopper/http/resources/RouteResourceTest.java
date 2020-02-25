@@ -43,6 +43,7 @@ import org.junit.Test;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import static java.lang.String.format;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -81,7 +82,7 @@ public class RouteResourceTest {
 
     @Test
     public void testBasicQuery() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851,1.536198&point=42.510071,1.548128", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -95,7 +96,7 @@ public class RouteResourceTest {
     @Test
     public void testBasicPostQuery() {
         String jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
-        final Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonStr));
+        final Response response = app.client().target(format("http://localhost:%s/route", app.getLocalPort())).request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -108,7 +109,7 @@ public class RouteResourceTest {
 
     @Test
     public void testWrongPointFormat() {
-        final Response response = app.client().target("http://localhost:8080/route?point=1234&point=42.510071,1.548128").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=1234&point=42.510071,1.548128", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue("There should be an error " + json.get("message"), json.get("message").asText().contains("Cannot parse point '1234'"));
@@ -116,7 +117,7 @@ public class RouteResourceTest {
 
     @Test
     public void testQueryWithoutInstructions() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&instructions=false").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851,1.536198&point=42.510071,1.548128&instructions=false", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -130,7 +131,7 @@ public class RouteResourceTest {
     @Test
     public void testCHWithHeading_error() {
         // There are special cases where heading works with node-based CH, but generally it leads to wrong results -> we expect an error
-        final Response response = app.client().target("http://localhost:8080/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue("There should have been an error response", json.has("message"));
@@ -141,7 +142,7 @@ public class RouteResourceTest {
     @Test
     public void testCHWithPassThrough_error() {
         // There are special cases where pass_through works with node-based CH, but generally it leads to wrong results -> we expect an error
-        final Response response = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue("There should have been an error response", json.has("message"));
@@ -151,7 +152,7 @@ public class RouteResourceTest {
 
     @Test
     public void testJsonRounding() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode cson = json.get("paths").get(0).get("points");
@@ -160,7 +161,7 @@ public class RouteResourceTest {
 
     @Test
     public void testFailIfElevationRequestedButNotIncluded() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("message"));
@@ -170,7 +171,7 @@ public class RouteResourceTest {
     @Test
     public void testGraphHopperWeb() {
         GraphHopperWeb hopper = new GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(format("http://localhost:%s/route", app.getLocalPort())));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
@@ -199,7 +200,7 @@ public class RouteResourceTest {
     @Test
     public void testPathDetailsRoadClass() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(format("http://localhost:%s/route", app.getLocalPort())));
         GHRequest request = new GHRequest(42.546757, 1.528645, 42.520573, 1.557999);
         request.setPathDetails(Arrays.asList(RoadClass.KEY, Surface.KEY, RoadEnvironment.KEY, "average_speed"));
         GHResponse rsp = hopper.route(request);
@@ -216,7 +217,7 @@ public class RouteResourceTest {
     @Test
     public void testPathDetails() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(format("http://localhost:%s/route", app.getLocalPort())));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
         GHResponse rsp = hopper.route(request);
@@ -254,7 +255,7 @@ public class RouteResourceTest {
     @Test
     public void testPathDetailsSamePoint() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(format("http://localhost:%s/route", app.getLocalPort())));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.554851, 1.536198);
         request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
         GHResponse rsp = hopper.route(request);
@@ -265,7 +266,7 @@ public class RouteResourceTest {
     @Test
     public void testPathDetailsNoConnection() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(format("http://localhost:%s/route", app.getLocalPort())));
         GHRequest request = new GHRequest(42.542078, 1.45586, 42.537841, 1.439981);
         request.setPathDetails(Collections.singletonList("average_speed"));
         GHResponse rsp = hopper.route(request);
@@ -274,7 +275,7 @@ public class RouteResourceTest {
 
     @Test
     public void testPathDetailsWithoutGraphHopperWeb() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -303,7 +304,7 @@ public class RouteResourceTest {
     @Test
     public void testInitInstructionsWithTurnDescription() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(format("http://localhost:%s/route", app.getLocalPort())));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         GHResponse rsp = hopper.route(request);
         assertEquals("Continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());
@@ -317,7 +318,7 @@ public class RouteResourceTest {
     @Test
     public void testSnapPreventions() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(format("http://localhost:%s/route", app.getLocalPort())));
         GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -331,7 +332,7 @@ public class RouteResourceTest {
     @Test
     public void testSnapPreventionsAndPointHints() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(format("http://localhost:%s/route", app.getLocalPort())));
         GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
         request.setSnapPreventions(Collections.singletonList("tunnel"));
         request.setPointHints(Arrays.asList("Avinguda Fiter i Rossell", ""));
@@ -349,7 +350,7 @@ public class RouteResourceTest {
     public void testPostWithPointHintsAndSnapPrevention() {
         String jsonStr = "{ \"points\": [[1.53285,42.511139], [1.532271,42.508165]], " +
                 "\"point_hints\":[\"Avinguda Fiter i Rossell\",\"\"] }";
-        Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonStr));
+        Response response = app.client().target(format("http://localhost:%s/route", app.getLocalPort())).request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         JsonNode path = response.readEntity(JsonNode.class).get("paths").get(0);
         assertEquals(1590, path.get("distance").asDouble(), 2);
@@ -357,7 +358,7 @@ public class RouteResourceTest {
         jsonStr = "{ \"points\": [[1.53285,42.511139], [1.532271,42.508165]], " +
                 "\"point_hints\":[\"Tunèl del Pont Pla\",\"\"], " +
                 "\"snap_preventions\": [\"tunnel\"] }";
-        response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonStr));
+        response = app.client().target(format("http://localhost:%s/route", app.getLocalPort())).request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         path = response.readEntity(JsonNode.class).get("paths").get(0);
         assertEquals(490, path.get("distance").asDouble(), 2);
@@ -366,7 +367,7 @@ public class RouteResourceTest {
     @Test
     public void testGraphHopperWebRealExceptions() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(format("http://localhost:%s/route", app.getLocalPort())));
 
         // IllegalArgumentException (Wrong Request)
         GHResponse rsp = hopper.route(new GHRequest());
@@ -394,7 +395,7 @@ public class RouteResourceTest {
                 + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
 
         // an IllegalArgumentException from inside the core is written as JSON
-        final Response response = app.client().target("http://localhost:8080/route?vehicle=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?vehicle=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         String msg = (String) response.readEntity(Map.class).get("message");
         assertTrue(msg, msg.contains("Vehicle not supported:"));
@@ -402,7 +403,7 @@ public class RouteResourceTest {
 
     @Test
     public void testGPX() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         // For backward compatibility we currently export route and track.
@@ -413,7 +414,7 @@ public class RouteResourceTest {
 
     @Test
     public void testGPXWithExcludedRouteSelection() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
@@ -423,7 +424,7 @@ public class RouteResourceTest {
 
     @Test
     public void testGPXWithTrackAndWaypointsSelection() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
@@ -433,7 +434,7 @@ public class RouteResourceTest {
 
     @Test
     public void testGPXWithError() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&type=gpx").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851,1.536198&type=gpx", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         String str = response.readEntity(String.class);
         assertFalse(str, str.contains("<html>"));
@@ -444,19 +445,19 @@ public class RouteResourceTest {
 
     @Test
     public void testWithError() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851,1.536198", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
 
     @Test
     public void testNoPoint() {
-        JsonNode json = app.client().target("http://localhost:8080/route?heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
+        JsonNode json = app.client().target(format("http://localhost:%s/route?heading=0", app.getLocalPort())).request().buildGet().invoke().readEntity(JsonNode.class);
         assertEquals("You have to pass at least one point", json.get("message").asText());
     }
 
     @Test
     public void testTooManyHeadings() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&heading=0&heading=0").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?point=42.554851,1.536198&heading=0&heading=0", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());

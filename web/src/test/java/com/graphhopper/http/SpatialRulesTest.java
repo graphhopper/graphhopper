@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import static java.lang.String.format;
 
 import static org.junit.Assert.*;
 
@@ -62,7 +63,7 @@ public class SpatialRulesTest {
 
     @Test
     public void testDetourToComplyWithSpatialRule() {
-        final Response response = app.client().target("http://localhost:8080/route?" + "point=49.995933,11.54809&point=50.004871,11.517191").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?" + "point=49.995933,11.54809&point=50.004871,11.517191", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));

@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import static java.lang.String.format;
 
 import static org.junit.Assert.*;
 
@@ -61,7 +62,7 @@ public class GtfsTest {
 
     @Test
     public void testStationStationQuery() {
-        final Response response = app.client().target("http://localhost:8080/route")
+        final Response response = app.client().target(format("http://localhost:%s/route", app.getLocalPort()))
                 .queryParam("point", "Stop(NADAV)")
                 .queryParam("point", "Stop(NANAA)")
                 .queryParam("vehicle", "pt")
@@ -74,7 +75,7 @@ public class GtfsTest {
 
     @Test
     public void testPointPointQuery() {
-        final Response response = app.client().target("http://localhost:8080/route")
+        final Response response = app.client().target(format("http://localhost:%s/route", app.getLocalPort()))
                 .queryParam("point","36.914893,-116.76821") // NADAV stop
                 .queryParam("point","36.914944,-116.761472") //NANAA stop
                 .queryParam("vehicle", "pt")
@@ -87,7 +88,7 @@ public class GtfsTest {
 
     @Test
     public void testWalkQuery() {
-        final Response response = app.client().target("http://localhost:8080/route")
+        final Response response = app.client().target(format("http://localhost:%s/route", app.getLocalPort()))
                 .queryParam("point", "36.914893,-116.76821")
                 .queryParam("point", "36.914944,-116.761472")
                 .queryParam("vehicle", "foot")
@@ -99,7 +100,7 @@ public class GtfsTest {
 
     @Test
     public void testInfo() {
-        final Response response = app.client().target("http://localhost:8080/info")
+        final Response response = app.client().target(format("http://localhost:%s/info", app.getLocalPort()))
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InfoResource.Info info = response.readEntity(InfoResource.Info.class);

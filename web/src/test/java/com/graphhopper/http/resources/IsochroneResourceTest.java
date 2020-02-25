@@ -35,6 +35,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 
 import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
+import static java.lang.String.format;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -64,7 +65,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestByTimeLimit() {
-        Response rsp = app.client().target("http://localhost:8080/isochrone")
+        Response rsp = app.client().target(format("http://localhost:%s/isochrone", app.getLocalPort()))
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
@@ -85,7 +86,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestByDistanceLimit() {
-        Response rsp = app.client().target("http://localhost:8080/isochrone")
+        Response rsp = app.client().target(format("http://localhost:%s/isochrone", app.getLocalPort()))
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("distance_limit", 3_000)
                 .queryParam("buckets", 2)
@@ -106,7 +107,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestReverseFlow() {
-        Response rsp = app.client().target("http://localhost:8080/isochrone")
+        Response rsp = app.client().target(format("http://localhost:%s/isochrone", app.getLocalPort()))
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("reverse_flow", true)
                 .queryParam("time_limit", 5 * 60)
@@ -131,13 +132,13 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestBadRequest() {
-        Response response = app.client().target("http://localhost:8080/route?point=-1.816719,51.557148").request().buildGet().invoke();
+        Response response = app.client().target(format("http://localhost:%s/route?point=-1.816719,51.557148", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
 
     @Test
     public void requestWithShortest() {
-        Response rsp = app.client().target("http://localhost:8080/isochrone")
+        Response rsp = app.client().target(format("http://localhost:%s/isochrone", app.getLocalPort()))
                 .queryParam("point", "42.509644,1.540554")
                 .queryParam("time_limit", 130)
                 .queryParam("buckets", 1)
@@ -155,7 +156,7 @@ public class IsochroneResourceTest {
         // more like a circle => shorter is expected
         assertTrue(polygon0.getCoordinates().length < 185);
 
-        rsp = app.client().target("http://localhost:8080/isochrone")
+        rsp = app.client().target(format("http://localhost:%s/isochrone", app.getLocalPort()))
                 .queryParam("point", "42.509644,1.540554")
                 .queryParam("time_limit", 130)
                 .queryParam("buckets", 1)
@@ -169,7 +170,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestJsonBadType() {
-        Response response = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130&type=xml")
+        Response response = app.client().target(format("http://localhost:%s/isochrone?point=42.531073,1.573792&time_limit=130&type=xml", app.getLocalPort()))
                 .request().buildGet().invoke();
 
         JsonNode json = response.readEntity(JsonNode.class);
@@ -180,7 +181,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestWithBlockArea() {
-        Response rsp = app.client().target("http://localhost:8080/isochrone")
+        Response rsp = app.client().target(format("http://localhost:%s/isochrone", app.getLocalPort()))
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
@@ -204,7 +205,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestJsonWithType() {
-        Response response = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130&type=json")
+        Response response = app.client().target(format("http://localhost:%s/isochrone?point=42.531073,1.573792&time_limit=130&type=json", app.getLocalPort()))
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("polygons"));
@@ -213,7 +214,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestJsonNoType() {
-        Response response = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130")
+        Response response = app.client().target(format("http://localhost:%s/isochrone?point=42.531073,1.573792&time_limit=130", app.getLocalPort()))
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("polygons"));
@@ -222,7 +223,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestGeoJsonPolygons() {
-        Response response = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson")
+        Response response = app.client().target(format("http://localhost:%s/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson", app.getLocalPort()))
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
 
@@ -246,7 +247,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestGeoJsonPolygonsBuckets() {
-        Response response = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson&buckets=3")
+        Response response = app.client().target(format("http://localhost:%s/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson&buckets=3", app.getLocalPort()))
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
 

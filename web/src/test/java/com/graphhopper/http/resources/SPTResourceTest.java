@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import static java.lang.String.format;
 import java.util.Arrays;
 import java.util.List;
 
@@ -59,7 +60,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPT() {
-        Response rsp = app.client().target("http://localhost:8080/spt?point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
+        Response rsp = app.client().target(format("http://localhost:%s/spt?point=42.531073,1.573792&time_limit=300", app.getLocalPort())).request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -71,7 +72,7 @@ public class SPTResourceTest {
         assertEquals(118, Integer.parseInt(row[2]) / 1000, 1);
         assertEquals(2263, Integer.parseInt(row[3]), 1);
 
-        rsp = app.client().target("http://localhost:8080/spt?point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
+        rsp = app.client().target(format("http://localhost:%s/spt?point=42.531073,1.573792&columns=prev_time", app.getLocalPort())).request().buildGet().invoke();
         rspCsvString = rsp.readEntity(String.class);
         lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -85,7 +86,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestDetails() {
-        Response rsp = app.client().target("http://localhost:8080/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
+        Response rsp = app.client().target(format("http://localhost:%s/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed", app.getLocalPort())).request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);

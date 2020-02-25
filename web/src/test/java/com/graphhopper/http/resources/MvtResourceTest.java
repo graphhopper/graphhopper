@@ -37,6 +37,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import static java.lang.String.format;
 import java.util.List;
 import java.util.Map;
 
@@ -72,7 +73,7 @@ public class MvtResourceTest {
 
     @Test
     public void testBasicMvtQuery() throws IOException {
-        final Response response = app.client().target("http://localhost:8080/mvt/15/16528/12099.mvt").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/mvt/15/16528/12099.mvt", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
         JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());
@@ -88,7 +89,7 @@ public class MvtResourceTest {
 
     @Test
     public void testWithDetailsInResponse() throws IOException {
-        final Response response = app.client().target("http://localhost:8080/mvt/15/16522/12102.mvt?details=max_speed&details=road_class&details=road_environment").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/mvt/15/16522/12102.mvt?details=max_speed&details=road_class&details=road_environment", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
         JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());

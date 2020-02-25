@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import static java.lang.String.format;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -37,12 +38,12 @@ public class I18nResourceTest {
 
     @Test
     public void requestI18n() {
-        Response response = app.client().target("http://localhost:8080/i18n").request().buildGet().invoke();
+        Response response = app.client().target(format("http://localhost:%s/i18n", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         assertTrue(str, str.contains("\"en\":") && str.contains("\"locale\":\"\""));
 
-        response = app.client().target("http://localhost:8080/i18n/de").request().buildGet().invoke();
+        response = app.client().target(format("http://localhost:%s/i18n/de", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         str = response.readEntity(String.class);
         assertTrue(str, str.contains("\"default\":") && str.contains("\"locale\":\"de\""));

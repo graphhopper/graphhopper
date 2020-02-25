@@ -29,6 +29,7 @@ import org.junit.Test;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import static java.lang.String.format;
 
 import static org.junit.Assert.*;
 
@@ -60,7 +61,7 @@ public class ChangeGraphResourceTest {
 
     @Test
     public void testBlockAccessViaPoint() throws Exception {
-        Response response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
+        Response response = app.client().target(format("http://localhost:%s/route?point=42.531453,1.518946&point=42.511178,1.54006", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));
@@ -82,13 +83,13 @@ public class ChangeGraphResourceTest {
                 + "    \"access\": false"
                 + "  }}]}";
 
-        response = app.client().target("http://localhost:8080/change").request().post(Entity.json(geoJson));
+        response = app.client().target(format("http://localhost:%s/change", app.getLocalPort())).request().post(Entity.json(geoJson));
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
         assertEquals(1, json.get("updates").asInt());
 
         // route around blocked road => longer
-        response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
+        response = app.client().target(format("http://localhost:%s/route?point=42.531453,1.518946&point=42.511178,1.54006", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));

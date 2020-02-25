@@ -34,6 +34,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import java.io.File;
+import static java.lang.String.format;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -68,7 +69,7 @@ public class PtIsochroneTest {
     @Test
     public void testIsoline() {
         WebTarget webTarget = app.client()
-                .target("http://localhost:8080/isochrone")
+                .target(format("http://localhost:%s/isochrone", app.getLocalPort()))
                 .queryParam("vehicle", "pt")
                 .queryParam("point", "36.914893,-116.76821") // NADAV
                 .queryParam("pt.earliest_departure_time", LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant())

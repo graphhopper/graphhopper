@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import static java.lang.String.format;
 
 import static org.junit.Assert.*;
 
@@ -61,7 +62,7 @@ public class RouteResourceWithEleTest {
 
     @Test
     public void testElevation() throws Exception {
-        final Response response = app.client().target("http://localhost:8080/route?" + "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/route?" + "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -82,7 +83,7 @@ public class RouteResourceWithEleTest {
     @Test
     public void testNoElevation() throws Exception {
         // default is elevation=false
-        Response response = app.client().target("http://localhost:8080/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().buildGet().invoke();
+        Response response = app.client().target(format("http://localhost:%s/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -95,7 +96,7 @@ public class RouteResourceWithEleTest {
         assertTrue("Elevation should not be included!", cson.toString().contains("[7.421392,43.7307]"));
 
         // disable elevation
-        response = app.client().target("http://localhost:8080/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().buildGet().invoke();
+        response = app.client().target(format("http://localhost:%s/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
         infoJson = json.get("info");

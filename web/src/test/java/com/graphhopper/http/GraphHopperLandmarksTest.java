@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import static java.lang.String.format;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -65,14 +66,14 @@ public class GraphHopperLandmarksTest {
 
     @Test
     public void testQueries() throws Exception {
-        Response response = app.client().target("http://localhost:8080/route?point=55.99022,29.129734&point=56.001069,29.150848").request().buildGet().invoke();
+        Response response = app.client().target(format("http://localhost:%s/route?point=55.99022,29.129734&point=56.001069,29.150848", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
         assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
 
-        response = app.client().target("http://localhost:8080/route?point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true").request().buildGet().invoke();
+        response = app.client().target(format("http://localhost:%s/route?point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true", app.getLocalPort())).request().buildGet().invoke();
         json = response.readEntity(JsonNode.class);
         distance = json.get("paths").get(0).get("distance").asDouble();
         assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
@@ -82,13 +83,13 @@ public class GraphHopperLandmarksTest {
     public void testLandmarkDisconnect() throws Exception {
         // if one algorithm is disabled then the following chain is executed: CH -> LM -> flexible
         // disconnected for landmarks
-        Response response = app.client().target("http://localhost:8080/route?" + "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true").request().buildGet().invoke();
+        Response response = app.client().target(format("http://localhost:%s/route?" + "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.get("message").toString().contains("Different subnetworks"));
 
         // without landmarks it should work
-        response = app.client().target("http://localhost:8080/route?" + "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true").request().buildGet().invoke();
+        response = app.client().target(format("http://localhost:%s/route?" + "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true", app.getLocalPort())).request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
         double distance = json.get("paths").get(0).get("distance").asDouble();

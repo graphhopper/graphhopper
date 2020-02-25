@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import static java.lang.String.format;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -60,7 +61,7 @@ public class NearestResourceTest {
 
     @Test
     public void testBasicNearestQuery() throws Exception {
-        final Response response = app.client().target("http://localhost:8080/nearest?point=42.554851,1.536198").request().buildGet().invoke();
+        final Response response = app.client().target(format("http://localhost:%s/nearest?point=42.554851,1.536198", app.getLocalPort())).request().buildGet().invoke();
         assertThat("HTTP status", response.getStatus(), is(200));
         NearestResource.Response json = response.readEntity(NearestResource.Response.class);
         assertThat("nearest point", json.coordinates, is(new double[]{1.5363742288086868, 42.55483907636756}));
