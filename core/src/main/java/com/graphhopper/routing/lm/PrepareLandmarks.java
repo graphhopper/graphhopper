@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.Weighting;
@@ -25,8 +24,6 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,17 +42,10 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     private final Graph graph;
     private final LandmarkStorage lms;
     private final LMProfile lmProfile;
-    private int defaultActiveLandmarks;
 
-    public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMProfile lmProfile,
-                            int landmarks, int activeLandmarks) {
-        if (activeLandmarks > landmarks)
-            throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarks
-                    + " should be less or equal to landmark count of " + landmarks);
+    public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMProfile lmProfile, int landmarks) {
         this.graph = graph;
-        this.defaultActiveLandmarks = activeLandmarks;
         this.lmProfile = lmProfile;
-
         lms = new LandmarkStorage(graph, dir, lmProfile, landmarks);
     }
 
@@ -124,8 +114,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     @Override
     public void doSpecificWork() {
         StopWatch sw = new StopWatch().start();
-        LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, default active lms:"
-                + defaultActiveLandmarks + ", weighting:" + lms.getLmSelectionWeighting() + ", " + Helper.getMemInfo());
+        LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, weighting:" + lms.getLmSelectionWeighting() + ", " + Helper.getMemInfo());
 
         lms.createLandmarks();
         lms.flush();
@@ -135,40 +124,11 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
                 + ", nodes:" + graph.getNodes() + ", " + Helper.getMemInfo());
     }
 
-    public RoutingAlgorithm getPreparedRoutingAlgorithm(Graph qGraph, RoutingAlgorithm algo, AlgorithmOptions opts) {
-        int activeLM = Math.max(1, opts.getHints().getInt(Landmark.ACTIVE_COUNT, defaultActiveLandmarks));
-        if (algo instanceof AStar) {
-            if (!lms.isInitialized())
-                throw new IllegalStateException("Initialize landmark storage before creating algorithms");
-
-            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStar.EPSILON, 1);
-            AStar astar = (AStar) algo;
-            astar.setApproximation(new LMApproximator(qGraph, lmProfile.getWeighting(), this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
-                    setEpsilon(epsilon));
-            return algo;
-        } else if (algo instanceof AStarBidirection) {
-            if (!lms.isInitialized())
-                throw new IllegalStateException("Initialize landmark storage before creating algorithms");
-
-            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
-            AStarBidirection astarbi = (AStarBidirection) algo;
-            astarbi.setApproximation(new LMApproximator(qGraph, lmProfile.getWeighting(), this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
-                    setEpsilon(epsilon));
-            return algo;
-        } else if (algo instanceof AlternativeRoute) {
-            if (!lms.isInitialized())
-                throw new IllegalStateException("Initialize landmark storage before creating algorithms");
-
-            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
-            AlternativeRoute altRoute = (AlternativeRoute) algo;
-            altRoute.setApproximation(new LMApproximator(qGraph, lmProfile.getWeighting(), this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
-                    setEpsilon(epsilon));
-            // landmark algorithm follows good compromise between fast response and exploring 'interesting' paths so we
-            // can decrease this exploration factor further (1->dijkstra, 0.8->bidir. A*)
-            altRoute.setMaxExplorationFactor(0.6);
-        }
-
-        return algo;
+    /**
+     * Convenience method to obtain a routing algo factory from the preparation.
+     */
+    public LMRoutingAlgorithmFactory getRoutingAlgorithmFactory() {
+        return new LMRoutingAlgorithmFactory(getLandmarkStorage());
     }
 
     /**

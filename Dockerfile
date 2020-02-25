@@ -6,7 +6,7 @@ RUN mkdir -p /data && mkdir -p /graphhopper
 
 # install node - only required for JS UI
 RUN apt-get install -y wget \
-       && curl -sL https://deb.nodesource.com/setup_11.x | bash - \
+       && curl -sL https://deb.nodesource.com/setup_13.x | bash - \
        && apt-get install -y nodejs
 
 COPY . /graphhopper/

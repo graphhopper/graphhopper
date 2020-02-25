@@ -703,6 +703,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return landmarkWeightDA.getCapacity() + subnetworkStorage.getCapacity();
     }
 
+    int getBaseNodes() {
+        return graph.getNodes();
+    }
+
     /**
      * This class is used to calculate landmark location (equally distributed).
      * It derives from DijkstraBidirectionRef, but is only used as forward or backward search.
