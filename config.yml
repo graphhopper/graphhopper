@@ -4,12 +4,12 @@ graphhopper:
   graph.flag_encoders: car
 
 server:
-  applicationConnectors:
+  application_connectors:
   - type: http
     port: 8989
     # for security reasons bind to localhost
-    bindHost: localhost
-  adminConnectors:
+    bind_host: localhost
+  admin_connectors:
   - type: http
     port: 8990
-    bindHost: localhost
+    bind_host: localhost

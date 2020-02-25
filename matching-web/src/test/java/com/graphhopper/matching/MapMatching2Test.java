@@ -19,6 +19,8 @@ package com.graphhopper.matching;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -57,6 +59,8 @@ public class MapMatching2Test {
         hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
+        hopper.setProfiles(new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest"));
+        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("my_profile"));
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
@@ -88,6 +92,8 @@ public class MapMatching2Test {
         hopper.setDataReaderFile("../map-data/issue-70.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
+        hopper.setProfiles(new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest"));
+        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("my_profile"));
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
@@ -114,6 +120,8 @@ public class MapMatching2Test {
         hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
+        hopper.setProfiles(new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest"));
+        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("my_profile"));
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
