@@ -866,7 +866,7 @@ public class GraphHopper implements GraphHopperAPI {
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             if (profile.isTurnCosts()) {
                 assert encoder.supportsTurnCosts() : "encoder " + encoder + " should support turn costs";
-                int uTurnCosts = profile.hints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
                 chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(new HintsMap(profile.getWeighting()), encoder, turnCostProvider)));
             } else {

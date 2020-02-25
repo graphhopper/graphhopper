@@ -78,7 +78,7 @@ public class ProfileConfig {
         return this;
     }
 
-    public PMap hints() {
+    public PMap getHints() {
         return hints;
     }
 

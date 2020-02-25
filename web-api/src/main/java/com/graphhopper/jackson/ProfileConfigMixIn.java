@@ -19,6 +19,8 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.graphhopper.util.PMap;
 
 /**
  * @see GHRequestMixIn
@@ -26,4 +28,9 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 public interface ProfileConfigMixIn {
     @JsonAnySetter
     void putHint(String key, Object value);
+
+    @JsonIgnore
+    PMap getHints();
+
+
 }

@@ -18,18 +18,37 @@
 
 package com.graphhopper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.jackson.Jackson;
+import com.graphhopper.jackson.ProfileConfigMixIn;
 import com.graphhopper.routing.util.EncodingManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GraphHopperProfileConfigTest {
 
     private static final String GH_LOCATION = "target/gh-profile-config-gh";
+
+    @Test
+    public void deserialize() throws IOException {
+        ObjectMapper objectMapper = Jackson.newObjectMapper()
+                .addMixIn(ProfileConfig.class, ProfileConfigMixIn.class);
+        String json = "{\"name\":\"my_car\",\"vehicle\":\"car\",\"weighting\":\"fastest\",\"turn_costs\":true,\"foo\":\"bar\",\"baz\":\"buzz\"}";
+        ProfileConfig profileConfig = objectMapper.readValue(json, ProfileConfig.class);
+        assertEquals("my_car", profileConfig.getName());
+        assertEquals("car", profileConfig.getVehicle());
+        assertEquals("fastest", profileConfig.getWeighting());
+        assertTrue(profileConfig.isTurnCosts());
+        assertEquals(2, profileConfig.getHints().toMap().size());
+        assertEquals("bar", profileConfig.getHints().get("foo", ""));
+        assertEquals("buzz", profileConfig.getHints().get("baz", ""));
+    }
 
     @Test
     public void duplicateProfileName_error() {
@@ -154,7 +173,7 @@ public class GraphHopperProfileConfigTest {
             runnable.run();
             fail("There should have been an error containing:\n\t" + messagePart);
         } catch (IllegalArgumentException e) {
-            assertTrue("Unexpected error message:\n\t" + e.getMessage() + "\nExpected the message to contain:\n\t" + messagePart, e.getMessage().contains(messagePart));
+            assertTrue(e.getMessage().contains(messagePart), "Unexpected error message:\n\t" + e.getMessage() + "\nExpected the message to contain:\n\t" + messagePart);
         }
     }
 }
