@@ -36,7 +36,7 @@ import java.util.Map;
  * <pre>
  * if the edge is not accessible for the base vehicle then return 'infinity'
  * speed = reduce_to_max_speed(estimated_average_speed * multiply_all(speed_factor_map))
- * weight = toSeconds(distance / speed) / multiply_all(priority_map) + distance * distance_term_constant;
+ * weight = toSeconds(distance / speed) / multiply_all(priority_map) + distance * distance_influence;
  * return weight
  * </pre>
  * Please note that the max_speed map is capped to the maximum allowed speed. Also values in the speed_factor and
@@ -63,7 +63,7 @@ public final class CustomWeighting extends AbstractWeighting {
     private final BooleanEncodedValue baseVehicleProfileAccessEnc;
     private final String baseVehicleProfile;
     private final double maxSpeed;
-    private final double minDistanceTerm;
+    private final double distanceInfluence;
     private final SpeedCustomConfig speedConfig;
     private final PriorityCustomConfig priorityConfig;
 
@@ -78,9 +78,10 @@ public final class CustomWeighting extends AbstractWeighting {
 
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
 
-        minDistanceTerm = customModel.getDistanceInfluence();
-        if (minDistanceTerm < 0)
-            throw new IllegalArgumentException("maximum distance_term cannot be negative " + minDistanceTerm);
+        // unit is "seconds per 1km"
+        distanceInfluence = customModel.getDistanceInfluence() / 1000;
+        if (distanceInfluence < 0)
+            throw new IllegalArgumentException("maximum distance_influence cannot be negative " + distanceInfluence);
     }
 
     /**
@@ -101,7 +102,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / maxSpeed + distance * minDistanceTerm;
+        return distance / maxSpeed + distance * distanceInfluence;
     }
 
     @Override
@@ -110,7 +111,7 @@ public final class CustomWeighting extends AbstractWeighting {
         double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds))
             return Double.POSITIVE_INFINITY;
-        double distanceInfluence = distance * minDistanceTerm;
+        double distanceInfluence = distance * this.distanceInfluence;
         if (Double.isInfinite(distanceInfluence))
             return Double.POSITIVE_INFINITY;
         return seconds / priorityConfig.calcPriority(edgeState, reverse) + distanceInfluence;
