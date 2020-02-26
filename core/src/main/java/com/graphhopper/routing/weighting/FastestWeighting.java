@@ -60,11 +60,7 @@ public class FastestWeighting extends AbstractWeighting {
     }
 
     public FastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
-        this("fastest", encoder, map, turnCostProvider);
-    }
-
-    public FastestWeighting(String name, FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
-        super(name, encoder, turnCostProvider);
+        super(encoder, turnCostProvider);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
         maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
@@ -118,5 +114,10 @@ public class FastestWeighting extends AbstractWeighting {
             throw new IllegalArgumentException(key + " has invalid range should be within [" + from + ", " + to + "]");
 
         return val;
+    }
+
+    @Override
+    public String getName() {
+        return "fastest";
     }
 }

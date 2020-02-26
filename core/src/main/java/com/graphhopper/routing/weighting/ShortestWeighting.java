@@ -35,7 +35,7 @@ public class ShortestWeighting extends AbstractWeighting {
     }
 
     public ShortestWeighting(FlagEncoder flagEncoder, TurnCostProvider turnCostProvider) {
-        super("shortest", flagEncoder, turnCostProvider);
+        super(flagEncoder, turnCostProvider);
     }
 
     @Override
@@ -46,5 +46,10 @@ public class ShortestWeighting extends AbstractWeighting {
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         return edgeState.getDistance();
+    }
+
+    @Override
+    public String getName() {
+        return "shortest";
     }
 }

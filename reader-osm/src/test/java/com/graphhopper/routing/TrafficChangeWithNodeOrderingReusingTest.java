@@ -175,7 +175,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         private final double maxDeviationPercentage;
 
         public RandomDeviationWeighting(Weighting baseWeighting, double maxDeviationPercentage) {
-            super("random_deviation", baseWeighting.getFlagEncoder());
+            super(baseWeighting.getFlagEncoder());
             this.baseWeighting = baseWeighting;
             this.maxDeviationPercentage = maxDeviationPercentage;
         }
@@ -208,6 +208,11 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                 throw new IllegalStateException("negative weights are not allowed: " + result);
             }
             return result;
+        }
+
+        @Override
+        public String getName() {
+            return "random_deviation";
         }
     }
 }

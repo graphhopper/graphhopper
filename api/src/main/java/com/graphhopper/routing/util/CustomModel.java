@@ -121,4 +121,21 @@ public class CustomModel {
     public Map<String, JsonFeature> getAreas() {
         return areas;
     }
+
+    @Override
+    public String toString() {
+        return "CustomModel{" +
+                "base='" + base + '\'' +
+                ", maxSpeedFallback=" + maxSpeedFallback +
+                ", vehicleWeight=" + vehicleWeight +
+                ", vehicleWidth=" + vehicleWidth +
+                ", vehicleHeight=" + vehicleHeight +
+                ", vehicleLength=" + vehicleLength +
+                ", distanceInfluence=" + distanceInfluence +
+                ", speedFactor=" + speedFactor +
+                ", maxSpeed=" + maxSpeed +
+                ", priorityMap=" + priorityMap +
+                ", #areas=" + areas.size() +
+                '}';
+    }
 }

@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import static com.graphhopper.util.Helper.toLowerCase;
+
 /**
  * GraphHopper request wrapper to simplify requesting GraphHopper.
  *
@@ -225,6 +227,16 @@ public class GHRequest {
 
     public String getWeighting() {
         return hints.getWeighting();
+    }
+
+    public String getProfile() {
+        return toLowerCase(hints.get("profile", ""));
+    }
+
+    public GHRequest setProfile(String profile) {
+        if (profile != null)
+            hints.put("profile", profile);
+        return this;
     }
 
     /**

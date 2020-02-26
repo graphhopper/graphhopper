@@ -36,20 +36,18 @@ public abstract class AbstractWeighting implements Weighting {
     protected final DecimalEncodedValue avSpeedEnc;
     protected final BooleanEncodedValue accessEnc;
     private final TurnCostProvider turnCostProvider;
-    private final String name;
 
-    protected AbstractWeighting(String name, FlagEncoder encoder) {
-        this(name, encoder, NO_TURN_COST_PROVIDER);
+    protected AbstractWeighting(FlagEncoder encoder) {
+        this(encoder, NO_TURN_COST_PROVIDER);
     }
 
-    protected AbstractWeighting(String name, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
+    protected AbstractWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
         this.flagEncoder = encoder;
         if (!flagEncoder.isRegistered())
             throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager before using it elsewhere");
-        if (!isValidName(name))
-            throw new IllegalStateException("Not a valid name for a Weighting: " + name);
+        if (!isValidName(getName()))
+            throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
 
-        this.name = name;
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
         this.turnCostProvider = turnCostProvider;
@@ -122,11 +120,6 @@ public abstract class AbstractWeighting implements Weighting {
             return false;
         final Weighting other = (Weighting) obj;
         return toString().equals(other.toString());
-    }
-
-    @Override
-    public final String getName() {
-        return name;
     }
 
     static boolean isValidName(String name) {

@@ -1390,12 +1390,12 @@ public class GraphHopper implements GraphHopperAPI {
             String weightingStr = toLowerCase(hintsMap.getWeighting());
 
             if (customModel != null) {
-                return new CustomWeighting(encoder.toString(), encoder, encodingManager, encodedValueFactory, turnCostProvider, customModel);
+                return new CustomWeighting(encoder, encodingManager, encodedValueFactory, turnCostProvider, customModel);
             } else if ("shortest".equals(weightingStr)) {
                 return new ShortestWeighting(encoder, turnCostProvider);
             } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {
                 if (encoder.supports(PriorityWeighting.class))
-                    return new PriorityWeighting("fastest", encoder, hintsMap, turnCostProvider);
+                    return new PriorityWeighting(encoder, hintsMap, turnCostProvider);
                 else
                     return new FastestWeighting(encoder, hintsMap, turnCostProvider);
             } else if ("curvature".equalsIgnoreCase(weightingStr)) {

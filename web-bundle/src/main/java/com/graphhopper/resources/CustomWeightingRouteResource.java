@@ -82,7 +82,8 @@ public class CustomWeightingRouteResource {
         if (request.getHints().has(BLOCK_AREA))
             throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
 
-        request.getHints().put(ProfileConfig.TMP_KEY, model.getBase());
+        // TODO NOW simply rename 'base' to 'profile'?
+        request.setProfile(model.getBase());
 
         // if encoder does not exist we assume the base is a LM or CH profile:
         if (graphHopper.getEncodingManager().hasEncoder(model.getBase()))

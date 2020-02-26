@@ -29,8 +29,6 @@ import com.graphhopper.util.PMap;
  * @see LMProfileConfig
  */
 public class ProfileConfig {
-    public static final String TMP_KEY = "profile";
-
     private String name = "car";
     private String vehicle = "car";
     private String weighting = "fastest";

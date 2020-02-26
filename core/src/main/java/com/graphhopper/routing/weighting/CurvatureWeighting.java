@@ -39,7 +39,7 @@ public class CurvatureWeighting extends PriorityWeighting {
     }
 
     public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap, TurnCostProvider turnCostProvider) {
-        super("curvature", flagEncoder, pMap, turnCostProvider);
+        super(flagEncoder, pMap, turnCostProvider);
 
         priorityEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "priority"));
         curvatureEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "curvature"));
@@ -69,5 +69,10 @@ public class CurvatureWeighting extends PriorityWeighting {
 
     protected double getRoadSpeed(EdgeIteratorState edge, boolean reverse) {
         return reverse ? edge.getReverse(avSpeedEnc) : edge.get(avSpeedEnc);
+    }
+
+    @Override
+    public String getName() {
+        return "curvature";
     }
 }

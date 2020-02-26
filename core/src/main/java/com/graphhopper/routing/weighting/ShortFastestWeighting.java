@@ -36,12 +36,8 @@ public class ShortFastestWeighting extends FastestWeighting {
     private final double distanceFactor;
     private final double timeFactor;
 
-    public ShortFastestWeighting(FlagEncoder encoder, PMap map) {
-        this(encoder, map, NO_TURN_COST_PROVIDER);
-    }
-
     public ShortFastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
-        super(NAME, encoder, map, turnCostProvider);
+        super(encoder, map, turnCostProvider);
         timeFactor = checkBounds(TIME_FACTOR, map.getDouble(TIME_FACTOR, 1), 0, 10);
 
         // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km
@@ -56,7 +52,7 @@ public class ShortFastestWeighting extends FastestWeighting {
     }
 
     public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor, TurnCostProvider turnCostProvider) {
-        super(NAME, encoder, new PMap(), turnCostProvider);
+        super(encoder, new PMap(), turnCostProvider);
         this.distanceFactor = checkBounds(DISTANCE_FACTOR, distanceFactor, 0, 10);
         this.timeFactor = 1;
     }
@@ -70,5 +66,10 @@ public class ShortFastestWeighting extends FastestWeighting {
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         double time = super.calcEdgeWeight(edgeState, reverse);
         return time * timeFactor + edgeState.getDistance() * distanceFactor;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
     }
 }

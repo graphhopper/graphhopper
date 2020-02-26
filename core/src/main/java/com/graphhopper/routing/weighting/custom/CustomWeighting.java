@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.GHRequest;
-import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -28,6 +27,7 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 
 import java.util.Map;
 
@@ -54,9 +54,9 @@ public final class CustomWeighting extends AbstractWeighting {
     private final SpeedCustomConfig speedConfig;
     private final PriorityCustomConfig priorityConfig;
 
-    public CustomWeighting(String name, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
+    public CustomWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
                            EncodedValueFactory factory, TurnCostProvider turnCostProvider, CustomModel customModel) {
-        super(name, baseFlagEncoder, turnCostProvider);
+        super(baseFlagEncoder, turnCostProvider);
         baseVehicleProfileAccessEnc = baseFlagEncoder.getAccessEnc();
         baseVehicleProfile = customModel.getBase();
 
@@ -75,10 +75,10 @@ public final class CustomWeighting extends AbstractWeighting {
      * This method sets the vehicle of the specified request. It uses the importCustomModels if customModel is null.
      */
     public static CustomModel prepareRequest(GHRequest request, CustomModel customModel, Map<String, CustomModel> importCustomModels) {
-        String profile = request.getHints().get(ProfileConfig.TMP_KEY, "");
-        if (!profile.isEmpty()) {
+        String profile = request.getProfile();
+        if (!Helper.isEmpty(profile)) {
             if (customModel == null && (customModel = importCustomModels.get(profile)) == null)
-                throw new IllegalArgumentException("unknown custom model " + profile);
+                throw new IllegalArgumentException("Unknown profile '" + profile + "' for custom weighting");
             request.setVehicle(customModel.getBase());
         }
         return customModel;
@@ -128,6 +128,11 @@ public final class CustomWeighting extends AbstractWeighting {
     public boolean matches(HintsMap reqMap) {
         return (reqMap.getWeighting().isEmpty() || getName().equals(reqMap.getWeighting())) &&
                 (reqMap.getVehicle().isEmpty() || baseVehicleProfile.equals(reqMap.getVehicle()));
+    }
+
+    @Override
+    public String getName() {
+        return "custom";
     }
 
     @Override
