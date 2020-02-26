@@ -236,6 +236,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
         String url = tmpServiceURL + "?";
         if (!Helper.isEmpty(key))
             url += "key=" + key;
+        if (!Helper.isEmpty(ghRequest.getProfile())) {
+            if (!url.endsWith("?"))
+                url += "&";
+            url += "profile=" + ghRequest.getProfile();
+        }
 
         ObjectNode requestJson = objectMapper.createObjectNode();
         requestJson.putArray("points").addAll(createPointList(ghRequest.getPoints()));

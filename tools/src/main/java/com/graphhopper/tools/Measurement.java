@@ -473,8 +473,7 @@ public class Measurement {
             double toLat = na.getLatitude(to);
             double toLon = na.getLongitude(to);
             GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setWeighting(weighting).
-                    setVehicle(vehicle).
+                    setVehicle(vehicle).setWeighting(weighting).
                     setAlgorithm(algo);
 
             GHResponse lmRsp = hopper.route(req);
@@ -514,13 +513,11 @@ public class Measurement {
             double toLat = na.getLatitude(to);
             double toLon = na.getLongitude(to);
             GHRequest sodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setWeighting(weighting).
-                    setVehicle(vehicle).
+                    setVehicle(vehicle).setWeighting(weighting).
                     setAlgorithm(DIJKSTRA_BI);
 
             GHRequest noSodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setWeighting(weighting).
-                    setVehicle(vehicle).
+                    setVehicle(vehicle).setWeighting(weighting).
                     setAlgorithm(DIJKSTRA_BI);
             noSodReq.getHints().put("stall_on_demand", false);
 
@@ -578,8 +575,7 @@ public class Measurement {
                 double toLat = na.getLatitude(to);
                 double toLon = na.getLongitude(to);
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setWeighting(weighting).
-                        setVehicle(querySettings.vehicle);
+                        setVehicle(querySettings.vehicle).setWeighting(weighting);
 
                 req.getHints().put(CH.DISABLE, !querySettings.ch).
                         put("stall_on_demand", querySettings.sod).

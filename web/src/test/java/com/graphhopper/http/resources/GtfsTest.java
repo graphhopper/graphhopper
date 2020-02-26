@@ -93,7 +93,7 @@ public class GtfsTest {
         final Response response = app.client().target("http://localhost:8080/route")
                 .queryParam("point", "36.914893,-116.76821")
                 .queryParam("point", "36.914944,-116.761472")
-                .queryParam("vehicle", "foot")
+                .queryParam("profile", "profile")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         GHResponse ghResponse = response.readEntity(GHResponse.class);

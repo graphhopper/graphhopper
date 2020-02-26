@@ -24,6 +24,7 @@ import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Constants;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.gpx.GpxFromInstructions;
@@ -81,6 +82,7 @@ public class RouteResource {
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
             @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
             @QueryParam("weighting") @DefaultValue("fastest") String weighting,
+            @QueryParam("profile") String profile,
             @QueryParam("algorithm") @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(POINT_HINT) List<String> pointHints,
@@ -131,6 +133,8 @@ public class RouteResource {
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
         request.setVehicle(vehicleStr).
                 setWeighting(weighting).
+                // todonow: if not set this should be set by the converter
+                        setProfile(profile).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
                 setPointHints(pointHints).
@@ -173,9 +177,21 @@ public class RouteResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
-    public Response doPost(GHRequest request, @Context HttpServletRequest httpReq) {
+    public Response doPost(GHRequest request, @Context HttpServletRequest httpReq,
+                           @QueryParam("profile") String profile) {
         if (request == null)
             throw new IllegalArgumentException("Empty request");
+
+        // todonow: not needed with converter?
+        // todonow: should we enforce this as url parameter or only in request body?
+        if (Helper.isEmpty(profile)) {
+            throw new IllegalArgumentException("You need to specify a profile via the 'profile' url parameter to make a routing request");
+        }
+        if (!Helper.isEmpty(request.getProfile()) && !request.getProfile().equals(profile)) {
+            throw new IllegalArgumentException("When doing a routing request via POST the profile given in the request " +
+                    "body must either be empty or match the 'profile' url parameter");
+        }
+        request.setProfile(profile);
 
         StopWatch sw = new StopWatch().start();
         GHResponse ghResponse = graphHopper.route(request);
@@ -196,7 +212,7 @@ public class RouteResource {
         float took = sw.stop().getSeconds();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + request.getPoints().size() + ", took:"
-                + took + ", " + request.getAlgorithm() + ", " + request.getWeighting() + ", " + request.getVehicle();
+                + took + ", " + request.getAlgorithm() + ", " + request.getProfile() + ", " + request.getWeighting() + ", " + request.getVehicle();
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());

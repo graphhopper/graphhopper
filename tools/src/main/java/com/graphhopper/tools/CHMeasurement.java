@@ -320,11 +320,11 @@ public class CHMeasurement {
                 req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
                 req.getHints().put(Parameters.CH.DISABLE, lm);
                 req.getHints().put(Parameters.Landmark.DISABLE, !lm);
+                req.setProfile("car_profile");
                 if (!lm) {
                     req.setAlgorithm(algo);
                 } else {
                     req.getHints().put(Parameters.Landmark.ACTIVE_COUNT, "8");
-                    req.setWeighting("fastest"); // why do we need this for lm, but not ch ?
                 }
                 long start = nanoTime();
                 GHResponse route = graphHopper.route(req);

@@ -1025,19 +1025,37 @@ public class GraphHopper implements GraphHopperAPI {
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
 
-        if (profiles.isEmpty()) {
+        // todonow
+        if (profilesByName.isEmpty()) {
             throw new IllegalArgumentException("XXX");
         }
 
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        // default handling
-        String vehicle = request.getVehicle();
-        if (vehicle.isEmpty()) {
-            vehicle = getDefaultVehicle().toString();
-            request.setVehicle(vehicle);
+        // todonow: should there be any kind of default handling for the profile?
+        if (request.getProfile().isEmpty()) {
+            // todonow: these errors must be in try-catch
+            throw new IllegalArgumentException("You need to specify a profile to perform a routing request");
         }
+
+        // todonow: make sure trimmed, lower case etc.?
+        ProfileConfig profile = profilesByName.get(request.getProfile());
+        if (profile == null) {
+            throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
+        }
+        // todonow: cleanup
+        // todonow: edge_based/turn_costs...
+        request.getHints().setVehicle(profile.getVehicle());
+        request.getHints().setWeighting(profile.getWeighting());
+        String vehicle = request.getHints().getVehicle();
+
+        // default handling
+//        String vehicle = request.getVehicle();
+//        if (vehicle.isEmpty()) {
+//            vehicle = getDefaultVehicle().toString();
+//            request.setVehicle(vehicle);
+//        }
 
         Lock readLock = readWriteLock.readLock();
         readLock.lock();

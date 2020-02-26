@@ -62,8 +62,8 @@ public class ChangeGraphResourceTest {
     }
 
     @Test
-    public void testBlockAccessViaPoint() throws Exception {
-        Response response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
+    public void testBlockAccessViaPoint() {
+        Response response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006&profile=profile").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));
@@ -91,7 +91,7 @@ public class ChangeGraphResourceTest {
         assertEquals(1, json.get("updates").asInt());
 
         // route around blocked road => longer
-        response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
+        response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006&profile=profile").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));

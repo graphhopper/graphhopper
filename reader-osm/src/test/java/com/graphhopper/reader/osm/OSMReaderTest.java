@@ -928,8 +928,7 @@ public class OSMReaderTest {
                 .setGraphHopperLocation(dir);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
-                setVehicle("motorcycle").
-                setWeighting("curvature");
+                setProfile("profile2");
 
         GHResponse ghRsp = hopper.route(req);
         assertFalse(ghRsp.getErrors().toString(), ghRsp.hasErrors());
@@ -955,14 +954,14 @@ public class OSMReaderTest {
                 importOrLoad();
 
         GHResponse response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
-                .setVehicle("car").setWeighting("fastest")
+                .setProfile("profile")
                 .setPathDetails(Collections.singletonList(RoadClass.KEY)));
         List<PathDetail> list = response.getBest().getPathDetails().get(RoadClass.KEY);
         assertEquals(3, list.size());
         assertEquals(RoadClass.MOTORWAY.toString(), list.get(0).getValue());
 
         response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
-                .setVehicle("car").setWeighting("fastest")
+                .setProfile("profile")
                 .setPathDetails(Collections.singletonList(Toll.KEY)));
         Throwable ex = response.getErrors().get(0);
         assertTrue(ex.getMessage(), ex.getMessage().contains("You requested the details [toll]"));

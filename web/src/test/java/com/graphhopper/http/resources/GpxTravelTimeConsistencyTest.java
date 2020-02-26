@@ -41,7 +41,6 @@ public class GpxTravelTimeConsistencyTest {
     public static final String DIR = "../core/files";
     private static final String graphFileFoot = "target/gpxtraveltimeconsistency-it";
     private static final String osmFile = DIR + "/monaco.osm.gz";
-    private static final String importVehicles = "foot";
     private static GraphHopper hopper;
 
     @BeforeClass
@@ -49,10 +48,10 @@ public class GpxTravelTimeConsistencyTest {
         Helper.removeDir(new File(graphFileFoot));
         hopper = new GraphHopperOSM().
                 setOSMFile(osmFile).
-                setProfiles(new ProfileConfig("profile").setVehicle(importVehicles).setWeighting("fastest")).
+                setProfiles(new ProfileConfig("profile").setVehicle("foot").setWeighting("fastest")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFileFoot).
-                setEncodingManager(EncodingManager.create(importVehicles)).
+                setEncodingManager(EncodingManager.create("foot")).
                 importOrLoad();
     }
 
@@ -61,15 +60,13 @@ public class GpxTravelTimeConsistencyTest {
         GHPoint routeStart = new GHPoint(43.727687, 7.418737);
         GHPoint routeEnd = new GHPoint(43.74958, 7.436566);
         GHRequest request = new GHRequest(routeStart, routeEnd);
-        request.setVehicle("foot");
-        request.setWeighting("fastest");
+        request.setProfile("profile");
         PathWrapper path = hopper.route(request).getBest();
         List<GPXEntry> gpxList = GpxFromInstructions.createGPXList(path.getInstructions());
-        for(GPXEntry entry : gpxList) {
-            if (entry.getTime() != null ) {
+        for (GPXEntry entry : gpxList) {
+            if (entry.getTime() != null) {
                 GHRequest requestForWaypoint = new GHRequest(routeStart, entry.getPoint());
-                requestForWaypoint.setVehicle("foot");
-                requestForWaypoint.setWeighting("fastest");
+                requestForWaypoint.setProfile("profile");
                 PathWrapper partialPath = hopper.route(requestForWaypoint).getBest();
                 assertEquals("GPXListEntry timeStamp is expected to be the same as route duration.", partialPath.getTime(), entry.getTime().longValue());
             }

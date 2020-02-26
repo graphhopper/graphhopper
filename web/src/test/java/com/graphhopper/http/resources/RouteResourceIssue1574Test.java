@@ -71,7 +71,8 @@ public class RouteResourceIssue1574Test {
 
     @Test
     public void testStallOnDemandBug_issue1574() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&&vehicle=car&weighting=fastest&stall_on_demand=true").request().buildGet().invoke();
+        final Response response = app.client().target("http://localhost:8080/route?profile=car_profile&" +
+                "point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&&stall_on_demand=true").request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse("there should be no error, but: " + json.get("message"), json.has("message"));
         System.out.println(json);
