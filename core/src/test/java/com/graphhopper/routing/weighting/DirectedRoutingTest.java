@@ -99,8 +99,8 @@ public class DirectedRoutingTest {
     public void init() {
         dir = new RAMDirectory();
         maxTurnCosts = 10;
-        // todonow: make this work with speed_both_directions=true!
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+        // todo: make this work with speed_two_directions=true!
+        encoder = new CarFlagEncoder(false,5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
@@ -122,7 +122,7 @@ public class DirectedRoutingTest {
             chGraph = graph.getCHGraph(chProfile);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, lmProfile, 16, 8);
+            lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
             lm.setMaximumWeight(1000);
             lm.doWork();
         }
@@ -141,8 +141,7 @@ public class DirectedRoutingTest {
             case CH_ASTAR:
                 return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM:
-                AStarBidirection astarbi = new AStarBidirection(graph, graph.wrapWeighting(weighting), TraversalMode.EDGE_BASED);
-                return (BidirRoutingAlgorithm) lm.getPreparedRoutingAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+                return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).traversalMode(TraversalMode.EDGE_BASED).build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }

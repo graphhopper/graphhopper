@@ -21,6 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
@@ -59,6 +62,7 @@ public class Measurement {
     private final Map<String, Object> properties = new TreeMap<>();
     private long seed;
     private int maxNode;
+    private String weighting = "fastest";
 
     public static void main(String[] strs) throws IOException {
         PMap args = PMap.read(strs);
@@ -139,13 +143,15 @@ public class Measurement {
             }
         };
 
+        // TODO NOW make it working for CustomWeighting again
         CustomModel customModel = createCustomModel();
         hopper.putCustomModel(customModel.toString(), customModel);
 
         // add more encoded values for CustomModel
         if (!args.has("graph.encoded_values"))
             args.put("graph.encoded_values", "max_width,max_height,toll,hazmat");
-        hopper.init(new GraphHopperConfig(args)).
+
+        hopper.init(createConfigFromArgs(args, customModel)).
                 // use server to allow path simplification
                         forServer();
         if (cleanGraph) {
@@ -177,11 +183,13 @@ public class Measurement {
             if (runSlow) {
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing", vehicleStr, count / 20, isCH, isLM).
                         withInstructions());
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", vehicleStr, count / 30, isCH, isLM).
-                        withInstructions().edgeBased());
+                if (encoder.supportsTurnCosts()) {
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", vehicleStr, count / 20, isCH, isLM).
+                            withInstructions().edgeBased());
+                }
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", customModel.toString(), count / 30, isCH, isLM).
                         withInstructions().customModel(customModel));
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", vehicleStr, count / 30, isCH, isLM).
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", vehicleStr, count / 20, isCH, isLM).
                         withInstructions().blockArea(blockAreaStr));
             }
 
@@ -191,8 +199,10 @@ public class Measurement {
                 for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, vehicleStr, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", vehicleStr, count / 4, isCH, isLM).
-                            withInstructions().activeLandmarks(activeLMCount).edgeBased());
+                    if (encoder.supportsTurnCosts()) {
+                        printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", vehicleStr, count / 4, isCH, isLM).
+                                withInstructions().activeLandmarks(activeLMCount).edgeBased());
+                    }
                 }
 
                 final int activeLMCount = 8;
@@ -256,6 +266,39 @@ public class Measurement {
                 storeProperties(propLocation);
             }
         }
+    }
+
+    private GraphHopperConfig createConfigFromArgs(PMap args, CustomModel customModel) {
+        GraphHopperConfig ghConfig = new GraphHopperConfig(args);
+        String encodingManagerString = args.get("graph.flag_encoders", "car");
+        List<FlagEncoder> tmpEncoders = EncodingManager.create(encodingManagerString).fetchEdgeEncoders();
+        if (tmpEncoders.size() != 1) {
+            logger.warn("You configured multiple encoders, only the first one is used for the measurements");
+        }
+        String vehicle = tmpEncoders.get(0).toString();
+        boolean turnCosts = tmpEncoders.get(0).supportsTurnCosts();
+        weighting = args.get("measurement.weighting", weighting);
+        boolean useCHEdge = args.getBool("measurement.ch.edge", true);
+        boolean useCHNode = args.getBool("measurement.ch.node", true);
+        boolean useLM = args.getBool("measurement.lm", true);
+        List<ProfileConfig> profiles = new ArrayList<>();
+        profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
+        if (turnCosts) {
+            profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
+        }
+        ghConfig.setProfiles(profiles);
+
+        List<CHProfileConfig> chProfiles = new ArrayList<>();
+        if (useCHNode)
+            chProfiles.add(new CHProfileConfig("profile_no_tc"));
+        if (useCHEdge)
+            chProfiles.add(new CHProfileConfig("profile_tc"));
+        ghConfig.setCHProfiles(chProfiles);
+        if (useLM) {
+            String lmProfile = turnCosts ? "profile_tc" : "profile_no_tc";
+            ghConfig.setLMProfiles(Collections.singletonList(new LMProfileConfig(lmProfile)));
+        }
+        return ghConfig;
     }
 
     private static class QuerySettings {
@@ -453,7 +496,7 @@ public class Measurement {
             double toLat = na.getLatitude(to);
             double toLon = na.getLongitude(to);
             GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setWeighting("fastest").
+                    setWeighting(weighting).
                     setVehicle(vehicle).
                     setAlgorithm(algo);
 
@@ -494,12 +537,12 @@ public class Measurement {
             double toLat = na.getLatitude(to);
             double toLon = na.getLongitude(to);
             GHRequest sodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setWeighting("fastest").
+                    setWeighting(weighting).
                     setVehicle(vehicle).
                     setAlgorithm(DIJKSTRA_BI);
 
             GHRequest noSodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setWeighting("fastest").
+                    setWeighting(weighting).
                     setVehicle(vehicle).
                     setAlgorithm(DIJKSTRA_BI);
             noSodReq.getHints().put("stall_on_demand", false);
@@ -559,9 +602,9 @@ public class Measurement {
                 double toLon = na.getLongitude(to);
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon);
                 if (querySettings.customModel == null)
-                    req.setWeighting("fastest").setVehicle(querySettings.vehicle);
+                    req.setWeighting(weighting).setVehicle(querySettings.vehicle);
                 else
-                    req.setWeighting(CustomWeighting.key(querySettings.vehicle));
+                    req.getHints().put("profile", querySettings.vehicle);
 
                 req.getHints().put(CH.DISABLE, !querySettings.ch).
                         put("stall_on_demand", querySettings.sod).

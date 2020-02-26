@@ -18,6 +18,8 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.Helper;
@@ -31,6 +33,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
@@ -45,14 +48,15 @@ public class CustomWeightingRouteResourceLMTest {
     static {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car,foot").
-                put("prepare.ch.weightings", "no").
-                put("prepare.lm.weightings", "fastest").
                 put("routing.lm.disabling_allowed", "true").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.encoded_values", "surface").
-                put("graph.location", DIR);
+                put("graph.location", DIR)
+                .setProfiles(Arrays.asList(new ProfileConfig("car").setWeighting("fastest").setVehicle("car"),
+                        new ProfileConfig("foot").setWeighting("fastest").setVehicle("foot"))).
+                setLMProfiles(Arrays.asList(new LMProfileConfig("car"), new LMProfileConfig("foot")));
     }
 
     @ClassRule

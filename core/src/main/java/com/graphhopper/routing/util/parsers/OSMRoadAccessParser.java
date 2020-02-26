@@ -22,6 +22,7 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
@@ -60,11 +61,9 @@ public class OSMRoadAccessParser implements TagParser {
             }
         }
 
-        if (accessValue == RoadAccess.YES) {
-            SpatialRule spatialRule = readerWay.getTag("spatial_rule", null);
-            if (spatialRule != null)
-                accessValue = spatialRule.getAccess(readerWay.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, YES);
-        }
+        SpatialRule spatialRule = readerWay.getTag("spatial_rule", null);
+        if (spatialRule != null)
+            accessValue = spatialRule.getAccess(RoadClass.find(readerWay.getTag("highway", "")), TransportationMode.MOTOR_VEHICLE, YES);
 
         roadAccessEnc.setEnum(false, edgeFlags, accessValue);
         return edgeFlags;

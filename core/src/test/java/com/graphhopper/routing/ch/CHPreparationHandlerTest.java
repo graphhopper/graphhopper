@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -69,7 +70,7 @@ public class CHPreparationHandlerTest {
     @Test
     public void testEnabled() {
         assertFalse(instance.isEnabled());
-        instance.setCHProfileStrings("fastest");
+        instance.setCHProfileConfigs(new CHProfileConfig("myconfig"));
         assertTrue(instance.isEnabled());
     }
 

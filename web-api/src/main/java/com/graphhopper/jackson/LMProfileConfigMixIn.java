@@ -18,24 +18,9 @@
 
 package com.graphhopper.jackson;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
 
-import java.util.List;
-
-public interface GraphHopperConfigMixIn {
-
-    @JsonProperty("profiles_ch")
-    GraphHopperConfig setCHProfiles(List<CHProfileConfig> chProfiles);
-
-    @JsonProperty("profiles_lm")
-    GraphHopperConfig setLMProfiles(List<LMProfileConfig> lmProfiles);
-
-    // We can add explicit configuration properties to GraphHopperConfig (for example to allow lists or nested objects),
-    // everything else is stored in a HashMap
-    @JsonAnySetter
-    GraphHopperConfig put(String key, Object value);
+public interface LMProfileConfigMixIn {
+    @JsonProperty("maximum_lm_weight")
+    void setMaximumLMWeight(double maximumLMWeight);
 }

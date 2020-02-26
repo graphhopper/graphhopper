@@ -65,8 +65,8 @@ lm.active_landmarks| 4        | Not recommended to change this
 
 ### Flexible
 
-Unlock certain flexible features via `ch.disable=true` per request or disable CH on the server-side in the
-configuration file via `prepare.ch.weightings=no`
+Unlock certain flexible features via `ch.disable=true` per request or disable CH on the server-side by using an 
+empty list for `profiles_ch`.
 
 Parameter        | Default    | Description
 :----------------|:-----------|:-----------

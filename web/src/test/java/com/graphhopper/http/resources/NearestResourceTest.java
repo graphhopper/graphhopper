@@ -43,7 +43,6 @@ public class NearestResourceTest {
     static {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
-                put("prepare.ch.weightings", "fastest").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", dir);
     }

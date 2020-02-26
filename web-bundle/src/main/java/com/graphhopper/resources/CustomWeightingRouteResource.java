@@ -22,11 +22,11 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.MultiException;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.CustomRequest;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.StopWatch;
@@ -82,7 +82,7 @@ public class CustomWeightingRouteResource {
         if (request.getHints().has(BLOCK_AREA))
             throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
 
-        request.setWeighting(CustomWeighting.key(model.getBase()));
+        request.getHints().put(ProfileConfig.TMP_KEY, model.getBase());
 
         // if encoder does not exist we assume the base is a LM or CH profile:
         if (graphHopper.getEncodingManager().hasEncoder(model.getBase()))

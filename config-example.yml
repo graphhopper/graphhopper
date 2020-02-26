@@ -24,14 +24,59 @@ graphhopper:
   # for CH or LM preparation (see different modes below). For example:
   #
   #  base: car               # use one of the previously defined flag_encoders
-  #  vehicle_max_speed: 100
+  #  max_speed_fallback: 100
   #  priority: { road_class: { primary: 0.5 } }
   # 
-  # Other entries than 'vehicle_max_speed' are 'vehicle_weight', 'vehicle_width', 'vehicle_height' and 'vehicle_length' are also supported.
-  # Other entries than 'priority' are 'speed_factor', 'delay' and 'average_sped' where the encoded values defined above like 'surface' can be used.
-  # See the CustomWeighting class of how the different entries influence the weighting (cost function).
+  # Other entries than 'max_speed_fallback' are also supported 'vehicle_weight', 'vehicle_width', 'vehicle_height', 'vehicle_length' and 'distance_influence'.
+  # Other entries than 'priority' are 'speed_factor' and 'max_speed' where the encoded values defined above like 'surface' can be used.
+  # You can also define GeoJSON areas to avoid or block certain roads.
+  # See the example under web/src/test/resources/com/graphhopper/http/resources/ or the CustomWeighting class for the raw details.
   #
   # graph.custom_profiles.directory: ./profiles/
+
+  ##### Routing Profiles ####
+
+  # Routing can be done for the following list of profiles. The fields of each profile are as follows:
+  # - name (required): a unique string identifier for the profile
+  # - vehicle (required): refers to the `graph.flag_encoders` used for this profile
+  # - weighting (required): the weighting used for this profile, e.g. fastest,shortest or short_fastest
+  # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
+  #   this will only work if the `graph.flag_encoders` for the given `vehicle` is configured with `|turn_costs=true`.
+  #
+  # Depending on the above fields there are other properties that can be used, e.g.
+  # - distance_factor: 0.1 (can be used to fine tune the time/distance trade-off of short_fastest weighting)
+  # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
+  #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
+  #   in seconds, so for example it does not work with shortest weighting.
+  #
+  # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
+  # profiles (see below). Otherwise you should at least limit the number of `routing.max_visited_nodes`.
+  profiles:
+    - name: car
+      vehicle: car
+      weighting: fastest
+
+  #  - name: car_with_turn_costs
+  #    vehicle: car
+  #    weighting: short_fastest
+  #    distance_factor: 0.1
+  #    turn_costs: true
+  #    u_turn_costs: 60
+
+  # Speed mode:
+  # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
+  # more RAM/disk space for holding the prepared graph but also means less memory usage per request. Using the following
+  # list you can define for which of the above routing profiles such preparation shall be performed. Note that to support
+  # profiles with `turn_costs: true` a more elaborate preparation is required (longer preparation time and more memory
+  # usage) and the routing will also be slower than with `turn_costs: false`.
+  profiles_ch:
+    - profile: car
+  #   - profile: car_with_turn_costs
+
+  # Hybrid mode:
+  # Similar to speed mode, the hybrid mode (Landmarks, LM) also speeds up routing by doing calculating auxiliary data
+  # in advance. Its not as fast as speed mode, but more flexible.
+  profiles_lm: []
 
   ##### Elevation #####
 
@@ -52,45 +97,15 @@ graphhopper:
   #### Speed, hybrid and flexible mode ####
 
 
-  # By default the speed mode with the 'fastest' weighting is used. Internally a graph preparation via
-  # contraction hierarchies (CH) is done to speed routing up. This requires more RAM/disc space for holding the
-  # graph but less for every request. You can also setup multiple weightings, by providing a comma separated list.
-  # To enable finite u-turn costs use something like fastest|u_turn_costs=30, where 30 are the u-turn costs in seconds
-  # (given as integer). Note that since the u-turn costs are given in seconds the weighting you use should also
-  # calculate the weight in seconds. The u-turn costs will only be applied for edge_based, see below.
-  prepare.ch.weightings: fastest
-
-  # Turn costs can be enabled also for speed mode (contraction hierarchies), but this requires a special kind of graph
-  # preparation (which uses edge- instead of node-based graph traversal), which takes more time and memory than a
-  # node-based preparation. You can also perform both node- and edge-based preparation for the same vehicle. This will
-  # allow switching between faster node-based routing and slower edge-based routing which supports turn costs.
-  # Using the following option you can specify what kind of preparation shall be performed for the different vehicles.
-  # You can choose:
-  # 'off': there will be no edge-based preparation for any of the vehicles, you will not be able to use turn costs
-  #        with speed mode
-  # 'edge_or_node': use edge-based preparation for all vehicles with |turn_costs=true (see graph.flag_encoders) and
-  #                 node-based preparation for all others
-  # 'edge_and_node': use node-based preparation for all vehicles and additionally use edge-based preparation for all
-  #                  vehicles with |turn_costs=true
-  prepare.ch.edge_based: off
-
-
-  # Disable the speed mode. Should be used only with routing.max_visited_nodes or when the hybrid mode is enabled instead
-  # prepare.ch.weightings: no
-
-
-  # To make CH preparation faster for multiple flagEncoders you can increase the default threads if you have enough RAM.
+  # To make CH preparation faster for multiple profiles you can increase the default threads if you have enough RAM.
   # Change this setting only if you know what you are doing and if the default worked for you.
   # prepare.ch.threads: 1
-
-
-  # The hybrid mode can be enabled with
-  # prepare.lm.weightings: fastest
 
   # To tune the performance vs. memory usage for the hybrid mode use
   # prepare.lm.landmarks: 16
 
-  # Make landmark preparation parallel if you have enough RAM. Change this only if you know what you are doing and if the default worked for you.
+  # Make landmark preparation parallel if you have enough RAM. Change this only if you know what you are doing and if
+  # the default worked for you.
   # prepare.lm.threads: 1
 
 

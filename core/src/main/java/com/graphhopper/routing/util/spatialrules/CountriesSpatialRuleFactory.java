@@ -17,13 +17,9 @@ public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.Spa
             Country country = Country.valueOf(toUpperCase(id));
             switch (country) {
                 case AUT:
-                    AustriaSpatialRule austriaSpatialRule = new AustriaSpatialRule();
-                    austriaSpatialRule.setBorders(polygons);
-                    return austriaSpatialRule;
+                    return new AustriaSpatialRule(polygons);
                 case DEU:
-                    GermanySpatialRule germanySpatialRule = new GermanySpatialRule();
-                    germanySpatialRule.setBorders(polygons);
-                    return germanySpatialRule;
+                    return new GermanySpatialRule(polygons);
             }
         } catch (Exception ex) {
         }

@@ -18,6 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.GHRequest;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -46,20 +47,6 @@ import java.util.Map;
  */
 public final class CustomWeighting extends AbstractWeighting {
 
-    /**
-     * @return the weighting name from the modelName
-     */
-    public static String key(String modelName) {
-        return "custom_" + modelName;
-    }
-
-    /**
-     * @return the modelName from the weighting
-     */
-    public static String modelName(String weighting) {
-        return weighting.substring(key("").length());
-    }
-
     private final BooleanEncodedValue baseVehicleProfileAccessEnc;
     private final String baseVehicleProfile;
     private final double maxSpeed;
@@ -69,7 +56,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
     public CustomWeighting(String name, FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
                            EncodedValueFactory factory, TurnCostProvider turnCostProvider, CustomModel customModel) {
-        super(key(name), baseFlagEncoder, turnCostProvider);
+        super(name, baseFlagEncoder, turnCostProvider);
         baseVehicleProfileAccessEnc = baseFlagEncoder.getAccessEnc();
         baseVehicleProfile = customModel.getBase();
 
@@ -88,13 +75,10 @@ public final class CustomWeighting extends AbstractWeighting {
      * This method sets the vehicle of the specified request. It uses the importCustomModels if customModel is null.
      */
     public static CustomModel prepareRequest(GHRequest request, CustomModel customModel, Map<String, CustomModel> importCustomModels) {
-        HintsMap hints = request.getHints();
-        if (hints.getWeighting().startsWith(CustomWeighting.key(""))) {
-            if (customModel == null) {
-                String modelName = modelName(hints.getWeighting());
-                if ((customModel = importCustomModels.get(modelName)) == null)
-                    throw new IllegalArgumentException("unknown custom model " + modelName + " (" + hints.getWeighting() + ")");
-            }
+        String profile = request.getHints().get(ProfileConfig.TMP_KEY, "");
+        if (!profile.isEmpty()) {
+            if (customModel == null && (customModel = importCustomModels.get(profile)) == null)
+                throw new IllegalArgumentException("unknown custom model " + profile);
             request.setVehicle(customModel.getBase());
         }
         return customModel;

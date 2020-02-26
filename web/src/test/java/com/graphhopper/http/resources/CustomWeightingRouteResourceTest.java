@@ -1,6 +1,8 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.Helper;
@@ -15,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import static com.graphhopper.http.resources.CustomWeightingRouteResourceLMTest.assertBetween;
 import static org.junit.Assert.assertEquals;
@@ -28,7 +31,6 @@ public class CustomWeightingRouteResourceTest {
     static {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "bike,car").
-                put("prepare.ch.weightings", "custom_truck").
                 put("routing.ch.disabling_allowed", "true").
                 put("graph.custom_profiles.directory", "./src/test/resources/com/graphhopper/http/resources/").
                 put("prepare.min_network_size", "0").
@@ -36,7 +38,11 @@ public class CustomWeightingRouteResourceTest {
                 // we need more than the default encoded values (truck.yml and cargo_bike.yml)
                 put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
-                put("graph.location", DIR);
+                put("graph.location", DIR).
+                // profile name must match the file name
+                setProfiles(Arrays.asList(new ProfileConfig("truck").setVehicle("car").setWeighting("custom_truck"),
+                        new ProfileConfig("cargo_bike").setVehicle("bike").setWeighting("custom_bike"))).
+                setCHProfiles(Arrays.asList(new CHProfileConfig("truck")));
     }
 
     @ClassRule
@@ -52,9 +58,8 @@ public class CustomWeightingRouteResourceTest {
     public void testCHTruckQuery() {
         String jsonQuery = "{" +
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
-                " \"weighting\": \"custom_truck\"" +
+                " \"profile\": \"truck\"" +
                 "}";
-        // TODO NOW use profile instead of weighting
         final Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
