@@ -473,7 +473,7 @@ public class Measurement {
             double toLat = na.getLatitude(to);
             double toLon = na.getLongitude(to);
             GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setVehicle(vehicle).setWeighting(weighting).
+                    setProfile("profile_no_tc").
                     setAlgorithm(algo);
 
             GHResponse lmRsp = hopper.route(req);
@@ -513,11 +513,11 @@ public class Measurement {
             double toLat = na.getLatitude(to);
             double toLon = na.getLongitude(to);
             GHRequest sodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setVehicle(vehicle).setWeighting(weighting).
+                    setProfile("profile_no_tc").
                     setAlgorithm(DIJKSTRA_BI);
 
             GHRequest noSodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setVehicle(vehicle).setWeighting(weighting).
+                    setProfile("profile_no_tc").
                     setAlgorithm(DIJKSTRA_BI);
             noSodReq.getHints().put("stall_on_demand", false);
 
@@ -574,12 +574,10 @@ public class Measurement {
                 double fromLon = na.getLongitude(from);
                 double toLat = na.getLatitude(to);
                 double toLon = na.getLongitude(to);
-                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setVehicle(vehicle).setWeighting(weighting);
-
+                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon);
+                req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
                 req.getHints().put(CH.DISABLE, !querySettings.ch).
                         put("stall_on_demand", querySettings.sod).
-                        put(Parameters.Routing.EDGE_BASED, querySettings.edgeBased).
                         put(Landmark.DISABLE, !querySettings.lm).
                         put(Landmark.ACTIVE_COUNT, querySettings.activeLandmarks).
                         put("instructions", querySettings.withInstructions);

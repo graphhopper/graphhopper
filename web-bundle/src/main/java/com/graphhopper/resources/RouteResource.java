@@ -131,8 +131,7 @@ public class RouteResource {
         initHints(request.getHints(), uriInfo.getQueryParameters());
         translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
-        request.setVehicle(vehicleStr).
-                setWeighting(weighting).
+        request.
                 // todonow: if not set this should be set by the converter
                         setProfile(profile).
                 setAlgorithm(algoStr).
