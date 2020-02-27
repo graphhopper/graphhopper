@@ -825,7 +825,7 @@ public class GraphHopper implements GraphHopperAPI {
     private void checkProfilesConsistency() {
         for (ProfileConfig profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
-                throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure to add all vehicle used in profiles to 'graph.flag_encoders'");
+                throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
             }
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             if (profile.isTurnCosts() && !encoder.supportsTurnCosts()) {
