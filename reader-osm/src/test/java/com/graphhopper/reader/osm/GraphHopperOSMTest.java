@@ -757,7 +757,7 @@ public class GraphHopperOSMTest {
         req.setAlgorithm(DIJKSTRA);
         response = new GHResponse();
         paths = instance.calcPaths(req, response);
-        assertFalse(response.hasErrors());
+        assertFalse(response.getErrors().toString(), response.hasErrors());
         assertArrayEquals(new int[]{9, 5, 8, 1, 2, 10}, paths.get(0).calcNodes().toArray());
     }
 

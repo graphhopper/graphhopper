@@ -1714,7 +1714,6 @@ public class GraphHopperIT {
 
     private GHResponse calcCurbsidePath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides, boolean force) {
         GHRequest req = new GHRequest(source, target);
-        req.getHints().put(Routing.EDGE_BASED, true);
         req.getHints().put(Routing.FORCE_CURBSIDE, force);
         req.setProfile("my_profile");
         req.setCurbsides(curbsides);

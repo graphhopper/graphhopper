@@ -1031,7 +1031,6 @@ public class GraphHopper implements GraphHopperAPI {
         Lock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
-
             if (profilesByName.isEmpty()) {
                 // todonow
                 throw new IllegalArgumentException("XXX");
@@ -1046,19 +1045,33 @@ public class GraphHopper implements GraphHopperAPI {
             if (profile == null) {
                 throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
             }
-            // todonow: cleanup
-            request.getHints().setVehicle(profile.getVehicle());
-            request.getHints().setWeighting(profile.getWeighting());
+            if (!request.getVehicle().isEmpty())
+                throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1859");
+            if (!request.getWeighting().isEmpty())
+                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1859");
+            if (!request.getHints().get(Routing.TURN_COSTS, "").isEmpty())
+                throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1859");
+            // todonow: maybe still allow something like running a (non CH) profile edge-based or not (if no turn costs or something)?
+            if (!request.getHints().get(Routing.EDGE_BASED, "").isEmpty())
+                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1859");
+            // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
+
+            // todonow: copying seems nices at first, but does not solve all problems, because the whole request
+            // without the copied hints is passed to the routing template. the goal is still not having to manipulate
+            // the request object
+            HintsMap hints = new HintsMap(request.getHints());
+            // todonow: cleanup, its way too ugly to modify(!) the request, actually there should be a test that makes sure
+            // the request is not modified!
+            hints.setWeighting(profile.getWeighting());
             // todonow: edge_based or turn_costs?
-            request.getHints().put(Routing.EDGE_BASED, profile.isTurnCosts());
+            hints.put(Routing.EDGE_BASED, profile.isTurnCosts());
             // todonow: u_turn_costs? (from request or profile)
-            String vehicle = request.getHints().getVehicle();
+            String vehicle = profile.getVehicle();
 
             if (!encodingManager.hasEncoder(vehicle))
                 throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-            HintsMap hints = request.getHints();
 
             // we use edge-based routing if the encoder supports turn-costs *unless* the edge_based parameter is set
             // explicitly.
@@ -1086,7 +1099,7 @@ public class GraphHopper implements GraphHopperAPI {
                 if (request.hasFavoredHeading(0))
                     throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
-                if (request.getHints().getBool(Routing.PASS_THROUGH, false))
+                if (hints.getBool(Routing.PASS_THROUGH, false))
                     throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
             }
 
@@ -1099,7 +1112,7 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+            final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
             if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
                 throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
             }
