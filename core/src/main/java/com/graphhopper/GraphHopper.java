@@ -1048,6 +1048,8 @@ public class GraphHopper implements GraphHopperAPI {
         // todonow: edge_based/turn_costs...
         request.getHints().setVehicle(profile.getVehicle());
         request.getHints().setWeighting(profile.getWeighting());
+        // todonow: edge_based or turn_costs?
+        request.getHints().put(Routing.EDGE_BASED, profile.isTurnCosts());
         String vehicle = request.getHints().getVehicle();
 
         // default handling

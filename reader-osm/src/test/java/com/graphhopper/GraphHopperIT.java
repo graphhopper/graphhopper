@@ -1441,12 +1441,13 @@ public class GraphHopperIT {
                 setStoreOnFlush(true);
         hopper.importOrLoad();
 
-        // no edge_based parameter -> use edge-based (since encoder supports it and no CH)
-        assertMoscowEdgeBased(hopper, "none", false);
-        // edge_based=false -> use node-based
-        assertMoscowNodeBased(hopper, "false", false);
-        // edge_based=true -> use edge-based
-        assertMoscowEdgeBased(hopper, "true", false);
+        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        // without turn costs
+        req.setProfile("profile1");
+        assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
+        // with turn costs
+        req.setProfile("profile2");
+        assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 
     @Test
@@ -1469,12 +1470,13 @@ public class GraphHopperIT {
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        // no edge_based parameter -> use edge-based (because its there)
-        assertMoscowEdgeBased(hopper, "none", true);
-        // edge_based=false -> use node-based
-        assertMoscowNodeBased(hopper, "false", true);
-        // edge_based=true -> use edge-based
-        assertMoscowEdgeBased(hopper, "true", true);
+        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        // without turn costs
+        req.setProfile("my_profile2");
+        assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
+        // with turn costs
+        req.setProfile("my_profile1");
+        assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 
     @Test
@@ -1493,16 +1495,24 @@ public class GraphHopperIT {
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        // with CH -> edge-based
-        GHResponse rsp1 = assertMoscowEdgeBased(hopper, "true", false);
-        // without CH -> also edge-based
-        GHResponse rsp2 = assertMoscowEdgeBased(hopper, "true", true);
+        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        req.setProfile("my_car");
+        // with CH
+        req.getHints().put(CH.DISABLE, true);
+        GHResponse rsp1 = hopper.route(req);
+        assertEquals(1044, rsp1.getBest().getDistance(), 1);
+        // without CH
+        req.getHints().put(CH.DISABLE, false);
+        GHResponse rsp2 = hopper.route(req);
+        assertEquals(1044, rsp2.getBest().getDistance(), 1);
         // just a quick check that we did not run the same algorithm twice
         assertNotEquals(rsp1.getHints().get("visited_nodes.sum", "_"), rsp2.getHints().get("visited_nodes.sum", "_"));
     }
 
     @Test
     public void testNodeBasedCHOnlyButTurnCostForNonCH() {
+        // todonow: tests with missing edge_based parameter for the different configurations probably need to go to
+        // converter tests
         final String profile1 = "car_profile_tc";
         final String profile2 = "car_profile_notc";
         final String weighting = "fastest";
@@ -1519,15 +1529,20 @@ public class GraphHopperIT {
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        // without CH -> use edge-based unless disabled explicitly
-        assertMoscowEdgeBased(hopper, "none", false);
-        assertMoscowEdgeBased(hopper, "true", false);
-        assertMoscowNodeBased(hopper, "false", false);
+        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        // without CH, turn turn costs on and off
+        req.getHints().put(CH.DISABLE, true);
+        req.setProfile(profile1);
+        assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
+        req.setProfile(profile2);
+        assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
 
-        // with CH -> use node-based unless edge_based is enabled explicitly (which should give an error)
-        assertMoscowNodeBased(hopper, "none", true);
-        assertMoscowNodeBased(hopper, "false", true);
-        GHResponse rsp = runMoscow(hopper, "true", true);
+        // with CH, turn turn costs on and off, since turn costs not supported for CH throw an error
+        req.getHints().put(CH.DISABLE, false);
+        req.setProfile(profile2);
+        assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
+        req.setProfile(profile1);
+        GHResponse rsp = hopper.route(req);
         assertEquals(1, rsp.getErrors().size());
         String expected = "Cannot find matching CH profile for your request. Please check your parameters." +
                 "\nYou can try disabling CH using ch.disable=true" +
@@ -1538,8 +1553,10 @@ public class GraphHopperIT {
 
     @Test
     public void testEdgeBasedByDefaultIfOnlyEdgeBased() {
+        // todonow: remove this comment but make sure this is included in converter tests?
         // when there is only one edge-based CH profile, there is no need to specify edge_based=true explicitly,
         // see #1637
+        // todonow: and maybe (re)move or at least rename this whole test
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
@@ -1549,39 +1566,12 @@ public class GraphHopperIT {
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        // even when we omit the edge_based parameter we get edge-based CH, unless we disable it explicitly
-        assertMoscowEdgeBased(hopper, "none", true);
-        assertMoscowEdgeBased(hopper, "true", true);
-        GHResponse rsp = runMoscow(hopper, "false", true);
-        assertTrue(rsp.hasErrors());
-        assertTrue("unexpected error: " + rsp.getErrors(), rsp.getErrors().toString().contains(
-                "Cannot find matching CH profile for your request. Please check your parameters." +
-                        "\nYou can try disabling CH using ch.disable=true" +
-                        "\nrequested:  fastest|car|edge_based=false|u_turn_costs=*\navailable: [fastest|car|edge_based=true|u_turn_costs=-1]"));
-    }
-
-    private GHResponse assertMoscowNodeBased(GraphHopper hopper, String edgeBasedParam, boolean ch) {
-        GHResponse rsp = runMoscow(hopper, edgeBasedParam, ch);
-        assertEquals(400, rsp.getBest().getDistance(), 1);
-        return rsp;
-    }
-
-    private GHResponse assertMoscowEdgeBased(GraphHopper hopper, String edgeBasedParam, boolean ch) {
-        GHResponse rsp = runMoscow(hopper, edgeBasedParam, ch);
-        assertEquals(1044, rsp.getBest().getDistance(), 1);
-        return rsp;
-    }
-
-    private GHResponse runMoscow(GraphHopper hopper, String edgeBasedParam, boolean ch) {
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        if (edgeBasedParam.equals("true") || edgeBasedParam.equals("false")) {
-            req.getHints().put(Routing.EDGE_BASED, edgeBasedParam);
-        } else {
-            req.getHints().remove(Routing.EDGE_BASED);
-        }
-        req.getHints().put(CH.DISABLE, !ch);
-        req.setVehicle("car").setWeighting("fastest");
-        return hopper.route(req);
+        req.setProfile("profile");
+        req.getHints().put(CH.DISABLE, false);
+        assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
+        req.getHints().put(CH.DISABLE, true);
+        assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 
     @Test
