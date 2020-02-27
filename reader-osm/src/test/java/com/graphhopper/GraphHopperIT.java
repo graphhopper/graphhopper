@@ -37,9 +37,9 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -1562,8 +1562,8 @@ public class GraphHopperIT {
         assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 
+    @Disabled
     @Test
-    @Ignore
     public void testEdgeBasedRequiresTurnCostSupport() {
         // todonow: move this test to converter tests as it makes no more sense here
         String profile = "profile";

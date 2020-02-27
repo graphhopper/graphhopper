@@ -1025,43 +1025,35 @@ public class GraphHopper implements GraphHopperAPI {
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
 
-        // todonow
-        if (profilesByName.isEmpty()) {
-            throw new IllegalArgumentException("XXX");
-        }
-
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
-
-        // todonow: should there be any kind of default handling for the profile?
-        if (request.getProfile().isEmpty()) {
-            // todonow: these errors must be in try-catch
-            throw new IllegalArgumentException("You need to specify a profile to perform a routing request");
-        }
-
-        // todonow: make sure trimmed, lower case etc.?
-        ProfileConfig profile = profilesByName.get(request.getProfile());
-        if (profile == null) {
-            throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
-        }
-        // todonow: cleanup
-        // todonow: edge_based/turn_costs...
-        request.getHints().setVehicle(profile.getVehicle());
-        request.getHints().setWeighting(profile.getWeighting());
-        // todonow: edge_based or turn_costs?
-        request.getHints().put(Routing.EDGE_BASED, profile.isTurnCosts());
-        String vehicle = request.getHints().getVehicle();
-
-        // default handling
-//        String vehicle = request.getVehicle();
-//        if (vehicle.isEmpty()) {
-//            vehicle = getDefaultVehicle().toString();
-//            request.setVehicle(vehicle);
-//        }
 
         Lock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
+
+            if (profilesByName.isEmpty()) {
+                // todonow
+                throw new IllegalArgumentException("XXX");
+            }
+
+            if (request.getProfile().isEmpty()) {
+                throw new IllegalArgumentException("You need to specify a profile to perform a routing request");
+            }
+
+            // todonow: make sure trimmed, lower case etc.?
+            ProfileConfig profile = profilesByName.get(request.getProfile());
+            if (profile == null) {
+                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
+            }
+            // todonow: cleanup
+            request.getHints().setVehicle(profile.getVehicle());
+            request.getHints().setWeighting(profile.getWeighting());
+            // todonow: edge_based or turn_costs?
+            request.getHints().put(Routing.EDGE_BASED, profile.isTurnCosts());
+            // todonow: u_turn_costs? (from request or profile)
+            String vehicle = request.getHints().getVehicle();
+
             if (!encodingManager.hasEncoder(vehicle))
                 throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
 
