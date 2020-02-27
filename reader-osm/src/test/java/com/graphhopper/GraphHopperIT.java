@@ -37,6 +37,7 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1105,6 +1106,8 @@ public class GraphHopperIT {
 
     @Test
     public void testMultipleVehiclesWithCH() {
+        // todonow: previously this test also was about the selection of the defaultvehicle, maybe do sth. similar
+        // for the converter
         final String profile1 = "profile1";
         final String profile2 = "profile2";
         final String vehicle1 = "bike";
@@ -1118,27 +1121,12 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setProfiles(profiles).
                 setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile1), new CHProfileConfig(profile2));
+        hopper.getCHPreparationHandler().setCHProfileConfigs(
+                new CHProfileConfig(profile1),
+                new CHProfileConfig(profile2)
+        );
         hopper.importOrLoad();
         assertEquals(vehicle1, hopper.getDefaultVehicle().toString());
-        checkMultiVehiclesWithCH(hopper);
-        hopper.close();
-
-        hopper.clean();
-        // todonow: no more default vehicle?
-        // new instance, try different order, resulting only in different default vehicle
-        hopper = createGraphHopper(vehicle2 + ", " + vehicle1).
-                setOSMFile(MONACO).
-                setProfiles(profiles).
-                setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile1), new CHProfileConfig(profile2));
-        hopper.importOrLoad();
-        assertEquals(vehicle2, hopper.getDefaultVehicle().toString());
-        checkMultiVehiclesWithCH(hopper);
-        hopper.close();
-    }
-
-    private void checkMultiVehiclesWithCH(GraphHopper hopper) {
         String str = hopper.getEncodingManager().toString();
         GHResponse rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile2"));
@@ -1372,7 +1360,7 @@ public class GraphHopperIT {
         hopper.importOrLoad();
         // request a profile that was not prepared
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                setProfile(profile1);
+                setProfile(profile2);
 
         // try with CH
         req.getHints().put(CH.DISABLE, false);
@@ -1575,7 +1563,9 @@ public class GraphHopperIT {
     }
 
     @Test
+    @Ignore
     public void testEdgeBasedRequiresTurnCostSupport() {
+        // todonow: move this test to converter tests as it makes no more sense here
         String profile = "profile";
         String vehicle = "foot";
         String weighting = "fastest";
@@ -1732,7 +1722,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testCHWithFiniteUTurnCostsAndMissingWeighting() {
+    public void testCHWithFiniteUTurnCosts() {
         GraphHopper h = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MONACO).
                 setProfiles(Collections.singletonList(
@@ -1747,6 +1737,8 @@ public class GraphHopperIT {
         GHPoint p = new GHPoint(43.73397, 7.414173);
         GHPoint q = new GHPoint(43.73222, 7.415557);
         GHRequest req = new GHRequest(p, q);
+        req.setProfile("my_profile");
+        // todonow: remove this comment and create a corresponding converter test
         // note that we do *not* set the weighting on the request, it will be determined automatically from the
         // CH profile, see #1788
         // we force the start/target directions such that there are u-turns right after we start and right before
