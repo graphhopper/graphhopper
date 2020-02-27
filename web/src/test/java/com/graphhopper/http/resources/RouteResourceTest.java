@@ -385,40 +385,43 @@ public class RouteResourceTest {
 
     @Test
     public void testGraphHopperWebRealExceptions() {
-        // todonow: error message checks should be made more specific first, then add profile
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
 
-        // IllegalArgumentException (Wrong Request)
-        GHResponse rsp = hopper.route(new GHRequest());
-        assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
+        // no profile
+        GHResponse rsp = hopper.route(new GHRequest(42.511139, 1.53285, 42.508165, 1.532271));
+        assertTrue(rsp.getErrors().toString(), rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString(), rsp.getErrors().get(0).getMessage().contains(
+                "You need to specify a profile via the 'profile' url parameter to make a routing request"));
 
+        // unknown profile
+        rsp = hopper.route(new GHRequest(42.511139, 1.53285, 42.508165, 1.532271).setProfile("space_shuttle"));
+        assertTrue(rsp.getErrors().toString(), rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString(), rsp.getErrors().get(0).getMessage().contains(
+                "The requested profile 'space_shuttle' does not exist"));
+
+        // no points
+        rsp = hopper.route(new GHRequest().setProfile("my_car"));
+        assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
         Throwable ex = rsp.getErrors().get(0);
         assertTrue("Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
+        assertTrue(ex.getMessage(), ex.getMessage().contains("At least 2 points have to be specified, but was:0"));
 
-        // IllegalArgumentException (Wrong Points)
-        rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0));
+        // points out of bounds
+        rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0).setProfile("my_car"));
         assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
-
         List<Throwable> errs = rsp.getErrors();
         for (int i = 0; i < errs.size(); i++) {
             assertEquals(((PointOutOfBoundsException) errs.get(i)).getPointIndex(), i);
+            assertTrue(errs.get(i).getMessage(), errs.get(i).getMessage().contains("Point 0 is out of bounds: 0.0,0.0"));
         }
 
-        // IllegalArgumentException (Vehicle not supported)
-        rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setVehicle("SPACE-SHUTTLE"));
-        assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
-
-        ex = rsp.getErrors().get(0);
-        assertTrue("Wrong exception found: " + ex.getClass().getName()
-                + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
-
-        // an IllegalArgumentException from inside the core is written as JSON
-        final Response response = app.client().target("http://localhost:8080/route?vehicle=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        // profile not supported via web api
+        final Response response = app.client().target("http://localhost:8080/route?profile=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         String msg = (String) response.readEntity(Map.class).get("message");
-        assertTrue(msg, msg.contains("Vehicle not supported:"));
+        assertTrue(msg, msg.contains("The requested profile 'SPACE-SHUTTLE' does not exist"));
     }
 
     @Test
@@ -471,8 +474,10 @@ public class RouteResourceTest {
     public void testWithError() {
         final Response response = app.client().target("http://localhost:8080/route?profile=my_car&" +
                 "point=42.554851,1.536198").request().buildGet().invoke();
-        // todonow: error message check should be more specific
         assertEquals(400, response.getStatus());
+        String rsp = response.readEntity(String.class);
+        assertTrue(rsp, rsp.contains("At least 2 points have to be specified, but was:1"));
+
     }
 
     @Test
