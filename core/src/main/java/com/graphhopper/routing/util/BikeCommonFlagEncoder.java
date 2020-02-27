@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -193,6 +194,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         speedDefault = highwaySpeeds.get("cycleway");
         setAvoidSpeedLimit(71);
+    }
+
+    @Override
+    public TransportationMode getTransportationMode() {
+        return TransportationMode.BICYCLE;
     }
 
     @Override
