@@ -19,6 +19,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.util.Parameters;
 
@@ -59,7 +60,7 @@ public class CHProfileSelector {
             if (edgeBased != null && p.isEdgeBased() != edgeBased) {
                 continue;
             }
-            if (!p.getWeighting().matches(hintsMap)) {
+            if (!weightingMatches(p.getWeighting(), hintsMap)) {
                 continue;
             }
             matchingProfiles.add(p);
@@ -85,6 +86,14 @@ public class CHProfileSelector {
                     "\nYou can also try disabling CH altogether using " + Parameters.CH.DISABLE + "=true" +
                     "\nrequested:  " + getRequestAsString() + "\nmatched:   " + matchingProfiles + "\navailable: " + chProfiles);
         }
+    }
+
+    private boolean weightingMatches(Weighting weighting, HintsMap reqMap) {
+        String requestedUTurnCosts = reqMap.get(Parameters.Routing.U_TURN_COSTS, "");
+        return (reqMap.getWeighting().isEmpty() || weighting.getName().equals(reqMap.getWeighting())) &&
+                // todonow!
+//                    (requestedUTurnCosts.isEmpty() || weighting.turnCostProvider.getName().equals(requestedUTurnCosts)) &&
+                (reqMap.getVehicle().isEmpty() || weighting.getFlagEncoder().toString().equals(reqMap.getVehicle()));
     }
 
     private String getVehicle(CHProfile match1) {

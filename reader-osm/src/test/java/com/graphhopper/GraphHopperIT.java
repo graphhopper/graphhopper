@@ -1367,14 +1367,14 @@ public class GraphHopperIT {
         req.getHints().put(Landmark.DISABLE, false);
         GHResponse res = hopper.route(req);
         assertTrue(res.getErrors().toString(), res.hasErrors());
-        assertTrue("there should be an error", res.getErrors().get(0).getMessage().contains("Cannot find matching CH profile for your request"));
+        assertTrue(res.getErrors().toString(), res.getErrors().get(0).getMessage().contains("Cannot find CH preparation for the requested profile: 'short_fast_profile'"));
 
         // try with LM
         req.getHints().put(CH.DISABLE, true);
         req.getHints().put(Landmark.DISABLE, false);
         res = hopper.route(req);
         assertTrue(res.getErrors().toString(), res.hasErrors());
-        assertTrue("there should be an error", res.getErrors().get(0).getMessage().contains("Cannot find matching LM profile for your request"));
+        assertTrue(res.getErrors().toString(), res.getErrors().get(0).getMessage().contains("Cannot find LM preparation for the requested profile: 'short_fast_profile'"));
 
         // falling back to non-prepared algo works
         req.getHints().put(CH.DISABLE, true);
@@ -1532,9 +1532,9 @@ public class GraphHopperIT {
         req.setProfile(profile1);
         GHResponse rsp = hopper.route(req);
         assertEquals(1, rsp.getErrors().size());
-        String expected = "Cannot find matching CH profile for your request. Please check your parameters." +
+        String expected = "Cannot find CH preparation for the requested profile: 'car_profile_tc'" +
                 "\nYou can try disabling CH using ch.disable=true" +
-                "\nrequested:  fastest|car|edge_based=true|u_turn_costs=*\navailable: [fastest|car|edge_based=false]";
+                "\navailable CH profiles: [car_profile_notc]";
         assertTrue("unexpected error:\n" + rsp.getErrors().toString() + "\nwhen expecting an error containing:\n" + expected,
                 rsp.getErrors().toString().contains(expected));
     }

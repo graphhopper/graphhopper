@@ -31,13 +31,11 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
@@ -52,8 +50,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.Random;
-
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 /**
  * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
@@ -97,17 +93,14 @@ public class MiniGraphUI {
         encoder = hopper.getEncodingManager().getEncoder("car");
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
-        HintsMap map = new HintsMap("fastest").
-                setVehicle("car");
 
         boolean ch = true;
         if (ch) {
-            map.put(Parameters.Landmark.DISABLE, true);
             CHProfile chProfile = hopper.getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
             weighting = chProfile.getWeighting();
             routingGraph = hopper.getGraphHopperStorage().getCHGraph(chProfile);
 
-            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
+            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory("no_profile_yet", false, true);
             algoFactory = new RoutingAlgorithmFactory() {
 
                 class TmpAlgo extends DijkstraBidirectionCH implements DebugAlgo {
@@ -143,11 +136,11 @@ public class MiniGraphUI {
             algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
 
         } else {
-            map.put(Parameters.CH.DISABLE, true);
-//            map.put(Parameters.Landmark.DISABLE, true);
             routingGraph = graph;
-            weighting = hopper.createWeighting(map, encoder, NO_TURN_COST_PROVIDER);
-            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
+            // todonow
+            weighting = null;
+//            weighting = hopper.createWeighting(map, encoder, NO_TURN_COST_PROVIDER);
+            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory("no_profile_yet", true, false);
             algoFactory = new RoutingAlgorithmFactory() {
 
                 @Override
@@ -389,6 +382,7 @@ public class MiniGraphUI {
         PMap args = PMap.read(strs);
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
+        // todonow: profile configurations
         boolean debug = args.getBool("minigraphui.debug", false);
         new MiniGraphUI(hopper, debug).visualize();
     }

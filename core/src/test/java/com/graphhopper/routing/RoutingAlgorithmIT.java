@@ -55,7 +55,7 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class RoutingAlgorithmIT {
-    public static List<AlgoHelperEntry> createAlgos(final GraphHopper hopper, final HintsMap hints, TraversalMode tMode) {
+    public static List<AlgoHelperEntry> createAlgos(final GraphHopper hopper, final String weightingStr, final String vehicleStr, TraversalMode tMode) {
         GraphHopperStorage ghStorage = hopper.getGraphHopperStorage();
         LocationIndex idx = hopper.getLocationIndex();
 
@@ -63,12 +63,15 @@ public class RoutingAlgorithmIT {
         if (tMode.isEdgeBased())
             addStr = "turn|";
 
-        FlagEncoder encoder = hopper.getEncodingManager().getEncoder(hints.getVehicle());
+        FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicleStr);
         TurnCostProvider turnCostProvider = tMode.isEdgeBased() ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
-        Weighting weighting = hopper.createWeighting(hints, encoder, turnCostProvider);
+        Weighting weighting = hopper.createWeighting(new HintsMap().setWeighting(weightingStr).setVehicle(vehicleStr), encoder, turnCostProvider);
 
-        HintsMap defaultHints = new HintsMap().put(Parameters.CH.DISABLE, true).put(Parameters.Landmark.DISABLE, true)
-                .setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());
+        HintsMap defaultHints = new HintsMap()
+                .put(Parameters.CH.DISABLE, true)
+                .put(Parameters.Landmark.DISABLE, true)
+                .setVehicle(vehicleStr)
+                .setWeighting(weightingStr);
 
         AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
         List<AlgoHelperEntry> prepare = new ArrayList<>();
@@ -84,11 +87,12 @@ public class RoutingAlgorithmIT {
 
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMPreparationHandler().isEnabled()) {
-            final HintsMap lmHints = new HintsMap(defaultHints).put(Parameters.Landmark.DISABLE, false);
+            final HintsMap lmHints = new HintsMap(defaultHints)
+                    .put(Parameters.Landmark.DISABLE, false);
             prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(lmHints);
+                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", true, false);
                 }
             });
         }
@@ -99,18 +103,18 @@ public class RoutingAlgorithmIT {
             chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             CHProfile pickedProfile = CHProfileSelector.select(hopper.getCHPreparationHandler().getCHProfiles(), chHints);
             prepare.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
-                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
+                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + weightingStr) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(chHints);
+                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", false, true);
                 }
             });
 
             prepare.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
-                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + hints.getWeighting()) {
+                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + weightingStr) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(chHints);
+                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", false, true);
                 }
             });
         }
@@ -141,7 +145,7 @@ public class RoutingAlgorithmIT {
             }
         };
 
-        Collection<AlgoHelperEntry> prepares = createAlgos(hopper, new HintsMap().setWeighting("shortest").setVehicle("car"), TraversalMode.NODE_BASED);
+        Collection<AlgoHelperEntry> prepares = createAlgos(hopper, "shortest", "car", TraversalMode.NODE_BASED);
 
         for (AlgoHelperEntry entry : prepares) {
             StopWatch sw = new StopWatch();

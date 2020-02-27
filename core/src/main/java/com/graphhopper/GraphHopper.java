@@ -862,9 +862,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
-        boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
-        boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
+    public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
         if (chPreparationHandler.isEnabled() && disableCH && !chPreparationHandler.isDisablingAllowed()) {
             throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
         }
@@ -874,9 +872,9 @@ public class GraphHopper implements GraphHopperAPI {
 
         // for now do not allow mixing CH&LM #1082,#1889
         if (chPreparationHandler.isEnabled() && !disableCH) {
-            return chPreparationHandler.getAlgorithmFactory(map);
+            return chPreparationHandler.getAlgorithmFactory(profile);
         } else if (lmPreparationHandler.isEnabled() && !disableLM) {
-            return lmPreparationHandler.getAlgorithmFactory(map);
+            return lmPreparationHandler.getAlgorithmFactory(profile);
         } else {
             return new RoutingAlgorithmFactorySimple();
         }
@@ -1051,7 +1049,7 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1859");
             if (!request.getHints().get(Routing.TURN_COSTS, "").isEmpty())
                 throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1859");
-            // todonow: maybe still allow something like running a (non CH) profile edge-based or not (if no turn costs or something)?
+            // todonow: maybe still allow something like running a (non CH) profile edge-based or not (if no turn costs or something)?, also see traversal mode below
             if (!request.getHints().get(Routing.EDGE_BASED, "").isEmpty())
                 throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1859");
             // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
@@ -1063,8 +1061,6 @@ public class GraphHopper implements GraphHopperAPI {
             // todonow: cleanup, its way too ugly to modify(!) the request, actually there should be a test that makes sure
             // the request is not modified!
             hints.setWeighting(profile.getWeighting());
-            // todonow: edge_based or turn_costs?
-            hints.put(Routing.EDGE_BASED, profile.isTurnCosts());
             // todonow: u_turn_costs? (from request or profile)
             String vehicle = profile.getVehicle();
 
@@ -1073,18 +1069,19 @@ public class GraphHopper implements GraphHopperAPI {
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
 
-            // we use edge-based routing if the encoder supports turn-costs *unless* the edge_based parameter is set
-            // explicitly.
-            TraversalMode tMode = encoder.supportsTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
-            if (hints.has(Routing.EDGE_BASED))
-                tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
+            // to support turn costs we always need edge-based traversal
+            TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
+            // todonow: should we allow using this parameter? if yes in which cases?
+//            if (hints.has(Routing.EDGE_BASED))
+//                tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
             if (tMode.isEdgeBased() && !encoder.supportsTurnCosts()) {
                 throw new IllegalArgumentException("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true");
             }
 
             if (!tMode.isEdgeBased() && !request.getCurbsides().isEmpty()) {
-                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
+                // todonow: this is a bit ugly: curbside requires edge-based traversal but not necessarily turn costs?!
+                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need a profile which supports turn costs");
             }
 
             boolean disableCH = hints.getBool(CH.DISABLE, false);
@@ -1114,13 +1111,14 @@ public class GraphHopper implements GraphHopperAPI {
 
             final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
             if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
+                // todonow: this should be more abou the profile using turn costs: true than edge-based parameter
                 throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
             }
             TurnCostProvider turnCostProvider = (encoder.supportsTurnCosts() && tMode.isEdgeBased())
                     ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
                     : NO_TURN_COST_PROVIDER;
 
-            RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(hints);
+            RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile.getName(), disableCH, disableLM);
             Weighting weighting;
             Graph graph = ghStorage;
             if (chPreparationHandler.isEnabled() && !disableCH) {
@@ -1136,6 +1134,8 @@ public class GraphHopper implements GraphHopperAPI {
                 }
             } else {
                 checkNonChMaxWaypointDistance(points);
+                // todonow: the idea here should be to use the profile to create the weighting, (some) hints from the request
+                // should be added to the hints used to create the weighting, for example u_turn_costs (since its non-CH)
                 weighting = createWeighting(hints, encoder, turnCostProvider);
                 if (hints.has(Routing.BLOCK_AREA))
                     weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
