@@ -17,8 +17,17 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.CHEdgeIterator;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.shapes.GHPoint;
+import org.junit.Before;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
@@ -29,6 +38,8 @@ import static org.junit.Assert.assertTrue;
  * @author Robin Boldt
  */
 public class NameSimilarityEdgeFilterTest {
+
+    private GHPoint basePoint = new GHPoint(49.4652132,11.1435159);
 
     @Test
     public void testAccept() {
@@ -75,6 +86,34 @@ public class NameSimilarityEdgeFilterTest {
 
         edge = createTestEdgeIterator("Hauptstr.");
         assertTrue(edgeFilter.accept(edge));
+    }
+
+    @Test
+    public void testDistanceFiltering() {
+        CarFlagEncoder encoder = new CarFlagEncoder();
+        Graph g = new GraphBuilder(EncodingManager.create(encoder)).create();
+        NodeAccess na = g.getNodeAccess();
+
+        GHPoint pointFarAway = new GHPoint(49.458629, 11.146124);
+        GHPoint point25mAway = new GHPoint(49.464871, 11.143575);
+        GHPoint point200mAway = new GHPoint(49.464598, 11.149039);
+
+        int farAwayId = 0;
+        int nodeId50 = 1;
+        int nodeID200 = 2;
+
+        na.setNode(farAwayId, pointFarAway.lat, pointFarAway.lon);
+        na.setNode(nodeId50, point25mAway.lat, point25mAway.lon);
+        na.setNode(nodeID200, point200mAway.lat, point200mAway.lon);
+
+        // Check that it matches a street 50m away
+        assertTrue(createNameSimilarityEdgeFilter(na, "Wentworth Street").
+                accept(createTestEdgeIterator("Wentworth Street", nodeId50, farAwayId)));
+
+        // Check that it doesn't match streets 200m away
+        assertFalse(createNameSimilarityEdgeFilter(na, "Wentworth Street").
+                accept(createTestEdgeIterator("Wentworth Street", nodeID200, farAwayId)));
+
     }
 
     /**
@@ -192,22 +231,51 @@ public class NameSimilarityEdgeFilterTest {
 //        assertTrue(edgeFilter.accept(edge));
     }
 
+    /**
+     * Create a NameSimilarityEdgeFilter that uses the same coordinates for all nodes
+     * so distance is not used when matching
+     */
     private NameSimilarityEdgeFilter createNameSimilarityEdgeFilter(String pointHint) {
+        return createNameSimilarityEdgeFilter(new GHUtility.DisabledNodeAccess() {
+            @Override
+            public double getLatitude(int nodeId) {
+                return basePoint.lat;
+            }
+            @Override
+            public double getLongitude(int nodeId) {
+                return basePoint.lon;
+            }
+        }, pointHint);
+    }
+
+    private NameSimilarityEdgeFilter createNameSimilarityEdgeFilter(NodeAccess nodeAccess, String pointHint) {
         return new NameSimilarityEdgeFilter(new EdgeFilter() {
             @Override
             public boolean accept(EdgeIteratorState edgeState) {
                 return true;
             }
-        }, pointHint);
+        }, nodeAccess, basePoint, 100, pointHint);
     }
 
-    private EdgeIteratorState createTestEdgeIterator(final String name) {
+    private EdgeIteratorState createTestEdgeIterator(final String name, final int baseNodeId, final int adjNodeId) {
         return new GHUtility.DisabledEdgeIterator() {
-
             @Override
             public String getName() {
                 return name;
             }
+            @Override
+            public int getBaseNode() {
+                return baseNodeId;
+            }
+            @Override
+            public int getAdjNode() {
+                return adjNodeId;
+            }
         };
     }
+
+    private EdgeIteratorState createTestEdgeIterator(final String name) {
+        return createTestEdgeIterator(name, 0, 0);
+    }
+
 }
