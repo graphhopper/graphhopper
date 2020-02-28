@@ -49,26 +49,22 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
     public CarFlagEncoder() {
-        this(5, 5, 0);
+        this(5, 5, 0, true);
     }
 
     public CarFlagEncoder(PMap properties) {
         this((int) properties.getLong("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
-                properties.getBool("turn_costs", false) ? 1 : 0);
+                properties.getBool("turn_costs", false) ? 1 : 0,
+                properties.getBool("block_private", true));
         this.speedTwoDirections = properties.getBool("speed_two_directions", false);
         this.setBlockFords(properties.getBool("block_fords", false));
         this.setBlockByDefault(properties.getBool("block_barriers", true));
     }
 
-    public CarFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
-    public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+    public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
         super(speedBits, speedFactor, maxTurnCosts);
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
-        restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -76,6 +72,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restrictedValues.add("delivery");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+
+        if (blockPrivate)
+            restrictedValues.add("private");
+        else
+            intendedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("permissive");

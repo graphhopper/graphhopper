@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest {
     @Override
     CarFlagEncoder createCarFlagEncoder() {
-        return new CarFlagEncoder(5, 5, 1400);
+        return new CarFlagEncoder(5, 5, 1400, true);
     }
 
     @Override

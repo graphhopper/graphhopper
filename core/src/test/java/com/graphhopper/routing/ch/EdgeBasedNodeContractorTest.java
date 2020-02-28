@@ -62,7 +62,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void initialize() {
-        encoder = new CarFlagEncoder(5, 5, maxCost);
+        encoder = new CarFlagEncoder(5, 5, maxCost, true);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHProfileStrings(

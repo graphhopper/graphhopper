@@ -25,7 +25,7 @@ public class Path4CHTest {
 
     @Before
     public void init() {
-        encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
+        encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts, true);
         EncodingManager em = EncodingManager.create(encoder);
         graph = new GraphBuilder(em)
                 .setCHProfileStrings("motorcycle|fastest|edge")

@@ -46,22 +46,19 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     private DecimalEncodedValue curvatureEncoder;
 
     public MotorcycleFlagEncoder() {
-        this(5, 5, 0);
+        this(5, 5, 0, true);
     }
 
     public MotorcycleFlagEncoder(PMap properties) {
         this(properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
-                properties.getBool("turn_costs", false) ? 1 : 0);
+                properties.getBool("turn_costs", false) ? 1 : 0,
+                properties.getBool("block_private", true));
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public MotorcycleFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
-    public MotorcycleFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+    public MotorcycleFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
+        super(speedBits, speedFactor, maxTurnCosts, blockPrivate);
         speedTwoDirections = true;
         restrictions.remove("motorcar");
         //  moped, mofa
