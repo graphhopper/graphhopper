@@ -19,7 +19,12 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
+import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.Circle;
+import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -81,21 +86,26 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     private static final Pattern WORD_CHAR = Pattern.compile("\\p{LD}+");
     private static final JaroWinkler jaroWinkler = new JaroWinkler();
     private static final double JARO_WINKLER_ACCEPT_FACTOR = .9;
+    private static final double WITHIN_RADIUS_METERS = 100;
     private final EdgeFilter edgeFilter;
     private final String pointHint;
     private final Map<String, String> rewriteMap;
+    private final Circle pointCircle;
+    private final NodeAccess nodeAccess;
 
-    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint) {
-        this(edgeFilter, pointHint, DEFAULT_REWRITE_MAP);
+    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, NodeAccess nodeAccess, GHPoint point, String pointHint) {
+        this(edgeFilter, nodeAccess, pointHint, point, DEFAULT_REWRITE_MAP);
     }
 
     /**
      * @param rewriteMap maps abbreviations to its longer form
      */
-    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint, Map<String, String> rewriteMap) {
+    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, NodeAccess nodeAccess, String pointHint, GHPoint point, Map<String, String> rewriteMap) {
         this.edgeFilter = edgeFilter;
         this.rewriteMap = rewriteMap;
+        this.nodeAccess = nodeAccess;
         this.pointHint = prepareName(removeRelation(pointHint == null ? "" : pointHint));
+        this.pointCircle = new Circle(point.lat, point.lon, WITHIN_RADIUS_METERS);
     }
 
     String getNormalizedPointHint() {
@@ -148,8 +158,14 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
             return false;
         }
 
+        BBox bbox = GraphEdgeIdFinder.createBBox(nodeAccess, iter);
+        if(!pointCircle.intersects(bbox)) {
+            return false;
+        }
+
         name = removeRelation(name);
         String edgeName = prepareName(name);
+
         return isJaroWinklerSimilar(pointHint, edgeName);
     }
 
