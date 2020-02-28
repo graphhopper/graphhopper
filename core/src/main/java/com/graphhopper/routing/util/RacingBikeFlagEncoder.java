@@ -44,7 +44,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    RacingBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
+    protected RacingBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
         super(speedBits, speedFactor, maxTurnCosts, blockPrivate);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");

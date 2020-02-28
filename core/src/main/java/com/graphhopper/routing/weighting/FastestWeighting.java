@@ -45,7 +45,7 @@ public class FastestWeighting extends AbstractWeighting {
     private final long headingPenaltyMillis;
     private final double maxSpeed;
     private final EnumEncodedValue<RoadAccess> roadAccessEnc;
-    // this factor puts a penalty on roads with a "destination"-only access, see #733
+    // this factor puts a penalty on roads with a "destination"-only or private access, see #733 and #1936
     private final double destinationPenalty, privatePenalty;
 
     public FastestWeighting(FlagEncoder encoder) {

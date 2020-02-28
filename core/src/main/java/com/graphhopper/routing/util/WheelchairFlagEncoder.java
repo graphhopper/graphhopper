@@ -55,7 +55,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    WheelchairFlagEncoder(int speedBits, double speedFactor, boolean blockPrivate) {
+    protected WheelchairFlagEncoder(int speedBits, double speedFactor, boolean blockPrivate) {
         super(speedBits, speedFactor, blockPrivate);
         restrictions.add("wheelchair");
 

@@ -45,7 +45,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    MountainBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
+    protected MountainBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
         super(speedBits, speedFactor, maxTurnCosts, blockPrivate);
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 16); // now unpaved ...
