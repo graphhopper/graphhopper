@@ -239,7 +239,7 @@ public class GraphEdgeIdFinder {
         }
     }
 
-    public static BBox createBBox(NodeAccess na, EdgeIteratorState edgeState) {
+    private static BBox createBBox(NodeAccess na, EdgeIteratorState edgeState) {
         return BBox.fromPoints(na.getLatitude(edgeState.getBaseNode()), na.getLongitude(edgeState.getBaseNode()),
                 na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()));
     }

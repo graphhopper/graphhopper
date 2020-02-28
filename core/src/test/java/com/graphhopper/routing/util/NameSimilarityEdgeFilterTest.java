@@ -254,7 +254,7 @@ public class NameSimilarityEdgeFilterTest {
             public boolean accept(EdgeIteratorState edgeState) {
                 return true;
             }
-        }, nodeAccess, basePoint, pointHint);
+        }, nodeAccess, basePoint, 100, pointHint);
     }
 
     private EdgeIteratorState createTestEdgeIterator(final String name, final int baseNodeId, final int adjNodeId) {
