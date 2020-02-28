@@ -64,23 +64,23 @@ public class SpatialRuleLookupBuilderTest {
 
         // Berlin
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).
-                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).
-                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
         // Paris -> empty rule
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).
-                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).
-                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
         // Austria
         assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRule(48.204484, 16.107888).
-                getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).
-                getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(48.210033, 16.363449).
-                getAccess("living_street", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+                getAccess(RoadClass.LIVING_STREET, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
     }
 
     @Test
@@ -122,8 +122,7 @@ public class SpatialRuleLookupBuilderTest {
         final GeometryFactory fac = new GeometryFactory();
         org.locationtech.jts.geom.Polygon polygon = fac.createPolygon(new Coordinate[]{
                 new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0)});
-        final GermanySpatialRule germany = new GermanySpatialRule();
-        germany.setBorders(Collections.singletonList(polygon));
+        final GermanySpatialRule germany = new GermanySpatialRule(Collections.singletonList(polygon));
 
         SpatialRuleLookup index = new SpatialRuleLookup() {
             @Override
@@ -196,7 +195,7 @@ public class SpatialRuleLookupBuilderTest {
         e2.setFlags(em.handleWayTags(way2, map, relFlags));
         assertEquals(RoadAccess.YES, e2.get(tmpRoadAccessEnc));
 
-        assertEquals(index.getSpatialId(new GermanySpatialRule()), e1.get(countrySpatialIdEnc));
+        assertEquals(index.getSpatialId(new GermanySpatialRule(Collections.singletonList(polygon))), e1.get(countrySpatialIdEnc));
         assertEquals(index.getSpatialId(SpatialRule.EMPTY), e2.get(countrySpatialIdEnc));
 
         ReaderWay livingStreet = new ReaderWay(29L);
@@ -219,31 +218,21 @@ public class SpatialRuleLookupBuilderTest {
 
             @Override
             public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
-                return new SpatialRule() {
+                return new AbstractSpatialRule(borders) {
+                    
+                    @Override
+                    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
+                        return 100;
+                    }
 
                     @Override
-                    public double getMaxSpeed(String highway, double _default) {
-                        return 100;
+                    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
+                        return RoadAccess.YES;
                     }
 
                     @Override
                     public String getId() {
                         return id;
-                    }
-
-                    @Override
-                    public List<Polygon> getBorders() {
-                        return borders;
-                    }
-
-                    @Override
-                    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
-                        return RoadAccess.YES;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return getId();
                     }
                 };
             }

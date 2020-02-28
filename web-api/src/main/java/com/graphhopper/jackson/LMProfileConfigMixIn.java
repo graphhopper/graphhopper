@@ -15,28 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
 
-/**
- * Defining different types of transportation.
- * <p>
- * We started with a subset of the definition found in the OSM Wiki
- * https://wiki.openstreetmap.org/wiki/Key:access#Land-based_transportation
- *
- * @author Robin Boldt
- */
-public enum TransportationMode {
+package com.graphhopper.jackson;
 
-    OTHER(0), MOTOR_VEHICLE(1), BICYCLE(2), FOOT(3);
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    private final int value;
-
-    TransportationMode(int value) {
-        this.value = value;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
+public interface LMProfileConfigMixIn {
+    @JsonProperty("maximum_lm_weight")
+    void setMaximumLMWeight(double maximumLMWeight);
 }

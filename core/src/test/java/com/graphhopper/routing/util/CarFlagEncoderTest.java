@@ -221,16 +221,20 @@ public class CarFlagEncoderTest {
         IntsRef relFlags = em.createRelationFlags();
 
         FastestWeighting weighting = new FastestWeighting(encoder);
+        FastestWeighting bikeWeighting = new FastestWeighting(em.getEncoder("bike"));
+
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
         assertTrue(em.acceptWay(way, acceptWay));
         IntsRef edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
         assertEquals(60, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
 
         way.setTag("vehicle", "destination");
         edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
         assertEquals(600, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
     }
 
     @Test

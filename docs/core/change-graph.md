@@ -6,7 +6,8 @@ Currently, it is possible to change the speed of edges as well as the access val
 ### Before you start
 
 You should be aware that changing either the access or the speed will not influence the results of ch requests.
-We recommend using `prepare.ch.weightings=no` or you should know what you are doing. This can be used in combination
+CH should not be used with the change-graph feature, unless you really know what you are doing, so make sure the
+`profiles_ch` list is empty in your configuration. The feature can however, be used in combination
 with [Landmarks](landmarks.md), but only if you increase the weight, decreasing the weight might lead to incorrect
 routing results. Per default the `/change` endpoint is disabled for security reasons, you can however enable the 
 endpoint first. Be aware that this endpoint is not secured and everybody can call it and change the graph. 

@@ -23,6 +23,7 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.profiles.RouteNetwork;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
@@ -83,6 +84,10 @@ public class EncodingManagerTest {
     @Test
     public void testToDetailsStringIncludesEncoderVersionNumber() {
         FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 0) {
+            public TransportationMode getTransportationMode() {
+                return TransportationMode.BICYCLE;
+            }
+
             @Override
             public int getVersion() {
                 return 10;

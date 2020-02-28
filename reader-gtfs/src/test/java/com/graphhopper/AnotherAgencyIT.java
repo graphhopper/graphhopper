@@ -74,7 +74,7 @@ public class AnotherAgencyIT {
                         new GHStationLocation("JUSTICE_COURT"),
                         new GHStationLocation("MUSEUM")
                 ),
-                LocalDateTime.of(2007,1,1,8,30,0).atZone(zoneId).toInstant()
+                LocalDateTime.of(2007, 1, 1, 8, 30, 0).atZone(zoneId).toInstant()
         );
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
@@ -93,7 +93,7 @@ public class AnotherAgencyIT {
                         new GHStationLocation("JUSTICE_COURT"),
                         new GHStationLocation("AIRPORT")
                 ),
-                LocalDateTime.of(2007,1,1,8,30,0).atZone(zoneId).toInstant()
+                LocalDateTime.of(2007, 1, 1, 8, 30, 0).atZone(zoneId).toInstant()
         );
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
@@ -147,14 +147,14 @@ public class AnotherAgencyIT {
                 Collections.emptyList()
         );
         router.calcLabels(adjNode, Instant.now(), 0)
-        .forEach(l -> {
-            if (l.parent == null) return;
-            EdgeIteratorState edgeIteratorState = graphHopperGtfs.getGraphHopperStorage().getEdgeIteratorState(l.edge, l.adjNode);
-            Label.EdgeLabel edgeLabel = Label.getEdgeLabel(edgeIteratorState, ptEncodedValues);
-            if (edgeLabel.edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
-                seenIds.add(edgeLabel.timeZoneId);
-            }
-        });
+                .forEach(l -> {
+                    if (l.parent == null) return;
+                    EdgeIteratorState edgeIteratorState = graphHopperGtfs.getGraphHopperStorage().getEdgeIteratorState(l.edge, l.adjNode);
+                    Label.EdgeLabel edgeLabel = Label.getEdgeLabel(edgeIteratorState, ptEncodedValues);
+                    if (edgeLabel.edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
+                        seenIds.add(edgeLabel.timeZoneId);
+                    }
+                });
         graphExplorer = new GraphExplorer(
                 graphHopperGtfs.getGraphHopperStorage(),
                 new FastestWeighting(graphHopperGtfs.getEncodingManager().getEncoder("foot")),

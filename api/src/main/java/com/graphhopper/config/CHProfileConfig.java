@@ -16,52 +16,54 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.lm;
-
-import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.Weighting;
+package com.graphhopper.config;
 
 import java.util.Objects;
 
 import static com.graphhopper.config.ProfileConfig.validateProfileName;
 
-public class LMProfile {
-    private final String profileName;
-    private final Weighting weighting;
+/**
+ * Corresponds to an entry in the `profiles_ch` section in config.yml and specifies a routing profile that shall be
+ * prepared using Contraction Hierarchies (CH)
+ *
+ * @see ProfileConfig
+ */
+public class CHProfileConfig {
+    private String profile = "";
 
-    public LMProfile(Weighting weighting) {
-        this(AbstractWeighting.weightingToFileName(weighting), weighting);
+    private CHProfileConfig() {
+        // default constructor needed for jackson
     }
 
-    public LMProfile(String profileName, Weighting weighting) {
-        validateProfileName(profileName);
-        this.profileName = profileName;
-        this.weighting = weighting;
+    public CHProfileConfig(String profile) {
+        setProfile(profile);
     }
 
-    public String getName() {
-        return profileName;
+    public String getProfile() {
+        return profile;
     }
 
-    public Weighting getWeighting() {
-        return weighting;
+    CHProfileConfig setProfile(String profile) {
+        validateProfileName(profile);
+        this.profile = profile;
+        return this;
     }
 
     @Override
     public String toString() {
-        return profileName;
+        return profile;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        LMProfile lmProfile = (LMProfile) o;
-        return Objects.equals(profileName, lmProfile.profileName);
+        CHProfileConfig that = (CHProfileConfig) o;
+        return Objects.equals(profile, that.profile);
     }
 
     @Override
     public int hashCode() {
-        return profileName.hashCode();
+        return profile.hashCode();
     }
 }

@@ -18,6 +18,8 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
@@ -26,6 +28,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static org.junit.Assert.*;
@@ -304,8 +307,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         // load without configured FlagEncoders
         GraphHopper hopper = new GraphHopper();
+        hopper.setProfiles(Collections.singletonList(new ProfileConfig("fastest_car_node").setVehicle("car").setWeighting("fastest")));
         if (ch) {
-            hopper.getCHPreparationHandler().setCHProfileStrings("fastest");
+            hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("fastest_car_node"));
         }
         assertTrue(hopper.load(defaultGraphLoc));
         graph = hopper.getGraphHopperStorage();
@@ -314,9 +318,11 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         Helper.close(graph);
 
         // load via explicitly configured FlagEncoders
-        hopper = new GraphHopper().setEncodingManager(encodingManager);
+        hopper = new GraphHopper()
+                .setEncodingManager(encodingManager)
+                .setProfiles(Collections.singletonList(new ProfileConfig("fastest_car_node").setVehicle("car").setWeighting("fastest")));
         if (ch) {
-            hopper.getCHPreparationHandler().setCHProfileStrings("fastest");
+            hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("fastest_car_node"));
         }
         assertTrue(hopper.load(defaultGraphLoc));
         graph = hopper.getGraphHopperStorage();
