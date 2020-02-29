@@ -864,18 +864,14 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
-        boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
-        boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
-
-        String profile = "";
+    public String resolveProfileName(HintsMap map, boolean disableCH, boolean disableLM) {
         if (chPreparationHandler.isEnabled() && !disableCH) {
-            profile = selectCHProfile(map).getName();
+            return selectCHProfile(map).getName();
         } else if (lmPreparationHandler.isEnabled() && !disableLM) {
-            profile = selectLMProfile(map).getName();
+            return selectLMProfile(map).getName();
+        } else {
+            return "unprepared_profile";
         }
-
-        return getAlgorithmFactory(profile, disableCH, disableLM);
     }
 
     public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
@@ -1117,7 +1113,8 @@ public class GraphHopper implements GraphHopperAPI {
                     ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
                     : NO_TURN_COST_PROVIDER;
 
-            RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(hints);
+            String profile = resolveProfileName(hints, disableCH, disableLM);
+            RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile, disableCH, disableLM);
             Weighting weighting;
             Graph graph = ghStorage;
             if (chPreparationHandler.isEnabled() && !disableCH) {

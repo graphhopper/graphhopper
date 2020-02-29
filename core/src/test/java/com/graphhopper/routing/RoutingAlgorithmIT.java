@@ -88,7 +88,7 @@ public class RoutingAlgorithmIT {
             algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(lmHints);
+                    return hopper.getAlgorithmFactory(lmHints.getVehicle() + "_profile", true, false);
                 }
             });
         }
@@ -102,7 +102,7 @@ public class RoutingAlgorithmIT {
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|algos|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(chHints);
+                    return hopper.getAlgorithmFactory(chHints.getVehicle() + "_profile", false, true);
                 }
             });
 
@@ -110,7 +110,7 @@ public class RoutingAlgorithmIT {
                     AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|algos|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(chHints);
+                    return hopper.getAlgorithmFactory(chHints.getVehicle() + "_profile", false, true);
                 }
             });
         }

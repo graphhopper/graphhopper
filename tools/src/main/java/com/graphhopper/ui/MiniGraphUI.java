@@ -37,7 +37,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
@@ -97,17 +96,20 @@ public class MiniGraphUI {
         encoder = hopper.getEncodingManager().getEncoder("car");
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
-        HintsMap map = new HintsMap("fastest").
+        HintsMap map = new HintsMap().
+                setWeighting("fastest").
                 setVehicle("car");
 
         boolean ch = true;
         if (ch) {
-            map.put(Parameters.Landmark.DISABLE, true);
             CHProfile chProfile = hopper.getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
             weighting = chProfile.getWeighting();
             routingGraph = hopper.getGraphHopperStorage().getCHGraph(chProfile);
 
-            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
+            boolean disableCH = false;
+            boolean disableLM = true;
+            String profileName = hopper.resolveProfileName(map, disableCH, disableLM);
+            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(profileName, disableCH, disableLM);
             algoFactory = new RoutingAlgorithmFactory() {
 
                 class TmpAlgo extends DijkstraBidirectionCH implements DebugAlgo {
@@ -143,11 +145,12 @@ public class MiniGraphUI {
             algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
 
         } else {
-            map.put(Parameters.CH.DISABLE, true);
-//            map.put(Parameters.Landmark.DISABLE, true);
             routingGraph = graph;
             weighting = hopper.createWeighting(map, encoder, NO_TURN_COST_PROVIDER);
-            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
+            boolean disableCH = true;
+            boolean disableLM = false;
+            String profileName = hopper.resolveProfileName(map, disableCH, disableLM);
+            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(profileName, disableCH, disableLM);
             algoFactory = new RoutingAlgorithmFactory() {
 
                 @Override

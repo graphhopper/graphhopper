@@ -134,7 +134,7 @@ public class GraphHopperOSMTest {
                 setDataReaderFile(testOsm);
         gh.importOrLoad();
 
-        assertFalse(gh.getAlgorithmFactory(new HintsMap(weighting)) instanceof CHRoutingAlgorithmFactory);
+        assertFalse(gh.getAlgorithmFactory("profile", false, false) instanceof CHRoutingAlgorithmFactory);
 
         GHResponse rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4)
                 .setVehicle(vehicle).setWeighting(weighting));
@@ -156,7 +156,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
 
-        assertFalse(gh.getAlgorithmFactory(new HintsMap(weighting)) instanceof CHRoutingAlgorithmFactory);
+        assertFalse(gh.getAlgorithmFactory("profile", false, false) instanceof CHRoutingAlgorithmFactory);
         gh.close();
     }
 
