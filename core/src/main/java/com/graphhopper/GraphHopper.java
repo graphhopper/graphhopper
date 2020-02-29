@@ -29,9 +29,12 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.ch.CHPreparationHandler;
+import com.graphhopper.routing.ch.CHProfileSelectionException;
+import com.graphhopper.routing.ch.CHProfileSelector;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LMProfile;
+import com.graphhopper.routing.lm.LMProfileSelector;
 import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
@@ -864,6 +867,18 @@ public class GraphHopper implements GraphHopperAPI {
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
         boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
         boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
+
+        String profile = "";
+        if (chPreparationHandler.isEnabled() && !disableCH) {
+            profile = selectCHProfile(map).getName();
+        } else if (lmPreparationHandler.isEnabled() && !disableLM) {
+            profile = selectLMProfile(map).getName();
+        }
+
+        return getAlgorithmFactory(profile, disableCH, disableLM);
+    }
+
+    public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
         if (chPreparationHandler.isEnabled() && disableCH && !chPreparationHandler.isDisablingAllowed()) {
             throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
         }
@@ -873,12 +888,24 @@ public class GraphHopper implements GraphHopperAPI {
 
         // for now do not allow mixing CH&LM #1082,#1889
         if (chPreparationHandler.isEnabled() && !disableCH) {
-            return chPreparationHandler.getAlgorithmFactory(map);
+            return chPreparationHandler.getAlgorithmFactory(profile);
         } else if (lmPreparationHandler.isEnabled() && !disableLM) {
-            return lmPreparationHandler.getAlgorithmFactory(map);
+            return lmPreparationHandler.getAlgorithmFactory(profile);
         } else {
             return new RoutingAlgorithmFactorySimple();
         }
+    }
+
+    private CHProfile selectCHProfile(HintsMap map) {
+        try {
+            return CHProfileSelector.select(chPreparationHandler.getCHProfiles(), map);
+        } catch (CHProfileSelectionException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+    }
+
+    private LMProfile selectLMProfile(HintsMap map) {
+        return LMProfileSelector.select(lmPreparationHandler.getLMProfiles(), map);
     }
 
     public final CHPreparationHandler getCHPreparationHandler() {

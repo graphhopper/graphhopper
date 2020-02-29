@@ -988,23 +988,22 @@ public class GraphHopperOSMTest {
         CHPreparationHandler chHandler = new CHPreparationHandler();
         Weighting fwSimpleTruck = new FastestWeighting(simpleTruck);
         Weighting fwTruck = new FastestWeighting(truck);
-        GraphHopperStorage storage = new GraphBuilder(em).setCHProfiles(Arrays.asList(CHProfile.nodeBased(fwSimpleTruck), CHProfile.nodeBased(fwTruck))).build();
-        chHandler.addCHProfile(CHProfile.nodeBased(fwSimpleTruck));
-        chHandler.addCHProfile(CHProfile.nodeBased(fwTruck));
-        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, CHProfile.nodeBased(fwSimpleTruck)));
-        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, CHProfile.nodeBased(fwTruck)));
+        CHProfile simpleTruckProfile = CHProfile.nodeBased("simple_truck", fwSimpleTruck);
+        CHProfile truckProfile = CHProfile.nodeBased("truck", fwTruck);
+        GraphHopperStorage storage = new GraphBuilder(em).setCHProfiles(Arrays.asList(simpleTruckProfile, truckProfile)).build();
+        chHandler.addCHProfile(simpleTruckProfile);
+        chHandler.addCHProfile(truckProfile);
+        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckProfile));
+        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, truckProfile));
 
-        HintsMap wMap = new HintsMap("fastest");
-        wMap.put("vehicle", "truck");
-        assertEquals("fastest|truck", ((CHRoutingAlgorithmFactory) chHandler.getAlgorithmFactory(wMap)).getWeighting().toString());
-        wMap.put("vehicle", "simple_truck");
-        assertEquals("fastest|simple_truck", ((CHRoutingAlgorithmFactory) chHandler.getAlgorithmFactory(wMap)).getWeighting().toString());
+        assertEquals("fastest|truck", ((CHRoutingAlgorithmFactory) chHandler.getAlgorithmFactory("truck")).getWeighting().toString());
+        assertEquals("fastest|simple_truck", ((CHRoutingAlgorithmFactory) chHandler.getAlgorithmFactory("simple_truck")).getWeighting().toString());
 
         // make sure weighting cannot be mixed
-        chHandler.addCHProfile(CHProfile.nodeBased(fwTruck));
-        chHandler.addCHProfile(CHProfile.nodeBased(fwSimpleTruck));
+        chHandler.addCHProfile(truckProfile);
+        chHandler.addCHProfile(simpleTruckProfile);
         try {
-            chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, CHProfile.nodeBased(fwSimpleTruck)));
+            chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckProfile));
             fail();
         } catch (Exception ex) {
         }
