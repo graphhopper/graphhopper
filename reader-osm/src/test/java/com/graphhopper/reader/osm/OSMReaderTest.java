@@ -607,23 +607,7 @@ public class OSMReaderTest {
 
     @Test
     public void testEstimatedCenter() {
-        final CarFlagEncoder encoder = new CarFlagEncoder() {
-            private EncodedValueOld objectEncoder;
-
-            @Override
-            public int defineNodeBits(int index, int shift) {
-                shift = super.defineNodeBits(index, shift);
-                objectEncoder = new EncodedValueOld("oEnc", shift, 2, 1, 0, 3, true);
-                return shift + 2;
-            }
-
-            @Override
-            public long handleNodeTags(ReaderNode node) {
-                if (node.hasTag("test", "now"))
-                    return -objectEncoder.setValue(0, 1);
-                return 0;
-            }
-        };
+        final CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager manager = EncodingManager.create(encoder);
         GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
         final Map<Integer, Double> latMap = new HashMap<>();
@@ -651,11 +635,6 @@ public class OSMReaderTest {
                 return Collections.emptyList();
             }
         };
-
-        // save some node tags for first node
-        ReaderNode osmNode = new ReaderNode(1, 1.1d, 1.0d);
-        osmNode.setTag("test", "now");
-        osmreader.getNodeFlagsMap().put(1, encoder.handleNodeTags(osmNode));
 
         ReaderWay way = new ReaderWay(1L);
         way.getNodes().add(1);
