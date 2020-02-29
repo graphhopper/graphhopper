@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
@@ -34,6 +35,8 @@ public interface FlagEncoder extends EncodedValueLookup {
      * introduced
      */
     int getVersion();
+
+    TransportationMode getTransportationMode();
 
     /**
      * @return the maximum speed in km/h
