@@ -1029,6 +1029,7 @@ public class GraphHopper implements GraphHopperAPI {
         Lock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
+            // todonow: this is rather illegal state and maybe should be checked even earlier?
             if (profilesByName.isEmpty()) {
                 // todonow
                 throw new IllegalArgumentException("XXX");
