@@ -49,7 +49,7 @@ public class GraphHopperMatrixIT {
         }
 
         // ... only weight:
-        assertEquals(1840, res.getWeight(1, 2), 10);
+        assertEquals(1930, res.getWeight(1, 2), 10);
 
         req = AbstractGHMatrixWebTester.createRequest();
         req.addOutArray("weights");
@@ -57,7 +57,7 @@ public class GraphHopperMatrixIT {
         res = ghMatrix.route(req);
 
         assertEquals(9800, res.getDistance(1, 2), 50);
-        assertEquals(1840, res.getWeight(1, 2), 10);
+        assertEquals(1930, res.getWeight(1, 2), 10);
     }
 
     @Test
