@@ -1105,14 +1105,6 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-            if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
-                throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
-            }
-            TurnCostProvider turnCostProvider = (encoder.supportsTurnCosts() && tMode.isEdgeBased())
-                    ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
-                    : NO_TURN_COST_PROVIDER;
-
             String profile = resolveProfileName(hints, disableCH, disableLM);
             RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile, disableCH, disableLM);
             Weighting weighting;
@@ -1130,6 +1122,14 @@ public class GraphHopper implements GraphHopperAPI {
                 }
             } else {
                 checkNonChMaxWaypointDistance(points);
+                final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
+                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
+                }
+                TurnCostProvider turnCostProvider = (encoder.supportsTurnCosts() && tMode.isEdgeBased())
+                        ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
+                        : NO_TURN_COST_PROVIDER;
+
                 weighting = createWeighting(hints, encoder, turnCostProvider);
                 if (hints.has(Routing.BLOCK_AREA))
                     weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
