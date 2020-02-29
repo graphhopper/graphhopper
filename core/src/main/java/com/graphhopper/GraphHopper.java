@@ -601,6 +601,10 @@ public class GraphHopper implements GraphHopperAPI {
                 ? ghConfig.getBool("graph.elevation.calcmean", false)
                 : ghConfig.getBool("graph.elevation.calc_mean", false);
 
+        boolean interpolate = ghConfig.has("graph.elevation.interpolate")
+                ? ghConfig.getBool("graph.elevation.interpolate", false)
+                : eleCalcMean;
+
         String cacheDirStr = ghConfig.get("graph.elevation.cache_dir", "");
         if (cacheDirStr.isEmpty())
             cacheDirStr = ghConfig.get("graph.elevation.cachedir", "");
@@ -627,7 +631,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         elevationProvider.setAutoRemoveTemporaryFiles(removeTempElevationFiles);
-        elevationProvider.setCalcMean(eleCalcMean);
+        elevationProvider.setInterpolate(interpolate);
         if (!baseURL.isEmpty())
             elevationProvider.setBaseURL(baseURL);
         elevationProvider.setDAType(elevationDAType);

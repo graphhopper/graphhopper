@@ -77,9 +77,9 @@ public class MultiSourceElevationProvider implements ElevationProvider {
     }
 
     @Override
-    public void setCalcMean(boolean calcMean) {
-        srtmProvider.setCalcMean(calcMean);
-        globalProvider.setCalcMean(calcMean);
+    public void setInterpolate(boolean interpolate) {
+        srtmProvider.setInterpolate(interpolate);
+        globalProvider.setInterpolate(interpolate);
     }
 
     @Override
