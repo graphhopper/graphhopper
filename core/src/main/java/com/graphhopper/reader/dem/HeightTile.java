@@ -98,7 +98,7 @@ public class HeightTile {
         double elevation;
         if (interpolate) {
             double x = (width - 1) * deltaLon / horizontalDegree;
-            double y = 1 - (height - 1) * deltaLat / verticalDegree;
+            double y = (height - 1) * (1 - deltaLat / verticalDegree);
             int left = (int) x;
             int top = (int) y;
             int right = left + 1;
