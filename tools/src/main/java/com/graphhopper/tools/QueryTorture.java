@@ -240,7 +240,7 @@ public class QueryTorture {
         GHPoint end;
         long realCount;
         List<String> points = new ArrayList<>();
-        Map<String, String> params = new HashMap<>();
+        Map<String, String> params = new LinkedHashMap<>();
 
         static Query parse(String logLine) {
             String START = "GHBaseServlet - ";
