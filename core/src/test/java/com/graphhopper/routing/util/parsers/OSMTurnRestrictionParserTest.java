@@ -1,6 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.OSMTurnRestriction;
+import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TurnCost;
@@ -18,7 +19,7 @@ import java.util.Map;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-public class OSMTurnRelationParserTest {
+public class OSMTurnRestrictionParserTest {
 
     @Test
     public void testGetRestrictionAsEntries() {
@@ -31,7 +32,7 @@ public class OSMTurnRelationParserTest {
         internalToOSMEdge.put(3, 3L);
         internalToOSMEdge.put(4, 4L);
 
-        OSMTurnRelationParser parser = new OSMTurnRelationParser(encoder.toString(), 1);
+        OSMTurnRestrictionParser parser = new OSMTurnRestrictionParser(encoder.toString(), 1);
         GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager.Builder().add(encoder).addTurnCostParser(parser).build()).create();
         EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage);
         TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
@@ -51,7 +52,12 @@ public class OSMTurnRelationParserTest {
         };
 
         // TYPE == ONLY
-        OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
+        ReaderRelation readerRelation = new ReaderRelation(-1);
+        readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 4, "from"));
+        readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.NODE, 3, "via"));
+        readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 3, "to"));
+        readerRelation.setTag("restriction", "left_turn_only");
+        OSMTurnRestriction instance = new OSMTurnRestriction(readerRelation);
         IntsRef tcFlags = TurnCost.createFlags();
         parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
 
@@ -62,16 +68,25 @@ public class OSMTurnRelationParserTest {
         assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 2)));
 
         // TYPE == NOT
-        instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
+        readerRelation = new ReaderRelation(-2);
+        readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 4, "from"));
+        readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.NODE, 3, "via"));
+        readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 3, "to"));
+        readerRelation.setTag("restriction", "no_left_turn");
+        instance = new OSMTurnRestriction(readerRelation);
         parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
         assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 3)));
     }
 
     @Test
     public void unknownShouldBehaveLikeMotorVehicle() {
-        OSMTurnRelationParser parser = new OSMTurnRelationParser("fatcarsomething", 1);
-        OSMTurnRelation turnRelation = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
-        turnRelation.setVehicleTypeRestricted("space");
+        OSMTurnRestrictionParser parser = new OSMTurnRestrictionParser("fatcarsomething", 1);
+        ReaderRelation readerRelation = new ReaderRelation(-1);
+        readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 4, "from"));
+        readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.NODE, 3, "via"));
+        readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 3, "to"));
+        readerRelation.setTag("restriction:space", "no_left_turn");
+        OSMTurnRestriction turnRelation = new OSMTurnRestriction(readerRelation);
         parser.handleTurnRelationTags(TurnCost.createFlags(), turnRelation, null, null);
     }
 }

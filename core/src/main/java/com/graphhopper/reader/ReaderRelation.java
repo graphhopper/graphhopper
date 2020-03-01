@@ -99,4 +99,13 @@ public class ReaderRelation extends ReaderElement {
             return role;
         }
     }
+
+    public long findMember(int type, String role) {
+        for (ReaderRelation.Member member : getMembers()) {
+            if (member.getType() == type && member.getRole().equals(role))
+                return member.getRef();
+        }
+        return 0;
+    }
+
 }

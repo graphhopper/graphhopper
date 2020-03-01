@@ -660,8 +660,8 @@ public class OSMReaderTest {
         way.getNodes().add(1);
         way.getNodes().add(2);
         way.setTag("highway", "motorway");
-        osmreader.getNodeMap().put(1, 1);
-        osmreader.getNodeMap().put(2, 2);
+        osmreader.osmNodeIdToInternalNodeMap.put(1, 1);
+        osmreader.osmNodeIdToInternalNodeMap.put(2, 2);
         osmreader.processWay(way);
 
         GHPoint p = way.getTag("estimated_center", null);
@@ -743,13 +743,11 @@ public class OSMReaderTest {
 
         IntsRef tcFlags = TurnCost.createFlags();
         tcStorage.readFlags(tcFlags, GHUtility.getEdge(graph, 1, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 2).getEdge());
-        // the 2nd entry provides turn flags for bike only
         assertTrue(Double.isInfinite(carTCEnc.getDecimal(false, tcFlags)));
         assertTrue(Double.isInfinite(truckTCEnc.getDecimal(false, tcFlags)));
         assertEquals(0, bikeTCEnc.getDecimal(false, tcFlags), .1);
 
         tcStorage.readFlags(tcFlags, GHUtility.getEdge(graph, 2, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 3).getEdge());
-        // the first entry provides turn flags for car and foot only
         assertEquals(0, carTCEnc.getDecimal(false, tcFlags), .1);
         assertEquals(0, truckTCEnc.getDecimal(false, tcFlags), .1);
         assertTrue(Double.isInfinite(bikeTCEnc.getDecimal(false, tcFlags)));

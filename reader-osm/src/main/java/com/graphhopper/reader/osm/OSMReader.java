@@ -94,7 +94,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     //        nodeOsmIdToIndexMap = new BigLongIntMap(expectedNodes, EMPTY);
     // smaller memory overhead for bigger data sets because of avoiding a "rehash"
     // remember how many times a node was used to identify tower nodes
-    private LongIntMap osmNodeIdToInternalNodeMap;
+    protected LongIntMap osmNodeIdToInternalNodeMap;
     private GHLongLongHashMap osmNodeIdToNodeFlagsMap;
     private GHLongLongHashMap osmWayIdToRouteWeightMap;
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
@@ -173,8 +173,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                         }
 
                         if (++tmpWayCounter % 10_000_000 == 0) {
-                            LOGGER.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:" + nf(getNodeMap().getSize()) + " ("
-                                    + getNodeMap().getMemoryUsage() + "MB) " + Helper.getMemInfo());
+                            LOGGER.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:" + nf(osmNodeIdToInternalNodeMap.getSize()) + " ("
+                                    + osmNodeIdToInternalNodeMap.getMemoryUsage() + "MB) " + Helper.getMemInfo());
                         }
                     }
                 } else if (item.isType(ReaderElement.RELATION)) {
@@ -202,8 +202,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     }
 
     private void rememberMemberWayIds(ReaderRelation relation) {
-        long fromWayID = findMember(relation, ReaderElement.WAY, "from");
-        long toWayID = findMember(relation, ReaderElement.WAY, "to");
+        long fromWayID = relation.findMember(ReaderElement.WAY, "from");
+        long toWayID = relation.findMember(ReaderElement.WAY, "to");
         osmWayIdSet.add(fromWayID);
         osmWayIdSet.add(toWayID);
     }
@@ -236,21 +236,19 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * Creates the graph with edges and nodes from the specified osm file.
      */
     private void writeOsmToGraph(File osmFile) {
-        int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
-        LOGGER.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
+        int tmp = (int) Math.max(osmNodeIdToInternalNodeMap.getSize() / 50, 100);
+        LOGGER.info("creating graph. Found nodes (pillar+tower):" + nf(osmNodeIdToInternalNodeMap.getSize()) + ", " + Helper.getMemInfo());
         ghStorage.create(tmp);
 
         long wayStart = -1;
         long relationStart = -1;
         long counter = 1;
         try (OSMInput in = openOsmInputFile(osmFile)) {
-            LongIntMap nodeFilter = getNodeMap();
-
             ReaderElement item;
             while ((item = in.getNext()) != null) {
                 switch (item.getType()) {
                     case ReaderElement.NODE:
-                        if (nodeFilter.get(item.getId()) != EMPTY_NODE) {
+                        if (osmNodeIdToInternalNodeMap.get(item.getId()) != EMPTY_NODE) {
                             processNode((ReaderNode) item);
                         }
                         break;
@@ -318,8 +316,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         // TODO move this after we have created the edge and know the coordinates => encodingManager.applyWayTags
         LongArrayList osmNodeIds = way.getNodes();
         // Estimate length of ways containing a route tag e.g. for ferry speed calculation
-        int first = getNodeMap().get(osmNodeIds.get(0));
-        int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
+        int first = osmNodeIdToInternalNodeMap.get(osmNodeIds.get(0));
+        int last = osmNodeIdToInternalNodeMap.get(osmNodeIds.get(osmNodeIds.size() - 1));
         double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
         double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
         if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
@@ -407,13 +405,15 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             storeTurnRelation(createTurnRelations(relation));
     }
 
-    void storeTurnRelation(List<OSMTurnRelation> turnRelations) {
-        for (OSMTurnRelation turnRelation : turnRelations) {
-            int viaNode = getInternalNodeIdOfOsmNode(turnRelation.getViaOsmNodeId());
-            // street with restriction was not included (access or tag limits etc)
-            if (viaNode != EMPTY_NODE)
-                encodingManager.handleTurnRelationTags(turnRelation, this, graph);
-        }
+    void storeTurnRelation(OSMTurnRestriction turnRelation) {
+        encodingManager.handleTurnRelationTags(turnRelation, this, graph);
+
+//        for (OSMTurnRelation turnRelation : turnRelations) {
+//            int viaNode = getInternalNodeIdOfOsmNode(turnRelation.getViaOsmNodeId());
+//            // street with restriction was not included (access or tag limits etc)
+//            if (viaNode != EMPTY_NODE)
+//                encodingManager.handleTurnRelationTags(turnRelation, this, graph);
+//        }
     }
 
     /**
@@ -427,7 +427,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
     @Override
     public int getInternalNodeIdOfOsmNode(long nodeOsmId) {
-        int id = getNodeMap().get(nodeOsmId);
+        int id = osmNodeIdToInternalNodeMap.get(nodeOsmId);
         if (id < TOWER_NODE)
             return -id - 3;
 
@@ -485,7 +485,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     }
 
     boolean addNode(ReaderNode node) {
-        int nodeType = getNodeMap().get(node.getId());
+        int nodeType = osmNodeIdToInternalNodeMap.get(node.getId());
         if (nodeType == EMPTY_NODE)
             return false;
 
@@ -496,7 +496,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             addTowerNode(node.getId(), lat, lon, ele);
         } else if (nodeType == PILLAR_NODE) {
             pillarInfo.setNode(nextPillarId, lat, lon, ele);
-            getNodeMap().put(node.getId(), nextPillarId + 3);
+            osmNodeIdToInternalNodeMap.put(node.getId(), nextPillarId + 3);
             nextPillarId++;
         }
         return true;
@@ -533,13 +533,13 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     }
 
     void prepareHighwayNode(long osmId) {
-        int tmpGHNodeId = getNodeMap().get(osmId);
+        int tmpGHNodeId = osmNodeIdToInternalNodeMap.get(osmId);
         if (tmpGHNodeId == EMPTY_NODE) {
             // osmId is used exactly once
-            getNodeMap().put(osmId, PILLAR_NODE);
+            osmNodeIdToInternalNodeMap.put(osmId, PILLAR_NODE);
         } else if (tmpGHNodeId > EMPTY_NODE) {
             // mark node as tower node as it occured at least twice times
-            getNodeMap().put(osmId, TOWER_NODE);
+            osmNodeIdToInternalNodeMap.put(osmId, TOWER_NODE);
         } else {
             // tmpIndex is already negative (already tower node)
         }
@@ -552,7 +552,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             nodeAccess.setNode(nextTowerId, lat, lon);
 
         int id = -(nextTowerId + 3);
-        getNodeMap().put(osmId, id);
+        osmNodeIdToInternalNodeMap.put(osmId, id);
         nextTowerId++;
         return id;
     }
@@ -569,7 +569,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         try {
             for (int i = 0; i < osmNodeIds.size(); i++) {
                 long osmNodeId = osmNodeIds.get(i);
-                int tmpNode = getNodeMap().get(osmNodeId);
+                int tmpNode = osmNodeIdToInternalNodeMap.get(osmNodeId);
                 if (tmpNode == EMPTY_NODE)
                     continue;
 
@@ -618,7 +618,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                     if (firstNode >= 0 && firstNode == tmpNode) {
                         // loop detected. See #1525 and #1533. Insert last OSM ID as tower node. Do this for all loops so that users can manipulate loops later arbitrarily.
                         long lastOsmNodeId = osmNodeIds.get(i - 1);
-                        int lastGHNodeId = getNodeMap().get(lastOsmNodeId);
+                        int lastGHNodeId = osmNodeIdToInternalNodeMap.get(lastOsmNodeId);
                         if (lastGHNodeId < TOWER_NODE) {
                             LOGGER.warn("Pillar node " + lastOsmNodeId + " is already a tower node and used in loop, see #1533. " +
                                     "Fix mapping for way " + wayOsmId + ", nodes:" + osmNodeIds);
@@ -748,7 +748,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
     protected void finishedReading() {
         LOGGER.info("finished way processing." + " nodes: " + graph.getNodes()
-                + ", osmIdMap.size:" + getNodeMap().getSize() + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
+                + ", osmIdMap.size:" + osmNodeIdToInternalNodeMap.getSize() + ", osmIdMap:" + osmNodeIdToInternalNodeMap.getMemoryUsage() + "MB"
                 + ", nodeFlagsMap.size:" + getNodeFlagsMap().size() + ", relFlagsMap.size:" + getRelFlagsMapSize()
                 + ", zeroCounter:" + zeroCounter
                 + " " + Helper.getMemInfo());
@@ -767,7 +767,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      */
     long addBarrierNode(long nodeId) {
         ReaderNode newNode;
-        int graphIndex = getNodeMap().get(nodeId);
+        int graphIndex = osmNodeIdToInternalNodeMap.get(nodeId);
         if (graphIndex < TOWER_NODE) {
             graphIndex = -graphIndex - 3;
             newNode = new ReaderNode(createNewNodeId(), nodeAccess, graphIndex);
@@ -803,58 +803,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         return addOSMWay(barrierNodeIds, edgeFlags, wayOsmId);
     }
 
-    /**
-     * Creates turn relations out of an unspecified OSM relation
-     */
-    List<OSMTurnRelation> createTurnRelations(ReaderRelation relation) {
-        List<OSMTurnRelation> result = new ArrayList<>();
-        long fromWayID = findMember(relation, ReaderElement.WAY, "from");
-        long viaNodeID = findMember(relation, ReaderElement.NODE, "via");
-        long toWayID = findMember(relation, ReaderElement.WAY, "to");
-        if (fromWayID > 0 && toWayID > 0 && viaNodeID > 0) {
-            List<String> vehicleTypesExcept = new ArrayList<>();
-            if (relation.hasTag("except")) {
-                String tagExcept = relation.getTag("except");
-                if (!Helper.isEmpty(tagExcept)) {
-                    List<String> vehicleTypes = new ArrayList<>(Arrays.asList(tagExcept.split(";")));
-                    for (String vehicleType : vehicleTypes)
-                        vehicleTypesExcept.add(vehicleType.trim());
-                }
-            }
-            if (relation.hasTag("restriction")) {
-                OSMTurnRelation osmTurnRelation = createTurnRelation(fromWayID, viaNodeID, toWayID, relation.getTag("restriction"), "", vehicleTypesExcept);
-                if (osmTurnRelation != null) {
-                    result.add(osmTurnRelation);
-                }
-            }
-            for (String key : relation.getKeysWithPrefix("restriction:")) {
-                String keyWithoutRestrictionPrefix = key.replace("restriction:", "").trim();
-                OSMTurnRelation osmTurnRelation = createTurnRelation(fromWayID, viaNodeID, toWayID, relation.getTag(key), keyWithoutRestrictionPrefix, vehicleTypesExcept);
-                if (osmTurnRelation != null) {
-                    result.add(osmTurnRelation);
-                }
-            }
-        }
-        return result;
-    }
-
-    private long findMember(ReaderRelation relation, int type, String role) {
-        for (ReaderRelation.Member member : relation.getMembers()) {
-            if (member.getType() == type && member.getRole().equals(role))
-                return member.getRef();
-        }
-        return 0;
-    }
-
-    OSMTurnRelation createTurnRelation(long fromWayID, long viaNodeID, long toWayID, String restrictionType, String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
-        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(restrictionType);
-        if (type != null) {
-            OSMTurnRelation osmTurnRelation = new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
-            osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
-            osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
-            return osmTurnRelation;
-        }
-        return null;
+    OSMTurnRestriction createTurnRelations(ReaderRelation relation) {
+        return new OSMTurnRestriction(relation);
     }
 
     /**
@@ -862,13 +812,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      */
     boolean isInBounds(ReaderNode node) {
         return true;
-    }
-
-    /**
-     * Maps OSM IDs (long) to internal node IDs (int)
-     */
-    protected LongIntMap getNodeMap() {
-        return osmNodeIdToInternalNodeMap;
     }
 
     protected LongLongMap getNodeFlagsMap() {

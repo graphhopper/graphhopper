@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.OSMTurnRestriction;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.storage.Graph;
@@ -35,7 +35,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 /**
  * This parser takes the turn restrictions from OSM (OSM does not provide turn costs, but only restrictions) and creates the appropriate turn costs (with value infinity)
  */
-public class OSMTurnRelationParser implements TurnCostParser {
+public class OSMTurnRestrictionParser implements TurnCostParser {
     private String name;
     private DecimalEncodedValue turnCostEnc;
     private final int maxTurnCosts;
@@ -47,7 +47,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      *                     turn is forbidden and results in costs of positive infinity.
      */
-    public OSMTurnRelationParser(String name, int maxTurnCosts) {
+    public OSMTurnRestrictionParser(String name, int maxTurnCosts) {
         this.name = name;
         this.maxTurnCosts = maxTurnCosts;
         // https://wiki.openstreetmap.org/wiki/Key:access
@@ -78,7 +78,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
     }
 
     @Override
-    public void handleTurnRelationTags(IntsRef turnCostFlags, OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph) {
+    public void handleTurnRelationTags(IntsRef turnCostFlags, OSMTurnRestriction turnRelation, ExternalInternalMap map, Graph graph) {
         if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
             return;
 
@@ -93,10 +93,10 @@ public class OSMTurnRelationParser implements TurnCostParser {
         return cachedOutExplorer == null ? cachedOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)) : cachedOutExplorer;
     }
 
-    void addRelationToTCStorage(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
+    void addRelationToTCStorage(OSMTurnRestriction osmTurnRestriction, IntsRef turnCostFlags,
                                 ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
-        int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
+        int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRestriction.getViaOsmNodeId());
         EdgeExplorer edgeOutExplorer = getOutExplorer(graph), edgeInExplorer = getInExplorer(graph);
 
         try {
@@ -106,7 +106,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
             EdgeIterator iter = edgeInExplorer.setBaseNode(viaNode);
 
             while (iter.next()) {
-                if (map.getOsmIdOfEdge(iter.getEdge()) == osmTurnRelation.getOsmIdFrom()) {
+                if (map.getOsmIdOfEdge(iter.getEdge()) == osmTurnRestriction.getOsmIdFrom()) {
                     edgeIdFrom = iter.getEdge();
                     break;
                 }
@@ -122,15 +122,16 @@ public class OSMTurnRelationParser implements TurnCostParser {
             while (iter.next()) {
                 int edgeId = iter.getEdge();
                 long wayId = map.getOsmIdOfEdge(edgeId);
-                if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRelation.Type.ONLY && wayId != osmTurnRelation.getOsmIdTo()
-                        || osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT && wayId == osmTurnRelation.getOsmIdTo() && wayId >= 0) {
+                OSMTurnRestriction.Type restrictionType = osmTurnRestriction.getRestrictionType();
+                if (edgeId != edgeIdFrom && restrictionType == OSMTurnRestriction.Type.ONLY && wayId != osmTurnRestriction.getOsmIdTo()
+                        || restrictionType == OSMTurnRestriction.Type.NOT && wayId == osmTurnRestriction.getOsmIdTo() && wayId >= 0) {
                     tcs.set(turnCostEnc, turnCostFlags, edgeIdFrom, viaNode, iter.getEdge(), Double.POSITIVE_INFINITY);
-                    if (osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT)
+                    if (restrictionType == OSMTurnRestriction.Type.NOT)
                         break;
                 }
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Could not built turn table entry for relation of node with osmId:" + osmTurnRelation.getViaOsmNodeId(), e);
+            throw new IllegalStateException("Could not build turn table entry for relation of node with osmId:" + osmTurnRestriction.getViaOsmNodeId(), e);
         }
     }
 

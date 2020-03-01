@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.OSMTurnRestriction;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -357,7 +357,7 @@ public class EncodingManager implements EncodedValueLookup {
             // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
             for (AbstractFlagEncoder encoder : flagEncoderList) {
                 if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(encoder.toString()))
-                    _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts()));
+                    _addTurnCostParser(new OSMTurnRestrictionParser(encoder.toString(), encoder.getMaxTurnCosts()));
             }
 
             if (em.encodedValueMap.isEmpty())
@@ -597,7 +597,7 @@ public class EncodingManager implements EncodedValueLookup {
         return relFlags;
     }
 
-    public void handleTurnRelationTags(OSMTurnRelation turnRelation, TurnCostParser.ExternalInternalMap map, Graph graph) {
+    public void handleTurnRelationTags(OSMTurnRestriction turnRelation, TurnCostParser.ExternalInternalMap map, Graph graph) {
         for (TurnCostParser parser : turnCostParsers.values()) {
             parser.handleTurnRelationTags(TurnCost.createFlags(), turnRelation, map, graph);
         }
