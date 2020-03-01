@@ -81,7 +81,7 @@ public class TardurGraphHopperManaged implements Managed {
                     }
 
                     @Override
-                    public void handleTurnRelationTags(IntsRef turnCostFlags, OSMTurnRestriction turnRelation, ExternalInternalMap map, Graph graph) {
+                    public void handleTurnRestriction(IntsRef turnCostFlags, OSMTurnRestriction turnRelation, ExternalInternalMap map, Graph graph) {
                         System.out.println("pups");
                     }
                 });

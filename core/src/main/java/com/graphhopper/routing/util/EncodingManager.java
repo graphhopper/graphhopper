@@ -597,9 +597,9 @@ public class EncodingManager implements EncodedValueLookup {
         return relFlags;
     }
 
-    public void handleTurnRelationTags(OSMTurnRestriction turnRelation, TurnRestrictionParser.ExternalInternalMap map, Graph graph) {
+    public void handleTurnRestriction(OSMTurnRestriction turnRestriction, TurnRestrictionParser.ExternalInternalMap map, Graph graph) {
         for (TurnRestrictionParser parser : turnRestrictionParsers.values()) {
-            parser.handleTurnRelationTags(TurnCost.createFlags(), turnRelation, map, graph);
+            parser.handleTurnRestriction(TurnCost.createFlags(), turnRestriction, map, graph);
         }
     }
 

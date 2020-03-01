@@ -34,7 +34,7 @@ public interface TurnRestrictionParser {
 
     void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
 
-    void handleTurnRelationTags(IntsRef turnCostFlags, OSMTurnRestriction turnRelation, ExternalInternalMap map, Graph graph);
+    void handleTurnRestriction(IntsRef turnCostFlags, OSMTurnRestriction turnRelation, ExternalInternalMap map, Graph graph);
 
     /**
      * This map associates the internal GraphHopper nodes IDs with external IDs (OSM) and similarly for the edge IDs

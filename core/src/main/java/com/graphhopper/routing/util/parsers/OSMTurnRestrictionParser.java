@@ -78,7 +78,7 @@ public class OSMTurnRestrictionParser implements TurnRestrictionParser {
     }
 
     @Override
-    public void handleTurnRelationTags(IntsRef turnCostFlags, OSMTurnRestriction turnRelation, ExternalInternalMap map, Graph graph) {
+    public void handleTurnRestriction(IntsRef turnCostFlags, OSMTurnRestriction turnRelation, ExternalInternalMap map, Graph graph) {
         if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
             return;
 

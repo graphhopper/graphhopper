@@ -87,6 +87,6 @@ public class OSMTurnRestrictionParserTest {
         readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 3, "to"));
         readerRelation.setTag("restriction:space", "no_left_turn");
         OSMTurnRestriction turnRelation = new OSMTurnRestriction(readerRelation);
-        parser.handleTurnRelationTags(TurnCost.createFlags(), turnRelation, null, null);
+        parser.handleTurnRestriction(TurnCost.createFlags(), turnRelation, null, null);
     }
 }

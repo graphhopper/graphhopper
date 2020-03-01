@@ -17,8 +17,10 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.*;
-import com.graphhopper.coll.LongIntMap;
+import com.carrotsearch.hppc.IntLongMap;
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongIndexedContainer;
+import com.carrotsearch.hppc.LongLongMap;
 import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -35,7 +37,10 @@ import org.slf4j.LoggerFactory;
 import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -109,7 +114,6 @@ public class OSMReader implements DataReader, TurnRestrictionParser.ExternalInte
     private File osmFile;
     private Date osmDataDate;
     private final IntsRef tempRelFlags;
-    private final TurnCostStorage tcs;
 
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
@@ -124,8 +128,6 @@ public class OSMReader implements DataReader, TurnRestrictionParser.ExternalInte
         tempRelFlags = encodingManager.createRelationFlags();
         if (tempRelFlags.length != 2)
             throw new IllegalArgumentException("Cannot use relation flags with != 2 integers");
-
-        tcs = graph.getTurnCostStorage();
     }
 
     @Override
@@ -401,19 +403,12 @@ public class OSMReader implements DataReader, TurnRestrictionParser.ExternalInte
     }
 
     public void processRelation(ReaderRelation relation) {
-        if (tcs != null && relation.hasTag("type", "restriction"))
-            storeTurnRelation(createTurnRelations(relation));
-    }
-
-    void storeTurnRelation(OSMTurnRestriction turnRelation) {
-        encodingManager.handleTurnRelationTags(turnRelation, this, graph);
-
-//        for (OSMTurnRelation turnRelation : turnRelations) {
-//            int viaNode = getInternalNodeIdOfOsmNode(turnRelation.getViaOsmNodeId());
-//            // street with restriction was not included (access or tag limits etc)
-//            if (viaNode != EMPTY_NODE)
-//                encodingManager.handleTurnRelationTags(turnRelation, this, graph);
-//        }
+        if (relation.hasTag("type", "restriction")) {
+            OSMTurnRestriction turnRestriction = new OSMTurnRestriction(relation);
+            int viaNode = getInternalNodeIdOfOsmNode(turnRestriction.getViaOsmNodeId());
+            if (viaNode != EMPTY_NODE) // maybe street with restriction was not included (access or tag limits etc)
+                encodingManager.handleTurnRestriction(turnRestriction, this, graph);
+        }
     }
 
     /**
@@ -801,10 +796,6 @@ public class OSMReader implements DataReader, TurnRestrictionParser.ExternalInte
         barrierNodeIds.add(fromId);
         barrierNodeIds.add(toId);
         return addOSMWay(barrierNodeIds, edgeFlags, wayOsmId);
-    }
-
-    OSMTurnRestriction createTurnRelations(ReaderRelation relation) {
-        return new OSMTurnRestriction(relation);
     }
 
     /**
