@@ -49,7 +49,7 @@ public class EncodingManager implements EncodedValueLookup {
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
     private final List<TagParser> edgeTagParsers = new ArrayList<>();
-    private final Map<String, TurnCostParser> turnCostParsers = new LinkedHashMap<>();
+    private final Map<String, TurnRestrictionParser> turnRestrictionParsers = new LinkedHashMap<>();
     private int nextNodeBit = 0;
     private boolean enableInstructions = true;
     private String preferredLanguage = "";
@@ -137,7 +137,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public void releaseParsers() {
-        turnCostParsers.clear();
+        turnRestrictionParsers.clear();
         edgeTagParsers.clear();
         relationTagParsers.clear();
     }
@@ -148,7 +148,7 @@ public class EncodingManager implements EncodedValueLookup {
         private List<AbstractFlagEncoder> flagEncoderList = new ArrayList<>();
         private List<EncodedValue> encodedValueList = new ArrayList<>();
         private List<TagParser> tagParsers = new ArrayList<>();
-        private List<TurnCostParser> turnCostParsers = new ArrayList<>();
+        private List<TurnRestrictionParser> turnRestrictionParsers = new ArrayList<>();
         private List<RelationTagParser> relationTagParsers = new ArrayList<>();
 
         public Builder() {
@@ -205,9 +205,9 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
-        public Builder addTurnCostParser(TurnCostParser parser) {
+        public Builder addTurnRestrictionParser(TurnRestrictionParser parser) {
             check();
-            turnCostParsers.add(parser);
+            turnRestrictionParsers.add(parser);
             return this;
         }
 
@@ -276,7 +276,7 @@ public class EncodingManager implements EncodedValueLookup {
             _addEdgeTagParser(tagParser, false, false);
         }
 
-        private void _addTurnCostParser(TurnCostParser parser) {
+        private void _addTurnRestrictionParser(TurnRestrictionParser parser) {
             List<EncodedValue> list = new ArrayList<>();
             parser.createTurnCostEncodedValues(em, list);
             for (EncodedValue ev : list) {
@@ -286,7 +286,7 @@ public class EncodingManager implements EncodedValueLookup {
                             "EncodedValues for edges and turn cost are in the same namespace.");
                 em.encodedValueMap.put(ev.getName(), ev);
             }
-            em.turnCostParsers.put(parser.getName(), parser);
+            em.turnRestrictionParsers.put(parser.getName(), parser);
         }
 
         public EncodingManager build() {
@@ -350,14 +350,14 @@ public class EncodingManager implements EncodedValueLookup {
                 em.addEncoder(encoder);
             }
 
-            for (TurnCostParser parser : turnCostParsers) {
-                _addTurnCostParser(parser);
+            for (TurnRestrictionParser parser : turnRestrictionParsers) {
+                _addTurnRestrictionParser(parser);
             }
 
             // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
             for (AbstractFlagEncoder encoder : flagEncoderList) {
-                if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(encoder.toString()))
-                    _addTurnCostParser(new OSMTurnRestrictionParser(encoder.toString(), encoder.getMaxTurnCosts()));
+                if (encoder.supportsTurnCosts() && !em.turnRestrictionParsers.containsKey(encoder.toString()))
+                    _addTurnRestrictionParser(new OSMTurnRestrictionParser(encoder.toString(), encoder.getMaxTurnCosts()));
             }
 
             if (em.encodedValueMap.isEmpty())
@@ -597,8 +597,8 @@ public class EncodingManager implements EncodedValueLookup {
         return relFlags;
     }
 
-    public void handleTurnRelationTags(OSMTurnRestriction turnRelation, TurnCostParser.ExternalInternalMap map, Graph graph) {
-        for (TurnCostParser parser : turnCostParsers.values()) {
+    public void handleTurnRelationTags(OSMTurnRestriction turnRelation, TurnRestrictionParser.ExternalInternalMap map, Graph graph) {
+        for (TurnRestrictionParser parser : turnRestrictionParsers.values()) {
             parser.handleTurnRelationTags(TurnCost.createFlags(), turnRelation, map, graph);
         }
     }

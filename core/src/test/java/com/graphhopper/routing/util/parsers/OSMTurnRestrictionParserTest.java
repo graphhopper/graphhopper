@@ -33,9 +33,9 @@ public class OSMTurnRestrictionParserTest {
         internalToOSMEdge.put(4, 4L);
 
         OSMTurnRestrictionParser parser = new OSMTurnRestrictionParser(encoder.toString(), 1);
-        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager.Builder().add(encoder).addTurnCostParser(parser).build()).create();
+        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager.Builder().add(encoder).addTurnRestrictionParser(parser).build()).create();
         EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage);
-        TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
+        TurnRestrictionParser.ExternalInternalMap map = new TurnRestrictionParser.ExternalInternalMap() {
 
             @Override
             public int getInternalNodeIdOfOsmNode(long nodeOsmId) {
@@ -56,7 +56,7 @@ public class OSMTurnRestrictionParserTest {
         readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 4, "from"));
         readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.NODE, 3, "via"));
         readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 3, "to"));
-        readerRelation.setTag("restriction", "left_turn_only");
+        readerRelation.setTag("restriction", "only_left_turn");
         OSMTurnRestriction instance = new OSMTurnRestriction(readerRelation);
         IntsRef tcFlags = TurnCost.createFlags();
         parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);

@@ -25,7 +25,7 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.parsers.TurnCostParser;
+import com.graphhopper.routing.util.parsers.TurnRestrictionParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -63,7 +63,7 @@ import static com.graphhopper.util.Helper.nf;
  *
  * @author Peter Karich
  */
-public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap {
+public class OSMReader implements DataReader, TurnRestrictionParser.ExternalInternalMap {
     protected static final int EMPTY_NODE = -1;
     // pillar node is >= 3
     protected static final int PILLAR_NODE = 1;
