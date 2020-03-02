@@ -12,7 +12,15 @@ istio:
   internal:
     hosts:
     - graphhopper.alpha.cure.fit.internal
+<<<<<<< HEAD
   timeout: 360s
 service:
   expose:
   - 5202
+=======
+  mesh:
+    timeout: 360s
+service:
+  expose:
+  - 8989
+>>>>>>> k8s-cluster-migration
