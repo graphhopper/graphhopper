@@ -16,4 +16,4 @@ istio:
     timeout: 360s
 service:
   expose:
-  - 5202
+  - 8989
