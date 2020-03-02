@@ -36,7 +36,7 @@ import static org.junit.Assert.assertEquals;
  * @author easbar
  */
 public class BidirPathExtractorTest {
-    private FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 10);
+    private FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 10, true);
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
 
     Graph createGraph() {

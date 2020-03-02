@@ -45,17 +45,18 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
      * Should be only instantiated via EncodingManager
      */
     public WheelchairFlagEncoder() {
-        this(4, 1);
+        this(4, 1, true);
     }
 
     public WheelchairFlagEncoder(PMap properties) {
         this((int) properties.getLong("speed_bits", 4),
-                properties.getDouble("speed_factor", 1));
+                properties.getDouble("speed_factor", 1),
+                properties.getBool("block_private", true));
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public WheelchairFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor);
+    protected WheelchairFlagEncoder(int speedBits, double speedFactor, boolean blockPrivate) {
+        super(speedBits, speedFactor, blockPrivate);
         restrictions.add("wheelchair");
 
         setBlockByDefault(false);

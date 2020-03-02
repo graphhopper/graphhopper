@@ -59,28 +59,34 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      * Should be only instantiated via EncodingManager
      */
     public FootFlagEncoder() {
-        this(4, 1);
-    }
-
-    public FootFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 4),
-                properties.getDouble("speed_factor", 1));
-        this.setBlockFords(properties.getBool("block_fords", false));
-        this.speedTwoDirections = properties.getBool("speed_two_directions", false);
+        this(4, 1, true);
     }
 
     public FootFlagEncoder(String propertiesStr) {
         this(new PMap(propertiesStr));
     }
 
-    public FootFlagEncoder(int speedBits, double speedFactor) {
+    public FootFlagEncoder(PMap properties) {
+        this((int) properties.getLong("speed_bits", 4),
+                properties.getDouble("speed_factor", 1),
+                properties.getBool("block_private", true));
+        this.setBlockFords(properties.getBool("block_fords", false));
+        this.speedTwoDirections = properties.getBool("speed_two_directions", false);
+    }
+
+    protected FootFlagEncoder(int speedBits, double speedFactor, boolean blockPrivate) {
         super(speedBits, speedFactor, 0);
         restrictions.addAll(Arrays.asList("foot", "access"));
-        restrictedValues.add("private");
+
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+
+        if (blockPrivate)
+            restrictedValues.add("private");
+        else
+            intendedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("designated");

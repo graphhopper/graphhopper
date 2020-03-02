@@ -89,7 +89,7 @@ public abstract class AbstractGraphStorageTester {
     }
 
     CarFlagEncoder createCarFlagEncoder() {
-        return new CarFlagEncoder(5, 5, 0);
+        return new CarFlagEncoder(5, 5, 0, true);
     }
 
     protected GraphHopperStorage createGHStorage() {
@@ -1136,7 +1136,7 @@ public abstract class AbstractGraphStorageTester {
 
     static class TmpCarFlagEncoder extends CarFlagEncoder {
         public TmpCarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-            super(speedBits, speedFactor, maxTurnCosts);
+            super(speedBits, speedFactor, maxTurnCosts, true);
         }
     }
 }

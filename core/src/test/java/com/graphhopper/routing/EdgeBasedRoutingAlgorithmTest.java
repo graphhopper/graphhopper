@@ -89,11 +89,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private EncodingManager createEncodingManager(boolean restrictedOnly) {
-        if (restrictedOnly)
-            carEncoder = new CarFlagEncoder(5, 5, 1);
-        else
-            // allow for basic costs too
-            carEncoder = new CarFlagEncoder(5, 5, 3);
+        carEncoder = new CarFlagEncoder(5, 5, restrictedOnly ? 1 : 3, true);
         return EncodingManager.create(carEncoder);
     }
 

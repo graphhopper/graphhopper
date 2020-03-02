@@ -49,7 +49,7 @@ import static org.junit.Assert.assertFalse;
 @RunWith(Parameterized.class)
 public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
-    private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
+    private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost, true);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting;
     private final GraphHopperStorage graph;
