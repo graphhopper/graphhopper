@@ -34,6 +34,7 @@ import com.graphhopper.routing.ch.CHProfileSelector;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LMProfile;
+import com.graphhopper.routing.lm.LMProfileSelectionException;
 import com.graphhopper.routing.lm.LMProfileSelector;
 import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
@@ -901,7 +902,11 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private LMProfile selectLMProfile(HintsMap map) {
-        return LMProfileSelector.select(lmPreparationHandler.getLMProfiles(), map);
+        try {
+            return LMProfileSelector.select(lmPreparationHandler.getLMProfiles(), map);
+        } catch (LMProfileSelectionException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
     }
 
     public final CHPreparationHandler getCHPreparationHandler() {
@@ -938,7 +943,9 @@ public class GraphHopper implements GraphHopperAPI {
         for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            // note that we do not consider turn costs during LM preparation?
+            // note that we do not consider turn costs during LM preparation this is important if we want
+            // to allow e.g. changing the u_turn_costs per request (we have to use the minimum weight settings (
+            // = no turn costs) for the preparation)
             Weighting weighting = createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER);
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
@@ -1154,7 +1161,9 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
 
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                    algorithm(algoStr).traversalMode(tMode).weighting(weighting).
+                    algorithm(algoStr).
+                    traversalMode(tMode).
+                    weighting(weighting).
                     maxVisitedNodes(maxVisitedNodesForRequest).
                     hints(hints).
                     build();

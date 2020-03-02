@@ -46,21 +46,42 @@ public class LMProfileSelector {
                 lmProfiles.size() == 1) {
             return lmProfiles.get(0);
         }
-        List<String> profileNames = new ArrayList<>(lmProfiles.size());
+        List<LMProfile> matchingProfiles = new ArrayList<>();
         for (LMProfile p : lmProfiles) {
-            profileNames.add(p.getName());
-            if (p.getWeighting().matches(map))
-                return p;
+            if (!p.getWeighting().matches(map)) {
+                continue;
+            }
+            matchingProfiles.add(p);
         }
+        // Note:
         // There are situations where we can use the requested encoder/weighting with an existing LM preparation, even
         // though the preparation was done with a different weighting. For example this works when the new weighting
         // only yields higher (but never lower) weights than the one that was used for the preparation. However, its not
         // trivial to check whether or not this is the case so we do not allow this for now.
-        String requestedString = (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) + "|" +
-                (map.getVehicle().isEmpty() ? "*" : map.getVehicle());
-        throw new IllegalArgumentException("Cannot find matching LM profile for your request. Please check your parameters." +
-                "\nYou can try disabling LM by setting " + Parameters.Landmark.DISABLE + "=true" +
-                "\nrequested: " + requestedString + "\navailable: " + profileNames);
+        if (matchingProfiles.isEmpty()) {
+            throw new LMProfileSelectionException("Cannot find matching LM profile for your request. Please check your parameters." +
+                    "\nYou can try disabling LM by setting " + Parameters.Landmark.DISABLE + "=true" +
+                    "\nrequested: " + getRequestAsString() + "\navailable: " + profilesAsStrings(lmProfiles));
+        } else if (matchingProfiles.size() == 1) {
+            return matchingProfiles.get(0);
+        } else {
+            throw new LMProfileSelectionException("There are multiple LM profiles matching your request. Use the `weighting` and `vehicle` parameters to be more specific." +
+                    "\nYou can also try disabling LM altogether using " + Parameters.CH.DISABLE + "=true" +
+                    "\nrequested:  " + getRequestAsString() + "\nmatched:   " + profilesAsStrings(matchingProfiles) + "\navailable: " + profilesAsStrings(lmProfiles));
+        }
+    }
 
+    private String getRequestAsString() {
+        return (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) +
+                "|" +
+                (map.getVehicle().isEmpty() ? "*" : map.getVehicle());
+    }
+
+    private List<String> profilesAsStrings(List<LMProfile> profiles) {
+        List<String> result = new ArrayList<>(profiles.size());
+        for (LMProfile p : profiles) {
+            result.add(p.getWeighting().getName() + "|" + p.getWeighting().getFlagEncoder().toString());
+        }
+        return result;
     }
 }

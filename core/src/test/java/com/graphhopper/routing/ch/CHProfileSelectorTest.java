@@ -23,15 +23,15 @@ import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.Parameters;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CHProfileSelectorTest {
 
@@ -48,7 +48,7 @@ public class CHProfileSelectorTest {
     private Weighting weightingShortestCar;
     private Weighting weightingShortestBike;
 
-    @Before
+    @BeforeEach
     public void setup() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         FlagEncoder bikeEncoder = new BikeFlagEncoder();
@@ -76,7 +76,9 @@ public class CHProfileSelectorTest {
         assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, false, 20);
         assertProfileFound(chProfiles.get(0), chProfiles, null, null);
         assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, null, 30);
-        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, "foot", "fastest", false, null);
+        String error = assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, "foot", "fastest", false, null);
+        assertTrue(error.contains("requested:  fastest|foot|edge_based=false|u_turn_costs=*"), error);
+        assertTrue(error.contains("available: [fastest|car|edge_based=false]"), error);
     }
 
     @Test
@@ -119,7 +121,10 @@ public class CHProfileSelectorTest {
         // without specifying edge-based
         assertProfileFound(chProfiles.get(1), chProfiles, null, 30);
         assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, null, 40);
-        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, null, null);
+        String error = assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, null, null);
+        assertTrue(error.contains("requested:  fastest|car|edge_based=*|u_turn_costs=*"), error);
+        assertTrue(error.contains("matched:   [fastest|car|edge_based=false, fastest|car|edge_based=true|u_turn_costs=30, fastest|car|edge_based=true|u_turn_costs=50]"), error);
+        assertTrue(error.contains("available: [fastest|car|edge_based=false, fastest|car|edge_based=true|u_turn_costs=30, fastest|car|edge_based=true|u_turn_costs=50]"), error);
     }
 
     @Test
@@ -226,18 +231,20 @@ public class CHProfileSelectorTest {
         }
     }
 
-    private void assertCHProfileSelectionError(String expectedError, List<CHProfile> profiles, Boolean edgeBased, Integer uTurnCosts) {
-        assertCHProfileSelectionError(expectedError, profiles, "car", "fastest", edgeBased, uTurnCosts);
+    private String assertCHProfileSelectionError(String expectedError, List<CHProfile> profiles, Boolean edgeBased, Integer uTurnCosts) {
+        return assertCHProfileSelectionError(expectedError, profiles, "car", "fastest", edgeBased, uTurnCosts);
     }
 
-    private void assertCHProfileSelectionError(String expectedError, List<CHProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
+    private String assertCHProfileSelectionError(String expectedError, List<CHProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
             CHProfileSelector.select(profiles, hintsMap);
             fail("There should have been an error");
+            return "";
         } catch (CHProfileSelectionException e) {
-            assertTrue("There should have been an error message containing:\n'" + expectedError + "'\nbut was:\n'" + e.getMessage() + "'",
-                    e.getMessage().contains(expectedError));
+            assertTrue(e.getMessage().contains(expectedError),
+                    "There should have been an error message containing:\n'" + expectedError + "'\nbut was:\n'" + e.getMessage() + "'");
+            return e.getMessage();
         }
     }
 

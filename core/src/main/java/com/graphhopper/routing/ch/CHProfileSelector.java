@@ -95,13 +95,12 @@ public class CHProfileSelector {
     }
 
     private String getRequestAsString() {
-        String sb = (hintsMap.getWeighting().isEmpty() ? "*" : hintsMap.getWeighting()) +
+        return (hintsMap.getWeighting().isEmpty() ? "*" : hintsMap.getWeighting()) +
                 "|" +
                 (hintsMap.getVehicle().isEmpty() ? "*" : hintsMap.getVehicle()) +
                 "|" +
                 "edge_based=" + (edgeBased != null ? edgeBased : "*") +
                 "|" +
                 "u_turn_costs=" + (uTurnCosts != null ? uTurnCosts : "*");
-        return sb;
     }
 }
