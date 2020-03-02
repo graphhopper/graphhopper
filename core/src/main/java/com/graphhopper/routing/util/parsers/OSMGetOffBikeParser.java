@@ -21,12 +21,13 @@ public class OSMGetOffBikeParser implements TagParser {
     private final BooleanEncodedValue offBikeEnc;
 
     public OSMGetOffBikeParser() {
-        offBikeEnc = GetOffBike.create();
-        pushBikeHighwayTags.add("path");
-        // pushBikeHighwayTags.add("steps"); special handling
-        pushBikeHighwayTags.add("footway");
-        pushBikeHighwayTags.add("pedestrian");
-        pushBikeHighwayTags.add("platform");
+        // steps -> special handling
+        this(GetOffBike.create(), Arrays.asList("path", "footway", "pedestrian", "platform"));
+    }
+
+    public OSMGetOffBikeParser(BooleanEncodedValue enc, List<String> pushBikeTags) {
+        offBikeEnc = enc;
+        pushBikeHighwayTags.addAll(pushBikeTags);
     }
 
     @Override
