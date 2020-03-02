@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
-import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
@@ -92,12 +91,12 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     private final Circle pointCircle;
     private final NodeAccess nodeAccess;
 
-    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, NodeAccess nodeAccess, GHPoint point, double radius, String pointHint) {
+    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, NodeAccess nodeAccess, String pointHint, GHPoint point, double radius) {
         this(edgeFilter, nodeAccess, pointHint, point, radius, DEFAULT_REWRITE_MAP);
     }
 
     /**
-     * @param radius the searchable region about the point in meters
+     * @param radius     the searchable region about the point in meters
      * @param rewriteMap maps abbreviations to its longer form
      */
     public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, NodeAccess nodeAccess, String pointHint, GHPoint point, double radius, Map<String, String> rewriteMap) {
@@ -159,7 +158,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         }
 
         BBox bbox = createBBox(nodeAccess, iter);
-        if(!pointCircle.intersects(bbox)) {
+        if (!pointCircle.intersects(bbox)) {
             return false;
         }
 
