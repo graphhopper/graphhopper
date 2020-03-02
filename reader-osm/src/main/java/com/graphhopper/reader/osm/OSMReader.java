@@ -697,8 +697,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         if (doSimplify)
             simplifyAlgo.simplify(pointList);
 
-        // If the entire way is the first and last point, do not waste space storing an empty way geometry
-        if (pointList.getSize() > 2)
+        // If the entire way is just the first and last point, do not waste space storing an empty way geometry
+        if (pointList.size() > 2)
             iter.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
 
         storeOsmWayID(iter.getEdge(), wayOsmId);

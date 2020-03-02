@@ -895,7 +895,7 @@ public class OSMReaderTest {
         assertTrue(qr.isValid());
         assertEquals(0.1, qr.getSnappedPoint().lat, 0.1);
         assertEquals(-179.6, qr.getSnappedPoint().lon, 0.1);
-        assertEquals(56, qr.getClosestEdge().getDistance() / 1000, 1);
+        assertEquals(112, qr.getClosestEdge().getDistance() / 1000, 1);
     }
 
     @Test
