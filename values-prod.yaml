@@ -12,7 +12,8 @@ istio:
   internal:
     hosts:
     - graphhopper.production.cure.fit.internal
-  timeout: 360s
+  mesh:
+    timeout: 360s
 service:
   expose:
   - 5202
