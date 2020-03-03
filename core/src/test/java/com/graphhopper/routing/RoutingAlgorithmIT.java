@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.PrincetonReader;
 import com.graphhopper.routing.ch.CHProfileSelector;
 import com.graphhopper.routing.util.EncodingManager;
@@ -65,7 +66,8 @@ public class RoutingAlgorithmIT {
 
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(hints.getVehicle());
         TurnCostProvider turnCostProvider = tMode.isEdgeBased() ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
-        Weighting weighting = hopper.createWeighting(hints, encoder, turnCostProvider);
+        ProfileConfig profile = new ProfileConfig("profile").setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());
+        Weighting weighting = hopper.createWeighting(profile, hints, encoder, turnCostProvider);
 
         HintsMap defaultHints = new HintsMap().put(Parameters.CH.DISABLE, true).put(Parameters.Landmark.DISABLE, true)
                 .setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());

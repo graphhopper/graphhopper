@@ -3,6 +3,7 @@ package com.graphhopper.resources;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.Isochrone;
@@ -55,7 +56,6 @@ public class IsochroneResource {
     @Produces({MediaType.APPLICATION_JSON})
     public Response doGet(
             @Context UriInfo uriInfo,
-            @QueryParam("vehicle") @DefaultValue("car") String vehicle,
             @QueryParam("buckets") @DefaultValue("1") int nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") GHPoint point,
@@ -71,13 +71,15 @@ public class IsochroneResource {
 
         StopWatch sw = new StopWatch().start();
 
-        if (!encodingManager.hasEncoder(vehicle))
-            throw new IllegalArgumentException("vehicle not supported:" + vehicle);
-
         if (respType != null && !respType.equalsIgnoreCase("json") && !respType.equalsIgnoreCase("geojson"))
             throw new IllegalArgumentException("Format not supported:" + respType);
 
-        FlagEncoder encoder = encodingManager.getEncoder(vehicle);
+        HintsMap hintsMap = new HintsMap();
+        RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
+        hintsMap.put(Parameters.CH.DISABLE, true);
+        hintsMap.put(Parameters.Landmark.DISABLE, true);
+        ProfileConfig profile = graphHopper.resolveProfile(hintsMap);
+        FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
         QueryResult qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
@@ -87,11 +89,8 @@ public class IsochroneResource {
         Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
 
-        HintsMap hintsMap = new HintsMap();
-        RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
-
-        // todo: isochrones with turn costs ?
-        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, NO_TURN_COST_PROVIDER);
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap, encoder, NO_TURN_COST_PROVIDER);
+        // todonow: isochrones with turn costs? do we have to disable it here explicitly?
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
