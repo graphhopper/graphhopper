@@ -50,7 +50,7 @@ public class ConditionalTurnRestrictionsResource {
     public ConditionalTurnRestrictionsResource(GraphHopperStorage storage, OSM osm, TimeZones timeZones) {
         this.osm = osm;
         this.timeZones = timeZones;
-        timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(storage, osm, timeZones);
+        timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(storage, timeZones);
     }
 
     @GET
@@ -62,7 +62,7 @@ public class ConditionalTurnRestrictionsResource {
                     .flatMap(entry -> {
                         long osmid = entry.getKey();
                         Relation relation = entry.getValue();
-                        Map<String, Object> tags = TimeDependentRestrictionsDAO.getTags(relation);
+                        Map<String, String> tags = TimeDependentRestrictionsDAO.getTags(relation);
                         List<TimeDependentRestrictionsDAO.ConditionalTagData> restrictionData = TimeDependentRestrictionsDAO.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
                                 .collect(Collectors.toList());
                         if (!restrictionData.isEmpty()) {

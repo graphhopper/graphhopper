@@ -31,20 +31,20 @@ import com.graphhopper.storage.IntsRef;
 import java.util.HashMap;
 import java.util.List;
 
-public class OSMConditionalRestrictionParser implements TagParser {
+public class ConditionalAccessRestrictionParser implements TagParser {
 
     private final GraphHopper graphHopper;
     private SimpleBooleanEncodedValue conditional;
     private UnsignedIntEncodedValue tagPointer;
 
-    public OSMConditionalRestrictionParser(GraphHopper graphHopper) {
+    public ConditionalAccessRestrictionParser(GraphHopper graphHopper) {
         this.graphHopper = graphHopper;
     }
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
         conditional = new SimpleBooleanEncodedValue("conditional");
-        tagPointer = new UnsignedIntEncodedValue("tagpointer", 31, false);
+        tagPointer = new UnsignedIntEncodedValue("edgetagpointer", 31, false);
         registerNewEncodedValue.add(conditional);
         registerNewEncodedValue.add(tagPointer);
     }

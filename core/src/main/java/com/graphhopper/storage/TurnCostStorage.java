@@ -22,8 +22,6 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.util.EdgeIterator;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
-
 /**
  * Holds turn cost tables for each node. The additional field of a node will be used to point towards the
  * first entry within a node cost table to identify turn restrictions or turn costs.
@@ -214,14 +212,6 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
 
         nextCostFlags(tcFlags, fromEdge, viaNode, toEdge);
         return tcFlags;
-    }
-
-    public boolean isUTurn(int edgeFrom, int edgeTo) {
-        return edgeFrom == edgeTo;
-    }
-
-    public boolean isUTurnAllowed(int node) {
-        return true;
     }
 
     private void nextCostFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {

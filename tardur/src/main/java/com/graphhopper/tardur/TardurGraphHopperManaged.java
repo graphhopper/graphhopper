@@ -24,19 +24,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.reader.OSMTurnRestriction;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.parsers.TurnRestrictionParser;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.Parameters;
 import io.dropwizard.lifecycle.Managed;
@@ -44,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.List;
 
 import static com.graphhopper.util.Helper.UTF_CS;
 
@@ -69,29 +63,15 @@ public class TardurGraphHopperManaged implements Managed {
         graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection){
             @Override
             protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
-                emBuilder.addTurnRestrictionParser(new TurnRestrictionParser() {
-                    @Override
-                    public String getName() {
-                        return "ulrich";
-                    }
-
-                    @Override
-                    public void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-
-                    }
-
-                    @Override
-                    public void handleTurnRestriction(IntsRef turnCostFlags, OSMTurnRestriction turnRelation, ExternalInternalMap map, Graph graph) {
-                        System.out.println("pups");
-                    }
-                });
+                TurnRestrictionParser turnRestrictionParser = new ConditionalTurnRestrictionParser();
+                emBuilder.addTurnRestrictionParser(turnRestrictionParser);
             }
 
             @Override
             public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
                 Weighting weighting = super.createWeighting(hintsMap, encoder, turnCostProvider);
                 if (hintsMap.has("block_property")) {
-                    return new TimeDependentAccessWeighting(osm, graphHopper, timeZones, weighting);
+                    return new TimeDependentAccessWeighting(graphHopper, timeZones, weighting);
                 }
                 return weighting;
             }
@@ -114,12 +94,6 @@ public class TardurGraphHopperManaged implements Managed {
             throw new RuntimeException(e);
         }
         osm = new OSM(graphHopper.getGraphHopperStorage().getDirectory().getDefaultType().isStoring() ? graphHopper.getGraphHopperStorage().getDirectory().getLocation()+"/osm.db" : null);
-        if (osm.ways.isEmpty()) {
-            osm.readFromFile(graphHopper.getDataReaderFile());
-            TimeDependentRestrictionsDAO timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(graphHopper.getGraphHopperStorage(), osm, timeZones);
-            timeDependentRestrictionsDAO.markEdgesAdjacentToConditionalTurnRestrictions();
-            graphHopper.getGraphHopperStorage().flush();
-        }
     }
 
     public GraphHopper getGraphHopper() {

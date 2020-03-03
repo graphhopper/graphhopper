@@ -23,20 +23,15 @@ import ch.poole.conditionalrestrictionparser.ConditionalRestrictionParser;
 import ch.poole.conditionalrestrictionparser.ParseException;
 import ch.poole.conditionalrestrictionparser.Restriction;
 import ch.poole.openinghoursparser.*;
-import com.conveyal.osmlib.OSM;
 import com.conveyal.osmlib.OSMEntity;
-import com.conveyal.osmlib.Relation;
 import com.conveyal.osmlib.Way;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.EdgeIteratorState;
-import org.mapdb.Fun;
 
 import java.io.ByteArrayInputStream;
 import java.time.*;
@@ -48,55 +43,25 @@ import java.util.stream.Stream;
 public class TimeDependentRestrictionsDAO {
 
     private final BooleanEncodedValue property;
-    private final OSMIDParser osmidParser;
-    private final OSM osm;
     private final IntEncodedValue tagPointer;
     private TimeZones timeZones;
     private GraphHopperStorage ghStorage;
     private final StringIndex tagStore;
 
-    public TimeDependentRestrictionsDAO(GraphHopperStorage ghStorage, OSM osm, TimeZones timeZones) {
+    public TimeDependentRestrictionsDAO(GraphHopperStorage ghStorage, TimeZones timeZones) {
         this.ghStorage = ghStorage;
-        this.osm = osm;
         this.timeZones = timeZones;
-        osmidParser = OSMIDParser.fromEncodingManager(ghStorage.getEncodingManager());
         property = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
-        tagPointer = ghStorage.getEncodingManager().getIntEncodedValue("tagpointer");
+        tagPointer = ghStorage.getEncodingManager().getIntEncodedValue("edgetagpointer");
         tagStore = ghStorage.getTagStore();
     }
 
-    public static Map<String, Object> getTags(OSMEntity relation) {
-        Map<String, Object> tags = new HashMap<>();
+    public static Map<String, String> getTags(OSMEntity relation) {
+        Map<String, String> tags = new HashMap<>();
         for (OSMEntity.Tag tag : relation.tags) {
             tags.put(tag.key, tag.value);
         }
         return tags;
-    }
-
-    public void markEdgesAdjacentToConditionalTurnRestrictions() {
-        BooleanEncodedValue conditional = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
-        Set<Long> collect = osm.relations.values().stream()
-                .filter(r -> r.hasTag("type", "restriction"))
-                .flatMap(relation -> {
-                    Map<String, Object> tags = TimeDependentRestrictionsDAO.getTags(relation);
-                    List<ConditionalTagData> restrictionData = TimeDependentRestrictionsDAO.getConditionalTagDataWithTimeDependentConditions(tags).stream().filter(c -> !c.restrictionData.isEmpty())
-                            .collect(Collectors.toList());
-                    if (!restrictionData.isEmpty()) {
-                        Optional<Relation.Member> fromM = relation.members.stream().filter(m -> m.role.equals("from")).findFirst();
-                        Optional<Relation.Member> toM = relation.members.stream().filter(m -> m.role.equals("to")).findFirst();
-                        return Stream.of(fromM.get(), toM.get());
-                    }
-                    return Stream.empty();
-                })
-                .map(m -> m.id)
-                .collect(Collectors.toSet());
-        AllEdgesIterator allEdges = ghStorage.getAllEdges();
-        while (allEdges.next()) {
-            long osmid = osmidParser.getOSMID(allEdges.getFlags());
-            if (collect.contains(osmid)) {
-                allEdges.set(conditional, true);
-            }
-        }
     }
 
     public static class ConditionalTagData {
@@ -142,7 +107,7 @@ public class TimeDependentRestrictionsDAO {
     }
 
     public static List<ConditionalTagData> getTimeDependentAccessConditions(ReaderWay way) {
-        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(way.getTags());
+        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(sanitize(way.getTags()));
         List<ConditionalTagData> accessRestrictionData = restrictionData.stream()
                 .filter(c -> c.tag.key.contains("access") || c.tag.key.contains("vehicle"))
                 .filter(c -> !c.tag.key.contains("lanes"))
@@ -150,6 +115,12 @@ public class TimeDependentRestrictionsDAO {
         return accessRestrictionData.stream()
                 .filter(c -> !c.restrictionData.isEmpty())
                 .collect(Collectors.toList());
+    }
+
+    public static Map<String, String> sanitize(Map<String, Object> tagsAndPerhapsOtherStuff) {
+        HashMap<String, String> tags = new HashMap<>();
+        tagsAndPerhapsOtherStuff.forEach((key, value) -> {if (value instanceof String) tags.put(key, (String) value);});
+        return tags;
     }
 
     /**
@@ -161,12 +132,12 @@ public class TimeDependentRestrictionsDAO {
      * To see only those conditional tags that have time-dependent restrictions, throw away all ConditionalTagData
      * that have empty restrictionData.
      *
+     * @param tags
      */
-    public static List<ConditionalTagData> getConditionalTagDataWithTimeDependentConditions(Map<String, Object> tags) {
+    public static List<ConditionalTagData> getConditionalTagDataWithTimeDependentConditions(Map<String, String> tags) {
         List<ConditionalTagData> restrictionData = new ArrayList<>();
-        for (Map.Entry<String, Object> tag : tags.entrySet()) {
-            if (!(tag.getValue() instanceof String)) continue;
-            String tagValue = (String) tag.getValue();
+        for (Map.Entry<String, String> tag : tags.entrySet()) {
+            String tagValue = tag.getValue();
             if (tag.getKey().contains("conditional") && tagValue.contains("@")) {
                 ConditionalTagData conditionalTagData = new ConditionalTagData();
                 conditionalTagData.tag = new OSMEntity.Tag(tag.getKey(), tagValue);
@@ -268,43 +239,13 @@ public class TimeDependentRestrictionsDAO {
         if (edgeState.get(property)) {
             TimeZone timeZone = timeZones.getTimeZone(ghStorage.getNodeAccess().getLat(edgeState.getBaseNode()), ghStorage.getNodeAccess().getLon(edgeState.getBaseNode()));
             int pointer = edgeState.get(tagPointer);
-            Map tags = tagStore.getAll(pointer);
+            Map<String, String> tags = tagStore.getAll(pointer);
             return accessible(tags, at.atZone(timeZone.toZoneId()));
         }
         return Optional.empty();
     }
 
-    // For weighting
-    public Optional<Boolean> canTurn(int inEdge, int viaNode, int outEdge, Instant at) {
-        EdgeIteratorState inEdgeCursor = ghStorage.getEdgeIteratorState(inEdge, viaNode);
-        if (inEdgeCursor.get(property)) {
-            TimeZone timeZone = timeZones.getTimeZone(ghStorage.getNodeAccess().getLat(inEdgeCursor.getBaseNode()), ghStorage.getNodeAccess().getLon(inEdgeCursor.getBaseNode()));
-            long inEdgeOsmId = osmidParser.getOSMID(inEdgeCursor.getFlags());
-            Way inWay = osm.ways.get(inEdgeOsmId);
-            EdgeIteratorState outEdgeCursor = ghStorage.getEdgeIteratorState(outEdge, viaNode);
-            long outEdgeOsmId = osmidParser.getOSMID(outEdgeCursor.getFlags());
-            Way outWay = osm.ways.get(outEdgeOsmId);
-            long viaNodeOsmId = findIntersectionNode(inWay, outWay);
-            SortedSet<Fun.Tuple2<Long, Long>> tuple2s = osm.relationsByNode.subSet(new Fun.Tuple2<>(viaNodeOsmId, 0L), new Fun.Tuple2<>(viaNodeOsmId, Long.MAX_VALUE));
-            return tuple2s.stream().map(t -> t.b).map(k -> osm.relations.get(k))
-                    .filter(r -> r.hasTag("type", "restriction"))
-                    .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("from") && m.id == inEdgeOsmId))
-                    .filter(r -> r.members.stream().anyMatch(m -> m.role.equals("to") && m.id == outEdgeOsmId))
-                    .flatMap(r -> stream(accessible(getTags(r), at.atZone(timeZone.toZoneId()))))
-                    .findFirst();
-        }
-        return Optional.empty();
-    }
-
-    public <T> Stream<T> stream(Optional<T> optional) {
-        return optional.map(Stream::of).orElseGet(Stream::empty);
-    }
-
-    private long findIntersectionNode(Way inWay, Way outWay) {
-        return Arrays.stream(inWay.nodes).filter(n -> Arrays.stream(outWay.nodes).anyMatch(m -> n==m)).findFirst().getAsLong();
-    }
-
-    public Optional<Boolean> accessible(Map<String, Object> tags, ZonedDateTime linkEnterTime) {
+    public Optional<Boolean> accessible(Map<String, String> tags, ZonedDateTime linkEnterTime) {
         List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(tags);
         for (ConditionalTagData conditionalTagData : conditionalTagDataWithTimeDependentConditions) {
             for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {

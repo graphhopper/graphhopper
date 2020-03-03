@@ -19,25 +19,20 @@
 package com.graphhopper.tardur;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
-import com.graphhopper.routing.util.parsers.OSMIDParser;
-import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.util.PMap;
+import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.jackson.Jackson;
+import org.junit.Test;
 
-public class TardurTagParserFactory extends DefaultTagParserFactory {
+public class TimeDependentTurnRestrictionsTest {
 
-    private final GraphHopper graphHopper;
-
-    public TardurTagParserFactory(GraphHopper graphHopper) {
-        this.graphHopper = graphHopper;
+    @Test
+    public void testTimeDependentTurnRestrictions() throws InterruptedException {
+        GraphHopperConfig config = new GraphHopperConfig();
+        config.put("datareader.file", "files/test-timedependent-turn-restrictions.xml");
+        config.put("graph.flag_encoders", "car");
+        config.put("graph.location", "wurst");
+        GraphHopper graphHopper = new TardurGraphHopperManaged(config, Jackson.newObjectMapper()).getGraphHopper();
+        graphHopper.importOrLoad();
     }
 
-    @Override
-    public TagParser create(String name, PMap configuration) {
-        if (name.equals("conditional"))
-            return new ConditionalAccessRestrictionParser(graphHopper);
-        else if (name.equals("osmid"))
-            return new OSMIDParser();
-        return super.create(name, configuration);
-    }
 }

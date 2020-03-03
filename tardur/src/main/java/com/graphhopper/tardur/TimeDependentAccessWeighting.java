@@ -18,25 +18,37 @@
 
 package com.graphhopper.tardur;
 
-import com.conveyal.osmlib.OSM;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.TDWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TimeZone;
 
 public class TimeDependentAccessWeighting implements TDWeighting {
 
     private final TimeDependentRestrictionsDAO timeDependentRestrictionsDAO;
+    private final TimeZones timeZones;
     private final Weighting finalWeighting;
+    private final IntEncodedValue tagPointer;
+    private final GraphHopperStorage ghStorage;
 
-    public TimeDependentAccessWeighting(OSM osm, GraphHopper graphHopper, TimeZones timeZones, Weighting finalWeighting) {
+    public TimeDependentAccessWeighting(GraphHopper graphHopper, TimeZones timeZones, Weighting finalWeighting) {
+        this.timeZones = timeZones;
         this.finalWeighting = finalWeighting;
-        timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(graphHopper.getGraphHopperStorage(), osm, timeZones);
+        ghStorage = graphHopper.getGraphHopperStorage();
+        timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(ghStorage, timeZones);
+        tagPointer = graphHopper.getEncodingManager().getIntEncodedValue("turnrestrictiontagpointer");
     }
 
     @Override
@@ -75,11 +87,23 @@ public class TimeDependentAccessWeighting implements TDWeighting {
 
     @Override
     public double calcTDTurnWeight(int inEdge, int viaNode, int outEdge, long turnTimeMilli) {
-        if (timeDependentRestrictionsDAO.canTurn(inEdge, viaNode, outEdge, Instant.ofEpochMilli(turnTimeMilli)).orElse(true)) {
+        if (canTurn(inEdge, viaNode, outEdge, Instant.ofEpochMilli(turnTimeMilli)).orElse(true)) {
             return finalWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
         } else {
             return Double.POSITIVE_INFINITY;
         }
+    }
+
+    private Optional<Boolean> canTurn(int inEdge, int viaNode, int outEdge, Instant at) {
+        EdgeIteratorState inEdgeCursor = ghStorage.getEdgeIteratorState(inEdge, viaNode);
+        IntsRef flags = ghStorage.getTurnCostStorage().readFlags(TurnCost.createFlags(), inEdge, viaNode, outEdge);
+        int p = tagPointer.getInt(false, flags);
+        if (p != 0) {
+            Map<String, String> tags = ghStorage.getTagStore().getAll(p);
+            TimeZone timeZone = timeZones.getTimeZone(ghStorage.getNodeAccess().getLat(inEdgeCursor.getBaseNode()), ghStorage.getNodeAccess().getLon(inEdgeCursor.getBaseNode()));
+            return timeDependentRestrictionsDAO.accessible(tags, at.atZone(timeZone.toZoneId()));
+        }
+        return Optional.empty();
     }
 
     @Override

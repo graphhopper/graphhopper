@@ -744,11 +744,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public boolean needsTurnCostsSupport() {
-        for (FlagEncoder encoder : edgeEncoders) {
-            if (encoder.supportsTurnCosts())
-                return true;
-        }
-        return false;
+        return turnCostConfig.getRequiredBits() > 0;
     }
 
     public List<BooleanEncodedValue> getAccessEncFromNodeFlags(long importNodeFlags) {

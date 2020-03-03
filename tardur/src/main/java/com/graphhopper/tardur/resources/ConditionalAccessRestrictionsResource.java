@@ -60,8 +60,8 @@ public class ConditionalAccessRestrictionsResource {
     @GET
     @Produces("text/html")
     public TimeDependentRestrictionsView timeDependentAccessRestrictions() {
-        TimeDependentRestrictionsDAO timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(storage, osm, timeZones);
-        return new TimeDependentRestrictionsView(new TimeDependentRestrictionsDAO(storage, osm, timeZones), () -> {
+        TimeDependentRestrictionsDAO timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(storage, timeZones);
+        return new TimeDependentRestrictionsView(new TimeDependentRestrictionsDAO(storage, timeZones), () -> {
             final OSMIDParser osmidParser = OSMIDParser.fromEncodingManager(storage.getEncodingManager());
             final BooleanEncodedValue property = storage.getEncodingManager().getBooleanEncodedValue("conditional");
             return allEdges()
@@ -75,7 +75,7 @@ public class ConditionalAccessRestrictionsResource {
                 if (!timeDependentAccessConditions.isEmpty()) {
                     ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentRestrictionsDAO, timeZones);
                     view.osmid = osmid;
-                    view.tags = readerWay.getTags();
+                    view.tags = TimeDependentRestrictionsDAO.sanitize(readerWay.getTags());
                     Node from = osm.nodes.get(way.nodes[0]);
                     Node to = osm.nodes.get(way.nodes[way.nodes.length-1]);
                     view.from = new Coordinate(from.getLon(), from.getLat());

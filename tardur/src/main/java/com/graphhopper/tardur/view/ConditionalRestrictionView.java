@@ -33,7 +33,7 @@ public class ConditionalRestrictionView {
 
     private final TimeZones timeZones;
     public long osmid;
-    public Map<String, Object> tags;
+    public Map<String, String> tags;
     public Coordinate from;
     public Coordinate to;
     private TimeDependentRestrictionsDAO timeDependentRestrictionsDAO;

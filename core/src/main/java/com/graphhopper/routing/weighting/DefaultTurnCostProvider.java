@@ -63,9 +63,9 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             return 0;
         }
         double tCost = 0;
-        if (turnCostStorage.isUTurn(edgeFrom, edgeTo)) {
-            // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
-            tCost = turnCostStorage.isUTurnAllowed(nodeVia) ? uTurnCosts : Double.POSITIVE_INFINITY;
+        if (edgeFrom == edgeTo) {
+            // note that the u-turn costs takes precedence over any turn costs set in TurnCostStorage
+            tCost = uTurnCosts;
         } else {
             if (turnCostEnc != null)
                 tCost = turnCostStorage.get(turnCostEnc, tcFlags, edgeFrom, nodeVia, edgeTo);

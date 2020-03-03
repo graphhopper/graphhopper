@@ -94,6 +94,10 @@ public class OSMTurnRestriction {
         return "*-(" + getOsmIdFrom() + ")->" + getViaOsmNodeId() + "-(" + getOsmIdTo() + ")->*";
     }
 
+    public ReaderRelation getReaderRelation() {
+        return relation;
+    }
+
     public enum Type {
         NOT, ONLY;
 
