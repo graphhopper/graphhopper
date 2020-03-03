@@ -45,6 +45,18 @@ public class DistancePlaneProjection extends DistanceCalcEarth {
     }
 
     @Override
+    public double calcDist3D(double fromLat, double fromLon, double fromHeight,
+                             double toLat, double toLon, double toHeight) {
+        double dLat = toRadians(toLat - fromLat);
+        double dLon = toRadians(toLon - fromLon);
+        double dEleNorm = fromHeight == toHeight ? 0 : calcNormalizedDist(toHeight - fromHeight);
+        // use mean latitude as reference point for delta_lon
+        double tmp = cos(toRadians((fromLat + toLat) / 2)) * dLon;
+        double normedDist = dLat * dLat + tmp * tmp + dEleNorm;
+        return R * sqrt(normedDist);
+    }
+
+    @Override
     public double calcDenormalizedDist(double normedDist) {
         return R * sqrt(normedDist);
     }

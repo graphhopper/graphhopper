@@ -39,6 +39,7 @@ public class DistanceCalcEarth implements DistanceCalc {
      */
     public final static double C = 2 * PI * R;
     public final static double KM_MILE = 1.609344;
+    public final static double METERS_PER_DEGREE = C / 360.0;
 
     /**
      * Calculates distance of (from, to) in meter.
@@ -50,6 +51,20 @@ public class DistanceCalcEarth implements DistanceCalc {
     public double calcDist(double fromLat, double fromLon, double toLat, double toLon) {
         double normedDist = calcNormalizedDist(fromLat, fromLon, toLat, toLon);
         return R * 2 * asin(sqrt(normedDist));
+    }
+
+    /**
+     * This implements a rather quick solution to calculate 3D distances on earth using euclidean
+     * geometry mixed with Haversine formula used for the on earth distance. The haversine formula makes
+     * not so much sense as it is only important for large distances where then the rather smallish
+     * heights would becomes negligible.
+     */
+    @Override
+    public double calcDist3D(double fromLat, double fromLon, double fromHeight,
+                             double toLat, double toLon, double toHeight) {
+        double len = calcDist(fromLat, fromLon, toLat, toLon);
+        double delta = Math.abs(toHeight - fromHeight);
+        return Math.sqrt(delta * delta + len * len);
     }
 
     @Override
@@ -107,6 +122,38 @@ public class DistanceCalcEarth implements DistanceCalc {
         return calcNormalizedEdgeDistanceNew(r_lat_deg, r_lon_deg, a_lat_deg, a_lon_deg, b_lat_deg, b_lon_deg, false);
     }
 
+    @Override
+    public double calcNormalizedEdgeDistance3D(double r_lat_deg, double r_lon_deg, double r_ele_m,
+                                               double a_lat_deg, double a_lon_deg, double a_ele_m,
+                                               double b_lat_deg, double b_lon_deg, double b_ele_m) {
+        double shrinkFactor = calcShrinkFactor(a_lat_deg, b_lat_deg);
+
+        double a_lat = a_lat_deg;
+        double a_lon = a_lon_deg * shrinkFactor;
+        double a_ele = a_ele_m / METERS_PER_DEGREE;
+
+        double b_lat = b_lat_deg;
+        double b_lon = b_lon_deg * shrinkFactor;
+        double b_ele = b_ele_m / METERS_PER_DEGREE;
+
+        double r_lat = r_lat_deg;
+        double r_lon = r_lon_deg * shrinkFactor;
+        double r_ele = r_ele_m / METERS_PER_DEGREE;
+
+        double delta_lon = b_lon - a_lon;
+        double delta_lat = b_lat - a_lat;
+        double delta_ele = b_ele - a_ele;
+
+        double norm = delta_lon * delta_lon + delta_lat * delta_lat + delta_ele * delta_ele;
+        double factor = ((r_lon - a_lon) * delta_lon + (r_lat - a_lat) * delta_lat + (r_ele - a_ele) * delta_ele) / norm;
+
+        // x,y,z is projection of r onto segment a-b
+        double c_lon = a_lon + factor * delta_lon;
+        double c_lat = a_lat + factor * delta_lat;
+        double c_ele_m = (a_ele + factor * delta_ele) * METERS_PER_DEGREE;
+        return calcNormalizedDist(c_lat, c_lon / shrinkFactor, r_lat_deg, r_lon_deg) + calcNormalizedDist(r_ele_m - c_ele_m);
+    }
+
     /**
      * New edge distance calculation where no validEdgeDistance check would be necessary
      * <p>
@@ -116,7 +163,8 @@ public class DistanceCalcEarth implements DistanceCalc {
      */
     public double calcNormalizedEdgeDistanceNew(double r_lat_deg, double r_lon_deg,
                                                 double a_lat_deg, double a_lon_deg,
-                                                double b_lat_deg, double b_lon_deg, boolean reduceToSegment) {
+                                                double b_lat_deg, double b_lon_deg,
+                                                boolean reduceToSegment) {
         double shrinkFactor = calcShrinkFactor(a_lat_deg, b_lat_deg);
 
         double a_lat = a_lat_deg;
@@ -136,7 +184,7 @@ public class DistanceCalcEarth implements DistanceCalc {
             return calcNormalizedDist(a_lat_deg, r_lon_deg, r_lat_deg, r_lon_deg);
 
         if (delta_lon == 0)
-            // special case: vertical edge        
+            // special case: vertical edge
             return calcNormalizedDist(r_lat_deg, a_lon_deg, r_lat_deg, r_lon_deg);
 
         double norm = delta_lon * delta_lon + delta_lat * delta_lat;

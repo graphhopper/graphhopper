@@ -121,6 +121,7 @@ public class GraphHopper implements GraphHopperAPI {
     // for data reader
     private String dataReaderFile;
     private double dataReaderWayPointMaxDistance = 1;
+    private double dataReaderElevationMaxDistance = 0;
     private int dataReaderWorkerThreads = 2;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
@@ -1216,7 +1217,7 @@ public class GraphHopper implements GraphHopperAPI {
         GHPoint lastPoint = points.get(0);
         GHPoint point;
         double dist;
-        DistanceCalc calc = DIST_3D;
+        DistanceCalc calc = DIST_EARTH;
         for (int i = 1; i < points.size(); i++) {
             point = points.get(i);
             dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());

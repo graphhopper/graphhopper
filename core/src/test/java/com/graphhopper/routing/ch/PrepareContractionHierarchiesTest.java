@@ -468,7 +468,7 @@ public class PrepareContractionHierarchiesTest {
         qr.setSnappedPosition(QueryResult.Position.EDGE);
         qr.setClosestNode(8);
         qr.setWayIndex(0);
-        qr.calcSnappedPoint(new DistanceCalc2D());
+        qr.calcSnappedPoint(new DistanceCalcEuclidean());
         QueryGraph queryGraph = QueryGraph.lookup(lg, qr);
 
         // we make sure our weight fine tunings do what they are supposed to

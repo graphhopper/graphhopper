@@ -75,7 +75,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private final NodeAccess nodeAccess;
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
-    private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean smoothElevation = false;
     private final boolean exitOnlyPillarNodeException = true;
@@ -684,7 +683,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             if (pointList.is3D()) {
                 ele = pointList.getElevation(i);
                 if (!distCalc.isCrossBoundary(lon, prevLon))
-                    towerNodeDistance += distCalc3D.calcDist(prevLat, prevLon, prevEle, lat, lon, ele);
+                    towerNodeDistance += distCalc.calcDist3D(prevLat, prevLon, prevEle, lat, lon, ele);
                 prevEle = ele;
             } else if (!distCalc.isCrossBoundary(lon, prevLon))
                 towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
