@@ -215,22 +215,64 @@ public class CarFlagEncoderTest {
         way.clearTags();
     }
 
-
     @Test
     public void testDestinationTag() {
         IntsRef relFlags = em.createRelationFlags();
 
         FastestWeighting weighting = new FastestWeighting(encoder);
+        FastestWeighting bikeWeighting = new FastestWeighting(em.getEncoder("bike"));
+
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
         assertTrue(em.acceptWay(way, acceptWay));
         IntsRef edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
         assertEquals(60, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
 
+        // no change for bike!
+        way.setTag("motor_vehicle", "destination");
+        edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
+        assertEquals(600, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
         way.setTag("vehicle", "destination");
         edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
         assertEquals(600, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+    }
+
+    @Test
+    public void testPrivateTag() {
+        // allow private access
+        FlagEncoder carEncoder = new CarFlagEncoder(false, 5, 5, 0, false);
+        FlagEncoder bikeEncoder = new BikeFlagEncoder(4, 2, 0, false);
+        EncodingManager em = new EncodingManager.Builder().add(carEncoder).add(bikeEncoder).build();
+
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting bikeWeighting = new FastestWeighting(bikeEncoder);
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+
+        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
+        assertTrue(em.acceptWay(way, acceptWay));
+        IntsRef edgeFlags = em.handleWayTags(way, acceptWay, em.createRelationFlags());
+
+        assertEquals(60, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+
+        way.setTag("highway", "secondary");
+        way.setTag("access", "private");
+        acceptWay = new EncodingManager.AcceptWay();
+        assertTrue(em.acceptWay(way, acceptWay));
+        edgeFlags = em.handleWayTags(way, acceptWay, em.createRelationFlags());
+
+        assertEquals(600, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+        // private should influence bike only slightly
+        assertEquals(240, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
     }
 
     @Test
@@ -539,7 +581,7 @@ public class CarFlagEncoderTest {
 
     @Test
     public void testMaxValue() {
-        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
+        CarFlagEncoder instance = new CarFlagEncoder(false, 10, 0.5, 0, true);
         EncodingManager em = EncodingManager.create(instance);
         DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(EncodingManager.getKey(instance, "average_speed"));
         ReaderWay way = new ReaderWay(1);
@@ -562,7 +604,7 @@ public class CarFlagEncoderTest {
 
     @Test
     public void testRegisterOnlyOnceAllowed() {
-        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
+        CarFlagEncoder instance = new CarFlagEncoder(false, 10, 0.5, 0, true);
         EncodingManager tmpEM = EncodingManager.create(instance);
         try {
             tmpEM = EncodingManager.create(instance);
@@ -608,7 +650,7 @@ public class CarFlagEncoderTest {
         way.setTag("route", "ferry");
         way.setTag("estimated_distance", 257);
 
-        CarFlagEncoder lowFactorCar = new CarFlagEncoder(10, 1, 0);
+        CarFlagEncoder lowFactorCar = new CarFlagEncoder(false, 10, 1, 0, true);
         List<EncodedValue> list = new ArrayList<>();
         lowFactorCar.setEncodedValueLookup(em);
         lowFactorCar.createEncodedValues(list, "car", 0);

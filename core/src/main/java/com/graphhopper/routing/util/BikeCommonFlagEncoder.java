@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -31,7 +32,6 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Defines bit layout of bicycles (not motorcycles) for speed, access and relations (network).
- * <p>
  *
  * @author Peter Karich
  * @author Nop
@@ -48,7 +48,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
-    private final Set<String> roadValues = new HashSet<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     protected boolean speedTwoDirections;
     DecimalEncodedValue priorityEnc;
@@ -60,15 +59,20 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     // This is the specific bicycle class
     private String classBicycleKey;
 
-    protected BikeCommonFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts) {
+    protected BikeCommonFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
         super(speedBits, speedFactor, maxTurnCosts);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions.addAll(Arrays.asList("bicycle", "vehicle", "access"));
-        restrictedValues.add("private");
+
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+
+        if (blockPrivate)
+            restrictedValues.add("private");
+        else
+            intendedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -103,20 +107,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         unpavedSurfaceTags.add("salt");
         unpavedSurfaceTags.add("sand");
         unpavedSurfaceTags.add("wood");
-
-        roadValues.add("living_street");
-        roadValues.add("road");
-        roadValues.add("service");
-        roadValues.add("unclassified");
-        roadValues.add("residential");
-        roadValues.add("trunk");
-        roadValues.add("trunk_link");
-        roadValues.add("primary");
-        roadValues.add("primary_link");
-        roadValues.add("secondary");
-        roadValues.add("secondary_link");
-        roadValues.add("tertiary");
-        roadValues.add("tertiary_link");
 
         maxPossibleSpeed = 30;
 
@@ -193,6 +183,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         speedDefault = highwaySpeeds.get("cycleway");
         setAvoidSpeedLimit(71);
+    }
+
+    @Override
+    public TransportationMode getTransportationMode() {
+        return TransportationMode.BICYCLE;
     }
 
     @Override

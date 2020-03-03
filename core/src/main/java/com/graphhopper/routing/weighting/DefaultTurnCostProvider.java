@@ -32,7 +32,6 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
     private final double uTurnCosts;
-    private final IntsRef tcFlags = TurnCost.createFlags();
 
     public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage) {
         this(encoder, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
@@ -68,7 +67,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             tCost = turnCostStorage.isUTurnAllowed(nodeVia) ? uTurnCosts : Double.POSITIVE_INFINITY;
         } else {
             if (turnCostEnc != null)
-                tCost = turnCostStorage.get(turnCostEnc, tcFlags, edgeFrom, nodeVia, edgeTo);
+                tCost = turnCostStorage.get(turnCostEnc, TurnCost.createFlags(), edgeFrom, nodeVia, edgeTo);
         }
         return tCost;
     }

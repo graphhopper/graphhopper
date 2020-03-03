@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.UnsignedDecimalEncodedValue;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -54,20 +55,16 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         this(properties.getBool("speed_two_directions", false),
                 properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
-                properties.getBool("turn_costs", false) ? 1 : 0);
+                properties.getBool("turn_costs", false) ? 1 : 0,
+                properties.getBool("block_private", true));
         this.setBlockFords(properties.getBool("block_fords", false));
         this.setBlockByDefault(properties.getBool("block_barriers", true));
     }
 
-    public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        this(false, speedBits, speedFactor, maxTurnCosts);
-    }
-
-    public CarFlagEncoder(boolean speedTwoDirections, int speedBits, double speedFactor, int maxTurnCosts) {
+    public CarFlagEncoder(boolean speedTwoDirections, int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
         super(speedBits, speedFactor, maxTurnCosts);
         this.speedTwoDirections = speedTwoDirections;
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
-        restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -75,6 +72,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restrictedValues.add("delivery");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+
+        if (blockPrivate)
+            restrictedValues.add("private");
+        else
+            intendedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("permissive");
@@ -141,6 +143,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         badSurfaceSpeed = 30;
         maxPossibleSpeed = 140;
         speedDefault = defaultSpeedMap.get("secondary");
+    }
+
+    public TransportationMode getTransportationMode() {
+        return TransportationMode.MOTOR_VEHICLE;
     }
 
     @Override

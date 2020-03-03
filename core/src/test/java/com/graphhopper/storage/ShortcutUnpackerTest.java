@@ -43,7 +43,7 @@ public class ShortcutUnpackerTest {
 
     @Before
     public void init() {
-        encoder = new CarFlagEncoder(true, 5, 5, 10);
+        encoder = new CarFlagEncoder(true, 5, 5, 10, true);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHProfileStrings("car|fastest|" + (edgeBased ? "edge" : "node"))

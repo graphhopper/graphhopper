@@ -89,7 +89,7 @@ public abstract class AbstractGraphStorageTester {
     }
 
     CarFlagEncoder createCarFlagEncoder() {
-        return new CarFlagEncoder(5, 5, 0);
+        return new CarFlagEncoder(false, 5, 5, 0, true);
     }
 
     protected GraphHopperStorage createGHStorage() {
@@ -966,13 +966,13 @@ public abstract class AbstractGraphStorageTester {
     public void test8AndMoreBytesForEdgeFlags() {
         Directory dir = new RAMDirectory();
         List<FlagEncoder> list = new ArrayList<>();
-        list.add(new CarFlagEncoder(false, 29, 0.001, 0) {
+        list.add(new CarFlagEncoder(false, 29, 0.001, 0, true) {
             @Override
             public String toString() {
                 return "car0";
             }
         });
-        list.add(new CarFlagEncoder(29, 0.001, 0));
+        list.add(new CarFlagEncoder(false, 29, 0.001, 0, true));
         EncodingManager manager = EncodingManager.create(list);
         graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
 
@@ -1009,14 +1009,14 @@ public abstract class AbstractGraphStorageTester {
         assertTrue(edgeIter.getReverse(access1Enc));
 
         list.clear();
-        list.add(new CarFlagEncoder(false, 29, 0.001, 0) {
+        list.add(new CarFlagEncoder(false, 29, 0.001, 0, true) {
             @Override
             public String toString() {
                 return "car0";
             }
         });
-        list.add(new CarFlagEncoder(29, 0.001, 0));
-        list.add(new CarFlagEncoder(false, 30, 0.001, 0) {
+        list.add(new CarFlagEncoder(false, 29, 0.001, 0, true));
+        list.add(new CarFlagEncoder(false, 30, 0.001, 0, true) {
             @Override
             public String toString() {
                 return "car2";
@@ -1132,11 +1132,5 @@ public abstract class AbstractGraphStorageTester {
 
     private int getCountAll(int node) {
         return GHUtility.count(carAllExplorer.setBaseNode(node));
-    }
-
-    static class TmpCarFlagEncoder extends CarFlagEncoder {
-        public TmpCarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-            super(speedBits, speedFactor, maxTurnCosts);
-        }
     }
 }

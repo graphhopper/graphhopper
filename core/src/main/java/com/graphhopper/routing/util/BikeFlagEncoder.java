@@ -33,12 +33,13 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     public BikeFlagEncoder(PMap properties) {
         this(properties.getInt("speed_bits", 4),
                 properties.getInt("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0);
+                properties.getBool("turn_costs", false) ? 1 : 0,
+                properties.getBool("block_private", true));
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
+        super(speedBits, speedFactor, maxTurnCosts, blockPrivate);
         addPushingSection("path");
         addPushingSection("footway");
         addPushingSection("pedestrian");

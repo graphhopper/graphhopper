@@ -198,15 +198,13 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
     public double get(DecimalEncodedValue turnCostEnc, IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
-        // reset is required as we could have a QueryGraph that does not set tcFlags
-        tcFlags.ints[0] = 0;
         return turnCostEnc.getDecimal(false, readFlags(tcFlags, fromEdge, viaNode, toEdge));
     }
 
     /**
      * @return turn cost flags of the specified triple "from edge", "via node" and "to edge"
      */
-    public IntsRef readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+    private IntsRef readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
         if (!EdgeIterator.Edge.isValid(fromEdge) || !EdgeIterator.Edge.isValid(toEdge))
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (viaNode < 0)

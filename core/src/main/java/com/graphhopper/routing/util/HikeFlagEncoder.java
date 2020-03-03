@@ -43,12 +43,13 @@ public class HikeFlagEncoder extends FootFlagEncoder {
 
     public HikeFlagEncoder(PMap properties) {
         this(properties.getInt("speed_bits", 4),
-                properties.getDouble("speed_factor", 1));
+                properties.getDouble("speed_factor", 1),
+                properties.getBool("block_private", true));
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
-    public HikeFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor);
+    protected HikeFlagEncoder(int speedBits, double speedFactor, boolean blockPrivate) {
+        super(speedBits, speedFactor, blockPrivate);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());

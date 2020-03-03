@@ -210,8 +210,8 @@ public class CHPreparationHandler {
     public void prepare(final StorableProperties properties, final boolean closeEarly) {
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
-        for (final PrepareContractionHierarchies prepare : getPreparations()) {
-            LOGGER.info((++counter) + "/" + getPreparations().size() + " calling " +
+        for (final PrepareContractionHierarchies prepare : preparations) {
+            LOGGER.info((++counter) + "/" + preparations.size() + " calling " +
                     "CH prepare.doWork for " + prepare.getCHProfile() + " ... (" + getMemInfo() + ")");
             final String name = prepare.getCHProfile().toFileName();
             completionService.submit(new Runnable() {
@@ -231,7 +231,7 @@ public class CHPreparationHandler {
         threadPool.shutdown();
 
         try {
-            for (int i = 0; i < getPreparations().size(); i++) {
+            for (int i = 0; i < preparations.size(); i++) {
                 completionService.take().get();
             }
         } catch (Exception e) {
@@ -241,7 +241,7 @@ public class CHPreparationHandler {
     }
 
     public void createPreparations(GraphHopperStorage ghStorage) {
-        if (!isEnabled() || !getPreparations().isEmpty())
+        if (!isEnabled() || !preparations.isEmpty())
             return;
         if (!hasCHProfiles())
             throw new IllegalStateException("No CH profiles found");

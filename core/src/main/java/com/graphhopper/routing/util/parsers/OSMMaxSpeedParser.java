@@ -34,7 +34,7 @@ import static com.graphhopper.routing.profiles.MaxSpeed.UNSET_SPEED;
 
 public class OSMMaxSpeedParser implements TagParser {
 
-    private final DecimalEncodedValue carMaxSpeedEnc;
+    protected final DecimalEncodedValue carMaxSpeedEnc;
 
     public OSMMaxSpeedParser() {
         this(MaxSpeed.create());

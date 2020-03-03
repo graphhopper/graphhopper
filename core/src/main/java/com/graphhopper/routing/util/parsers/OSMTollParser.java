@@ -31,7 +31,11 @@ public class OSMTollParser implements TagParser {
     private final EnumEncodedValue<Toll> tollEnc;
 
     public OSMTollParser() {
-        this.tollEnc = new EnumEncodedValue<>(Toll.KEY, Toll.class);
+        this(new EnumEncodedValue<>(Toll.KEY, Toll.class));
+    }
+
+    public OSMTollParser(EnumEncodedValue<Toll> tollEnc) {
+        this.tollEnc = tollEnc;
     }
 
     @Override

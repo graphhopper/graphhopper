@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -60,19 +61,25 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     public FootFlagEncoder(PMap properties) {
         this(properties.getInt("speed_bits", 4),
-                properties.getDouble("speed_factor", 1));
+                properties.getDouble("speed_factor", 1),
+                properties.getBool("block_private", true));
         this.setBlockFords(properties.getBool("block_fords", false));
         this.speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 
-    public FootFlagEncoder(int speedBits, double speedFactor) {
+    protected FootFlagEncoder(int speedBits, double speedFactor, boolean blockPrivate) {
         super(speedBits, speedFactor, 0);
         restrictions.addAll(Arrays.asList("foot", "access"));
-        restrictedValues.add("private");
+
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+
+        if (blockPrivate)
+            restrictedValues.add("private");
+        else
+            intendedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -134,6 +141,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         maxPossibleSpeed = FERRY_SPEED;
         speedDefault = MEAN_SPEED;
+    }
+
+    public TransportationMode getTransportationMode() {
+        return TransportationMode.FOOT;
     }
 
     @Override
