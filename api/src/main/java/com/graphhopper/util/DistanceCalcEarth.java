@@ -62,9 +62,9 @@ public class DistanceCalcEarth implements DistanceCalc {
     @Override
     public double calcDist3D(double fromLat, double fromLon, double fromHeight,
                              double toLat, double toLon, double toHeight) {
+        double eleDelta = hasElevationDiff(fromHeight, toHeight) ? (toHeight - fromHeight) : 0;
         double len = calcDist(fromLat, fromLon, toLat, toLon);
-        double delta = Math.abs(toHeight - fromHeight);
-        return Math.sqrt(delta * delta + len * len);
+        return Math.sqrt(eleDelta * eleDelta + len * len);
     }
 
     @Override
@@ -126,6 +126,9 @@ public class DistanceCalcEarth implements DistanceCalc {
     public double calcNormalizedEdgeDistance3D(double r_lat_deg, double r_lon_deg, double r_ele_m,
                                                double a_lat_deg, double a_lon_deg, double a_ele_m,
                                                double b_lat_deg, double b_lon_deg, double b_ele_m) {
+        if (Double.isNaN(r_ele_m) || Double.isNaN(a_ele_m) || Double.isNaN(b_ele_m))
+            return calcNormalizedEdgeDistance(r_lat_deg, r_lon_deg, a_lat_deg, a_lon_deg, b_lat_deg, b_lon_deg);
+
         double shrinkFactor = calcShrinkFactor(a_lat_deg, b_lat_deg);
 
         double a_lat = a_lat_deg;
@@ -300,6 +303,10 @@ public class DistanceCalcEarth implements DistanceCalc {
     @Override
     public boolean isCrossBoundary(double lon1, double lon2) {
         return abs(lon1 - lon2) > 300;
+    }
+
+    protected boolean hasElevationDiff(double a, double b) {
+        return a != b && !Double.isNaN(a) && !Double.isNaN(b);
     }
 
     @Override

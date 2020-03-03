@@ -126,6 +126,14 @@ public class DistanceCalcEarthTest {
     }
 
     @Test
+    public void testEdgeDistance3dEarthNaN() {
+        double dist = dc.calcNormalizedEdgeDistance3D(0, 0.5, Double.NaN,
+                0, 0, 0,
+                0, 1, 0);
+        assertEquals(0, dc.calcDenormalizedDist(dist), 1e-4);
+    }
+
+    @Test
     public void testEdgeDistance3dPlane() {
         DistanceCalc calc = new DistancePlaneProjection();
         double dist = calc.calcNormalizedEdgeDistance3D(0, 0.5, 10,
@@ -204,6 +212,23 @@ public class DistanceCalcEarthTest {
     }
 
     @Test
+    public void testDistance3dEarthNaN() {
+        DistanceCalc distCalc = new DistanceCalcEarth();
+        assertEquals(0, distCalc.calcDist3D(
+                0, 0, 0,
+                0, 0, Double.NaN
+        ), 1e-6);
+        assertEquals(0, distCalc.calcDist3D(
+                0, 0, Double.NaN,
+                0, 0, 10
+        ), 1e-6);
+        assertEquals(0, distCalc.calcDist3D(
+                0, 0, Double.NaN,
+                0, 0, Double.NaN
+        ), 1e-6);
+    }
+
+    @Test
     public void testDistance3dPlane() {
         DistancePlaneProjection distCalc = new DistancePlaneProjection();
         assertEquals(1, distCalc.calcDist3D(
@@ -213,6 +238,23 @@ public class DistanceCalcEarthTest {
         assertEquals(10, distCalc.calcDist3D(
                 0, 0, 0,
                 0, 0, 10
+        ), 1e-6);
+    }
+
+    @Test
+    public void testDistance3dPlaneNaN() {
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        assertEquals(0, distCalc.calcDist3D(
+                0, 0, 0,
+                0, 0, Double.NaN
+        ), 1e-6);
+        assertEquals(0, distCalc.calcDist3D(
+                0, 0, Double.NaN,
+                0, 0, 10
+        ), 1e-6);
+        assertEquals(0, distCalc.calcDist3D(
+                0, 0, Double.NaN,
+                0, 0, Double.NaN
         ), 1e-6);
     }
 }
