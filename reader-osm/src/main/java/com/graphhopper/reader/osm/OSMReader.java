@@ -694,7 +694,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
         EdgeIteratorState iter = graph.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
 
-        if (doSimplify)
+        if (doSimplify && pointList.size() > 2)
             simplifyAlgo.simplify(pointList);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
