@@ -96,13 +96,6 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     }
 
     /**
-     * This is a convenient setter method and should not be used in loops or where speed is important.
-     */
-    public void setExpensive(String name, EncodedValueLookup lookup, int fromEdge, int viaNode, int toEdge, double cost) {
-        set(lookup.getDecimalEncodedValue(TurnCost.key(name)), TurnCost.createFlags(), fromEdge, viaNode, toEdge, cost);
-    }
-
-    /**
      * Sets the turn cost at the viaNode when going from "fromEdge" to "toEdge"
      */
     public void set(DecimalEncodedValue turnCostEnc, IntsRef tcFlags, int fromEdge, int viaNode, int toEdge, double cost) {
@@ -185,13 +178,6 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         turnCosts.setInt(costsBase + TC_TO, toEdge);
         turnCosts.setInt(costsBase + TC_FLAGS, newFlags);
         turnCosts.setInt(costsBase + TC_NEXT, next);
-    }
-
-    /**
-     * This is a convenient getter method and should not be used in loops or where speed is important.
-     */
-    public double getExpensive(String name, EncodedValueLookup lookup, int fromEdge, int viaNode, int toEdge) {
-        return get(lookup.getDecimalEncodedValue(TurnCost.key(name)), TurnCost.createFlags(), fromEdge, viaNode, toEdge);
     }
 
     /**
