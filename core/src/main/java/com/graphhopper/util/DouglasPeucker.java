@@ -64,38 +64,22 @@ public class DouglasPeucker {
         return simplify(points, 0, points.size() - 1);
     }
 
-    /**
-     * Simplifies the <code>points</code>, from index 0 to size-1 and returns the inner points, excluding first and last.
-     * <p>
-     * It is a wrapper method for {@link DouglasPeucker#simplify(PointList, int, int, boolean, boolean)}.
-     *
-     * @return The number removed points
-     */
-    public int simplifyExcludeFirstLast(PointList points) {
-        return simplify(points, 0, points.size() - 1, true, true);
-    }
-
     public int simplify(PointList points, int fromIndex, int lastIndex) {
         return simplify(points, fromIndex, lastIndex, true);
-    }
-
-    public int simplify(PointList points, int fromIndex, int lastIndex, boolean compress) {
-        return simplify(points, fromIndex, lastIndex, compress, false);
     }
 
     /**
      * Simplifies a part of the <code>points</code>. The <code>fromIndex</code> and <code>lastIndex</code>
      * are guaranteed to be kept.
      *
-     * @param points      The PointList to simplify
-     * @param fromIndex   Start index to simplify, should be <= <code>lastIndex</code>
-     * @param lastIndex   Simplify up to this index
-     * @param compress    Whether or not the <code>points</code> shall be compressed or not, if set to false no points
-     *                    are actually removed, but instead their lat/lon/ele is only set to NaN
-     * @param excludeEnds True to exclude first and last points, leaving only the inner points behind
+     * @param points    The PointList to simplify
+     * @param fromIndex Start index to simplify, should be <= <code>lastIndex</code>
+     * @param lastIndex Simplify up to this index
+     * @param compress  Whether or not the <code>points</code> shall be compressed or not, if set to false no points
+     *                  are actually removed, but instead their lat/lon/ele is only set to NaN
      * @return The number of removed points
      */
-    public int simplify(PointList points, int fromIndex, int lastIndex, boolean compress, boolean excludeEnds) {
+    public int simplify(PointList points, int fromIndex, int lastIndex, boolean compress) {
         int removed = 0;
         int size = lastIndex - fromIndex;
         if (approx) {
@@ -109,12 +93,6 @@ public class DouglasPeucker {
             }
         } else {
             removed = subSimplify(points, fromIndex, lastIndex);
-        }
-
-        if (excludeEnds) {
-            points.set(0, Double.NaN, Double.NaN, Double.NaN);
-            points.set(points.size() - 1, Double.NaN, Double.NaN, Double.NaN);
-            removed += 2;
         }
 
         if (removed > 0 && compress)
