@@ -730,7 +730,7 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private void setTurnCost(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode, double costs) {
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), TurnCost.createFlags(), edge1.getEdge(), viaNode, edge2.getEdge(), costs);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), edge1.getEdge(), viaNode, edge2.getEdge(), costs);
     }
 
     private void setRestriction(int from, int via, int to) {

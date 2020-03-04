@@ -155,6 +155,6 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     }
 
     private void setTurnCost(int fromEdge, int viaNode, int toEdge, int cost) {
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), TurnCost.createFlags(), fromEdge, viaNode, toEdge, cost);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), fromEdge, viaNode, toEdge, cost);
     }
 }

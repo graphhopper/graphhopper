@@ -300,7 +300,7 @@ public class ShortcutUnpackerTest {
     }
 
     private void setTurnCost(int fromEdge, int viaNode, int toEdge, double cost) {
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), TurnCost.createFlags(), fromEdge, viaNode, toEdge, cost);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), fromEdge, viaNode, toEdge, cost);
     }
 
     private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast) {

@@ -460,6 +460,6 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private void setTurnCost(GraphHopperStorage g, double cost, int from, int via, int to) {
-        g.getTurnCostStorage().set(((EncodedValueLookup) g.getEncodingManager()).getDecimalEncodedValue(TurnCost.key(carEncoder.toString())), TurnCost.createFlags(), getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), cost);
+        g.getTurnCostStorage().set(((EncodedValueLookup) g.getEncodingManager()).getDecimalEncodedValue(TurnCost.key(carEncoder.toString())), getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), cost);
     }
 }

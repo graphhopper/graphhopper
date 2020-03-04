@@ -89,7 +89,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
         if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
             return;
 
-        addRelationToTCStorage(turnRelation, turnCostFlags, map, graph);
+        addRelationToTCStorage(turnRelation, map, graph);
     }
 
     private EdgeExplorer getInExplorer(Graph graph) {
@@ -103,7 +103,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
     /**
      * Add the specified relation to the TurnCostStorage
      */
-    void addRelationToTCStorage(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
+    void addRelationToTCStorage(OSMTurnRelation osmTurnRelation,
                                 ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
@@ -134,7 +134,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
                 long wayId = map.getOsmIdOfInternalEdge(edgeId);
                 if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRelation.Type.ONLY && wayId != osmTurnRelation.getOsmIdTo()
                         || osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT && wayId == osmTurnRelation.getOsmIdTo() && wayId >= 0) {
-                    tcs.set(turnCostEnc, turnCostFlags, edgeIdFrom, viaNode, iter.getEdge(), Double.POSITIVE_INFINITY);
+                    tcs.set(turnCostEnc, edgeIdFrom, viaNode, iter.getEdge(), Double.POSITIVE_INFINITY);
                     if (osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT)
                         break;
                 }

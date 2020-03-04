@@ -53,7 +53,7 @@ public class OSMTurnRelationParserTest {
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
         IntsRef tcFlags = TurnCost.createFlags();
-        parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
+        parser.addRelationToTCStorage(instance, map, ghStorage);
 
         TurnCostStorage tcs = ghStorage.getTurnCostStorage();
         DecimalEncodedValue tce = parser.getTurnCostEnc();
@@ -63,7 +63,7 @@ public class OSMTurnRelationParserTest {
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
-        parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
+        parser.addRelationToTCStorage(instance, map, ghStorage);
         assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 3)));
     }
 

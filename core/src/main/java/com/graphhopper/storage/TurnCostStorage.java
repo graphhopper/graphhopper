@@ -95,9 +95,8 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     /**
      * Sets the turn cost at the viaNode when going from "fromEdge" to "toEdge"
      */
-    public void set(DecimalEncodedValue turnCostEnc, IntsRef tcFlags, int fromEdge, int viaNode, int toEdge, double cost) {
-        // reset is required as we could have read a value for other vehicles before (that was changed in the meantime) that we would overwrite
-        tcFlags.ints[0] = 0;
+    public void set(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge, double cost) {
+        IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, cost);
         setTurnCost(tcFlags, fromEdge, viaNode, toEdge);
     }

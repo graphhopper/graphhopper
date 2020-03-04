@@ -247,7 +247,7 @@ public class GHUtility {
                         }
                         if (random.nextDouble() < pEdgePairHasTurnCosts) {
                             double cost = random.nextDouble() < pCostIsRestriction ? Double.POSITIVE_INFINITY : random.nextDouble() * maxTurnCost;
-                            turnCostStorage.set(turnCostEnc, tcFlags, inIter.getEdge(), node, outIter.getEdge(), cost);
+                            turnCostStorage.set(turnCostEnc, inIter.getEdge(), node, outIter.getEdge(), cost);
                         }
                     }
                 }

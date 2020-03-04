@@ -124,7 +124,7 @@ public class TurnCostStorageTest {
     }
 
     private void setTurnCost(GraphHopperStorage g, int fromEdge, int toEdge, String vehicle, int viaNode, double cost) {
-        g.getTurnCostStorage().set(((EncodedValueLookup) manager).getDecimalEncodedValue(TurnCost.key(vehicle)), TurnCost.createFlags(), fromEdge, viaNode, toEdge, cost);
+        g.getTurnCostStorage().set(((EncodedValueLookup) manager).getDecimalEncodedValue(TurnCost.key(vehicle)), fromEdge, viaNode, toEdge, cost);
     }
 
     private double getTurnCost(GraphHopperStorage g, int fromEdge, int toEdge, String vehicle, int viaNode) {

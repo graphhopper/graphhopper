@@ -126,7 +126,7 @@ public class Path4CHTest {
     }
 
     private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
-        graph.getTurnCostStorage().set(((EncodedValueLookup) graph.getEncodingManager()).getDecimalEncodedValue(TurnCost.key(encoder.toString())), TurnCost.createFlags(), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) graph.getEncodingManager()).getDecimalEncodedValue(TurnCost.key(encoder.toString())), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost);
     }
 
     private void setTurnCost(int from, int via, int to, int cost) {

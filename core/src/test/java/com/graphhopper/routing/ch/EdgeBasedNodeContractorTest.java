@@ -1398,7 +1398,7 @@ public class EdgeBasedNodeContractorTest {
 
     private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
         double cost1 = cost >= maxCost ? Double.POSITIVE_INFINITY : cost;
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encoder).getDecimalEncodedValue(TurnCost.key("car")), TurnCost.createFlags(), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost1);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encoder).getDecimalEncodedValue(TurnCost.key("car")), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost1);
     }
 
     private EdgeIteratorState getEdge(int from, int to) {

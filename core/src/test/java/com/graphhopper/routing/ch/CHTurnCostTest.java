@@ -1223,7 +1223,7 @@ public class CHTurnCostTest {
     }
 
     private void setRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode) {
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), TurnCost.createFlags(), inEdge.getEdge(), viaNode, outEdge.getEdge(), Double.POSITIVE_INFINITY);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), inEdge.getEdge(), viaNode, outEdge.getEdge(), Double.POSITIVE_INFINITY);
     }
 
     private void setTurnCost(int from, int via, int to, double cost) {
@@ -1231,7 +1231,7 @@ public class CHTurnCostTest {
     }
 
     private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double costs) {
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), TurnCost.createFlags(), inEdge.getEdge(), viaNode, outEdge.getEdge(), costs);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), inEdge.getEdge(), viaNode, outEdge.getEdge(), costs);
     }
 
     private void setCostOrRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
