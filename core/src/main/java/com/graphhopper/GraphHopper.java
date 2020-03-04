@@ -596,14 +596,13 @@ public class GraphHopper implements GraphHopperAPI {
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
         String eleProviderStr = toLowerCase(ghConfig.get("graph.elevation.provider", "noop"));
 
-        // keep fallback until 0.8
-        boolean eleCalcMean = ghConfig.has("graph.elevation.calcmean")
-                ? ghConfig.getBool("graph.elevation.calcmean", false)
-                : ghConfig.getBool("graph.elevation.calc_mean", false);
+        if (ghConfig.has("graph.elevation.calcmean")) {
+            throw new IllegalArgumentException("graph.elevation.calcmean is deprecated, use graph.elevation.interpolate");
+        }
 
         boolean interpolate = ghConfig.has("graph.elevation.interpolate")
                 ? ghConfig.getBool("graph.elevation.interpolate", false)
-                : eleCalcMean;
+                : ghConfig.getBool("graph.elevation.calc_mean", false);
 
         String cacheDirStr = ghConfig.get("graph.elevation.cache_dir", "");
         if (cacheDirStr.isEmpty())
