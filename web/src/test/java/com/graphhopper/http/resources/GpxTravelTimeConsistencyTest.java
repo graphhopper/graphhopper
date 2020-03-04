@@ -23,8 +23,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.gpx.GPXEntry;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.gpx.GPXEntry;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.BeforeClass;
@@ -49,7 +49,6 @@ public class GpxTravelTimeConsistencyTest {
         hopper = new GraphHopperOSM().
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
-                setCHEnabled(false).
                 setGraphHopperLocation(graphFileFoot).
                 setEncodingManager(EncodingManager.create(importVehicles)).
                 importOrLoad();

@@ -21,6 +21,9 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.lm.LMPreparationHandler;
@@ -86,17 +89,26 @@ public class CHMeasurement {
         final boolean quick = ghConfig.getBool("quick", false);
 
         final GraphHopper graphHopper = new GraphHopperOSM();
+        String profile = "car_profile";
         if (withTurnCosts) {
             ghConfig.put("graph.flag_encoders", "car|turn_costs=true");
-            ghConfig.put("prepare.ch.weightings", "fastest");
-            ghConfig.put("prepare.ch.edge_based", "edge_or_node");
+            ghConfig.setProfiles(Collections.singletonList(
+                    new ProfileConfig(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+            ));
+            ghConfig.setCHProfiles(Collections.singletonList(
+                    new CHProfileConfig(profile)
+            ));
             if (landmarks > 0) {
-                ghConfig.put("prepare.lm.weightings", "fastest");
+                ghConfig.setLMProfiles(Collections.singletonList(
+                        new LMProfileConfig(profile)
+                ));
                 ghConfig.put("prepare.lm.landmarks", landmarks);
             }
         } else {
             ghConfig.put("graph.flag_encoders", "car");
-            ghConfig.put("prepare.ch.weightings", "no");
+            ghConfig.setProfiles(Collections.singletonList(
+                    new ProfileConfig(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(false)
+            ));
         }
         CHPreparationHandler chHandler = graphHopper.getCHPreparationHandler();
         chHandler.setDisablingAllowed(true);
@@ -113,7 +125,6 @@ public class CHMeasurement {
         ghConfig.put(SETTLED_EDGES_RESET_INTERVAL, resetInterval);
 
         LMPreparationHandler lmHandler = graphHopper.getLMPreparationHandler();
-        lmHandler.setEnabled(landmarks > 0);
         lmHandler.setDisablingAllowed(true);
 
         LOGGER.info("Initializing graph hopper with args: {}", ghConfig);

@@ -72,7 +72,7 @@ public class ChangeGraphHelperTest {
         ChangeGraphHelper instance = new ChangeGraphHelper(graph, locationIndex);
         JsonFeatureCollection collection = Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class);
         long updates = instance.applyChanges(encodingManager, collection.getFeatures());
-        assertEquals(2, updates);
+        assertEquals(3, updates);
 
         // assert changed speed and access
         double newSpeed = GHUtility.getEdge(graph, 0, 1).get(avSpeedEnc);

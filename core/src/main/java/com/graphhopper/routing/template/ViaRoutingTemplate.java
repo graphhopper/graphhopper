@@ -33,6 +33,7 @@ import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.TDWeighting;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -48,6 +49,7 @@ import java.util.List;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_ANY;
+import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 
 /**
  * Implementation of calculating a route with multiple via points.
@@ -60,13 +62,15 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     // result from route
     protected List<Path> pathList;
     protected final PathWrapper altResponse = new PathWrapper();
+    private final NodeAccess nodeAccess;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
-    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, EncodingManager lookup, final Weighting weighting) {
+    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, NodeAccess nodeAccess, EncodingManager lookup, final Weighting weighting) {
         super(locationIndex, lookup, weighting);
         this.ghRequest = ghRequest;
         this.ghResponse = ghRsp;
+        this.nodeAccess = nodeAccess;
         this.roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.roadEnvEnc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
     }
@@ -84,7 +88,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             GHPoint point = points.get(placeIndex);
             QueryResult qr = null;
             if (ghRequest.hasPointHints())
-                qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter, ghRequest.getPointHints().get(placeIndex)));
+                qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
+                        nodeAccess, ghRequest.getPointHints().get(placeIndex), point, 100));
             else if (ghRequest.hasSnapPreventions())
                 qr = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
             if (qr == null || !qr.isValid())
@@ -144,35 +149,37 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             // calculate paths
             List<Path> tmpPathList;
             if (!directions.isEmpty()) {
-                assert ghRequest.getCurbsides().size() == directions.size();
-                if (!(algo instanceof BidirRoutingAlgorithm)) {
-                    throw new IllegalArgumentException("To make use of the " + Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
-                } else {
-                    final String fromCurbside = ghRequest.getCurbsides().get(placeIndex - 1);
-                    final String toCurbside = ghRequest.getCurbsides().get(placeIndex);
-                    int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), fromCurbside);
-                    int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), toCurbside);
-                    sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbsides(sourceOutEdge, placeIndex - 1, forceCurbsides);
-                    targetInEdge = ignoreThrowOrAcceptImpossibleCurbsides(targetInEdge, placeIndex, forceCurbsides);
+                if (ghRequest.getCurbsides().size() != ghRequest.getPoints().size())
+                    throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
-                    if (fromQResult.getClosestNode() == toQResult.getClosestNode()) {
-                        // special case where we go from one point back to itself. for example going from a point A
-                        // with curbside right to the same point with curbside right is interpreted as 'being there
-                        // already' -> empty path. Similarly if the curbside for the start/target is not even specified
-                        // there is no need to drive a loop. However, going from point A/right to point A/left (or the
-                        // other way around) means we need to drive some kind of loop to get back to the same location
-                        // (arriving on the other side of the road).
-                        if (Helper.isEmpty(fromCurbside) || Helper.isEmpty(toCurbside) || fromCurbside.equals(CURBSIDE_ANY) ||
-                                toCurbside.equals(CURBSIDE_ANY) || fromCurbside.equals(toCurbside)) {
-                            // we just disable start/target edge constraints to get an empty path
-                            sourceOutEdge = ANY_EDGE;
-                            targetInEdge = ANY_EDGE;
-                        }
+                if (!(algo instanceof BidirRoutingAlgorithm))
+                    throw new IllegalArgumentException("To make use of the " + Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
+
+                final String fromCurbside = ghRequest.getCurbsides().get(placeIndex - 1);
+                final String toCurbside = ghRequest.getCurbsides().get(placeIndex);
+                int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), fromCurbside);
+                int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), toCurbside);
+                sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbsides(sourceOutEdge, placeIndex - 1, forceCurbsides);
+                targetInEdge = ignoreThrowOrAcceptImpossibleCurbsides(targetInEdge, placeIndex, forceCurbsides);
+
+                if (fromQResult.getClosestNode() == toQResult.getClosestNode()) {
+                    // special case where we go from one point back to itself. for example going from a point A
+                    // with curbside right to the same point with curbside right is interpreted as 'being there
+                    // already' -> empty path. Similarly if the curbside for the start/target is not even specified
+                    // there is no need to drive a loop. However, going from point A/right to point A/left (or the
+                    // other way around) means we need to drive some kind of loop to get back to the same location
+                    // (arriving on the other side of the road).
+                    if (Helper.isEmpty(fromCurbside) || Helper.isEmpty(toCurbside) || fromCurbside.equals(CURBSIDE_ANY) ||
+                            toCurbside.equals(CURBSIDE_ANY) || fromCurbside.equals(toCurbside)) {
+                        // we just disable start/target edge constraints to get an empty path
+                        sourceOutEdge = ANY_EDGE;
+                        targetInEdge = ANY_EDGE;
                     }
-                    // todo: enable curbside feature for alternative routes as well ?
-                    tmpPathList = Collections.singletonList(((BidirRoutingAlgorithm) algo)
-                            .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
                 }
+                // todo: enable curbside feature for alternative routes as well ?
+                tmpPathList = Collections.singletonList(((BidirRoutingAlgorithm) algo)
+                        .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
+
             } else if (algoOpts.getWeighting() instanceof TDWeighting) {
                 AlgorithmOptions pass1Options = AlgorithmOptions.start().weighting(new FastestWeighting(lookup.getEncoder(ghRequest.getVehicle()))).build();
                 RoutingAlgorithm algo1 = algoFactory.createAlgo(queryGraph, pass1Options);

@@ -51,6 +51,7 @@ Here is an overview:
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806
  * msbarry, fixes like #1733
+ * naser13, fixes like #1923
  * njanakiev, fixes like #1560
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
@@ -69,6 +70,7 @@ Here is an overview:
  * thehereward, code cleanups like #620
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
+ * samruston, improved point hint matching
 
 ## Translations
 

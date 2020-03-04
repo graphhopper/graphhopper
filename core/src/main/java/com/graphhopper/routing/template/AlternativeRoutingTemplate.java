@@ -27,6 +27,7 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Parameters.Routing;
@@ -47,8 +48,8 @@ import static com.graphhopper.util.Parameters.Routing.PASS_THROUGH;
  */
 final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
     public AlternativeRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex,
-                                      EncodingManager lookup, Weighting weighting) {
-        super(ghRequest, ghRsp, locationIndex, lookup, weighting);
+                                      NodeAccess nodeAccess, EncodingManager lookup, Weighting weighting) {
+        super(ghRequest, ghRsp, locationIndex, nodeAccess, lookup, weighting);
     }
 
     @Override

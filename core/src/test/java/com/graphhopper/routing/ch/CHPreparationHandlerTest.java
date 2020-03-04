@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -67,10 +68,10 @@ public class CHPreparationHandlerTest {
     }
 
     @Test
-    public void testDisablingAllowed() {
-        assertFalse(instance.isDisablingAllowed());
-        instance.setEnabled(false);
-        assertTrue(instance.isDisablingAllowed());
+    public void testEnabled() {
+        assertFalse(instance.isEnabled());
+        instance.setCHProfileConfigs(new CHProfileConfig("myconfig"));
+        assertTrue(instance.isEnabled());
     }
 
     @Test(expected = IllegalStateException.class)

@@ -18,7 +18,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.storage.IntsRef;
@@ -34,19 +36,15 @@ public class SpatialRuleParser implements TagParser {
     private final IntEncodedValue spatialRuleEnc;
     private SpatialRuleLookup spatialRuleLookup;
 
-    public SpatialRuleParser(SpatialRuleLookup spatialRuleLookup) {
-        this(spatialRuleLookup, new EnumEncodedValue<>(Country.KEY, Country.class));
-    }
-
     public SpatialRuleParser(SpatialRuleLookup spatialRuleLookup, IntEncodedValue spatialRuleEnc) {
         this.spatialRuleLookup = spatialRuleLookup;
+        if (spatialRuleEnc == null)
+            throw new IllegalStateException("SpatialRuleLookup was not initialized before building the EncodingManager");
         this.spatialRuleEnc = spatialRuleEnc;
     }
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        if (spatialRuleEnc == null)
-            throw new IllegalStateException("SpatialRuleLookup was not initialized before building the EncodingManager");
         registerNewEncodedValue.add(spatialRuleEnc);
     }
 

@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -31,7 +32,6 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Defines bit layout of bicycles (not motorcycles) for speed, access and relations (network).
- * <p>
  *
  * @author Peter Karich
  * @author Nop
@@ -48,7 +48,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
-    private final Set<String> roadValues = new HashSet<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     protected boolean speedTwoDirections;
     DecimalEncodedValue priorityEnc;
@@ -64,11 +63,12 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         super(speedBits, speedFactor, maxTurnCosts);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions.addAll(Arrays.asList("bicycle", "vehicle", "access"));
-        restrictedValues.add("private");
+
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+        restrictedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -79,7 +79,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
 
-        setBlockByDefault(false);
+        blockBarriersByDefault(false);
         potentialBarriers.add("gate");
         // potentialBarriers.add("lift_gate");
         potentialBarriers.add("swing_gate");
@@ -103,20 +103,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         unpavedSurfaceTags.add("salt");
         unpavedSurfaceTags.add("sand");
         unpavedSurfaceTags.add("wood");
-
-        roadValues.add("living_street");
-        roadValues.add("road");
-        roadValues.add("service");
-        roadValues.add("unclassified");
-        roadValues.add("residential");
-        roadValues.add("trunk");
-        roadValues.add("trunk_link");
-        roadValues.add("primary");
-        roadValues.add("primary_link");
-        roadValues.add("secondary");
-        roadValues.add("secondary_link");
-        roadValues.add("tertiary");
-        roadValues.add("tertiary_link");
 
         maxPossibleSpeed = 30;
 
@@ -193,6 +179,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         speedDefault = highwaySpeeds.get("cycleway");
         setAvoidSpeedLimit(71);
+    }
+
+    @Override
+    public TransportationMode getTransportationMode() {
+        return TransportationMode.BICYCLE;
     }
 
     @Override
@@ -335,12 +326,13 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         // Under certain conditions we need to increase the speed of pushing sections to the speed of a "highway=cycleway"
         if (way.hasTag("highway", pushingSectionsHighways)
                 && ((way.hasTag("foot", "yes") && way.hasTag("segregated", "yes"))
-                || way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official")))
+                || (way.hasTag("bicycle", intendedValues))))
             highwaySpeed = getHighwaySpeed("cycleway");
 
         String s = way.getTag("surface");
+        Integer surfaceSpeed = 0;
         if (!Helper.isEmpty(s)) {
-            Integer surfaceSpeed = surfaceSpeeds.get(s);
+            surfaceSpeed = surfaceSpeeds.get(s);
             if (surfaceSpeed != null) {
                 speed = surfaceSpeed;
                 // boost handling for good surfaces but avoid boosting if pushing section
@@ -366,24 +358,24 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
 
         // Until now we assumed that the way is no pushing section
-        // Now we check that, but only in case that our speed is bigger compared to the PUSHING_SECTION_SPEED
+        // Now we check that, but only in case that our speed computed so far is bigger compared to the PUSHING_SECTION_SPEED
         if (speed > PUSHING_SECTION_SPEED
                 && (way.hasTag("highway", pushingSectionsHighways) || way.hasTag("bicycle", "dismount"))) {
             if (!way.hasTag("bicycle", intendedValues)) {
                 // Here we set the speed for pushing sections and set speed for steps as even lower:
-                if (way.hasTag("highway", "steps"))
-                    speed = PUSHING_SECTION_SPEED / 2;
-                else
-                    speed = PUSHING_SECTION_SPEED;
-            } else if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official")) {
+                speed = way.hasTag("highway", "steps") ? PUSHING_SECTION_SPEED / 2 : PUSHING_SECTION_SPEED;
+            } else if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") ||
+                    way.hasTag("segregated", "yes") || way.hasTag("bicycle", "yes")) {
                 // Here we handle the cases where the OSM tagging results in something similar to "highway=cycleway"
-                speed = highwaySpeeds.get("cycleway");
-            } else {
-                speed = PUSHING_SECTION_SPEED;
+                if (way.hasTag("segregated", "yes"))
+                    speed = highwaySpeeds.get("cycleway");
+                else
+                    speed = way.hasTag("bicycle", "yes") ? 10 : highwaySpeeds.get("cycleway");
+
+                // overwrite our speed again in case we have a valid surface speed and if it is smaller as computed so far
+                if ((surfaceSpeed > 0) && (surfaceSpeed < speed))
+                    speed = surfaceSpeed;
             }
-            // Increase speed in case of segregated
-            if (speed <= PUSHING_SECTION_SPEED && way.hasTag("segregated", "yes"))
-                speed = PUSHING_SECTION_SPEED * 2;
         }
         return speed;
     }

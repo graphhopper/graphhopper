@@ -4,6 +4,7 @@ import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.lm.LMProfile;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -50,6 +51,7 @@ public class DirectedRoutingTest {
     private Directory dir;
     private GraphHopperStorage graph;
     private CHProfile chProfile;
+    private LMProfile lmProfile;
     private CHGraph chGraph;
     private CarFlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
@@ -104,6 +106,7 @@ public class DirectedRoutingTest {
         turnCostStorage = graph.getTurnCostStorage();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
         chProfile = CHProfile.edgeBased(weighting);
+        lmProfile = new LMProfile(weighting);
         graph.addCHGraph(chProfile);
         graph.create(1000);
     }
@@ -119,7 +122,7 @@ public class DirectedRoutingTest {
             chGraph = graph.getCHGraph(chProfile);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
+            lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
             lm.setMaximumWeight(1000);
             lm.doWork();
         }
@@ -138,8 +141,7 @@ public class DirectedRoutingTest {
             case CH_ASTAR:
                 return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM:
-                AStarBidirection astarbi = new AStarBidirection(graph, graph.wrapWeighting(weighting), TraversalMode.EDGE_BASED);
-                return (BidirRoutingAlgorithm) lm.getPreparedRoutingAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+                return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).traversalMode(TraversalMode.EDGE_BASED).build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }

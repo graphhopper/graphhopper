@@ -63,7 +63,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected int maxPossibleSpeed;
     /* Edge Flag Encoder fields */
     private long nodeBitMask;
-    private long relBitMask;
     private boolean blockByDefault = true;
     private boolean blockFords = true;
     private boolean registered;
@@ -125,7 +124,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * Should potential barriers block when no access limits are given?
      */
-    public void setBlockByDefault(boolean blockByDefault) {
+    void blockBarriersByDefault(boolean blockByDefault) {
         this.blockByDefault = blockByDefault;
     }
 
@@ -133,8 +132,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return blockFords;
     }
 
-    public void setBlockFords(boolean blockFords) {
+    void blockFords(boolean blockFords) {
         this.blockFords = blockFords;
+    }
+
+    void blockPrivate(boolean blockPrivate) {
+        if (!blockPrivate) {
+            if (!restrictedValues.remove("private"))
+                throw new IllegalStateException("no 'private' found in restrictedValues");
+            intendedValues.add("private");
+        }
     }
 
     public ConditionalTagInspector getConditionalTagInspector() {

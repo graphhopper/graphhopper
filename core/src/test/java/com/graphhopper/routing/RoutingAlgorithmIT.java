@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.PrincetonReader;
+import com.graphhopper.routing.ch.CHProfileSelector;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
@@ -70,21 +71,21 @@ public class RoutingAlgorithmIT {
                 .setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());
 
         AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
-        List<AlgoHelperEntry> prepare = new ArrayList<>();
-        prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(), idx, "astar|beeline|" + addStr + weighting));
+        List<AlgoHelperEntry> algos = new ArrayList<>();
+        algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(), idx, "astar|beeline|" + addStr + weighting));
         // later: include dijkstraOneToMany
-        prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
 
         AlgorithmOptions astarbiOpts = AlgorithmOptions.start(defaultOpts).algorithm(ASTAR_BI).build();
         astarbiOpts.getHints().put(ASTAR_BI + ".approximation", "BeelineSimplification");
         AlgorithmOptions dijkstrabiOpts = AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA_BI).build();
-        prepare.add(new AlgoHelperEntry(ghStorage, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
-        prepare.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
 
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMPreparationHandler().isEnabled()) {
             final HintsMap lmHints = new HintsMap(defaultHints).put(Parameters.Landmark.DISABLE, false);
-            prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
+            algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(lmHints);
@@ -96,26 +97,17 @@ public class RoutingAlgorithmIT {
             final HintsMap chHints = new HintsMap(defaultHints);
             chHints.put(Parameters.CH.DISABLE, false);
             chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
-            CHProfile pickedProfile = null;
-            for (CHProfile chProfile : hopper.getCHPreparationHandler().getCHProfiles()) {
-                if (chProfile.getWeighting().equals(weighting) && tMode.isEdgeBased() == chProfile.getTraversalMode().isEdgeBased()) {
-                    pickedProfile = chProfile;
-                    break;
-                }
-            }
-            if (pickedProfile == null)
-                throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHPreparationHandler().getCHProfiles());
-
-            prepare.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
-                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
+            CHProfile pickedProfile = CHProfileSelector.select(hopper.getCHPreparationHandler().getCHProfiles(), chHints);
+            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
+                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|algos|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(chHints);
                 }
             });
 
-            prepare.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
-                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + hints.getWeighting()) {
+            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
+                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|algos|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(chHints);
@@ -123,7 +115,7 @@ public class RoutingAlgorithmIT {
             });
         }
 
-        return prepare;
+        return algos;
     }
 
     @Test
@@ -139,7 +131,6 @@ public class RoutingAlgorithmIT {
         new PrincetonReader(graph).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream(bigFile))).read();
         GraphHopper hopper = new GraphHopper() {
             {
-                setCHEnabled(false);
                 setEncodingManager(eManager);
                 loadGraph(graph);
             }

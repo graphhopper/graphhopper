@@ -196,8 +196,6 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
     public double get(DecimalEncodedValue turnCostEnc, IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
-        // reset is required as we could have a QueryGraph that does not set tcFlags
-        tcFlags.ints[0] = 0;
         return turnCostEnc.getDecimal(false, readFlags(tcFlags, fromEdge, viaNode, toEdge));
     }
 

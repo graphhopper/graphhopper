@@ -38,7 +38,6 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 public class OSMTurnRestrictionParser implements TurnRestrictionParser {
     private String name;
     private DecimalEncodedValue turnCostEnc;
-    private final int maxTurnCosts;
     private final Collection<String> restrictions;
     private BooleanEncodedValue accessEnc;
     private EdgeExplorer cachedOutExplorer, cachedInExplorer;
@@ -49,7 +48,8 @@ public class OSMTurnRestrictionParser implements TurnRestrictionParser {
      */
     public OSMTurnRestrictionParser(String name, int maxTurnCosts) {
         this.name = name;
-        this.maxTurnCosts = maxTurnCosts;
+        this.turnCostEnc = TurnCost.create(name, maxTurnCosts);
+
         // https://wiki.openstreetmap.org/wiki/Key:access
         if (name.contains("car"))
             this.restrictions = Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access");
@@ -65,8 +65,6 @@ public class OSMTurnRestrictionParser implements TurnRestrictionParser {
     }
 
     DecimalEncodedValue getTurnCostEnc() {
-        if (turnCostEnc == null)
-            throw new IllegalStateException("Cannot access turn cost encoded value. Not initialized. Call createTurnCostEncodedValues before");
         return turnCostEnc;
     }
 
@@ -74,7 +72,7 @@ public class OSMTurnRestrictionParser implements TurnRestrictionParser {
     public void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
         String accessKey = getKey(name, "access");
         accessEnc = lookup.getEncodedValue(accessKey, BooleanEncodedValue.class);
-        registerNewEncodedValue.add(turnCostEnc = TurnCost.create(name, maxTurnCosts));
+        registerNewEncodedValue.add(turnCostEnc);
     }
 
     @Override
