@@ -51,21 +51,6 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.github.graphhopper</groupId>
-            <artifactId>osm-lib</artifactId>
-            <version>master-v1.4.0-gc538eda-9</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.poole</groupId>
-            <artifactId>ConditionalRestrictionParser</artifactId>
-            <version>0.2.3</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.poole</groupId>
-            <artifactId>OpeningHoursParser</artifactId>
-            <version>0.16.1</version>
-        </dependency>
 
         <!-- for using CGIAR: elevation data importing via tif files-->
         <dependency>

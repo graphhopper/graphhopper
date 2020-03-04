@@ -23,9 +23,6 @@ import ch.poole.conditionalrestrictionparser.ConditionalRestrictionParser;
 import ch.poole.conditionalrestrictionparser.ParseException;
 import ch.poole.conditionalrestrictionparser.Restriction;
 import ch.poole.openinghoursparser.*;
-import com.conveyal.osmlib.OSMEntity;
-import com.conveyal.osmlib.Way;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.search.StringIndex;
@@ -38,7 +35,6 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TimeDependentRestrictionsDAO {
 
@@ -56,20 +52,27 @@ public class TimeDependentRestrictionsDAO {
         tagStore = ghStorage.getTagStore();
     }
 
-    public static Map<String, String> getTags(OSMEntity relation) {
-        Map<String, String> tags = new HashMap<>();
-        for (OSMEntity.Tag tag : relation.tags) {
-            tags.put(tag.key, tag.value);
+    public static class Tag {
+        public String key;
+        public String value;
+
+        public Tag(String key, String value) {
+            this.key = key;
+            this.value = value;
         }
-        return tags;
+
+        @Override
+        public String toString() {
+            return key + "=" + value;
+        }
     }
 
     public static class ConditionalTagData {
-        public OSMEntity.Tag getTag() {
+        public Tag getTag() {
             return tag;
         }
 
-        public OSMEntity.Tag tag;
+        public Tag tag;
 
         public List<TimeDependentRestrictionData> getRestrictionData() {
             return restrictionData;
@@ -93,21 +96,8 @@ public class TimeDependentRestrictionsDAO {
     }
 
 
-    /**
-     *
-     * We use ReaderWay instead of Way as the domain type, because we also need these functions in the
-     * OSM import, where we don't have the separate OSM database.
-     */
-    public ReaderWay readerWay(long osmid, Way way) {
-        ReaderWay readerWay = new ReaderWay(osmid);
-        for (OSMEntity.Tag tag : way.tags) {
-            readerWay.setTag(tag.key, tag.value);
-        }
-        return readerWay;
-    }
-
-    public static List<ConditionalTagData> getTimeDependentAccessConditions(ReaderWay way) {
-        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(sanitize(way.getTags()));
+    public static List<ConditionalTagData> getTimeDependentAccessConditions(Map<String, String> tags) {
+        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(tags);
         List<ConditionalTagData> accessRestrictionData = restrictionData.stream()
                 .filter(c -> c.tag.key.contains("access") || c.tag.key.contains("vehicle"))
                 .filter(c -> !c.tag.key.contains("lanes"))
@@ -140,7 +130,7 @@ public class TimeDependentRestrictionsDAO {
             String tagValue = tag.getValue();
             if (tag.getKey().contains("conditional") && tagValue.contains("@")) {
                 ConditionalTagData conditionalTagData = new ConditionalTagData();
-                conditionalTagData.tag = new OSMEntity.Tag(tag.getKey(), tagValue);
+                conditionalTagData.tag = new Tag(tag.getKey(), tagValue);
                 conditionalTagData.restrictionData = new ArrayList<>();
                 ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tagValue.getBytes()));
                 try {

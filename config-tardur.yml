@@ -1,11 +1,7 @@
 graphhopper:
-#  datareader.file: germany-latest.osm.pbf
-#  graph.location: graphs/germany/graph
+  datareader.file: germany-latest.osm.pbf
+  graph.location: graphs/germany/graph
 
-  datareader.file: sachsen-latest.osm.pbf
-  graph.location: graphs/sachsen
-
-  graph.encoded_values: conditional
   graph.flag_encoders: car
   prepare.ch.weightings: no
   prepare.lm.weightings: fastest

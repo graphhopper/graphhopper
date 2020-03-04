@@ -25,7 +25,6 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.profiles.UnsignedIntEncodedValue;
 import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.search.StringIndex;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.HashMap;
@@ -51,7 +50,7 @@ public class ConditionalAccessRestrictionParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        List<TimeDependentRestrictionsDAO.ConditionalTagData> timeDependentAccessConditions = TimeDependentRestrictionsDAO.getTimeDependentAccessConditions(way);
+        List<TimeDependentRestrictionsDAO.ConditionalTagData> timeDependentAccessConditions = TimeDependentRestrictionsDAO.getTimeDependentAccessConditions(TimeDependentRestrictionsDAO.sanitize(way.getTags()));
         if (!timeDependentAccessConditions.isEmpty()) {
             conditional.setBool(false, edgeFlags, true);
             HashMap<String, String> tags = new HashMap<>();

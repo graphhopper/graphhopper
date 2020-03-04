@@ -18,19 +18,13 @@
 
 package com.graphhopper.tardur.resources;
 
-import com.conveyal.osmlib.Node;
-import com.conveyal.osmlib.OSM;
-import com.conveyal.osmlib.Way;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.util.parsers.OSMIDParser;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.tardur.TimeDependentRestrictionsDAO;
 import com.graphhopper.tardur.view.ConditionalRestrictionView;
 import com.graphhopper.tardur.view.TimeDependentRestrictionsView;
 import com.graphhopper.timezone.core.TimeZones;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 import org.locationtech.jts.geom.Coordinate;
 
 import javax.inject.Inject;
@@ -38,22 +32,20 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import java.util.List;
-import java.util.Spliterators;
-import java.util.function.Consumer;
+import java.util.Map;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+
+import static com.graphhopper.graphsupport.GraphSupport.allEdges;
 
 @Path("conditional-access")
 public class ConditionalAccessRestrictionsResource {
 
     private final GraphHopperStorage storage;
-    private final OSM osm;
     private final TimeZones timeZones;
 
     @Inject
-    public ConditionalAccessRestrictionsResource(GraphHopperStorage storage, OSM osm, TimeZones timeZones) {
+    public ConditionalAccessRestrictionsResource(GraphHopperStorage storage, TimeZones timeZones) {
         this.storage = storage;
-        this.osm = osm;
         this.timeZones = timeZones;
     }
 
@@ -62,47 +54,28 @@ public class ConditionalAccessRestrictionsResource {
     public TimeDependentRestrictionsView timeDependentAccessRestrictions() {
         TimeDependentRestrictionsDAO timeDependentRestrictionsDAO = new TimeDependentRestrictionsDAO(storage, timeZones);
         return new TimeDependentRestrictionsView(new TimeDependentRestrictionsDAO(storage, timeZones), () -> {
-            final OSMIDParser osmidParser = OSMIDParser.fromEncodingManager(storage.getEncodingManager());
-            final BooleanEncodedValue property = storage.getEncodingManager().getBooleanEncodedValue("conditional");
-            return allEdges()
+            BooleanEncodedValue property = storage.getEncodingManager().getBooleanEncodedValue("conditional");
+            IntEncodedValue tagPointer = storage.getEncodingManager().getIntEncodedValue("edgetagpointer");
+            return allEdges(storage)
                     .filter(edge -> edge.get(property))
-                    .map(edge -> osmidParser.getOSMID(edge.getFlags()))
-                    .distinct()
-                    .flatMap(osmid -> {
-                Way way = osm.ways.get(osmid);
-                ReaderWay readerWay = timeDependentRestrictionsDAO.readerWay(osmid, way);
-                List<TimeDependentRestrictionsDAO.ConditionalTagData> timeDependentAccessConditions = TimeDependentRestrictionsDAO.getTimeDependentAccessConditions(readerWay);
-                if (!timeDependentAccessConditions.isEmpty()) {
-                    ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentRestrictionsDAO, timeZones);
-                    view.osmid = osmid;
-                    view.tags = TimeDependentRestrictionsDAO.sanitize(readerWay.getTags());
-                    Node from = osm.nodes.get(way.nodes[0]);
-                    Node to = osm.nodes.get(way.nodes[way.nodes.length-1]);
-                    view.from = new Coordinate(from.getLon(), from.getLat());
-                    view.to = new Coordinate(to.getLon(), to.getLat());
-                    view.restrictionData = timeDependentAccessConditions;
-                    return Stream.of(view);
-                } else {
-                    return Stream.empty();
-                }
-            }).iterator();
+                    .flatMap(edge -> {
+                        int p = edge.get(tagPointer);
+                        Map<String, String> tags = storage.getTagStore().getAll(p);
+                        List<TimeDependentRestrictionsDAO.ConditionalTagData> timeDependentAccessConditions = TimeDependentRestrictionsDAO.getTimeDependentAccessConditions(tags);
+                        if (!timeDependentAccessConditions.isEmpty()) {
+                            ConditionalRestrictionView view = new ConditionalRestrictionView(timeDependentRestrictionsDAO, timeZones);
+                            view.id = edge.getEdge();
+                            view.tags = tags;
+                            view.from = new Coordinate(storage.getNodeAccess().getLon(edge.getBaseNode()), storage.getNodeAccess().getLat(edge.getBaseNode()));
+                            view.to = new Coordinate(storage.getNodeAccess().getLon(edge.getAdjNode()), storage.getNodeAccess().getLat(edge.getAdjNode()));
+                            view.restrictionData = timeDependentAccessConditions;
+                            return Stream.of(view);
+                        } else {
+                            return Stream.empty();
+                        }
+                    }).iterator();
         });
     }
 
-    private Stream<EdgeIteratorState> allEdges() {
-        return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
-            EdgeIterator edgeIterator = storage.getAllEdges();
-
-            @Override
-            public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
-                if (edgeIterator.next()) {
-                    action.accept(edgeIterator);
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        }, false);
-    }
 
 }

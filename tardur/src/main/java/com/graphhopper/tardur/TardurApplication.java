@@ -17,7 +17,6 @@
  */
 package com.graphhopper.tardur;
 
-import com.conveyal.osmlib.OSM;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.SerializationConfig;
@@ -41,7 +40,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.tardur.resources.ConditionalAccessRestrictionsResource;
-import com.graphhopper.tardur.resources.ConditionalTurnRestrictionsResource;
 import com.graphhopper.tardur.resources.RootResource;
 import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.TranslationMap;
@@ -61,23 +59,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class TardurApplication extends Application<TardurConfiguration> {
-
-    static class OSMFactory implements Factory<OSM> {
-
-        @Inject
-        TardurGraphHopperManaged graphHopperManaged;
-
-
-        @Override
-        public OSM provide() {
-            return graphHopperManaged.getOsm();
-        }
-
-        @Override
-        public void dispose(OSM instance) {
-
-        }
-    }
 
     static class TimeZonesFactory implements Factory<TimeZones> {
         @Inject
@@ -266,7 +247,6 @@ public final class TardurApplication extends Application<TardurConfiguration> {
                 bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
                 bindFactory(GtfsStorageFactory.class).to(GtfsStorage.class);
 
-                bindFactory(OSMFactory.class).to(OSM.class);
                 bindFactory(TimeZonesFactory.class).to(TimeZones.class);
             }
         });
@@ -295,7 +275,6 @@ public final class TardurApplication extends Application<TardurConfiguration> {
 
         environment.jersey().register(new GHJerseyViolationExceptionMapper());
         environment.jersey().register(new RootResource());
-        environment.jersey().register(ConditionalTurnRestrictionsResource.class);
         environment.jersey().register(ConditionalAccessRestrictionsResource.class);
     }
 }

@@ -37,7 +37,6 @@ public class TimeDependentTurnRestrictionsTest {
         config.put("graph.flag_encoders", "car");
         config.put("graph.location", "wurst");
         config.put("routing.ch.disabling_allowed", true);
-        config.put("graph.encoded_values","conditional");
         TardurGraphHopperManaged tardurGraphHopperManaged = new TardurGraphHopperManaged(config, Jackson.newObjectMapper());
         tardurGraphHopperManaged.start();
         GraphHopper graphHopper = tardurGraphHopperManaged.getGraphHopper();

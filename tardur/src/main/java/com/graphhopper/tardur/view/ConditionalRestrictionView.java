@@ -32,7 +32,7 @@ import java.util.TimeZone;
 public class ConditionalRestrictionView {
 
     private final TimeZones timeZones;
-    public long osmid;
+    public long id;
     public Map<String, String> tags;
     public Coordinate from;
     public Coordinate to;

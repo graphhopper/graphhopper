@@ -18,7 +18,6 @@
 
 package com.graphhopper.tardur;
 
-import com.conveyal.osmlib.OSM;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
@@ -38,7 +37,10 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 import static com.graphhopper.util.Helper.UTF_CS;
 
@@ -46,7 +48,6 @@ public class TardurGraphHopperManaged implements Managed {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopper graphHopper;
-    private OSM osm;
     private TimeZones timeZones;
 
     public TardurGraphHopperManaged(GraphHopperConfig configuration, ObjectMapper objectMapper) {
@@ -63,6 +64,8 @@ public class TardurGraphHopperManaged implements Managed {
         graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection){
             @Override
             protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
+                ConditionalAccessRestrictionParser conditionalAccessRestrictionParser = new ConditionalAccessRestrictionParser(graphHopper);
+                emBuilder.add(conditionalAccessRestrictionParser);
                 TurnRestrictionParser turnRestrictionParser = new ConditionalTurnRestrictionParser();
                 emBuilder.addTurnRestrictionParser(turnRestrictionParser);
             }
@@ -76,7 +79,6 @@ public class TardurGraphHopperManaged implements Managed {
                 return weighting;
             }
         }.forServer();
-        graphHopper.setTagParserFactory(new TardurTagParserFactory(graphHopper));
         graphHopper.init(configuration);
     }
 
@@ -93,15 +95,10 @@ public class TardurGraphHopperManaged implements Managed {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        osm = new OSM(graphHopper.getGraphHopperStorage().getDirectory().getDefaultType().isStoring() ? graphHopper.getGraphHopperStorage().getDirectory().getLocation()+"/osm.db" : null);
     }
 
     public GraphHopper getGraphHopper() {
         return graphHopper;
-    }
-
-    public OSM getOsm() {
-        return osm;
     }
 
     public TimeZones getTimeZones() {
@@ -110,7 +107,6 @@ public class TardurGraphHopperManaged implements Managed {
 
     @Override
     public void stop() {
-        osm.close();
         graphHopper.close();
     }
 
