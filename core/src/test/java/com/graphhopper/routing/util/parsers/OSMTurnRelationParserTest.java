@@ -57,14 +57,14 @@ public class OSMTurnRelationParserTest {
 
         TurnCostStorage tcs = ghStorage.getTurnCostStorage();
         DecimalEncodedValue tce = parser.getTurnCostEnc();
-        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 6)));
-        assertEquals(0, tcs.get(tce, tcFlags, 4, 3, 3), .1);
-        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 2)));
+        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 6)));
+        assertEquals(0, tcs.get(tce, 4, 3, 3), .1);
+        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 2)));
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
         parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
-        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 3)));
+        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 3)));
     }
 
     @Test

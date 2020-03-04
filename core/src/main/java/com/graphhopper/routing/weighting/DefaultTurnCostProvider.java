@@ -66,7 +66,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             tCost = true ? uTurnCosts : Double.POSITIVE_INFINITY;
         } else {
             if (turnCostEnc != null)
-                tCost = turnCostStorage.get(turnCostEnc, TurnCost.createFlags(), edgeFrom, nodeVia, edgeTo);
+                tCost = turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
         }
         return tCost;
     }

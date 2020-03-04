@@ -18,6 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -179,8 +180,8 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     /**
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
-    public double get(DecimalEncodedValue turnCostEnc, IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
-        return turnCostEnc.getDecimal(false, readFlags(tcFlags, fromEdge, viaNode, toEdge));
+    public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
+        return turnCostEnc.getDecimal(false, readFlags(TurnCost.createFlags(), fromEdge, viaNode, toEdge));
     }
 
     /**
