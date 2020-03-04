@@ -32,7 +32,6 @@ import static org.junit.Assert.assertEquals;
 
 public class TurnCostStorageTest {
 
-    private final IntsRef EMPTY = TurnCost.createFlags();
     private EncodingManager manager;
 
     @Before
@@ -76,7 +75,6 @@ public class TurnCostStorageTest {
         setTurnCost(g, edge23, edge31, "bike", 3, 2.0);
         setTurnCost(g, edge31, edge10, "car", 1, 2.0);
         setTurnCost(g, edge31, edge10, "bike", 1, Double.POSITIVE_INFINITY);
-        g.getTurnCostStorage().setOrMerge(EMPTY, edge02, 2, edge24, false);
         setTurnCost(g, edge02, edge24, "bike", 2, Double.POSITIVE_INFINITY);
 
         assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge42, edge23, "car", 2), 0);
@@ -91,23 +89,10 @@ public class TurnCostStorageTest {
         assertEquals(0.0, getTurnCost(g, edge02, edge24, "car", 2), 0);
         assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge24, "bike", 2), 0);
 
-        // merge per default
         setTurnCost(g, edge02, edge23, "car", 2, Double.POSITIVE_INFINITY);
         setTurnCost(g, edge02, edge23, "bike", 2, Double.POSITIVE_INFINITY);
         assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "car", 2), 0);
         assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "bike", 2), 0);
-
-        // overwrite unrelated turn cost value
-        g.getTurnCostStorage().setOrMerge(EMPTY, edge02, 2, edge23, false);
-        g.getTurnCostStorage().setOrMerge(EMPTY, edge02, 2, edge23, false);
-        setTurnCost(g, edge02, edge23, "bike", 2, Double.POSITIVE_INFINITY);
-        assertEquals(0, getTurnCost(g, edge02, edge23, "car", 2), 0);
-        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "bike", 2), 0);
-
-        // clear
-        g.getTurnCostStorage().setOrMerge(EMPTY, edge02, 2, edge23, false);
-        assertEquals(0, getTurnCost(g, edge02, edge23, "car", 2), 0);
-        assertEquals(0, getTurnCost(g, edge02, edge23, "bike", 2), 0);
     }
 
     @Test

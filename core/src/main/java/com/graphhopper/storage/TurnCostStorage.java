@@ -94,14 +94,17 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
 
     /**
      * Sets the turn cost at the viaNode when going from "fromEdge" to "toEdge"
+     * WARNING: It is tacitly assumed that for every encoder, this method is only called once per turn relation.
+     * Subsequent calls for the same encoder and the same turn relation will have undefined results.
+     * (The implementation below ORs the new bits into the existing bits.)
      */
     public void set(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge, double cost) {
         IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, cost);
-        setOrMerge(tcFlags, fromEdge, viaNode, toEdge, true);
+        merge(tcFlags, fromEdge, viaNode, toEdge);
     }
 
-    void setOrMerge(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge, boolean merge) {
+    private void merge(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
         int newEntryIndex = turnCostsCount;
         ensureTurnCostIndex(newEntryIndex);
         boolean oldEntryFound = false;
@@ -139,10 +142,8 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
             if (!oldEntryFound) {
                 // set next-pointer to this new cost entry
                 turnCosts.setInt((long) previousEntryIndex * BYTES_PER_ENTRY + TC_NEXT, newEntryIndex);
-            } else if (merge) {
-                newFlags = existingFlags | newFlags;
             } else {
-                // overwrite!
+                newFlags = existingFlags | newFlags;
             }
         }
         long costsBase; // where to (over)write
