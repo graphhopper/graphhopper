@@ -101,20 +101,12 @@ public class OSMTurnRestriction {
     public enum Type {
         NOT, ONLY;
 
-        private static final Map<String, Type> tags = new HashMap<>();
-
-        static {
-            tags.put("no_left_turn", NOT);
-            tags.put("no_right_turn", NOT);
-            tags.put("no_straight_on", NOT);
-            tags.put("no_u_turn", NOT);
-            tags.put("only_right_turn", ONLY);
-            tags.put("only_left_turn", ONLY);
-            tags.put("only_straight_on", ONLY);
-        }
-
         public static Type getRestrictionType(String tag) {
-            return tags.get(tag);
+            if (tag.startsWith("no"))
+                return NOT;
+            else if (tag.startsWith("only"))
+                return ONLY;
+            return null;
         }
     }
 

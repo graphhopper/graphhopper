@@ -15,7 +15,7 @@
     -->
 
     <node id="1" lat="50" lon="10"> </node>
-    <node id="2" lat="52" lon="10"> </node>
+    <node id="2" lat="54" lon="10"> </node>
     <node id="3" lat="52" lon="11"> </node>
     <node id="4" lat="52" lon="12"> </node>
     <node id="5" lat="50" lon="12"> </node>
@@ -96,7 +96,7 @@
         <member type="way" ref="23" role="from"/>
         <member type="way" ref="34" role="to"/>
         <member type="node" ref="3" role="via"/>
-        <tag k="restriction" v="only_straight_on"/>
+        <tag k="restriction:conditional" v="only_straight_on @ (Mo-Fr 7:00-13:30)"/>
         <tag k="type" v="restriction"/>
     </relation>
         
@@ -112,7 +112,7 @@
         <member type="way" ref="45" role="from"/>
         <member type="way" ref="56" role="to"/>
         <member type="node" ref="5" role="via"/>
-        <tag k="restriction" v="only_right_turn"/>
+        <tag k="restriction:conditional" v="only_right_turn @ (Mo-Fr 7:00-13:30)"/>
         <tag k="type" v="restriction"/>
     </relation>
 

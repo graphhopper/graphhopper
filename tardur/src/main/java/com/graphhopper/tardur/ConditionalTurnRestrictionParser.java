@@ -61,8 +61,6 @@ class ConditionalTurnRestrictionParser implements TurnRestrictionParser {
 
         int viaNode = map.getInternalNodeIdOfOsmNode(turnRestriction.getViaOsmNodeId());
         if (!restrictionData.isEmpty()) {
-            System.out.println("pups");
-
             int edgeIdFrom = EdgeIterator.NO_EDGE;
 
             // get all incoming edges and receive the edge which is defined by fromOsm

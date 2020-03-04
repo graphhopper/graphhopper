@@ -18,6 +18,7 @@
 
 package com.graphhopper.tardur;
 
+import ch.poole.openinghoursparser.Rule;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.profiles.TurnCost;
@@ -31,9 +32,13 @@ import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TimeZone;
+
+import static com.graphhopper.tardur.TimeDependentRestrictionsDAO.getConditionalTagDataWithTimeDependentConditions;
 
 public class TimeDependentAccessWeighting implements TDWeighting {
 
@@ -101,7 +106,25 @@ public class TimeDependentAccessWeighting implements TDWeighting {
         if (p != 0) {
             Map<String, String> tags = ghStorage.getTagStore().getAll(p);
             TimeZone timeZone = timeZones.getTimeZone(ghStorage.getNodeAccess().getLat(inEdgeCursor.getBaseNode()), ghStorage.getNodeAccess().getLon(inEdgeCursor.getBaseNode()));
-            return timeDependentRestrictionsDAO.accessible(tags, at.atZone(timeZone.toZoneId()));
+            return accessible(tags, at.atZone(timeZone.toZoneId()));
+        }
+        return Optional.empty();
+    }
+
+    private Optional<Boolean> accessible(Map<String, String> tags, ZonedDateTime linkEnterTime) {
+        List<TimeDependentRestrictionsDAO.ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(tags);
+        for (TimeDependentRestrictionsDAO.ConditionalTagData conditionalTagData : conditionalTagDataWithTimeDependentConditions) {
+            for (TimeDependentRestrictionsDAO.TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
+                // Evaluate all the rules on all the tags. Don't care about the tag itself -- we expect that
+                // an "only_straight_on" rule will be attached to those turn relations that are supposed to be
+                // blocked, just as a "no_right_turn" rule would.
+                // So as soon as a rule fits, this turn relation is blocked.
+                for (Rule rule : timeDependentRestrictionData.rules) {
+                    if (timeDependentRestrictionsDAO.matches(linkEnterTime, rule)) {
+                        return Optional.of(false);
+                    }
+                }
+            }
         }
         return Optional.empty();
     }

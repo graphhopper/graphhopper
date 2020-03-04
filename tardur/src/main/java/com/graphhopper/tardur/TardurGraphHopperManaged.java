@@ -89,7 +89,7 @@ public class TardurGraphHopperManaged implements Managed {
                 + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
         timeZones = new TimeZones();
         try {
-            timeZones.initWithWorldData(new File("world-data/tz_world.shp").toURI().toURL());
+            timeZones.initWithWorldData(getClass().getResource("/world-data/tz_world.shp"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
