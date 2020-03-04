@@ -93,6 +93,12 @@
             <version>1.3.5</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>timezone</groupId>
+            <artifactId>timezone-core</artifactId>
+            <version>2.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 
