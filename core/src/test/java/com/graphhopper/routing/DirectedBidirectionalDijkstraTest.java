@@ -50,7 +50,7 @@ public class DirectedBidirectionalDijkstraTest {
     public void setup() {
         dir = new RAMDirectory();
         maxTurnCosts = 10;
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts, true);
+        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphHopperStorage(dir, encodingManager, false, true).create(1000);
         turnCostStorage = graph.getTurnCostStorage();

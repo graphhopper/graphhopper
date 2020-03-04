@@ -491,7 +491,7 @@ public class QueryGraphTest {
 
     @Test
     public void testTurnCostsProperlyPropagated_Issue282() {
-        FlagEncoder encoder = new CarFlagEncoder(5, 5, 15, true);
+        FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
         EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, false, true).
                 create(100);

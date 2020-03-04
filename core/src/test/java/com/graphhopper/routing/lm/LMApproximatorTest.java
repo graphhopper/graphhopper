@@ -60,7 +60,7 @@ public class LMApproximatorTest {
 
     private void run(long seed) {
         Directory dir = new RAMDirectory();
-        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1, true);
+        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         GraphHopperStorage graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).create();
 

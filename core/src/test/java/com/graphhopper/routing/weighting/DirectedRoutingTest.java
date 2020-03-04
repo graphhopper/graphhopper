@@ -100,7 +100,7 @@ public class DirectedRoutingTest {
         dir = new RAMDirectory();
         maxTurnCosts = 10;
         // todonow: make this work with speed_both_directions=true!
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts, true);
+        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();

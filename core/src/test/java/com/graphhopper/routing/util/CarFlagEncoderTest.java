@@ -171,14 +171,10 @@ public class CarFlagEncoderTest {
         assertTrue(encoder.getAccess(way).canSkip());
         assertTrue(encoder.handleNodeTags(node) > 0);
 
-        try {
-            // Now they are passable
-            encoder.setBlockFords(false);
-            assertTrue(encoder.getAccess(way).isWay());
-            assertFalse(encoder.handleNodeTags(node) > 0);
-        } finally {
-            encoder.setBlockFords(true);
-        }
+        CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_fords=false"));
+        EncodingManager.create(tmpEncoder);
+        assertTrue(tmpEncoder.getAccess(way).isWay());
+        assertFalse(tmpEncoder.handleNodeTags(node) > 0);
     }
 
     @Test
@@ -247,8 +243,8 @@ public class CarFlagEncoderTest {
     @Test
     public void testPrivateTag() {
         // allow private access
-        FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 0, false);
-        FlagEncoder bikeEncoder = new BikeFlagEncoder(4, 2, 0, false);
+        FlagEncoder carEncoder = new CarFlagEncoder(new PMap("block_private=false"));
+        FlagEncoder bikeEncoder = new BikeFlagEncoder(new PMap("block_private=false"));
         EncodingManager em = new EncodingManager.Builder().add(carEncoder).add(bikeEncoder).build();
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);
@@ -571,17 +567,18 @@ public class CarFlagEncoderTest {
         // still barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
 
-        encoder.setBlockByDefault(false);
+        CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_barriers=false"));
+        EncodingManager.create(tmpEncoder);
 
         // Test if cattle_grid is not blocking
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertTrue(tmpEncoder.handleNodeTags(node) == 0);
     }
 
     @Test
     public void testMaxValue() {
-        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0, true);
+        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
         EncodingManager em = EncodingManager.create(instance);
         DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(EncodingManager.getKey(instance, "average_speed"));
         ReaderWay way = new ReaderWay(1);
@@ -604,7 +601,7 @@ public class CarFlagEncoderTest {
 
     @Test
     public void testRegisterOnlyOnceAllowed() {
-        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0, true);
+        CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
         EncodingManager tmpEM = EncodingManager.create(instance);
         try {
             tmpEM = EncodingManager.create(instance);
@@ -650,7 +647,7 @@ public class CarFlagEncoderTest {
         way.setTag("route", "ferry");
         way.setTag("estimated_distance", 257);
 
-        CarFlagEncoder lowFactorCar = new CarFlagEncoder(10, 1, 0, true);
+        CarFlagEncoder lowFactorCar = new CarFlagEncoder(10, 1, 0);
         List<EncodedValue> list = new ArrayList<>();
         lowFactorCar.setEncodedValueLookup(em);
         lowFactorCar.createEncodedValues(list, "car", 0);

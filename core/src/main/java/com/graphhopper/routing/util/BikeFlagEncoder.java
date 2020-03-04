@@ -27,7 +27,7 @@ import com.graphhopper.util.PMap;
  */
 public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     public BikeFlagEncoder() {
-        this(4, 2, 0, true);
+        this(4, 2, 0);
     }
 
     public BikeFlagEncoder(String propertiesString) {
@@ -37,13 +37,15 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     public BikeFlagEncoder(PMap properties) {
         this(properties.getInt("speed_bits", 4),
                 properties.getInt("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0,
-                properties.getBool("block_private", true));
-        this.setBlockFords(properties.getBool("block_fords", false));
+                properties.getBool("turn_costs", false) ? 1 : 0);
+
+        blockBarriersByDefault(properties.getBool("block_barriers", false));
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
     }
 
-    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
-        super(speedBits, speedFactor, maxTurnCosts, blockPrivate);
+    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+        super(speedBits, speedFactor, maxTurnCosts);
         addPushingSection("path");
         addPushingSection("footway");
         addPushingSection("pedestrian");

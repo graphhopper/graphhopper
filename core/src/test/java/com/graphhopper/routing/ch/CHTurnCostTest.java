@@ -73,7 +73,7 @@ public class CHTurnCostTest {
     public void init() {
         // its important to use @Before when using Repeat Rule!
         maxCost = 10;
-        encoder = new CarFlagEncoder(5, 5, maxCost, true);
+        encoder = new CarFlagEncoder(5, 5, maxCost);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).build();
         turnCostStorage = graph.getTurnCostStorage();

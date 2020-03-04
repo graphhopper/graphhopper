@@ -44,7 +44,7 @@ public class ShortcutUnpackerTest {
     @Before
     public void init() {
         // use motorcycle to be able to set different fwd/bwd speeds
-        encoder = new MotorcycleFlagEncoder(5, 5, 10, true);
+        encoder = new MotorcycleFlagEncoder(5, 5, 10);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHProfileStrings("motorcycle|fastest|" + (edgeBased ? "edge" : "node"))

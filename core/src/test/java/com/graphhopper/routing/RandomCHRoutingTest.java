@@ -59,7 +59,7 @@ public class RandomCHRoutingTest {
     @Before
     public void init() {
         dir = new RAMDirectory();
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts, true);
+        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHProfileStrings("car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)

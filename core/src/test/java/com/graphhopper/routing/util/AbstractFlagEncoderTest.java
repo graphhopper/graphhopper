@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 public class AbstractFlagEncoderTest {
     @Test
     public void testAcceptsCar() {
-        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 0, true);
+        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 0);
         assertEquals(40, encoder.parseSpeed("40 km/h"), 1e-3);
         assertEquals(40, encoder.parseSpeed("40km/h"), 1e-3);
         assertEquals(40, encoder.parseSpeed("40kmh"), 1e-3);

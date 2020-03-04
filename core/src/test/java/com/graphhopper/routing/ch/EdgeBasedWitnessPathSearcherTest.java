@@ -40,7 +40,7 @@ public class EdgeBasedWitnessPathSearcherTest {
 
     @Before
     public void setup() {
-        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10, true);
+        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHProfileStrings("car|shortest|edge")

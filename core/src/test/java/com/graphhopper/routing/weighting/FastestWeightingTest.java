@@ -38,7 +38,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    private final FlagEncoder encoder = new CarFlagEncoder(5, 5, 10, true);
+    private final FlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
 
     @Test
