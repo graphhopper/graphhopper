@@ -37,11 +37,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
     }
 
     public Bike2WeightFlagEncoder(PMap properties) {
-        super(properties.getInt("speed_bits", 4),
-                properties.getInt("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0,
-                properties.getBool("block_private", true));
-        this.setBlockFords(properties.getBool("block_fords", false));
+        super(properties);
         speedTwoDirections = true;
     }
 

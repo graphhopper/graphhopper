@@ -24,8 +24,7 @@ public class Path4CHTest {
 
     @Before
     public void init() {
-        int maxTurnCosts = 10;
-        encoder = new CarFlagEncoder(true, 5, 5, maxTurnCosts, true);
+        encoder = new CarFlagEncoder(5, 5, 10).setSpeedTwoDirections(true);
         EncodingManager em = EncodingManager.create(encoder);
         graph = new GraphBuilder(em)
                 .setCHProfileStrings("car|fastest|edge")

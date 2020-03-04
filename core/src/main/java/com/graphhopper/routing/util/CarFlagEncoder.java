@@ -36,7 +36,7 @@ import java.util.*;
 public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
-    private final boolean speedTwoDirections;
+    private boolean speedTwoDirections;
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
 
@@ -52,18 +52,18 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     public CarFlagEncoder(PMap properties) {
-        this(properties.getBool("speed_two_directions", false),
-                properties.getInt("speed_bits", 5),
+        this(properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
-                properties.getBool("turn_costs", false) ? 1 : 0,
-                properties.getBool("block_private", true));
-        this.setBlockFords(properties.getBool("block_fords", false));
-        this.setBlockByDefault(properties.getBool("block_barriers", true));
+                properties.getBool("turn_costs", false) ? 1 : 0);
+
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
+        blockBarriersByDefault(properties.getBool("block_barriers", true));
+        setSpeedTwoDirections(properties.getBool("speed_two_directions", false));
     }
 
-    public CarFlagEncoder(boolean speedTwoDirections, int speedBits, double speedFactor, int maxTurnCosts, boolean blockPrivate) {
+    public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
-        this.speedTwoDirections = speedTwoDirections;
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -72,11 +72,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restrictedValues.add("delivery");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
-
-        if (blockPrivate)
-            restrictedValues.add("private");
-        else
-            intendedValues.add("private");
+        restrictedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("permissive");
@@ -143,6 +139,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         badSurfaceSpeed = 30;
         maxPossibleSpeed = 140;
         speedDefault = defaultSpeedMap.get("secondary");
+    }
+
+    public CarFlagEncoder setSpeedTwoDirections(boolean value) {
+        speedTwoDirections = value;
+        return this;
     }
 
     public TransportationMode getTransportationMode() {
