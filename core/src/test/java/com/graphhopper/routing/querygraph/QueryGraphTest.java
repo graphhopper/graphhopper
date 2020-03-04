@@ -496,7 +496,6 @@ public class QueryGraphTest {
         GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, false, true).
                 create(100);
         TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
-        IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);

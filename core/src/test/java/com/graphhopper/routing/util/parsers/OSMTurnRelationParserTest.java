@@ -3,12 +3,10 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostStorage;
 import org.junit.Test;
 
@@ -52,7 +50,6 @@ public class OSMTurnRelationParserTest {
 
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
-        IntsRef tcFlags = TurnCost.createFlags();
         parser.addRelationToTCStorage(instance, map, ghStorage);
 
         TurnCostStorage tcs = ghStorage.getTurnCostStorage();
@@ -72,6 +69,6 @@ public class OSMTurnRelationParserTest {
         OSMTurnRelationParser parser = new OSMTurnRelationParser("fatcarsomething", 1);
         OSMTurnRelation turnRelation = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
         turnRelation.setVehicleTypeRestricted("space");
-        parser.handleTurnRelationTags(TurnCost.createFlags(), turnRelation, null, null);
+        parser.handleTurnRelationTags(turnRelation, null, null);
     }
 }

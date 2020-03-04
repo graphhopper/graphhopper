@@ -21,7 +21,6 @@ import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -85,7 +84,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
     }
 
     @Override
-    public void handleTurnRelationTags(IntsRef turnCostFlags, OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph) {
+    public void handleTurnRelationTags(OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph) {
         if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
             return;
 

@@ -517,7 +517,6 @@ public class OSMReaderTest {
 
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
-        IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
         assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8) > 0);
@@ -721,7 +720,6 @@ public class OSMReaderTest {
         Graph graph = hopper.getGraphHopperStorage();
         TurnCostStorage tcStorage = graph.getTurnCostStorage();
 
-        IntsRef tcFlags = TurnCost.createFlags();
         int edge1 = GHUtility.getEdge(graph, 1, 0).getEdge();
         int edge2 = GHUtility.getEdge(graph, 0, 2).getEdge();
         // the 2nd entry provides turn flags for bike only
@@ -778,7 +776,6 @@ public class OSMReaderTest {
         // (2-3)->(3-4) only_straight_on except bicycle = (2-3)->(3-8) restricted for car
         // (4-3)->(3-8) no_right_turn dedicated to motorcar = (4-3)->(3-8) restricted for car
 
-        IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
         assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8) > 0);
@@ -835,7 +832,6 @@ public class OSMReaderTest {
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
-        IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
         DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("bike"));
 
