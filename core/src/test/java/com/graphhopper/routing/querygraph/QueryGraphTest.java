@@ -512,8 +512,7 @@ public class QueryGraphTest {
         assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
         // now use turn costs
-        turnCostEnc.setDecimal(false, tcFlags, 10);
-        turnExt.setTurnCost(tcFlags, edge0.getEdge(), 1, edge1.getEdge());
+        turnExt.set(turnCostEnc, edge0.getEdge(), 1, edge1.getEdge(), 10);
         assertEquals(10, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
         // now use turn costs with query graph

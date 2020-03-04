@@ -98,24 +98,6 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     public void set(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge, double cost) {
         IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, cost);
-        setTurnCost(tcFlags, fromEdge, viaNode, toEdge);
-    }
-
-    /**
-     * Add an entry which is a turn restriction or cost information via the turnFlags. Overwrite existing information
-     * if it is the same edges and node.
-     *
-     * @param fromEdge edge ID
-     * @param viaNode  node ID
-     * @param toEdge   edge ID
-     * @param tcFlags  flags to be written
-     */
-    public void setTurnCost(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
-        if (tcFlags.length != 1)
-            throw new IllegalArgumentException("Cannot use IntsRef with length != 1");
-        if (tcFlags.ints[0] == 0)
-            return;
-
         setOrMerge(tcFlags, fromEdge, viaNode, toEdge, true);
     }
 
