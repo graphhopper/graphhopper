@@ -163,23 +163,25 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
-        return turnCostEnc.getDecimal(false, readFlags(TurnCost.createFlags(), fromEdge, viaNode, toEdge));
+        IntsRef flags = readFlags(fromEdge, viaNode, toEdge);
+        return turnCostEnc.getDecimal(false, flags);
     }
 
     /**
      * @return turn cost flags of the specified triple "from edge", "via node" and "to edge"
      */
-    private IntsRef readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+    private IntsRef readFlags(int fromEdge, int viaNode, int toEdge) {
         if (!EdgeIterator.Edge.isValid(fromEdge) || !EdgeIterator.Edge.isValid(toEdge))
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (viaNode < 0)
             throw new IllegalArgumentException("via node cannot be negative");
 
-        nextCostFlags(tcFlags, fromEdge, viaNode, toEdge);
-        return tcFlags;
+        IntsRef flags = TurnCost.createFlags();
+        readFlags(flags, fromEdge, viaNode, toEdge);
+        return flags;
     }
 
-    private void nextCostFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+    private void readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
         int turnCostIndex = nodeAccess.getTurnCostIndex(viaNode);
         int i = 0;
         for (; i < 1000; i++) {
