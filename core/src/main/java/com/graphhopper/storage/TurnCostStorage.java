@@ -18,11 +18,8 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.util.EdgeIterator;
-
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * Holds turn cost tables for each node. The additional field of a node will be used to point towards the
@@ -96,41 +93,18 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     }
 
     /**
-     * This is a convenient setter method and should not be used in loops or where speed is important.
-     */
-    public void setExpensive(String name, EncodedValueLookup lookup, int fromEdge, int viaNode, int toEdge, double cost) {
-        set(lookup.getDecimalEncodedValue(TurnCost.key(name)), TurnCost.createFlags(), fromEdge, viaNode, toEdge, cost);
-    }
-
-    /**
      * Sets the turn cost at the viaNode when going from "fromEdge" to "toEdge"
+     * WARNING: It is tacitly assumed that for every encoder, this method is only called once per turn relation.
+     * Subsequent calls for the same encoder and the same turn relation will have undefined results.
+     * (The implementation below ORs the new bits into the existing bits.)
      */
-    public void set(DecimalEncodedValue turnCostEnc, IntsRef tcFlags, int fromEdge, int viaNode, int toEdge, double cost) {
-        // reset is required as we could have read a value for other vehicles before (that was changed in the meantime) that we would overwrite
-        tcFlags.ints[0] = 0;
+    public void set(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge, double cost) {
+        IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, cost);
-        setTurnCost(tcFlags, fromEdge, viaNode, toEdge);
+        merge(tcFlags, fromEdge, viaNode, toEdge);
     }
 
-    /**
-     * Add an entry which is a turn restriction or cost information via the turnFlags. Overwrite existing information
-     * if it is the same edges and node.
-     *
-     * @param fromEdge edge ID
-     * @param viaNode  node ID
-     * @param toEdge   edge ID
-     * @param tcFlags  flags to be written
-     */
-    public void setTurnCost(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
-        if (tcFlags.length != 1)
-            throw new IllegalArgumentException("Cannot use IntsRef with length != 1");
-        if (tcFlags.ints[0] == 0)
-            return;
-
-        setOrMerge(tcFlags, fromEdge, viaNode, toEdge, true);
-    }
-
-    void setOrMerge(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge, boolean merge) {
+    private void merge(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
         int newEntryIndex = turnCostsCount;
         ensureTurnCostIndex(newEntryIndex);
         boolean oldEntryFound = false;
@@ -168,10 +142,8 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
             if (!oldEntryFound) {
                 // set next-pointer to this new cost entry
                 turnCosts.setInt((long) previousEntryIndex * BYTES_PER_ENTRY + TC_NEXT, newEntryIndex);
-            } else if (merge) {
-                newFlags = existingFlags | newFlags;
             } else {
-                // overwrite!
+                newFlags = existingFlags | newFlags;
             }
         }
         long costsBase; // where to (over)write
@@ -188,41 +160,28 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     }
 
     /**
-     * This is a convenient getter method and should not be used in loops or where speed is important.
-     */
-    public double getExpensive(String name, EncodedValueLookup lookup, int fromEdge, int viaNode, int toEdge) {
-        return get(lookup.getDecimalEncodedValue(TurnCost.key(name)), TurnCost.createFlags(), fromEdge, viaNode, toEdge);
-    }
-
-    /**
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
-    public double get(DecimalEncodedValue turnCostEnc, IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
-        return turnCostEnc.getDecimal(false, readFlags(tcFlags, fromEdge, viaNode, toEdge));
+    public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
+        IntsRef flags = readFlags(fromEdge, viaNode, toEdge);
+        return turnCostEnc.getDecimal(false, flags);
     }
 
     /**
      * @return turn cost flags of the specified triple "from edge", "via node" and "to edge"
      */
-    private IntsRef readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+    private IntsRef readFlags(int fromEdge, int viaNode, int toEdge) {
         if (!EdgeIterator.Edge.isValid(fromEdge) || !EdgeIterator.Edge.isValid(toEdge))
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (viaNode < 0)
             throw new IllegalArgumentException("via node cannot be negative");
 
-        nextCostFlags(tcFlags, fromEdge, viaNode, toEdge);
-        return tcFlags;
+        IntsRef flags = TurnCost.createFlags();
+        readFlags(flags, fromEdge, viaNode, toEdge);
+        return flags;
     }
 
-    public boolean isUTurn(int edgeFrom, int edgeTo) {
-        return edgeFrom == edgeTo;
-    }
-
-    public boolean isUTurnAllowed(int node) {
-        return true;
-    }
-
-    private void nextCostFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+    private void readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
         int turnCostIndex = nodeAccess.getTurnCostIndex(viaNode);
         int i = 0;
         for (; i < 1000; i++) {
