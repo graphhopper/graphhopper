@@ -44,7 +44,8 @@ public class HeightTile {
     private final double latHigherBound;
     private DataAccess heights;
     private boolean interpolate;
-    private final double MIN_ELEVATION = -12_000;
+    private final double MIN_ELEVATION_METERS = -12_000;
+    private final double MAX_ELEVATION_METERS = 9_000;
 
     public HeightTile(int minLat, int minLon, int width, int height, double precision, int horizontalDegree, int verticalDegree) {
         this.minLat = minLat;
@@ -83,8 +84,13 @@ public class HeightTile {
         return heights.getShort(2 * (y * width + x));
     }
 
+    private boolean isValidElevation(double elevation) {
+        return elevation > MIN_ELEVATION_METERS && elevation < MAX_ELEVATION_METERS;
+    }
+
     private double linearInterpolate(double a, double b, double f) {
-        return a < MIN_ELEVATION ? b : b < MIN_ELEVATION ? a : (a + (b - a) * f);
+        // interpolate between a and b but if either are invalid, return the other
+        return !isValidElevation(a) ? b : !isValidElevation(b) ? a : (a + (b - a) * f);
     }
 
     public double getHeight(double lat, double lon) {
@@ -125,16 +131,7 @@ public class HeightTile {
 
             elevation = getHeightSample(x, y);
         }
-        return elevation < MIN_ELEVATION ? Double.NaN : elevation;
-    }
-
-    private double includePoint(int pointer, AtomicInteger counter) {
-        short value = heights.getShort(pointer);
-        if (value == Short.MIN_VALUE)
-            return 0;
-
-        counter.incrementAndGet();
-        return value;
+        return isValidElevation(elevation) ? elevation : Double.NaN;
     }
 
     public void toImage(String imageFile) throws IOException {
