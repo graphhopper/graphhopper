@@ -34,6 +34,7 @@ import com.graphhopper.util.Parameters;
 
 public class ProfileResolver {
     private final EncodingManager encodingManager;
+    // todonow: we actually only need the profiles
     private final CHPreparationHandler chPreparationHandler;
     private final LMPreparationHandler lmPreparationHandler;
 
