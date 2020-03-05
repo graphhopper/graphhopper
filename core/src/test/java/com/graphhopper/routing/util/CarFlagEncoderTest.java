@@ -171,14 +171,10 @@ public class CarFlagEncoderTest {
         assertTrue(encoder.getAccess(way).canSkip());
         assertTrue(encoder.handleNodeTags(node) > 0);
 
-        try {
-            // Now they are passable
-            encoder.setBlockFords(false);
-            assertTrue(encoder.getAccess(way).isWay());
-            assertFalse(encoder.handleNodeTags(node) > 0);
-        } finally {
-            encoder.setBlockFords(true);
-        }
+        CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_fords=false"));
+        EncodingManager.create(tmpEncoder);
+        assertTrue(tmpEncoder.getAccess(way).isWay());
+        assertFalse(tmpEncoder.handleNodeTags(node) > 0);
     }
 
     @Test
@@ -215,7 +211,6 @@ public class CarFlagEncoderTest {
         way.clearTags();
     }
 
-
     @Test
     public void testDestinationTag() {
         IntsRef relFlags = em.createRelationFlags();
@@ -231,10 +226,49 @@ public class CarFlagEncoderTest {
         assertEquals(60, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
         assertEquals(200, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
 
+        // no change for bike!
+        way.setTag("motor_vehicle", "destination");
+        edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
+        assertEquals(600, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
         way.setTag("vehicle", "destination");
         edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
         assertEquals(600, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
         assertEquals(200, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+    }
+
+    @Test
+    public void testPrivateTag() {
+        // allow private access
+        FlagEncoder carEncoder = new CarFlagEncoder(new PMap("block_private=false"));
+        FlagEncoder bikeEncoder = new BikeFlagEncoder(new PMap("block_private=false"));
+        EncodingManager em = new EncodingManager.Builder().add(carEncoder).add(bikeEncoder).build();
+
+        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting bikeWeighting = new FastestWeighting(bikeEncoder);
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+
+        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
+        assertTrue(em.acceptWay(way, acceptWay));
+        IntsRef edgeFlags = em.handleWayTags(way, acceptWay, em.createRelationFlags());
+
+        assertEquals(60, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+        assertEquals(200, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+
+        way.setTag("highway", "secondary");
+        way.setTag("access", "private");
+        acceptWay = new EncodingManager.AcceptWay();
+        assertTrue(em.acceptWay(way, acceptWay));
+        edgeFlags = em.handleWayTags(way, acceptWay, em.createRelationFlags());
+
+        assertEquals(600, weighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
+        // private should influence bike only slightly
+        assertEquals(240, bikeWeighting.calcEdgeWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false), 0.1);
     }
 
     @Test
@@ -533,12 +567,13 @@ public class CarFlagEncoderTest {
         // still barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
 
-        encoder.setBlockByDefault(false);
+        CarFlagEncoder tmpEncoder = new CarFlagEncoder(new PMap("block_barriers=false"));
+        EncodingManager.create(tmpEncoder);
 
         // Test if cattle_grid is not blocking
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
-        assertTrue(encoder.handleNodeTags(node) == 0);
+        assertTrue(tmpEncoder.handleNodeTags(node) == 0);
     }
 
     @Test

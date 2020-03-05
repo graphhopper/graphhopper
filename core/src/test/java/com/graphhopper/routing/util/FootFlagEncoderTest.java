@@ -24,10 +24,7 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import org.junit.Test;
 
 import java.text.DateFormat;
@@ -393,7 +390,7 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testFord() {
-        // by default deny access through fords!
+        // by default do not block access due to fords!
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "no");
         assertTrue(footEncoder.handleNodeTags(node) == 0);
@@ -407,16 +404,15 @@ public class FootFlagEncoderTest {
         node.setTag("foot", "no");
         assertTrue(footEncoder.handleNodeTags(node) > 0);
 
-        // Now let's allow fords for foot
-        footEncoder.setBlockFords(Boolean.FALSE);
-
+        FootFlagEncoder tmpEncoder = new FootFlagEncoder(new PMap("block_fords=true"));
+        EncodingManager.create(tmpEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "no");
-        assertTrue(footEncoder.handleNodeTags(node) == 0);
+        assertTrue(tmpEncoder.handleNodeTags(node) == 0);
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
-        assertTrue(footEncoder.handleNodeTags(node) == 0);
+        assertTrue(tmpEncoder.handleNodeTags(node) != 0);
     }
 
     @Test
@@ -439,9 +435,9 @@ public class FootFlagEncoderTest {
         node.setTag("access", "yes");
         assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
 
-        // Now let's block potential barriers per default (if no other access tag exists)
-        tmpFootEncoder.setBlockByDefault(true);
-
+        // block potential barriers per default (if no other access tag exists)
+        tmpFootEncoder = new FootFlagEncoder(new PMap("block_barriers=true"));
+        EncodingManager.create(tmpFootEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
@@ -452,9 +448,9 @@ public class FootFlagEncoderTest {
         node.setTag("barrier", "fence");
         assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
 
-        // Let's stop block potential barriers to test if barrier:cattle_grid is non blocking
-        tmpFootEncoder.setBlockByDefault(false);
-
+        // don't block potential barriers: barrier:cattle_grid should not block here
+        tmpFootEncoder = new FootFlagEncoder();
+        EncodingManager.create(tmpFootEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
         assertTrue(tmpFootEncoder.handleNodeTags(node) == 0);
