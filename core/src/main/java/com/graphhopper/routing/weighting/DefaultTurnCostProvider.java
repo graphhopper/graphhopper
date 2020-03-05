@@ -21,7 +21,6 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 
@@ -67,7 +66,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             tCost = uTurnCosts;
         } else {
             if (turnCostEnc != null)
-                tCost = turnCostStorage.get(turnCostEnc, TurnCost.createFlags(), edgeFrom, nodeVia, edgeTo);
+                tCost = turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
         }
         return tCost;
     }

@@ -248,11 +248,11 @@ public class DirectedBidirectionalDijkstraTest {
         int leftNorth = graph.edge(9, 0, 1, true).getEdge();
 
         // make paths fully deterministic by applying some turn costs at junction node 2
-        setTurnCost(7, 2, 3, 1);
-        setTurnCost(7, 2, 6, 3);
-        setTurnCost(1, 2, 3, 5);
-        setTurnCost(1, 2, 6, 7);
-        setTurnCost(1, 2, 7, 9);
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, 7, 2).getEdge(), 2, GHUtility.getEdge(graph, 2, 3).getEdge(), 1);
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, 7, 2).getEdge(), 2, GHUtility.getEdge(graph, 2, 6).getEdge(), 3);
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, 1, 2).getEdge(), 2, GHUtility.getEdge(graph, 2, 3).getEdge(), 5);
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, 1, 2).getEdge(), 2, GHUtility.getEdge(graph, 2, 6).getEdge(), 7);
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, 1, 2).getEdge(), 2, GHUtility.getEdge(graph, 2, 7).getEdge(), 9);
 
         final double unitEdgeWeight = 0.06;
         assertPath(calcPath(9, 9, leftNorth, leftSouth),
@@ -322,8 +322,8 @@ public class DirectedBidirectionalDijkstraTest {
         graph.edge(4, 5, 1, true);
         graph.edge(5, 2, 1, true);
 
-        addRestriction(0, 3, 4);
-        setTurnCost(4, 5, 2, 6);
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, 0, 3).getEdge(), 3, GHUtility.getEdge(graph, 3, 4).getEdge(), Double.POSITIVE_INFINITY);
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, 4, 5).getEdge(), 5, GHUtility.getEdge(graph, 5, 2).getEdge(), 6);
 
         // due to the restrictions we have to take the expensive path with turn costs
         assertPath(calcPath(0, 2, 0, 6), 6.24, 4, 6240, nodes(0, 1, 4, 5, 2));
@@ -356,8 +356,8 @@ public class DirectedBidirectionalDijkstraTest {
         int right6 = graph.edge(9, 6, 10, true).getEdge();
 
         // enforce p-turn (using the loop in clockwise direction)
-        addRestriction(0, 1, 6);
-        addRestriction(5, 4, 3);
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, 0, 1).getEdge(), 1, GHUtility.getEdge(graph, 1, 6).getEdge(), Double.POSITIVE_INFINITY);
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, 5, 4).getEdge(), 4, GHUtility.getEdge(graph, 4, 3).getEdge(), Double.POSITIVE_INFINITY);
 
         assertPath(calcPath(0, 6, right0, left6), 64.2, 1070, 64200, nodes(0, 1, 2, 3, 4, 5, 2, 1, 6));
         // if the u-turn cost is finite it depends on its value if we rather do the p-turn or do an immediate u-turn at node 2
@@ -513,27 +513,6 @@ public class DirectedBidirectionalDijkstraTest {
 
     private BidirRoutingAlgorithm createAlgo(Graph graph, Weighting weighting) {
         return new DijkstraBidirectionRef(graph, weighting, TraversalMode.EDGE_BASED);
-    }
-
-    private void addRestriction(int fromNode, int node, int toNode) {
-        IntsRef tcFlags = TurnCost.createFlags();
-        turnCostEnc.setDecimal(false, tcFlags, Double.POSITIVE_INFINITY);
-        turnCostStorage.setTurnCost(
-                tcFlags,
-                GHUtility.getEdge(graph, fromNode, node).getEdge(),
-                node,
-                GHUtility.getEdge(graph, node, toNode).getEdge()
-        );
-    }
-
-    private void setTurnCost(int fromNode, int node, int toNode, double turnCost) {
-        IntsRef tcFlags = TurnCost.createFlags();
-        turnCostEnc.setDecimal(false, tcFlags, turnCost);
-        turnCostStorage.setTurnCost(
-                tcFlags,
-                GHUtility.getEdge(graph, fromNode, node).getEdge(),
-                node,
-                GHUtility.getEdge(graph, node, toNode).getEdge());
     }
 
     private IntArrayList nodes(int... nodes) {

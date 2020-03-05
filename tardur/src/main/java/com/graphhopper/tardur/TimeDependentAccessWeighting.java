@@ -101,8 +101,7 @@ public class TimeDependentAccessWeighting implements TDWeighting {
 
     private Optional<Boolean> canTurn(int inEdge, int viaNode, int outEdge, Instant at) {
         EdgeIteratorState inEdgeCursor = ghStorage.getEdgeIteratorState(inEdge, viaNode);
-        IntsRef flags = ghStorage.getTurnCostStorage().readFlags(TurnCost.createFlags(), inEdge, viaNode, outEdge);
-        int p = tagPointer.getInt(false, flags);
+        int p = ghStorage.getTurnCostStorage().get(tagPointer, inEdge, viaNode, outEdge);
         if (p != 0) {
             Map<String, String> tags = ghStorage.getTagStore().getAll(p);
             TimeZone timeZone = timeZones.getTimeZone(ghStorage.getNodeAccess().getLat(inEdgeCursor.getBaseNode()), ghStorage.getNodeAccess().getLon(inEdgeCursor.getBaseNode()));

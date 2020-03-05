@@ -50,7 +50,7 @@ class ConditionalTurnRestrictionParser implements TurnRestrictionParser {
     }
 
     @Override
-    public void handleTurnRestriction(IntsRef turnCostFlags, OSMTurnRestriction turnRestriction, ExternalInternalMap map, Graph graph) {
+    public void handleTurnRestriction(OSMTurnRestriction turnRestriction, ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
         List<TimeDependentRestrictionsDAO.ConditionalTagData> restrictionData =
                 TimeDependentRestrictionsDAO
@@ -90,14 +90,12 @@ class ConditionalTurnRestrictionParser implements TurnRestrictionParser {
             // for TYPE_NOT_*  we add ONE restriction  (from, via, to)
             while (iter.next()) {
                 int edgeIdTo = iter.getEdge();
-                IntsRef intsRef = tcs.readFlags(TurnCost.createFlags(), edgeIdFrom, viaNode, edgeIdTo);
-                tagPointer.setInt(false, intsRef, offset);
                 int edgeId = iter.getEdge();
                 long wayId = map.getOsmIdOfEdge(edgeId);
                 OSMTurnRestriction.Type restrictionType = turnRestriction.getRestrictionType();
                 if (edgeId != edgeIdFrom && restrictionType == OSMTurnRestriction.Type.ONLY && wayId != turnRestriction.getOsmIdTo()
                         || restrictionType == OSMTurnRestriction.Type.NOT && wayId == turnRestriction.getOsmIdTo() && wayId >= 0) {
-                    tcs.setTurnCost(intsRef, edgeIdFrom, viaNode, edgeIdTo);
+                    tcs.set(tagPointer, edgeIdFrom, viaNode, edgeIdTo, offset);
                     if (restrictionType == OSMTurnRestriction.Type.NOT)
                         break;
                 }

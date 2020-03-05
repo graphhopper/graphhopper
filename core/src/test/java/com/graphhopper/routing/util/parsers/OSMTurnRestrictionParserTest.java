@@ -4,12 +4,10 @@ import com.graphhopper.reader.OSMTurnRestriction;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostStorage;
 import org.junit.Test;
 
@@ -58,14 +56,13 @@ public class OSMTurnRestrictionParserTest {
         readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 3, "to"));
         readerRelation.setTag("restriction", "only_left_turn");
         OSMTurnRestriction instance = new OSMTurnRestriction(readerRelation);
-        IntsRef tcFlags = TurnCost.createFlags();
-        parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
+        parser.addRelationToTCStorage(instance, map, ghStorage);
 
         TurnCostStorage tcs = ghStorage.getTurnCostStorage();
         DecimalEncodedValue tce = parser.getTurnCostEnc();
-        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 6)));
-        assertEquals(0, tcs.get(tce, tcFlags, 4, 3, 3), .1);
-        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 2)));
+        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 6)));
+        assertEquals(0, tcs.get(tce, 4, 3, 3), .1);
+        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 2)));
 
         // TYPE == NOT
         readerRelation = new ReaderRelation(-2);
@@ -74,8 +71,8 @@ public class OSMTurnRestrictionParserTest {
         readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 3, "to"));
         readerRelation.setTag("restriction", "no_left_turn");
         instance = new OSMTurnRestriction(readerRelation);
-        parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
-        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 3)));
+        parser.addRelationToTCStorage(instance, map, ghStorage);
+        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 3)));
     }
 
     @Test
@@ -87,6 +84,6 @@ public class OSMTurnRestrictionParserTest {
         readerRelation.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 3, "to"));
         readerRelation.setTag("restriction:space", "no_left_turn");
         OSMTurnRestriction turnRelation = new OSMTurnRestriction(readerRelation);
-        parser.handleTurnRestriction(TurnCost.createFlags(), turnRelation, null, null);
+        parser.handleTurnRestriction(turnRelation, null, null);
     }
 }

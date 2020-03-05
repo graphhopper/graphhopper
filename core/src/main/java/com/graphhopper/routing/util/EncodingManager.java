@@ -599,7 +599,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     public void handleTurnRestriction(OSMTurnRestriction turnRestriction, TurnRestrictionParser.ExternalInternalMap map, Graph graph) {
         for (TurnRestrictionParser parser : turnRestrictionParsers.values()) {
-            parser.handleTurnRestriction(TurnCost.createFlags(), turnRestriction, map, graph);
+            parser.handleTurnRestriction(turnRestriction, map, graph);
         }
     }
 

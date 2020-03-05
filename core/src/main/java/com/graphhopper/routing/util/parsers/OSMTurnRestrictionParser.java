@@ -21,7 +21,6 @@ import com.graphhopper.reader.OSMTurnRestriction;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -76,11 +75,11 @@ public class OSMTurnRestrictionParser implements TurnRestrictionParser {
     }
 
     @Override
-    public void handleTurnRestriction(IntsRef turnCostFlags, OSMTurnRestriction turnRelation, ExternalInternalMap map, Graph graph) {
+    public void handleTurnRestriction(OSMTurnRestriction turnRelation, ExternalInternalMap map, Graph graph) {
         if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
             return;
 
-        addRelationToTCStorage(turnRelation, turnCostFlags, map, graph);
+        addRelationToTCStorage(turnRelation, map, graph);
     }
 
     private EdgeExplorer getInExplorer(Graph graph) {
@@ -91,7 +90,7 @@ public class OSMTurnRestrictionParser implements TurnRestrictionParser {
         return cachedOutExplorer == null ? cachedOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)) : cachedOutExplorer;
     }
 
-    void addRelationToTCStorage(OSMTurnRestriction osmTurnRestriction, IntsRef turnCostFlags,
+    void addRelationToTCStorage(OSMTurnRestriction osmTurnRestriction,
                                 ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRestriction.getViaOsmNodeId());
@@ -123,7 +122,7 @@ public class OSMTurnRestrictionParser implements TurnRestrictionParser {
                 OSMTurnRestriction.Type restrictionType = osmTurnRestriction.getRestrictionType();
                 if (edgeId != edgeIdFrom && restrictionType == OSMTurnRestriction.Type.ONLY && wayId != osmTurnRestriction.getOsmIdTo()
                         || restrictionType == OSMTurnRestriction.Type.NOT && wayId == osmTurnRestriction.getOsmIdTo() && wayId >= 0) {
-                    tcs.set(turnCostEnc, turnCostFlags, edgeIdFrom, viaNode, iter.getEdge(), Double.POSITIVE_INFINITY);
+                    tcs.set(turnCostEnc, edgeIdFrom, viaNode, iter.getEdge(), Double.POSITIVE_INFINITY);
                     if (restrictionType == OSMTurnRestriction.Type.NOT)
                         break;
                 }

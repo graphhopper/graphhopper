@@ -65,9 +65,7 @@ public class BidirPathExtractorTest {
         // weight and the time of the path
         TurnCostStorage turnCostStorage = g.getTurnCostStorage();
         DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(carEncoder.toString()));
-        IntsRef tcFlags = TurnCost.createFlags();
-        turnCostEnc.setDecimal(false, tcFlags, 5);
-        turnCostStorage.setTurnCost(tcFlags, 0, 2, 1);
+        turnCostStorage.set(turnCostEnc, 0, 2, 1, 5);
 
         SPTEntry fwdEntry = new SPTEntry(0, 2, 0.6);
         fwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
