@@ -32,7 +32,6 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Defines bit layout of bicycles (not motorcycles) for speed, access and relations (network).
- * <p>
  *
  * @author Peter Karich
  * @author Nop
@@ -49,7 +48,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
-    private final Set<String> roadValues = new HashSet<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     protected boolean speedTwoDirections;
     DecimalEncodedValue priorityEnc;
@@ -65,11 +63,12 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         super(speedBits, speedFactor, maxTurnCosts);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions.addAll(Arrays.asList("bicycle", "vehicle", "access"));
-        restrictedValues.add("private");
+
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+        restrictedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -80,7 +79,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
 
-        setBlockByDefault(false);
+        blockBarriersByDefault(false);
         potentialBarriers.add("gate");
         // potentialBarriers.add("lift_gate");
         potentialBarriers.add("swing_gate");
@@ -104,20 +103,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         unpavedSurfaceTags.add("salt");
         unpavedSurfaceTags.add("sand");
         unpavedSurfaceTags.add("wood");
-
-        roadValues.add("living_street");
-        roadValues.add("road");
-        roadValues.add("service");
-        roadValues.add("unclassified");
-        roadValues.add("residential");
-        roadValues.add("trunk");
-        roadValues.add("trunk_link");
-        roadValues.add("primary");
-        roadValues.add("primary_link");
-        roadValues.add("secondary");
-        roadValues.add("secondary_link");
-        roadValues.add("tertiary");
-        roadValues.add("tertiary_link");
 
         maxPossibleSpeed = 30;
 

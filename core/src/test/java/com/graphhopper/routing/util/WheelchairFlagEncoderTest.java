@@ -22,10 +22,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import org.junit.Test;
 
 import java.text.DateFormat;
@@ -446,8 +443,8 @@ public class WheelchairFlagEncoderTest {
         assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
 
         // Now let's block potential barriers per default (if no other access tag exists)
-        tmpWheelchairEncoder.setBlockByDefault(true);
-
+        tmpWheelchairEncoder = new WheelchairFlagEncoder(new PMap("block_barriers=true"));
+        EncodingManager.create(tmpWheelchairEncoder);
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
@@ -463,13 +460,6 @@ public class WheelchairFlagEncoderTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
         assertTrue(tmpWheelchairEncoder.handleNodeTags(node) > 0);
-
-        // Let's stop block potential barriers to test if barrier:cattle_grid is non blocking
-        tmpWheelchairEncoder.setBlockByDefault(false);
-
-        node = new ReaderNode(1, -1, -1);
-        node.setTag("barrier", "cattle_grid");
-        assertTrue(tmpWheelchairEncoder.handleNodeTags(node) == 0);
     }
 
     @Test

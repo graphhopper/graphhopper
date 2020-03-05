@@ -36,17 +36,8 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
         this(new PMap());
     }
 
-    public Bike2WeightFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
     public Bike2WeightFlagEncoder(PMap properties) {
         super(properties);
-        speedTwoDirections = true;
-    }
-
-    public Bike2WeightFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
         speedTwoDirections = true;
     }
 

@@ -17,17 +17,12 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.CHEdgeIterator;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Before;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
@@ -39,7 +34,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class NameSimilarityEdgeFilterTest {
 
-    private GHPoint basePoint = new GHPoint(49.4652132,11.1435159);
+    private GHPoint basePoint = new GHPoint(49.4652132, 11.1435159);
 
     @Test
     public void testAccept() {
@@ -241,6 +236,7 @@ public class NameSimilarityEdgeFilterTest {
             public double getLatitude(int nodeId) {
                 return basePoint.lat;
             }
+
             @Override
             public double getLongitude(int nodeId) {
                 return basePoint.lon;
@@ -254,7 +250,7 @@ public class NameSimilarityEdgeFilterTest {
             public boolean accept(EdgeIteratorState edgeState) {
                 return true;
             }
-        }, nodeAccess, basePoint, 100, pointHint);
+        }, nodeAccess, pointHint, basePoint, 100);
     }
 
     private EdgeIteratorState createTestEdgeIterator(final String name, final int baseNodeId, final int adjNodeId) {
@@ -263,10 +259,12 @@ public class NameSimilarityEdgeFilterTest {
             public String getName() {
                 return name;
             }
+
             @Override
             public int getBaseNode() {
                 return baseNodeId;
             }
+
             @Override
             public int getAdjNode() {
                 return adjNodeId;
