@@ -20,6 +20,7 @@ package com.graphhopper.http.resources;
 import com.graphhopper.GHResponse;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.reader.gtfs.GtfsGraphLogger;
 import com.graphhopper.resources.InfoResource;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -29,6 +30,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 
 import static org.junit.Assert.*;
@@ -107,4 +109,22 @@ public class GtfsTest {
         assertTrue(info.features.containsKey("pt"));
     }
 
+
+    @Test
+    public void testGtfsGraphmlCreation() throws ParserConfigurationException {
+        final String gtfsGraphmlFileName = "./target/gtfsTenGraph.graphml";
+        File graphmlFile = new File(gtfsGraphmlFileName);
+        if (graphmlFile.exists()) {
+            graphmlFile.delete();
+        }
+
+        final GtfsGraphLogger graphLogger = new GtfsGraphLogger(gtfsGraphmlFileName);
+        graphLogger.addNode("node1", 0, 0, GtfsGraphLogger.NodeLogType.DEPARTURE_STOP_TIME_NODE, "7:00");
+        graphLogger.addNode("node2", 50, 50, GtfsGraphLogger.NodeLogType.ARRIVAL_STOP_TIME_NODE, "8:00");
+        graphLogger.addEdge("HOP", "edge1", "node1", "node2");
+        graphLogger.exportGraphmlToFile();
+
+        assertTrue(graphmlFile.exists());
+        graphmlFile.delete();
+    }
 }

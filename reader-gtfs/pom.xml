@@ -131,6 +131,11 @@
             <version>2.23.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.osgeo</groupId>
+            <artifactId>proj4j</artifactId>
+            <version>0.1.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
