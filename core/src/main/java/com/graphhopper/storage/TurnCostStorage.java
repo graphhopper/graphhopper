@@ -47,12 +47,6 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         this.turnCosts = turnCosts;
     }
 
-    public TurnCostStorage(TurnCostStorage turnCostStorage) {
-        this.nodeAccess = turnCostStorage.nodeAccess;
-        this.turnCosts = turnCostStorage.turnCosts;
-        this.turnCostsCount = turnCostStorage.turnCostsCount;
-    }
-
     public void setSegmentSize(int bytes) {
         turnCosts.setSegmentSize(bytes);
     }
