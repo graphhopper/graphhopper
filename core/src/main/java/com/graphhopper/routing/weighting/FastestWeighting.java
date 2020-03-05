@@ -45,8 +45,8 @@ public class FastestWeighting extends AbstractWeighting {
     private final long headingPenaltyMillis;
     private final double maxSpeed;
     private final EnumEncodedValue<RoadAccess> roadAccessEnc;
-    // this factor puts a penalty on roads with a "destination"-only access, see #733
-    private final double destinationPenalty;
+    // this factor puts a penalty on roads with a "destination"-only or private access, see #733 and #1936
+    private final double destinationPenalty, privatePenalty;
 
     public FastestWeighting(FlagEncoder encoder) {
         this(encoder, new HintsMap(0));
@@ -70,9 +70,11 @@ public class FastestWeighting extends AbstractWeighting {
             throw new IllegalArgumentException("road_access is not available but expected for FastestWeighting");
 
         // ensure that we do not need to change getMinWeight, i.e. road_access_factor >= 1
-        double defaultFactor = encoder.getTransportationMode() == TransportationMode.MOTOR_VEHICLE ? 10 : 1;
-        destinationPenalty = checkBounds("road_access_destination_factor", map.getDouble("road_access_destination_factor", defaultFactor), 1, 10);
-        roadAccessEnc = destinationPenalty > 1 ? encoder.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class) : null;
+        double defaultDestinationFactor = encoder.getTransportationMode() == TransportationMode.MOTOR_VEHICLE ? 10 : 1;
+        destinationPenalty = checkBounds("road_access_destination_factor", map.getDouble("road_access_destination_factor", defaultDestinationFactor), 1, 10);
+        double defaultPrivateFactor = encoder.getTransportationMode() == TransportationMode.MOTOR_VEHICLE ? 10 : 1.2;
+        privatePenalty = checkBounds("road_access_private_factor", map.getDouble("road_access_private_factor", defaultPrivateFactor), 1, 10);
+        roadAccessEnc = destinationPenalty > 1 || privatePenalty > 1 ? encoder.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class) : null;
     }
 
     @Override
@@ -92,6 +94,8 @@ public class FastestWeighting extends AbstractWeighting {
             RoadAccess access = edgeState.get(roadAccessEnc);
             if (access == RoadAccess.DESTINATION)
                 time *= destinationPenalty;
+            else if (access == RoadAccess.PRIVATE)
+                time *= privatePenalty;
         }
         // add direction penalties at start/stop/via points
         boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);

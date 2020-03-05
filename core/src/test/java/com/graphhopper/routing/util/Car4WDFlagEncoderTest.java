@@ -33,6 +33,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class Car4WDFlagEncoderTest extends CarFlagEncoderTest {
 
+    @Override
     CarFlagEncoder createEncoder() {
         return new Car4WDFlagEncoder(new PMap("speed_two_directions=true|block_fords=true"));
     }

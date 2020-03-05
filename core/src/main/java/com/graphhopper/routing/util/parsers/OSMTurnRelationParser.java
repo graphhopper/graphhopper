@@ -39,7 +39,6 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 public class OSMTurnRelationParser implements TurnCostParser {
     private String name;
     private DecimalEncodedValue turnCostEnc;
-    private final int maxTurnCosts;
     private final Collection<String> restrictions;
     private BooleanEncodedValue accessEnc;
     private EdgeExplorer cachedOutExplorer, cachedInExplorer;
@@ -54,7 +53,8 @@ public class OSMTurnRelationParser implements TurnCostParser {
 
     public OSMTurnRelationParser(String name, int maxTurnCosts, Collection<String> restrictions) {
         this.name = name;
-        this.maxTurnCosts = maxTurnCosts;
+        this.turnCostEnc = TurnCost.create(name, maxTurnCosts);
+
         if (restrictions.isEmpty()) {
             // https://wiki.openstreetmap.org/wiki/Key:access
             if (name.contains("car"))
@@ -74,8 +74,6 @@ public class OSMTurnRelationParser implements TurnCostParser {
     }
 
     DecimalEncodedValue getTurnCostEnc() {
-        if (turnCostEnc == null)
-            throw new IllegalStateException("Cannot access turn cost encoded value. Not initialized. Call createTurnCostEncodedValues before");
         return turnCostEnc;
     }
 
@@ -83,7 +81,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
     public void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
         String accessKey = getKey(name, "access");
         accessEnc = lookup.getEncodedValue(accessKey, BooleanEncodedValue.class);
-        registerNewEncodedValue.add(turnCostEnc = TurnCost.create(name, maxTurnCosts));
+        registerNewEncodedValue.add(turnCostEnc);
     }
 
     @Override
@@ -104,8 +102,6 @@ public class OSMTurnRelationParser implements TurnCostParser {
 
     /**
      * Add the specified relation to the TurnCostStorage
-     *
-     * @return a collection of turn cost entries which can be used for testing
      */
     void addRelationToTCStorage(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
                                 ExternalInternalMap map, Graph graph) {
