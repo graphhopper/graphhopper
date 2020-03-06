@@ -84,8 +84,6 @@ public class ProfileResolver {
      * @throws IllegalArgumentException if no CH profile could be selected for the given parameters
      */
     public CHProfile selectCHProfile(List<CHProfile> chProfiles, HintsMap hintsMap) {
-        Boolean edgeBased = hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
-        Integer uTurnCosts = hintsMap.has(Parameters.Routing.U_TURN_COSTS) ? hintsMap.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
         List<CHProfile> matchingProfiles = new ArrayList<>();
         for (CHProfile p : chProfiles) {
             if (!chProfileMatchesHints(p, hintsMap))
@@ -93,6 +91,8 @@ public class ProfileResolver {
             matchingProfiles.add(p);
         }
 
+        Boolean edgeBased = getEdgeBased(hintsMap);
+        Integer uTurnCosts = getUTurnCosts(hintsMap);
         if (matchingProfiles.isEmpty()) {
             throw new IllegalArgumentException("Cannot find matching CH profile for your request. Please check your parameters." +
                     "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
@@ -141,10 +141,10 @@ public class ProfileResolver {
     }
 
     private boolean chProfileMatchesHints(CHProfile p, HintsMap hintsMap) {
-        Boolean edgeBased = hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
-        String requestedUTurnCosts = hintsMap.has(Parameters.Routing.U_TURN_COSTS) ? hintsMap.get(Parameters.Routing.U_TURN_COSTS, "") : null;
+        Boolean edgeBased = getEdgeBased(hintsMap);
+        Integer uTurnCosts = getUTurnCosts(hintsMap);
         return (edgeBased == null || p.isEdgeBased() == edgeBased) &&
-                (requestedUTurnCosts == null || p.getWeighting().getTurnCostProvider().getName().equals(requestedUTurnCosts)) &&
+                (uTurnCosts == null || p.getWeighting().getTurnCostProvider().getName().equals(uTurnCosts.toString())) &&
                 (hintsMap.getWeighting().isEmpty() || p.getWeighting().getName().equals(hintsMap.getWeighting())) &&
                 (hintsMap.getVehicle().isEmpty() || p.getWeighting().getFlagEncoder().toString().equals(hintsMap.getVehicle()));
     }
@@ -183,5 +183,13 @@ public class ProfileResolver {
             result.add(p.getWeighting().getName() + "|" + p.getWeighting().getFlagEncoder().toString());
         }
         return result;
+    }
+
+    private Boolean getEdgeBased(HintsMap hintsMap) {
+        return hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
+    }
+
+    private Integer getUTurnCosts(HintsMap hintsMap) {
+        return hintsMap.has(Parameters.Routing.U_TURN_COSTS) ? hintsMap.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
     }
 }
