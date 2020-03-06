@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -111,9 +112,9 @@ public class LMProfileSelectorTest {
     private void assertProfileFound(LMProfile expectedProfile, List<LMProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            LMProfile selectedProfile = LMProfileSelector.select(profiles, hintsMap);
+            LMProfile selectedProfile = new ProfileResolver().selectLMProfile(profiles, hintsMap);
             assertEquals(expectedProfile, selectedProfile);
-        } catch (LMProfileSelectionException e) {
+        } catch (IllegalArgumentException e) {
             fail("no profile found\nexpected: " + expectedProfile + "\nerror: " + e.getMessage());
         }
     }
@@ -121,10 +122,10 @@ public class LMProfileSelectorTest {
     private String assertLMProfileSelectionError(String expectedError, List<LMProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            LMProfileSelector.select(profiles, hintsMap);
+            new ProfileResolver().selectLMProfile(profiles, hintsMap);
             fail("There should have been an error");
             return "";
-        } catch (LMProfileSelectionException e) {
+        } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains(expectedError),
                     "There should have been an error message containing:\n'" + expectedError + "'\nbut was:\n'" + e.getMessage() + "'");
             return e.getMessage();

@@ -19,39 +19,25 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.config.ProfileConfig;
-import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.ch.CHProfileSelectionException;
-import com.graphhopper.routing.ch.CHProfileSelector;
-import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LMProfile;
-import com.graphhopper.routing.lm.LMProfileSelectionException;
-import com.graphhopper.routing.lm.LMProfileSelector;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.util.Parameters;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
+
 public class ProfileResolver {
-    private final EncodingManager encodingManager;
-    // todonow: we actually only need the profiles
-    private final CHPreparationHandler chPreparationHandler;
-    private final LMPreparationHandler lmPreparationHandler;
 
-    public ProfileResolver(
-            EncodingManager encodingManager,
-            CHPreparationHandler chPreparationHandler,
-            LMPreparationHandler lmPreparationHandler) {
-        this.encodingManager = encodingManager;
-        this.chPreparationHandler = chPreparationHandler;
-        this.lmPreparationHandler = lmPreparationHandler;
-    }
-
-    public ProfileConfig resolveProfile(HintsMap hints) {
+    public ProfileConfig resolveProfile(EncodingManager encodingManager, List<CHProfile> chProfiles, List<LMProfile> lmProfiles, HintsMap hints) {
         // default handling
         String vehicle = hints.getVehicle();
         if (vehicle.isEmpty()) {
-            vehicle = getDefaultVehicle().toString();
+            vehicle = getDefaultVehicle(encodingManager).toString();
         }
         String weighting = hints.getWeighting();
         if (weighting.isEmpty()) {
@@ -68,47 +54,140 @@ public class ProfileResolver {
         if (turnCosts && !encoder.supportsTurnCosts())
             throw new IllegalArgumentException("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true");
 
-        boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
-        boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
+        String profileName = resolveProfileName(chProfiles, lmProfiles, hints);
 
-        String profileName = resolveProfileName(hints, disableCH, disableLM);
         return new ProfileConfig(profileName)
                 .setVehicle(vehicle)
                 .setWeighting(weighting)
                 .setTurnCosts(turnCosts);
     }
 
-    public String resolveProfileName(HintsMap map, boolean disableCH, boolean disableLM) {
-        if (chPreparationHandler.isEnabled() && !disableCH) {
-            return selectCHProfile(map).getName();
-        } else if (lmPreparationHandler.isEnabled() && !disableLM) {
-            return selectLMProfile(map).getName();
+    private String resolveProfileName(List<CHProfile> chProfiles, List<LMProfile> lmProfiles, HintsMap hints) {
+        boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
+        boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
+
+        String profileName;
+        if (!chProfiles.isEmpty() && !disableCH) {
+            profileName = selectCHProfile(chProfiles, hints).getName();
+        } else if (!lmProfiles.isEmpty() && !disableLM) {
+            profileName = selectLMProfile(lmProfiles, hints).getName();
         } else {
             // todonow: here we will instead select one of the existing profiles
-            return "unprepared_profile";
+            profileName = "unprepared_profile";
         }
+        return profileName;
+    }
+
+    /**
+     * @param chProfiles the CH profiles to choose from
+     * @param hintsMap   a map used to describe the CH profile that shall be selected
+     * @throws IllegalArgumentException if no CH profile could be selected for the given parameters
+     */
+    public CHProfile selectCHProfile(List<CHProfile> chProfiles, HintsMap hintsMap) {
+        Boolean edgeBased = hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
+        Integer uTurnCosts = hintsMap.has(Parameters.Routing.U_TURN_COSTS) ? hintsMap.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
+        List<CHProfile> matchingProfiles = new ArrayList<>();
+        for (CHProfile p : chProfiles) {
+            if (!chProfileMatchesHints(p, hintsMap))
+                continue;
+            matchingProfiles.add(p);
+        }
+
+        if (matchingProfiles.isEmpty()) {
+            throw new IllegalArgumentException("Cannot find matching CH profile for your request. Please check your parameters." +
+                    "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
+                    "\nrequested:  " + getCHRequestAsString(hintsMap, edgeBased, uTurnCosts) + "\navailable: " + chProfiles);
+        } else if (matchingProfiles.size() == 1) {
+            return matchingProfiles.get(0);
+        } else {
+            // special case: prefer edge-based over node-based if these are the only two options
+            CHProfile match1 = matchingProfiles.get(0);
+            CHProfile match2 = matchingProfiles.get(1);
+            if (edgeBased == null && matchingProfiles.size() == 2 &&
+                    match1.getWeighting().getName().equals(match2.getWeighting().getName()) &&
+                    match1.getWeighting().getFlagEncoder().toString().equals(match2.getWeighting().getFlagEncoder().toString()) &&
+                    match1.isEdgeBased() != match2.isEdgeBased()) {
+                return match1.isEdgeBased() ? match1 : match2;
+            }
+            throw new IllegalArgumentException("There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`edge_based` and/or `u_turn_costs` parameters to be more specific." +
+                    "\nYou can also try disabling CH altogether using " + Parameters.CH.DISABLE + "=true" +
+                    "\nrequested:  " + getCHRequestAsString(hintsMap, edgeBased, uTurnCosts) + "\nmatched:   " + matchingProfiles + "\navailable: " + chProfiles);
+        }
+    }
+
+    public LMProfile selectLMProfile(List<LMProfile> lmProfiles, HintsMap hintsMap) {
+        // if no weighting or vehicle is specified for this request and there is only one preparation, use it
+        if ((hintsMap.getWeighting().isEmpty() || hintsMap.getVehicle().isEmpty()) &&
+                lmProfiles.size() == 1) {
+            return lmProfiles.get(0);
+        }
+        List<LMProfile> matchingProfiles = new ArrayList<>();
+        for (LMProfile p : lmProfiles) {
+            if (!lmProfileMatchesHints(p, hintsMap))
+                continue;
+            matchingProfiles.add(p);
+        }
+        // Note:
+        // There are situations where we can use the requested encoder/weighting with an existing LM preparation, even
+        // though the preparation was done with a different weighting. For example this works when the new weighting
+        // only yields higher (but never lower) weights than the one that was used for the preparation. However, its not
+        // trivial to check whether or not this is the case so we do not allow this for now.
+        if (matchingProfiles.isEmpty()) {
+            throw new IllegalArgumentException("Cannot find matching LM profile for your request. Please check your parameters." +
+                    "\nYou can try disabling LM by setting " + Parameters.Landmark.DISABLE + "=true" +
+                    "\nrequested: " + getLMRequestAsString(hintsMap) + "\navailable: " + lmProfilesAsStrings(lmProfiles));
+        } else if (matchingProfiles.size() == 1) {
+            return matchingProfiles.get(0);
+        } else {
+            throw new IllegalArgumentException("There are multiple LM profiles matching your request. Use the `weighting` and `vehicle` parameters to be more specific." +
+                    "\nYou can also try disabling LM altogether using " + Parameters.CH.DISABLE + "=true" +
+                    "\nrequested:  " + getLMRequestAsString(hintsMap) + "\nmatched:   " + lmProfilesAsStrings(matchingProfiles) + "\navailable: " + lmProfilesAsStrings(lmProfiles));
+        }
+    }
+
+    private boolean chProfileMatchesHints(CHProfile p, HintsMap hintsMap) {
+        Boolean edgeBased = hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
+        if (edgeBased != null && p.isEdgeBased() != edgeBased) {
+            return false;
+        }
+        if (!p.getWeighting().matches(hintsMap)) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean lmProfileMatchesHints(LMProfile p, HintsMap hintsMap) {
+        return p.getWeighting().matches(hintsMap);
     }
 
     /**
      * @return the first flag encoder of the encoding manager
      */
-    public FlagEncoder getDefaultVehicle() {
+    public FlagEncoder getDefaultVehicle(EncodingManager encodingManager) {
         return encodingManager.fetchEdgeEncoders().get(0);
     }
 
-    private CHProfile selectCHProfile(HintsMap map) {
-        try {
-            return CHProfileSelector.select(chPreparationHandler.getCHProfiles(), map);
-        } catch (CHProfileSelectionException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
+    private String getLMRequestAsString(HintsMap map) {
+        return (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) +
+                "|" +
+                (map.getVehicle().isEmpty() ? "*" : map.getVehicle());
     }
 
-    private LMProfile selectLMProfile(HintsMap map) {
-        try {
-            return LMProfileSelector.select(lmPreparationHandler.getLMProfiles(), map);
-        } catch (LMProfileSelectionException e) {
-            throw new IllegalArgumentException(e.getMessage());
+    private String getCHRequestAsString(HintsMap hintsMap, Boolean edgeBased, Integer uTurnCosts) {
+        return (hintsMap.getWeighting().isEmpty() ? "*" : hintsMap.getWeighting()) +
+                "|" +
+                (hintsMap.getVehicle().isEmpty() ? "*" : hintsMap.getVehicle()) +
+                "|" +
+                "edge_based=" + (edgeBased != null ? edgeBased : "*") +
+                "|" +
+                "u_turn_costs=" + (uTurnCosts != null ? uTurnCosts : "*");
+    }
+
+    private List<String> lmProfilesAsStrings(List<LMProfile> profiles) {
+        List<String> result = new ArrayList<>(profiles.size());
+        for (LMProfile p : profiles) {
+            result.add(p.getWeighting().getName() + "|" + p.getWeighting().getFlagEncoder().toString());
         }
+        return result;
     }
 }

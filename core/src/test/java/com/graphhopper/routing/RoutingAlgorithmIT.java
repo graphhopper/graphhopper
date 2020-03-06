@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.PrincetonReader;
-import com.graphhopper.routing.ch.CHProfileSelector;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
@@ -99,7 +98,7 @@ public class RoutingAlgorithmIT {
             final HintsMap chHints = new HintsMap(defaultHints);
             chHints.put(Parameters.CH.DISABLE, false);
             chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
-            CHProfile pickedProfile = CHProfileSelector.select(hopper.getCHPreparationHandler().getCHProfiles(), chHints);
+            CHProfile pickedProfile = new ProfileResolver().selectCHProfile(hopper.getCHPreparationHandler().getCHProfiles(), chHints);
             algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|algos|" + hints.getWeighting()) {
                 @Override

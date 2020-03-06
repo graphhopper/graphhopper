@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.CHProfile;
@@ -224,9 +225,9 @@ public class CHProfileSelectorTest {
     private void assertProfileFound(CHProfile expectedProfile, List<CHProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            CHProfile selectedProfile = CHProfileSelector.select(profiles, hintsMap);
+            CHProfile selectedProfile = new ProfileResolver().selectCHProfile(profiles, hintsMap);
             assertEquals(expectedProfile, selectedProfile);
-        } catch (CHProfileSelectionException e) {
+        } catch (IllegalArgumentException e) {
             fail("no profile found\nexpected: " + expectedProfile + "\nerror: " + e.getMessage());
         }
     }
@@ -238,10 +239,10 @@ public class CHProfileSelectorTest {
     private String assertCHProfileSelectionError(String expectedError, List<CHProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            CHProfileSelector.select(profiles, hintsMap);
+            new ProfileResolver().selectCHProfile(profiles, hintsMap);
             fail("There should have been an error");
             return "";
-        } catch (CHProfileSelectionException e) {
+        } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains(expectedError),
                     "There should have been an error message containing:\n'" + expectedError + "'\nbut was:\n'" + e.getMessage() + "'");
             return e.getMessage();

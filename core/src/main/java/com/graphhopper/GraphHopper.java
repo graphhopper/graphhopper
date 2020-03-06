@@ -102,12 +102,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean smoothElevation = false;
     // for routing
     private final RoutingConfig routingConfig = new RoutingConfig();
-    private ProfileResolverFactory profileResolverFactory = new ProfileResolverFactory() {
-        @Override
-        public ProfileResolver create(EncodingManager em, CHPreparationHandler ch, LMPreparationHandler lm) {
-            return new ProfileResolver(em, ch, lm);
-        }
-    };
+    private ProfileResolver profileResolver = new ProfileResolver();
 
     // for index
     private LocationIndex locationIndex;
@@ -149,8 +144,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (encodingManager == null)
             throw new IllegalStateException("No encoding manager specified or loaded");
 
-        ProfileResolver profileResolver = profileResolverFactory.create(encodingManager, chPreparationHandler, lmPreparationHandler);
-        return profileResolver.getDefaultVehicle();
+        return profileResolver.getDefaultVehicle(encodingManager);
     }
 
     public EncodingManager getEncodingManager() {
@@ -506,12 +500,12 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public ProfileResolverFactory getProfileResolverFactory() {
-        return this.profileResolverFactory;
+    public ProfileResolver getProfileResolver() {
+        return this.profileResolver;
     }
 
-    public GraphHopper setProfileResolverFactory(ProfileResolverFactory factory) {
-        this.profileResolverFactory = factory;
+    public GraphHopper setProfileResolver(ProfileResolver profileResolver) {
+        this.profileResolver = profileResolver;
         return this;
     }
 
@@ -878,7 +872,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (encodingManager == null)
             throw new IllegalStateException("No encoding manager specified or loaded");
 
-        return profileResolverFactory.create(encodingManager, chPreparationHandler, lmPreparationHandler).resolveProfile(hints);
+        return profileResolver.resolveProfile(encodingManager, chPreparationHandler.getCHProfiles(), lmPreparationHandler.getLMProfiles(), hints);
     }
 
     public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
@@ -1448,9 +1442,5 @@ public class GraphHopper implements GraphHopperAPI {
         public void setSimplifyResponse(boolean simplifyResponse) {
             this.simplifyResponse = simplifyResponse;
         }
-    }
-
-    private interface ProfileResolverFactory {
-        ProfileResolver create(EncodingManager encodingManager, CHPreparationHandler chPreparationHandler, LMPreparationHandler lmPreparationHandler);
     }
 }
