@@ -71,13 +71,11 @@ public class LMProfileSelectorTest {
         assertProfileFound(lmProfiles.get(0), lmProfiles, "car", "fastest", true, 54);
 
         // if we request something that does not fit we do not get a match
-        // todonow: there is this strange rule that if there is only one profile and vehicle or weighting is not
-        // specified we use that profile even when the vehicle does not match like here
-//        String error = assertLMProfileSelectionError(NO_MATCH_ERROR, lmProfiles, "bike", null, null, null);
-//        assertTrue(error.contains("available: [fastest|car]"), error);
-//        assertLMProfileSelectionError(NO_MATCH_ERROR, lmProfiles, "car", "shortest", null, null);
-//        assertLMProfileSelectionError(NO_MATCH_ERROR, lmProfiles, null, "shortest", null, null);
-//        assertLMProfileSelectionError(NO_MATCH_ERROR, lmProfiles, "truck", "short_fastest", null, null);
+        String error = assertLMProfileSelectionError(NO_MATCH_ERROR, lmProfiles, "bike", null, null, null);
+        assertTrue(error.contains("available: [fastest|car]"), error);
+        assertLMProfileSelectionError(NO_MATCH_ERROR, lmProfiles, "car", "shortest", null, null);
+        assertLMProfileSelectionError(NO_MATCH_ERROR, lmProfiles, null, "shortest", null, null);
+        assertLMProfileSelectionError(NO_MATCH_ERROR, lmProfiles, "truck", "short_fastest", null, null);
     }
 
     @Test

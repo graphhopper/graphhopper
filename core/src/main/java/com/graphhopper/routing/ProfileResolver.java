@@ -116,11 +116,6 @@ public class ProfileResolver {
     }
 
     public LMProfile selectLMProfile(List<LMProfile> lmProfiles, HintsMap hintsMap) {
-        // if no weighting or vehicle is specified for this request and there is only one preparation, use it
-        if ((hintsMap.getWeighting().isEmpty() || hintsMap.getVehicle().isEmpty()) &&
-                lmProfiles.size() == 1) {
-            return lmProfiles.get(0);
-        }
         List<LMProfile> matchingProfiles = new ArrayList<>();
         for (LMProfile p : lmProfiles) {
             if (!lmProfileMatchesHints(p, hintsMap))
@@ -147,12 +142,10 @@ public class ProfileResolver {
 
     private boolean chProfileMatchesHints(CHProfile p, HintsMap hintsMap) {
         Boolean edgeBased = hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
-        if (edgeBased != null && p.isEdgeBased() != edgeBased) {
-            return false;
-        }
-        String requestedUTurnCosts = hintsMap.get(Parameters.Routing.U_TURN_COSTS, "");
-        return (hintsMap.getWeighting().isEmpty() || p.getWeighting().getName().equals(hintsMap.getWeighting())) &&
-                (requestedUTurnCosts.isEmpty() || p.getWeighting().getTurnCostProvider().getName().equals(requestedUTurnCosts)) &&
+        String requestedUTurnCosts = hintsMap.has(Parameters.Routing.U_TURN_COSTS) ? hintsMap.get(Parameters.Routing.U_TURN_COSTS, "") : null;
+        return (edgeBased == null || p.isEdgeBased() == edgeBased) &&
+                (requestedUTurnCosts == null || p.getWeighting().getTurnCostProvider().getName().equals(requestedUTurnCosts)) &&
+                (hintsMap.getWeighting().isEmpty() || p.getWeighting().getName().equals(hintsMap.getWeighting())) &&
                 (hintsMap.getVehicle().isEmpty() || p.getWeighting().getFlagEncoder().toString().equals(hintsMap.getVehicle()));
     }
 
