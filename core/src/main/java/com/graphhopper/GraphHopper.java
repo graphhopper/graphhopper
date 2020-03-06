@@ -841,7 +841,7 @@ public class GraphHopper implements GraphHopperAPI {
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
             }
             try {
-                createWeighting(profile, new HintsMap(), encoder, NO_TURN_COST_PROVIDER);
+                createWeighting(profile, new PMap(), encoder, NO_TURN_COST_PROVIDER);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with an unknown weighting '" + profile.getWeighting() + "'");
             }
@@ -909,9 +909,9 @@ public class GraphHopper implements GraphHopperAPI {
                 assert encoder.supportsTurnCosts() : "encoder " + encoder + " should support turn costs";
                 int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
-                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new HintsMap(), encoder, turnCostProvider)));
+                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap(), encoder, turnCostProvider)));
             } else {
-                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new HintsMap(), encoder, NO_TURN_COST_PROVIDER)));
+                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap(), encoder, NO_TURN_COST_PROVIDER)));
             }
         }
     }
@@ -930,7 +930,7 @@ public class GraphHopper implements GraphHopperAPI {
             // note that we do not consider turn costs during LM preparation this is important if we want
             // to allow e.g. changing the u_turn_costs per request (we have to use the minimum weight settings (
             // = no turn costs) for the preparation)
-            Weighting weighting = createWeighting(profile, new HintsMap(), encoder, NO_TURN_COST_PROVIDER);
+            Weighting weighting = createWeighting(profile, new PMap(), encoder, NO_TURN_COST_PROVIDER);
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1007,21 +1007,11 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Based on the hintsMap and the specified encoder a Weighting instance can be
-     * created. Note that all URL parameters are available in the hintsMap as String if
-     * you use the web module.
-     * <p>
-     * // todonow: docs
-     *
-     * @param profileConfig
-     * @param hintsMap      all parameters influencing the weighting. E.g. parameters coming via
-     *                      GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
-     * @param encoder       the required vehicle
-     * @return the weighting to be used for route calculation
-     * @see HintsMap
+     * @param profileConfig The profile for which the weighting shall be created
+     * @param hints         Additional hints that can be used to further specify the weighting that shall be created
      */
-    public Weighting createWeighting(ProfileConfig profileConfig, HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        return new DefaultWeightingFactory().createWeighting(profileConfig, hintsMap, encoder, turnCostProvider);
+    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
+        return new DefaultWeightingFactory().createWeighting(profileConfig, hints, encoder, turnCostProvider);
     }
 
     @Override
@@ -1366,8 +1356,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private static class DefaultWeightingFactory {
-        // todonow: hintsMap should rather be a pmap especially there should be no vehicle/weighting
-        public Weighting createWeighting(ProfileConfig profile, HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
+        public Weighting createWeighting(ProfileConfig profile, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
             String weightingStr = toLowerCase(profile.getWeighting());
             if (weightingStr.isEmpty())
                 throw new IllegalArgumentException("You have to specify a weighting");
@@ -1378,15 +1367,15 @@ public class GraphHopper implements GraphHopperAPI {
                 weighting = new ShortestWeighting(encoder, turnCostProvider);
             } else if ("fastest".equalsIgnoreCase(weightingStr)) {
                 if (encoder.supports(PriorityWeighting.class))
-                    weighting = new PriorityWeighting(encoder, hintsMap, turnCostProvider);
+                    weighting = new PriorityWeighting(encoder, hints, turnCostProvider);
                 else
-                    weighting = new FastestWeighting(encoder, hintsMap, turnCostProvider);
+                    weighting = new FastestWeighting(encoder, hints, turnCostProvider);
             } else if ("curvature".equalsIgnoreCase(weightingStr)) {
                 if (encoder.supports(CurvatureWeighting.class))
-                    weighting = new CurvatureWeighting(encoder, hintsMap, turnCostProvider);
+                    weighting = new CurvatureWeighting(encoder, hints, turnCostProvider);
 
             } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
-                weighting = new ShortFastestWeighting(encoder, hintsMap, turnCostProvider);
+                weighting = new ShortFastestWeighting(encoder, hints, turnCostProvider);
             }
 
             if (weighting == null)
