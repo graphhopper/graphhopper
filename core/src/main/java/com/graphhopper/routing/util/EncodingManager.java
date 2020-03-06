@@ -599,7 +599,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     public void handleTurnRelationTags(OSMTurnRelation turnRelation, TurnCostParser.ExternalInternalMap map, Graph graph) {
         for (TurnCostParser parser : turnCostParsers.values()) {
-            parser.handleTurnRelationTags(TurnCost.createFlags(), turnRelation, map, graph);
+            parser.handleTurnRelationTags(turnRelation, map, graph);
         }
     }
 

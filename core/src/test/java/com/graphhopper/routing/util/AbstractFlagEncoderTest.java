@@ -27,22 +27,20 @@ import static org.junit.Assert.assertEquals;
 public class AbstractFlagEncoderTest {
     @Test
     public void testAcceptsCar() {
-        CarFlagEncoder encoder = new CarFlagEncoder();
-        assertEquals(40, encoder.parseSpeed("40 km/h"), 1e-3);
-        assertEquals(40, encoder.parseSpeed("40km/h"), 1e-3);
-        assertEquals(40, encoder.parseSpeed("40kmh"), 1e-3);
-        assertEquals(64.374, encoder.parseSpeed("40mph"), 1e-3);
-        assertEquals(48.28, encoder.parseSpeed("30 mph"), 1e-3);
-        assertEquals(-1, encoder.parseSpeed(null), 1e-3);
-        assertEquals(18.52, encoder.parseSpeed("10 knots"), 1e-3);
-        assertEquals(19, encoder.parseSpeed("19 kph"), 1e-3);
-        assertEquals(19, encoder.parseSpeed("19kph"), 1e-3);
+        assertEquals(40, AbstractFlagEncoder.parseSpeed("40 km/h"), 1e-3);
+        assertEquals(40, AbstractFlagEncoder.parseSpeed("40km/h"), 1e-3);
+        assertEquals(40, AbstractFlagEncoder.parseSpeed("40kmh"), 1e-3);
+        assertEquals(64.374, AbstractFlagEncoder.parseSpeed("40mph"), 1e-3);
+        assertEquals(48.28, AbstractFlagEncoder.parseSpeed("30 mph"), 1e-3);
+        assertEquals(-1, AbstractFlagEncoder.parseSpeed(null), 1e-3);
+        assertEquals(18.52, AbstractFlagEncoder.parseSpeed("10 knots"), 1e-3);
+        assertEquals(19, AbstractFlagEncoder.parseSpeed("19 kph"), 1e-3);
+        assertEquals(19, AbstractFlagEncoder.parseSpeed("19kph"), 1e-3);
 
-        assertEquals(50, encoder.parseSpeed("RO:urban"), 1e-3);
+        assertEquals(50, AbstractFlagEncoder.parseSpeed("RO:urban"), 1e-3);
 
-        assertEquals(80, encoder.parseSpeed("RU:rural"), 1e-3);
+        assertEquals(80, AbstractFlagEncoder.parseSpeed("RU:rural"), 1e-3);
 
-        assertEquals(6, encoder.parseSpeed("walk"), 1e-3);
+        assertEquals(6, AbstractFlagEncoder.parseSpeed("walk"), 1e-3);
     }
-
 }
