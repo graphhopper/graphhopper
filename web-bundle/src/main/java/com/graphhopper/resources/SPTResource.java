@@ -29,8 +29,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-
 /**
  * This resource provides the entire shortest path tree as response. In a simple CSV format discussed at #1577.
  */
@@ -67,6 +65,9 @@ public class SPTResource {
         hintsMap.put(Parameters.CH.DISABLE, true);
         hintsMap.put(Parameters.Landmark.DISABLE, true);
         ProfileConfig profile = graphHopper.resolveProfile(hintsMap);
+        if (profile.isTurnCosts()) {
+            throw new IllegalArgumentException("SPT calculation does not support turn costs yet");
+        }
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
@@ -77,8 +78,7 @@ public class SPTResource {
         Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
 
-        // todonow: /spt with turn costs? do we have to disable it explicitly here?
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap, encoder, NO_TURN_COST_PROVIDER);
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));

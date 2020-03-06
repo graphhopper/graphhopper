@@ -781,7 +781,6 @@ public class GraphHopper implements GraphHopperAPI {
         if (encodingManager == null)
             setEncodingManager(EncodingManager.create(encodedValueFactory, flagEncoderFactory, ghLocation));
 
-        checkProfilesConsistency();
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -789,6 +788,8 @@ public class GraphHopper implements GraphHopperAPI {
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
 
         ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+
+        checkProfilesConsistency();
 
         if (lmPreparationHandler.isEnabled())
             initLMPreparationHandler();
@@ -841,8 +842,9 @@ public class GraphHopper implements GraphHopperAPI {
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
             }
             try {
-                createWeighting(profile, new PMap(), encoder, NO_TURN_COST_PROVIDER);
+                createWeighting(profile, new PMap());
             } catch (IllegalArgumentException e) {
+                // todonow: update, what are we really checking here?
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with an unknown weighting '" + profile.getWeighting() + "'");
             }
         }
@@ -904,14 +906,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(chConfig.getProfile());
-            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             if (profile.isTurnCosts()) {
-                assert encoder.supportsTurnCosts() : "encoder " + encoder + " should support turn costs";
-                int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-                TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
-                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap(), encoder, turnCostProvider)));
+                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
             } else {
-                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap(), encoder, NO_TURN_COST_PROVIDER)));
+                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
             }
         }
     }
@@ -926,11 +924,11 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
-            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            // note that we do not consider turn costs during LM preparation this is important if we want
+            // note that we do not consider turn costs during LM preparation. this is important if we want
             // to allow e.g. changing the u_turn_costs per request (we have to use the minimum weight settings (
             // = no turn costs) for the preparation)
-            Weighting weighting = createWeighting(profile, new PMap(), encoder, NO_TURN_COST_PROVIDER);
+            // todonow: is it too ugly this way?
+            Weighting weighting = createWeighting(profile, new PMap().put("__disable_turn_costs", true));
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1010,8 +1008,8 @@ public class GraphHopper implements GraphHopperAPI {
      * @param profileConfig The profile for which the weighting shall be created
      * @param hints         Additional hints that can be used to further specify the weighting that shall be created
      */
-    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        return new DefaultWeightingFactory().createWeighting(profileConfig, hints, encoder, turnCostProvider);
+    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints) {
+        return new DefaultWeightingFactory(encodingManager, ghStorage).createWeighting(profileConfig, hints);
     }
 
     @Override
@@ -1065,8 +1063,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             ProfileConfig profile = resolveProfile(request.getHints());
             if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
-                // todonow: edge_based vs. turn_costs
-                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to set " + Parameters.Routing.EDGE_BASED + " to true");
+                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
 
             TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
@@ -1086,16 +1083,12 @@ public class GraphHopper implements GraphHopperAPI {
                 }
             } else {
                 checkNonChMaxWaypointDistance(points);
-                FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
                 final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
                     throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
                 }
-                TurnCostProvider turnCostProvider = profile.isTurnCosts()
-                        ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
-                        : NO_TURN_COST_PROVIDER;
-
-                weighting = createWeighting(profile, hints, encoder, turnCostProvider);
+                FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+                weighting = createWeighting(profile, hints);
                 if (hints.has(Routing.BLOCK_AREA))
                     weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
                             points, hints, DefaultEdgeFilter.allEdges(encoder)));
@@ -1356,7 +1349,26 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private static class DefaultWeightingFactory {
-        public Weighting createWeighting(ProfileConfig profile, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
+        private final EncodingManager encodingManager;
+        private final GraphHopperStorage ghStorage;
+
+        public DefaultWeightingFactory(EncodingManager encodingManager, GraphHopperStorage ghStorage) {
+            this.encodingManager = encodingManager;
+            this.ghStorage = ghStorage;
+        }
+
+        public Weighting createWeighting(ProfileConfig profile, PMap hints) {
+            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+            TurnCostProvider turnCostProvider;
+            if (profile.isTurnCosts() && !hints.getBool("__disable_turn_costs", false)) {
+                if (!encoder.supportsTurnCosts())
+                    throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
+                int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
+            } else {
+                turnCostProvider = NO_TURN_COST_PROVIDER;
+            }
+
             String weightingStr = toLowerCase(profile.getWeighting());
             if (weightingStr.isEmpty())
                 throw new IllegalArgumentException("You have to specify a weighting");

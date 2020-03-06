@@ -35,8 +35,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-
 @Path("isochrone")
 public class IsochroneResource {
 
@@ -79,6 +77,9 @@ public class IsochroneResource {
         hintsMap.put(Parameters.CH.DISABLE, true);
         hintsMap.put(Parameters.Landmark.DISABLE, true);
         ProfileConfig profile = graphHopper.resolveProfile(hintsMap);
+        if (profile.isTurnCosts()) {
+            throw new IllegalArgumentException("Isochrone calculation does not support turn costs yet");
+        }
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
@@ -89,8 +90,7 @@ public class IsochroneResource {
         Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
 
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap, encoder, NO_TURN_COST_PROVIDER);
-        // todonow: isochrones with turn costs? do we have to disable it here explicitly?
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
