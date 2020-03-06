@@ -150,14 +150,15 @@ public class ProfileResolver {
         if (edgeBased != null && p.isEdgeBased() != edgeBased) {
             return false;
         }
-        if (!p.getWeighting().matches(hintsMap)) {
-            return false;
-        }
-        return true;
+        String requestedUTurnCosts = hintsMap.get(Parameters.Routing.U_TURN_COSTS, "");
+        return (hintsMap.getWeighting().isEmpty() || p.getWeighting().getName().equals(hintsMap.getWeighting())) &&
+                (requestedUTurnCosts.isEmpty() || p.getWeighting().getTurnCostProvider().getName().equals(requestedUTurnCosts)) &&
+                (hintsMap.getVehicle().isEmpty() || p.getWeighting().getFlagEncoder().toString().equals(hintsMap.getVehicle()));
     }
 
     private boolean lmProfileMatchesHints(LMProfile p, HintsMap hintsMap) {
-        return p.getWeighting().matches(hintsMap);
+        return (hintsMap.getWeighting().isEmpty() || p.getWeighting().getName().equals(hintsMap.getWeighting())) &&
+                (hintsMap.getVehicle().isEmpty() || p.getWeighting().getFlagEncoder().toString().equals(hintsMap.getVehicle()));
     }
 
     /**

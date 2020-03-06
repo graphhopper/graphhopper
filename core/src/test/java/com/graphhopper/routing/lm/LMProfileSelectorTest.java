@@ -68,8 +68,7 @@ public class LMProfileSelectorTest {
         assertProfileFound(lmProfiles.get(0), lmProfiles, "car", null, true, 54);
         assertProfileFound(lmProfiles.get(0), lmProfiles, null, "fastest", true, 54);
         assertProfileFound(lmProfiles.get(0), lmProfiles, "car", "fastest", true, null);
-        // todonow: setting u-turn costs should not lead to the profile not being found
-//        assertProfileFound(lmProfiles.get(0), lmProfiles, "car", "fastest", true, 54);
+        assertProfileFound(lmProfiles.get(0), lmProfiles, "car", "fastest", true, 54);
 
         // if we request something that does not fit we do not get a match
         // todonow: there is this strange rule that if there is only one profile and vehicle or weighting is not
@@ -103,9 +102,8 @@ public class LMProfileSelectorTest {
         // edge_based/u_turn_costs is set, but lm should not really care
         assertProfileFound(lmProfiles.get(0), lmProfiles, "car", null, null, null);
         assertProfileFound(lmProfiles.get(0), lmProfiles, "car", null, true, null);
-        // todonow: setting u-turn costs should not lead to the profile not being found
-//        assertProfileFound(lmProfiles.get(0), lmProfiles, "car", null, null, 54);
-//        assertProfileFound(lmProfiles.get(0), lmProfiles, "car", null, false, 64);
+        assertProfileFound(lmProfiles.get(0), lmProfiles, "car", null, null, 54);
+        assertProfileFound(lmProfiles.get(0), lmProfiles, "car", null, false, 64);
     }
 
 
