@@ -39,7 +39,7 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
     String baseUrl;
     Directory dir;
     DAType daType = DAType.MMAP;
-    boolean interpolate = false;
+    ElevationInterpolation interpolate = ElevationInterpolation.NONE;
     boolean autoRemoveTemporary = true;
     long sleep = 2000;
 
@@ -55,7 +55,7 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
     }
 
     @Override
-    public void setInterpolate(boolean interpolate) {
+    public void setInterpolate(ElevationInterpolation interpolate) {
         this.interpolate = interpolate;
     }
 

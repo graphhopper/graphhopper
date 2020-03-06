@@ -43,7 +43,7 @@ public class HeightTile {
     private final double lonHigherBound;
     private final double latHigherBound;
     private DataAccess heights;
-    private boolean interpolate;
+    private ElevationInterpolation interpolate;
     private final double MIN_ELEVATION_METERS = -12_000;
     private final double MAX_ELEVATION_METERS = 9_000;
 
@@ -61,7 +61,7 @@ public class HeightTile {
         this.verticalDegree = verticalDegree;
     }
 
-    public HeightTile setInterpolate(boolean interpolate) {
+    public HeightTile setInterpolate(ElevationInterpolation interpolate) {
         this.interpolate = interpolate;
         return this;
     }
@@ -102,7 +102,7 @@ public class HeightTile {
             throw new IllegalStateException("longitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
 
         double elevation;
-        if (interpolate) {
+        if (interpolate == ElevationInterpolation.BILINEAR) {
             double x = (width - 1) * deltaLon / horizontalDegree;
             double y = (height - 1) * (1 - deltaLat / verticalDegree);
             int left = (int) x;

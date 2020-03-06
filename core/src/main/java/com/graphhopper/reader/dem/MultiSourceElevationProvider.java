@@ -77,7 +77,7 @@ public class MultiSourceElevationProvider implements ElevationProvider {
     }
 
     @Override
-    public void setInterpolate(boolean interpolate) {
+    public void setInterpolate(ElevationInterpolation interpolate) {
         srtmProvider.setInterpolate(interpolate);
         globalProvider.setInterpolate(interpolate);
     }
