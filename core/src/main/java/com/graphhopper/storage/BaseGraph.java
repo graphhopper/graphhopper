@@ -163,7 +163,7 @@ class BaseGraph implements Graph {
         this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
         if (withTurnCosts) {
-            turnCostStorage = new TurnCostStorage(nodeAccess, dir.find("turn_costs"));
+            turnCostStorage = new TurnCostStorage(this, dir.find("turn_costs"));
         } else {
             turnCostStorage = null;
         }
