@@ -129,7 +129,6 @@ public class GraphHopper implements GraphHopperAPI {
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
-    private Map<String, CustomModel> importCustomModels = new HashMap<>();
 
     public GraphHopper() {
     }
@@ -165,11 +164,6 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper setEncodingManager(EncodingManager em) {
         ensureNotLoaded();
         this.encodingManager = em;
-        return this;
-    }
-
-    public GraphHopper putCustomModel(String name, CustomModel customModel) {
-        importCustomModels.put(name, customModel);
         return this;
     }
 
@@ -840,7 +834,7 @@ public class GraphHopper implements GraphHopperAPI {
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
             }
             try {
-                CustomModel customModel = importCustomModels.get(profile.getName());
+                CustomModel customModel = profile.getCustomModel();
                 createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, customModel);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with an unknown weighting '" + profile.getWeighting() + "', msg: " + e.getMessage());
@@ -900,7 +894,7 @@ public class GraphHopper implements GraphHopperAPI {
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(chConfig.getProfile());
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            CustomModel customModel = importCustomModels.get(profile.getName());
+            CustomModel customModel = profile.getCustomModel();
             if (profile.isTurnCosts()) {
                 assert encoder.supportsTurnCosts() : "encoder " + encoder + " should support turn costs";
                 int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
@@ -924,7 +918,7 @@ public class GraphHopper implements GraphHopperAPI {
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             // note that we do not consider turn costs during LM preparation?
-            CustomModel customModel = importCustomModels.get(profile.getName());
+            CustomModel customModel = profile.getCustomModel();
             Weighting weighting = createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, customModel);
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
@@ -1038,7 +1032,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        customModel = CustomWeighting.prepareRequest(request, customModel, importCustomModels);
+        customModel = CustomWeighting.prepareRequest(request, customModel, profilesByName);
 
         // default handling
         String vehicle = request.getVehicle();

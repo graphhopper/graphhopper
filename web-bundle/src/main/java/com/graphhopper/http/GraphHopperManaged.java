@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
@@ -94,13 +95,14 @@ public class GraphHopperManaged implements Managed {
                     new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
         }
 
-        String customModelLocation = configuration.get("graph.custom_profiles.directory", "");
+        String customModelLocation = configuration.get("custom_profiles.directory", "");
         if (!customModelLocation.isEmpty()) {
             ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
             for (Map.Entry<String, File> entry : Helper.listFiles(new File(customModelLocation), Arrays.asList("yaml", "yml"))) {
                 try {
-                    CustomModel customModel = yamlOM.readValue(entry.getValue(), CustomModel.class);
-                    graphHopper.putCustomModel(entry.getKey(), customModel);
+                    List<ProfileConfig> list = new ArrayList<>(configuration.getProfiles());
+                    list.add(new ProfileConfig(entry.getKey()).setCustomModel(yamlOM.readValue(entry.getValue(), CustomModel.class)));
+                    configuration.setProfiles(list);
                 } catch (Exception ex) {
                     throw new RuntimeException("Cannot load custom_model from " + entry.getValue(), ex);
                 }

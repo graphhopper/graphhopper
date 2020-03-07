@@ -18,6 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.GHRequest;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -27,7 +28,6 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 
 import java.util.Map;
 
@@ -46,7 +46,11 @@ import java.util.Map;
  * underestimates the weight.
  */
 public final class CustomWeighting extends AbstractWeighting {
-
+    /**
+     * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
+     * costs or traffic light costs etc)
+     */
+    private final static double SPEED_CONV = 3.6;
     private final BooleanEncodedValue baseVehicleProfileAccessEnc;
     private final String baseVehicleProfile;
     private final double maxSpeed;
@@ -61,7 +65,7 @@ public final class CustomWeighting extends AbstractWeighting {
         baseVehicleProfile = customModel.getBase();
 
         speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, lookup, factory);
-        maxSpeed = speedConfig.getMaxSpeed() / CustomModel.SPEED_CONV;
+        maxSpeed = speedConfig.getMaxSpeed() / SPEED_CONV;
 
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
 
@@ -72,16 +76,23 @@ public final class CustomWeighting extends AbstractWeighting {
     }
 
     /**
-     * This method sets the vehicle of the specified request. It uses the importCustomModels if customModel is null.
+     * This method sets the vehicle of the specified request using the profile. It uses the profiles if customModel is null.
      */
-    public static CustomModel prepareRequest(GHRequest request, CustomModel customModel, Map<String, CustomModel> importCustomModels) {
-        String profile = request.getProfile();
-        if (!Helper.isEmpty(profile)) {
-            if (customModel == null && (customModel = importCustomModels.get(profile)) == null)
-                throw new IllegalArgumentException("Unknown profile '" + profile + "' for custom weighting");
-            request.setVehicle(customModel.getBase());
+    public static CustomModel prepareRequest(GHRequest request, CustomModel requestCustomModel, Map<String, ProfileConfig> profiles) {
+        ProfileConfig profileConfig = profiles.get(request.getProfile());
+        // 1. use case custom "profile" specified
+        if (profileConfig != null && profileConfig.getCustomModel() != null) {
+            // if(requestCustomModel != null) requestCustomModel.merge(profileConfig.getCustomModel()); else ...
+            requestCustomModel = profileConfig.getCustomModel();
         }
-        return customModel;
+
+        // TODO NOW what is the difference of the use case "custom model with base=truck" versus "profile=truck plus a custom model in request"?
+
+        // 2. use case base == vehicle
+        if (requestCustomModel != null)
+            // TODO NOW this wiring is ugly, see also ProfileConfig.setCustomModel
+            request.setVehicle(requestCustomModel.getBase());
+        return requestCustomModel;
     }
 
     @Override
@@ -116,7 +127,7 @@ public final class CustomWeighting extends AbstractWeighting {
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
 
-        return distance / speed * CustomModel.SPEED_CONV;
+        return distance / speed * SPEED_CONV;
     }
 
     @Override

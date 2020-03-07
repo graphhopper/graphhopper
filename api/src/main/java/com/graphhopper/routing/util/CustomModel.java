@@ -25,12 +25,7 @@ import java.util.Map;
 
 public class CustomModel {
 
-    /**
-     * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
-     * costs or traffic light costs etc)
-     */
-    public final static double SPEED_CONV = 3.6;
-    // required
+    // required! TODO NOW 'base' encoder or later it might be also profile?
     private String base;
     // optional:
     private Double maxSpeedFallback, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;

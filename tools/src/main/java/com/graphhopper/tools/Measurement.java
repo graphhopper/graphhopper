@@ -27,7 +27,6 @@ import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
@@ -143,15 +142,14 @@ public class Measurement {
             }
         };
 
-        // TODO NOW make it working for CustomWeighting again
-        CustomModel customModel = createCustomModel();
-        hopper.putCustomModel(customModel.toString(), customModel);
-
+        // Currently we test speed of custom truck via: 1. raw dijkstra -> routing_custom, 2. modified car base LM-preparation -> routingLM_custom
+        // TODO test also 3. truck LM-preparation, 4. truck CH-preparation
+        ProfileConfig customProfile = createCustomProfile("truck");
         // add more encoded values for CustomModel
         if (!args.has("graph.encoded_values"))
             args.put("graph.encoded_values", "max_width,max_height,toll,hazmat");
 
-        hopper.init(createConfigFromArgs(args, customModel)).
+        hopper.init(createConfigFromArgs(args, customProfile)).
                 // use server to allow path simplification
                         forServer();
         if (cleanGraph) {
@@ -187,8 +185,8 @@ public class Measurement {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", vehicleStr, count / 20, isCH, isLM).
                             withInstructions().edgeBased());
                 }
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", customModel.toString(), count / 30, isCH, isLM).
-                        withInstructions().customModel(customModel));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", customProfile.getName(), count / 30, isCH, isLM).
+                        withInstructions().customModel(customProfile.getCustomModel()));
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", vehicleStr, count / 20, isCH, isLM).
                         withInstructions().blockArea(blockAreaStr));
             }
@@ -208,8 +206,8 @@ public class Measurement {
                 final int activeLMCount = 8;
                 printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", vehicleStr, count / 4, isCH, isLM).
                         withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
-                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_custom", customModel.toString(), count / 5, isCH, isLM).
-                        withInstructions().activeLandmarks(activeLMCount).customModel(customModel));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_custom", customProfile.getName(), count / 5, isCH, isLM).
+                        withInstructions().activeLandmarks(activeLMCount).customModel(customProfile.getCustomModel()));
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
 
@@ -268,7 +266,7 @@ public class Measurement {
         }
     }
 
-    private GraphHopperConfig createConfigFromArgs(PMap args, CustomModel customModel) {
+    private GraphHopperConfig createConfigFromArgs(PMap args, ProfileConfig customProfile) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         String encodingManagerString = args.get("graph.flag_encoders", "car");
         List<FlagEncoder> tmpEncoders = EncodingManager.create(encodingManagerString).fetchEdgeEncoders();
@@ -283,9 +281,9 @@ public class Measurement {
         boolean useLM = args.getBool("measurement.lm", true);
         List<ProfileConfig> profiles = new ArrayList<>();
         profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
-        if (turnCosts) {
+        if (turnCosts)
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
-        }
+        profiles.add(customProfile);
         ghConfig.setProfiles(profiles);
 
         List<CHProfileConfig> chProfiles = new ArrayList<>();
@@ -759,14 +757,13 @@ public class Measurement {
         }
     }
 
-    private CustomModel createCustomModel() {
-        CustomModel customModel = new CustomModel() {
-            @Override
-            public String toString() {
-                return "truck";
-            }
-        };
+    private ProfileConfig createCustomProfile(String profileName) {
+        CustomModel customModel = new CustomModel();
         customModel.setBase("car");
+        ProfileConfig profileConfig = new ProfileConfig(profileName).
+                setCustomModel(customModel).
+                setVehicle(customModel.getBase());
+
         customModel.setVehicleHeight(3.8);
         customModel.setVehicleWidth(2.5);
         // the default distance_factor for custom requests is currently 1 which makes it too different regarding speed
@@ -791,7 +788,7 @@ public class Measurement {
 
         customModel.setMaxSpeedFallback(110.0);
 
-        return customModel;
+        return profileConfig;
     }
 
     private void storeProperties(String propLocation) {
