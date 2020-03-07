@@ -140,7 +140,7 @@ public class ProfileResolver {
         }
     }
 
-    private boolean chProfileMatchesHints(CHProfile p, HintsMap hintsMap) {
+    protected boolean chProfileMatchesHints(CHProfile p, HintsMap hintsMap) {
         Boolean edgeBased = getEdgeBased(hintsMap);
         Integer uTurnCosts = getUTurnCosts(hintsMap);
         return (edgeBased == null || p.isEdgeBased() == edgeBased) &&
@@ -149,7 +149,7 @@ public class ProfileResolver {
                 (hintsMap.getVehicle().isEmpty() || p.getWeighting().getFlagEncoder().toString().equals(hintsMap.getVehicle()));
     }
 
-    private boolean lmProfileMatchesHints(LMProfile p, HintsMap hintsMap) {
+    protected boolean lmProfileMatchesHints(LMProfile p, HintsMap hintsMap) {
         return (hintsMap.getWeighting().isEmpty() || p.getWeighting().getName().equals(hintsMap.getWeighting())) &&
                 (hintsMap.getVehicle().isEmpty() || p.getWeighting().getFlagEncoder().toString().equals(hintsMap.getVehicle()));
     }
