@@ -22,11 +22,18 @@ import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.util.EdgeIterator;
 
 /**
- * Holds turn cost tables for each node. The additional field of a node will be used to point towards the
- * first entry within a node cost table to identify turn restrictions or turn costs.
+ * A key/value store, where the unique keys are turn relations, and the values are IntRefs.
+ * A turn relation is a triple (fromEdge, viaNode, toEdge),
+ * and refers to one of the possible ways of crossing an intersection.
+ *
+ * Like IntRefs on edges, this can in principle be used to store values of any kind.
+ *
+ * In practice, the IntRefs are used to store generalized travel costs per turn relation per vehicle type.
+ * In practice, we only store 0 or infinity. (Can turn, or cannot turn.)
  *
  * @author Karl Hübner
  * @author Peter Karich
+ * @author Michael Zilske
  */
 public class TurnCostStorage implements Storable<TurnCostStorage> {
     static final int NO_TURN_ENTRY = -1;
@@ -38,12 +45,12 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     private static final int TC_NEXT = 12;
     private static final int BYTES_PER_ENTRY = 16;
 
-    private NodeAccess nodeAccess;
+    private BaseGraph baseGraph;
     private DataAccess turnCosts;
     private int turnCostsCount;
 
-    public TurnCostStorage(NodeAccess nodeAccess, DataAccess turnCosts) {
-        this.nodeAccess = nodeAccess;
+    public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
+        this.baseGraph = baseGraph;
         this.turnCosts = turnCosts;
     }
 
@@ -106,10 +113,10 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         int next = NO_TURN_ENTRY;
 
         // determine if we already have a cost entry for this node
-        int previousEntryIndex = nodeAccess.getTurnCostIndex(viaNode);
+        int previousEntryIndex = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
         if (previousEntryIndex == NO_TURN_ENTRY) {
             // set cost-pointer to this new cost entry
-            nodeAccess.setTurnCostIndex(viaNode, newEntryIndex);
+            baseGraph.getNodeAccess().setTurnCostIndex(viaNode, newEntryIndex);
         } else {
             int i = 0;
             next = turnCosts.getInt((long) previousEntryIndex * BYTES_PER_ENTRY + TC_NEXT);
@@ -176,7 +183,7 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     }
 
     private void readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
-        int turnCostIndex = nodeAccess.getTurnCostIndex(viaNode);
+        int turnCostIndex = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
         int i = 0;
         for (; i < 1000; i++) {
             if (turnCostIndex == NO_TURN_ENTRY)
@@ -220,5 +227,91 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     public String toString() {
         return "turn_cost";
     }
+
+    // TODO: Maybe some of the stuff above could now be re-implemented in a simpler way with some of the stuff below.
+    // For now, I just wanted to iterate over all entries.
+
+    /**
+     * Returns an iterator over all entries.
+     *
+     * @return an iterator over all entries.
+     */
+    public TurnRelationIterator getAllTurnRelations() {
+        return new Itr();
+    }
+
+    public interface TurnRelationIterator {
+        int getFromEdge();
+        int getViaNode();
+        int getToEdge();
+        IntsRef getFlags();
+        boolean next();
+    }
+
+    private class Itr implements TurnRelationIterator {
+        private int viaNode = -1;
+        private int turnCostIndex = -1;
+
+        private long turnCostPtr() {
+            return (long) turnCostIndex * BYTES_PER_ENTRY;
+        }
+
+        @Override
+        public int getFromEdge() {
+            return turnCosts.getInt(turnCostPtr() + TC_FROM);
+        }
+
+        @Override
+        public int getViaNode() {
+            return viaNode;
+        }
+
+        @Override
+        public int getToEdge() {
+            return turnCosts.getInt(turnCostPtr() + TC_TO);
+        }
+
+        @Override
+        public IntsRef getFlags() {
+            return readFlags(getFromEdge(), getViaNode(), getToEdge());
+        }
+
+        @Override
+        public boolean next() {
+            boolean gotNextTci = nextTci();
+            if (!gotNextTci) {
+                turnCostIndex = NO_TURN_ENTRY;
+                boolean gotNextNode = true;
+                while (turnCostIndex == NO_TURN_ENTRY && (gotNextNode = nextNode())) {
+
+                }
+                if (!gotNextNode) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private boolean nextNode() {
+            viaNode++;
+            if (viaNode >= baseGraph.getNodes()) {
+                return false;
+            }
+            turnCostIndex = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
+            return true;
+        }
+
+        private boolean nextTci() {
+            if (turnCostIndex == NO_TURN_ENTRY) {
+                return false;
+            }
+            turnCostIndex = turnCosts.getInt(turnCostPtr() + TC_NEXT);
+            if (turnCostIndex == NO_TURN_ENTRY) {
+                return false;
+            }
+            return true;
+        }
+    }
+
 }
 

@@ -18,6 +18,7 @@
 
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.BikeFlagEncoder;
@@ -27,8 +28,11 @@ import com.graphhopper.routing.util.FlagEncoder;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.*;
+
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class TurnCostStorageTest {
 
@@ -61,7 +65,10 @@ public class TurnCostStorageTest {
     public void testMultipleTurnCosts() {
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
+        TurnCostStorage turnCostStorage = g.getTurnCostStorage();
 
+        DecimalEncodedValue car = ((EncodedValueLookup) manager).getDecimalEncodedValue(TurnCost.key("car"));
+        DecimalEncodedValue bike = ((EncodedValueLookup) manager).getDecimalEncodedValue(TurnCost.key("bike"));
         int edge42 = getEdge(g, 4, 2).getEdge();
         int edge23 = getEdge(g, 2, 3).getEdge();
         int edge31 = getEdge(g, 3, 1).getEdge();
@@ -69,50 +76,83 @@ public class TurnCostStorageTest {
         int edge02 = getEdge(g, 0, 2).getEdge();
         int edge24 = getEdge(g, 2, 4).getEdge();
 
-        setTurnCost(g, edge42, edge23, "car", 2, Double.POSITIVE_INFINITY);
-        setTurnCost(g, edge42, edge23, "bike", 2, Double.POSITIVE_INFINITY);
-        setTurnCost(g, edge23, edge31, "car", 3, Double.POSITIVE_INFINITY);
-        setTurnCost(g, edge23, edge31, "bike", 3, 2.0);
-        setTurnCost(g, edge31, edge10, "car", 1, 2.0);
-        setTurnCost(g, edge31, edge10, "bike", 1, Double.POSITIVE_INFINITY);
-        setTurnCost(g, edge02, edge24, "bike", 2, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(car, edge42, 2, edge23, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(bike, edge42, 2, edge23, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(car, edge23, 3, edge31, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(bike, edge23, 3, edge31, 2.0);
+        turnCostStorage.set(car, edge31, 1, edge10, 2.0);
+        turnCostStorage.set(bike, edge31, 1, edge10, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(bike, edge02, 2, edge24, Double.POSITIVE_INFINITY);
 
-        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge42, edge23, "car", 2), 0);
-        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge42, edge23, "bike", 2), 0);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(car, edge42, 2, edge23), 0);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bike, edge42, 2, edge23), 0);
 
-        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge23, edge31, "car", 3), 0);
-        assertEquals(2.0, getTurnCost(g, edge23, edge31, "bike", 3), 0);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(car, edge23, 3, edge31), 0);
+        assertEquals(2.0, turnCostStorage.get(bike, edge23, 3, edge31), 0);
 
-        assertEquals(2.0, getTurnCost(g, edge31, edge10, "car", 1), 0);
-        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge31, edge10, "bike", 1), 0);
+        assertEquals(2.0, turnCostStorage.get(car, edge31, 1, edge10), 0);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bike, edge31, 1, edge10), 0);
 
-        assertEquals(0.0, getTurnCost(g, edge02, edge24, "car", 2), 0);
-        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge24, "bike", 2), 0);
+        assertEquals(0.0, turnCostStorage.get(car, edge02, 2, edge24), 0);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bike, edge02, 2, edge24), 0);
 
-        setTurnCost(g, edge02, edge23, "car", 2, Double.POSITIVE_INFINITY);
-        setTurnCost(g, edge02, edge23, "bike", 2, Double.POSITIVE_INFINITY);
-        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "car", 2), 0);
-        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "bike", 2), 0);
+        turnCostStorage.set(car, edge02, 2, edge23, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(bike, edge02, 2, edge23, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(car, edge02, 2, edge23), 0);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bike, edge02, 2, edge23), 0);
+
+        Set<List<Integer>> allTurnRelations = new HashSet<>();
+        TurnCostStorage.TurnRelationIterator iterator = turnCostStorage.getAllTurnRelations();
+        while (iterator.next()) {
+            allTurnRelations.add(Arrays.asList(iterator.getFromEdge(), iterator.getViaNode(),iterator.getToEdge(), (int) car.getDecimal(false, iterator.getFlags()), (int) bike.getDecimal(false, iterator.getFlags())));
+        }
+
+        Set<List<Integer>> expectedTurnRelations = new HashSet<>();
+        expectedTurnRelations.add(Arrays.asList(edge31,1,edge10,2,Integer.MAX_VALUE));
+        expectedTurnRelations.add(Arrays.asList(edge42,2,edge23,Integer.MAX_VALUE,Integer.MAX_VALUE));
+        expectedTurnRelations.add(Arrays.asList(edge02,2,edge24,0,Integer.MAX_VALUE));
+        expectedTurnRelations.add(Arrays.asList(edge02,2,edge23,Integer.MAX_VALUE,Integer.MAX_VALUE));
+        expectedTurnRelations.add(Arrays.asList(edge23,3,edge31,Integer.MAX_VALUE,2));
+
+        assertEquals(expectedTurnRelations, allTurnRelations);
     }
 
     @Test
     public void testMergeFlagsBeforeAdding() {
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
+        TurnCostStorage turnCostStorage = g.getTurnCostStorage();
 
+        DecimalEncodedValue car = ((EncodedValueLookup) manager).getDecimalEncodedValue(TurnCost.key("car"));
+        DecimalEncodedValue bike = ((EncodedValueLookup) manager).getDecimalEncodedValue(TurnCost.key("bike"));
         int edge23 = getEdge(g, 2, 3).getEdge();
         int edge02 = getEdge(g, 0, 2).getEdge();
-        setTurnCost(g, edge02, edge23, "car", 2, Double.POSITIVE_INFINITY);
-        setTurnCost(g, edge02, edge23, "bike", 2, Double.POSITIVE_INFINITY);
-        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "car", 2), 0);
-        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "bike", 2), 0);
+
+        turnCostStorage.set(car, edge02, 2, edge23, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(bike, edge02, 2, edge23, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(car, edge02, 2, edge23), 0);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bike, edge02, 2, edge23), 0);
+
+        Set<List<Integer>> allTurnRelations = new HashSet<>();
+        TurnCostStorage.TurnRelationIterator iterator = turnCostStorage.getAllTurnRelations();
+        while (iterator.next()) {
+            allTurnRelations.add(Arrays.asList(iterator.getFromEdge(), iterator.getViaNode(),iterator.getToEdge(), (int) car.getDecimal(false, iterator.getFlags()), (int) bike.getDecimal(false, iterator.getFlags())));
+        }
+
+        Set<List<Integer>> expectedTurnRelations = new HashSet<>();
+        expectedTurnRelations.add(Arrays.asList(edge02,2,edge23,Integer.MAX_VALUE,Integer.MAX_VALUE));
+
+        assertEquals(expectedTurnRelations, allTurnRelations);
     }
 
-    private void setTurnCost(GraphHopperStorage g, int fromEdge, int toEdge, String vehicle, int viaNode, double cost) {
-        g.getTurnCostStorage().set(((EncodedValueLookup) manager).getDecimalEncodedValue(TurnCost.key(vehicle)), fromEdge, viaNode, toEdge, cost);
+    @Test
+    public void testIterateEmptyStore() {
+        GraphHopperStorage g = new GraphBuilder(manager).create();
+        initGraph(g);
+        TurnCostStorage turnCostStorage = g.getTurnCostStorage();
+
+        TurnCostStorage.TurnRelationIterator iterator = turnCostStorage.getAllTurnRelations();
+        assertFalse(iterator.next());
     }
 
-    private double getTurnCost(GraphHopperStorage g, int fromEdge, int toEdge, String vehicle, int viaNode) {
-        return g.getTurnCostStorage().get(((EncodedValueLookup) manager).getDecimalEncodedValue(TurnCost.key(vehicle)), fromEdge, viaNode, toEdge);
-    }
 }
