@@ -273,7 +273,7 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
 
         @Override
         public IntsRef getFlags() {
-            return readFlags(getFromEdge(), getViaNode(), getToEdge());
+            return new IntsRef(new int[]{turnCosts.getInt(turnCostPtr() + TC_FLAGS)}, 0, 1);
         }
 
         @Override
