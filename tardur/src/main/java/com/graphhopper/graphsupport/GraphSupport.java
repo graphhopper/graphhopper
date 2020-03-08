@@ -19,6 +19,7 @@
 package com.graphhopper.graphsupport;
 
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -44,5 +45,22 @@ public class GraphSupport {
             }
         }, false);
     }
+
+    public static Stream<TurnCostStorage.TurnRelationIterator> allTurnRelations(TurnCostStorage tcs) {
+        return StreamSupport.stream(new Spliterators.AbstractSpliterator<TurnCostStorage.TurnRelationIterator>(0, 0) {
+            TurnCostStorage.TurnRelationIterator turnRelationIterator = tcs.getAllTurnRelations();
+
+            @Override
+            public boolean tryAdvance(Consumer<? super TurnCostStorage.TurnRelationIterator> action) {
+                if (turnRelationIterator.next()) {
+                    action.accept(turnRelationIterator);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }, false);
+    }
+
 
 }

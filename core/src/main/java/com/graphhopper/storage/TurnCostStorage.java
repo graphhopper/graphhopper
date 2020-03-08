@@ -255,6 +255,8 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
 
         double getCost(DecimalEncodedValue encodedValue);
 
+        int get(IntEncodedValue encodedValue);
+
         boolean next();
     }
 
@@ -286,6 +288,12 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         public double getCost(DecimalEncodedValue encodedValue) {
             intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
             return encodedValue.getDecimal(false, intsRef);
+        }
+
+        @Override
+        public int get(IntEncodedValue encodedValue) {
+            intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
+            return encodedValue.getInt(false, intsRef);
         }
 
         @Override

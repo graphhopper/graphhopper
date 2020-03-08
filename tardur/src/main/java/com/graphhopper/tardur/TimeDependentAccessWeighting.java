@@ -21,13 +21,11 @@ package com.graphhopper.tardur;
 import ch.poole.openinghoursparser.Rule;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.TDWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -140,11 +138,11 @@ public class TimeDependentAccessWeighting implements TDWeighting {
 
     @Override
     public String getName() {
-        return finalWeighting.getName();
+        return "time_dependent_restrictions";
     }
 
     @Override
     public boolean matches(HintsMap map) {
-        return finalWeighting.matches(map);
+        return getName().equals(map.getWeighting());
     }
 }

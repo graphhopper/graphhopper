@@ -30,7 +30,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * {@link Weighting} we want to use with this class. Otherwise turn costs at virtual nodes and/or including virtual
  * edges will not be calculated correctly.
  */
-public class QueryGraphWeighting implements TDWeighting {
+public class QueryGraphWeighting implements Weighting {
     private final Weighting weighting;
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
@@ -51,11 +51,6 @@ public class QueryGraphWeighting implements TDWeighting {
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         return weighting.calcEdgeWeight(edgeState, reverse);
-    }
-
-    @Override
-    public double calcTDWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId, long linkEnterTime) {
-        return ((TDWeighting) weighting).calcTDWeight(edge, reverse, prevOrNextEdgeId, linkEnterTime);
     }
 
     @Override
@@ -92,38 +87,6 @@ public class QueryGraphWeighting implements TDWeighting {
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
         return weighting.calcEdgeMillis(edgeState, reverse);
-    }
-
-    @Override
-    public long calcTDMillis(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId, long linkEnterTime) {
-        return ((TDWeighting) weighting).calcTDMillis(edge, reverse, prevOrNextEdgeId, linkEnterTime);
-    }
-
-    @Override
-    public double calcTDTurnWeight(int inEdge, int viaNode, int outEdge, long turnTimeMilli) {
-        if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
-            return 0;
-        }
-        if (isVirtualNode(viaNode)) {
-            if (isUTurn(inEdge, outEdge)) {
-                // do not allow u-turns at virtual nodes, otherwise the route depends on whether or not there are
-                // virtual via nodes, see #1672. note since we are turning between virtual edges here we need to compare
-                // the *virtual* edge ids (the orig edge would always be the same for all virtual edges at a virtual
-                // node), see #1593
-                return Double.POSITIVE_INFINITY;
-            } else {
-                return 0;
-            }
-        }
-        // to calculate the actual turn costs or detect u-turns we need to look at the original edge of each virtual
-        // edge, see #1593
-        if (isVirtualEdge(inEdge)) {
-            inEdge = getOriginalEdge(inEdge);
-        }
-        if (isVirtualEdge(outEdge)) {
-            outEdge = getOriginalEdge(outEdge);
-        }
-        return ((TDWeighting) weighting).calcTDTurnWeight(inEdge, viaNode, outEdge, turnTimeMilli);
     }
 
     @Override

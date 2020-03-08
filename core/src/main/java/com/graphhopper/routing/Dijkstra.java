@@ -58,7 +58,6 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
 
     @Override
     public Path calcPath(int from, int to) {
-        if (weighting instanceof TDWeighting) throw new RuntimeException();
         checkAlreadyRun();
         this.to = to;
         currEdge = new SPTEntry(from, 0);
@@ -72,7 +71,6 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
 
     @Override
     public Path calcTDPath(int from, int to, long at) {
-        if (!(weighting instanceof TDWeighting)) throw new RuntimeException();
         checkAlreadyRun();
         this.to = to;
         currEdge = new SPTEntry(from, 0);

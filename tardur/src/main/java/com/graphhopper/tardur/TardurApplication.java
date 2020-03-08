@@ -40,6 +40,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.tardur.resources.ConditionalAccessRestrictionsResource;
+import com.graphhopper.tardur.resources.ConditionalTurnRestrictionsResource;
 import com.graphhopper.tardur.resources.RootResource;
 import com.graphhopper.timezone.core.TimeZones;
 import com.graphhopper.util.TranslationMap;
@@ -276,5 +277,6 @@ public final class TardurApplication extends Application<TardurConfiguration> {
         environment.jersey().register(new GHJerseyViolationExceptionMapper());
         environment.jersey().register(new RootResource());
         environment.jersey().register(ConditionalAccessRestrictionsResource.class);
+        environment.jersey().register(ConditionalTurnRestrictionsResource.class);
     }
 }

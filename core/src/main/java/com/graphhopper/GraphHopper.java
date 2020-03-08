@@ -833,11 +833,6 @@ public class GraphHopper implements GraphHopperAPI {
                         "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
             }
-            try {
-                createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with an unknown weighting '" + profile.getWeighting() + "'");
-            }
         }
         Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {

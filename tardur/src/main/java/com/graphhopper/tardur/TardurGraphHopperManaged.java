@@ -29,6 +29,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.parsers.TurnRestrictionParser;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.timezone.core.TimeZones;
@@ -72,11 +73,10 @@ public class TardurGraphHopperManaged implements Managed {
 
             @Override
             public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-                Weighting weighting = super.createWeighting(hintsMap, encoder, turnCostProvider);
-                if (hintsMap.has("block_property")) {
-                    return new TimeDependentAccessWeighting(graphHopper, timeZones, weighting);
+                if (hintsMap.getWeighting().equals("time_dependent_restrictions")) {
+                    return new TimeDependentAccessWeighting(graphHopper, timeZones, new FastestWeighting(graphHopper.getEncodingManager().getEncoder("car")));
                 }
-                return weighting;
+                return super.createWeighting(hintsMap, encoder, turnCostProvider);
             }
         }.forServer();
         graphHopper.init(configuration);

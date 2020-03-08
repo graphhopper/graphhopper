@@ -181,7 +181,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                         .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
 
             } else if (algoOpts.getWeighting() instanceof TDWeighting) {
-                AlgorithmOptions pass1Options = AlgorithmOptions.start().weighting(new FastestWeighting(lookup.getEncoder(ghRequest.getVehicle()))).build();
+                AlgorithmOptions pass1Options = AlgorithmOptions.start().weighting(new FastestWeighting(lookup.getEncoder(ghRequest.getVehicle()))).algorithm("astar").build();
                 RoutingAlgorithm algo1 = algoFactory.createAlgo(queryGraph, pass1Options);
                 Path path = algo1.calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode());
                 if (path.isFound()) {
@@ -193,7 +193,9 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                     } else {
                         departureTime = Instant.parse(departureTimeString);
                     }
-                    tmpPathList = ((AbstractRoutingAlgorithm) algo).calcTDPaths(fromQResult.getClosestNode(), toQResult.getClosestNode(), departureTime.toEpochMilli());
+                    AlgorithmOptions pass2Options = AlgorithmOptions.start().weighting(algoOpts.getWeighting()).algorithm("astar").build();
+                    RoutingAlgorithm algo2 = algoFactory.createAlgo(queryGraph, pass2Options);
+                    tmpPathList = ((AbstractRoutingAlgorithm) algo2).calcTDPaths(fromQResult.getClosestNode(), toQResult.getClosestNode(), departureTime.toEpochMilli());
                 } else {
                     tmpPathList = Collections.singletonList(path);
                 }

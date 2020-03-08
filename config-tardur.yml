@@ -1,17 +1,26 @@
 graphhopper:
-  datareader.file: germany-latest.osm.pbf
-  graph.location: graphs/germany/graph
+#  datareader.file: germany-latest.osm.pbf
+#  graph.location: graphs/germany/graph
+
+  datareader.file: sachsen-latest.osm.pbf
+  graph.location: graphs/sachsen/graph
+
+  profiles:
+    - name: car
+      vehicle: car
+      weighting: time_dependent_restrictions
+
+  profiles_lm:
+    - profile: car
 
   graph.flag_encoders: car
-  prepare.ch.weightings: no
-  prepare.lm.weightings: fastest
   prepare.lm.landmarks: 8
 
 server:
-  applicationConnectors:
+  application_connectors:
   - type: http
     port: 8989
-  adminConnectors:
+  admin_connectors:
   - type: http
     port: 8990
 
