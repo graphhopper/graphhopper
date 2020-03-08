@@ -98,7 +98,7 @@ public class GraphHopperMatrixIT {
         req = new GHMRequest();
         req.addPoint(new GHPoint(52.517004, 13.389416));
         req.addPoint(new GHPoint(52.485707, 13.435249));
-        req.addPoint(new GHPoint(52.516848, 13.424606));
+        req.addPoint(new GHPoint(52.516857, 13.423828));
         req.addOutArray("distances");
         req.setPointHints(Arrays.asList("", "", "ifflandstr"));
         res = ghMatrix.route(req);
