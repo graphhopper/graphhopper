@@ -34,7 +34,6 @@ public class ProfileConfig {
     private String weighting = "fastest";
     private boolean turnCosts = false;
     private PMap hints = new PMap();
-    private CustomModel customModel;
 
     public static void validateProfileName(String profileName) {
         // currently allowing dash/minus, maybe remove later
@@ -87,17 +86,6 @@ public class ProfileConfig {
     public ProfileConfig setTurnCosts(boolean turnCosts) {
         this.turnCosts = turnCosts;
         return this;
-    }
-
-    public ProfileConfig setCustomModel(CustomModel customModel) {
-        this.customModel = customModel;
-        // TODO NOW this wiring is ugly, at least they should be named both 'base' or both 'vehicle'
-        setVehicle(customModel.getBase());
-        return this;
-    }
-
-    public CustomModel getCustomModel() {
-        return customModel;
     }
 
     public PMap getHints() {

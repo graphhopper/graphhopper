@@ -2,6 +2,7 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.Helper;
@@ -17,6 +18,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static com.graphhopper.http.resources.CustomWeightingRouteResourceLMTest.assertBetween;
 import static org.junit.Assert.assertEquals;
@@ -39,7 +41,10 @@ public class CustomWeightingRouteResourceTest {
                 put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 // profiles are automatically created using the yaml files in this directory
                 put("custom_profiles.directory", "./src/test/resources/com/graphhopper/http/resources/").
-                setCHProfiles(Arrays.asList(new CHProfileConfig("truck")));
+                setProfiles(Arrays.asList(
+                        new ProfileConfig("bike").setVehicle("bike").setWeighting("fastest"),
+                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest"))).
+                setCHProfiles(Collections.singletonList(new CHProfileConfig("truck")));
     }
 
     @ClassRule
@@ -70,7 +75,7 @@ public class CustomWeightingRouteResourceTest {
     @Test
     public void testCargoBike() throws IOException {
         String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
-                "base: bike\n";
+                "profile: bike\n";
         JsonNode yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
@@ -78,7 +83,9 @@ public class CustomWeightingRouteResourceTest {
 
         // since CustomModel is in the root level of the request we can directly use the yml file:
         String queryYamlFromFile = Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml"));
-        yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" + queryYamlFromFile;
+        yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
+                "profile: bike\n" +
+                queryYamlFromFile;
         yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);

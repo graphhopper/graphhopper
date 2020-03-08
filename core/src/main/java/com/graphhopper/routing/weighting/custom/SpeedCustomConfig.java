@@ -38,13 +38,12 @@ final class SpeedCustomConfig {
     private final double maxSpeed;
     private final double maxSpeedFallback;
 
-    public SpeedCustomConfig(final double maxSpeed, CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
+    public SpeedCustomConfig(final double maxSpeed, CustomModel customModel, DecimalEncodedValue avgSpeedEnc, EncodedValueLookup lookup, EncodedValueFactory factory) {
         this.maxSpeed = maxSpeed;
         this.maxSpeedFallback = customModel.getMaxSpeedFallback() == null ? maxSpeed : customModel.getMaxSpeedFallback();
+        this.avgSpeedEnc = avgSpeedEnc;
         if (this.maxSpeedFallback > maxSpeed)
             throw new IllegalArgumentException("max_speed_fallback cannot be bigger than max_speed " + maxSpeed);
-
-        this.avgSpeedEnc = lookup.getDecimalEncodedValue(EncodingManager.getKey(customModel.getBase(), "average_speed"));
 
         // use max_speed to lower speed for the specified conditions
         for (Map.Entry<String, Object> entry : customModel.getMaxSpeed().entrySet()) {

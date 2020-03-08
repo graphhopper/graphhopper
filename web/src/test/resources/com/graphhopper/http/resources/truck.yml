@@ -1,5 +1,5 @@
 # Specify a vehicle (FlagEncoder) or another custom profile like
-base: car
+profile: car
 
 # in meter
 vehicle_height: 3.8

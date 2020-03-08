@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.GHRequest;
-import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -51,8 +50,8 @@ public final class CustomWeighting extends AbstractWeighting {
      * costs or traffic light costs etc)
      */
     private final static double SPEED_CONV = 3.6;
-    private final BooleanEncodedValue baseVehicleProfileAccessEnc;
-    private final String baseVehicleProfile;
+    private final BooleanEncodedValue baseVehicleAccessEnc;
+    private final String baseVehicle;
     private final double maxSpeed;
     private final double distanceInfluence;
     private final SpeedCustomConfig speedConfig;
@@ -61,10 +60,15 @@ public final class CustomWeighting extends AbstractWeighting {
     public CustomWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
                            EncodedValueFactory factory, TurnCostProvider turnCostProvider, CustomModel customModel) {
         super(baseFlagEncoder, turnCostProvider);
-        baseVehicleProfileAccessEnc = baseFlagEncoder.getAccessEnc();
-        baseVehicleProfile = customModel.getBase();
+        if (customModel == null)
+            throw new IllegalStateException("CustomModel cannot be null");
 
-        speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, lookup, factory);
+        baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
+        baseVehicle = customModel.getProfile();
+        if (!baseVehicle.equals(baseFlagEncoder.toString()))
+            throw new IllegalStateException("profile '" + baseVehicle + "' must be identical to encoder " + baseFlagEncoder.toString());
+
+        speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), lookup, factory);
         maxSpeed = speedConfig.getMaxSpeed() / SPEED_CONV;
 
         priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
@@ -76,23 +80,18 @@ public final class CustomWeighting extends AbstractWeighting {
     }
 
     /**
-     * This method sets the vehicle of the specified request using the profile. It uses the profiles if customModel is null.
+     * This method sets the vehicle of the specified request using the profiles.
      */
-    public static CustomModel prepareRequest(GHRequest request, CustomModel requestCustomModel, Map<String, ProfileConfig> profiles) {
-        ProfileConfig profileConfig = profiles.get(request.getProfile());
-        // 1. use case custom "profile" specified
-        if (profileConfig != null && profileConfig.getCustomModel() != null) {
-            // if(requestCustomModel != null) requestCustomModel.merge(profileConfig.getCustomModel()); else ...
-            requestCustomModel = profileConfig.getCustomModel();
-        }
+    public static CustomModel prepareRequest(GHRequest request, CustomModel customModel, Map<String, CustomModel> models) {
+        if (customModel == null)
+            customModel = models.get(request.getProfile());
+        else
+            request.getHints().put("ch.disable", true);
 
-        // TODO NOW what is the difference of the use case "custom model with base=truck" versus "profile=truck plus a custom model in request"?
+        if (customModel != null)
+            request.setVehicle(customModel.getProfile());
 
-        // 2. use case base == vehicle
-        if (requestCustomModel != null)
-            // TODO NOW this wiring is ugly, see also ProfileConfig.setCustomModel
-            request.setVehicle(requestCustomModel.getBase());
-        return requestCustomModel;
+        return customModel;
     }
 
     @Override
@@ -118,7 +117,7 @@ public final class CustomWeighting extends AbstractWeighting {
             reverse = false;
 
         // TODO see #1835
-        if (reverse ? !edge.getReverse(baseVehicleProfileAccessEnc) : !edge.get(baseVehicleProfileAccessEnc))
+        if (reverse ? !edge.getReverse(baseVehicleAccessEnc) : !edge.get(baseVehicleAccessEnc))
             return Double.POSITIVE_INFINITY;
 
         double speed = speedConfig.calcSpeed(edge, reverse);
@@ -138,7 +137,7 @@ public final class CustomWeighting extends AbstractWeighting {
     @Override
     public boolean matches(HintsMap reqMap) {
         return (reqMap.getWeighting().isEmpty() || getName().equals(reqMap.getWeighting())) &&
-                (reqMap.getVehicle().isEmpty() || baseVehicleProfile.equals(reqMap.getVehicle()));
+                (reqMap.getVehicle().isEmpty() || baseVehicle.equals(reqMap.getVehicle()));
     }
 
     @Override

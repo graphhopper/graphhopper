@@ -17,16 +17,16 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.util.Helper;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class CustomModel {
 
-    // required! TODO NOW 'base' encoder or later it might be also profile?
-    private String base;
+    // required!
+    private String profile;
     // optional:
     private Double maxSpeedFallback, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
@@ -39,14 +39,16 @@ public class CustomModel {
     public CustomModel() {
     }
 
-    public void setBase(String base) {
-        this.base = base;
+    public CustomModel(String profile) {
+        setProfile(profile);
     }
 
-    public String getBase() {
-        if (Helper.isEmpty(base))
-            throw new IllegalArgumentException("No base specified");
-        return base;
+    public void setProfile(String profile) {
+        this.profile = profile;
+    }
+
+    public String getProfile() {
+        return profile;
     }
 
     public void setVehicleWeight(Double vehicleWeight) {
@@ -117,10 +119,14 @@ public class CustomModel {
         return areas;
     }
 
+    public ProfileConfig createProfileConfig(String name) {
+        return new ProfileConfig(name).setVehicle(getProfile()).setWeighting("custom");
+    }
+
     @Override
     public String toString() {
         return "CustomModel{" +
-                "base='" + base + '\'' +
+                "profile='" + profile + '\'' +
                 ", maxSpeedFallback=" + maxSpeedFallback +
                 ", vehicleWeight=" + vehicleWeight +
                 ", vehicleWidth=" + vehicleWidth +

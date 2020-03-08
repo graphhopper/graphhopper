@@ -100,9 +100,11 @@ public class GraphHopperManaged implements Managed {
             ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
             for (Map.Entry<String, File> entry : Helper.listFiles(new File(customModelLocation), Arrays.asList("yaml", "yml"))) {
                 try {
+                    CustomModel customModel = yamlOM.readValue(entry.getValue(), CustomModel.class);
                     List<ProfileConfig> list = new ArrayList<>(configuration.getProfiles());
-                    list.add(new ProfileConfig(entry.getKey()).setCustomModel(yamlOM.readValue(entry.getValue(), CustomModel.class)));
+                    list.add(customModel.createProfileConfig(entry.getKey()));
                     configuration.setProfiles(list);
+                    graphHopper.putCustomModel(entry.getKey(), customModel);
                 } catch (Exception ex) {
                     throw new RuntimeException("Cannot load custom_model from " + entry.getValue(), ex);
                 }

@@ -88,6 +88,7 @@ import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 public class GraphHopper implements GraphHopperAPI {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Map<String, ProfileConfig> profilesByName = new LinkedHashMap<>();
+    private final Map<String, CustomModel> customModels = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
@@ -333,13 +334,31 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public GraphHopper setProfiles(List<ProfileConfig> profiles) {
-        this.profilesByName.clear();
+        profilesByName.clear();
         for (ProfileConfig profile : profiles) {
-            ProfileConfig previous = this.profilesByName.put(profile.getName(), profile);
-            if (previous != null) {
-                throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
-            }
+            putProfile(profile);
         }
+        return this;
+    }
+
+    private void putProfile(ProfileConfig profile) {
+        ProfileConfig previous = this.profilesByName.put(profile.getName(), profile);
+        if (previous != null)
+            throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
+    }
+
+    /**
+     * This method adds the specified CustomModel to this GraphHopper instance. It requires to have set up the used
+     * profile.
+     */
+    public GraphHopper putCustomModel(String name, CustomModel customModel) {
+        if (name.equals(customModel.getProfile()))
+            throw new IllegalArgumentException("custom model name '" + name + "' cannot be the same like the profile");
+        if (customModels.containsKey(name))
+            throw new IllegalArgumentException("custom model '" + name + "' already exists");
+//        if (profilesByName.get(customModel.getProfile()) == null)
+//            throw new IllegalArgumentException("Add profile '" + customModel.getProfile() + "' before adding custom model depending on it");
+        customModels.put(name, customModel);
         return this;
     }
 
@@ -834,8 +853,7 @@ public class GraphHopper implements GraphHopperAPI {
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
             }
             try {
-                CustomModel customModel = profile.getCustomModel();
-                createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, customModel);
+                createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, customModels.get(profile.getName()));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with an unknown weighting '" + profile.getWeighting() + "', msg: " + e.getMessage());
             }
@@ -894,14 +912,15 @@ public class GraphHopper implements GraphHopperAPI {
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(chConfig.getProfile());
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            CustomModel customModel = profile.getCustomModel();
             if (profile.isTurnCosts()) {
                 assert encoder.supportsTurnCosts() : "encoder " + encoder + " should support turn costs";
                 int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
-                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(new HintsMap(profile.getWeighting()), encoder, turnCostProvider, customModel)));
+                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(),
+                        createWeighting(new HintsMap(profile.getWeighting()), encoder, turnCostProvider, customModels.get(profile.getName()))));
             } else {
-                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, customModel)));
+                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(),
+                        createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, customModels.get(profile.getName()))));
             }
         }
     }
@@ -918,8 +937,7 @@ public class GraphHopper implements GraphHopperAPI {
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             // note that we do not consider turn costs during LM preparation?
-            CustomModel customModel = profile.getCustomModel();
-            Weighting weighting = createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, customModel);
+            Weighting weighting = createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, customModels.get(profile.getName()));
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1032,7 +1050,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        customModel = CustomWeighting.prepareRequest(request, customModel, profilesByName);
+        customModel = CustomWeighting.prepareRequest(request, customModel, customModels);
 
         // default handling
         String vehicle = request.getVehicle();

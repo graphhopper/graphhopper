@@ -22,12 +22,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.MultiException;
-import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.CustomRequest;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.Constants;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.gpx.GpxFromInstructions;
@@ -82,13 +82,13 @@ public class CustomWeightingRouteResource {
         if (request.getHints().has(BLOCK_AREA))
             throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
 
-        // TODO NOW simply rename 'base' to 'profile'?
-        request.setProfile(model.getBase());
+        // TODO NOW we need the profile parameter in both models, we could get rid of it in CustomModel but this feels wrong
+        if (Helper.isEmpty(request.getProfile()))
+            throw new IllegalStateException("The 'profile' parameter for CustomRequest is required");
+        if (!Helper.isEmpty(model.getProfile()))
+            throw new IllegalStateException("The 'profile' parameter for CustomModel must be empty");
 
-        // if encoder does not exist we assume the base is a LM or CH profile:
-        if (graphHopper.getEncodingManager().hasEncoder(model.getBase()))
-            request.getHints().put("lm.disable", true).put("ch.disable", true);
-
+        model.setProfile(request.getProfile());
         graphHopper.calcPaths(request, ghResponse, model);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);

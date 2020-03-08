@@ -62,6 +62,7 @@ public class Measurement {
     private long seed;
     private int maxNode;
     private String weighting = "fastest";
+    private String customModelName = "truck";
 
     public static void main(String[] strs) throws IOException {
         PMap args = PMap.read(strs);
@@ -144,12 +145,13 @@ public class Measurement {
 
         // Currently we test speed of custom truck via: 1. raw dijkstra -> routing_custom, 2. modified car base LM-preparation -> routingLM_custom
         // TODO test also 3. truck LM-preparation, 4. truck CH-preparation
-        ProfileConfig customProfile = createCustomProfile("truck");
+        CustomModel customModel = createCustomModel();
         // add more encoded values for CustomModel
         if (!args.has("graph.encoded_values"))
             args.put("graph.encoded_values", "max_width,max_height,toll,hazmat");
+        hopper.putCustomModel(customModelName, customModel);
 
-        hopper.init(createConfigFromArgs(args, customProfile)).
+        hopper.init(createConfigFromArgs(args, customModel)).
                 // use server to allow path simplification
                         forServer();
         if (cleanGraph) {
@@ -185,8 +187,8 @@ public class Measurement {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", vehicleStr, count / 20, isCH, isLM).
                             withInstructions().edgeBased());
                 }
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", customProfile.getName(), count / 30, isCH, isLM).
-                        withInstructions().customModel(customProfile.getCustomModel()));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", customModelName, count / 30, isCH, isLM).
+                        withInstructions().customModel(customModel));
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", vehicleStr, count / 20, isCH, isLM).
                         withInstructions().blockArea(blockAreaStr));
             }
@@ -206,8 +208,9 @@ public class Measurement {
                 final int activeLMCount = 8;
                 printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", vehicleStr, count / 4, isCH, isLM).
                         withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
-                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_custom", customProfile.getName(), count / 5, isCH, isLM).
-                        withInstructions().activeLandmarks(activeLMCount).customModel(customProfile.getCustomModel()));
+
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_custom", customModelName, count / 5, isCH, isLM).
+                        withInstructions().activeLandmarks(activeLMCount).customModel(customModel));
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
 
@@ -266,7 +269,7 @@ public class Measurement {
         }
     }
 
-    private GraphHopperConfig createConfigFromArgs(PMap args, ProfileConfig customProfile) {
+    private GraphHopperConfig createConfigFromArgs(PMap args, CustomModel customModel) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         String encodingManagerString = args.get("graph.flag_encoders", "car");
         List<FlagEncoder> tmpEncoders = EncodingManager.create(encodingManagerString).fetchEdgeEncoders();
@@ -283,7 +286,7 @@ public class Measurement {
         profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
         if (turnCosts)
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
-        profiles.add(customProfile);
+        profiles.add(customModel.createProfileConfig(customModelName));
         ghConfig.setProfiles(profiles);
 
         List<CHProfileConfig> chProfiles = new ArrayList<>();
@@ -294,7 +297,7 @@ public class Measurement {
         ghConfig.setCHProfiles(chProfiles);
         if (useLM) {
             String lmProfile = turnCosts ? "profile_tc" : "profile_no_tc";
-            ghConfig.setLMProfiles(Collections.singletonList(new LMProfileConfig(lmProfile)));
+            ghConfig.setLMProfiles(Arrays.asList(new LMProfileConfig(lmProfile), new LMProfileConfig(customModelName)));
         }
         return ghConfig;
     }
@@ -359,10 +362,6 @@ public class Measurement {
         public QuerySettings customModel(CustomModel customModel) {
             this.customModel = customModel;
             return this;
-        }
-
-        public CustomModel customModel() {
-            return customModel;
         }
     }
 
@@ -644,7 +643,7 @@ public class Measurement {
 
                 GHResponse rsp = new GHResponse();
                 try {
-                    hopper.calcPaths(req, rsp, querySettings.customModel());
+                    hopper.calcPaths(req, rsp, querySettings.customModel);
                 } catch (Exception ex) {
                     // 'not found' can happen if import creates more than one subnetwork
                     throw new RuntimeException("Error while calculating route! "
@@ -757,13 +756,8 @@ public class Measurement {
         }
     }
 
-    private ProfileConfig createCustomProfile(String profileName) {
-        CustomModel customModel = new CustomModel();
-        customModel.setBase("car");
-        ProfileConfig profileConfig = new ProfileConfig(profileName).
-                setCustomModel(customModel).
-                setVehicle(customModel.getBase());
-
+    private CustomModel createCustomModel() {
+        CustomModel customModel = new CustomModel("car");
         customModel.setVehicleHeight(3.8);
         customModel.setVehicleWidth(2.5);
         // the default distance_factor for custom requests is currently 1 which makes it too different regarding speed
@@ -787,8 +781,7 @@ public class Measurement {
         customModel.getSpeedFactor().put("road_class", map);
 
         customModel.setMaxSpeedFallback(110.0);
-
-        return profileConfig;
+        return customModel;
     }
 
     private void storeProperties(String propLocation) {

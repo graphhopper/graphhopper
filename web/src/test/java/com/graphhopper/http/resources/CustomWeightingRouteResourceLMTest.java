@@ -54,7 +54,8 @@ public class CustomWeightingRouteResourceLMTest {
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.encoded_values", "surface").
                 put("graph.location", DIR)
-                .setProfiles(Arrays.asList(new ProfileConfig("car").setWeighting("fastest").setVehicle("car"),
+                .setProfiles(Arrays.asList(
+                        new ProfileConfig("car").setWeighting("fastest").setVehicle("car"),
                         new ProfileConfig("foot").setWeighting("fastest").setVehicle("foot"))).
                 setLMProfiles(Arrays.asList(new LMProfileConfig("car"), new LMProfileConfig("foot")));
     }
@@ -72,7 +73,7 @@ public class CustomWeightingRouteResourceLMTest {
     public void testCustomWeightingJson() {
         String jsonQuery = "{" +
                 " \"points\": [[1.518946,42.531453],[1.54006,42.511178]]," +
-                " \"base\": \"car\"" +
+                " \"profile\": \"car\"" +
                 "}";
         final Response response = app.client().target("http://localhost:8080/custom").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());
@@ -87,7 +88,7 @@ public class CustomWeightingRouteResourceLMTest {
     @Test
     public void testCustomWeightingYaml() {
         String yamlQuery = "points: [[1.518946,42.531453], [1.54006,42.511178]]\n" +
-                "base: car\n";
+                "profile: car\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode infoElement = yamlNode.get("info");
         assertFalse(infoElement.has("errors"));
@@ -98,7 +99,7 @@ public class CustomWeightingRouteResourceLMTest {
     @Test
     public void testCustomWeighting() {
         String yamlQuery = "points: [[1.529106,42.506567], [1.54006,42.511178]]\n" +
-                "base: car\n" +
+                "profile: car\n" +
                 "priority:\n" +
                 "  road_class:\n" +
                 "    secondary: 2\n";
@@ -108,7 +109,7 @@ public class CustomWeightingRouteResourceLMTest {
 
         // now prefer primary roads via special yaml-map notation
         yamlQuery = "points: [[1.5274,42.506211], [1.54006,42.511178]]\n" +
-                "base: car\n" +
+                "profile: car\n" +
                 "priority:\n" +
                 "  road_class: { residential: 1.2, primary: 1.5 }";
         yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
@@ -119,7 +120,7 @@ public class CustomWeightingRouteResourceLMTest {
     @Test
     public void testCustomWeightingAvoidTunnels() {
         String yamlQuery = "points: [[1.533365, 42.506211], [1.523924, 42.520605]]\n" +
-                "base: car\n" +
+                "profile: car\n" +
                 "priority:\n" +
                 "  road_environment:\n" +
                 "    tunnel: 0.1\n";
@@ -131,7 +132,7 @@ public class CustomWeightingRouteResourceLMTest {
     @Test
     public void testCustomWeightingSimplisticWheelchair() {
         String yamlQuery = "points: [[1.540875,42.510672], [1.54212,42.511131]]\n" +
-                "base: foot\n" +
+                "profile: foot\n" +
                 "priority:\n" +
                 "  road_class:\n" +
                 "    steps: 0\n";
