@@ -21,14 +21,12 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
-import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TDWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -65,7 +63,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
-    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, NodeAccess nodeAccess, EncodingManager lookup, final Weighting weighting) {
+    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, NodeAccess nodeAccess, EncodedValueLookup lookup, final Weighting weighting) {
         super(locationIndex, lookup, weighting);
         this.ghRequest = ghRequest;
         this.ghResponse = ghRsp;
@@ -180,7 +178,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                         .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
 
             } else if (algoOpts.getWeighting() instanceof TDWeighting) {
-                AlgorithmOptions pass1Options = AlgorithmOptions.start().weighting(new FastestWeighting(lookup.getEncoder(ghRequest.getVehicle()))).algorithm("astar").build();
+                AlgorithmOptions pass1Options = AlgorithmOptions.start().weighting(new FastestWeighting(((EncodingManager) lookup).getEncoder(ghRequest.getVehicle()))).algorithm("astar").build();
                 RoutingAlgorithm algo1 = algoFactory.createAlgo(queryGraph, pass1Options);
                 Path path = algo1.calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode());
                 if (path.isFound()) {

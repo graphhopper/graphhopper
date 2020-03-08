@@ -3,7 +3,6 @@ package com.graphhopper.routing.template;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -20,11 +19,11 @@ public abstract class AbstractRoutingTemplate {
     protected final EdgeFilter edgeFilter;
     protected final BooleanEncodedValue accessEnc;
     protected final LocationIndex locationIndex;
-    protected final EncodingManager lookup;
+    protected final EncodedValueLookup lookup;
     // result from lookup
     protected List<QueryResult> queryResults;
 
-    protected AbstractRoutingTemplate(LocationIndex locationIndex, EncodingManager lookup, final Weighting weighting) {
+    protected AbstractRoutingTemplate(LocationIndex locationIndex, EncodedValueLookup lookup, final Weighting weighting) {
         this.locationIndex = locationIndex;
         this.lookup = lookup;
         this.weighting = weighting;
