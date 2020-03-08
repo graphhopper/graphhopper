@@ -773,14 +773,13 @@ public class GraphHopper implements GraphHopperAPI {
         if (encodingManager == null)
             setEncodingManager(EncodingManager.create(encodedValueFactory, flagEncoderFactory, ghLocation));
 
-        checkProfilesConsistency();
-
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-
         ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+
+        checkProfilesConsistency();
 
         if (lmPreparationHandler.isEnabled())
             initLMPreparationHandler();
