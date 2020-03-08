@@ -25,9 +25,9 @@ import com.graphhopper.util.EdgeIterator;
  * A key/value store, where the unique keys are turn relations, and the values are IntRefs.
  * A turn relation is a triple (fromEdge, viaNode, toEdge),
  * and refers to one of the possible ways of crossing an intersection.
- *
+ * <p>
  * Like IntRefs on edges, this can in principle be used to store values of any kind.
- *
+ * <p>
  * In practice, the IntRefs are used to store generalized travel costs per turn relation per vehicle type.
  * In practice, we only store 0 or infinity. (Can turn, or cannot turn.)
  *
@@ -242,15 +242,20 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
 
     public interface TurnRelationIterator {
         int getFromEdge();
+
         int getViaNode();
+
         int getToEdge();
-        IntsRef getFlags();
+
+        double getCost(DecimalEncodedValue encodedValue);
+
         boolean next();
     }
 
     private class Itr implements TurnRelationIterator {
         private int viaNode = -1;
         private int turnCostIndex = -1;
+        private IntsRef intsRef = TurnCost.createFlags();
 
         private long turnCostPtr() {
             return (long) turnCostIndex * BYTES_PER_ENTRY;
@@ -272,8 +277,9 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         }
 
         @Override
-        public IntsRef getFlags() {
-            return new IntsRef(new int[]{turnCosts.getInt(turnCostPtr() + TC_FLAGS)}, 0, 1);
+        public double getCost(DecimalEncodedValue encodedValue) {
+            intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
+            return encodedValue.getDecimal(false, intsRef);
         }
 
         @Override
