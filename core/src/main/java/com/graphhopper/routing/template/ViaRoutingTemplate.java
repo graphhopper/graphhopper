@@ -21,7 +21,6 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
@@ -31,8 +30,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.TDWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -195,7 +194,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                     }
                     AlgorithmOptions pass2Options = AlgorithmOptions.start().weighting(algoOpts.getWeighting()).algorithm("astar").build();
                     RoutingAlgorithm algo2 = algoFactory.createAlgo(queryGraph, pass2Options);
-                    tmpPathList = ((AbstractRoutingAlgorithm) algo2).calcTDPaths(fromQResult.getClosestNode(), toQResult.getClosestNode(), departureTime.toEpochMilli());
+                    tmpPathList = Collections.singletonList(((AStar) algo2).calcTDPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), departureTime.toEpochMilli()));
                 } else {
                     tmpPathList = Collections.singletonList(path);
                 }

@@ -283,9 +283,4 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         return maxVisitedNodes < getVisitedNodes();
     }
 
-    @Override
-    public Path calcTDPath(int from, int to, long at) {
-        throw new RuntimeException("Unsupported. (Add algorithm=dijkstra to request?)");
-    }
-
 }
