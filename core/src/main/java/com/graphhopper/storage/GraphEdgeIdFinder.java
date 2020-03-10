@@ -19,11 +19,11 @@ package com.graphhopper.storage;
 
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.Polygon;
@@ -165,13 +165,10 @@ public class GraphEdgeIdFinder {
     public static class BlockArea {
         private final List<GHIntHashSet> edgesList = new ArrayList<>();
         private final List<Shape> blockedShapes = new ArrayList<>();
-        private NodeAccess na;
         private final int baseEdgeCount;
-        private boolean prepared;
 
         public BlockArea(Graph g) {
             baseEdgeCount = g.getAllEdges().length();
-            na = g.getNodeAccess();
         }
 
         public boolean hasCachedEdgeIds(int shapeIndex) {
@@ -207,6 +204,7 @@ public class GraphEdgeIdFinder {
          */
         public final boolean intersects(EdgeIteratorState edgeState) {
             PointList pointList = null;
+            BBox bbox = null;
             for (int shapeIdx = 0; shapeIdx < blockedShapes.size(); shapeIdx++) {
                 GHIntHashSet blockedEdges = edgesList.get(shapeIdx);
                 // blockedEdges acts as cache that is only useful when filled and for non-virtual edges
@@ -216,8 +214,10 @@ public class GraphEdgeIdFinder {
                     continue;
                 }
 
-                // compromise: mostly avoid expensive fetchWayGeometry which isn't yet fast for being used in Weighting.calc
-                BBox bbox = createBBox(na, edgeState);
+                // compromise: avoid expensive fetch of pillar nodes, which isn't yet fast for being used in Weighting.calc
+                if (bbox == null)
+                    bbox = GHUtility.createBBox(edgeState);
+
                 Shape shape = blockedShapes.get(shapeIdx);
                 if (shape.getBounds().intersects(bbox)) {
                     if (pointList == null)
@@ -228,19 +228,5 @@ public class GraphEdgeIdFinder {
             }
             return false;
         }
-
-        public BlockArea setQueryGraph(QueryGraph queryGraph) {
-            if (prepared)
-                throw new IllegalStateException("setGraph cannot be called multiple times");
-
-            prepared = true;
-            na = queryGraph.getNodeAccess();
-            return this;
-        }
-    }
-
-    private static BBox createBBox(NodeAccess na, EdgeIteratorState edgeState) {
-        return BBox.fromPoints(na.getLatitude(edgeState.getBaseNode()), na.getLongitude(edgeState.getBaseNode()),
-                na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()));
     }
 }

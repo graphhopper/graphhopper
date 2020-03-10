@@ -22,6 +22,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
@@ -102,13 +103,12 @@ public class NameSimilarityEdgeFilterTest {
         na.setNode(nodeID200, point200mAway.lat, point200mAway.lon);
 
         // Check that it matches a street 50m away
-        assertTrue(createNameSimilarityEdgeFilter(na, "Wentworth Street").
-                accept(createTestEdgeIterator("Wentworth Street", nodeId50, farAwayId)));
+        EdgeIteratorState edge1 = g.edge(nodeId50, farAwayId).setName("Wentworth Street");
+        assertTrue(createNameSimilarityEdgeFilter("Wentworth Street").accept(edge1));
 
         // Check that it doesn't match streets 200m away
-        assertFalse(createNameSimilarityEdgeFilter(na, "Wentworth Street").
-                accept(createTestEdgeIterator("Wentworth Street", nodeID200, farAwayId)));
-
+        EdgeIteratorState edge2 = g.edge(nodeID200, farAwayId).setName("Wentworth Street");
+        assertFalse(createNameSimilarityEdgeFilter("Wentworth Street").accept(edge2));
     }
 
     /**
@@ -231,26 +231,12 @@ public class NameSimilarityEdgeFilterTest {
      * so distance is not used when matching
      */
     private NameSimilarityEdgeFilter createNameSimilarityEdgeFilter(String pointHint) {
-        return createNameSimilarityEdgeFilter(new GHUtility.DisabledNodeAccess() {
-            @Override
-            public double getLatitude(int nodeId) {
-                return basePoint.lat;
-            }
-
-            @Override
-            public double getLongitude(int nodeId) {
-                return basePoint.lon;
-            }
-        }, pointHint);
-    }
-
-    private NameSimilarityEdgeFilter createNameSimilarityEdgeFilter(NodeAccess nodeAccess, String pointHint) {
         return new NameSimilarityEdgeFilter(new EdgeFilter() {
             @Override
             public boolean accept(EdgeIteratorState edgeState) {
                 return true;
             }
-        }, nodeAccess, pointHint, basePoint, 100);
+        }, pointHint, basePoint, 100);
     }
 
     private EdgeIteratorState createTestEdgeIterator(final String name, final int baseNodeId, final int adjNodeId) {
@@ -268,6 +254,13 @@ public class NameSimilarityEdgeFilterTest {
             @Override
             public int getAdjNode() {
                 return adjNodeId;
+            }
+
+            @Override
+            public PointList fetchWayGeometry(int type) {
+                PointList list = new PointList();
+                list.add(basePoint);
+                return list;
             }
         };
     }
