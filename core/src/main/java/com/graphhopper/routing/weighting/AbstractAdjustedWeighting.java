@@ -68,11 +68,6 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     }
 
     @Override
-    public TurnCostProvider getTurnCostProvider() {
-        return superWeighting.getTurnCostProvider();
-    }
-
-    @Override
     public String toString() {
         return getName() + "|" + superWeighting.toString();
     }

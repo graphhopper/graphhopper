@@ -857,11 +857,6 @@ public class RoutingAlgorithmTest {
             }
 
             @Override
-            public TurnCostProvider getTurnCostProvider() {
-                return tmpW.getTurnCostProvider();
-            }
-
-            @Override
             public String getName() {
                 return "custom";
             }

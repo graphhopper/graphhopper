@@ -100,11 +100,6 @@ public class QueryGraphWeighting implements Weighting {
     }
 
     @Override
-    public TurnCostProvider getTurnCostProvider() {
-        return weighting.getTurnCostProvider();
-    }
-
-    @Override
     public String getName() {
         return weighting.getName();
     }

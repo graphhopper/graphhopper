@@ -84,11 +84,15 @@ public class ProfileResolver {
      * @throws IllegalArgumentException if no CH profile could be selected for the given parameters
      */
     public CHProfile selectCHProfile(List<CHProfile> chProfiles, HintsMap hintsMap) {
+        int numMatchingEdgeBased = 0;
         List<CHProfile> matchingProfiles = new ArrayList<>();
         for (CHProfile p : chProfiles) {
             if (!chProfileMatchesHints(p, hintsMap))
                 continue;
             matchingProfiles.add(p);
+            if (p.isEdgeBased()) {
+                numMatchingEdgeBased++;
+            }
         }
 
         Boolean edgeBased = getEdgeBased(hintsMap);
@@ -109,9 +113,17 @@ public class ProfileResolver {
                     match1.isEdgeBased() != match2.isEdgeBased()) {
                 return match1.isEdgeBased() ? match1 : match2;
             }
-            throw new IllegalArgumentException("There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`edge_based` and/or `u_turn_costs` parameters to be more specific." +
-                    "\nYou can also try disabling CH altogether using " + Parameters.CH.DISABLE + "=true" +
-                    "\nrequested:  " + getCHRequestAsString(hintsMap, edgeBased, uTurnCosts) + "\nmatched:   " + matchingProfiles + "\navailable: " + chProfiles);
+            // special case: error if multiple edge-based matches. to differentiate between these it will be required
+            // to explicitly set the profile parameter.
+            if (numMatchingEdgeBased > 1 && numMatchingEdgeBased == matchingProfiles.size()) {
+                throw new IllegalArgumentException("There are multiple edge-based CH profiles matching your request. You need to" +
+                        " specify the profile you want to use explicitly, see here: https://github.com/graphhopper/graphhopper/pull/1934.");
+            } else {
+                throw new IllegalArgumentException("There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`edge_based` and/or `u_turn_costs` parameters to be more specific." +
+                        "\nYou can also try disabling CH altogether using " + Parameters.CH.DISABLE + "=true" +
+                        "\nrequested:  " + getCHRequestAsString(hintsMap, edgeBased, uTurnCosts) + "\nmatched:   " + matchingProfiles + "\navailable: " + chProfiles);
+
+            }
         }
     }
 
@@ -144,7 +156,9 @@ public class ProfileResolver {
         Boolean edgeBased = getEdgeBased(hintsMap);
         Integer uTurnCosts = getUTurnCosts(hintsMap);
         return (edgeBased == null || p.isEdgeBased() == edgeBased) &&
-                (uTurnCosts == null || p.getWeighting().getTurnCostProvider().getName().equals(uTurnCosts.toString())) &&
+                // u-turn costs cannot be used to select one of multiple edge-based CH profiles,
+                // but when they are set only edge-based profiles can match
+                (uTurnCosts == null || p.isEdgeBased()) &&
                 (hintsMap.getWeighting().isEmpty() || p.getWeighting().getName().equals(hintsMap.getWeighting())) &&
                 (hintsMap.getVehicle().isEmpty() || p.getWeighting().getFlagEncoder().toString().equals(hintsMap.getVehicle()));
     }

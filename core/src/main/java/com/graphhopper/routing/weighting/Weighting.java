@@ -62,9 +62,6 @@ public interface Weighting {
 
     FlagEncoder getFlagEncoder();
 
-    // todonow: it would be nice to get rid of this
-    TurnCostProvider getTurnCostProvider();
-
     String getName();
 
 }

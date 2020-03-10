@@ -96,11 +96,6 @@ public abstract class AbstractWeighting implements Weighting {
     }
 
     @Override
-    public TurnCostProvider getTurnCostProvider() {
-        return turnCostProvider;
-    }
-
-    @Override
     public int hashCode() {
         int hash = 7;
         hash = 71 * hash + toString().hashCode();
