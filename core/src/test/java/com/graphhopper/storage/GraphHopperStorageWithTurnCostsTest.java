@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -149,10 +151,10 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     }
 
     private double getTurnCost(EdgeIteratorState fromEdge, int viaNode, EdgeIteratorState toEdge) {
-        return graph.getTurnCostStorage().getExpensive("car", encodingManager, toEdge.getEdge(), viaNode, fromEdge.getEdge());
+        return graph.getTurnCostStorage().get(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), toEdge.getEdge(), viaNode, fromEdge.getEdge());
     }
 
     private void setTurnCost(int fromEdge, int viaNode, int toEdge, int cost) {
-        graph.getTurnCostStorage().setExpensive("car", encodingManager, fromEdge, viaNode, toEdge, cost);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), fromEdge, viaNode, toEdge, cost);
     }
 }
