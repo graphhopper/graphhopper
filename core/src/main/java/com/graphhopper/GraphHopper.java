@@ -121,7 +121,6 @@ public class GraphHopper implements GraphHopperAPI {
     // for data reader
     private String dataReaderFile;
     private double dataReaderWayPointMaxDistance = 1;
-    private double dataReaderElevationMaxDistance = 0;
     private int dataReaderWorkerThreads = 2;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
