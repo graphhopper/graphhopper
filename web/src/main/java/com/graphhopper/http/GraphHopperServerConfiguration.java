@@ -15,7 +15,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,8 +24,6 @@ import com.graphhopper.gtfs.dropwizard.RealtimeConfiguration;
 import io.dropwizard.Configuration;
 import io.dropwizard.bundles.assets.AssetsBundleConfiguration;
 import io.dropwizard.bundles.assets.AssetsConfiguration;
-import io.dropwizard.jetty.HttpConnectorFactory;
-import io.dropwizard.server.DefaultServerFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -45,15 +42,6 @@ public class GraphHopperServerConfiguration extends Configuration implements Gra
     private final RealtimeConfiguration gtfsRealtime = new RealtimeConfiguration();
 
     public GraphHopperServerConfiguration() {
-        init();
-    }
-    
-     private void init() {
-        //see: https://stackoverflow.com/questions/20028451/change-dropwizard-default-ports
-        // The following is to make sure it runs with a random port. parallel tests clash otherwise
-        ((HttpConnectorFactory) ((DefaultServerFactory) getServerFactory()).getApplicationConnectors().get(0)).setPort(0);
-        // this is for admin port
-        ((HttpConnectorFactory) ((DefaultServerFactory) getServerFactory()).getAdminConnectors().get(0)).setPort(0);
     }
 
     @Override

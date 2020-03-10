@@ -19,7 +19,7 @@
 package com.graphhopper.http.resources;
 
 import com.graphhopper.http.GraphHopperApplication;
-import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -28,18 +28,19 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
-import static java.lang.String.format;
 import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
+
 
 public class SPTResourceTest {
     private static final String DIR = "./target/spt-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -50,7 +51,7 @@ public class SPTResourceTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -60,7 +61,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPT() {
-        Response rsp = app.client().target(format("http://localhost:%s/spt?point=42.531073,1.573792&time_limit=300", app.getLocalPort())).request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -72,7 +73,7 @@ public class SPTResourceTest {
         assertEquals(118, Integer.parseInt(row[2]) / 1000, 1);
         assertEquals(2263, Integer.parseInt(row[3]), 1);
 
-        rsp = app.client().target(format("http://localhost:%s/spt?point=42.531073,1.573792&columns=prev_time", app.getLocalPort())).request().buildGet().invoke();
+        rsp = clientTarget(app, "/spt?point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
         rspCsvString = rsp.readEntity(String.class);
         lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -86,7 +87,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestDetails() {
-        Response rsp = app.client().target(format("http://localhost:%s/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed", app.getLocalPort())).request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);

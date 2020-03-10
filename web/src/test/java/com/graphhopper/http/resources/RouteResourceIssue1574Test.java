@@ -19,7 +19,7 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.http.GraphHopperApplication;
-import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -29,7 +29,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
-import static java.lang.String.format;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,7 +40,7 @@ import static org.junit.Assert.assertFalse;
 public class RouteResourceIssue1574Test {
     private static final String DIR = "./target/andorra-1574-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         // this is the reason we put this test into an extra file: we can only reproduce the bug of issue 1574 by increasing the one-way-network size
@@ -54,7 +54,7 @@ public class RouteResourceIssue1574Test {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(GraphHopperApplication.class, config);
 
     @BeforeClass
     @AfterClass
@@ -64,7 +64,7 @@ public class RouteResourceIssue1574Test {
 
     @Test
     public void testStallOnDemandBug_issue1574() {
-        final Response response = app.client().target(format("http://localhost:%s/route?point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&&vehicle=car&weighting=fastest&stall_on_demand=true", app.getLocalPort())).request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&&vehicle=car&weighting=fastest&stall_on_demand=true").request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse("there should be no error, but: " + json.get("message"), json.has("message"));
         System.out.println(json);

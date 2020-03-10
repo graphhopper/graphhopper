@@ -19,20 +19,18 @@ package com.graphhopper.http.resources;
 
 import com.graphhopper.GHResponse;
 import com.graphhopper.http.GraphHopperApplication;
-import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.resources.InfoResource;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import java.io.File;
+import javax.ws.rs.core.Response;
 import org.junit.AfterClass;
+import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import javax.ws.rs.core.Response;
-import java.io.File;
-import static java.lang.String.format;
-
-import static org.junit.Assert.*;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 /**
  * Similar to PtRouteResourceTest, but tests the entire app, not the resource, so that the plugging-together
@@ -41,7 +39,7 @@ import static org.junit.Assert.*;
 public class GtfsTest {
     private static final String DIR = "./target/gtfs-app-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -52,7 +50,7 @@ public class GtfsTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(GraphHopperApplication.class, config);
 
     @BeforeClass
     @AfterClass
@@ -62,7 +60,7 @@ public class GtfsTest {
 
     @Test
     public void testStationStationQuery() {
-        final Response response = app.client().target(format("http://localhost:%s/route", app.getLocalPort()))
+        final Response response = clientTarget(app, "/route")
                 .queryParam("point", "Stop(NADAV)")
                 .queryParam("point", "Stop(NANAA)")
                 .queryParam("vehicle", "pt")
@@ -75,9 +73,9 @@ public class GtfsTest {
 
     @Test
     public void testPointPointQuery() {
-        final Response response = app.client().target(format("http://localhost:%s/route", app.getLocalPort()))
-                .queryParam("point","36.914893,-116.76821") // NADAV stop
-                .queryParam("point","36.914944,-116.761472") //NANAA stop
+        final Response response = clientTarget(app, "/route")
+                .queryParam("point", "36.914893,-116.76821") // NADAV stop
+                .queryParam("point", "36.914944,-116.761472") //NANAA stop
                 .queryParam("vehicle", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
                 .request().buildGet().invoke();
@@ -88,7 +86,7 @@ public class GtfsTest {
 
     @Test
     public void testWalkQuery() {
-        final Response response = app.client().target(format("http://localhost:%s/route", app.getLocalPort()))
+        final Response response = clientTarget(app, "/route")
                 .queryParam("point", "36.914893,-116.76821")
                 .queryParam("point", "36.914944,-116.761472")
                 .queryParam("vehicle", "foot")
@@ -100,7 +98,7 @@ public class GtfsTest {
 
     @Test
     public void testInfo() {
-        final Response response = app.client().target(format("http://localhost:%s/info", app.getLocalPort()))
+        final Response response = clientTarget(app, "/info")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InfoResource.Info info = response.readEntity(InfoResource.Info.class);
