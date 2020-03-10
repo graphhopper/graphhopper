@@ -951,6 +951,13 @@ class BaseGraph implements Graph {
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, int mode, int baseNode, int adjNode) {
+        if (mode == 4) {
+            // no reverse handling required as adjNode and baseNode is already properly switched
+            PointList pillarNodes = new PointList(2, nodeAccess.is3D());
+            pillarNodes.add(nodeAccess, baseNode);
+            pillarNodes.add(nodeAccess, adjNode);
+            return pillarNodes;
+        }
         long geoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
         int count = 0;
         byte[] bytes = null;
