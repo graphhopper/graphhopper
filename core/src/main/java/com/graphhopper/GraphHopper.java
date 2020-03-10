@@ -290,15 +290,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Not yet stable enough to offer it for everyone
-     */
-    private GraphHopper setUnsafeMemory() {
-        ensureNotLoaded();
-        dataAccessType = DAType.UNSAFE_STORE;
-        return this;
-    }
-
-    /**
      * Sets the routing profiles that can be used for CH/LM preparation. So far adding these profiles is only required
      * so we can refer to them when configuring the CH/LM preparations, later it will be required to specify all
      * routing profiles that shall be supported by this GraphHopper instance here.
