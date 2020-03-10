@@ -16,11 +16,6 @@ public class BlockAreaWeighting extends AbstractAdjustedWeighting {
         this.blockArea = blockArea;
     }
 
-    public BlockAreaWeighting setQueryGraph(QueryGraph queryGraph) {
-        blockArea.setQueryGraph(queryGraph);
-        return this;
-    }
-
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         if (blockArea.intersects(edgeState))
