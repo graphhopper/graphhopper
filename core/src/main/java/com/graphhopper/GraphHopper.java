@@ -922,11 +922,11 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
-            // note that we do not consider turn costs during LM preparation. this is important if we want
-            // to allow e.g. changing the u_turn_costs per request (we have to use the minimum weight settings (
-            // = no turn costs) for the preparation)
-            // todonow: is it too ugly this way?
-            Weighting weighting = createWeighting(profile, new PMap().put("__disable_turn_costs", true));
+            // Note that turn costs will be ignored during LM preparation even when the created weighting includes
+            // turn costs, because the preparation is running node-based. This is important if we want to allow e.g.
+            // changing the u_turn_costs per request (we have to use the minimum weight settings (= no turn costs) for
+            // the preparation)
+            Weighting weighting = createWeighting(profile, new PMap());
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1358,7 +1358,7 @@ public class GraphHopper implements GraphHopperAPI {
         public Weighting createWeighting(ProfileConfig profile, PMap hints) {
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
-            if (profile.isTurnCosts() && !hints.getBool("__disable_turn_costs", false)) {
+            if (profile.isTurnCosts()) {
                 if (!encoder.supportsTurnCosts())
                     throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
                 int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
