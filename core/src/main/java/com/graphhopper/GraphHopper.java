@@ -1166,9 +1166,9 @@ public class GraphHopper implements GraphHopperAPI {
         if (ROUND_TRIP.equalsIgnoreCase(algoStr))
             routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, routingConfig.getMaxRoundTripRetries());
         else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, ghStorage.getNodeAccess(), encodingManager, weighting);
+            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
         else
-            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, ghStorage.getNodeAccess(), encodingManager, weighting);
+            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
         return routingTemplate;
     }
 
