@@ -99,7 +99,7 @@ public class GHDirectory implements Directory {
         } else if (type.isMMap()) {
             da = new MMapDataAccess(name, location, byteOrder, type.isAllowWrites());
         } else {
-            da = new UnsafeDataAccess(name, location, byteOrder);
+            throw new IllegalArgumentException("DAType not supported " + type);
         }
 
         map.put(name, da);

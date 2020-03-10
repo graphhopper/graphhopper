@@ -58,15 +58,14 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     // result from route
     protected List<Path> pathList;
     protected final PathWrapper altResponse = new PathWrapper();
-    private final NodeAccess nodeAccess;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
-    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, NodeAccess nodeAccess, EncodedValueLookup lookup, final Weighting weighting) {
+    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex,
+                              EncodedValueLookup lookup, final Weighting weighting) {
         super(locationIndex, lookup, weighting);
         this.ghRequest = ghRequest;
         this.ghResponse = ghRsp;
-        this.nodeAccess = nodeAccess;
         this.roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.roadEnvEnc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
     }
@@ -85,7 +84,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             QueryResult qr = null;
             if (ghRequest.hasPointHints())
                 qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
-                        nodeAccess, ghRequest.getPointHints().get(placeIndex), point, 100));
+                        ghRequest.getPointHints().get(placeIndex), point, 100));
             else if (ghRequest.hasSnapPreventions())
                 qr = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
             if (qr == null || !qr.isValid())

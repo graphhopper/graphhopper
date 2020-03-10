@@ -47,8 +47,8 @@ import static com.graphhopper.util.Parameters.Routing.PASS_THROUGH;
  */
 final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
     public AlternativeRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex,
-                                      NodeAccess nodeAccess, EncodedValueLookup lookup, Weighting weighting) {
-        super(ghRequest, ghRsp, locationIndex, nodeAccess, lookup, weighting);
+                                      EncodedValueLookup lookup, Weighting weighting) {
+        super(ghRequest, ghRsp, locationIndex, lookup, weighting);
     }
 
     @Override

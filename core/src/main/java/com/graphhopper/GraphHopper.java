@@ -285,15 +285,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Not yet stable enough to offer it for everyone
-     */
-    private GraphHopper setUnsafeMemory() {
-        ensureNotLoaded();
-        dataAccessType = DAType.UNSAFE_STORE;
-        return this;
-    }
-
-    /**
      * Sets the routing profiles that can be used for CH/LM preparation. So far adding these profiles is only required
      * so we can refer to them when configuring the CH/LM preparations, later it will be required to specify all
      * routing profiles that shall be supported by this GraphHopper instance here.
@@ -1133,8 +1124,6 @@ public class GraphHopper implements GraphHopperAPI {
                 return Collections.emptyList();
 
             QueryGraph queryGraph = QueryGraph.lookup(graph, qResults);
-            if (weighting instanceof BlockAreaWeighting)
-                ((BlockAreaWeighting) weighting).setQueryGraph(queryGraph);
 
             int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
             if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
@@ -1181,9 +1170,9 @@ public class GraphHopper implements GraphHopperAPI {
         if (ROUND_TRIP.equalsIgnoreCase(algoStr))
             routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, routingConfig.getMaxRoundTripRetries());
         else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, ghStorage.getNodeAccess(), encodingManager, weighting);
+            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
         else
-            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, ghStorage.getNodeAccess(), encodingManager, weighting);
+            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
         return routingTemplate;
     }
 
