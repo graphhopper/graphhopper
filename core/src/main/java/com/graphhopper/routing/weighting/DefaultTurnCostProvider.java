@@ -21,7 +21,6 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 
@@ -32,7 +31,6 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
     private final double uTurnCosts;
-    private final IntsRef tcFlags = TurnCost.createFlags();
 
     public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage) {
         this(encoder, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
@@ -63,12 +61,12 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             return 0;
         }
         double tCost = 0;
-        if (turnCostStorage.isUTurn(edgeFrom, edgeTo)) {
+        if (edgeFrom == edgeTo) {
             // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
-            tCost = turnCostStorage.isUTurnAllowed(nodeVia) ? uTurnCosts : Double.POSITIVE_INFINITY;
+            tCost = uTurnCosts;
         } else {
             if (turnCostEnc != null)
-                tCost = turnCostStorage.get(turnCostEnc, tcFlags, edgeFrom, nodeVia, edgeTo);
+                tCost = turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
         }
         return tCost;
     }

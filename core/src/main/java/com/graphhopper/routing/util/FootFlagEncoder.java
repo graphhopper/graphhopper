@@ -62,25 +62,28 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         this(4, 1);
     }
 
-    public FootFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 4),
-                properties.getDouble("speed_factor", 1));
-        this.setBlockFords(properties.getBool("block_fords", false));
-        this.speedTwoDirections = properties.getBool("speed_two_directions", false);
-    }
-
     public FootFlagEncoder(String propertiesStr) {
         this(new PMap(propertiesStr));
     }
 
-    public FootFlagEncoder(int speedBits, double speedFactor) {
+    public FootFlagEncoder(PMap properties) {
+        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1));
+
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
+        blockBarriersByDefault(properties.getBool("block_barriers", false));
+        speedTwoDirections = properties.getBool("speed_two_directions", false);
+    }
+
+    protected FootFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor, 0);
         restrictions.addAll(Arrays.asList("foot", "access"));
-        restrictedValues.add("private");
+
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+        restrictedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -97,7 +100,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         sidewalkValues.add("left");
         sidewalkValues.add("right");
 
-        setBlockByDefault(false);
+        blockBarriersByDefault(false);
         absoluteBarriers.add("fence");
         potentialBarriers.add("gate");
         potentialBarriers.add("cattle_grid");

@@ -84,7 +84,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             GHPoint point = points.get(placeIndex);
             QueryResult qr = null;
             if (ghRequest.hasPointHints())
-                qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter, nodeAccess, point, 100, ghRequest.getPointHints().get(placeIndex)));
+                qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
+                        nodeAccess, ghRequest.getPointHints().get(placeIndex), point, 100));
             else if (ghRequest.hasSnapPreventions())
                 qr = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
             if (qr == null || !qr.isValid())

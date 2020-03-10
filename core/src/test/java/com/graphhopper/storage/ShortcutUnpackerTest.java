@@ -4,6 +4,8 @@ import com.carrotsearch.hppc.DoubleArrayList;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
@@ -298,7 +300,7 @@ public class ShortcutUnpackerTest {
     }
 
     private void setTurnCost(int fromEdge, int viaNode, int toEdge, double cost) {
-        graph.getTurnCostStorage().setExpensive(encoder.toString(), encodingManager, fromEdge, viaNode, toEdge, cost);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), fromEdge, viaNode, toEdge, cost);
     }
 
     private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast) {

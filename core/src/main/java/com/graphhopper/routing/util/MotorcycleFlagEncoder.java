@@ -53,11 +53,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         this(properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.setBlockFords(properties.getBool("block_fords", false));
-    }
 
-    public MotorcycleFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
+        blockBarriersByDefault(properties.getBool("block_barriers", true));
     }
 
     public MotorcycleFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
