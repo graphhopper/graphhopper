@@ -166,12 +166,12 @@ public class CHPreparationHandler {
      * profile name
      */
     public RoutingAlgorithmFactory getAlgorithmFactory(String profile) {
-        if (preparations.isEmpty())
-            throw new IllegalStateException("No CH preparations added yet");
         return getPreparation(profile).getRoutingAlgorithmFactory();
     }
 
     public PrepareContractionHierarchies getPreparation(String profile) {
+        if (preparations.isEmpty())
+            throw new IllegalStateException("No CH preparations added yet");
         List<String> profileNames = new ArrayList<>(preparations.size());
         for (PrepareContractionHierarchies preparation : preparations) {
             profileNames.add(preparation.getCHProfile().getName());

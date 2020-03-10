@@ -22,6 +22,9 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
@@ -49,6 +52,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -93,14 +97,16 @@ public class MiniGraphUI {
         encoder = hopper.getEncodingManager().getEncoder("car");
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
-
+        ProfileConfig profile = hopper.getProfiles().iterator().next();
         boolean ch = true;
         if (ch) {
             CHProfile chProfile = hopper.getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
             weighting = chProfile.getWeighting();
             routingGraph = hopper.getGraphHopperStorage().getCHGraph(chProfile);
 
-            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory("no_profile_yet", false, true);
+            boolean disableCH = false;
+            boolean disableLM = true;
+            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
             algoFactory = new RoutingAlgorithmFactory() {
 
                 class TmpAlgo extends DijkstraBidirectionCH implements DebugAlgo {
@@ -137,10 +143,10 @@ public class MiniGraphUI {
 
         } else {
             routingGraph = graph;
-            // todonow
-            weighting = null;
-//            weighting = hopper.createWeighting(map, encoder, NO_TURN_COST_PROVIDER);
-            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory("no_profile_yet", true, false);
+            weighting = hopper.createWeighting(profile, new PMap());
+            boolean disableCH = true;
+            boolean disableLM = false;
+            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
             algoFactory = new RoutingAlgorithmFactory() {
 
                 @Override
@@ -378,11 +384,21 @@ public class MiniGraphUI {
         }
     }
 
-    public static void main(String[] strs) throws Exception {
+    public static void main(String[] strs) {
         PMap args = PMap.read(strs);
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
+        ghConfig.setProfiles(Arrays.asList(
+                new ProfileConfig("profile")
+                        .setVehicle("car")
+                        .setWeighting("fastest")
+        ));
+        ghConfig.setCHProfiles(Arrays.asList(
+                new CHProfileConfig("profile")
+        ));
+        ghConfig.setLMProfiles(Arrays.asList(
+                new LMProfileConfig("profile")
+        ));
         GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
-        // todonow: profile configurations
         boolean debug = args.getBool("minigraphui.debug", false);
         new MiniGraphUI(hopper, debug).visualize();
     }

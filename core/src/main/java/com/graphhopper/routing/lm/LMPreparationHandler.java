@@ -180,7 +180,7 @@ public class LMPreparationHandler {
 
     /**
      * @return a {@link RoutingAlgorithmFactory} for LM or throw an error if no preparation is available for the given
-     * profile
+     * profile name
      */
     public RoutingAlgorithmFactory getAlgorithmFactory(String profile) {
         PrepareLandmarks preparation = getPreparation(profile);
@@ -191,27 +191,16 @@ public class LMPreparationHandler {
         if (preparations.isEmpty())
             throw new IllegalStateException("No LM preparations added yet");
 
-        // todonow: this 'rule' needs to be removed or kept elsewhere
-        // if no weighting or vehicle is specified for this request and there is only one preparation, use it
-//        if ((map.getWeighting().isEmpty() || map.getVehicle().isEmpty()) && preparations.size() == 1) {
-//            return preparations.get(0);
-//        }
-
-        List<String> lmProfiles = new ArrayList<>(preparations.size());
-        for (final PrepareLandmarks p : preparations) {
-            lmProfiles.add(p.getLMProfile().getName());
-            if (p.getLMProfile().getName().equals(profile))
-                return p;
+        List<String> profileNames = new ArrayList<>(preparations.size());
+        for (PrepareLandmarks preparation : preparations) {
+            profileNames.add(preparation.getLMProfile().getName());
+            if (preparation.getLMProfile().getName().equals(profile)) {
+                return preparation;
+            }
         }
-
-        // todonow: update this comment, how is this going to fit into the profile model?
-        // There are situations where we can use the requested encoder/weighting with an existing LM preparation, even
-        // though the preparation was done with a different weighting. For example this works when the new weighting
-        // only yields higher (but never lower) weights than the one that was used for the preparation. However, its not
-        // trivial to check whether or not this is the case so we do not allow this for now.
         throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'" +
-                "\nYou can try disabling LM using " + Parameters.CH.DISABLE + "=true" +
-                "\navailable LM profiles: " + lmProfiles);
+                "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
+                "\navailable LM profiles: " + profileNames);
     }
 
     /**
