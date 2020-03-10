@@ -669,34 +669,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         if (this.smoothElevation)
             pointList = GraphElevationSmoothing.smoothElevation(pointList);
 
-        double towerNodeDistance = 0;
-        double prevLat = pointList.getLatitude(0);
-        double prevLon = pointList.getLongitude(0);
-        double prevEle = pointList.is3D() ? pointList.getElevation(0) : Double.NaN;
-        double lat, lon, ele = Double.NaN;
-        PointList pillarNodes = new PointList(pointList.getSize() - 2, nodeAccess.is3D());
-        int nodes = pointList.getSize();
-        for (int i = 1; i < nodes; i++) {
-            // we could save some lines if we would use pointList.calcDistance(distCalc);
-            lat = pointList.getLatitude(i);
-            lon = pointList.getLongitude(i);
-            if (pointList.is3D()) {
-                ele = pointList.getElevation(i);
-                if (!distCalc.isCrossBoundary(lon, prevLon))
-                    towerNodeDistance += distCalc.calcDist3D(prevLat, prevLon, prevEle, lat, lon, ele);
-                prevEle = ele;
-            } else if (!distCalc.isCrossBoundary(lon, prevLon))
-                towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
+        double towerNodeDistance = pointList.calcDistance(distCalc);
 
-            prevLat = lat;
-            prevLon = lon;
-            if (nodes > 2 && i < nodes - 1) {
-                if (pillarNodes.is3D())
-                    pillarNodes.add(lat, lon, ele);
-                else
-                    pillarNodes.add(lat, lon);
-            }
-        }
         if (towerNodeDistance < 0.001) {
             // As investigation shows often two paths should have crossed via one identical point 
             // but end up in two very close points.
@@ -719,12 +693,13 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
 
         EdgeIteratorState iter = graph.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
 
-        if (nodes > 2) {
-            if (doSimplify)
-                simplifyAlgo.simplify(pillarNodes);
+        if (doSimplify && pointList.size() > 2)
+            simplifyAlgo.simplify(pointList);
 
-            iter.setWayGeometry(pillarNodes);
-        }
+        // If the entire way is just the first and last point, do not waste space storing an empty way geometry
+        if (pointList.size() > 2)
+            iter.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
+
         storeOsmWayID(iter.getEdge(), wayOsmId);
         return iter;
     }

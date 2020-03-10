@@ -90,7 +90,14 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         if (pointList.getSize() == 0)
             return PointList.EMPTY;
         // due to API we need to create a new instance per call!
-        if (mode == 3)
+        if (mode == 4) {
+            if (pointList.getSize() < 3)
+                return pointList.clone(false);
+            PointList towerNodes = new PointList(2, pointList.is3D());
+            towerNodes.add(pointList, 0);
+            towerNodes.add(pointList, pointList.getSize() - 1);
+            return towerNodes;
+        } else if (mode == 3)
             return pointList.clone(false);
         else if (mode == 1)
             return pointList.copy(0, pointList.getSize() - 1);
