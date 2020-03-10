@@ -21,14 +21,11 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.QueryGraphRequired;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Map;
@@ -47,7 +44,7 @@ import java.util.Map;
  * to avoid problems with the landmark algorithm, i.e. the edge weight is always increased so that the heuristic always
  * underestimates the weight.
  */
-public final class CustomWeighting extends AbstractWeighting implements QueryGraphRequired {
+public final class CustomWeighting extends AbstractWeighting {
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
      * costs or traffic light costs etc)
@@ -60,8 +57,8 @@ public final class CustomWeighting extends AbstractWeighting implements QueryGra
     private final SpeedCustomConfig speedConfig;
     private final PriorityCustomConfig priorityConfig;
 
-    public CustomWeighting(FlagEncoder baseFlagEncoder, Graph storage, EncodedValueLookup lookup,
-                           EncodedValueFactory factory, TurnCostProvider turnCostProvider, CustomModel customModel) {
+    public CustomWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, EncodedValueFactory factory,
+                           TurnCostProvider turnCostProvider, CustomModel customModel) {
         super(baseFlagEncoder, turnCostProvider);
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
@@ -71,22 +68,15 @@ public final class CustomWeighting extends AbstractWeighting implements QueryGra
         if (!baseVehicle.equals(baseFlagEncoder.toString()))
             throw new IllegalStateException("profile '" + baseVehicle + "' must be identical to encoder " + baseFlagEncoder.toString());
 
-        speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), storage, lookup, factory);
+        speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), lookup, factory);
         maxSpeed = speedConfig.getMaxSpeed() / SPEED_CONV;
 
-        priorityConfig = new PriorityCustomConfig(customModel, storage, lookup, factory);
+        priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
 
         // unit is "seconds per 1km"
         distanceInfluence = customModel.getDistanceInfluence() / 1000;
         if (distanceInfluence < 0)
             throw new IllegalArgumentException("maximum distance_influence cannot be negative " + distanceInfluence);
-    }
-
-    @Override
-    public CustomWeighting setQueryGraph(QueryGraph queryGraph) {
-        speedConfig.setQueryGraph(queryGraph);
-        priorityConfig.setQueryGraph(queryGraph);
-        return this;
     }
 
     /**

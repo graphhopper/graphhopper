@@ -33,7 +33,7 @@ import java.util.Map;
 final class PriorityCustomConfig {
     private List<ConfigMapEntry> priorityList = new ArrayList<>();
 
-    public PriorityCustomConfig(CustomModel customModel, Graph graph, EncodedValueLookup lookup, EncodedValueFactory factory) {
+    public PriorityCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
         add(lookup, customModel.getVehicleWeight(), "vehicle_weight", MaxWeight.KEY);
         add(lookup, customModel.getVehicleWidth(), "vehicle_width", MaxWidth.KEY);
         add(lookup, customModel.getVehicleHeight(), "vehicle_height", MaxHeight.KEY);
@@ -46,7 +46,7 @@ final class PriorityCustomConfig {
             if (value instanceof Number) {
                 if (key.startsWith(GeoToValue.key(""))) {
                     Geometry geometry = GeoToValue.pickGeometry(customModel, key);
-                    priorityList.add(new GeoToValue(graph, new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
+                    priorityList.add(new GeoToValue(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
                 } else {
                     BooleanEncodedValue encodedValue = getEV(lookup, "priority", key, BooleanEncodedValue.class);
                     priorityList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), 1));
@@ -108,14 +108,6 @@ final class PriorityCustomConfig {
                 return priority;
         }
         return priority;
-    }
-
-    public void setQueryGraph(QueryGraph queryGraph) {
-        for (ConfigMapEntry configMapEntry : priorityList) {
-            if (configMapEntry instanceof GeoToValue) {
-                ((GeoToValue) configMapEntry).setQueryGraph(queryGraph);
-            }
-        }
     }
 
     private static class MaxValueConfigMapEntry implements ConfigMapEntry {

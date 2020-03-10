@@ -21,6 +21,7 @@ import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.GHPoint;
@@ -89,20 +90,18 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     private final String pointHint;
     private final Map<String, String> rewriteMap;
     private final Circle pointCircle;
-    private final NodeAccess nodeAccess;
 
-    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, NodeAccess nodeAccess, String pointHint, GHPoint point, double radius) {
-        this(edgeFilter, nodeAccess, pointHint, point, radius, DEFAULT_REWRITE_MAP);
+    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint, GHPoint point, double radius) {
+        this(edgeFilter, pointHint, point, radius, DEFAULT_REWRITE_MAP);
     }
 
     /**
      * @param radius     the searchable region about the point in meters
      * @param rewriteMap maps abbreviations to its longer form
      */
-    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, NodeAccess nodeAccess, String pointHint, GHPoint point, double radius, Map<String, String> rewriteMap) {
+    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint, GHPoint point, double radius, Map<String, String> rewriteMap) {
         this.edgeFilter = edgeFilter;
         this.rewriteMap = rewriteMap;
-        this.nodeAccess = nodeAccess;
         this.pointHint = prepareName(removeRelation(pointHint == null ? "" : pointHint));
         this.pointCircle = new Circle(point.lat, point.lon, radius);
     }
@@ -157,7 +156,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
             return false;
         }
 
-        BBox bbox = createBBox(nodeAccess, iter);
+        BBox bbox = GHUtility.createBBox(iter);
         if (!pointCircle.intersects(bbox)) {
             return false;
         }

@@ -86,17 +86,6 @@ public class CustomWeightingRouteResourceLMTest {
     }
 
     @Test
-    public void testCustomWeightingYaml() {
-        String yamlQuery = "points: [[1.518946,42.531453], [1.54006,42.511178]]\n" +
-                "profile: car\n";
-        JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
-        JsonNode infoElement = yamlNode.get("info");
-        assertFalse(infoElement.has("errors"));
-        JsonNode path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 3100, 3300);
-    }
-
-    @Test
     public void testCustomWeighting() {
         String yamlQuery = "points: [[1.529106,42.506567], [1.54006,42.511178]]\n" +
                 "profile: car\n" +

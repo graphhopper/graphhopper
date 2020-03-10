@@ -96,7 +96,7 @@ public class MvtResourceTest {
         JtsLayer layer = layerValues.values().iterator().next();
         List layerGeoList = (List) layer.getGeometries();
         Geometry geometry = (Geometry) layerGeoList.get(0);
-        assertEquals(19, geometry.getCoordinates().length);
+        assertEquals(18, geometry.getCoordinates().length);
         assertEquals(21, layerGeoList.size());
 
         Map map = (Map) ((Geometry) layerGeoList.get(0)).getUserData();

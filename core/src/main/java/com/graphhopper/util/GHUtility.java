@@ -968,8 +968,10 @@ public class GHUtility {
         }
     }
 
-    public static BBox createBBox(NodeAccess na, EdgeIteratorState edgeState) {
-        return BBox.fromPoints(na.getLatitude(edgeState.getBaseNode()), na.getLongitude(edgeState.getBaseNode()),
-                na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()));
+    public static BBox createBBox(EdgeIteratorState edgeState) {
+        PointList towerNodes = edgeState.fetchWayGeometry(4);
+        int secondIndex = towerNodes.getSize() == 1 ? 0 : 1;
+        return BBox.fromPoints(towerNodes.getLatitude(0), towerNodes.getLongitude(0),
+                towerNodes.getLatitude(secondIndex), towerNodes.getLongitude(secondIndex));
     }
 }

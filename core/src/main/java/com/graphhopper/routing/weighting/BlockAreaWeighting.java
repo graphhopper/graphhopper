@@ -7,19 +7,13 @@ import com.graphhopper.util.EdgeIteratorState;
 /**
  * This weighting is a wrapper for every weighting to support block_area
  */
-public class BlockAreaWeighting extends AbstractAdjustedWeighting implements QueryGraphRequired {
+public class BlockAreaWeighting extends AbstractAdjustedWeighting {
 
     private GraphEdgeIdFinder.BlockArea blockArea;
 
     public BlockAreaWeighting(Weighting superWeighting, GraphEdgeIdFinder.BlockArea blockArea) {
         super(superWeighting);
         this.blockArea = blockArea;
-    }
-
-    @Override
-    public BlockAreaWeighting setQueryGraph(QueryGraph queryGraph) {
-        blockArea.setQueryGraph(queryGraph);
-        return this;
     }
 
     @Override

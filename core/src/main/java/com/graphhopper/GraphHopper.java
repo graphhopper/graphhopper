@@ -289,15 +289,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Not yet stable enough to offer it for everyone
-     */
-    private GraphHopper setUnsafeMemory() {
-        ensureNotLoaded();
-        dataAccessType = DAType.UNSAFE_STORE;
-        return this;
-    }
-
-    /**
      * Sets the routing profiles that can be used for CH/LM preparation. So far adding these profiles is only required
      * so we can refer to them when configuring the CH/LM preparations, later it will be required to specify all
      * routing profiles that shall be supported by this GraphHopper instance here.
@@ -787,14 +778,13 @@ public class GraphHopper implements GraphHopperAPI {
         if (encodingManager == null)
             setEncodingManager(EncodingManager.create(encodedValueFactory, flagEncoderFactory, ghLocation));
 
-        checkProfilesConsistency();
-
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-
         ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+
+        checkProfilesConsistency();
 
         if (lmPreparationHandler.isEnabled())
             initLMPreparationHandler();
@@ -1017,7 +1007,7 @@ public class GraphHopper implements GraphHopperAPI {
      * @see HintsMap
      */
     public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider, CustomModel customModel) {
-        return new DefaultWeightingFactory(encodingManager, encodedValueFactory, ghStorage).createWeighting(hintsMap, encoder, turnCostProvider, customModel);
+        return new DefaultWeightingFactory(encodingManager, encodedValueFactory).createWeighting(hintsMap, encoder, turnCostProvider, customModel);
     }
 
     @Override
@@ -1101,14 +1091,6 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-            if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
-                throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
-            }
-            TurnCostProvider turnCostProvider = (encoder.supportsTurnCosts() && tMode.isEdgeBased())
-                    ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
-                    : NO_TURN_COST_PROVIDER;
-
             RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(hints);
             Weighting weighting;
             Graph graph = ghStorage;
@@ -1125,6 +1107,13 @@ public class GraphHopper implements GraphHopperAPI {
 
             } else {
                 checkNonChMaxWaypointDistance(points);
+                final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
+                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
+                }
+                TurnCostProvider turnCostProvider = (encoder.supportsTurnCosts() && tMode.isEdgeBased())
+                        ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
+                        : NO_TURN_COST_PROVIDER;
                 weighting = createWeighting(hints, encoder, turnCostProvider, customModel);
                 if (hints.has(Routing.BLOCK_AREA))
                     weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
@@ -1141,9 +1130,6 @@ public class GraphHopper implements GraphHopperAPI {
                 return Collections.emptyList();
 
             QueryGraph queryGraph = QueryGraph.lookup(graph, qResults);
-            if (weighting instanceof QueryGraphRequired)
-                ((QueryGraphRequired) weighting).setQueryGraph(queryGraph);
-
             int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
             if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
@@ -1187,9 +1173,9 @@ public class GraphHopper implements GraphHopperAPI {
         if (ROUND_TRIP.equalsIgnoreCase(algoStr))
             routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, routingConfig.getMaxRoundTripRetries());
         else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, ghStorage.getNodeAccess(), encodingManager, weighting);
+            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
         else
-            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, ghStorage.getNodeAccess(), encodingManager, weighting);
+            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
         return routingTemplate;
     }
 
@@ -1386,20 +1372,17 @@ public class GraphHopper implements GraphHopperAPI {
     private static class DefaultWeightingFactory {
         private final EncodedValueLookup encodedValueLookup;
         private final EncodedValueFactory encodedValueFactory;
-        private final Graph graph;
 
-        public DefaultWeightingFactory(EncodedValueLookup encodedValueLookup, EncodedValueFactory encodedValueFactory,
-                                       Graph graph) {
+        public DefaultWeightingFactory(EncodedValueLookup encodedValueLookup, EncodedValueFactory encodedValueFactory) {
             this.encodedValueLookup = encodedValueLookup;
             this.encodedValueFactory = encodedValueFactory;
-            this.graph = graph;
         }
 
         public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider, CustomModel customModel) {
             String weightingStr = toLowerCase(hintsMap.getWeighting());
 
             if (customModel != null) {
-                return new CustomWeighting(encoder, graph, encodedValueLookup, encodedValueFactory, turnCostProvider, customModel);
+                return new CustomWeighting(encoder, encodedValueLookup, encodedValueFactory, turnCostProvider, customModel);
             } else if ("shortest".equals(weightingStr)) {
                 return new ShortestWeighting(encoder, turnCostProvider);
             } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {

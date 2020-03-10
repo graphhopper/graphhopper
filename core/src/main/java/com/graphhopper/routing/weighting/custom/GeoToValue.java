@@ -18,13 +18,9 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 import org.locationtech.jts.geom.Geometry;
@@ -37,20 +33,11 @@ final class GeoToValue implements ConfigMapEntry {
 
     private final Polygon ghPolygon;
     private final double value, elseValue;
-    private NodeAccess nodeAccess;
 
-    public GeoToValue(Graph graph, PreparedGeometry geometry, double value, double elseValue) {
-        // this could cause later NPE but required for GraphHopper.checkProfilesConsistency
-        if (graph != null)
-            this.nodeAccess = graph.getNodeAccess();
+    public GeoToValue(PreparedGeometry geometry, double value, double elseValue) {
         this.ghPolygon = new Polygon(geometry);
         this.value = value;
         this.elseValue = elseValue;
-    }
-
-    public void setQueryGraph(QueryGraph queryGraph) {
-        // the initial nodeAccess is from baseGraph sufficient for LocationIndex; for routing we need QueryGraph:
-        this.nodeAccess = queryGraph.getNodeAccess();
     }
 
     static Geometry pickGeometry(CustomModel customModel, String key) {
@@ -63,10 +50,9 @@ final class GeoToValue implements ConfigMapEntry {
 
     @Override
     public double getValue(EdgeIteratorState edgeState, boolean reverse) {
-        BBox bbox = GHUtility.createBBox(nodeAccess, edgeState);
+        BBox bbox = GHUtility.createBBox(edgeState);
         if (ghPolygon.getBounds().intersects(bbox)) {
-            PointList pointList = edgeState.fetchWayGeometry(3).makeImmutable();
-            if (ghPolygon.intersects(pointList))
+            if (ghPolygon.intersects(edgeState.fetchWayGeometry(3).makeImmutable()))
                 return value;
         }
         return elseValue;

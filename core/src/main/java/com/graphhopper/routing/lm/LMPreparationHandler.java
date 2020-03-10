@@ -192,11 +192,6 @@ public class LMPreparationHandler {
         if (preparations.isEmpty())
             throw new IllegalStateException("No LM preparations added yet");
 
-        // if no weighting or vehicle is specified for this request and there is only one preparation, use it
-        if ((map.getWeighting().isEmpty() || map.getVehicle().isEmpty()) && preparations.size() == 1) {
-            return preparations.get(0);
-        }
-
         List<String> lmProfiles = new ArrayList<>(preparations.size());
         for (final PrepareLandmarks p : preparations) {
             lmProfiles.add(p.getLMProfile().getName());
