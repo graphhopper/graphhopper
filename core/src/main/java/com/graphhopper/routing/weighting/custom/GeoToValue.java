@@ -40,9 +40,9 @@ final class GeoToValue implements ConfigMapEntry {
     private NodeAccess nodeAccess;
 
     public GeoToValue(Graph graph, PreparedGeometry geometry, double value, double elseValue) {
-        if (graph == null)
-            throw new IllegalArgumentException("graph cannot be null. Required for GeoToValue");
-        this.nodeAccess = graph.getNodeAccess();
+        // this could cause later NPE but required for GraphHopper.checkProfilesConsistency
+        if (graph != null)
+            this.nodeAccess = graph.getNodeAccess();
         this.ghPolygon = new Polygon(geometry);
         this.value = value;
         this.elseValue = elseValue;
