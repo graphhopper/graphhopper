@@ -48,7 +48,7 @@ public interface ElevationProvider {
         }
 
         @Override
-        public void setInterpolate(ElevationInterpolation interpolate) {
+        public void setInterpolate(boolean interpolate) {
         }
     };
 
@@ -69,11 +69,11 @@ public interface ElevationProvider {
     ElevationProvider setDAType(DAType daType);
 
     /**
-     * Configuration option to use an interpolation strategy to find the elevation at a point from the
+     * Configuration option to use bilinear interpolation to find the elevation at a point from the
      * surrounding elevation points. Has only an effect if called before the first getEle call.
-     * Turned to NONE by default.
+     * Turned off by default.
      */
-    void setInterpolate(ElevationInterpolation interpolate);
+    void setInterpolate(boolean interpolate);
 
     /**
      * Release resources.

@@ -591,12 +591,9 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalArgumentException("graph.elevation.calcmean is deprecated, use graph.elevation.interpolate");
         }
 
-        ElevationInterpolation fallbackInterpolation = ghConfig.getBool("graph.elevation.calc_mean", false)
-                ? ElevationInterpolation.BILINEAR : ElevationInterpolation.NONE;
-
-        ElevationInterpolation interpolate = ElevationInterpolation.find(
-                ghConfig.get("graph.elevation.interpolate", fallbackInterpolation.name())
-        );
+        boolean interpolate = ghConfig.has("graph.elevation.interpolate")
+                ? ghConfig.getBool("graph.elevation.interpolate", false)
+                : ghConfig.getBool("graph.elevation.calc_mean", false);
 
         String cacheDirStr = ghConfig.get("graph.elevation.cache_dir", "");
         if (cacheDirStr.isEmpty())

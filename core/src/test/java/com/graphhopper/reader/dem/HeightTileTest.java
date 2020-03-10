@@ -97,8 +97,7 @@ public class HeightTileTest {
 
     @Test
     public void testInterpolate() {
-        HeightTile instance = new HeightTile(0, 0, 2, 2, 1e-6, 10, 10)
-                .setInterpolate(ElevationInterpolation.BILINEAR);
+        HeightTile instance = new HeightTile(0, 0, 2, 2, 1e-6, 10, 10).setInterpolate(true);
         DataAccess heights = new RAMDirectory().find("tmp");
         heights.create(2 * 2 * 2);
         instance.setHeights(heights);
