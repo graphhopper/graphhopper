@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.Polygon;
@@ -217,7 +218,7 @@ public class GraphEdgeIdFinder {
                 }
 
                 // compromise: mostly avoid expensive fetchWayGeometry which isn't yet fast for being used in Weighting.calc
-                BBox bbox = createBBox(na, edgeState);
+                BBox bbox = GHUtility.createBBox(na, edgeState);
                 Shape shape = blockedShapes.get(shapeIdx);
                 if (shape.getBounds().intersects(bbox)) {
                     if (pointList == null)
@@ -237,10 +238,5 @@ public class GraphEdgeIdFinder {
             na = queryGraph.getNodeAccess();
             return this;
         }
-    }
-
-    private static BBox createBBox(NodeAccess na, EdgeIteratorState edgeState) {
-        return BBox.fromPoints(na.getLatitude(edgeState.getBaseNode()), na.getLongitude(edgeState.getBaseNode()),
-                na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()));
     }
 }

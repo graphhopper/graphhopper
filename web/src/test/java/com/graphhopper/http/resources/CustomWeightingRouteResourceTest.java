@@ -38,9 +38,9 @@ public class CustomWeightingRouteResourceTest {
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 put("graph.location", DIR).
                 // for the custom_profiles more than the default encoded values are necessary
-                put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
+                        put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 // profiles are automatically created using the yaml files in this directory
-                put("custom_profiles.directory", "./src/test/resources/com/graphhopper/http/resources/").
+                        put("custom_profiles.directory", "./src/test/resources/com/graphhopper/http/resources/").
                 setProfiles(Arrays.asList(
                         new ProfileConfig("bike").setVehicle("bike").setWeighting("fastest"),
                         new ProfileConfig("car").setVehicle("car").setWeighting("fastest"))).
@@ -73,6 +73,28 @@ public class CustomWeightingRouteResourceTest {
     }
 
     @Test
+    public void testAvoidArea() throws IOException {
+        String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
+                "profile: car\n";
+
+        JsonNode yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
+                new MediaType("application", "yaml"))).readEntity(JsonNode.class);
+        JsonNode path = yamlNode.get("paths").get(0);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 500, 900);
+
+        yamlQuery += "priority:\n" +
+                "  area_custom1: 0.5\n" +
+                "areas:\n" +
+                "  custom1:\n" +
+                "    type: \"Feature\"\n" +
+                "    geometry: { type: \"Polygon\", coordinates: [[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }";
+        yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
+                new MediaType("application", "yaml"))).readEntity(JsonNode.class);
+        path = yamlNode.get("paths").get(0);
+        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1400, 1600);
+    }
+
+    @Test
     public void testCargoBike() throws IOException {
         String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: bike\n";
@@ -81,10 +103,8 @@ public class CustomWeightingRouteResourceTest {
         JsonNode path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 600, 700);
 
-        // since CustomModel is in the root level of the request we can directly use the yml file:
         String queryYamlFromFile = Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml"));
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
-                "profile: bike\n" +
                 queryYamlFromFile;
         yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);

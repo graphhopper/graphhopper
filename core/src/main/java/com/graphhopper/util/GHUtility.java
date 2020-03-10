@@ -967,4 +967,9 @@ public class GHUtility {
             throw new UnsupportedOperationException("Not supported.");
         }
     }
+
+    public static BBox createBBox(NodeAccess na, EdgeIteratorState edgeState) {
+        return BBox.fromPoints(na.getLatitude(edgeState.getBaseNode()), na.getLongitude(edgeState.getBaseNode()),
+                na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()));
+    }
 }

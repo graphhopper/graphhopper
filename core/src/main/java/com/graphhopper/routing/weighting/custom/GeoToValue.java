@@ -18,8 +18,15 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.Polygon;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 
@@ -28,16 +35,25 @@ final class GeoToValue implements ConfigMapEntry {
         return "area_" + postfix;
     }
 
-    private final PreparedGeometry geometry;
+    private final Polygon ghPolygon;
     private final double value, elseValue;
+    private NodeAccess nodeAccess;
 
-    public GeoToValue(PreparedGeometry geometry, double value, double elseValue) {
-        this.geometry = geometry;
+    public GeoToValue(Graph graph, PreparedGeometry geometry, double value, double elseValue) {
+        if (graph == null)
+            throw new IllegalArgumentException("graph cannot be null. Required for GeoToValue");
+        this.nodeAccess = graph.getNodeAccess();
+        this.ghPolygon = new Polygon(geometry);
         this.value = value;
         this.elseValue = elseValue;
     }
 
-    public static Geometry _pickGeo(CustomModel customModel, String key) {
+    public void setQueryGraph(QueryGraph queryGraph) {
+        // the initial nodeAccess is from baseGraph sufficient for LocationIndex; for routing we need QueryGraph:
+        this.nodeAccess = queryGraph.getNodeAccess();
+    }
+
+    static Geometry pickGeometry(CustomModel customModel, String key) {
         String id = key.substring(GeoToValue.key("").length());
         JsonFeature feature = customModel.getAreas().get(id);
         if (feature == null)
@@ -46,13 +62,18 @@ final class GeoToValue implements ConfigMapEntry {
     }
 
     @Override
-    public double getValue(EdgeIteratorState iter, boolean reverse) {
-        // TODO NOW PERFORMANCE: Do it like in BlockArea but here we have no NodeAccess!?
-        return geometry.intersects(iter.fetchWayGeometry(3).toLineString(false)) ? value : elseValue;
+    public double getValue(EdgeIteratorState edgeState, boolean reverse) {
+        BBox bbox = GHUtility.createBBox(nodeAccess, edgeState);
+        if (ghPolygon.getBounds().intersects(bbox)) {
+            PointList pointList = edgeState.fetchWayGeometry(3).makeImmutable();
+            if (ghPolygon.intersects(pointList))
+                return value;
+        }
+        return elseValue;
     }
 
     @Override
     public String toString() {
-        return geometry.toString() + ": " + value + ", " + elseValue;
+        return ghPolygon.toString() + ": " + value + ", " + elseValue;
     }
 }

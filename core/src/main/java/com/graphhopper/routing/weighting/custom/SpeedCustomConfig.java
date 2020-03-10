@@ -18,8 +18,9 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.locationtech.jts.geom.Geometry;
@@ -38,7 +39,8 @@ final class SpeedCustomConfig {
     private final double maxSpeed;
     private final double maxSpeedFallback;
 
-    public SpeedCustomConfig(final double maxSpeed, CustomModel customModel, DecimalEncodedValue avgSpeedEnc, EncodedValueLookup lookup, EncodedValueFactory factory) {
+    public SpeedCustomConfig(final double maxSpeed, CustomModel customModel, DecimalEncodedValue avgSpeedEnc, Graph graph,
+                             EncodedValueLookup lookup, EncodedValueFactory factory) {
         this.maxSpeed = maxSpeed;
         this.maxSpeedFallback = customModel.getMaxSpeedFallback() == null ? maxSpeed : customModel.getMaxSpeedFallback();
         this.avgSpeedEnc = avgSpeedEnc;
@@ -52,8 +54,8 @@ final class SpeedCustomConfig {
 
             if (value instanceof Number) {
                 if (key.startsWith(GeoToValue.key(""))) {
-                    Geometry geometry = GeoToValue._pickGeo(customModel, key);
-                    maxSpeedList.add(new GeoToValue(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), maxSpeed));
+                    Geometry geometry = GeoToValue.pickGeometry(customModel, key);
+                    maxSpeedList.add(new GeoToValue(graph, new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), maxSpeed));
                 } else {
                     BooleanEncodedValue encodedValue = getEV(lookup, "max_speed", key, BooleanEncodedValue.class);
                     maxSpeedList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), maxSpeed));
@@ -69,15 +71,15 @@ final class SpeedCustomConfig {
             }
         }
 
-        // use speed_factor to reduce (or increase?) the estimated speed value under the specified conditions
+        // use speed_factor to reduce the estimated speed value under the specified conditions
         for (Map.Entry<String, Object> entry : customModel.getSpeedFactor().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
 
             if (value instanceof Number) {
                 if (key.startsWith(GeoToValue.key(""))) {
-                    Geometry geometry = GeoToValue._pickGeo(customModel, key);
-                    speedFactorList.add(new GeoToValue(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
+                    Geometry geometry = GeoToValue.pickGeometry(customModel, key);
+                    speedFactorList.add(new GeoToValue(graph, new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
                 } else {
                     BooleanEncodedValue encodedValue = getEV(lookup, "speed_factor", key, BooleanEncodedValue.class);
                     speedFactorList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), 1));
@@ -91,6 +93,17 @@ final class SpeedCustomConfig {
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'speed_factor'");
             }
+        }
+    }
+
+    void setQueryGraph(QueryGraph queryGraph) {
+        for (ConfigMapEntry configEntry : speedFactorList) {
+            if (configEntry instanceof GeoToValue)
+                ((GeoToValue) configEntry).setQueryGraph(queryGraph);
+        }
+        for (ConfigMapEntry configEntry : maxSpeedList) {
+            if (configEntry instanceof GeoToValue)
+                ((GeoToValue) configEntry).setQueryGraph(queryGraph);
         }
     }
 
