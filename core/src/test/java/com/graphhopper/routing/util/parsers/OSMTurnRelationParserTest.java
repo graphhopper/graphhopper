@@ -3,12 +3,10 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostStorage;
 import org.junit.Test;
 
@@ -52,19 +50,18 @@ public class OSMTurnRelationParserTest {
 
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
-        IntsRef tcFlags = TurnCost.createFlags();
-        parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
+        parser.addRelationToTCStorage(instance, map, ghStorage);
 
         TurnCostStorage tcs = ghStorage.getTurnCostStorage();
         DecimalEncodedValue tce = parser.getTurnCostEnc();
-        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 6)));
-        assertEquals(0, tcs.get(tce, tcFlags, 4, 3, 3), .1);
-        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 2)));
+        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 6)));
+        assertEquals(0, tcs.get(tce, 4, 3, 3), .1);
+        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 2)));
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
-        parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
-        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 3)));
+        parser.addRelationToTCStorage(instance, map, ghStorage);
+        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 3)));
     }
 
     @Test
@@ -72,6 +69,6 @@ public class OSMTurnRelationParserTest {
         OSMTurnRelationParser parser = new OSMTurnRelationParser("fatcarsomething", 1);
         OSMTurnRelation turnRelation = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
         turnRelation.setVehicleTypeRestricted("space");
-        parser.handleTurnRelationTags(TurnCost.createFlags(), turnRelation, null, null);
+        parser.handleTurnRelationTags(turnRelation, null, null);
     }
 }

@@ -124,7 +124,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * Should potential barriers block when no access limits are given?
      */
-    void blockBarriersByDefault(boolean blockByDefault) {
+    protected void blockBarriersByDefault(boolean blockByDefault) {
         this.blockByDefault = blockByDefault;
     }
 
@@ -132,11 +132,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return blockFords;
     }
 
-    void blockFords(boolean blockFords) {
+    protected void blockFords(boolean blockFords) {
         this.blockFords = blockFords;
     }
 
-    void blockPrivate(boolean blockPrivate) {
+    protected void blockPrivate(boolean blockPrivate) {
         if (!blockPrivate) {
             if (!restrictedValues.remove("private"))
                 throw new IllegalStateException("no 'private' found in restrictedValues");
