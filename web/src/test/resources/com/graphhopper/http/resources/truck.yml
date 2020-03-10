@@ -31,7 +31,9 @@ max_speed:
 max_speed_fallback: 100
 
 # This term changes the influence of the distance. I.e. longer roads get a higher cost.
-# The distance_influence is independent of the edge properties and does not influence the ETA. The default is 70.
+# The distance_influence is independent of the edge properties and does not influence the ETA. The default is 70 (seconds/1km).
+# Let's assume a route that takes 1000sec and is 10km long, then a value of 30 means that I would like to drive maximum 11km
+# to reduce the travel time to 970sec or 12km to reduce it to 940sec.
 distance_influence: 90
 
 # Now we want to set a preference without changing the taken time. The default priority is 1 and does not change something.

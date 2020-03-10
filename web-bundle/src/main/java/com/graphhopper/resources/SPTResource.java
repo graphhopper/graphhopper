@@ -78,8 +78,7 @@ public class SPTResource {
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
 
-        // todo: /spt with turn costs ?
-        // TODO NOW: /spt with CustomModel
+        // todo: /spt with turn costs and CustomModel
         Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, NO_TURN_COST_PROVIDER, null);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,

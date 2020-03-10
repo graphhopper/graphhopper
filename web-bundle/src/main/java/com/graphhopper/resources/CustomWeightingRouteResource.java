@@ -82,11 +82,11 @@ public class CustomWeightingRouteResource {
         if (request.getHints().has(BLOCK_AREA))
             throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
 
-        // TODO NOW we need the profile parameter in both models, we could get rid of it in CustomModel but this feels wrong
+        // The CustomModel without 'profile' works, but makes things complicated in CustomWeighting, so fill it from GHRequest
         if (Helper.isEmpty(request.getProfile()))
             throw new IllegalStateException("The 'profile' parameter for CustomRequest is required");
         if (!Helper.isEmpty(model.getProfile()))
-            throw new IllegalStateException("The 'profile' parameter for CustomModel must be empty");
+            throw new IllegalStateException("The 'profile' parameter for CustomModel must be empty but was " + model.getProfile());
 
         model.setProfile(request.getProfile());
         graphHopper.calcPaths(request, ghResponse, model);
