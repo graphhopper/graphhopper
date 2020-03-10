@@ -1029,6 +1029,10 @@ public class GraphHopper implements GraphHopperAPI {
         Lock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
+            if (!request.getVehicle().isEmpty())
+                throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1859");
+            if (!request.getWeighting().isEmpty())
+                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1859");
             HintsMap hints = request.getHints();
             boolean disableCH = hints.getBool(CH.DISABLE, false);
             if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
@@ -1055,7 +1059,10 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            ProfileConfig profile = resolveProfile(hints);
+            ProfileConfig profile = profilesByName.get(request.getProfile());
+            if (profile == null) {
+                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
+            }
             if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
 

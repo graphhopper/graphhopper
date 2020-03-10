@@ -34,6 +34,9 @@ import java.util.Locale;
  */
 public class GHRequest {
     private List<GHPoint> points;
+    // todonow: keep this here or put it into hints, and even more important: can we remove vehicle+weighting from
+    // hints?
+    private String profile = "";
     private final HintsMap hints = new HintsMap();
     // List of favored start (1st element) and arrival heading (all other).
     // Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
@@ -221,6 +224,15 @@ public class GHRequest {
 
     public GHRequest setLocale(String localeStr) {
         return setLocale(Helper.getLocale(localeStr));
+    }
+
+    public String getProfile() {
+        return profile;
+    }
+
+    public GHRequest setProfile(String profile) {
+        this.profile = profile;
+        return this;
     }
 
     public String getWeighting() {
