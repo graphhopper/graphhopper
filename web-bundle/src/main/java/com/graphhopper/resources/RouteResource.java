@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
@@ -59,11 +60,13 @@ public class RouteResource {
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
     private final GraphHopperAPI graphHopper;
+    private final ProfileResolver profileResolver;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopperAPI graphHopper, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopperAPI graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
+        this.profileResolver = profileResolver;
         this.hasElevation = hasElevation;
     }
 
@@ -176,21 +179,14 @@ public class RouteResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
-    public Response doPost(GHRequest request, @Context HttpServletRequest httpReq,
-                           @QueryParam("profile") String profile) {
+    public Response doPost(GHRequest request, @Context HttpServletRequest httpReq) {
         if (request == null)
             throw new IllegalArgumentException("Empty request");
 
-        // todonow: not needed with converter?
-        // todonow: should we enforce this as url parameter or only in request body?
-        if (Helper.isEmpty(profile)) {
-            throw new IllegalArgumentException("You need to specify a profile via the 'profile' url parameter to make a routing request");
+        // todonow: converter
+        if (Helper.isEmpty(request.getProfile())) {
+            throw new IllegalArgumentException("You need to specify a `profile` when doing a routing request");
         }
-        if (!Helper.isEmpty(request.getProfile()) && !request.getProfile().equals(profile)) {
-            throw new IllegalArgumentException("When doing a routing request via POST the profile given in the request " +
-                    "body must either be empty or match the 'profile' url parameter");
-        }
-        request.setProfile(profile);
 
         StopWatch sw = new StopWatch().start();
         GHResponse ghResponse = graphHopper.route(request);

@@ -1060,34 +1060,11 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1859");
             // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
 
-            // todonow: copying seems nices at first, but does not solve all problems, because the whole request
-            // without the copied hints is passed to the routing template. the goal is still not having to manipulate
-            // the request object
-            HintsMap hints = new HintsMap(request.getHints());
-            // todonow: cleanup, its way too ugly to modify(!) the request, actually there should be a test that makes sure
-            // the request is not modified!
-            hints.setWeighting(profile.getWeighting());
-            // todonow: u_turn_costs? (from request or profile)
-            String vehicle = profile.getVehicle();
-
-            if (!encodingManager.hasEncoder(vehicle))
-                throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
-
-            // to support turn costs we always need edge-based traversal
-            TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
             // todonow: should we allow using this parameter? if yes in which cases?
 //            if (hints.has(Routing.EDGE_BASED))
 //                tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
-            if (tMode.isEdgeBased() && !encoder.supportsTurnCosts()) {
-                throw new IllegalArgumentException("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true");
-            }
-
-            if (!tMode.isEdgeBased() && !request.getCurbsides().isEmpty()) {
-                // todonow: this is a bit ugly: curbside requires edge-based traversal but not necessarily turn costs?!
-                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need a profile which supports turn costs");
-            }
-
+            HintsMap hints = request.getHints();
             boolean disableCH = hints.getBool(CH.DISABLE, false);
             if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
                 throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
@@ -1113,8 +1090,8 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            ProfileConfig profile = resolveProfile(request.getHints());
             if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
+                // todonow: this is a bit ugly: curbside requires edge-based traversal but not necessarily turn costs?!
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
 
             TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;

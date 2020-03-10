@@ -37,6 +37,7 @@ import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.resources.*;
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
@@ -194,12 +195,15 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), environment.getObjectMapper());
         environment.lifecycle().manage(graphHopperManaged);
+        final GraphHopper graphHopper = graphHopperManaged.getGraphHopper();
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {
                 bind(configuration.getGraphHopperConfiguration()).to(GraphHopperConfig.class);
-                bind(graphHopperManaged.getGraphHopper()).to(GraphHopper.class);
-                bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
+                bind(graphHopper).to(GraphHopper.class);
+                bind(graphHopper).to(GraphHopperAPI.class);
+                bind(new ProfileResolver(graphHopper.getEncodingManager(), graphHopper.getCHPreparationHandler().getCHProfiles(), graphHopper.getLMPreparationHandler().getLMProfiles()))
+                        .to(ProfileResolver.class);
 
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
@@ -229,6 +233,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(SPTResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
-        environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopperManaged.getGraphHopper()));
+        environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopper));
     }
 }

@@ -32,8 +32,17 @@ import java.util.List;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
 public class ProfileResolver {
+    private final EncodingManager encodingManager;
+    private final List<CHProfile> chProfiles;
+    private final List<LMProfile> lmProfiles;
 
-    public ProfileConfig resolveProfile(EncodingManager encodingManager, List<CHProfile> chProfiles, List<LMProfile> lmProfiles, HintsMap hints) {
+    public ProfileResolver(EncodingManager encodingManager, List<CHProfile> chProfiles, List<LMProfile> lmProfiles) {
+        this.encodingManager = encodingManager;
+        this.chProfiles = chProfiles;
+        this.lmProfiles = lmProfiles;
+    }
+
+    public ProfileConfig resolveProfile(HintsMap hints) {
         // default handling
         String vehicle = hints.getVehicle();
         if (vehicle.isEmpty()) {

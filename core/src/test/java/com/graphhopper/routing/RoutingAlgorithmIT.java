@@ -31,6 +31,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import org.junit.Test;
@@ -59,8 +60,8 @@ public class RoutingAlgorithmIT {
         if (tMode.isEdgeBased())
             addStr = "turn|";
 
-        ProfileConfig profile = new ProfileConfig("profile").setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting()).setTurnCosts(tMode.isEdgeBased());
-        Weighting weighting = hopper.createWeighting(profile, hints);
+        ProfileConfig profile = new ProfileConfig("profile").setVehicle(vehicleStr).setWeighting(weightingStr).setTurnCosts(tMode.isEdgeBased());
+        Weighting weighting = hopper.createWeighting(profile, new PMap());
 
         HintsMap defaultHints = new HintsMap()
                 .put(Parameters.CH.DISABLE, true)
