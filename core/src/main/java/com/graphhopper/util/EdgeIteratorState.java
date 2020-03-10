@@ -106,9 +106,13 @@ public interface EdgeIteratorState {
      * (docs/core/low-level-api.md#what-are-pillar-and-tower-nodes). Updates to the returned list
      * are not reflected in the graph, for that you've to use setWayGeometry.
      *
-     * @param mode can be <ul> <li>0 = only pillar nodes, no tower nodes</li> <li>1 = inclusive the
-     *             base tower node only</li> <li>2 = inclusive the adjacent tower node only</li> <li>3 =
-     *             inclusive the base and adjacent tower node</li> </ul>
+     * @param mode can be <ul>
+     *             <li>0 = only pillar nodes, no tower nodes</li>
+     *             <li>1 = inclusive the base tower node only</li>
+     *             <li>2 = inclusive the adjacent tower node only</li>
+     *             <li>3 = inclusive the base and adjacent tower node</li>
+     *             <li>4 = only tower nodes, no pillar nodes</li>
+     *             </ul>
      * @return pillar nodes
      */
     PointList fetchWayGeometry(int mode);
