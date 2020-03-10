@@ -1,6 +1,45 @@
-0.13
-    removed TraversalMode.EDGE_BASED_1DIR
+1.0
     removed UnsafeDataAccess as not maintained, see #1620
+    add profiles parameter and replace prepare.ch/lm.weightings and prepare.ch.edge_based with profiles_ch/lm config parameters, #1922
+    Properties in config.yml have to follow the snake_case, #1918, easy convert via https://github.com/karussell/snake_case
+    GraphHopper class no longer enables CH by default, #1914
+    replaced command line arguments -Dgraphhopper.. with -Ddw.graphhopper.. due to #1879, see also #1897
+    GraphHopper.init(CmdArgs)->GraphHopper.init(GraphHopperConfig), see #1879
+    remove TurnWeighting, see #1863
+    speed up path simplification with path details/instructions, see #1802
+    revert compression of landmark preparation data, see #1749 and #1376
+    removed GenericWeighting and DataFlagEncoder as a normal CarFlagEncoder does the job too
+    add required EncodedValues like road_class to EncodingManager if not added from user
+    removed PathNative,PathBidirRef,Path4CH,EdgeBasedPathCH and moved path extraction code out of Path class, added PathExtractor,BidirPathExtractor(+subclasses for CH) instead, #1730
+    conditional turn restrictions now supported, #1683
+    added new `curbside` feature, #1697
+    moved QueryGraph to new routing.querygraph package
+    removed GraphExtension, #1783, renamed TurnCostExtension to TurnCostStorage
+    removed `heading`, `pass_through` and `ch.force_heading` parameters for speed mode/CH, #1763
+
+0.13
+    removed docker compose file
+    PathDetails return null instead of -1 for Infinity by default
+    replaced AverageSpeedDetails by DecimalDetails
+    moved TagParser into new package: com.graphhopper.routing.util.parsers
+    removed FlagEncoderFactory.DEFAULT
+    removed forestry and motorroad from RoadClass
+    SpatialRule.AccessValue replaced by RoadAccess
+    removed EncodedValueLookup.hasEncoder, use hasEncodedValue instead
+    removed MappedDecimalEncodedValue: should be replaced with FactoredDecimalEncodedValue
+    DataFlagEncoder: it is now required to add EncodedValues before. graph.encoded_values: max_speed,road_class,road_environment,road_access
+    instead of EncodingManager.ROUNDABOUT use Roundabout.KEY
+    changed output format of result=pointlist and moved it into separate endpoint /spt
+    removed TraversalMode.EDGE_BASED_1DIR and TraversalMode.EDGE_BASED_2DIR_UTURN, renamed TraversalMode.EDGE_BASED_2DIR to TraversalMode.EDGE_BASED
+    to prevent u-turns when using edge-based algorithms it is now required to use TurnWeighting, #1640
+    GraphHopperStorage.getGraph(Class) was replaced by GraphHopperStorage.getBase/CHGraph(), #1669
+    CHGraph.shortcut(int, int) was removed (use .shortcut(int, int, ...) and/or .shortcutEdgeBased(int, int, ...) instead, #1693
+    CH graphs are now identified using CHProfile instead of Weighting, #1670
+    removed the 'traversal_mode` request parameter for /route, instead of 'traversal_mode=edge_based_2dir' use edge_based=true
+    removed GraphHopper.set/getTraversalMode() methods, #1705
+    edge-based CH is now chosen by default if it was prepared, #1706
+    it is now possible to specify finite u-turn costs for CH preparation, #1671
+    removed distances from CH shortcuts, reduces memory consumption per shortcut by 4 bytes (about 8-10%), #1719
 
 0.12
     renamed VirtualEdgeIteratorState.getOriginalEdgeKey to more precise getOriginalEdgeKey #1549
@@ -51,7 +90,7 @@
     several constants changed to under score notation see #719 with a few breaking changes, e.g. use lower case names for flag encoders or jsonp_allowed instead of the jsonpAllowed annotation
     moving all string parameter constants into the Parameters class
     no more acceptedRailways set see #662 for more information
-    web API: content type of gpx export is now application/gpx+xml if not explicitely specified
+    web API: content type of gpx export is now application/gpx+xml if not explicitly specified
     use prepare.ch.weightings instead of prepare.chWeighting e.g. for disabling CH use prepare.ch.weightings=no
     GraphHopper class is refactored regarding RoutingAlgorithmFactory in order to fix problem when integrating flexibility routing, most of the CH related stuff is moved into CHAlgoFactoryDecorator, several methods are deprecated to use the methods of the decorator, see #631
     WeightingMap is now named HintsMap

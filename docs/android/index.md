@@ -23,7 +23,7 @@ Please read [here](./android-studio-setup.md) for a detailed instruction.
 
 ## None-Android Studio
 
-Download the [Android SDK](http://developer.android.com/sdk/installing/index.html?pkg=tools) and go to the Android SDK Manager and install the latest SDK.
+You need to download the SDK tools and then install builds-tools and platform (both e.g. v27). The process is described in more details for linux [here](https://gist.github.com/karussell/86fa2554c552a204ae7be2964b870bab).
 
 ### Maven or NetBeans
  1. Download [Maven Android SDK Deployer](https://github.com/simpligility/maven-android-sdk-deployer) and execute `mvn install -P 5.1` - it uses [Android Maven Plugin](http://simpligility.github.io/android-maven-plugin/) under the hood where you need to set up `ANDROID_HOME`

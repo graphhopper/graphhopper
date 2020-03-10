@@ -18,128 +18,111 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHEntry;
-import com.graphhopper.routing.ch.EdgeBasedPathCH;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.ch.EdgeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.storage.TurnCostExtension;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
+
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
 /**
  * @author easbar
  */
-public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
-    private final EdgeExplorer innerInExplorer;
-    private final EdgeExplorer innerOutExplorer;
-    private final TurnWeighting turnWeighting;
-    private final TurnCostExtension turnCostExtension;
+public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo {
+    private final RoutingCHEdgeExplorer innerInExplorer;
+    private final RoutingCHEdgeExplorer innerOutExplorer;
 
-    public AbstractBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
-        super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
-        this.turnWeighting = weighting;
+    public AbstractBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
+        super(graph, TraversalMode.EDGE_BASED);
+        // the inner explorers will run on the base-(or base-query-)graph edges only
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
-        innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
-        innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
-        if (!(graph.getExtension() instanceof TurnCostExtension)) {
-            throw new IllegalArgumentException("edge-based CH algorithms require a turn cost extension");
-        }
-        turnCostExtension = (TurnCostExtension) graph.getExtension();
+        innerInExplorer = graph.createOriginalInEdgeExplorer();
+        innerOutExplorer = graph.createOriginalOutEdgeExplorer();
     }
 
     @Override
     protected void postInitFrom() {
-        EdgeFilter filter = additionalEdgeFilter;
-        setEdgeFilter(EdgeFilter.ALL_EDGES);
-        fillEdgesFrom();
-        setEdgeFilter(filter);
+        // With CH the additionalEdgeFilter is the one that filters out edges leading or coming from higher rank nodes,
+        // i.e. LevelEdgeFilter, For the first step though we need all edges, so we need to ignore this filter.
+        // Using an arbitrary filter is not supported for CH anyway.
+        if (fromOutEdge == ANY_EDGE) {
+            fillEdgesFromUsingFilter(CHEdgeFilter.ALL_EDGES);
+        } else {
+            fillEdgesFromUsingFilter(new CHEdgeFilter() {
+                @Override
+                public boolean accept(RoutingCHEdgeIteratorState edgeState) {
+                    return edgeState.getOrigEdgeFirst() == fromOutEdge;
+                }
+            });
+        }
     }
 
     @Override
     protected void postInitTo() {
-        EdgeFilter filter = additionalEdgeFilter;
-        setEdgeFilter(EdgeFilter.ALL_EDGES);
-        fillEdgesTo();
-        setEdgeFilter(filter);
+        if (toInEdge == ANY_EDGE) {
+            fillEdgesToUsingFilter(CHEdgeFilter.ALL_EDGES);
+        } else {
+            fillEdgesToUsingFilter(new CHEdgeFilter() {
+                @Override
+                public boolean accept(RoutingCHEdgeIteratorState edgeState) {
+                    return edgeState.getOrigEdgeLast() == toInEdge;
+                }
+            });
+        }
     }
 
     @Override
-    protected void initCollections(int size) {
-        super.initCollections(Math.min(size, 2000));
-    }
-
-    @Override
-    public boolean finished() {
-        // we need to finish BOTH searches for CH!
-        if (finishedFrom && finishedTo)
-            return true;
-
-        // changed also the final finish condition for CH
-        return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
-    }
-
-    @Override
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entry, int traversalId, boolean reverse) {
+    protected void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
+        assert Double.isInfinite(edgeWeight) : "edge-based CH does not use pre-calculated edge weight";
         // special case where the fwd/bwd search runs directly into the opposite node, for example if the highest level
         // node of the shortest path matches the source or target. in this case one of the searches does not contribute
         // anything to the shortest path.
         int oppositeNode = reverse ? from : to;
-        if (edgeState.getAdjNode() == oppositeNode) {
-            if (entry.getWeightOfVisitedPath() < bestPath.getWeight()) {
-                bestPath.setSwitchToFrom(reverse);
-                bestPath.setSPTEntry(entry);
-                bestPath.setSPTEntryTo(new CHEntry(oppositeNode, 0));
-                bestPath.setWeight(entry.getWeightOfVisitedPath());
+        int oppositeEdge = reverse ? fromOutEdge : toInEdge;
+        boolean oppositeEdgeRestricted = reverse ? (fromOutEdge != ANY_EDGE) : (toInEdge != ANY_EDGE);
+        if (entry.adjNode == oppositeNode && (!oppositeEdgeRestricted || origEdgeId == oppositeEdge)) {
+            if (entry.getWeightOfVisitedPath() < bestWeight) {
+                bestFwdEntry = reverse ? new CHEntry(oppositeNode, 0) : entry;
+                bestBwdEntry = reverse ? entry : new CHEntry(oppositeNode, 0);
+                bestWeight = entry.getWeightOfVisitedPath();
                 return;
             }
         }
 
-        // todo: it would be sufficient (and maybe more efficient) to use an original edge explorer here ?
-        EdgeIterator iter = reverse ?
-                innerInExplorer.setBaseNode(edgeState.getAdjNode()) :
-                innerOutExplorer.setBaseNode(edgeState.getAdjNode());
+        RoutingCHEdgeIterator iter = reverse ?
+                innerInExplorer.setBaseNode(entry.adjNode) :
+                innerOutExplorer.setBaseNode(entry.adjNode);
 
         // todo: for a-star it should be possible to skip bridge node check at the beginning of the search as long as
         // minimum source-target distance lies above total sum of fwd+bwd path candidates.
         while (iter.next()) {
             final int edgeId = getOrigEdgeId(iter, !reverse);
-            final int prevOrNextOrigEdgeId = getOrigEdgeId(edgeState, reverse);
-            if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(edgeId, prevOrNextOrigEdgeId)) {
-                continue;
-            }
-            int key = GHUtility.getEdgeKey(graph, edgeId, iter.getBaseNode(), !reverse);
+            int key = GHUtility.createEdgeKey(getOtherNode(edgeId, iter.getBaseNode()), iter.getBaseNode(), edgeId, !reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {
                 continue;
             }
 
             double turnCostsAtBridgeNode = reverse ?
-                    turnWeighting.calcTurnWeight(iter.getOrigEdgeLast(), iter.getBaseNode(), prevOrNextOrigEdgeId) :
-                    turnWeighting.calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), iter.getOrigEdgeFirst());
+                    graph.getTurnWeight(edgeId, iter.getBaseNode(), origEdgeId) :
+                    graph.getTurnWeight(origEdgeId, iter.getBaseNode(), edgeId);
 
             double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath() + turnCostsAtBridgeNode;
-            if (newWeight < bestPath.getWeight()) {
-                bestPath.setSwitchToFrom(reverse);
-                bestPath.setSPTEntry(entry);
-                bestPath.setSPTEntryTo(entryOther);
-                bestPath.setWeight(newWeight);
+            if (newWeight < bestWeight) {
+                bestFwdEntry = reverse ? entryOther : entry;
+                bestBwdEntry = reverse ? entry : entryOther;
+                bestWeight = newWeight;
             }
         }
     }
 
     @Override
-    protected Path createAndInitPath() {
-        bestPath = new EdgeBasedPathCH(graph, graph.getBaseGraph(), weighting);
-        return bestPath;
+    protected BidirPathExtractor createPathExtractor(RoutingCHGraph graph) {
+        return new EdgeBasedCHBidirPathExtractor(graph);
     }
 
     @Override
-    protected int getOrigEdgeId(EdgeIteratorState edge, boolean reverse) {
+    protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
         return reverse ? edge.getOrigEdgeFirst() : edge.getOrigEdgeLast();
     }
 
@@ -149,26 +132,22 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     }
 
     @Override
-    protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        int baseNode = graph.getOtherNode(origEdgeId, edge.getAdjNode());
+    protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, boolean reverse) {
+        int baseNode = getOtherNode(origEdgeId, edge.getAdjNode());
         return GHUtility.createEdgeKey(baseNode, edge.getAdjNode(), origEdgeId, reverse);
     }
 
     @Override
-    protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
+    protected boolean accept(RoutingCHEdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
         final int incEdge = getIncomingEdge(currEdge);
-        if (incEdge == EdgeIterator.NO_EDGE)
-            return true;
         final int prevOrNextEdgeId = getOrigEdgeId(edge, !reverse);
-        if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(incEdge, prevOrNextEdgeId))
+        double turnWeight = reverse
+                ? graph.getTurnWeight(prevOrNextEdgeId, edge.getBaseNode(), incEdge)
+                : graph.getTurnWeight(incEdge, edge.getBaseNode(), prevOrNextEdgeId);
+        if (Double.isInfinite(turnWeight)) {
             return false;
-
-        return additionalEdgeFilter == null || additionalEdgeFilter.accept(edge);
-    }
-
-    @Override
-    public String toString() {
-        return getName() + "|" + weighting;
+        }
+        return levelEdgeFilter == null || levelEdgeFilter.accept(edge);
     }
 
 }

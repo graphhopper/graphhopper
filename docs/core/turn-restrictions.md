@@ -16,11 +16,32 @@ Turn restrictions have to be enabled on a vehicle basis. To enable it for one ve
 Turn restrictions are not available for every vehicle as they have low relevance
 for some vehicles like `foot`. 
 To enable turn restrictions when using the 'speed mode' additional graph preparation is required, because turn restrictions
-require edge-based (vs. node-based) traversal of the graph. First you have to set the weightings for which the graph 
-preparation should be run using e.g. `prepare.ch.weightings=fastest`, just like when you use the 'speed mode' without 
-turn restrictions. Additionally you need to set `prepare.ch.turn_costs` to `edge_or_node` or `edge_and_node`
-(see `config-example.yml` for further details). At request time you need to add `edge_based=true` as URL parameter to 
-enable turn restricted routing and to disable the 'speed mode' per request you can add `ch.disable=true`.
+require edge-based (vs. node-based) traversal of the graph. You have to configure the profiles for which the graph
+preparation should be run using e.g. `profiles_ch`, just like when you use the 'speed mode' without turn restrictions.
+The edge-based CH preparation will be chosen if you configure `turn_costs: true` for the profile you are referencing
+in `profiles_ch`.
+You can also specify a time penalty for taking u-turns (turning from one road back to the same road at a junction).
+Note that this time-penalty only works reasonably when your weighting is time-based (like "fastest"). To use u-turn 
+costs with speed mode you need to specify the time penalty for each u-turn (again in the profile configuration):
+ `u_turn_costs: 60`. See `config-example.yml` for further details regarding these configurations. 
+If you prepare multiple 'speed mode' profiles you have to specify which 
+one to use at request time: Use the `edge_based=true/false` parameter to enforce edge-based or node-based routing and 
+the `u_turn_costs` parameter to specify the u-turn costs (only needed if there are multiple edge-based 'speed mode'
+profiles with different u-turn costs). To disable the 'speed mode' per request you can add `ch.disable=true` and choose
+the value of `u_turn_costs` freely.
 
 While OSM data only contains turn *restrictions*, the GraphHopper routing engine can also deal with turn *costs*, i.e.
 you can specify custom turn costs for each turn at each junction.
+
+Conditional turn restriction are supported. For example, the following no left turn restriction concerns only bus :
+
+> type=restriction  
+> restriction:bus=no_left_turn
+
+Another example, using the *except* tag, means only *bicycle* are allowed to turn left:
+
+> type=restriction  
+> restriction=no_left_turn  
+> except=bicycle
+
+You can overwrite `FlagEncoder#acceptsTurnRelation` to change the default handling of turn restrictions in your customized vehicle profile.

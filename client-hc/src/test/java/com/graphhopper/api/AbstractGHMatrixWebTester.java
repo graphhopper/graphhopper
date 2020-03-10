@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 
@@ -54,9 +55,94 @@ public abstract class AbstractGHMatrixWebTester {
 
         try {
             assertEquals(0., rsp.getDistance(0, 1), .1);
-            assertTrue(false);
+            fail("there should have been an exception");
         } catch (Exception ex) {
         }
+    }
+
+    @Test
+    public void testReadingMatrixConnectionsNotFound_noFailFast() throws IOException {
+        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-connection-not-found-fail-fast.json")));
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(0, 1));
+        req.addPoint(new GHPoint(2, 3));
+        req.addOutArray("weights");
+        req.addOutArray("distances");
+        req.addOutArray("times");
+        req.setFailFast(false);
+
+        MatrixResponse rsp = matrixWeb.route(req);
+        assertFalse(rsp.hasErrors());
+        assertTrue(rsp.hasProblems());
+
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(0, 1), 1.e-3);
+        assertEquals(0, rsp.getWeight(0, 0), 1.e-3);
+
+        assertEquals(Double.MAX_VALUE, rsp.getDistance(0, 1), 1.e-3);
+        assertEquals(1, rsp.getDistance(0, 0), 1.e-3);
+
+        assertEquals(Long.MAX_VALUE, rsp.getTime(0, 1));
+        assertEquals(2 * 1000, rsp.getTime(0, 0));
+
+        assertEquals("[[0, 1], [1, 0]]", rsp.getDisconnectedPoints().toString());
+    }
+
+    @Test
+    public void testReadingMatrixPointsNotFound_noFailFast() throws IOException {
+        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-point-not-found-fail-fast.json")));
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(0, 1));
+        req.addPoint(new GHPoint(2, 3));
+        req.addPoint(new GHPoint(4, 5));
+        req.addOutArray("weights");
+        req.addOutArray("distances");
+        req.addOutArray("times");
+        req.setFailFast(false);
+
+        MatrixResponse rsp = matrixWeb.route(req);
+        assertFalse(rsp.hasErrors());
+        assertTrue(rsp.hasProblems());
+
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(1, 0), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(1, 1), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(1, 2), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(0, 1), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(2, 1), 1.e-3);
+
+        assertEquals(0, rsp.getWeight(0, 0), 1.e-3);
+        assertEquals(1, rsp.getWeight(0, 2), 1.e-3);
+        assertEquals(2, rsp.getWeight(2, 0), 1.e-3);
+        assertEquals(3, rsp.getWeight(2, 2), 1.e-3);
+
+        assertEquals(Double.MAX_VALUE, rsp.getDistance(1, 0), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getDistance(1, 1), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getDistance(1, 2), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getDistance(0, 1), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getDistance(2, 1), 1.e-3);
+
+        assertEquals(4, rsp.getDistance(0, 0), 1.e-3);
+        assertEquals(5, rsp.getDistance(0, 2), 1.e-3);
+        assertEquals(6, rsp.getDistance(2, 0), 1.e-3);
+        assertEquals(7, rsp.getDistance(2, 2), 1.e-3);
+
+        assertEquals(Long.MAX_VALUE, rsp.getTime(1, 0));
+        assertEquals(Long.MAX_VALUE, rsp.getTime(1, 1));
+        assertEquals(Long.MAX_VALUE, rsp.getTime(1, 2));
+        assertEquals(Long.MAX_VALUE, rsp.getTime(0, 1));
+        assertEquals(Long.MAX_VALUE, rsp.getTime(2, 1));
+
+        assertEquals(8 * 1000, rsp.getTime(0, 0));
+        assertEquals(9 * 1000, rsp.getTime(0, 2));
+        assertEquals(10 * 1000, rsp.getTime(2, 0));
+        assertEquals(11 * 1000, rsp.getTime(2, 2));
+
+        assertEquals("[[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]]", rsp.getDisconnectedPoints().toString());
+        assertEquals(Collections.singletonList(1), rsp.getInvalidFromPoints());
+        assertEquals(Collections.singletonList(1), rsp.getInvalidToPoints());
     }
 
     @Test

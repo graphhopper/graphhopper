@@ -21,29 +21,20 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostExtension;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -58,12 +49,10 @@ public class EdgeBasedNodeContractorTest {
     private CHGraph chGraph;
     private CarFlagEncoder encoder;
     private GraphHopperStorage graph;
-    private TurnCostExtension turnCostExtension;
-    private TurnWeighting turnWeighting;
-    private TurnWeighting chTurnWeighting;
 
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
+    private List<CHProfile> chProfiles;
 
     @Before
     public void setup() {
@@ -74,13 +63,14 @@ public class EdgeBasedNodeContractorTest {
     private void initialize() {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        Weighting weighting = new ShortestWeighting(encoder);
-        PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
-        graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
-        turnCostExtension = (TurnCostExtension) graph.getExtension();
-        turnWeighting = new TurnWeighting(weighting, turnCostExtension);
-        chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
-        chGraph = graph.getGraph(CHGraph.class);
+        graph = new GraphBuilder(encodingManager)
+                .setCHProfileStrings(
+                        "car|shortest|edge",
+                        "car|shortest|edge|60"
+                )
+                .create();
+        chProfiles = graph.getCHProfiles();
+        chGraph = graph.getCHGraph(chProfiles.get(0));
     }
 
     @Test
@@ -99,8 +89,8 @@ public class EdgeBasedNodeContractorTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
 
-        addRestriction(6, 7, 9);
-        addTurnCost(8, 3, 2, 2);
+        setRestriction(6, 7, 9);
+        setTurnCost(8, 3, 2, 2);
 
         contractNodes(5, 6, 3, 2, 9, 1, 8, 4, 7, 0);
         checkShortcuts(
@@ -127,7 +117,7 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(5, 4, 2, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        addRestriction(1, 6, 3);
+        setRestriction(1, 6, 3);
         contractAllNodesInOrder();
         checkShortcuts(
                 // from contracting node 0: need a shortcut because of turn restriction
@@ -182,9 +172,9 @@ public class EdgeBasedNodeContractorTest {
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
-        addRestriction(0, 4, 5);
-        addTurnCost(6, 3, 4, 2);
-        addTurnCost(4, 3, 6, 4);
+        setRestriction(0, 4, 5);
+        setTurnCost(6, 3, 4, 2);
+        setTurnCost(4, 3, 6, 4);
         setMaxLevelOnAllNodes();
 
         contractAllNodesInOrder();
@@ -236,8 +226,8 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(3, 2, 3, false);
         graph.edge(2, 4, 5, false);
         graph.edge(4, 1, 1, false);
-        addRestriction(0, 3, 2);
-        addRestriction(2, 4, 1);
+        setRestriction(0, 3, 2);
+        setRestriction(2, 4, 1);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
@@ -386,12 +376,11 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e3to2 = graph.edge(3, 2, 3, false);
         final EdgeIteratorState e2to4 = graph.edge(2, 4, 5, false);
         graph.edge(4, 1, 1, false);
-        addTurnCost(3, 2, 4, 4);
+        setTurnCost(3, 2, 4, 4);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
-        double weight = calcWeight(e3to2, e2to4);
-        checkShortcuts(createShortcut(3, 4, e3to2, e2to4, weight));
+        checkShortcuts(createShortcut(3, 4, e3to2, e2to4, 12));
     }
 
     @Test
@@ -401,7 +390,7 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(3, 2, 3, false);
         graph.edge(2, 4, 5, false);
         graph.edge(4, 1, 1, false);
-        addRestriction(3, 2, 4);
+        setRestriction(3, 2, 4);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
@@ -415,8 +404,8 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e3to2 = graph.edge(3, 2, 3, true);
         final EdgeIteratorState e2to4 = graph.edge(2, 4, 5, true);
         graph.edge(4, 1, 1, true);
-        addTurnCost(e3to2, e2to4, 2, 4);
-        addTurnCost(e2to4, e3to2, 2, 4);
+        setTurnCost(e3to2, e2to4, 2, 4);
+        setTurnCost(e2to4, e3to2, 2, 4);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
@@ -436,8 +425,8 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e2to3 = graph.edge(3, 2, 3, true);
         final EdgeIteratorState e2to4 = graph.edge(2, 4, 5, true);
         graph.edge(4, 1, 1, true);
-        addTurnCost(e2to3, e2to4, 2, 4);
-        addTurnCost(e2to4, e2to3, 2, 7);
+        setTurnCost(e2to3, e2to4, 2, 4);
+        setTurnCost(e2to4, e2to3, 2, 7);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
@@ -481,9 +470,9 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e2to4 = graph.edge(2, 4, 5, false);
         graph.edge(4, 1, 1, false);
 
-        addTurnCost(e3to2, e2to2, 2, 2);
-        addTurnCost(e2to2, e2to4, 2, 1);
-        addTurnCost(e3to2, e2to4, 2, loopHelps ? 6 : 3);
+        setTurnCost(e3to2, e2to2, 2, 2);
+        setTurnCost(e2to2, e2to4, 2, 1);
+        setTurnCost(e3to2, e2to4, 2, loopHelps ? 6 : 3);
         graph.freeze();
         setMaxLevelOnAllNodes();
 
@@ -514,7 +503,7 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(1, 4, 1, true);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        addRestriction(7, 3, 5);
+        setRestriction(7, 3, 5);
         contractNodes(3, 4);
         checkShortcuts(
                 // from contracting node 3
@@ -597,16 +586,16 @@ public class EdgeBasedNodeContractorTest {
         final int numEdges = 12;
 
         GraphWithTwoLoops(int turnCost70, int turnCost72, int turnCost12, int turnCost18, int turnCost38, int turnCost78) {
-            addCostOrRestriction(e7to6, e6to0, centerNode, turnCost70);
-            addCostOrRestriction(e7to6, e6to2, centerNode, turnCost72);
-            addCostOrRestriction(e7to6, e6to8, centerNode, turnCost78);
-            addCostOrRestriction(e1to6, e6to2, centerNode, turnCost12);
-            addCostOrRestriction(e1to6, e6to8, centerNode, turnCost18);
-            addCostOrRestriction(e3to6, e6to8, centerNode, turnCost38);
+            setTurnCost(e7to6, e6to0, centerNode, turnCost70);
+            setTurnCost(e7to6, e6to2, centerNode, turnCost72);
+            setTurnCost(e7to6, e6to8, centerNode, turnCost78);
+            setTurnCost(e1to6, e6to2, centerNode, turnCost12);
+            setTurnCost(e1to6, e6to8, centerNode, turnCost18);
+            setTurnCost(e3to6, e6to8, centerNode, turnCost38);
             // restrictions to make sure that no loop avoidance takes place when the left&right loops are contracted
-            addRestriction(e4to6, e6to8, centerNode);
-            addRestriction(e5to6, e6to2, centerNode);
-            addRestriction(e4to6, e6to0, centerNode);
+            setRestriction(e4to6, e6to8, centerNode);
+            setRestriction(e5to6, e6to2, centerNode);
+            setRestriction(e4to6, e6to0, centerNode);
 
             graph.freeze();
             setMaxLevelOnAllNodes();
@@ -660,10 +649,10 @@ public class EdgeBasedNodeContractorTest {
         private final EdgeIteratorState e2to3 = graph.edge(2, 3, 2, false);
 
         GraphWithDetour(int turnCost42, int turnCost13, int turnCost40, int turnCost03) {
-            addCostOrRestriction(e4to1, e1to2, 1, turnCost42);
-            addCostOrRestriction(e4to1, e1to0, 1, turnCost40);
-            addCostOrRestriction(e1to2, e2to3, 2, turnCost13);
-            addCostOrRestriction(e0to2, e2to3, 2, turnCost03);
+            setTurnCost(e4to1, e1to2, 1, turnCost42);
+            setTurnCost(e4to1, e1to0, 1, turnCost40);
+            setTurnCost(e1to2, e2to3, 2, turnCost13);
+            setTurnCost(e0to2, e2to3, 2, turnCost03);
             graph.freeze();
             setMaxLevelOnAllNodes();
         }
@@ -705,12 +694,12 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e4to7 = graph.edge(4, 7, 3, false);
 
         GraphWithDetourMultipleInOutEdges(int turnCost20, int turnCost50, int turnCost23, int turnCost53, int turnCost36) {
-            addTurnCost(e1to3, e3to4, 3, 2);
-            addCostOrRestriction(e2to1, e1to0, 1, turnCost20);
-            addCostOrRestriction(e2to1, e1to3, 1, turnCost23);
-            addCostOrRestriction(e5to1, e1to0, 1, turnCost50);
-            addCostOrRestriction(e5to1, e1to3, 1, turnCost53);
-            addCostOrRestriction(e3to4, e4to6, 4, turnCost36);
+            setTurnCost(e1to3, e3to4, 3, 2);
+            setTurnCost(e2to1, e1to0, 1, turnCost20);
+            setTurnCost(e2to1, e1to3, 1, turnCost23);
+            setTurnCost(e5to1, e1to0, 1, turnCost50);
+            setTurnCost(e5to1, e1to3, 1, turnCost53);
+            setTurnCost(e3to4, e4to6, 4, turnCost36);
             graph.freeze();
             setMaxLevelOnAllNodes();
         }
@@ -752,7 +741,7 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e5to2 = graph.edge(5, 2, 2, false);
 
         GraphWithLoop(int turnCost34) {
-            addCostOrRestriction(e3to2, e2to4, 2, turnCost34);
+            setTurnCost(e3to2, e2to4, 2, turnCost34);
             graph.freeze();
             setMaxLevelOnAllNodes();
         }
@@ -951,8 +940,8 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(3, 4, 1, false);
         graph.edge(1, 5, 3, false);
         graph.edge(5, 3, 1, false);
-        addTurnCost(2, 3, 4, 5);
-        addTurnCost(5, 3, 4, 2);
+        setTurnCost(2, 3, 4, 5);
+        setTurnCost(5, 3, 4, 2);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
@@ -1015,8 +1004,8 @@ public class EdgeBasedNodeContractorTest {
         EdgeIteratorState edge0 = graph.edge(0, 1, 2, true);
         EdgeIteratorState edge1 = graph.edge(1, 0, 4, true);
         graph.edge(1, 2, 5, true);
-        addTurnCost(edge0, edge1, 0, 1);
-        addTurnCost(edge1, edge0, 0, 2);
+        setTurnCost(edge0, edge1, 0, 1);
+        setTurnCost(edge1, edge0, 0, 2);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(0);
@@ -1039,12 +1028,12 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(3, 4, 10, true);
         EdgeIteratorState e5 = graph.edge(4, 5, 56, true);
 
-        addTurnCost(e3, e2, 5, 4);
-        addTurnCost(e2, e3, 5, 5);
-        addTurnCost(e5, e3, 5, 3);
-        addTurnCost(e3, e5, 5, 2);
-        addTurnCost(e2, e5, 5, 2);
-        addTurnCost(e5, e2, 5, 1);
+        setTurnCost(e3, e2, 5, 4);
+        setTurnCost(e2, e3, 5, 5);
+        setTurnCost(e5, e3, 5, 3);
+        setTurnCost(e3, e5, 5, 2);
+        setTurnCost(e2, e5, 5, 2);
+        setTurnCost(e5, e2, 5, 1);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(4, 5);
@@ -1115,13 +1104,38 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
 
         // enforce loop (going counter-clockwise)
-        addRestriction(0, 4, 1);
-        addTurnCost(4, 2, 3, 4);
-        addTurnCost(3, 2, 4, 2);
+        setRestriction(0, 4, 1);
+        setTurnCost(4, 2, 3, 4);
+        setTurnCost(3, 2, 4, 2);
         contractNodes(2);
         checkShortcuts(
                 createShortcut(4, 3, 3, 2, 3, 2, 6),
                 createShortcut(3, 4, 2, 3, 2, 3, 4)
+        );
+    }
+
+    @Test
+    public void testFindPath_finiteUTurnCost() {
+        chGraph = graph.getCHGraph(chProfiles.get(1));
+        // turning to 1 at node 3 when coming from 0 is forbidden, but taking the full loop 3-4-2-3 is very
+        // expensive, so the best solution is to go straight to 4 and take a u-turn there
+        //   1
+        //   |
+        // 0-3-4
+        //   |/
+        //   2
+        graph.edge(0, 3, 100, false);
+        graph.edge(3, 4, 100, true);
+        graph.edge(4, 2, 500, false);
+        graph.edge(2, 3, 200, false);
+        graph.edge(3, 1, 100, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        setRestriction(0, 3, 1);
+        contractNodes(4);
+        checkShortcuts(
+                createShortcut(3, 2, 1, 2, 1, 2, 600),
+                createShortcut(3, 3, 1, 1, 1, 1, 260)
         );
     }
 
@@ -1135,7 +1149,7 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(1, 2, 2, true);
         graph.edge(3, 2, 3, false);
         graph.edge(2, 4, 3, false);
-        addRestriction(3, 2, 4);
+        setRestriction(3, 2, 4);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(0);
@@ -1152,7 +1166,7 @@ public class EdgeBasedNodeContractorTest {
         EdgeIteratorState edge2 = graph.edge(1, 2, 1, true);
         EdgeIteratorState edge3 = graph.edge(2, 3, 1, false);
         EdgeIteratorState edge4 = graph.edge(3, 4, 1, false);
-        addRestriction(edge0, edge2, 1);
+        setRestriction(edge0, edge2, 1);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
@@ -1312,8 +1326,8 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(3, 3, 0, false);
         graph.edge(3, 3, 0, false);
         // we have to use the zero weight loop so it may not be excluded
-        addTurnCost(edge2, edge3, 3, 5);
-        addRestriction(edge2, edge4, 3);
+        setTurnCost(edge2, edge3, 3, 5);
+        setRestriction(edge2, edge4, 3);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
@@ -1364,38 +1378,27 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor() {
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, chTurnWeighting, new PMap());
+        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, chGraph.getCHProfile().getWeighting());
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
 
-    private double calcWeight(EdgeIteratorState edge1, EdgeIteratorState edge2) {
-        return turnWeighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE) +
-                turnWeighting.calcWeight(edge2, false, edge1.getEdge());
+    private void setRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode) {
+        setTurnCost(inEdge, outEdge, viaNode, Double.POSITIVE_INFINITY);
     }
 
-    private void addRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode) {
-        turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(true, 0));
+    private void setRestriction(int from, int via, int to) {
+        setTurnCost(getEdge(from, via), getEdge(via, to), via, Double.POSITIVE_INFINITY);
     }
 
-    private void addRestriction(int from, int via, int to) {
-        addRestriction(getEdge(from, via), getEdge(via, to), via);
+    private void setTurnCost(int from, int via, int to, double cost) {
+        setTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
     }
 
-    private void addTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
-        turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, cost));
-    }
-
-    private void addTurnCost(int from, int via, int to, int cost) {
-        addTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
-    }
-
-    private void addCostOrRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
-        if (cost >= maxCost) {
-            addRestriction(inEdge, outEdge, viaNode);
-        } else {
-            addTurnCost(inEdge, outEdge, viaNode, cost);
-        }
+    private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
+        double cost1 = cost >= maxCost ? Double.POSITIVE_INFINITY : cost;
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encoder).getDecimalEncodedValue(TurnCost.key("car")), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost1);
     }
 
     private EdgeIteratorState getEdge(int from, int to) {

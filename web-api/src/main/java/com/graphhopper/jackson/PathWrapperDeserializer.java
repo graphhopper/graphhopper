@@ -15,7 +15,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -166,6 +165,16 @@ public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
                 }
                 pathWrapper.addPathDetails(pathDetails);
             }
+        }
+
+        if (path.has("points_order")) {
+            pathWrapper.setPointsOrder((List<Integer>) objectMapper.convertValue(path.get("points_order"), List.class));
+        } else {
+            List<Integer> list = new ArrayList<>(pathWrapper.getWaypoints().size());
+            for (int i = 0; i < pathWrapper.getWaypoints().size(); i++) {
+                list.add(i);
+            }
+            pathWrapper.setPointsOrder(list);
         }
 
         double distance = path.get("distance").asDouble();

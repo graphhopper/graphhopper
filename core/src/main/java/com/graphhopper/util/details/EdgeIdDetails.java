@@ -17,11 +17,11 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.VirtualEdgeIteratorState;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import static com.graphhopper.util.Parameters.DETAILS.EDGE_ID;
+import static com.graphhopper.util.Parameters.Details.EDGE_ID;
 
 /**
  * Calculate the Edge Id segments of a Path

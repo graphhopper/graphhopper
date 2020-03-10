@@ -17,17 +17,17 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.FactorizedDecimalEncodedValue;
+import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
 
+import static com.graphhopper.routing.profiles.RouteNetwork.*;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -47,12 +47,13 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     final Set<String> safeHighwayTags = new HashSet<>();
     final Set<String> allowedHighwayTags = new HashSet<>();
     final Set<String> avoidHighwayTags = new HashSet<>();
-    // convert network tag of hiking routes into a way route code
-    final Map<String, Integer> hikingNetworkToCode = new HashMap<>();
+    final Set<String> allowedSacScale = new HashSet<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
+    protected boolean speedTwoDirections;
     private DecimalEncodedValue priorityWayEncoder;
-    private EncodedValueOld relationCodeEncoder;
+    private EnumEncodedValue<RouteNetwork> footRouteEnc;
+    Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     /**
      * Should be only instantiated via EncodingManager
@@ -61,25 +62,28 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         this(4, 1);
     }
 
-    public FootFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speedBits", 4),
-                properties.getDouble("speedFactor", 1));
-        this.properties = properties;
-        this.setBlockFords(properties.getBool("block_fords", true));
-    }
-
     public FootFlagEncoder(String propertiesStr) {
         this(new PMap(propertiesStr));
     }
 
-    public FootFlagEncoder(int speedBits, double speedFactor) {
+    public FootFlagEncoder(PMap properties) {
+        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1));
+
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
+        blockBarriersByDefault(properties.getBool("block_barriers", false));
+        speedTwoDirections = properties.getBool("speed_two_directions", false);
+    }
+
+    protected FootFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor, 0);
         restrictions.addAll(Arrays.asList("foot", "access"));
-        restrictedValues.add("private");
+
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+        restrictedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -96,7 +100,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         sidewalkValues.add("left");
         sidewalkValues.add("right");
 
-        setBlockByDefault(false);
+        blockBarriersByDefault(false);
         absoluteBarriers.add("fence");
         potentialBarriers.add("gate");
         potentialBarriers.add("cattle_grid");
@@ -109,6 +113,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         safeHighwayTags.add("track");
         safeHighwayTags.add("residential");
         safeHighwayTags.add("service");
+        safeHighwayTags.add("platform");
 
         avoidHighwayTags.add("trunk");
         avoidHighwayTags.add("trunk_link");
@@ -129,14 +134,21 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // disallowed in some countries
         //allowedHighwayTags.add("bridleway");
 
-        hikingNetworkToCode.put("iwn", UNCHANGED.getValue());
-        hikingNetworkToCode.put("nwn", UNCHANGED.getValue());
-        hikingNetworkToCode.put("rwn", UNCHANGED.getValue());
-        hikingNetworkToCode.put("lwn", UNCHANGED.getValue());
+        routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
+        routeMap.put(NATIONAL, UNCHANGED.getValue());
+        routeMap.put(REGIONAL, UNCHANGED.getValue());
+        routeMap.put(LOCAL, UNCHANGED.getValue());
+
+        allowedSacScale.add("hiking");
+        allowedSacScale.add("mountain_hiking");
+        allowedSacScale.add("demanding_mountain_hiking");
 
         maxPossibleSpeed = FERRY_SPEED;
         speedDefault = MEAN_SPEED;
-        init();
+    }
+
+    public TransportationMode getTransportationMode() {
+        return TransportationMode.FOOT;
     }
 
     @Override
@@ -149,49 +161,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         // larger value required - ferries are faster than pedestrians
-        registerNewEncodedValue.add(speedEncoder = new FactorizedDecimalEncodedValue(prefix + "average_speed", speedBits, speedFactor, false));
-        registerNewEncodedValue.add(priorityWayEncoder = new FactorizedDecimalEncodedValue(prefix + "priority", 3, PriorityCode.getFactor(1), false));
-    }
+        registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), speedTwoDirections));
 
-    @Override
-    public int defineRelationBits(int index, int shift) {
-        relationCodeEncoder = new EncodedValueOld("RelationCode", shift, 3, 1, 0, 7);
-        return shift + relationCodeEncoder.getBits();
-    }
-
-    /**
-     * Foot flag encoder does not provide any turn cost / restrictions
-     */
-    @Override
-    public int defineTurnBits(int index, int shift) {
-        return shift;
-    }
-
-    /**
-     * Foot flag encoder does not provide any turn cost / restrictions
-     * <p>
-     *
-     * @return <code>false</code>
-     */
-    @Override
-    public boolean isTurnRestricted(long flags) {
-        return false;
-    }
-
-    /**
-     * Foot flag encoder does not provide any turn cost / restrictions
-     * <p>
-     *
-     * @return 0
-     */
-    @Override
-    public double getTurnCost(long flag) {
-        return 0;
-    }
-
-    @Override
-    public long getTurnFlags(boolean restricted, double costs) {
-        return 0;
+        footRouteEnc = getEnumEncodedValue(RouteNetwork.key("foot"), RouteNetwork.class);
     }
 
     /**
@@ -225,13 +198,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return EncodingManager.Access.CAN_SKIP;
         }
 
-        String sacScale = way.getTag("sac_scale");
-        if (sacScale != null) {
-            if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale)
-                    && !"demanding_mountain_hiking".equals(sacScale) && !"alpine_hiking".equals(sacScale))
-                // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-                return EncodingManager.Access.CAN_SKIP;
-        }
+        // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
+        if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale))
+            return EncodingManager.Access.CAN_SKIP;
 
         // no need to evaluate ferries or fords - already included here
         if (way.hasTag("foot", intendedValues))
@@ -261,59 +230,42 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
-        int code = 0;
-        if (relation.hasTag("route", "hiking") || relation.hasTag("route", "foot")) {
-            Integer val = hikingNetworkToCode.get(relation.getTag("network"));
-            if (val != null)
-                code = val;
-            else
-                code = hikingNetworkToCode.get("lwn");
-        } else if (relation.hasTag("route", "ferry")) {
-            code = PriorityCode.AVOID_IF_POSSIBLE.getValue();
-        }
-
-        int oldCode = (int) relationCodeEncoder.getValue(oldRelationFlags);
-        if (oldCode < code)
-            return relationCodeEncoder.setValue(0, code);
-        return oldRelationFlags;
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
         if (access.canSkip())
             return edgeFlags;
 
+        Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
+        accessEnc.setBool(false, edgeFlags, true);
+        accessEnc.setBool(true, edgeFlags, true);
         if (!access.isFerry()) {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null) {
-                if ("hiking".equals(sacScale))
-                    speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
-                else
-                    speedEncoder.setDecimal(false, edgeFlags, SLOW_SPEED);
+                setSpeed(edgeFlags, true, true, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
             } else {
-                speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
+                setSpeed(edgeFlags, true, true, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
             }
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
         } else {
+            priorityFromRelation = PriorityCode.AVOID_IF_POSSIBLE.getValue();
             double ferrySpeed = getFerrySpeed(way);
-            setSpeed(false, edgeFlags, ferrySpeed);
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
+            setSpeed(edgeFlags, true, true, ferrySpeed);
         }
-
-        int priorityFromRelation = 0;
-        if (relationFlags != 0)
-            priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, priorityFromRelation)));
         return edgeFlags;
     }
 
-    protected int handlePriority(ReaderWay way, int priorityFromRelation) {
+    void setSpeed(IntsRef edgeFlags, boolean fwd, boolean bwd, double speed) {
+        if (speed > getMaxSpeed())
+            speed = getMaxSpeed();
+        if (fwd)
+            avgSpeedEnc.setDecimal(false, edgeFlags, speed);
+        if (bwd && speedTwoDirections)
+            avgSpeedEnc.setDecimal(true, edgeFlags, speed);
+    }
+
+    int handlePriority(ReaderWay way, Integer priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
-        if (priorityFromRelation == 0)
+        if (priorityFromRelation == null)
             weightToPrioMap.put(0d, UNCHANGED.getValue());
         else
             weightToPrioMap.put(110d, priorityFromRelation);
@@ -359,11 +311,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
-    @Override
-    public String toString() {
-        return "foot";
-    }
-
     /*
      * This method is a current hack, to allow ferries to be actually faster than our current storable maxSpeed.
      */
@@ -375,5 +322,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return SHORT_TRIP_FERRY_SPEED;
         }
         return speed;
+    }
+
+    @Override
+    public String toString() {
+        return "foot";
     }
 }

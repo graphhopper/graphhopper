@@ -17,10 +17,10 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.FactorizedDecimalEncodedValue;
+import com.graphhopper.routing.profiles.UnsignedDecimalEncodedValue;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -40,8 +40,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
 
-    // This value determines the speed for roads with access=destination
-    protected int destinationSpeed;
     protected boolean speedTwoDirections;
     /**
      * A map which associates string to speed. Get some impression:
@@ -55,23 +53,19 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     public CarFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 5),
+        this(properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.properties = properties;
-        this.speedTwoDirections = properties.getBool("speed_two_directions", false);
-        this.setBlockFords(properties.getBool("block_fords", true));
-        this.setBlockByDefault(properties.getBool("block_barriers", true));
-    }
 
-    public CarFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
+        blockBarriersByDefault(properties.getBool("block_barriers", true));
+        speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 
     public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
-        restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -79,6 +73,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restrictedValues.add("delivery");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+        restrictedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("permissive");
@@ -98,10 +93,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         absoluteBarriers.add("block");
         absoluteBarriers.add("bus_trap");
         absoluteBarriers.add("sump_buster");
-
-        trackTypeSpeedMap.put("grade1", 20); // paved
-        trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
-        trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials        
 
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("grass_paver");
@@ -140,13 +131,19 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         // forestry stuff
         defaultSpeedMap.put("track", 15);
 
+        trackTypeSpeedMap.put("grade1", 20); // paved
+        trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
+        trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials
+        trackTypeSpeedMap.put(null, defaultSpeedMap.get("track"));
+
         // limit speed on bad surfaces to 30 km/h
         badSurfaceSpeed = 30;
-        destinationSpeed = 5;
         maxPossibleSpeed = 140;
         speedDefault = defaultSpeedMap.get("secondary");
+    }
 
-        init();
+    public TransportationMode getTransportationMode() {
+        return TransportationMode.MOTOR_VEHICLE;
     }
 
     @Override
@@ -161,13 +158,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
-        registerNewEncodedValue.add(speedEncoder = new FactorizedDecimalEncodedValue(prefix + "average_speed", speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(EncodingManager.getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
     }
 
     protected double getSpeed(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (!Helper.isEmpty(highwayValue) && way.hasTag("motorroad", "yes")
-                && highwayValue != "motorway" && highwayValue != "motorway_link") {
+                && !"motorway".equals(highwayValue) && !"motorway_link".equals(highwayValue)) {
             highwayValue = "motorroad";
         }
         Integer speed = defaultSpeedMap.get(highwayValue);
@@ -203,11 +200,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             return EncodingManager.Access.CAN_SKIP;
         }
 
-        if ("track".equals(highwayValue)) {
-            String tt = way.getTag("tracktype");
-            if (tt != null && !tt.equals("grade1") && !tt.equals("grade2") && !tt.equals("grade3"))
-                return EncodingManager.Access.CAN_SKIP;
-        }
+        if ("track".equals(highwayValue) && trackTypeSpeedMap.get(way.getTag("tracktype")) == null)
+            return EncodingManager.Access.CAN_SKIP;
 
         if (!defaultSpeedMap.containsKey(highwayValue))
             return EncodingManager.Access.CAN_SKIP;
@@ -234,12 +228,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
-        return oldRelationFlags;
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access accept, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access accept) {
         if (accept.canSkip())
             return edgeFlags;
 
@@ -251,7 +240,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             speed = applyBadSurfaceSpeed(way, speed);
 
             setSpeed(false, edgeFlags, speed);
-            setSpeed(true, edgeFlags, speed);
+            if (speedTwoDirections)
+                setSpeed(true, edgeFlags, speed);
 
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
             if (isOneway(way) || isRoundabout) {
@@ -269,16 +259,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
             setSpeed(false, edgeFlags, ferrySpeed);
-            setSpeed(true, edgeFlags, ferrySpeed);
+            if (speedTwoDirections)
+                setSpeed(true, edgeFlags, ferrySpeed);
         }
 
-        for (String restriction : restrictions) {
-            if (way.hasTag(restriction, "destination")) {
-                // This is problematic as Speed != Time
-                setSpeed(false, edgeFlags, destinationSpeed);
-                setSpeed(true, edgeFlags, destinationSpeed);
-            }
-        }
         return edgeFlags;
     }
 
@@ -306,35 +290,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 || way.hasTag("vehicle:forward")
                 || way.hasTag("motor_vehicle:backward")
                 || way.hasTag("motor_vehicle:forward");
-    }
-
-    public String getWayInfo(ReaderWay way) {
-        String str = "";
-        String highwayValue = way.getTag("highway");
-        // for now only motorway links
-        if ("motorway_link".equals(highwayValue)) {
-            String destination = way.getTag("destination");
-            if (!Helper.isEmpty(destination)) {
-                int counter = 0;
-                for (String d : destination.split(";")) {
-                    if (d.trim().isEmpty())
-                        continue;
-
-                    if (counter > 0)
-                        str += ", ";
-
-                    str += d.trim();
-                    counter++;
-                }
-            }
-        }
-        if (str.isEmpty())
-            return str;
-        // I18N
-        if (str.contains(","))
-            return "destinations: " + str;
-        else
-            return "destination: " + str;
     }
 
     /**

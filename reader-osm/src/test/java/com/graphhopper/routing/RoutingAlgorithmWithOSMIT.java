@@ -18,9 +18,11 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
@@ -97,9 +99,9 @@ public class RoutingAlgorithmWithOSMIT {
     @Test
     public void testMonacoMotorcycle() {
         List<OneRun> list = new ArrayList<>();
-        list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2703, 119));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3749, 170));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 3175, 169));
+        list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2682, 119));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3728, 170));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 3168, 169));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
         list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
@@ -112,9 +114,9 @@ public class RoutingAlgorithmWithOSMIT {
     @Test
     public void testMonacoMotorcycleCurvature() {
         List<OneRun> list = new ArrayList<>();
-        list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2703, 119));
-        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3749, 170));
-        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 3175, 169));
+        list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2681, 119));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3727, 170));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 3168, 169));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
         list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
@@ -276,11 +278,11 @@ public class RoutingAlgorithmWithOSMIT {
         // most routes have same number of points as testMonaceFoot results but longer distance due to elevation difference
         List<OneRun> list = createMonacoFoot();
         list.get(0).setDistance(1, 1627);
-        list.get(2).setDistance(1, 2258);
+        list.get(2).setDistance(1, 2250);
         list.get(3).setDistance(1, 1482);
 
         // or slightly longer tour with less nodes: list.get(1).setDistance(1, 3610);
-        list.get(1).setDistance(1, 3595);
+        list.get(1).setDistance(1, 3573);
         list.get(1).setLocs(1, 149);
 
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
@@ -292,9 +294,9 @@ public class RoutingAlgorithmWithOSMIT {
     public void testNorthBayreuthHikeFastestAnd3D() {
         List<OneRun> list = new ArrayList<>();
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
-        list.add(new OneRun(49.974972, 11.515657, 49.991022, 11.512299, 2365, 66));
+        list.add(new OneRun(49.974972, 11.515657, 49.991022, 11.512299, 2384, 93));
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
-        list.add(new OneRun(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
+        list.add(new OneRun(49.990967, 11.545258, 50.023182, 11.555386, 4746, 119));
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
                 list, "hike", true, "hike", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -304,9 +306,9 @@ public class RoutingAlgorithmWithOSMIT {
     public void testMonacoBike3D_twoSpeedsPerEdge() {
         List<OneRun> list = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2710, 118));
+        list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2689, 118));
         // 2.
-        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 3777, 194));
+        list.add(new OneRun(43.728499, 7.417907, 43.74958, 7.436566, 3735, 194));
         // 3.
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.
@@ -315,29 +317,28 @@ public class RoutingAlgorithmWithOSMIT {
         // try reverse direction
         // 1.
         list.add(new OneRun(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
-        list.add(new OneRun(43.74958, 7.436566, 43.728499, 7.417907, 4199, 165));
-        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 3261, 177));
+        list.add(new OneRun(43.74958, 7.436566, 43.728499, 7.417907, 4180, 165));
+        list.add(new OneRun(43.739213, 7.427806, 43.728677, 7.41016, 3244, 177));
         // 4. avoid tunnel(s)!
-        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 2452, 112));
+        list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 2436, 112));
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
                 list, "bike2", true, "bike2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-    // TODO fix later, see #1525, #1531
-//    @Test
-//    public void testLandmarkBug() {
-//        List<OneRun> list = new ArrayList<>();
-//        OneRun run = new OneRun();
-//        run.add(50.016923, 11.514187, 0, 0);
-//        run.add(50.019129, 11.500325, 0, 0);
-//        run.add(50.023623, 11.56929, 7069, 178);
-//        list.add(run);
-//
-//        runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
-//                list, "bike", true, "bike", "fastest", false);
-//        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-//    }
+    @Test
+    public void testLandmarkBug() {
+        List<OneRun> list = new ArrayList<>();
+        OneRun run = new OneRun();
+        run.add(50.016923, 11.514187, 0, 0);
+        run.add(50.019129, 11.500325, 0, 0);
+        run.add(50.023623, 11.56929, 7069, 178);
+        list.add(run);
+
+        runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
+                list, "bike", true, "bike", "fastest", false);
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
 
     @Test
     public void testBug1014() {
@@ -402,8 +403,7 @@ public class RoutingAlgorithmWithOSMIT {
     public void testKremsBikeRelation() {
         List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
-        // 3109m is better as cyclepath is used
-        list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3112, 87));
+        list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3077, 79));
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 94));
 
         runAlgo(testCollector, DIR + "/krems.osm.gz", "target/krems-gh",
@@ -540,7 +540,7 @@ public class RoutingAlgorithmWithOSMIT {
      *               preparation and takes a bit longer
      */
     Graph runAlgo(TestAlgoCollector testCollector, String osmFile,
-                  String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
+                  String graphFile, List<OneRun> runs, String importVehicles,
                   boolean withCH, String vehicle, String weightStr, boolean is3D) {
 
         // for different weightings we need a different storage, otherwise we would need to remove the graph folder
@@ -551,28 +551,36 @@ public class RoutingAlgorithmWithOSMIT {
         OneRun tmpOneRun = null;
         try {
             Helper.removeDir(new File(graphFile));
+            EncodingManager em = EncodingManager.create(importVehicles);
+            List<ProfileConfig> profiles = new ArrayList<>();
+            for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
+                String vehicleName = encoder.toString();
+                profiles.add(new ProfileConfig(vehicleName + "_profile")
+                        .setVehicle(vehicleName).setWeighting(weightStr).setTurnCosts(encoder.supportsTurnCosts()));
+            }
             GraphHopper hopper = new GraphHopperOSM().
                     setStoreOnFlush(true).
-                    setCHEnabled(withCH).
                     setDataReaderFile(osmFile).
+                    setProfiles(profiles).
                     setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager.Builder(8).addAll(new DefaultFlagEncoderFactory(), importVehicles).build());
+                    setEncodingManager(em);
 
             if (osmFile.contains("krautsand"))
                 hopper.setMinNetworkSize(0, 0);
             // avoid that path.getDistance is too different to path.getPoint.calcDistance
             hopper.setWayPointMaxDistance(0);
 
-            // always enable landmarks, add maximum information to reduce warnings
-            hopper.getLMFactoryDecorator().addWeighting(weightStr + "|maximum=60000").
-                    setEnabled(true).setDisablingAllowed(true);
+            // always enable landmarks
+            hopper.getLMPreparationHandler().
+                    setLMProfileConfigs(new LMProfileConfig(vehicle + "_profile")).
+                    setDisablingAllowed(true);
 
-            if (withCH)
-                hopper.getCHFactoryDecorator().
-                        addWeighting(weightStr).
-                        setEnabled(true).
-                        setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE).
+            if (withCH) {
+                assert !Helper.isEmpty(weightStr);
+                hopper.getCHPreparationHandler().
+                        setCHProfileConfigs(new CHProfileConfig(vehicle + "_profile")).
                         setDisablingAllowed(true);
+            }
 
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider(DIR));
@@ -580,7 +588,7 @@ public class RoutingAlgorithmWithOSMIT {
             hopper.importOrLoad();
 
             TraversalMode tMode = importVehicles.contains("turn_costs=true")
-                    ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
+                    ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             HintsMap hints = new HintsMap().setWeighting(weightStr).setVehicle(vehicle);
 
@@ -593,7 +601,7 @@ public class RoutingAlgorithmWithOSMIT {
                 }
                 algoEntry = entry;
                 LocationIndex idx = entry.getIdx();
-                for (OneRun oneRun : forEveryAlgo) {
+                for (OneRun oneRun : runs) {
                     tmpOneRun = oneRun;
                     List<QueryResult> list = oneRun.getList(idx, edgeFilter);
                     testCollector.assertDistance(hopper.getEncodingManager(), algoEntry, list, oneRun);
@@ -620,7 +628,7 @@ public class RoutingAlgorithmWithOSMIT {
         final EncodingManager encodingManager = EncodingManager.create("car");
         final GraphHopper hopper = new GraphHopperOSM().
                 setStoreOnFlush(true).
-                setEncodingManager(encodingManager).setCHEnabled(false).
+                setEncodingManager(encodingManager).
                 setWayPointMaxDistance(0).
                 setDataReaderFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).

@@ -17,11 +17,18 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.GraphHopper;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.routing.util.BikeFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static org.junit.Assert.*;
@@ -33,30 +40,33 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     @Override
     public GraphHopperStorage createGHStorage(String location, boolean enabled3D) {
         // reduce segment size in order to test the case where multiple segments come into the game
-        GraphHopperStorage gs = newGHStorage(new RAMDirectory(location), enabled3D);
-        gs.setSegmentSize(defaultSize / 2);
+        GraphHopperStorage gs = newGHStorage(new RAMDirectory(location), enabled3D, defaultSize / 2);
         gs.create(defaultSize);
         return gs;
     }
 
     protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D) {
-        return new GraphHopperStorage(dir, encodingManager, enabled3D, new GraphExtension.NoOpExtension());
+        return newGHStorage(dir, enabled3D, -1);
+    }
+
+    protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
+        return GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).setSegmentSize(segmentSize).build();
     }
 
     @Test
-    public void testNoCreateCalled() throws IOException {
-        try (GraphHopperStorage gs = new GraphBuilder(encodingManager).build()) {
-            ((BaseGraph) gs.getGraph(Graph.class)).ensureNodeIndex(123);
-            fail("AssertionError should be raised");
-        } catch (AssertionError err) {
+    public void testNoCreateCalled() {
+        try (GraphHopperStorage gs = GraphBuilder.start(encodingManager).build()) {
+            ((BaseGraph) gs.getBaseGraph()).ensureNodeIndex(123);
+            fail("IllegalStateException should be raised");
+        } catch (IllegalStateException err) {
             // ok
         } catch (Exception ex) {
-            fail("AssertionError should be raised, but was " + ex.toString());
+            fail("IllegalStateException should be raised, but was " + ex.toString());
         }
     }
 
     @Test
-    public void testSave_and_fileFormat() throws IOException {
+    public void testSave_and_fileFormat() {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
@@ -126,6 +136,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0), iter.fetchWayGeometry(0));
         assertEquals(Helper.createPointList3D(10, 10, 0, 1.5, 1, 0, 2, 3, 0), iter.fetchWayGeometry(1));
         assertEquals(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0, 11, 20, 1), iter.fetchWayGeometry(2));
+        assertEquals(Helper.createPointList3D(10, 10, 0, 11, 20, 1), iter.fetchWayGeometry(4));
+        assertEquals(Helper.createPointList3D(11, 20, 1, 10, 10, 0), iter.detach(true).fetchWayGeometry(4));
 
         assertEquals(11, na.getLatitude(1), 1e-2);
         assertEquals(20, na.getLongitude(1), 1e-2);
@@ -148,7 +160,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     @Test
     public void internalDisconnect() {
         GraphHopperStorage storage = createGHStorage();
-        BaseGraph graph = (BaseGraph) storage.getGraph(Graph.class);
+        BaseGraph graph = (BaseGraph) storage.getBaseGraph();
         EdgeIteratorState iter0 = graph.edge(0, 1, 10, true);
         EdgeIteratorState iter2 = graph.edge(1, 2, 10, true);
         EdgeIteratorState iter3 = graph.edge(0, 3, 10, true);
@@ -189,9 +201,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     @Test
     public void testBigDataEdge() {
         Directory dir = new RAMDirectory();
-        GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false);
         graph.create(defaultSize);
-        ((BaseGraph) graph.getGraph(Graph.class)).setEdgeCount(Integer.MAX_VALUE / 2);
+        ((BaseGraph) graph.getBaseGraph()).setEdgeCount(Integer.MAX_VALUE / 2);
         assertTrue(graph.getAllEdges().next());
         graph.close();
     }
@@ -213,17 +225,16 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testIdentical() {
-        GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension());
-        assertEquals(store.getNodes(), store.getGraph(Graph.class).getNodes());
-        assertEquals(store.getAllEdges().length(), store.getGraph(Graph.class).getAllEdges().length());
+        GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true);
+        assertEquals(store.getNodes(), store.getBaseGraph().getNodes());
+        assertEquals(store.getEdges(), store.getBaseGraph().getEdges());
     }
 
     @Test
     public void testMultipleDecoupledEdges() {
         // a typical usage where we create independent EdgeIteratorState's BUT due to the IntsRef reference they are no more independent
         GraphHopperStorage storage = createGHStorage();
-        IntsRef intsRef = encodingManager.createEdgeFlags();
-        BaseGraph graph = (BaseGraph) storage.getGraph(Graph.class);
+        Graph graph = storage.getBaseGraph();
         graph.edge(0, 1, 10, true);
         graph.edge(1, 2, 10, true);
 
@@ -259,7 +270,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     @Test
     public void testDecoupledEdgeIteratorStates() {
         GraphHopperStorage storage = createGHStorage();
-        BaseGraph graph = (BaseGraph) storage.getGraph(Graph.class);
+        Graph graph = storage.getBaseGraph();
         IntsRef ref = encodingManager.createEdgeFlags();
         ref.ints[0] = 12;
         graph.edge(1, 2, 10, true).setFlags(ref);
@@ -279,75 +290,49 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void testAdditionalEdgeField() {
-        GraphExtension extStorage = new GraphExtension() {
-            @Override
-            public boolean isRequireNodeField() {
-                return false;
-            }
+    public void testLoadGraph_implicitEncodedValues_issue1862() {
+        Helper.removeDir(new File(defaultGraphLoc));
+        encodingManager = new EncodingManager.Builder().add(createCarFlagEncoder()).add(new BikeFlagEncoder()).build();
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 12, 23);
+        na.setNode(1, 8, 13);
+        na.setNode(2, 2, 10);
+        na.setNode(3, 5, 9);
+        graph.edge(1, 2, 10, true);
+        graph.edge(1, 3, 10, true);
+        int nodes = graph.getNodes();
+        int edges = graph.getAllEdges().length();
+        graph.flush();
+        boolean ch = graph.isCHPossible();
+        Helper.close(graph);
 
-            @Override
-            public boolean isRequireEdgeField() {
-                return true;
-            }
+        // load without configured FlagEncoders
+        GraphHopper hopper = new GraphHopper();
+        hopper.setProfiles(Collections.singletonList(new ProfileConfig("fastest_car_node").setVehicle("car").setWeighting("fastest")));
+        if (ch) {
+            hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("fastest_car_node"));
+        }
+        assertTrue(hopper.load(defaultGraphLoc));
+        graph = hopper.getGraphHopperStorage();
+        assertEquals(nodes, graph.getNodes());
+        assertEquals(edges, graph.getAllEdges().length());
+        Helper.close(graph);
 
-            @Override
-            public int getDefaultNodeFieldValue() {
-                throw new UnsupportedOperationException("Not supported.");
-            }
+        // load via explicitly configured FlagEncoders
+        hopper = new GraphHopper()
+                .setEncodingManager(encodingManager)
+                .setProfiles(Collections.singletonList(new ProfileConfig("fastest_car_node").setVehicle("car").setWeighting("fastest")));
+        if (ch) {
+            hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("fastest_car_node"));
+        }
+        assertTrue(hopper.load(defaultGraphLoc));
+        graph = hopper.getGraphHopperStorage();
+        assertEquals(nodes, graph.getNodes());
+        assertEquals(edges, graph.getAllEdges().length());
+        Helper.close(graph);
 
-            @Override
-            public int getDefaultEdgeFieldValue() {
-                return 2;
-            }
-
-            @Override
-            public void init(Graph graph, Directory dir) {
-            }
-
-            @Override
-            public void setSegmentSize(int bytes) {
-
-            }
-
-            @Override
-            public GraphExtension copyTo(GraphExtension extStorage) {
-                return this;
-            }
-
-            @Override
-            public boolean loadExisting() {
-                return true;
-            }
-
-            @Override
-            public GraphExtension create(long byteCount) {
-                return this;
-            }
-
-            @Override
-            public void flush() {
-            }
-
-            @Override
-            public void close() {
-            }
-
-            @Override
-            public boolean isClosed() {
-                return false;
-            }
-
-            @Override
-            public long getCapacity() {
-                return 0;
-            }
-        };
-
-        GraphHopperStorage storage = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, extStorage);
-        storage.create(1000);
-        EdgeIteratorState iter = storage.edge(0, 1, 10, true);
-
-        assertEquals(extStorage.getDefaultEdgeFieldValue(), iter.getAdditionalField());
+        Helper.removeDir(new File(defaultGraphLoc));
     }
+
 }

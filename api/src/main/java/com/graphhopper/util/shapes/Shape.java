@@ -17,9 +17,10 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.graphhopper.util.PointList;
+
 /**
- * A shape interface to implement circles or rectangles.
- * <p>
+ * A shape interface to implement circles, polygons or rectangles.
  *
  * @author Peter Karich
  */
@@ -28,6 +29,8 @@ public interface Shape {
      * @return true if edges or areas of this and the specified shapes overlap
      */
     boolean intersects(Shape o);
+
+    boolean intersects(PointList pointList);
 
     /**
      * @return true only if lat and lon are inside (or on the edge) of this shape

@@ -1,19 +1,68 @@
 graphhopper:
 
-  # OpenStreetMap input file
-  # datareader.file: some.pbf
+  # OpenStreetMap input file PBF or XML, can be changed via command line -Ddw.graphhopper.datareader.file=some.pbf
+  datareader.file: ""
+  # Local folder used by graphhopper to store its data
+  graph.location: graph-cache
 
   ##### Vehicles #####
 
 
-  # Possible options: car,foot,bike,bike2,mtb,racingbike,motorcycle (comma separated)
-  # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below
+  # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,car4wd,wheelchair (comma separated)
+  # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
   graph.flag_encoders: car
-
 
   # Enable turn restrictions for car or motorcycle.
   # graph.flag_encoders: car|turn_costs=true
 
+  # Add additional information to every edge. Used for path details (#1548), better instructions (#1844) and tunnel/bridge interpolation (#798).
+  # Default values are: road_class,road_class_link,road_environment,max_speed,road_access (since #1805)
+  # More are: surface,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type
+  # graph.encoded_values: surface,toll,track_type
+
+  ##### Routing Profiles ####
+
+  # Routing can be done for the following list of profiles. The fields of each profile are as follows:
+  # - name (required): a unique string identifier for the profile
+  # - vehicle (required): refers to the `graph.flag_encoders` used for this profile
+  # - weighting (required): the weighting used for this profile, e.g. fastest,shortest or short_fastest
+  # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
+  #   this will only work if the `graph.flag_encoders` for the given `vehicle` is configured with `|turn_costs=true`.
+  #
+  # Depending on the above fields there are other properties that can be used, e.g.
+  # - distance_factor: 0.1 (can be used to fine tune the time/distance trade-off of short_fastest weighting)
+  # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
+  #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
+  #   in seconds, so for example it does not work with shortest weighting.
+  #
+  # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
+  # profiles (see below). Otherwise you should at least limit the number of `routing.max_visited_nodes`.
+  profiles:
+    - name: car
+      vehicle: car
+      weighting: fastest
+
+  #  - name: car_with_turn_costs
+  #    vehicle: car
+  #    weighting: short_fastest
+  #    distance_factor: 0.1
+  #    turn_costs: true
+  #    u_turn_costs: 60
+
+  # Speed mode:
+  # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
+  # more RAM/disk space for holding the prepared graph but also means less memory usage per request. Using the following
+  # list you can define for which of the above routing profiles such preparation shall be performed. Note that to support
+  # profiles with `turn_costs: true` a more elaborate preparation is required (longer preparation time and more memory
+  # usage) and the routing will also be slower than with `turn_costs: false`.
+  profiles_ch:
+    - profile: car
+  #   - profile: car_with_turn_costs
+
+  # Hybrid mode:
+  # Similar to speed mode, the hybrid mode (Landmarks, LM) also speeds up routing by doing calculating auxiliary data
+  # in advance. Its not as fast as speed mode, but more flexible.
+  profiles_lm: []
 
   ##### Elevation #####
 
@@ -34,35 +83,15 @@ graphhopper:
   #### Speed, hybrid and flexible mode ####
 
 
-  # By default the speed mode with the 'fastest' weighting is used. Internally a graph preparation via
-  # contraction hierarchies (CH) is done to speed routing up. This requires more RAM/disc space for holding the
-  # graph but less for every request. You can also setup multiple weightings, by providing a comma separated list.
-  prepare.ch.weightings: fastest
-
-  # To enable turn-costs in speed mode (contraction hierarchies) edge-based graph traversal and a more elaborate
-  # pre-processing is required. Using this option you can either turn off the edge-based pre-processing (choose 'off'),
-  # use edge-based pre-processing for all encoders/vehicles with turn_costs=true (choose 'edge_or_node') or use node-based
-  # pre-processing for all encoders/vehicles and additional edge-based pre-processing for all encoders/vehicles with
-  # turn_costs=true (choose 'edge_and_node').
-  prepare.ch.edge_based: off
-
-
-  # Disable the speed mode. Should be used only with routing.max_visited_nodes or when the hybrid mode is enabled instead
-  # prepare.ch.weightings: no
-
-
-  # To make CH preparation faster for multiple flagEncoders you can increase the default threads if you have enough RAM.
+  # To make CH preparation faster for multiple profiles you can increase the default threads if you have enough RAM.
   # Change this setting only if you know what you are doing and if the default worked for you.
   # prepare.ch.threads: 1
-
-
-  # The hybrid mode can be enabled with
-  # prepare.lm.weightings: fastest
 
   # To tune the performance vs. memory usage for the hybrid mode use
   # prepare.lm.landmarks: 16
 
-  # Make landmark preparation parallel if you have enough RAM. Change this only if you know what you are doing and if the default worked for you.
+  # Make landmark preparation parallel if you have enough RAM. Change this only if you know what you are doing and if
+  # the default worked for you.
   # prepare.lm.threads: 1
 
 
@@ -80,7 +109,7 @@ graphhopper:
   # routing.max_visited_nodes: 1000000
 
 
-  # If enabled, allows a user to run flexibility requests even if speed mode is enabled. Every request then has to include a hint routing.ch.disable=true.
+  # If enabled, allows a user to run flexibility requests even if speed mode is enabled. Every request then has to include a hint ch.disable=true.
   # Attention, non-CH route calculations take way more time and resources, compared to CH routing.
   # A possible attacker might exploit this to slow down your service. Only enable it if you need it and with routing.maxVisitedNodes
   # routing.ch.disabling_allowed: true
@@ -119,8 +148,8 @@ graphhopper:
 
 
   # Spatial Rules require you to provide Polygons in which the rules are enforced
-  # The line below contains the default location for these rules
-  # spatial_rules.location: core/files/spatialrules/countries.geo.json
+  # The line below contains the default location for the files which define these borders
+  # spatial_rules.borders_directory: core/files/spatialrules
 
   # You can define the maximum BBox for which spatial rules are loaded.
   # You might want to do this if you are only importing a small area and don't need rules for other countries.
@@ -138,28 +167,28 @@ graphhopper:
 
 # Dropwizard server configuration
 server:
-  applicationConnectors:
+  application_connectors:
   - type: http
     port: 8989
     # for security reasons bind to localhost
-    bindHost: localhost
-  requestLog:
+    bind_host: localhost
+  request_log:
       appenders: []
-  adminConnectors:
+  admin_connectors:
   - type: http
     port: 8990
-    bindHost: localhost
+    bind_host: localhost
 # See https://www.dropwizard.io/1.3.8/docs/manual/configuration.html#logging
 logging:
   appenders:
   - type: file
-    timeZone: UTC
-    currentLogFilename: logs/graphhopper.log
-    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    time_zone: UTC
+    current_log_filename: logs/graphhopper.log
+    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     archive: true
-    archivedLogFilenamePattern: ./logs/graphhopper-%d.log.gz
-    archivedFileCount: 30
-    neverBlock: true
+    archived_log_filename_pattern: ./logs/graphhopper-%d.log.gz
+    archived_file_count: 30
+    never_block: true
   - type: console
-    timeZone: UTC
-    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    time_zone: UTC
+    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

@@ -50,7 +50,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         return (LocationIndexTree) createIndexNoPrepare(g, resolution).prepareIndex();
     }
 
-    public LocationIndexTree createIndexNoPrepare(Graph g, int resolution) {
+    private LocationIndexTree createIndexNoPrepare(Graph g, int resolution) {
         Directory dir = new RAMDirectory(location);
         LocationIndexTree tmpIDX = new LocationIndexTree(g, dir);
         tmpIDX.setResolution(resolution);

@@ -19,10 +19,9 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -48,18 +47,7 @@ public class TestAlgoCollector {
     public TestAlgoCollector assertDistance(EncodingManager encodingManager, AlgoHelperEntry algoEntry, List<QueryResult> queryList,
                                             OneRun oneRun) {
         List<Path> altPaths = new ArrayList<>();
-        QueryGraph queryGraph = new QueryGraph(algoEntry.getForQueryGraph());
-        queryGraph.lookup(queryList);
-        AlgorithmOptions opts = algoEntry.getAlgorithmOptions();
-        FlagEncoder encoder = opts.getWeighting().getFlagEncoder();
-        if (encoder.supports(TurnWeighting.class)) {
-            if (!opts.getTraversalMode().isEdgeBased()) {
-                errors.add("Cannot use TurnWeighting with a node based traversal");
-                return this;
-            }
-            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), (TurnCostExtension) queryGraph.getExtension())).build());
-        }
-
+        QueryGraph queryGraph = QueryGraph.lookup(algoEntry.getForQueryGraph(), queryList);
         RoutingAlgorithmFactory factory = algoEntry.createRoutingFactory();
         for (int i = 0; i < queryList.size() - 1; i++) {
             RoutingAlgorithm algo = factory.createAlgo(queryGraph, algoEntry.getAlgorithmOptions());
@@ -73,7 +61,7 @@ public class TestAlgoCollector {
             altPaths.add(path);
         }
 
-        PathMerger pathMerger = new PathMerger().
+        PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), algoEntry.getAlgorithmOptions().getWeighting()).
                 setCalcPoints(true).
                 setSimplifyResponse(false).
                 setEnableInstructions(true);

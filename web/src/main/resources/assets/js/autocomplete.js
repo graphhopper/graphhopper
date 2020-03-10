@@ -104,7 +104,7 @@ AutoComplete.prototype.showListForIndex = function (ghRequest, routeIfAllResolve
         containerClass: "autocomplete",
         timeout: 1000,
         /* avoid too many requests when typing quickly */
-        deferRequestBy: 5,
+        deferRequestBy: 200,
         minChars: 2,
         maxHeight: 510,
         noCache: true,

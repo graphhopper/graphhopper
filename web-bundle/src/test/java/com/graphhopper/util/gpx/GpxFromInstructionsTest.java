@@ -18,11 +18,12 @@
 
 package com.graphhopper.util.gpx;
 
-import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -44,7 +45,9 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import java.io.StringReader;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 import static org.junit.Assert.*;
 
@@ -52,14 +55,12 @@ public class GpxFromInstructionsTest {
 
     private EncodingManager carManager;
     private FlagEncoder carEncoder;
-    private BooleanEncodedValue roundaboutEnc;
     private TranslationMap trMap;
 
     @Before
     public void setUp() {
         carEncoder = new CarFlagEncoder();
         carManager = EncodingManager.create(carEncoder);
-        roundaboutEnc = carManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
         trMap = new TranslationMap().doImport();
     }
 
@@ -87,8 +88,9 @@ public class GpxFromInstructionsTest {
         g.edge(3, 7, 10000, true).setName("3-7").setFlags(flagsForSpeed(carManager, 10));
         g.edge(4, 5, 10000, true).setName("4-5").setFlags(flagsForSpeed(carManager, 100));
 
-        Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), TraversalMode.NODE_BASED).calcPath(1, 5);
-        InstructionList wayList = p.calcInstructions(roundaboutEnc, trMap.getWithFallBack(Locale.US));
+        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, trMap.getWithFallBack(Locale.US));
         PointList points = p.calcPoints();
         assertEquals(4, wayList.size());
 
@@ -111,7 +113,7 @@ public class GpxFromInstructionsTest {
 
         String gpxStr = GpxFromInstructions.createGPX(wayList, "test", (long) 0, false, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US));
         verifyGPX(gpxStr);
-        System.out.println(gpxStr);
+//        System.out.println(gpxStr);
 
         assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T00:00:00Z</time>"));
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
@@ -210,7 +212,7 @@ public class GpxFromInstructionsTest {
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         encodingManager.acceptWay(way, map);
-        return encodingManager.handleWayTags(way, map, 0);
+        return encodingManager.handleWayTags(way, map, encodingManager.createRelationFlags());
     }
 
     private void verifyGPX(String gpx) {

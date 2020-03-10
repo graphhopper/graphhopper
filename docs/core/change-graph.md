@@ -6,7 +6,8 @@ Currently, it is possible to change the speed of edges as well as the access val
 ### Before you start
 
 You should be aware that changing either the access or the speed will not influence the results of ch requests.
-We recommend using `prepare.ch.weightings=no` or you should know what you are doing. This can be used in combination
+CH should not be used with the change-graph feature, unless you really know what you are doing, so make sure the
+`profiles_ch` list is empty in your configuration. The feature can however, be used in combination
 with [Landmarks](landmarks.md), but only if you increase the weight, decreasing the weight might lead to incorrect
 routing results. Per default the `/change` endpoint is disabled for security reasons, you can however enable the 
 endpoint first. Be aware that this endpoint is not secured and everybody can call it and change the graph. 
@@ -16,7 +17,7 @@ unless you call `graphHopperStorage.flush()`.
 ### Getting started
 
 First, enable the `/change` endpoint. On a Unix system, open the terminal and go to the GraphHopper directory.
-Type `export GH_WEB_OPTS=-Dgraphhopper.web.change_graph.enabled=true`.
+Type `export GH_WEB_OPTS=-Ddw.graphhopper.web.change_graph.enabled=true`.
 Start graphhopper by typing `./graphhopper.sh -a web -i <your-pbf>`.
 In this example we use `baden-wuerttemberg-latest.osm.pbf`.
 

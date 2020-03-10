@@ -20,43 +20,44 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.PriorityQueue;
 
-/**
- * Common subclass for bidirectional algorithms.
- * <p>
- *
- * @author Peter Karich
- */
-public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+
+public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
+    protected final TraversalMode traversalMode;
     protected int from;
     protected int to;
+    protected int fromOutEdge;
+    protected int toInEdge;
     protected IntObjectMap<SPTEntry> bestWeightMapFrom;
     protected IntObjectMap<SPTEntry> bestWeightMapTo;
     protected IntObjectMap<SPTEntry> bestWeightMapOther;
     protected SPTEntry currFrom;
     protected SPTEntry currTo;
-    protected PathBidirRef bestPath;
+    protected SPTEntry bestFwdEntry;
+    protected SPTEntry bestBwdEntry;
+    protected double bestWeight = Double.MAX_VALUE;
+    protected NodeAccess nodeAccess;
+    protected int maxVisitedNodes = Integer.MAX_VALUE;
     PriorityQueue<SPTEntry> pqOpenSetFrom;
     PriorityQueue<SPTEntry> pqOpenSetTo;
-    private boolean updateBestPath = true;
+    protected boolean updateBestPath = true;
     protected boolean finishedFrom;
     protected boolean finishedTo;
     int visitedCountFrom;
     int visitedCountTo;
+    private boolean alreadyRun;
 
-    public AbstractBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
-        super(graph, weighting, tMode);
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
-        initCollections(size);
+    public AbstractBidirAlgo(TraversalMode traversalMode) {
+        this.traversalMode = traversalMode;
+        fromOutEdge = ANY_EDGE;
+        toInEdge = ANY_EDGE;
     }
 
     protected void initCollections(int size) {
@@ -72,32 +73,22 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
      */
     protected abstract SPTEntry createStartEntry(int node, double weight, boolean reverse);
 
-    /**
-     * Creates a new entry of the shortest path tree (a {@link SPTEntry} or one of its subclasses) during a dijkstra
-     * expansion.
-     *
-     * @param edge    the edge that is currently processed for the expansion
-     * @param incEdge the id of the edge that is incoming to the node the edge is pointed at. usually this is the same as
-     *                edge.getEdge(), but for edge-based CH and in case edge is a shortcut incEdge is the original edge
-     *                that is incoming to the node
-     * @param weight  the weight the shortest path three entry should carry
-     * @param parent  the parent entry of in the shortest path tree
-     * @param reverse true if we are currently looking at the backward search, false otherwise
-     */
-    protected abstract SPTEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse);
-
     @Override
     public Path calcPath(int from, int to) {
+        return calcPath(from, to, ANY_EDGE, ANY_EDGE);
+    }
+
+    @Override
+    public Path calcPath(int from, int to, int fromOutEdge, int toInEdge) {
+        if ((fromOutEdge != ANY_EDGE || toInEdge != ANY_EDGE) && !traversalMode.isEdgeBased()) {
+            throw new IllegalArgumentException("Restricting the start/target edges is only possible for edge-based graph traversal");
+        }
+        this.fromOutEdge = fromOutEdge;
+        this.toInEdge = toInEdge;
         checkAlreadyRun();
-        createAndInitPath();
         init(from, 0, to, 0);
         runAlgo();
         return extractPath();
-    }
-
-    protected Path createAndInitPath() {
-        bestPath = new PathBidirRef(graph, weighting);
-        return bestPath;
     }
 
     void init(int from, double fromWeight, int to, double toWeight) {
@@ -128,16 +119,17 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         if (!traversalMode.isEdgeBased()) {
             if (updateBestPath) {
                 bestWeightMapOther = bestWeightMapFrom;
-                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to, true);
+                updateBestPath(Double.POSITIVE_INFINITY, currFrom, -1, to, true);
             }
-        } else if (from == to) {
-            // special case of identical start and end
+        } else if (from == to && fromOutEdge == ANY_EDGE && toInEdge == ANY_EDGE) {
+            // special handling if start and end are the same and no directions are restricted
+            // the resulting weight should be zero
             if (currFrom.weight != 0 || currTo.weight != 0) {
                 throw new IllegalStateException("If from=to, the starting weight must be zero for from and to");
             }
-            bestPath.sptEntry = currFrom;
-            bestPath.edgeTo = currTo;
-            bestPath.setWeight(0);
+            bestFwdEntry = currFrom;
+            bestBwdEntry = currTo;
+            bestWeight = 0;
             finishedFrom = true;
             finishedTo = true;
             return;
@@ -146,11 +138,9 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         postInitTo();
     }
 
-    protected void postInitFrom() {
-    }
+    protected abstract void postInitFrom();
 
-    protected void postInitTo() {
-    }
+    protected abstract void postInitTo();
 
     protected void runAlgo() {
         while (!finished() && !isMaxVisitedNodesExceeded()) {
@@ -166,78 +156,19 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     // a node from overlap may not be on the best path!
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder
     //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ
-    @Override
     protected boolean finished() {
         if (finishedFrom || finishedTo)
             return true;
 
-        return currFrom.weight + currTo.weight >= bestPath.getWeight();
+        return currFrom.weight + currTo.weight >= bestWeight;
     }
 
-    boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty()) {
-            return false;
-        }
-        currFrom = pqOpenSetFrom.poll();
-        visitedCountFrom++;
-        if (fromEntryCanBeSkipped()) {
-            return true;
-        }
-        if (fwdSearchCanBeStopped()) {
-            return false;
-        }
-        bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
-        return true;
-    }
+    abstract boolean fillEdgesFrom();
 
-    boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty()) {
-            return false;
-        }
-        currTo = pqOpenSetTo.poll();
-        visitedCountTo++;
-        if (toEntryCanBeSkipped()) {
-            return true;
-        }
-        if (bwdSearchCanBeStopped()) {
-            return false;
-        }
-        bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
-        return true;
-    }
+    abstract boolean fillEdgesTo();
 
-    private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
-                           IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
-        EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
-        while (iter.next()) {
-            if (!accept(iter, currEdge, reverse))
-                continue;
-
-            final int origEdgeId = getOrigEdgeId(iter, reverse);
-            final int traversalId = getTraversalId(iter, origEdgeId, reverse);
-            final double weight = calcWeight(iter, currEdge, reverse);
-            if (Double.isInfinite(weight))
-                continue;
-            SPTEntry entry = bestWeightMap.get(traversalId);
-            if (entry == null) {
-                entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
-                bestWeightMap.put(traversalId, entry);
-                prioQueue.add(entry);
-            } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
-                updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
-                prioQueue.add(entry);
-            } else
-                continue;
-
-            if (updateBestPath)
-                updateBestPath(iter, entry, traversalId, reverse);
-        }
-    }
-
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entry, int traversalId, boolean reverse) {
+    protected void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
+        assert traversalMode.isEdgeBased() != Double.isInfinite(edgeWeight);
         SPTEntry entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
             return;
@@ -250,50 +181,25 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
 
             // prevents the path to contain the edge at the meeting point twice and subtracts the weight (excluding turn weight => no previous edge)
             entry = entry.getParent();
-            weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
+            weight -= edgeWeight;
         }
 
-        if (weight < bestPath.getWeight()) {
-            bestPath.setSwitchToFrom(reverse);
-            bestPath.setSPTEntry(entry);
-            bestPath.setSPTEntryTo(entryOther);
-            bestPath.setWeight(weight);
+        if (weight < bestWeight) {
+            bestFwdEntry = reverse ? entryOther : entry;
+            bestBwdEntry = reverse ? entry : entryOther;
+            bestWeight = weight;
         }
     }
 
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
-        entry.weight = weight;
-        entry.parent = parent;
-    }
+    protected abstract double getInEdgeWeight(SPTEntry entry);
 
-    protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        return accept(edge, getIncomingEdge(currEdge));
-    }
-
-    protected int getOrigEdgeId(EdgeIteratorState edge, boolean reverse) {
-        return edge.getEdge();
-    }
+    protected abstract int getOtherNode(int edge, int node);
 
     protected int getIncomingEdge(SPTEntry entry) {
         return entry.edge;
     }
 
-    protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        return traversalMode.createTraversalId(edge, reverse);
-    }
-
-    protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
-        return weighting.calcWeight(iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
-    }
-
-    @Override
-    protected Path extractPath() {
-        if (finished())
-            return bestPath.extract();
-
-        return bestPath;
-    }
+    abstract protected Path extractPath();
 
     protected boolean fromEntryCanBeSkipped() {
         return false;
@@ -335,27 +241,14 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         updateBestPath = b;
     }
 
-    void setBestPath(PathBidirRef bestPath) {
-        this.bestPath = bestPath;
-    }
-
     @Override
     public int getVisitedNodes() {
         return visitedCountFrom + visitedCountTo;
     }
 
-    void setFromDataStructures(AbstractBidirAlgo other) {
-        from = other.from;
-        pqOpenSetFrom = other.pqOpenSetFrom;
-        bestWeightMapFrom = other.bestWeightMapFrom;
-        finishedFrom = other.finishedFrom;
-        currFrom = other.currFrom;
-        visitedCountFrom = other.visitedCountFrom;
-        // outEdgeExplorer
-    }
-
     void setToDataStructures(AbstractBidirAlgo other) {
         to = other.to;
+        toInEdge = other.toInEdge;
         pqOpenSetTo = other.pqOpenSetTo;
         bestWeightMapTo = other.bestWeightMapTo;
         finishedTo = other.finishedTo;
@@ -363,4 +256,31 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         visitedCountTo = other.visitedCountTo;
         // inEdgeExplorer
     }
+
+    @Override
+    public void setMaxVisitedNodes(int numberOfNodes) {
+        this.maxVisitedNodes = numberOfNodes;
+    }
+
+    protected void checkAlreadyRun() {
+        if (alreadyRun)
+            throw new IllegalStateException("Create a new instance per call");
+
+        alreadyRun = true;
+    }
+
+    @Override
+    public List<Path> calcPaths(int from, int to) {
+        return Collections.singletonList(calcPath(from, to));
+    }
+
+    @Override
+    public String getName() {
+        return getClass().getSimpleName();
+    }
+
+    protected boolean isMaxVisitedNodesExceeded() {
+        return maxVisitedNodes < getVisitedNodes();
+    }
+
 }

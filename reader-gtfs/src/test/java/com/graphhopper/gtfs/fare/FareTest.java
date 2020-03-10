@@ -20,6 +20,7 @@ package com.graphhopper.gtfs.fare;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
+import com.conveyal.gtfs.model.FareAttribute;
 import com.conveyal.gtfs.model.FareRule;
 import com.csvreader.CsvReader;
 import org.junit.Assert;
@@ -173,7 +174,7 @@ public class FareTest {
     private static Map<String, Fare> parseFares(String fareAttributes, String fareRules) {
         GTFSFeed feed = new GTFSFeed();
         HashMap<String, Fare> fares = new HashMap<>();
-        new FixedFareAttributeLoader(feed, fares) {
+        new FareAttribute.Loader(feed, fares) {
             void load(String input){
                 reader = new CsvReader(new StringReader(input));
                 reader.setHeaders(new String[]{"fare_id","price","currency_type","payment_method","transfers","transfer_duration"});

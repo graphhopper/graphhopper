@@ -19,20 +19,14 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.ch.PrepareEncoder;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
-import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostExtension;
-import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Test;
@@ -56,11 +50,10 @@ public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
     private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
-    private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
-    private final TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
-    private final CHGraph chGraph = graph.getGraph(CHGraph.class);
-    private String algoString;
+    private final Weighting weighting;
+    private final GraphHopperStorage graph;
+    private final CHGraph chGraph;
+    private final String algoString;
 
     @Parameterized.Parameters(name = "{0}")
     public static Object[] parameters() {
@@ -69,6 +62,11 @@ public class CHQueryWithTurnCostsTest {
 
     public CHQueryWithTurnCostsTest(String algoString) {
         this.algoString = algoString;
+        graph = new GraphBuilder(encodingManager)
+                .setCHProfileStrings("motorcycle|shortest|edge")
+                .create();
+        weighting = graph.getCHProfiles().get(0).getWeighting();
+        chGraph = graph.getCHGraph();
     }
 
     @Test
@@ -77,7 +75,7 @@ public class CHQueryWithTurnCostsTest {
         // 1 -- 0 -- 2
         graph.edge(1, 0, 3, true);
         graph.edge(0, 2, 5, true);
-        addTurnCost(1, 0, 2, 3);
+        setTurnCost(1, 0, 2, 3);
         graph.freeze();
 
         // contraction yields no shortcuts for edge based case (at least without u-turns).
@@ -103,10 +101,10 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(6, 5, 9, true);
         graph.edge(5, 3, 1, true);
         graph.edge(3, 1, 4, true);
-        addTurnCost(0, 2, 4, 3);
-        addTurnCost(4, 6, 5, 6);
-        addTurnCost(5, 6, 4, 2);
-        addTurnCost(5, 3, 1, 5);
+        setTurnCost(0, 2, 4, 3);
+        setTurnCost(4, 6, 5, 6);
+        setTurnCost(5, 6, 4, 2);
+        setTurnCost(5, 3, 1, 5);
         graph.freeze();
 
         // contraction yields no shortcuts
@@ -144,9 +142,9 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(2, 4, 1, false);
         graph.edge(4, 6, 1, false);
         graph.edge(6, 5, 1, false);
-        addRestriction(8, 4, 6);
-        addRestriction(8, 4, 2);
-        addRestriction(1, 4, 6);
+        setRestriction(8, 4, 6);
+        setRestriction(8, 4, 2);
+        setRestriction(1, 4, 6);
 
         graph.freeze();
 
@@ -181,9 +179,9 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(4, 7, 1, false);
         graph.edge(7, 8, 1, false);
         graph.edge(8, 0, 1, false);
-        addRestriction(6, 4, 7);
-        addRestriction(6, 4, 2);
-        addRestriction(1, 4, 7);
+        setRestriction(6, 4, 7);
+        setRestriction(6, 4, 2);
+        setRestriction(1, 4, 7);
         graph.freeze();
 
         // from contracting node 1
@@ -210,9 +208,9 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(2, 0, 2, false);
         graph.edge(0, 3, 3, false);
         graph.edge(3, 4, 2, false);
-        addTurnCost(1, 2, 0, 5);
-        addTurnCost(2, 0, 3, 2);
-        addTurnCost(0, 3, 4, 1);
+        setTurnCost(1, 2, 0, 5);
+        setTurnCost(2, 0, 3, 2);
+        setTurnCost(0, 3, 4, 1);
         graph.freeze();
 
         // only when node 0 is contracted a shortcut is added
@@ -240,8 +238,8 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(2, 4, 3, false);
         graph.freeze();
 
-        addTurnCost(1, 3, 0, 2);
-        addTurnCost(0, 2, 4, 4);
+        setTurnCost(1, 3, 0, 2);
+        setTurnCost(0, 2, 4, 4);
 
         // from contracting node 0
         addShortcut(3, 2, 1, 2, 1, 2, 4);
@@ -260,9 +258,9 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(3, 1, 2, false);
         graph.edge(1, 0, 3, false);
         graph.edge(0, 4, 2, false);
-        addTurnCost(2, 3, 1, 5);
-        addTurnCost(3, 1, 0, 2);
-        addTurnCost(1, 0, 4, 1);
+        setTurnCost(2, 3, 1, 5);
+        setTurnCost(3, 1, 0, 2);
+        setTurnCost(1, 0, 4, 1);
         graph.freeze();
 
         // contraction of node 0 and 1 each yield a single shortcut
@@ -289,7 +287,7 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(2, 3, 2, false);
         graph.edge(3, 1, 9, false);
         graph.edge(0, 1, 50, false);
-        addTurnCost(2, 3, 1, 4);
+        setTurnCost(2, 3, 1, 4);
         graph.freeze();
 
         // no shortcuts here
@@ -311,7 +309,7 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(3, 4, 4, false);
         graph.edge(5, 4, 6, false);
         graph.edge(4, 2, 3, false);
-        addTurnCost(1, 3, 4, 3);
+        setTurnCost(1, 3, 4, 3);
         graph.freeze();
 
         // no shortcuts here
@@ -360,10 +358,10 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(0, 2, 1, false);
         graph.edge(2, 3, 2, true);
         graph.edge(2, 1, 3, false);
-        addRestriction(0, 2, 1);
-        addTurnCost(0, 2, 3, 5);
-        addTurnCost(2, 3, 2, 4);
-        addTurnCost(3, 2, 1, 7);
+        setRestriction(0, 2, 1);
+        setTurnCost(0, 2, 3, 5);
+        setTurnCost(2, 3, 2, 4);
+        setTurnCost(3, 2, 1, 7);
         graph.freeze();
 
         // contraction yields no shortcuts
@@ -405,7 +403,7 @@ public class CHQueryWithTurnCostsTest {
         final EdgeIteratorState e3toB = graph.edge(3, nodeB, 2, false);
         final EdgeIteratorState e3toA = graph.edge(3, nodeA, 1, true);
         graph.freeze();
-        addRestriction(0, 3, nodeB);
+        setRestriction(0, 3, nodeB);
 
         // one shortcut when contracting node 3
         addShortcut(nodeA, nodeB, e3toA.getEdge(), e3toB.getEdge(), e3toA.getEdge(), e3toB.getEdge(), 2);
@@ -425,8 +423,8 @@ public class CHQueryWithTurnCostsTest {
         final EdgeIteratorState edge3 = graph.edge(3, 2, 7, false);
         final EdgeIteratorState edge4 = graph.edge(2, 1, 3, false);
         // need to specify edges explicitly because there are two edges between nodes 2 and 3
-        addRestriction(edge1, edge4, 2);
-        addTurnCost(edge1, edge2, 2, 3);
+        setRestriction(edge1, edge4, 2);
+        setTurnCost(edge1, edge2, 2, 3);
         graph.freeze();
 
         // no shortcuts
@@ -452,9 +450,9 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(2, 1, 1, false);
         graph.edge(3, 1, 2, false);
         graph.edge(4, 1, 6, false);
-        addTurnCost(0, 2, 1, 9);
-        addTurnCost(0, 3, 1, 2);
-        addTurnCost(0, 4, 1, 1);
+        setTurnCost(0, 2, 1, 9);
+        setTurnCost(0, 3, 1, 2);
+        setTurnCost(0, 4, 1, 1);
         graph.freeze();
 
         // contraction yields no shortcuts
@@ -474,7 +472,7 @@ public class CHQueryWithTurnCostsTest {
         EdgeIteratorState edge1 = graph.edge(3, 3, 1, false);
         EdgeIteratorState edge2 = graph.edge(3, 2, 1, true);
         EdgeIteratorState edge3 = graph.edge(2, 1, 1, false);
-        addRestriction(edge0, edge2, 3);
+        setRestriction(edge0, edge2, 3);
         graph.freeze();
 
         // contraction yields no shortcuts
@@ -497,7 +495,7 @@ public class CHQueryWithTurnCostsTest {
         EdgeIteratorState edge2 = graph.edge(2, 0, 1, false);
         EdgeIteratorState edge3 = graph.edge(0, 2, 1, false);
         EdgeIteratorState edge4 = graph.edge(2, 1, 1, false);
-        addRestriction(edge1, edge4, 2);
+        setRestriction(edge1, edge4, 2);
         graph.freeze();
 
         // contracting node 0 yields (the only) shortcut - and its a loop
@@ -527,7 +525,7 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(0, 1, 3, false);
         graph.edge(4, 1, 5, true);
         graph.edge(4, 2, 4, false);
-        addRestriction(3, 4, 2);
+        setRestriction(3, 4, 2);
         graph.freeze();
 
         // contracting node 0
@@ -573,7 +571,7 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(1, 5, 1, false);
         graph.edge(5, nodeB, 1, false);
         graph.edge(nodeB, 7, 2, false);
-        addRestriction(nodeA, 5, nodeB);
+        setRestriction(nodeA, 5, nodeB);
         graph.freeze();
         addShortcut(3, 5, 4, 5, 4, 5, 3);
         addShortcut(5, 3, 2, 3, 2, 3, 3);
@@ -605,15 +603,15 @@ public class CHQueryWithTurnCostsTest {
         final EdgeIteratorState e4to7 = graph.edge(7, 4, 3, true);
         final EdgeIteratorState e5to7 = graph.edge(7, 5, 2, true);
 
-        addRestriction(e6to7, e1to6, 6);
-        addRestriction(e6to7, e2to6, 6);
-        addRestriction(e6to7, e3to6, 6);
-        addRestriction(e1to6, e3to6, 6);
-        addRestriction(e1to6, e6to7, 6);
-        addRestriction(e1to6, e0to6, 6);
+        setRestriction(e6to7, e1to6, 6);
+        setRestriction(e6to7, e2to6, 6);
+        setRestriction(e6to7, e3to6, 6);
+        setRestriction(e1to6, e3to6, 6);
+        setRestriction(e1to6, e6to7, 6);
+        setRestriction(e1to6, e0to6, 6);
 
-        addRestriction(e4to7, e5to7, 7);
-        addRestriction(e5to7, e4to7, 7);
+        setRestriction(e4to7, e5to7, 7);
+        setRestriction(e5to7, e4to7, 7);
         graph.freeze();
 
         // contracting node 0 and 1
@@ -655,7 +653,7 @@ public class CHQueryWithTurnCostsTest {
 
         graph.edge(3, 6, 3, false);
         graph.edge(6, 2, 4, false);
-        addRestriction(3, 6, 2);
+        setRestriction(3, 6, 2);
         graph.freeze();
 
         // contracting node 0
@@ -712,20 +710,13 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
-        chTurnWeighting.setDefaultUTurnCost(0);
-        AbstractBidirectionEdgeCHNoSOD algo = "astar".equals(algoString) ?
-                new AStarBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting) :
-                new DijkstraBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting);
-        algo.setEdgeFilter(new LevelEdgeFilter(chGraph));
-        return algo;
+        return "astar".equals(algoString) ?
+                new AStarBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting)) :
+                new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting));
     }
 
     private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {
-        CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
-        // we need to set flags first because they overwrite weight etc
-        shortcut.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), weight);
-        shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipped1, skipped2);
+        chGraph.shortcutEdgeBased(from, to, PrepareEncoder.getScFwdDir(), weight, skipped1, skipped2, firstOrigEdge, lastOrigEdge);
     }
 
     private void setLevelEqualToNodeIdForAllNodes() {
@@ -734,24 +725,23 @@ public class CHQueryWithTurnCostsTest {
         }
     }
 
-    private void addTurnCost(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode, double costs) {
-        turnCostExtension.addTurnInfo(edge1.getEdge(), viaNode, edge2.getEdge(), encoder.getTurnFlags(false, costs));
+    private void setTurnCost(int from, int via, int to, double cost) {
+        setTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
     }
 
-    private void addTurnCost(int from, int via, int to, int cost) {
-        addTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
+    private void setTurnCost(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode, double costs) {
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), edge1.getEdge(), viaNode, edge2.getEdge(), costs);
     }
 
-    private void addRestriction(int from, int via, int to) {
-        addRestriction(getEdge(from, via), getEdge(via, to), via);
+    private void setRestriction(int from, int via, int to) {
+        setTurnCost(getEdge(from, via), getEdge(via, to), via, Double.POSITIVE_INFINITY);
     }
 
-    private void addRestriction(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode) {
-        turnCostExtension.addTurnInfo(edge1.getEdge(), viaNode, edge2.getEdge(), encoder.getTurnFlags(true, 0));
+    private void setRestriction(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode) {
+        setTurnCost(edge1, edge2, viaNode, Double.POSITIVE_INFINITY);
     }
 
     private EdgeIteratorState getEdge(int from, int to) {
         return GHUtility.getEdge(graph, from, to);
     }
-
 }

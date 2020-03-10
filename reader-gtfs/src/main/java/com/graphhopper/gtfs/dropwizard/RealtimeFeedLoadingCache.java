@@ -25,7 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtFlagEncoder;
+import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.reader.gtfs.RealtimeFeed;
 import com.graphhopper.storage.GraphHopperStorage;
 import org.apache.http.client.HttpClient;
@@ -33,7 +33,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.glassfish.hk2.api.Factory;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -48,16 +47,14 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed> {
     private final HttpClient httpClient;
     private final GraphHopperStorage graphHopperStorage;
     private final GtfsStorage gtfsStorage;
-    private final PtFlagEncoder ptFlagEncoder;
     private final RealtimeBundleConfiguration bundleConfiguration;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final LoadingCache<String, RealtimeFeed> cache;
 
     @Inject
-    RealtimeFeedLoadingCache(GraphHopperStorage graphHopperStorage, GtfsStorage gtfsStorage, PtFlagEncoder ptFlagEncoder, HttpClient httpClient, RealtimeBundleConfiguration bundleConfiguration) {
+    RealtimeFeedLoadingCache(GraphHopperStorage graphHopperStorage, GtfsStorage gtfsStorage, HttpClient httpClient, RealtimeBundleConfiguration bundleConfiguration) {
         this.graphHopperStorage = graphHopperStorage;
         this.gtfsStorage = gtfsStorage;
-        this.ptFlagEncoder = ptFlagEncoder;
         this.bundleConfiguration = bundleConfiguration;
         this.httpClient = httpClient;
         this.cache = CacheBuilder.newBuilder()
@@ -102,7 +99,7 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed> {
                 throw new RuntimeException(e);
             }
         }
-        return RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, ptFlagEncoder, feedMessageMap);
+        return RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager()), feedMessageMap);
     }
 
 }

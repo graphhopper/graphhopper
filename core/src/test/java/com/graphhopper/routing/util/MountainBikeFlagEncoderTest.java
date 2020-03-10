@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -30,12 +31,12 @@ import static org.junit.Assert.*;
 public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Override
     protected BikeCommonFlagEncoder createBikeEncoder() {
-        return new MountainBikeFlagEncoder();
+        return new MountainBikeFlagEncoder(new PMap("block_fords=true"));
     }
 
     @Test
     public void testGetSpeed() {
-        IntsRef intsRef = GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 10, true, true);
+        IntsRef intsRef = GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 10, true, false);
         assertEquals(10, encoder.getSpeed(intsRef), 1e-1);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
@@ -102,87 +103,37 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     }
 
     @Test
-    public void testHandleWayTags() {
-        ReaderWay way = new ReaderWay(1);
-        String wayType;
-
-        way.setTag("highway", "track");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("small way, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "path");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("small way, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "path");
-        way.setTag("surface", "grass");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("small way, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "path");
-        way.setTag("surface", "concrete");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("foot", "yes");
-        way.setTag("surface", "paved");
-        way.setTag("tracktype", "grade1");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("foot", "yes");
-        way.setTag("surface", "paved");
-        way.setTag("tracktype", "grade2");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("small way, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "pedestrian");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("get off the bike", wayType);
-    }
-
-    @Test
     public void testHandleWayTagsInfluencedByRelation() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
 
         ReaderRelation osmRel = new ReaderRelation(1);
-        long relFlags = encoder.handleRelationTags(0, osmRel);
+        IntsRef relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         // unchanged
-        IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, EncodingManager.Access.WAY, relFlags);
+        IntsRef flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
-        assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay));
 
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        relFlags = encoder.handleRelationTags(0, osmRel);
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, EncodingManager.Access.WAY, relFlags);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
+        flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
-        assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay));
 
         // relation code is PREFER
         osmRel.setTag("network", "rcn");
 
-        relFlags = encoder.handleRelationTags(0, osmRel);
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, EncodingManager.Access.WAY, relFlags);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
+        flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
 
         // relation code is PREFER
         osmRel.setTag("network", "ncn");
-        relFlags = encoder.handleRelationTags(0, osmRel);
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, EncodingManager.Access.WAY, relFlags);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
+        flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
 
@@ -193,11 +144,10 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        relFlags = encoder.handleRelationTags(0, osmRel);
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, EncodingManager.Access.WAY, relFlags);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
+        flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
-        assertEquals("", getWayTypeFromFlags(osmWay));
     }
 
     // Issue 407 : Always block kissing_gate execpt for mountainbikes

@@ -21,11 +21,10 @@ import com.graphhopper.coll.GHBitSet;
 
 /**
  * Implementation of breadth first search (BFS)
- * <p>
  *
  * @author Peter Karich
  */
-public class BreadthFirstSearch extends XFirstSearch {
+public abstract class BreadthFirstSearch extends XFirstSearch {
     @Override
     public void start(EdgeExplorer explorer, int startNode) {
         SimpleIntDeque fifo = new SimpleIntDeque();

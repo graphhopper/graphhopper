@@ -4,7 +4,7 @@
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper GmbH licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
+ *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  *
  *       http://www.apache.org/licenses/LICENSE-2.0
@@ -18,22 +18,22 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.junit.Test;
 
 import java.util.*;
 
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
-import static com.graphhopper.util.Parameters.DETAILS.*;
+import static com.graphhopper.util.Parameters.Details.*;
 import static org.junit.Assert.*;
 
 /**
@@ -41,14 +41,10 @@ import static org.junit.Assert.*;
  */
 public class PathTest {
     private final FlagEncoder encoder = new CarFlagEncoder();
-    private final DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
     private final EncodingManager carManager = EncodingManager.create(encoder);
-    private final BooleanEncodedValue carManagerRoundabout = carManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();
-    private final EncodingManager dataFlagManager = EncodingManager.create(dataFlagEncoder);
     private final EncodingManager mixedEncoders = EncodingManager.create(new CarFlagEncoder(), new FootFlagEncoder());
-    private final BooleanEncodedValue mixedManagerRoundabout = mixedEncoders.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
     private final RoundaboutGraph roundaboutGraph = new RoundaboutGraph();
@@ -56,17 +52,16 @@ public class PathTest {
 
     @Test
     public void testFound() {
-        GraphHopperStorage g = new GraphBuilder(carManager).create();
-        Path p = new Path(g, new FastestWeighting(encoder));
+        Graph g = new GraphBuilder(carManager).create();
+        Path p = new Path(g);
         assertFalse(p.isFound());
         assertEquals(0, p.getDistance(), 1e-7);
         assertEquals(0, p.calcNodes().size());
-        g.close();
     }
 
     @Test
     public void testWayList() {
-        GraphHopperStorage g = new GraphBuilder(carManager).create();
+        Graph g = new GraphBuilder(carManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0.0, 0.1);
         na.setNode(1, 1.0, 0.1);
@@ -78,15 +73,14 @@ public class PathTest {
         EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
-        Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setSPTEntry(e1);
-        path.extract();
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        Path path = extractPath(g, weighting, e1);
         // 0-1-2
         assertPList(Helper.createPointList(0, 0.1, 8, 1, 9, 1, 1, 0.1, 10, 1, 11, 1, 2, 0.1), path.calcPoints());
-        InstructionList instr = path.calcInstructions(carManagerRoundabout, tr);
+        InstructionList instr = InstructionsFromEdges.calcInstructions(path, path.graph, weighting, carManager, tr);
         Instruction tmp = instr.get(0);
         assertEquals(3000.0, tmp.getDistance(), 0.0);
         assertEquals(504000L, tmp.getTime());
@@ -115,13 +109,11 @@ public class PathTest {
         na.setNode(3, 1.0, 1.0);
         g.edge(1, 3).setDistance(1000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 10.0);
 
-        path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setSPTEntry(e1);
-        path.extract();
-        instr = path.calcInstructions(carManagerRoundabout, tr);
+        path = extractPath(g, weighting, e1);
+        instr = InstructionsFromEdges.calcInstructions(path, path.graph, weighting, carManager, tr);
 
         tmp = instr.get(0);
         assertEquals(1000.0, tmp.getDistance(), 0);
@@ -141,16 +133,14 @@ public class PathTest {
         assertEquals(path.calcPoints().size() - 1, acc);
 
         // now reverse order
-        path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge1.getEdge(), 0, 1);
         e1.parent = new SPTEntry(edge2.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 2, 1);
-        path.setSPTEntry(e1);
-        path.extract();
+        path = extractPath(g, weighting, e1);
         // 2-1-0
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
 
-        instr = path.calcInstructions(carManagerRoundabout, tr);
+        instr = InstructionsFromEdges.calcInstructions(path, path.graph, weighting, carManager, tr);
         tmp = instr.get(0);
         assertEquals(2000.0, tmp.getDistance(), 0);
         assertEquals(144000L, tmp.getTime());
@@ -180,7 +170,6 @@ public class PathTest {
         na.setNode(4, 7.5, 0.25);
         na.setNode(5, 5.0, 1.0);
 
-
         EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
         edge1.setWayGeometry(Helper.createPointList());
         edge1.setName("Street 1");
@@ -198,16 +187,15 @@ public class PathTest {
         g.edge(2, 5).setDistance(10000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
         g.edge(3, 5).setDistance(100000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
 
-        Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge4.getEdge(), 4, 1);
         e1.parent = new SPTEntry(edge3.getEdge(), 3, 1);
         e1.parent.parent = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent.parent.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setSPTEntry(e1);
-        path.extract();
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        Path path = extractPath(g, weighting, e1);
 
-        InstructionList il = path.calcInstructions(carManagerRoundabout, tr);
+        InstructionList il = InstructionsFromEdges.calcInstructions(path, path.graph, weighting, carManager, tr);
         Instruction nextInstr0 = il.find(-0.001, 0.0, 1000);
         assertEquals(Instruction.CONTINUE_ON_STREET, nextInstr0.getSign());
 
@@ -234,11 +222,12 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundabout() {
         for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
-            Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+            ShortestWeighting weighting = new ShortestWeighting(encoder);
+            Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                     .calcPath(1, 8);
             assertTrue(p.isFound());
             assertEquals("[1, 2, 3, 4, 5, 8]", p.calcNodes().toString());
-            InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+            InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
             // Test instructions
             List<String> tmpList = getTurnDescriptions(wayList);
             assertEquals(Arrays.asList("continue onto MainStreet 1 2",
@@ -251,9 +240,9 @@ public class PathTest {
             assertEquals(delta, instr.getTurnAngle(), 0.01);
 
             // case of continuing a street through a roundabout
-            p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).
+            p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED).
                     calcPath(1, 7);
-            wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+            wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
             tmpList = getTurnDescriptions(wayList);
             assertEquals(Arrays.asList("continue onto MainStreet 1 2",
                     "At roundabout, take exit 2 onto MainStreet 4 7",
@@ -266,31 +255,27 @@ public class PathTest {
         }
     }
 
-    /**
-     * case starting in Roundabout
-     */
     @Test
     public void testCalcInstructionsRoundaboutBegin() {
-        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(2, 8);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("At roundabout, take exit 3 onto 5-8",
                 "arrive at destination"),
                 tmpList);
     }
 
-    /**
-     * case with one node being containig already exit
-     */
     @Test
     public void testCalcInstructionsRoundaboutDirectExit() {
         roundaboutGraph.inverse3to9();
-        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(6, 8);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto 3-6",
                 "At roundabout, take exit 3 onto 5-8",
@@ -301,10 +286,12 @@ public class PathTest {
 
     @Test
     public void testCalcAverageSpeedDetails() {
-        Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(new String[]{AVERAGE_SPEED}), new PathDetailsBuilderFactory(), 0);
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
@@ -322,11 +309,35 @@ public class PathTest {
     }
 
     @Test
+    public void testCalcAverageSpeedDetailsWithShortDistances_issue1848() {
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 6);
+        assertTrue(p.isFound());
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+        assertTrue(details.size() == 1);
+        List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
+        assertEquals(4, averageSpeedDetails.size());
+
+        // reverse path includes 'null' value as first
+        p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(6, 1);
+        assertTrue(p.isFound());
+        details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+        assertTrue(details.size() == 1);
+        averageSpeedDetails = details.get(AVERAGE_SPEED);
+        assertEquals(5, averageSpeedDetails.size());
+        assertNull(averageSpeedDetails.get(0).getValue());
+    }
+
+    @Test
     public void testCalcStreetNameDetails() {
-        Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(new String[]{STREET_NAME}), new PathDetailsBuilderFactory(), 0);
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(STREET_NAME), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> streetNameDetails = details.get(STREET_NAME);
@@ -347,10 +358,12 @@ public class PathTest {
 
     @Test
     public void testCalcEdgeIdDetails() {
-        Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(new String[]{EDGE_ID}), new PathDetailsBuilderFactory(), 0);
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(EDGE_ID), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> edgeIdDetails = details.get(EDGE_ID);
@@ -370,10 +383,12 @@ public class PathTest {
 
     @Test
     public void testCalcTimeDetails() {
-        Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(new String[]{TIME}), new PathDetailsBuilderFactory(), 0);
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(TIME), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> timeDetails = details.get(TIME);
@@ -392,10 +407,12 @@ public class PathTest {
 
     @Test
     public void testCalcDistanceDetails() {
-        Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(new String[]{DISTANCE}), new PathDetailsBuilderFactory(), 0);
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(DISTANCE), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> distanceDetails = details.get(DISTANCE);
@@ -411,10 +428,11 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundabout2() {
         roundaboutGraph.inverse3to6();
-        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto MainStreet 1 2",
                 "At roundabout, take exit 2 onto 5-8",
@@ -461,6 +479,7 @@ public class PathTest {
         // roundabout
         EdgeIteratorState tmpEdge;
         tmpEdge = g.edge(3, 9, 2, false).setName("3-9");
+        BooleanEncodedValue carManagerRoundabout = carManager.getBooleanEncodedValue(Roundabout.KEY);
         carManagerRoundabout.setBool(false, tmpEdge.getFlags(), true);
         tmpEdge.setFlags(tmpEdge.getFlags());
         tmpEdge = g.edge(9, 10, 2, false).setName("9-10");
@@ -489,26 +508,25 @@ public class PathTest {
         g.edge(5, 8, 5, true).setName("5-8");
         g.edge(3, 6, 5, true).setName("3-6");
 
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(6, 11);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("At roundabout, take exit 1 onto MainStreet 1 11",
                 "arrive at destination"),
                 tmpList);
     }
 
-    /**
-     * clockwise roundabout
-     */
     @Test
     public void testCalcInstructionsRoundaboutClockwise() {
         roundaboutGraph.setRoundabout(true);
-        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto MainStreet 1 2",
                 "At roundabout, take exit 1 onto 5-8",
@@ -523,10 +541,11 @@ public class PathTest {
     @Test
     public void testCalcInstructionsIgnoreContinue() {
         // Follow a couple of straight edges, including a name change
-        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 11);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
 
         // Contain only start and finish instruction, no CONTINUE
         assertEquals(2, wayList.size());
@@ -535,10 +554,11 @@ public class PathTest {
     @Test
     public void testCalcInstructionsIgnoreTurnIfNoAlternative() {
         // The street turns left, but there is not turn
-        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(10, 12);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
 
         // Contain only start and finish instruction
         assertEquals(2, wayList.size());
@@ -566,17 +586,50 @@ public class PathTest {
         g.edge(2, 4, 5, true).setName("Regener Weg");
         g.edge(2, 3, 5, true);
 
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
 
         assertEquals(3, wayList.size());
         assertEquals(-7, wayList.get(1).getSign());
     }
 
     @Test
-    public void testCalcInstructionsEnterMotoway() {
+    public void testCalcInstructionForMotorwayFork() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=48.909071%2C8.647136&point=48.908789%2C8.649244
+        // 1-2 & 2-4 is a motorway, 2-3 is a motorway_link
+        // We should skip the instruction here
+        //      1 ---- 2 ---- 4
+        //              \
+        //               3
+        na.setNode(1, 48.909071, 8.647136);
+        na.setNode(2, 48.908962, 8.647978);
+        na.setNode(3, 48.908867, 8.648155);
+        na.setNode(4, 48.908789, 8.649244);
+
+        EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        BooleanEncodedValue roadClassLinkEnc = carManager.getBooleanEncodedValue(RoadClassLink.KEY);
+
+        g.edge(1, 2, 5, true).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
+        g.edge(2, 4, 5, true).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
+        g.edge(2, 3, 5, true).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, true);
+
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
+                .calcPath(1, 4);
+        assertTrue(p.isFound());
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+
+        assertEquals(2, wayList.size());
+    }
+
+    @Test
+    public void testCalcInstructionsEnterMotorway() {
         final Graph g = new GraphBuilder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
@@ -594,17 +647,18 @@ public class PathTest {
         g.edge(2, 3, 5, false).setName("A 8");
         g.edge(4, 2, 5, false).setName("A 8");
 
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 3);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
 
         // no turn instruction for entering the highway
         assertEquals(2, wayList.size());
     }
 
     @Test
-    public void testCalcInstructionsMotowayJunction() {
+    public void testCalcInstructionsMotorwayJunction() {
         final Graph g = new GraphBuilder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
@@ -622,10 +676,11 @@ public class PathTest {
         g.edge(2, 3, 5, false).setName("A 8");
         g.edge(2, 4, 5, false).setName("A 8");
 
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 3);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
 
         assertEquals(3, wayList.size());
         // TODO this should be a keep_right
@@ -651,13 +706,55 @@ public class PathTest {
         g.edge(2, 3, 5, false).setName("Pacific Highway");
         g.edge(4, 2, 5, true).setName("Greenwich Road");
 
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 3);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
 
         assertEquals(3, wayList.size());
         assertEquals(2, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionIssue1047() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=51.367105%2C14.491246&point=51.369048%2C14.483092
+        // 1-2 & 2-3 is a road that is turning right, 2-4 is a that is branching off.
+        // When driving 1-2-4, we should create an instruction notifying the user to continue straight instead of turning and following the road
+        // When driving 1-2-3, we should create an instruction as well
+        //
+        //      1 ---- 2 ---- 4
+        //             |
+        //             3
+        na.setNode(1, 51.367544, 14.488209);
+        na.setNode(2, 51.368046, 14.486525);
+        na.setNode(3, 51.36875, 14.487019);
+        na.setNode(4, 51.368428, 14.485173);
+
+        EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        BooleanEncodedValue roadClassLinkEnc = carManager.getBooleanEncodedValue(RoadClassLink.KEY);
+
+        g.edge(1, 2, 5, true).setName("B 156").set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
+        g.edge(2, 4, 5, true).setName("S 108").set(roadClassEnc, RoadClass.SECONDARY).set(roadClassLinkEnc, false);
+        g.edge(2, 3, 5, true).setName("B 156").set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
+
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
+                .calcPath(1, 4);
+        assertTrue(p.isFound());
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+
+        assertEquals(3, wayList.size());
+
+        p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
+                .calcPath(1, 3);
+        assertTrue(p.isFound());
+        wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+
+        assertEquals(3, wayList.size());
     }
 
     @Test
@@ -678,10 +775,11 @@ public class PathTest {
         g.edge(2, 4, 5, true);
         g.edge(2, 3, 5, true).setName("Regener Weg");
 
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
 
         assertEquals(3, wayList.size());
         assertEquals(-7, wayList.get(1).getSign());
@@ -707,10 +805,11 @@ public class PathTest {
         g.edge(2, 3, 5, true);
         g.edge(2, 4, 5, true).setName("Stöhrgasse");
 
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 1);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
 
         assertEquals(3, wayList.size());
         assertEquals(-1, wayList.get(1).getSign());
@@ -742,10 +841,11 @@ public class PathTest {
         g.edge(2, 5, 5, true).setName("Neithardtstraße");
         g.edge(5, 7, 5, true).setName("Neithardtstraße");
 
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
 
         assertEquals(3, wayList.size());
         assertEquals(Instruction.U_TURN_LEFT, wayList.get(1).getSign());
@@ -777,10 +877,11 @@ public class PathTest {
         g.edge(2, 5, 5, true).setName("Larkin Street");
         g.edge(5, 7, 5, true).setName("Larkin Street");
 
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 6);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
 
         assertEquals(3, wayList.size());
         assertEquals(Instruction.U_TURN_RIGHT, wayList.get(1).getSign());
@@ -789,10 +890,11 @@ public class PathTest {
     @Test
     public void testCalcInstructionsForTurn() {
         // The street turns left, but there is not turn
-        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(11, 13);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
 
         // Contain start, turn, and finish instruction
         assertEquals(3, wayList.size());
@@ -801,38 +903,13 @@ public class PathTest {
     }
 
     @Test
-    public void testCalcInstructionsForDataFlagEncoder() {
-        final Graph g = new GraphBuilder(dataFlagManager).create();
-        final NodeAccess na = g.getNodeAccess();
-
-        na.setNode(1, 48.982618, 13.122021);
-        na.setNode(2, 48.982565, 13.121597);
-        na.setNode(3, 48.982611, 13.121012);
-        na.setNode(4, 48.982336, 13.121002);
-
-        ReaderWay w = new ReaderWay(1);
-        w.setTag("highway", "tertiary");
-
-        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(dataFlagManager.createEdgeFlags(), w,
-                EncodingManager.Access.WAY, 0));
-        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(dataFlagManager.createEdgeFlags(), w,
-                EncodingManager.Access.WAY, 0));
-        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(dataFlagManager.createEdgeFlags(), w,
-                EncodingManager.Access.WAY, 0));
-
-        Path p = new Dijkstra(g, new GenericWeighting(dataFlagEncoder, new HintsMap()), TraversalMode.NODE_BASED).calcPath(1, 3);
-        assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
-        assertEquals(3, wayList.size());
-    }
-
-    @Test
     public void testCalcInstructionsForSlightTurnWithOtherSlightTurn() {
         // Test for a fork with two sligh turns. Since there are two sligh turns, show the turn instruction
-        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(12, 16);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
 
         // Contain start, turn, and finish instruction
         assertEquals(3, wayList.size());
@@ -859,10 +936,11 @@ public class PathTest {
         g.edge(2, 3, 5, true).setName("Calmbacher Straße, K 4312");
         g.edge(3, 4, 5, true).setName("Calmbacher Straße, K 4312");
 
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 2);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
 
         assertEquals(3, wayList.size());
         assertEquals(Instruction.TURN_SLIGHT_RIGHT, wayList.get(1).getSign());
@@ -871,10 +949,11 @@ public class PathTest {
     @Test
     public void testIgnoreInstructionsForSlightTurnWithOtherTurn() {
         // Test for a fork with one sligh turn and one actual turn. We are going along the slight turn. No turn instruction needed in this case
-        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(16, 19);
         assertTrue(p.isFound());
-        InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncoders, tr);
 
         // Contain start, and finish instruction
         assertEquals(2, wayList.size());
@@ -897,6 +976,7 @@ public class PathTest {
         na.setNode(3, 52.514, 13.350);
         na.setNode(4, 52.515, 13.349);
         na.setNode(5, 52.516, 13.3452);
+        na.setNode(6, 52.516, 13.344);
 
         ReaderWay w = new ReaderWay(1);
         w.setTag("highway", "tertiary");
@@ -906,17 +986,21 @@ public class PathTest {
         tmpEdge = g.edge(1, 2, 5, true).setName("1-2");
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         assertTrue(carManager.acceptWay(w, map));
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        IntsRef relFlags = carManager.createRelationFlags();
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
         tmpEdge = g.edge(4, 5, 5, true).setName("4-5");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         w.setTag("maxspeed", "100");
         tmpEdge = g.edge(2, 3, 5, true).setName("2-3");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         w.setTag("maxspeed", "10");
         tmpEdge = g.edge(3, 4, 10, true).setName("3-4");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
+
+        tmpEdge = g.edge(5, 6, 0.01, true).setName("3-4");
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         return g;
     }
@@ -990,11 +1074,12 @@ public class PathTest {
         }
 
         public void setRoundabout(boolean clockwise) {
+            BooleanEncodedValue mixedRoundabout = mixedEncoders.getBooleanEncodedValue(Roundabout.KEY);
             for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
                 BooleanEncodedValue accessEnc = encoder.getAccessEnc();
                 for (EdgeIteratorState edge : roundaboutEdges) {
                     edge.set(accessEnc, clockwise).setReverse(accessEnc, !clockwise);
-                    mixedManagerRoundabout.setBool(false, edge.getFlags(), true);
+                    mixedRoundabout.setBool(false, edge.getFlags(), true);
                     edge.setFlags(edge.getFlags());
                 }
             }
@@ -1023,6 +1108,10 @@ public class PathTest {
             delta = clockwise ? (Math.PI + delta) : -1 * (Math.PI - delta);
             return delta;
         }
+    }
+
+    private static Path extractPath(Graph graph, Weighting weighting, SPTEntry sptEntry) {
+        return PathExtractor.extractPath(graph, weighting, sptEntry);
     }
 
 }

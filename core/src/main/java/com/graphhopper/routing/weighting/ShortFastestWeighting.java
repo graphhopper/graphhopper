@@ -21,6 +21,8 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+
 /**
  * Calculates the fastest route with distance influence controlled by a new parameter.
  * <p>
@@ -36,44 +38,43 @@ public class ShortFastestWeighting extends FastestWeighting {
     private final double timeFactor;
 
     public ShortFastestWeighting(FlagEncoder encoder, PMap map) {
-        super(encoder);
-        timeFactor = checkBounds(TIME_FACTOR, map.getDouble(TIME_FACTOR, 1));
+        this(encoder, map, NO_TURN_COST_PROVIDER);
+    }
 
-        // is it faster to include timeFactor via distanceFactor = tmp / timeFactor?
+    public ShortFastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
+        super(encoder, turnCostProvider);
+        timeFactor = checkBounds(TIME_FACTOR, map.getDouble(TIME_FACTOR, 1), 0, 10);
+
         // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km
-        distanceFactor = checkBounds(DISTANCE_FACTOR, map.getDouble(DISTANCE_FACTOR, 0.07));
+        distanceFactor = checkBounds(DISTANCE_FACTOR, map.getDouble(DISTANCE_FACTOR, 0.07), 0, 10);
 
         if (timeFactor < 1e-5 && distanceFactor < 1e-5)
             throw new IllegalArgumentException("[" + NAME + "] one of distance_factor or time_factor has to be non-zero");
     }
 
     public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor) {
-        super(encoder);
-        this.distanceFactor = checkBounds(DISTANCE_FACTOR, distanceFactor);
+        this(encoder, distanceFactor, NO_TURN_COST_PROVIDER);
+    }
+
+    public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor, TurnCostProvider turnCostProvider) {
+        super(encoder, turnCostProvider);
+        this.distanceFactor = checkBounds(DISTANCE_FACTOR, distanceFactor, 0, 10);
         this.timeFactor = 1;
     }
 
     @Override
     public double getMinWeight(double distance) {
-        // TODO: Should we add the [+ distance * distanceFactor]. It improves the heuristic of the A*.
         return super.getMinWeight(distance) * timeFactor + distance * distanceFactor;
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        double time = super.calcWeight(edge, reverse, prevOrNextEdgeId);
-        return time * timeFactor + edge.getDistance() * distanceFactor;
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        double time = super.calcEdgeWeight(edgeState, reverse);
+        return time * timeFactor + edgeState.getDistance() * distanceFactor;
     }
 
     @Override
     public String getName() {
         return NAME;
-    }
-
-    private double checkBounds(String key, double val) {
-        if (val < 0 || val > 10)
-            throw new IllegalArgumentException(key + " has invalid range should be within [0, 10]");
-
-        return val;
     }
 }

@@ -29,7 +29,9 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -38,21 +40,22 @@ import java.util.stream.StreamSupport;
 public final class GraphExplorer {
 
     private final EdgeExplorer edgeExplorer;
-    private final PtFlagEncoder flagEncoder;
+    private final PtEncodedValues flagEncoder;
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final boolean reverse;
     private final Weighting accessEgressWeighting;
     private final boolean walkOnly;
     private double walkSpeedKmH;
+    private boolean ignoreValidities;
 
-
-    public GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, double walkSpeedKmh) {
+    public GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtEncodedValues flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, double walkSpeedKmh, boolean ignoreValidities) {
         this.accessEgressWeighting = accessEgressWeighting;
+        this.ignoreValidities = ignoreValidities;
         DefaultEdgeFilter accessEgressIn = DefaultEdgeFilter.inEdges(accessEgressWeighting.getFlagEncoder());
         DefaultEdgeFilter accessEgressOut = DefaultEdgeFilter.outEdges(accessEgressWeighting.getFlagEncoder());
-        DefaultEdgeFilter ptIn = DefaultEdgeFilter.inEdges(flagEncoder);
-        DefaultEdgeFilter ptOut = DefaultEdgeFilter.outEdges(flagEncoder);
+        DefaultEdgeFilter ptIn = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
+        DefaultEdgeFilter ptOut = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
         EdgeFilter in = edgeState -> accessEgressIn.accept(edgeState) || ptIn.accept(edgeState);
         EdgeFilter out = edgeState -> accessEgressOut.accept(edgeState) || ptOut.accept(edgeState);
         this.edgeExplorer = graph.createEdgeExplorer(reverse ? in : out);
@@ -110,7 +113,8 @@ public final class GraphExplorer {
         GtfsStorage.EdgeType edgeType = edge.get(flagEncoder.getTypeEnc());
         switch (edgeType) {
             case HIGHWAY:
-                return (long) (accessEgressWeighting.calcMillis(edge, reverse, -1) * (5.0 / walkSpeedKmH));
+                // todo: why do we not account for turn times here ?
+                return (long) (accessEgressWeighting.calcEdgeMillis(edge, reverse) * (5.0 / walkSpeedKmH));
             case ENTER_TIME_EXPANDED_NETWORK:
                 if (reverse) {
                     return 0;
@@ -193,7 +197,7 @@ public final class GraphExplorer {
             if (walkOnly && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
                 return false;
             }
-            if (!isValidOn(edgeIterator, label.currentTime)) {
+            if (!(ignoreValidities || isValidOn(edgeIterator, label.currentTime))) {
                 return false;
             }
             if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {

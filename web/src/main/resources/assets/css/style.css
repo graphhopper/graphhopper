@@ -27,6 +27,12 @@ body {
     padding-right: 5px;
 }
 
+#info ul {
+   margin-left:5px;
+   padding-left:5px;
+   list-style-type: none;
+}
+
 .route_results {
     max-height: 40%;
 }
@@ -109,10 +115,25 @@ body {
     padding-top: 20px;
     color: #666666
 }
+
 #locationpoints {
     padding-bottom: 10px;
     float: left;
 }
+
+#locationpoints>div:nth-child(n+2) {
+    counter-increment: pointcounter;
+}
+
+#locationpoints>div:nth-child(n+2):nth-last-child(n+3)::before {
+    content: counter(pointcounter);
+    position: absolute;
+    padding-top: 0.45em;
+    right: calc(100% - 1.2em);
+    text-align: right;
+    font-size: 60%;
+}
+
 .pointDiv {
     margin: 6px 0;
 }
@@ -438,13 +459,15 @@ td img.pic {
 }
 
 .fullscreen-reverse-btn, .fullscreen-btn {
-    cursor:pointer;
+    cursor: pointer;
     width: 30px;
     height: 30px;
     border-radius: 4px;
+    background-color: white;
+    background-position: 50% 50%;
     background-repeat: no-repeat;
     box-shadow: none;
-    border: 2px solid rgba(0,0,0,0.2);
+    border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 .fullscreen-btn {

@@ -9,7 +9,10 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
@@ -22,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Random;
 
@@ -41,12 +43,10 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     // make sure to increase xmx/xms for the JVM created by the surefire plugin in parent pom.xml
     private static final String OSM_FILE = "../local/maps/berlin-latest.osm.pbf";
 
-    private final Weighting baseWeighting;
-    private final Weighting trafficWeighting;
     private final GraphHopperStorage ghStorage;
-    private final CHGraphImpl baseCHGraph;
-    private final CHGraphImpl trafficCHGraph;
     private int maxDeviationPercentage;
+    private final CHProfile baseProfile;
+    private final CHProfile trafficProfile;
 
     @Parameters(name = "maxDeviationPercentage = {0}")
     public static Object[] data() {
@@ -57,12 +57,9 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         this.maxDeviationPercentage = maxDeviationPercentage;
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        baseWeighting = new FastestWeighting(encoder);
-        trafficWeighting = new RandomDeviationWeighting(baseWeighting, maxDeviationPercentage);
-        Directory dir = new RAMDirectory("traffic-change-test");
-        ghStorage = new GraphHopperStorage(Arrays.asList(baseWeighting, trafficWeighting), dir, em, false, new GraphExtension.NoOpExtension());
-        baseCHGraph = ghStorage.getGraph(CHGraphImpl.class, baseWeighting);
-        trafficCHGraph = ghStorage.getGraph(CHGraphImpl.class, trafficWeighting);
+        baseProfile = CHProfile.nodeBased(new FastestWeighting(encoder));
+        trafficProfile = CHProfile.nodeBased(new RandomDeviationWeighting(baseProfile.getWeighting(), maxDeviationPercentage));
+        ghStorage = new GraphBuilder(em).setCHProfiles(baseProfile, trafficProfile).build();
     }
 
     @Test
@@ -70,26 +67,27 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         final long seed = 2139960664L;
         final int numQueries = 50_000;
 
-        LOGGER.info("Running performance test, max deviation percentage: " + this.maxDeviationPercentage);
+        LOGGER.info("Running performance test, max deviation percentage: " + maxDeviationPercentage);
         // read osm
         OSMReader reader = new OSMReader(ghStorage);
         reader.setFile(new File(OSM_FILE));
-        reader.setCreateStorage(true);
         reader.readGraph();
         ghStorage.freeze();
 
         // create CH
-        PrepareContractionHierarchies basePch = new PrepareContractionHierarchies(baseCHGraph, baseWeighting, TraversalMode.NODE_BASED);
+        PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, baseProfile);
         basePch.doWork();
+        CHGraph baseCHGraph = ghStorage.getCHGraph(baseProfile);
 
         // check correctness & performance
         checkCorrectness(ghStorage, baseCHGraph, basePch, seed, 100);
         runPerformanceTest(ghStorage, baseCHGraph, basePch, seed, numQueries);
 
         // now we re-use the contraction order from the previous contraction and re-run it with the traffic weighting
-        PrepareContractionHierarchies trafficPch = new PrepareContractionHierarchies(trafficCHGraph, trafficWeighting, TraversalMode.NODE_BASED)
+        PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, trafficProfile)
                 .useFixedNodeOrdering(baseCHGraph.getNodeOrderingProvider());
         trafficPch.doWork();
+        CHGraph trafficCHGraph = ghStorage.getCHGraph(trafficProfile);
 
         // check correctness & performance
         checkCorrectness(ghStorage, trafficCHGraph, trafficPch, seed, 100);
@@ -102,7 +100,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         int numFails = 0;
         for (int i = 0; i < numQueries; ++i) {
             Dijkstra dijkstra = new Dijkstra(ghStorage, pch.getWeighting(), TraversalMode.NODE_BASED);
-            RoutingAlgorithm chAlgo = pch.createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
+            RoutingAlgorithm chAlgo = pch.getRoutingAlgorithmFactory().createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
 
             int from = rnd.nextInt(ghStorage.getNodes());
             int to = rnd.nextInt(ghStorage.getNodes());
@@ -141,7 +139,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                 int from = random.nextInt(numNodes);
                 int to = random.nextInt(numNodes);
                 long start = nanoTime();
-                RoutingAlgorithm algo = pch.createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
+                RoutingAlgorithm algo = pch.getRoutingAlgorithmFactory().createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
                 Path path = algo.calcPath(from, to);
                 if (!warmup && !path.isFound())
                     return 1;
@@ -189,8 +187,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         }
 
         @Override
-        public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-            double baseWeight = this.baseWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+        public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+            double baseWeight = baseWeighting.calcEdgeWeight(edgeState, reverse);
             if (edgeState instanceof CHEdgeIteratorState) {
                 // important! we may not change weights of shortcuts (the deviations are already included in their weight)
                 if (((CHEdgeIteratorState) edgeState).isShortcut()) {

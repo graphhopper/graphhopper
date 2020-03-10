@@ -20,9 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.InstructionAnnotation;
-import com.graphhopper.util.Translation;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
@@ -30,13 +28,15 @@ import com.graphhopper.util.Translation;
  *
  * @author Peter Karich
  */
-public interface FlagEncoder extends TurnCostEncoder, EncodedValueLookup {
+public interface FlagEncoder extends EncodedValueLookup {
 
     /**
      * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are
      * introduced
      */
     int getVersion();
+
+    TransportationMode getTransportationMode();
 
     /**
      * @return the maximum speed in km/h
@@ -53,16 +53,13 @@ public interface FlagEncoder extends TurnCostEncoder, EncodedValueLookup {
      */
     DecimalEncodedValue getAverageSpeedEnc();
 
+    boolean supportsTurnCosts();
+
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
      * Use support(String) instead.
      */
     boolean supports(Class<?> feature);
-
-    /**
-     * @return additional cost or warning information for an instruction like ferry or road charges.
-     */
-    InstructionAnnotation getAnnotation(IntsRef intsRef, Translation tr);
 
     /**
      * @return true if already registered in an EncodingManager

@@ -48,11 +48,6 @@ public interface Directory {
     DataAccess find(String name, DAType type);
 
     /**
-     * Renames the specified DataAccess object into one.
-     */
-    // DataAccess rename( DataAccess da, String newName );
-
-    /**
      * Removes the specified object from the directory.
      */
     void remove(DataAccess da);
@@ -66,6 +61,11 @@ public interface Directory {
      * Removes all contained objects from the directory and releases its resources.
      */
     void clear();
+
+    /**
+     * Releases all allocated resources from the directory without removing backing files.
+     */
+    void close();
 
     /**
      * Returns all created directories.

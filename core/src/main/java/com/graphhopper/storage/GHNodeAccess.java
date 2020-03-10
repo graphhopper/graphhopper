@@ -26,17 +26,17 @@ import com.graphhopper.util.Helper;
  * @author Peter Karich
  */
 class GHNodeAccess implements NodeAccess {
-    private final BaseGraph that;
+    private final BaseGraph baseGraph;
     private final boolean elevation;
 
-    public GHNodeAccess(BaseGraph that, boolean withElevation) {
-        this.that = that;
+    public GHNodeAccess(BaseGraph baseGraph, boolean withElevation) {
+        this.baseGraph = baseGraph;
         this.elevation = withElevation;
     }
 
     @Override
     public void ensureNode(int nodeId) {
-        that.ensureNodeIndex(nodeId);
+        baseGraph.ensureNodeIndex(nodeId);
     }
 
     @Override
@@ -46,33 +46,32 @@ class GHNodeAccess implements NodeAccess {
 
     @Override
     public final void setNode(int nodeId, double lat, double lon, double ele) {
-        that.ensureNodeIndex(nodeId);
-        long tmp = (long) nodeId * that.nodeEntryBytes;
-        that.nodes.setInt(tmp + that.N_LAT, Helper.degreeToInt(lat));
-        that.nodes.setInt(tmp + that.N_LON, Helper.degreeToInt(lon));
+        baseGraph.ensureNodeIndex(nodeId);
+        long tmp = (long) nodeId * baseGraph.nodeEntryBytes;
+        baseGraph.nodes.setInt(tmp + baseGraph.N_LAT, Helper.degreeToInt(lat));
+        baseGraph.nodes.setInt(tmp + baseGraph.N_LON, Helper.degreeToInt(lon));
 
         if (is3D()) {
             // meter precision is sufficient for now
-            that.nodes.setInt(tmp + that.N_ELE, Helper.eleToInt(ele));
-            that.bounds.update(lat, lon, ele);
+            baseGraph.nodes.setInt(tmp + baseGraph.N_ELE, Helper.eleToInt(ele));
+            baseGraph.bounds.update(lat, lon, ele);
 
         } else {
-            that.bounds.update(lat, lon);
+            baseGraph.bounds.update(lat, lon);
         }
 
-        // set the default value for the additional field of this node
-        if (that.extStorage.isRequireNodeField())
-            that.nodes.setInt(tmp + that.N_ADDITIONAL, that.extStorage.getDefaultNodeFieldValue());
+        if (baseGraph.supportsTurnCosts())
+            baseGraph.nodes.setInt(tmp + baseGraph.N_TC, TurnCostStorage.NO_TURN_ENTRY);
     }
 
     @Override
     public final double getLatitude(int nodeId) {
-        return Helper.intToDegree(that.nodes.getInt((long) nodeId * that.nodeEntryBytes + that.N_LAT));
+        return Helper.intToDegree(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_LAT));
     }
 
     @Override
     public final double getLongitude(int nodeId) {
-        return Helper.intToDegree(that.nodes.getInt((long) nodeId * that.nodeEntryBytes + that.N_LON));
+        return Helper.intToDegree(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_LON));
     }
 
     @Override
@@ -80,7 +79,7 @@ class GHNodeAccess implements NodeAccess {
         if (!elevation)
             throw new IllegalStateException("Cannot access elevation - 3D is not enabled");
 
-        return Helper.intToEle(that.nodes.getInt((long) nodeId * that.nodeEntryBytes + that.N_ELE));
+        return Helper.intToEle(baseGraph.nodes.getInt((long) nodeId * baseGraph.nodeEntryBytes + baseGraph.N_ELE));
     }
 
     @Override
@@ -99,22 +98,22 @@ class GHNodeAccess implements NodeAccess {
     }
 
     @Override
-    public final void setAdditionalNodeField(int index, int additionalValue) {
-        if (that.extStorage.isRequireNodeField() && that.N_ADDITIONAL >= 0) {
-            that.ensureNodeIndex(index);
-            long tmp = (long) index * that.nodeEntryBytes;
-            that.nodes.setInt(tmp + that.N_ADDITIONAL, additionalValue);
+    public final void setTurnCostIndex(int index, int turnCostIndex) {
+        if (baseGraph.supportsTurnCosts()) {
+            baseGraph.ensureNodeIndex(index);
+            long tmp = (long) index * baseGraph.nodeEntryBytes;
+            baseGraph.nodes.setInt(tmp + baseGraph.N_TC, turnCostIndex);
         } else {
-            throw new AssertionError("This graph does not provide an additional node field");
+            throw new AssertionError("This graph does not support turn costs");
         }
     }
 
     @Override
-    public final int getAdditionalNodeField(int index) {
-        if (that.extStorage.isRequireNodeField() && that.N_ADDITIONAL >= 0)
-            return that.nodes.getInt((long) index * that.nodeEntryBytes + that.N_ADDITIONAL);
+    public final int getTurnCostIndex(int index) {
+        if (baseGraph.supportsTurnCosts())
+            return baseGraph.nodes.getInt((long) index * baseGraph.nodeEntryBytes + baseGraph.N_TC);
         else
-            throw new AssertionError("This graph does not provide an additional node field");
+            throw new AssertionError("This graph does not support turn costs");
     }
 
     @Override

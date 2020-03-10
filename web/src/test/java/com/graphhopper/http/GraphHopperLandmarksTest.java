@@ -18,7 +18,9 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.util.CmdArgs;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -27,6 +29,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -42,17 +45,25 @@ public class GraphHopperLandmarksTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
-                put("prepare.ch.weightings", "fastest").
-                put("prepare.lm.weightings", "fastest").
                 put("datareader.file", "../core/files/belarus-east.osm.gz").
                 put("prepare.min_network_size", 0).
                 put("prepare.min_one_way_network_size", 0).
                 put("routing.ch.disabling_allowed", true).
                 put("routing.lm.disabling_allowed", true).
-                put("graph.location", DIR).
-                put("prepare.lm.min_network_size", 2)); // force landmark creation even for tiny networks
+                put("graph.location", DIR)
+                // force landmark creation even for tiny networks
+                .put("prepare.lm.min_network_size", 2)
+                .setProfiles(Collections.singletonList(
+                        new ProfileConfig("car_profile").setVehicle("car").setWeighting("fastest")
+                ))
+                .setCHProfiles(Collections.singletonList(
+                        new CHProfileConfig("car_profile")
+                ))
+                .setLMProfiles(Collections.singletonList(
+                        new LMProfileConfig("car_profile")
+                ));
     }
 
     @ClassRule
@@ -65,7 +76,7 @@ public class GraphHopperLandmarksTest {
     }
 
     @Test
-    public void testQueries() throws Exception {
+    public void testQueries() {
         Response response = app.client().target("http://localhost:8080/route?point=55.99022,29.129734&point=56.001069,29.150848").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -80,7 +91,7 @@ public class GraphHopperLandmarksTest {
     }
 
     @Test
-    public void testLandmarkDisconnect() throws Exception {
+    public void testLandmarkDisconnect() {
         // if one algorithm is disabled then the following chain is executed: CH -> LM -> flexible
         // disconnected for landmarks
         Response response = app.client().target("http://localhost:8080/route?" + "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true").request().buildGet().invoke();

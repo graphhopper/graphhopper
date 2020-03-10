@@ -2,7 +2,6 @@ package com.graphhopper.storage.change;
 
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -26,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
 
 /**
@@ -51,11 +51,11 @@ public class ChangeGraphHelperTest {
         graph.edge(3, 4, 1, true);
         graph.edge(0, 3, 1, true);
         graph.edge(1, 4, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.01, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, 0.01, 0.02);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 3, 0.00, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 4, 0.00, 0.01);
+        updateDistancesFor(graph, 0, 0.01, 0.00);
+        updateDistancesFor(graph, 1, 0.01, 0.01);
+        updateDistancesFor(graph, 2, 0.01, 0.02);
+        updateDistancesFor(graph, 3, 0.00, 0.00);
+        updateDistancesFor(graph, 4, 0.00, 0.01);
         LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory()).prepareIndex();
 
         FlagEncoder encoder = encodingManager.getEncoder("car");
@@ -72,7 +72,7 @@ public class ChangeGraphHelperTest {
         ChangeGraphHelper instance = new ChangeGraphHelper(graph, locationIndex);
         JsonFeatureCollection collection = Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class);
         long updates = instance.applyChanges(encodingManager, collection.getFeatures());
-        assertEquals(2, updates);
+        assertEquals(3, updates);
 
         // assert changed speed and access
         double newSpeed = GHUtility.getEdge(graph, 0, 1).get(avSpeedEnc);
@@ -91,11 +91,11 @@ public class ChangeGraphHelperTest {
         graph.edge(3, 4, 1, true);
         graph.edge(0, 3, 1, true);
         graph.edge(1, 4, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.01, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, 0.01, 0.02);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 3, 0.00, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 4, 0.00, 0.01);
+        updateDistancesFor(graph, 0, 0.01, 0.00);
+        updateDistancesFor(graph, 1, 0.01, 0.01);
+        updateDistancesFor(graph, 2, 0.01, 0.02);
+        updateDistancesFor(graph, 3, 0.00, 0.00);
+        updateDistancesFor(graph, 4, 0.00, 0.01);
         LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory()).prepareIndex();
 
         FlagEncoder encoder = encodingManager.getEncoder("car");

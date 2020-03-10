@@ -37,8 +37,7 @@ var GHRequest = function (host, api_key) {
     this.do_zoom = true;
     this.useMiles = false;
     this.dataType = "json";
-    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false,
-        "key": api_key, "pt": {}};
+    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "key": api_key, "pt": {}};
 
     // register events
     this.route.addListener('route.add', function (evt) {
@@ -79,15 +78,7 @@ GHRequest.prototype.init = function (params) {
     if ('use_miles' in params)
         this.useMiles = params.use_miles;
 
-    // overwrite elevation e.g. important if not supported from feature set
-    this.api_params.elevation = false;
-    var featureSet = this.features[this.api_params.vehicle];
-    if (featureSet && featureSet.elevation) {
-        if ('elevation' in params)
-            this.api_params.elevation = params.elevation;
-        else
-            this.api_params.elevation = true;
-    }
+    this.initVehicle(this.api_params.vehicle);
 
     if (params.q) {
         var qStr = params.q;
@@ -129,16 +120,22 @@ GHRequest.prototype.getEarliestDepartureTime = function () {
 
 GHRequest.prototype.initVehicle = function (vehicle) {
     this.api_params.vehicle = vehicle;
-    var featureSet = this.features[vehicle];
+    if(this.api_params.elevation !== false) {
+        var featureSet = this.features[vehicle];
+        this.api_params.elevation = featureSet && featureSet.elevation;
+    }
+    this.hasTCSupport();
+};
 
-    if (featureSet && featureSet.elevation)
-        this.api_params.elevation = true;
-    else
-        this.api_params.elevation = false;
+GHRequest.prototype.hasTCSupport = function() {
+   if(this.api_params.turn_costs !== false) {
+      var featureSet = this.features[this.api_params.vehicle];
+      this.api_params.turn_costs = featureSet && featureSet.turn_costs;
+   }
 };
 
 GHRequest.prototype.hasElevation = function () {
-    return this.api_params.elevation;
+    return this.api_params.elevation === true;
 };
 
 GHRequest.prototype.getVehicle = function () {
@@ -206,21 +203,22 @@ GHRequest.prototype.createPath = function (url, skipParameters) {
 };
 
 GHRequest.prototype.flatParameter = function (key, val) {
-    var url = "";
-    var arr;
-    var keyIndex;
+    if(val == undefined)
+        return "";
 
     if (GHRoute.isObject(val)) {
-        arr = Object.keys(val);
-        for (keyIndex in arr) {
+        var url = "";
+        var arr = Object.keys(val);
+        for (var keyIndex in arr) {
             var objKey = arr[keyIndex];
             url += this.flatParameter(key + "." + objKey, val[objKey]);
         }
         return url;
 
     } else if (GHRoute.isArray(val)) {
-        arr = val;
-        for (keyIndex in arr) {
+        var arr = val;
+        var url = "";
+        for (var keyIndex in arr) {
             url += this.flatParameter(key, arr[keyIndex]);
         }
         return url;

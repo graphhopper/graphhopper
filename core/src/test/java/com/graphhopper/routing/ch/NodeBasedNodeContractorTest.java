@@ -19,20 +19,19 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionCH;
-import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.SimpleBooleanEncodedValue;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllCHEdgesIterator;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
@@ -55,16 +54,16 @@ public class NodeBasedNodeContractorTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
-    private final CHGraph lg = graph.getGraph(CHGraph.class);
-    private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
+    private final CHGraph lg = graph.getCHGraph();
+    private final PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
 
     private NodeContractor createNodeContractor() {
-        return createNodeContractor(lg, weighting);
+        return createNodeContractor(pg);
     }
 
-    private NodeContractor createNodeContractor(CHGraph chGraph, Weighting weighting) {
-        NodeContractor nodeContractor = new NodeBasedNodeContractor(chGraph, weighting, new PMap());
+    private NodeContractor createNodeContractor(PrepareCHGraph chGraph) {
+        NodeContractor nodeContractor = new NodeBasedNodeContractor(chGraph, new PMap());
         nodeContractor.initFromGraph();
         nodeContractor.prepareContraction();
         return nodeContractor;
@@ -90,12 +89,12 @@ public class NodeBasedNodeContractorTest {
     @Test
     public void testShortestPathSkipNode() {
         createExampleGraph();
-        final double normalDist = new Dijkstra(graph, weighting, traversalMode).calcPath(4, 2).getDistance();
-        DijkstraOneToMany algo = new DijkstraOneToMany(graph, weighting, traversalMode);
+        final double normalDist = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(4, 2).getDistance();
+        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(pg);
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(createIgnoreNodeFilter(3));
+        algo.ignoreNode(3);
         algo.setWeightLimit(100);
         int nodeEntry = algo.findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
@@ -109,13 +108,13 @@ public class NodeBasedNodeContractorTest {
     @Test
     public void testShortestPathSkipNode2() {
         createExampleGraph();
-        final double normalDist = new Dijkstra(graph, weighting, traversalMode).calcPath(4, 2).getDistance();
+        final double normalDist = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(4, 2).getDistance();
         assertEquals(3, normalDist, 1e-5);
-        DijkstraOneToMany algo = new DijkstraOneToMany(graph, weighting, traversalMode);
+        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(pg);
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(createIgnoreNodeFilter(3));
+        algo.ignoreNode(3);
         algo.setWeightLimit(10);
         int nodeEntry = algo.findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
@@ -127,11 +126,11 @@ public class NodeBasedNodeContractorTest {
     @Test
     public void testShortestPathLimit() {
         createExampleGraph();
-        DijkstraOneToMany algo = new DijkstraOneToMany(graph, weighting, traversalMode);
+        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(pg);
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(createIgnoreNodeFilter(0));
+        algo.ignoreNode(0);
         algo.setWeightLimit(2);
         int endNode = algo.findEndNode(4, 1);
         // did not reach endNode
@@ -184,20 +183,9 @@ public class NodeBasedNodeContractorTest {
         graph.edge(6, 7, 1, true);
         graph.freeze();
 
-        CHEdgeIteratorState sc1to4 = lg.shortcut(1, 4);
-        sc1to4.setFlagsAndWeight(PrepareEncoder.getScDirMask(), 2);
-        sc1to4.setDistance(2);
-        sc1to4.setSkippedEdges(iter1to3.getEdge(), iter3to4.getEdge());
-
-        CHEdgeIteratorState sc4to6 = lg.shortcut(4, 6);
-        sc4to6.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 2);
-        sc4to6.setDistance(2);
-        sc4to6.setSkippedEdges(iter4to5.getEdge(), iter5to6.getEdge());
-
-        CHEdgeIteratorState sc6to4 = lg.shortcut(6, 4);
-        sc6to4.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 3);
-        sc6to4.setDistance(3);
-        sc6to4.setSkippedEdges(iter6to8.getEdge(), iter8to4.getEdge());
+        int sc1to4 = lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 2, iter1to3.getEdge(), iter3to4.getEdge());
+        int sc4to6 = lg.shortcut(4, 6, PrepareEncoder.getScFwdDir(), 2, iter4to5.getEdge(), iter5to6.getEdge());
+        int sc6to4 = lg.shortcut(6, 4, PrepareEncoder.getScFwdDir(), 3, iter6to8.getEdge(), iter8to4.getEdge());
 
         setMaxLevelOnAllNodes();
 
@@ -221,8 +209,8 @@ public class NodeBasedNodeContractorTest {
         nodeContractor.contractNode(4);
         checkShortcuts(manualSc1, manualSc2, manualSc3,
                 // there should be two different shortcuts for both directions!
-                expectedShortcut(1, 6, sc1to4, sc4to6, true, false),
-                expectedShortcut(6, 1, sc6to4, sc1to4, true, false)
+                expectedShortcut(1, 6, lg.getEdgeIteratorState(sc1to4, 4), lg.getEdgeIteratorState(sc4to6, 6), true, false),
+                expectedShortcut(6, 1, lg.getEdgeIteratorState(sc6to4, 4), lg.getEdgeIteratorState(sc1to4, 1), true, false)
         );
     }
 
@@ -328,7 +316,7 @@ public class NodeBasedNodeContractorTest {
         Dijkstra dikstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
         Path dijkstraPath = dikstra.calcPath(from, to);
 
-        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(lg, new PreparationWeighting(weighting));
+        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(new RoutingCHGraphImpl(lg, weighting));
         Path chPath = ch.calcPath(from, to);
         assertEquals(dijkstraPath.calcNodes(), chPath.calcNodes());
         assertEquals(dijkstraPath.getDistance(), chPath.getDistance(), 1.e-6);
@@ -352,8 +340,9 @@ public class NodeBasedNodeContractorTest {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
-        CHGraph lg = graph.getGraph(CHGraph.class);
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
+        CHGraph lg = graph.getCHGraph();
+        PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
         // 0 ------------> 4
         //  \             /
         //   1 --> 2 --> 3
@@ -365,10 +354,10 @@ public class NodeBasedNodeContractorTest {
         graph.edge(2, 3, distances[3], false);
         graph.edge(3, 4, distances[4], false);
         graph.freeze();
-        setMaxLevelOnAllNodes(lg);
+        setMaxLevelOnAllNodes(pg);
 
         // perform CH contraction
-        contractInOrder(lg, weighting, 1, 3, 2, 0, 4);
+        contractInOrder(pg, 1, 3, 2, 0, 4);
 
         // first we compare dijkstra with CH to make sure they produce the same results
         int from = 0;
@@ -376,7 +365,7 @@ public class NodeBasedNodeContractorTest {
         Dijkstra dikstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
         Path dijkstraPath = dikstra.calcPath(from, to);
 
-        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(lg, new PreparationWeighting(weighting));
+        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(new RoutingCHGraphImpl(lg, weighting));
         Path chPath = ch.calcPath(from, to);
         assertEquals(dijkstraPath.calcNodes(), chPath.calcNodes());
         assertEquals(dijkstraPath.getDistance(), chPath.getDistance(), 1.e-6);
@@ -390,8 +379,9 @@ public class NodeBasedNodeContractorTest {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
-        CHGraph lg = graph.getGraph(CHGraph.class);
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
+        CHGraph lg = graph.getCHGraph();
+        PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
         // 0 - 1 - 2 - 3
         // o           o
         graph.edge(0, 1, 1, true);
@@ -401,19 +391,19 @@ public class NodeBasedNodeContractorTest {
         graph.edge(3, 3, 1, true);
 
         graph.freeze();
-        setMaxLevelOnAllNodes(lg);
-        NodeContractor nodeContractor = createNodeContractor(lg, weighting);
+        setMaxLevelOnAllNodes(pg);
+        NodeContractor nodeContractor = createNodeContractor(pg);
         nodeContractor.contractNode(0);
         nodeContractor.contractNode(3);
-        checkNoShortcuts(lg);
+        checkNoShortcuts(pg);
     }
 
     private void contractInOrder(int... nodeIds) {
-        contractInOrder(lg, weighting, nodeIds);
+        contractInOrder(pg, nodeIds);
     }
 
-    private void contractInOrder(CHGraph chGraph, Weighting weighting, int... nodeIds) {
-        NodeContractor nodeContractor = createNodeContractor(chGraph, weighting);
+    private void contractInOrder(PrepareCHGraph chGraph, int... nodeIds) {
+        NodeContractor nodeContractor = createNodeContractor(chGraph);
         int level = 0;
         for (int n : nodeIds) {
             nodeContractor.contractNode(n);
@@ -426,10 +416,10 @@ public class NodeBasedNodeContractorTest {
      * Queries the ch graph and checks if the graph's shortcuts match the given expected shortcuts.
      */
     private void checkShortcuts(Shortcut... expectedShortcuts) {
-        checkShortcuts(lg, expectedShortcuts);
+        checkShortcuts(pg, expectedShortcuts);
     }
 
-    private void checkShortcuts(CHGraph chGraph, Shortcut... expectedShortcuts) {
+    private void checkShortcuts(PrepareCHGraph chGraph, Shortcut... expectedShortcuts) {
         Set<Shortcut> expected = setOf(expectedShortcuts);
         if (expected.size() != expectedShortcuts.length) {
             fail("was given duplicate shortcuts");
@@ -439,7 +429,7 @@ public class NodeBasedNodeContractorTest {
         while (iter.next()) {
             if (iter.isShortcut()) {
                 given.add(new Shortcut(
-                        iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(), iter.getDistance(),
+                        iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(),
                         iter.get(SC_ACCESS), iter.getReverse(SC_ACCESS),
                         iter.getSkippedEdge1(), iter.getSkippedEdge2()));
             }
@@ -448,20 +438,27 @@ public class NodeBasedNodeContractorTest {
     }
 
     private void checkNoShortcuts() {
-        checkShortcuts(lg);
+        checkShortcuts(pg);
     }
 
-    private void checkNoShortcuts(CHGraph chGraph) {
+    private void checkNoShortcuts(PrepareCHGraph chGraph) {
         checkShortcuts(chGraph);
     }
 
     private Shortcut expectedShortcut(int baseNode, int adjNode, EdgeIteratorState edge1, EdgeIteratorState edge2,
                                       boolean fwd, boolean bwd) {
         //todo: weight calculation might have to be adjusted for different encoders/weightings/reverse speed
-        double weight = weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE) +
-                weighting.calcWeight(edge2, false, EdgeIterator.NO_EDGE);
-        double distance = edge1.getDistance() + edge2.getDistance();
-        return new Shortcut(baseNode, adjNode, weight, distance, fwd, bwd, edge1.getEdge(), edge2.getEdge());
+        double weight1 = getWeight(edge1);
+        double weight2 = getWeight(edge2);
+        return new Shortcut(baseNode, adjNode, weight1 + weight2, fwd, bwd, edge1.getEdge(), edge2.getEdge());
+    }
+
+    private double getWeight(EdgeIteratorState edge) {
+        if (edge instanceof CHEdgeIteratorState) {
+            return ((CHEdgeIteratorState) edge).getWeight();
+        } else {
+            return weighting.calcEdgeWeight(edge, false);
+        }
     }
 
     private Set<Shortcut> setOf(Shortcut... shortcuts) {
@@ -469,35 +466,29 @@ public class NodeBasedNodeContractorTest {
     }
 
     private void setMaxLevelOnAllNodes() {
-        setMaxLevelOnAllNodes(lg);
+        setMaxLevelOnAllNodes(pg);
     }
 
-    private void setMaxLevelOnAllNodes(CHGraph chGraph) {
+    private void setMaxLevelOnAllNodes(PrepareCHGraph chGraph) {
         int nodes = chGraph.getNodes();
         for (int node = 0; node < nodes; node++) {
             chGraph.setLevel(node, nodes);
         }
     }
 
-    private IgnoreNodeFilter createIgnoreNodeFilter(int node) {
-        return new IgnoreNodeFilter(lg, graph.getNodes()).setAvoidNode(node);
-    }
-
     private static class Shortcut {
         int baseNode;
         int adjNode;
         double weight;
-        double distance;
         boolean fwd;
         boolean bwd;
         int skipEdge1;
         int skipEdge2;
 
-        Shortcut(int baseNode, int adjNode, double weight, double distance, boolean fwd, boolean bwd, int skipEdge1, int skipEdge2) {
+        Shortcut(int baseNode, int adjNode, double weight, boolean fwd, boolean bwd, int skipEdge1, int skipEdge2) {
             this.baseNode = baseNode;
             this.adjNode = adjNode;
             this.weight = weight;
-            this.distance = distance;
             this.fwd = fwd;
             this.bwd = bwd;
             this.skipEdge1 = skipEdge1;
@@ -512,7 +503,6 @@ public class NodeBasedNodeContractorTest {
             return baseNode == shortcut.baseNode &&
                     adjNode == shortcut.adjNode &&
                     Double.compare(shortcut.weight, weight) == 0 &&
-                    Double.compare(shortcut.distance, distance) == 0 &&
                     fwd == shortcut.fwd &&
                     bwd == shortcut.bwd &&
                     skipEdge1 == shortcut.skipEdge1 &&
@@ -521,7 +511,7 @@ public class NodeBasedNodeContractorTest {
 
         @Override
         public int hashCode() {
-            return Objects.hash(baseNode, adjNode, weight, distance, fwd, bwd, skipEdge1, skipEdge2);
+            return Objects.hash(baseNode, adjNode, weight, fwd, bwd, skipEdge1, skipEdge2);
         }
 
         @Override
@@ -530,7 +520,6 @@ public class NodeBasedNodeContractorTest {
                     "baseNode=" + baseNode +
                     ", adjNode=" + adjNode +
                     ", weight=" + weight +
-                    ", distance=" + distance +
                     ", fwd=" + fwd +
                     ", bwd=" + bwd +
                     ", skipEdge1=" + skipEdge1 +

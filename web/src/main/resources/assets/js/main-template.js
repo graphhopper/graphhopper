@@ -30,10 +30,16 @@ if (!host) {
 }
 
 var AutoComplete = require('./autocomplete.js');
-if (ghenv.environment === 'development')
+if (ghenv.environment === 'development') {
     var autocomplete = AutoComplete.prototype.createStub();
-else
+} else {
     var autocomplete = new AutoComplete(ghenv.geocoding.host, ghenv.geocoding.api_key);
+    // overwrite default for production
+    GHRequest.prototype.hasTCSupport = function() {
+       if(this.api_params.turn_costs !== false)
+          this.api_params.turn_costs = new Set(["car", "truck", "small_truck", "scooter"]).has(this.api_params.vehicle);
+    };
+}
 
 var mapLayer = require('./map.js');
 var nominatim = require('./nominatim.js');
@@ -46,11 +52,12 @@ var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
 var vehicleTools = require('./tools/vehicle.js');
 var tileLayers = require('./config/tileLayers.js');
+if(ghenv.with_tiles)
+   tileLayers.enableVectorTiles();
 
 var debug = false;
 var ghRequest = new GHRequest(host, ghenv.routing.api_key);
 var bounds = {};
-
 var metaVersionInfo;
 
 // usage: log('inside coolFunc',this,arguments);
@@ -123,7 +130,8 @@ $(document).ready(function (e) {
                     button.click(function () {
                         ghRequest.initVehicle(vehicle);
                         resolveAll();
-                        routeLatLng(ghRequest);
+                        if (ghRequest.route.isResolved())
+                          routeLatLng(ghRequest);
                     });
                     return button;
                 }
@@ -137,9 +145,6 @@ $(document).ready(function (e) {
                     var vehicles = vehicleTools.getSortedVehicleKeys(json.features, prefer);
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
-
-                    if (ghRequest.isPublicTransit())
-                        $(".time_input").show();
 
                     var hiddenVehicles = [];
                     for (var i in vehicles) {
@@ -157,7 +162,7 @@ $(document).ready(function (e) {
                                 hiddenVehicles[i].show();
                             }
                         });
-                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://graphhopper.com/api/1/docs/supported-vehicle-profiles/'>?</a>"));
+                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://docs.graphhopper.com/#section/Map-Data-and-Routing-Profiles/OpenStreetMap'>?</a>"));
                         vehiclesDiv.append(moreBtn);
                     }
                 }
@@ -245,7 +250,10 @@ function initFromParams(params, doQuery) {
         time_24hr: true,
         enableTime: true
     });
-
+    if (ghRequest.isPublicTransit())
+        $(".time_input").show();
+    else
+        $(".time_input").hide();
     if (ghRequest.getEarliestDepartureTime()) {
         flatpickr.setDate(ghRequest.getEarliestDepartureTime());
     }
@@ -386,6 +394,7 @@ function setIntermediateCoord(e) {
     });
     var index = routeManipulation.getIntermediatePointIndex(routeSegments, e.latlng);
     ghRequest.route.add(e.latlng.wrap(), index);
+    ghRequest.do_zoom = false;
     resolveIndex(index);
     routeIfAllResolved();
 }
@@ -461,6 +470,8 @@ function resolveTo() {
 }
 
 function resolveIndex(index) {
+    if(!ghRequest.route.getIndex(index))
+        return;
     setFlag(ghRequest.route.getIndex(index), index);
     if (index === 0) {
         if (!ghRequest.to.isResolved())
@@ -549,7 +560,7 @@ function routeLatLng(request, doQuery) {
             return;
         }
 
-        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, useMiles, details) {
+        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, details) {
             return function () {
 
                 var currentGeoJson = geoJsons[currentLayerIndex];
@@ -568,7 +579,7 @@ function routeLatLng(request, doQuery) {
 
                 if (hasElevation) {
                     mapLayer.clearElevation();
-                    mapLayer.addElevation(currentGeoJson, useMiles, details);
+                    mapLayer.addElevation(currentGeoJson, details);
                 }
 
                 headerTabs.find("li").removeClass("current");
@@ -598,7 +609,8 @@ function routeLatLng(request, doQuery) {
                 mapLayer.updateScale(useMiles);
                 ghRequest.useMiles = useMiles;
                 resolveAll();
-                routeLatLng(ghRequest);
+                if (ghRequest.route.isResolved())
+                  routeLatLng(ghRequest);
             };
         };
 
@@ -633,7 +645,7 @@ function routeLatLng(request, doQuery) {
             mapLayer.addDataToRoutingLayer(geojsonFeature);
             var oneTab = $("<div class='route_result_tab'>");
             routeResultsDiv.append(oneTab);
-            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), request.useMiles, path.details));
+            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), path.details));
 
             var routeInfo = $("<div class='route_description'>");
             if (path.description && path.description.length > 0) {

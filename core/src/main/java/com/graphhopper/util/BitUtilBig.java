@@ -33,15 +33,15 @@ public class BitUtilBig extends BitUtil {
     }
 
     @Override
-    public final int toInt(byte[] b, int offset) {
-        return (b[offset] & 0xFF) << 24 | (b[++offset] & 0xFF) << 16
-                | (b[++offset] & 0xFF) << 8 | (b[++offset] & 0xFF);
-    }
-
-    @Override
     public void fromShort(byte[] bytes, short value, int offset) {
         bytes[offset] = (byte) (value >> 8);
         bytes[offset + 1] = (byte) (value);
+    }
+
+    @Override
+    public final int toInt(byte[] b, int offset) {
+        return (b[offset] & 0xFF) << 24 | (b[++offset] & 0xFF) << 16
+                | (b[++offset] & 0xFF) << 8 | (b[++offset] & 0xFF);
     }
 
     @Override

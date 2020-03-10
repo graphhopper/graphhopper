@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.PMap;
 
 /**
@@ -36,11 +35,13 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public BikeFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 4),
-                properties.getLong("speed_factor", 2),
+        this(properties.getInt("speed_bits", 4),
+                properties.getInt("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.properties = properties;
-        this.setBlockFords(properties.getBool("block_fords", true));
+
+        blockBarriersByDefault(properties.getBool("block_barriers", false));
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
     }
 
     public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
@@ -49,6 +50,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
         addPushingSection("footway");
         addPushingSection("pedestrian");
         addPushingSection("steps");
+        addPushingSection("platform");
 
         avoidHighwayTags.add("trunk");
         avoidHighwayTags.add("trunk_link");
@@ -66,20 +68,11 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
 
         absoluteBarriers.add("kissing_gate");
         setSpecificClassBicycle("touring");
-
-        init();
     }
 
     @Override
     public int getVersion() {
         return 2;
-    }
-
-    @Override
-    boolean isPushingSection(ReaderWay way) {
-        String highway = way.getTag("highway");
-        String trackType = way.getTag("tracktype");
-        return super.isPushingSection(way) || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
 
     @Override

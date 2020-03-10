@@ -53,11 +53,11 @@ List<Map<String, Object>> iList = il.createJson();
 List<GPXEntry> list = il.createGPXList();
 ```
 
-## Speed mode vs. Hybrid mode vs. Flexibile mode
+## Speed mode vs. Hybrid mode vs. Flexible mode
 
 The default option of GraphHopper is the speed mode. If you don't want to use the speed-up mode you can disable it before the import (see
-config.yml `prepare.ch.weightings=no`) or on a per request base by adding `ch.disable=true` to the request. If you want to use the hybrid mode you have to enable it before the import 
-(see config.yml `prepare.lm.weightings=fastest`).
+config.yml `profiles_ch`) or on a per request basis by adding `ch.disable=true` to the request. If you want to use the hybrid mode you have to enable it before the import 
+(see config.yml `profiles_lm`).
 
 If you need multiple vehicle profiles you can specify a list of vehicle profiles (see
 config.yml e.g. `graph.flag_encoders=car,bike` or use `EncodingManager.create("car,bike")`). 
@@ -66,7 +66,6 @@ To calculate a route you have to pick one vehicle and optionally an algorithm li
 
 ```java
 GraphHopper hopper = new GraphHopperOSM().forServer();
-hopper.setCHEnabled(false);
 hopper.setOSMFile(osmFile);
 hopper.setGraphHopperLocation(graphFolder);
 hopper.setEncodingManager(EncodingManager.create("car,bike"));
@@ -80,8 +79,9 @@ GHResponse res = hopper.route(req);
 
 ## Heading
 
-The flexibile and hybrid mode allows to add a desired heading (north based azimuth between 0 and 360 degree)
-to any point. Adding a heading makes it more likely that a route starts towards the provided direction:
+The flexible and hybrid modes allow adding a desired heading (north based azimuth between 0 and 360 degree)
+to any point. Adding a heading makes it more likely that a route starts towards the provided direction, because
+roads going into other directions are penalized (see the Routing.HEADING_PENALTY parameter)
 ```java
 GHRequest req = new GHRequest().addPoint(new GHPoint (latFrom, lonFrom), favoredHeading).addPoint(new GHPoint (latTo, lonTo));
 ```

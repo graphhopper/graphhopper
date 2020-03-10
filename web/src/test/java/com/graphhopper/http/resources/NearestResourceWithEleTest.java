@@ -21,9 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -43,14 +41,13 @@ public class NearestResourceWithEleTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.getGraphHopperConfiguration().merge(new CmdArgs().
+        config.getGraphHopperConfiguration().
                 put("graph.elevation.provider", "srtm").
                 put("graph.elevation.cachedir", "../core/files/").
-                put(Parameters.CH.PREPARE + "weightings", "no").
                 put("prepare.min_one_way_network_size", "0").
                 put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/monaco.osm.gz").
-                put("graph.location", dir));
+                put("graph.location", dir);
     }
 
     @ClassRule

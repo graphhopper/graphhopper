@@ -18,16 +18,22 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
+
+import java.util.Arrays;
 
 /**
- * This class implements an ObjectEncodedValue via a list of enums. I.e. it stores just the indices
- * of the used objects as an integer value.
+ * This class allows to store distinct values via an enum. I.e. it stores just the indices
  */
-public final class EnumEncodedValue<E extends Enum> extends SimpleIntEncodedValue {
+public final class EnumEncodedValue<E extends Enum> extends UnsignedIntEncodedValue {
     private final E[] arr;
 
     public EnumEncodedValue(String name, Class<E> enumType) {
-        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length));
+        this(name, enumType, false);
+    }
+
+    public EnumEncodedValue(String name, Class<E> enumType, boolean storeTwoDirections) {
+        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length - 1), storeTwoDirections);
         arr = enumType.getEnumConstants();
     }
 
@@ -39,5 +45,17 @@ public final class EnumEncodedValue<E extends Enum> extends SimpleIntEncodedValu
     public final E getEnum(boolean reverse, IntsRef ref) {
         int value = super.getInt(reverse, ref);
         return arr[value];
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!super.equals(o)) return false;
+        EnumEncodedValue that = (EnumEncodedValue) o;
+        return Arrays.equals(arr, that.arr);
+    }
+
+    @Override
+    public int getVersion() {
+        return 31 * super.getVersion() + staticHashCode(arr);
     }
 }

@@ -23,4 +23,13 @@ public class EnumEncodedValueTest {
         prop.setEnum(false, ref, RoadClass.SECONDARY);
         assertEquals(RoadClass.SECONDARY, prop.getEnum(false, ref));
     }
+
+    @Test
+    public void testSize() {
+        assertEquals(3, 32 - Integer.numberOfLeadingZeros(7 - 1));
+        assertEquals(3, 32 - Integer.numberOfLeadingZeros(8 - 1));
+        assertEquals(4, 32 - Integer.numberOfLeadingZeros(9 - 1));
+        assertEquals(4, 32 - Integer.numberOfLeadingZeros(16 - 1));
+        assertEquals(5, 32 - Integer.numberOfLeadingZeros(17 - 1));
+    }
 }
