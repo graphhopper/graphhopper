@@ -18,19 +18,23 @@
 package com.graphhopper.http.resources;
 
 import com.graphhopper.GHResponse;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.resources.InfoResource;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import java.io.File;
-import javax.ws.rs.core.Response;
 import org.junit.AfterClass;
-import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import javax.ws.rs.core.Response;
+import java.io.File;
+import java.util.Collections;
+
 import static com.graphhopper.http.util.TestUtils.clientTarget;
+import static org.junit.Assert.*;
 
 /**
  * Similar to PtRouteResourceTest, but tests the entire app, not the resource, so that the plugging-together
@@ -46,7 +50,8 @@ public class GtfsTest {
                 put("graph.flag_encoders", "foot").
                 put("datareader.file", "../reader-gtfs/files/beatty.osm").
                 put("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
-                put("graph.location", DIR);
+                put("graph.location", DIR).
+                setProfiles(Collections.singletonList(new ProfileConfig("profile").setVehicle("foot").setWeighting("fastest")));
     }
 
     @ClassRule

@@ -18,16 +18,20 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import java.io.File;
-import javax.ws.rs.core.Response;
 import org.junit.AfterClass;
-import static org.junit.Assert.*;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import javax.ws.rs.core.Response;
+import java.io.File;
+import java.util.Collections;
+
 import static com.graphhopper.http.util.TestUtils.clientTarget;
+import static org.junit.Assert.*;
 
 /**
  * Tests the DataFlagEncoder with the SpatialRuleLookup enabled
@@ -48,7 +52,8 @@ public class SpatialRulesTest {
                 put("spatial_rules.borders_directory", "../core/files/spatialrules").
                 put("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
-                put("graph.location", DIR);
+                put("graph.location", DIR).
+                setProfiles(Collections.singletonList(new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")));
     }
 
     @ClassRule
