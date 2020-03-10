@@ -4,6 +4,8 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
@@ -124,8 +126,7 @@ public class Path4CHTest {
     }
 
     private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
-        graph.getTurnCostStorage().setExpensive(encoder.toString(), graph.getEncodingManager(),
-                inEdge.getEdge(), viaNode, outEdge.getEdge(), cost);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) graph.getEncodingManager()).getDecimalEncodedValue(TurnCost.key(encoder.toString())), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost);
     }
 
     private void setTurnCost(int from, int via, int to, int cost) {
