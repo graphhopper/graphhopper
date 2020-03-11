@@ -17,26 +17,16 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
-final class BooleanToValue implements ConfigMapEntry {
-    private final BooleanEncodedValue bev;
-    private final double value, elseValue;
-
-    public BooleanToValue(BooleanEncodedValue bev, double value, double elseValue) {
-        this.bev = bev;
-        this.value = value;
-        this.elseValue = elseValue;
-    }
-
-    @Override
-    public double getValue(EdgeIteratorState iter, boolean reverse) {
-        return iter.get(bev) ? value : elseValue;
-    }
-
-    @Override
-    public String toString() {
-        return bev.getName() + ": " + value + ", else:" + elseValue;
-    }
+/**
+ * This internal interface calculates a double value from the specified EdgeIteratorState. Used for CustomWeighting.
+ *
+ * @see {{@link GeoToValueEntry}} or {@link EnumToValueEntry}
+ */
+interface EdgeToValueEntry {
+    /**
+     * @return a double value or null if this entry should be skipped
+     */
+    double getValue(EdgeIteratorState iter, boolean reverse);
 }

@@ -1282,7 +1282,7 @@ public class GraphHopperIT {
         req.getHints().put(CH.DISABLE, true);
         rsp = hopper.route(req);
         long flexSum = rsp.getHints().getLong("visited_nodes.sum", 0);
-        assertTrue("Too few visited nodes for custom mode " + flexSum, flexSum > 60);
+        assertTrue("Too few visited nodes for flex mode " + flexSum, flexSum > 60);
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);

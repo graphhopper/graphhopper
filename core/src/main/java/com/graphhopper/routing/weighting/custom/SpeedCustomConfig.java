@@ -18,9 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.locationtech.jts.geom.Geometry;
@@ -33,8 +31,8 @@ import java.util.Map;
 import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.getEV;
 
 final class SpeedCustomConfig {
-    private List<ConfigMapEntry> speedFactorList = new ArrayList<>();
-    private List<ConfigMapEntry> maxSpeedList = new ArrayList<>();
+    private List<EdgeToValueEntry> speedFactorList = new ArrayList<>();
+    private List<EdgeToValueEntry> maxSpeedList = new ArrayList<>();
     private DecimalEncodedValue avgSpeedEnc;
     private final double maxSpeed;
     private final double maxSpeedFallback;
@@ -53,19 +51,19 @@ final class SpeedCustomConfig {
             Object value = entry.getValue();
 
             if (value instanceof Number) {
-                if (key.startsWith(GeoToValue.key(""))) {
-                    Geometry geometry = GeoToValue.pickGeometry(customModel, key);
-                    maxSpeedList.add(new GeoToValue(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), maxSpeed));
+                if (key.startsWith(GeoToValueEntry.key(""))) {
+                    Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
+                    maxSpeedList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), maxSpeed));
                 } else {
                     BooleanEncodedValue encodedValue = getEV(lookup, "max_speed", key, BooleanEncodedValue.class);
-                    maxSpeedList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), maxSpeed));
+                    maxSpeedList.add(new BooleanToValueEntry(encodedValue, ((Number) value).doubleValue(), maxSpeed));
                 }
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "max_speed", key, EnumEncodedValue.class);
                 Class<? extends Enum> enumClass = factory.findValues(key);
                 double[] values = Helper.createEnumToDoubleArray("max_speed." + key, maxSpeed, 0, maxSpeed,
                         enumClass, (Map<String, Object>) value);
-                maxSpeedList.add(new EnumToValue(enumEncodedValue, values));
+                maxSpeedList.add(new EnumToValueEntry(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'max_speed'");
             }
@@ -77,19 +75,19 @@ final class SpeedCustomConfig {
             Object value = entry.getValue();
 
             if (value instanceof Number) {
-                if (key.startsWith(GeoToValue.key(""))) {
-                    Geometry geometry = GeoToValue.pickGeometry(customModel, key);
-                    speedFactorList.add(new GeoToValue(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
+                if (key.startsWith(GeoToValueEntry.key(""))) {
+                    Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
+                    speedFactorList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
                 } else {
                     BooleanEncodedValue encodedValue = getEV(lookup, "speed_factor", key, BooleanEncodedValue.class);
-                    speedFactorList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), 1));
+                    speedFactorList.add(new BooleanToValueEntry(encodedValue, ((Number) value).doubleValue(), 1));
                 }
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "speed_factor", key, EnumEncodedValue.class);
                 Class<? extends Enum> enumClass = factory.findValues(key);
                 double[] values = Helper.createEnumToDoubleArray("speed_factor." + key, 1, 0, 1,
                         enumClass, (Map<String, Object>) value);
-                speedFactorList.add(new EnumToValue(enumEncodedValue, values));
+                speedFactorList.add(new EnumToValueEntry(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'speed_factor'");
             }
@@ -109,7 +107,7 @@ final class SpeedCustomConfig {
             throw new IllegalStateException("Invalid estimated speed " + speed);
 
         for (int i = 0; i < speedFactorList.size(); i++) {
-            ConfigMapEntry entry = speedFactorList.get(i);
+            EdgeToValueEntry entry = speedFactorList.get(i);
             double factorValue = entry.getValue(edge, reverse);
             speed *= factorValue;
             if (speed <= 0)
@@ -118,7 +116,7 @@ final class SpeedCustomConfig {
 
         boolean applied = false;
         for (int i = 0; i < maxSpeedList.size(); i++) {
-            ConfigMapEntry entry = maxSpeedList.get(i);
+            EdgeToValueEntry entry = maxSpeedList.get(i);
             double maxValue = entry.getValue(edge, reverse);
             if (maxValue < speed) {
                 applied = true;

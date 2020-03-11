@@ -26,7 +26,7 @@ import com.graphhopper.util.shapes.Polygon;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 
-final class GeoToValue implements ConfigMapEntry {
+final class GeoToValueEntry implements EdgeToValueEntry {
     public static String key(String postfix) {
         return "area_" + postfix;
     }
@@ -34,14 +34,14 @@ final class GeoToValue implements ConfigMapEntry {
     private final Polygon ghPolygon;
     private final double value, elseValue;
 
-    public GeoToValue(PreparedGeometry geometry, double value, double elseValue) {
+    public GeoToValueEntry(PreparedGeometry geometry, double value, double elseValue) {
         this.ghPolygon = new Polygon(geometry);
         this.value = value;
         this.elseValue = elseValue;
     }
 
     static Geometry pickGeometry(CustomModel customModel, String key) {
-        String id = key.substring(GeoToValue.key("").length());
+        String id = key.substring(GeoToValueEntry.key("").length());
         JsonFeature feature = customModel.getAreas().get(id);
         if (feature == null)
             throw new IllegalArgumentException("Cannot find area " + id);

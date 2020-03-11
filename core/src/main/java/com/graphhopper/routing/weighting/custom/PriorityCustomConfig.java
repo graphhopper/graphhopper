@@ -18,9 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.locationtech.jts.geom.Geometry;
@@ -31,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 final class PriorityCustomConfig {
-    private List<ConfigMapEntry> priorityList = new ArrayList<>();
+    private List<EdgeToValueEntry> priorityList = new ArrayList<>();
 
     public PriorityCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
         add(lookup, customModel.getVehicleWeight(), "vehicle_weight", MaxWeight.KEY);
@@ -44,12 +42,12 @@ final class PriorityCustomConfig {
             Object value = entry.getValue();
 
             if (value instanceof Number) {
-                if (key.startsWith(GeoToValue.key(""))) {
-                    Geometry geometry = GeoToValue.pickGeometry(customModel, key);
-                    priorityList.add(new GeoToValue(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
+                if (key.startsWith(GeoToValueEntry.key(""))) {
+                    Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
+                    priorityList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
                 } else {
                     BooleanEncodedValue encodedValue = getEV(lookup, "priority", key, BooleanEncodedValue.class);
-                    priorityList.add(new BooleanToValue(encodedValue, ((Number) value).doubleValue(), 1));
+                    priorityList.add(new BooleanToValueEntry(encodedValue, ((Number) value).doubleValue(), 1));
                 }
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "priority", key, EnumEncodedValue.class);
@@ -57,7 +55,7 @@ final class PriorityCustomConfig {
                 double[] values = Helper.createEnumToDoubleArray("priority." + key, 1, 0, 100,
                         enumClass, (Map<String, Object>) value);
                 normalizeFactor(values, 1);
-                priorityList.add(new EnumToValue(enumEncodedValue, values));
+                priorityList.add(new EnumToValueEntry(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'priority'");
             }
@@ -92,7 +90,7 @@ final class PriorityCustomConfig {
             return;
         if (!lookup.hasEncodedValue(encValue))
             throw new IllegalArgumentException("You cannot use " + name + " as encoded value '" + encValue + "' was not enabled on the server.");
-        priorityList.add(new MaxValueConfigMapEntry(name, lookup.getDecimalEncodedValue(encValue), value));
+        priorityList.add(new MaxValueEntry(name, lookup.getDecimalEncodedValue(encValue), value));
     }
 
     /**
@@ -101,7 +99,7 @@ final class PriorityCustomConfig {
     public double calcPriority(EdgeIteratorState edge, boolean reverse) {
         double priority = 1;
         for (int i = 0; i < priorityList.size(); i++) {
-            ConfigMapEntry entry = priorityList.get(i);
+            EdgeToValueEntry entry = priorityList.get(i);
             double value = entry.getValue(edge, reverse);
             priority *= value;
             if (priority <= 0)
@@ -110,11 +108,11 @@ final class PriorityCustomConfig {
         return priority;
     }
 
-    private static class MaxValueConfigMapEntry implements ConfigMapEntry {
+    private static class MaxValueEntry implements EdgeToValueEntry {
         DecimalEncodedValue ev;
         double vehicleValue;
 
-        public MaxValueConfigMapEntry(String name, DecimalEncodedValue ev, double vehicleValue) {
+        public MaxValueEntry(String name, DecimalEncodedValue ev, double vehicleValue) {
             if (vehicleValue <= 0)
                 throw new IllegalArgumentException(name + " cannot be 0 or negative");
             this.ev = ev;

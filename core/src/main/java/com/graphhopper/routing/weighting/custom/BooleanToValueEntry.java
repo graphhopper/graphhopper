@@ -17,29 +17,26 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.Arrays;
+final class BooleanToValueEntry implements EdgeToValueEntry {
+    private final BooleanEncodedValue bev;
+    private final double value, elseValue;
 
-final class EnumToValue implements ConfigMapEntry {
-    private final IntEncodedValue eev;
-    private final double[] values;
-
-    EnumToValue(EnumEncodedValue eev, double[] values) {
-        this.eev = eev;
-        this.values = values;
+    public BooleanToValueEntry(BooleanEncodedValue bev, double value, double elseValue) {
+        this.bev = bev;
+        this.value = value;
+        this.elseValue = elseValue;
     }
 
     @Override
     public double getValue(EdgeIteratorState iter, boolean reverse) {
-        int enumOrdinal = iter.get(eev);
-        return values[enumOrdinal];
+        return iter.get(bev) ? value : elseValue;
     }
 
     @Override
     public String toString() {
-        return eev.getName() + ": " + Arrays.toString(values);
+        return bev.getName() + ": " + value + ", else:" + elseValue;
     }
 }

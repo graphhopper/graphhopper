@@ -17,11 +17,29 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
-interface ConfigMapEntry {
-    /**
-     * @return a double value or null if this entry should be skipped
-     */
-    double getValue(EdgeIteratorState iter, boolean reverse);
+import java.util.Arrays;
+
+final class EnumToValueEntry implements EdgeToValueEntry {
+    private final IntEncodedValue eev;
+    private final double[] values;
+
+    EnumToValueEntry(EnumEncodedValue eev, double[] values) {
+        this.eev = eev;
+        this.values = values;
+    }
+
+    @Override
+    public double getValue(EdgeIteratorState iter, boolean reverse) {
+        int enumOrdinal = iter.get(eev);
+        return values[enumOrdinal];
+    }
+
+    @Override
+    public String toString() {
+        return eev.getName() + ": " + Arrays.toString(values);
+    }
 }
