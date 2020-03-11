@@ -234,7 +234,6 @@ public class GHUtility {
         DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
         EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
-        IntsRef tcFlags = TurnCost.createFlags();
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (random.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);
@@ -247,7 +246,7 @@ public class GHUtility {
                         }
                         if (random.nextDouble() < pEdgePairHasTurnCosts) {
                             double cost = random.nextDouble() < pCostIsRestriction ? Double.POSITIVE_INFINITY : random.nextDouble() * maxTurnCost;
-                            turnCostStorage.set(turnCostEnc, tcFlags, inIter.getEdge(), node, outIter.getEdge(), cost);
+                            turnCostStorage.set(turnCostEnc, inIter.getEdge(), node, outIter.getEdge(), cost);
                         }
                     }
                 }
@@ -895,5 +894,84 @@ public class GHUtility {
         public int getMergeStatus(int flags) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
+    }
+
+    /**
+     * This node access can be used in tests to mock specific iterator behaviour via overloading
+     * certain methods.
+     */
+    public static class DisabledNodeAccess implements NodeAccess {
+
+        @Override
+        public int getTurnCostIndex(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void setTurnCostIndex(int nodeId, int additionalValue) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public boolean is3D() {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public int getDimension() {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void ensureNode(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void setNode(int nodeId, double lat, double lon) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public void setNode(int nodeId, double lat, double lon, double ele) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public double getLatitude(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public double getLat(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public double getLongitude(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public double getLon(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public double getElevation(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+
+        @Override
+        public double getEle(int nodeId) {
+            throw new UnsupportedOperationException("Not supported.");
+        }
+    }
+
+    public static BBox createBBox(EdgeIteratorState edgeState) {
+        PointList towerNodes = edgeState.fetchWayGeometry(4);
+        int secondIndex = towerNodes.getSize() == 1 ? 0 : 1;
+        return BBox.fromPoints(towerNodes.getLatitude(0), towerNodes.getLongitude(0),
+                towerNodes.getLatitude(secondIndex), towerNodes.getLongitude(secondIndex));
     }
 }

@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -30,7 +31,7 @@ import static org.junit.Assert.*;
 public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Override
     protected BikeCommonFlagEncoder createBikeEncoder() {
-        return new MountainBikeFlagEncoder();
+        return new MountainBikeFlagEncoder(new PMap("block_fords=true"));
     }
 
     @Test

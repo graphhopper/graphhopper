@@ -21,7 +21,6 @@ import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -39,7 +38,6 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 public class OSMTurnRelationParser implements TurnCostParser {
     private String name;
     private DecimalEncodedValue turnCostEnc;
-    private final int maxTurnCosts;
     private final Collection<String> restrictions;
     private BooleanEncodedValue accessEnc;
     private EdgeExplorer cachedOutExplorer, cachedInExplorer;
@@ -54,7 +52,8 @@ public class OSMTurnRelationParser implements TurnCostParser {
 
     public OSMTurnRelationParser(String name, int maxTurnCosts, Collection<String> restrictions) {
         this.name = name;
-        this.maxTurnCosts = maxTurnCosts;
+        this.turnCostEnc = TurnCost.create(name, maxTurnCosts);
+
         if (restrictions.isEmpty()) {
             // https://wiki.openstreetmap.org/wiki/Key:access
             if (name.contains("car"))
@@ -74,8 +73,6 @@ public class OSMTurnRelationParser implements TurnCostParser {
     }
 
     DecimalEncodedValue getTurnCostEnc() {
-        if (turnCostEnc == null)
-            throw new IllegalStateException("Cannot access turn cost encoded value. Not initialized. Call createTurnCostEncodedValues before");
         return turnCostEnc;
     }
 
@@ -83,15 +80,15 @@ public class OSMTurnRelationParser implements TurnCostParser {
     public void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
         String accessKey = getKey(name, "access");
         accessEnc = lookup.getEncodedValue(accessKey, BooleanEncodedValue.class);
-        registerNewEncodedValue.add(turnCostEnc = TurnCost.create(name, maxTurnCosts));
+        registerNewEncodedValue.add(turnCostEnc);
     }
 
     @Override
-    public void handleTurnRelationTags(IntsRef turnCostFlags, OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph) {
+    public void handleTurnRelationTags(OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph) {
         if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
             return;
 
-        addRelationToTCStorage(turnRelation, turnCostFlags, map, graph);
+        addRelationToTCStorage(turnRelation, map, graph);
     }
 
     private EdgeExplorer getInExplorer(Graph graph) {
@@ -104,10 +101,8 @@ public class OSMTurnRelationParser implements TurnCostParser {
 
     /**
      * Add the specified relation to the TurnCostStorage
-     *
-     * @return a collection of turn cost entries which can be used for testing
      */
-    void addRelationToTCStorage(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
+    void addRelationToTCStorage(OSMTurnRelation osmTurnRelation,
                                 ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
@@ -138,7 +133,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
                 long wayId = map.getOsmIdOfInternalEdge(edgeId);
                 if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRelation.Type.ONLY && wayId != osmTurnRelation.getOsmIdTo()
                         || osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT && wayId == osmTurnRelation.getOsmIdTo() && wayId >= 0) {
-                    tcs.set(turnCostEnc, turnCostFlags, edgeIdFrom, viaNode, iter.getEdge(), Double.POSITIVE_INFINITY);
+                    tcs.set(turnCostEnc, edgeIdFrom, viaNode, iter.getEdge(), Double.POSITIVE_INFINITY);
                     if (osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT)
                         break;
                 }

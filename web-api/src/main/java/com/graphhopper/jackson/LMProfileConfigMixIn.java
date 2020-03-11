@@ -15,27 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.IntsRef;
-import org.junit.Test;
+package com.graphhopper.jackson;
 
-import static org.junit.Assert.assertEquals;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * @author Peter Karich
- */
-public class EncodedValueOldTest {
-    @Test
-    public void testSetValue() {
-        EncodedValueOld instance = new EncodedValueOld("test", 6, 4, 1, 5, 10);
-        assertEquals(10, instance.getValue(instance.setValue(0, 10)));
-
-        instance = new EncodedValueOld("test", 0, 4, 1, 5, 10);
-        assertEquals(10, instance.getValue(instance.setValue(0, 10)));
-
-        instance = new EncodedValueOld("test", 0, 4, 1, 5, 10);
-        long flags = instance.setDefaultValue(0);
-        assertEquals(5, instance.getValue(flags));
-    }
+public interface LMProfileConfigMixIn {
+    @JsonProperty("maximum_lm_weight")
+    void setMaximumLMWeight(double maximumLMWeight);
 }

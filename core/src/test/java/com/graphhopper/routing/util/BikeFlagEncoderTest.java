@@ -21,6 +21,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
@@ -35,7 +36,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
     @Override
     protected BikeCommonFlagEncoder createBikeEncoder() {
-        return new BikeFlagEncoder();
+        return new BikeFlagEncoder(new PMap("block_fords=true"));
     }
 
     @Test

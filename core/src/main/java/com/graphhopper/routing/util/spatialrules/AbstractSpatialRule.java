@@ -17,42 +17,52 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.locationtech.jts.geom.Polygon;
+
+import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.profiles.RoadClass;
 
 /**
  * @author Robin Boldt
  */
 public abstract class AbstractSpatialRule implements SpatialRule {
 
-    protected List<Polygon> polygons = Collections.emptyList();
+    private final List<Polygon> borders;
+    
+    public AbstractSpatialRule(List<Polygon> borders) {
+        this.borders = borders;
+    }
+    
+    public AbstractSpatialRule(Polygon border) {
+        this(Collections.singletonList(border));
+    }
+    
+    @Override
+    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
+        return currentMaxSpeed;
+    }
 
+    @Override
+    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
+        return currentRoadAccess;
+    }
+    
     public List<Polygon> getBorders() {
-        return polygons;
-    }
-
-    public SpatialRule setBorders(List<Polygon> polygons) {
-        this.polygons = polygons;
-        return this;
-    }
-
-    public SpatialRule addBorder(Polygon polygon) {
-        if (polygons.isEmpty())
-            polygons = new ArrayList<>();
-        this.polygons.add(polygon);
-        return this;
+        return borders;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof SpatialRule) {
-            if (((SpatialRule) obj).getId().equals(this.getId()))
-                return true;
+        if (this == obj) {
+            return true;
         }
-        return false;
+        if (!(obj instanceof SpatialRule)) {
+            return false;
+        }
+        return this.getId().equals(((SpatialRule) obj).getId());
     }
 
     @Override

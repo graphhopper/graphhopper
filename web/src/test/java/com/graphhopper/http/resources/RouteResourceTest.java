@@ -23,6 +23,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.api.GraphHopperWeb;
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.routing.profiles.RoadClass;
@@ -63,13 +65,15 @@ public class RouteResourceTest {
     static {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
-                put("prepare.ch.weightings", "fastest").
                 put("routing.ch.disabling_allowed", "true").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.encoded_values", "road_class,surface,road_environment,max_speed").
-                put("graph.location", DIR);
+                put("graph.location", DIR)
+                .setProfiles(Collections.singletonList(new ProfileConfig("my_car").setVehicle("car").setWeighting("fastest")))
+                .setCHProfiles(Collections.singletonList(new CHProfileConfig("my_car"))
+                );
     }
 
     @ClassRule
@@ -429,7 +433,7 @@ public class RouteResourceTest {
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
-        assertTrue(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>arrive at destination</name></wpt>"));
+        assertTrue(str.contains("<wpt lat=\"42.510033\" lon=\"1.548191\"> <name>arrive at destination</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
     }
 

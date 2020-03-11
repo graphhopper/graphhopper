@@ -19,6 +19,8 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -89,11 +91,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private EncodingManager createEncodingManager(boolean restrictedOnly) {
-        if (restrictedOnly)
-            carEncoder = new CarFlagEncoder(5, 5, 1);
-        else
-            // allow for basic costs too
-            carEncoder = new CarFlagEncoder(5, 5, 3);
+        carEncoder = new CarFlagEncoder(5, 5, restrictedOnly ? 1 : 3);
         return EncodingManager.create(carEncoder);
     }
 
@@ -462,7 +460,6 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private void setTurnCost(GraphHopperStorage g, double cost, int from, int via, int to) {
-        g.getTurnCostStorage().setExpensive(carEncoder.toString(), g.getEncodingManager(),
-                getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), cost);
+        g.getTurnCostStorage().set(((EncodedValueLookup) g.getEncodingManager()).getDecimalEncodedValue(TurnCost.key(carEncoder.toString())), getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), cost);
     }
 }

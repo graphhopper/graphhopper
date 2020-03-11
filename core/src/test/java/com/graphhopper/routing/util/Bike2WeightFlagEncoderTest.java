@@ -32,7 +32,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
 
     @Override
     protected BikeCommonFlagEncoder createBikeEncoder() {
-        return new Bike2WeightFlagEncoder();
+        return new Bike2WeightFlagEncoder(new PMap("block_fords=true"));
     }
 
     private Graph initExampleGraph() {

@@ -30,6 +30,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -60,7 +61,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
-    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, EncodedValueLookup lookup, final Weighting weighting) {
+    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex,
+                              EncodedValueLookup lookup, final Weighting weighting) {
         super(locationIndex, lookup, weighting);
         this.ghRequest = ghRequest;
         this.ghResponse = ghRsp;
@@ -81,7 +83,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             GHPoint point = points.get(placeIndex);
             QueryResult qr = null;
             if (ghRequest.hasPointHints())
-                qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter, ghRequest.getPointHints().get(placeIndex)));
+                qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
+                        ghRequest.getPointHints().get(placeIndex), point, 100));
             else if (ghRequest.hasSnapPreventions())
                 qr = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
             if (qr == null || !qr.isValid())

@@ -18,17 +18,25 @@
 
 package com.graphhopper;
 
+import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.util.PMap;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
  * This class represents the global configuration for the GraphHopper class, which is typically configured via the
- * `config.yml` file. So far we are mapping the key-value pairs in the config file to a string-string map, but soon
- * we will start adding hierarchical configurations (lists, nested objects etc.). We will also start adding the
- * different configuration options as fields of this class including the default values.
+ * `config.yml` file. Certain fields are mapped to dedicated config objects to allow a hierarchical configuration and
+ * to include lists. All other fields are mapped to a key-value (string-string) map. In the future we will start adding
+ * the different configuration options as fields of this class including the default values.
  */
 public class GraphHopperConfig {
+    private List<ProfileConfig> profiles = new ArrayList<>();
+    private List<CHProfileConfig> chProfiles = new ArrayList<>();
+    private List<LMProfileConfig> lmProfiles = new ArrayList<>();
     private final PMap map;
 
     public GraphHopperConfig() {
@@ -37,6 +45,33 @@ public class GraphHopperConfig {
 
     public GraphHopperConfig(PMap pMap) {
         this.map = pMap;
+    }
+
+    public List<ProfileConfig> getProfiles() {
+        return profiles;
+    }
+
+    public GraphHopperConfig setProfiles(List<ProfileConfig> profiles) {
+        this.profiles = profiles;
+        return this;
+    }
+
+    public List<CHProfileConfig> getCHProfiles() {
+        return chProfiles;
+    }
+
+    public GraphHopperConfig setCHProfiles(List<CHProfileConfig> chProfiles) {
+        this.chProfiles = chProfiles;
+        return this;
+    }
+
+    public List<LMProfileConfig> getLMProfiles() {
+        return lmProfiles;
+    }
+
+    public GraphHopperConfig setLMProfiles(List<LMProfileConfig> lmProfiles) {
+        this.lmProfiles = lmProfiles;
+        return this;
     }
 
     public GraphHopperConfig put(String key, Object value) {
@@ -79,6 +114,21 @@ public class GraphHopperConfig {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("profiles:\n");
+        for (ProfileConfig profile : profiles) {
+            sb.append(profile);
+            sb.append("\n");
+        }
+        sb.append("profiles_ch:\n");
+        for (CHProfileConfig profile : chProfiles) {
+            sb.append(profile);
+            sb.append("\n");
+        }
+        sb.append("profiles_lm:\n");
+        for (LMProfileConfig profile : lmProfiles) {
+            sb.append(profile);
+            sb.append("\n");
+        }
         sb.append("properties:\n");
         for (Map.Entry<String, String> entry : map.toMap().entrySet()) {
             sb.append(entry.getKey()).append(": ").append(entry.getValue());

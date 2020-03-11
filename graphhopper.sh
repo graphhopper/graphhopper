@@ -48,12 +48,12 @@ while [ ! -z $1 ]; do
     -fd|--force-download) FORCE_DWN=1; shift 1;;
     -h|--help) printBashUsage
       exit 0;;
-    --host) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].bindHost=$2"; shift 2;;
+    --host) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.application_connectors[0].bind_host=$2"; shift 2;;
     -i|--input) FILE="$2"; shift 2;;
     --jar) JAR="$2"; shift 2;;
     -o|--graph-cache) GRAPH="$2"; shift 2;;
     -p|--profiles) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.graphhopper.graph.flag_encoders=$2"; shift 2;;
-    --port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
+    --port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.application_connectors[0].port=$2"; shift 2;;
     -v|--version) echo $VERSION
     	exit 2;;
     # forward VM options, here we assume no spaces ie. just one parameter!?
@@ -270,7 +270,8 @@ elif [ "$ACTION" = "torture" ]; then
   "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $@
 
 elif [ "$ACTION" = "measurement" ]; then
-  ARGS="$GH_WEB_OPTS graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest prepare.lm.weightings=fastest graph.flag_encoders=car|turn_costs=true \
+  ARGS="$GH_WEB_OPTS graph.location=$GRAPH datareader.file=$OSM_FILE \
+       measurement.weighting=fastest measurement.ch.node=true measurement.ch.edge=false measurement.lm=true graph.flag_encoders=car|turn_costs=true \
        prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
 
  function startMeasurement {

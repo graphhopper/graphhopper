@@ -21,7 +21,6 @@ import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
@@ -34,7 +33,7 @@ public interface TurnCostParser {
 
     void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
 
-    void handleTurnRelationTags(IntsRef turnCostFlags, OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph);
+    void handleTurnRelationTags(OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph);
 
     /**
      * This map associates the internal GraphHopper nodes IDs with external IDs (OSM) and similarly for the edge IDs
