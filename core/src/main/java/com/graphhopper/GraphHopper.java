@@ -833,8 +833,9 @@ public class GraphHopper implements GraphHopperAPI {
             try {
                 createWeighting(profile, new PMap());
             } catch (IllegalArgumentException e) {
-                // todonow: update, what are we really checking here?
-                throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with an unknown weighting '" + profile.getWeighting() + "'");
+                throw new IllegalArgumentException("Could not create weighting for profile: '" + profile.getName() + "'.\n" +
+                        "Profile: " + profile + "\n" +
+                        "Error: " + e.getMessage());
             }
         }
         Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
@@ -1037,7 +1038,7 @@ public class GraphHopper implements GraphHopperAPI {
                 if (request.hasFavoredHeading(0))
                     throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
-                if (request.getHints().getBool(Routing.PASS_THROUGH, false))
+                if (hints.getBool(Routing.PASS_THROUGH, false))
                     throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
             }
 
@@ -1050,7 +1051,7 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            ProfileConfig profile = resolveProfile(request.getHints());
+            ProfileConfig profile = resolveProfile(hints);
             if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
 

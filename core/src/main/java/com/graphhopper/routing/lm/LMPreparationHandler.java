@@ -194,7 +194,7 @@ public class LMPreparationHandler {
         List<String> profileNames = new ArrayList<>(preparations.size());
         for (PrepareLandmarks preparation : preparations) {
             profileNames.add(preparation.getLMProfile().getName());
-            if (preparation.getLMProfile().getName().equalsIgnoreCase(profile)) {
+            if (preparation.getLMProfile().getName().equals(profile)) {
                 return preparation;
             }
         }
