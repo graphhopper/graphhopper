@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.*;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
+import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -77,6 +78,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean smoothElevation = false;
+    private double longEdgeSamplingDistance = 0;
     private final boolean exitOnlyPillarNodeException = true;
     private final Map<String, EdgeExplorer> outExplorerMap = new HashMap<>();
     private final Map<String, EdgeExplorer> inExplorerMap = new HashMap<>();
@@ -669,6 +671,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         if (this.smoothElevation)
             pointList = GraphElevationSmoothing.smoothElevation(pointList);
 
+        // sample points along long edges
+        if (this.longEdgeSamplingDistance > 0 && pointList.is3D())
+            pointList = EdgeSampling.sample(pointList, longEdgeSamplingDistance, distCalc, eleProvider);
+
         double towerNodeDistance = pointList.calcDistance(distCalc);
 
         if (towerNodeDistance < 0.001) {
@@ -896,8 +902,20 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     }
 
     @Override
+    public DataReader setElevationSimplifyFactor(double elevationSimplifyFactor) {
+        simplifyAlgo.setElevationFactor(elevationSimplifyFactor);
+        return this;
+    }
+
+    @Override
     public DataReader setSmoothElevation(boolean smoothElevation) {
         this.smoothElevation = smoothElevation;
+        return this;
+    }
+
+    @Override
+    public DataReader setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
+        this.longEdgeSamplingDistance = longEdgeSamplingDistance;
         return this;
     }
 

@@ -137,4 +137,49 @@ public class DouglasPeuckerTest {
         }
         assertEquals(expected, given);
     }
+
+    @Test
+    public void test3dPathSimplify() {
+        PointList pointList = new PointList(5, true);
+        pointList.add(0, 0, 0);
+        pointList.add(0.01, 0, 10); // can be removed
+        pointList.add(0.02, 0, 20); // can be removed
+        pointList.add(0.03, 0, 30); // can't be removed
+        pointList.add(0.04, 0, 50);
+        new DouglasPeucker().setMaxDistance(1).setElevationFactor(1).simplify(pointList);
+        assertEquals("(0.0,0.0,0.0), (0.03,0.0,30.0), (0.04,0.0,50.0)", pointList.toString());
+    }
+
+    @Test
+    public void test3dPathSimplifyElevationDisabled() {
+        PointList pointList = new PointList(5, true);
+        pointList.add(0, 0, 0);
+        pointList.add(0.03, 0, 30); // would be kept, if we cared about elevation
+        pointList.add(0.04, 0, 50);
+        new DouglasPeucker().setMaxDistance(1).setElevationFactor(0).simplify(pointList);
+        assertEquals("(0.0,0.0,0.0), (0.04,0.0,50.0)", pointList.toString());
+    }
+
+    @Test
+    public void test3dPathSimplifyElevationFactorOneFifth() {
+        PointList pointList = new PointList(5, true);
+        pointList.add(0, 0, 0);
+        pointList.add(0.01, 0, 14); // <5m from straight line (10), remove
+        pointList.add(0.02, 0, 20); // on straight line, remove
+        pointList.add(0.03, 0, 30); // >5m from straight line, keep
+        pointList.add(0.04, 0, 50);
+        new DouglasPeucker().setMaxDistance(1).setElevationFactor(0.2).simplify(pointList);
+        assertEquals("(0.0,0.0,0.0), (0.03,0.0,30.0), (0.04,0.0,50.0)", pointList.toString());
+    }
+
+    @Test
+    public void test3dPathSimplifyWithMissingElevation() {
+        PointList pointList = new PointList(5, true);
+        pointList.add(0, 0, 0);
+        pointList.add(0, 0.5, Double.NaN); // on straight line in 2d space, ignore elevation
+        pointList.add(0, 1, 14); // <5m from straight line (10), remove
+        pointList.add(1, 1, 20);
+        new DouglasPeucker().setMaxDistance(1).setElevationFactor(1).simplify(pointList);
+        assertEquals("(0.0,0.0,0.0), (0.0,1.0,14.0), (1.0,1.0,20.0)", pointList.toString());
+    }
 }

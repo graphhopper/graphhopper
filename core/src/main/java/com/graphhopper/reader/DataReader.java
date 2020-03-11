@@ -36,7 +36,11 @@ public interface DataReader {
 
     DataReader setWayPointMaxDistance(double wayPointMaxDistance);
 
+    DataReader setElevationSimplifyFactor(double elevationSimplifyFactor);
+
     DataReader setSmoothElevation(boolean smoothElevation);
+
+    DataReader setLongEdgeSamplingDistance(double longEdgeSamplingDistance);
 
     /**
      * This method triggers reading the underlying data to create a graph

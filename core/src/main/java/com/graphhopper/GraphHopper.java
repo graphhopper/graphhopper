@@ -103,6 +103,8 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean allowWrites = true;
     private boolean fullyLoaded = false;
     private boolean smoothElevation = false;
+    private double longEdgeSamplingDistance = 0;
+    private double elevationSimplifyFactor = 0;
     // for routing
     private final RoutingConfig routingConfig = new RoutingConfig();
 
@@ -534,6 +536,8 @@ public class GraphHopper implements GraphHopperAPI {
 
         // elevation
         this.smoothElevation = ghConfig.getBool("graph.elevation.smoothing", false);
+        this.longEdgeSamplingDistance = ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", 0);
+        this.elevationSimplifyFactor = ghConfig.getDouble("graph.elevation.simplify_factor", 0);
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);
 
@@ -726,7 +730,9 @@ public class GraphHopper implements GraphHopperAPI {
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
-                setSmoothElevation(this.smoothElevation);
+                setElevationSimplifyFactor(elevationSimplifyFactor).
+                setSmoothElevation(smoothElevation).
+                setLongEdgeSamplingDistance(longEdgeSamplingDistance);
     }
 
     /**
@@ -1129,7 +1135,9 @@ public class GraphHopper implements GraphHopperAPI {
             boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, routingConfig.isCalcPoints());
             double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
 
-            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
+            DouglasPeucker peucker = new DouglasPeucker().
+                    setMaxDistance(wayPointMaxDistance).
+                    setElevationFactor(elevationSimplifyFactor);
             PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
                     setCalcPoints(tmpCalcPoints).
                     setDouglasPeucker(peucker).

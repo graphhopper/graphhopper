@@ -84,7 +84,17 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 }
 
                 @Override
+                public DataReader setElevationSimplifyFactor(double elevationSimplifyFactor) {
+                    return this;
+                }
+
+                @Override
                 public DataReader setSmoothElevation(boolean smoothElevation) {
+                    return this;
+                }
+
+                @Override
+                public DataReader setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
                     return this;
                 }
 

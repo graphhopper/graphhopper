@@ -28,6 +28,7 @@ package com.graphhopper.util;
  */
 public class DouglasPeucker {
     private double normedMaxDist;
+    private double elevationFactor;
     private DistanceCalc calc;
     private boolean approx;
 
@@ -35,6 +36,8 @@ public class DouglasPeucker {
         setApproximation(true);
         // 1m
         setMaxDistance(1);
+        // elevation ignored by default
+        setElevationFactor(0);
     }
 
     public void setApproximation(boolean a) {
@@ -50,6 +53,17 @@ public class DouglasPeucker {
      */
     public DouglasPeucker setMaxDistance(double dist) {
         this.normedMaxDist = calc.calcNormalizedDist(dist);
+        return this;
+    }
+
+    /**
+     * Weight to give elevation changes during simplification:
+     * 0 means elevation is ignored during simplification
+     * 0.2 means that 5 meters of elevation change is treated like
+     * 1m of lat/lon change
+     */
+    public DouglasPeucker setElevationFactor(double factor) {
+        this.elevationFactor = factor;
         return this;
     }
 
@@ -110,15 +124,23 @@ public class DouglasPeucker {
         double maxDist = -1;
         double firstLat = points.getLatitude(fromIndex);
         double firstLon = points.getLongitude(fromIndex);
+        double firstEle = points.getElevation(fromIndex);
         double lastLat = points.getLatitude(lastIndex);
         double lastLon = points.getLongitude(lastIndex);
+        double lastEle = points.getElevation(lastIndex);
         for (int i = fromIndex + 1; i < lastIndex; i++) {
             double lat = points.getLatitude(i);
             if (Double.isNaN(lat)) {
                 continue;
             }
             double lon = points.getLongitude(i);
-            double dist = calc.calcNormalizedEdgeDistance(lat, lon, firstLat, firstLon, lastLat, lastLon);
+            double ele = points.getElevation(i);
+            double dist = (points.is3D() && elevationFactor > 0 && !Double.isNaN(firstEle) && !Double.isNaN(lastEle) && !Double.isNaN(ele))
+                    ? calc.calcNormalizedEdgeDistance3D(
+                            lat, lon, ele * elevationFactor,
+                            firstLat, firstLon, firstEle * elevationFactor,
+                            lastLat, lastLon, lastEle * elevationFactor)
+                    : calc.calcNormalizedEdgeDistance(lat, lon, firstLat, firstLon, lastLat, lastLon);
             if (maxDist < dist) {
                 indexWithMaxDist = i;
                 maxDist = dist;
