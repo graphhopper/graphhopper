@@ -82,7 +82,6 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
 
         index.build();
 
-        Collections.sort(registeredRules, RULE_COMP); // keep the spatial id stable
         this.rules = Collections.unmodifiableList(registeredRules);
         this.maxBounds = maxBounds;
     }
