@@ -824,6 +824,9 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void checkProfilesConsistency() {
+        if (profilesByName.isEmpty()) {
+            throw new IllegalArgumentException("No routing profiles have been specified, you need to configure at least one");
+        }
         for (ProfileConfig profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
@@ -1033,6 +1036,13 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1859");
             if (!request.getWeighting().isEmpty())
                 throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1859");
+            if (!request.getHints().get(Routing.TURN_COSTS, "").isEmpty())
+                throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1859");
+            // todonow: maybe still allow something like running a (non CH) profile edge-based or not (if no turn costs or something)?, also see traversal mode below
+            if (!request.getHints().get(Routing.EDGE_BASED, "").isEmpty())
+                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1859");
+            // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
+
             HintsMap hints = request.getHints();
             boolean disableCH = hints.getBool(CH.DISABLE, false);
             if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
@@ -1059,6 +1069,9 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
+            if (Helper.isEmpty(request.getProfile())) {
+                throw new IllegalArgumentException("You need to specify a profile to perform a routing request");
+            }
             ProfileConfig profile = profilesByName.get(request.getProfile());
             if (profile == null) {
                 throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
