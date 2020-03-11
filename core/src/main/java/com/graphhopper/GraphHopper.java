@@ -1379,7 +1379,7 @@ public class GraphHopper implements GraphHopperAPI {
             }
 
             if (weighting == null)
-                throw new IllegalArgumentException("weighting " + weightingStr + " not supported");
+                throw new IllegalArgumentException("Weighting '" + weightingStr + "' not supported");
 
             return weighting;
         }
