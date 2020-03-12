@@ -41,7 +41,9 @@ final class PriorityCustomConfig {
             String key = entry.getKey();
             Object value = entry.getValue();
 
-            if (value instanceof Number) {
+            if (value == null) {
+                throw new IllegalArgumentException("Missing value for " + key + " in 'priority'");
+            } else if (value instanceof Number) {
                 if (key.startsWith(GeoToValueEntry.key(""))) {
                     Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
                     priorityList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
@@ -57,7 +59,7 @@ final class PriorityCustomConfig {
                 normalizeFactor(values, 1);
                 priorityList.add(new EnumToValueEntry(enumEncodedValue, values));
             } else {
-                throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'priority'");
+                throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for " + key + " in 'priority'");
             }
         }
     }

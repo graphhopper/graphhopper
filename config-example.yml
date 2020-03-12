@@ -57,7 +57,11 @@ graphhopper:
   #  priority: { road_class: { primary: 0.5 } }
   #
   # Other entries than 'max_speed_fallback' are also supported 'vehicle_weight', 'vehicle_width', 'vehicle_height', 'vehicle_length' and 'distance_influence'.
-  # Other entries than 'priority' are 'speed_factor' and 'max_speed' where the encoded values defined above like 'surface' can be used.
+  # Other entries than 'priority' are 'speed_factor' and 'max_speed' where the encoded values defined above like 'surface' can be used:
+  # country, get_off_bike (boolean, see cargo_bike.yml), hazmat, hazmat_tunnel, hazmat_water, road_access, road_class,
+  # road_class_link, road_environment, roundabout, bike_network, foot_network, surface, toll, track_type
+  # The values like primary or secondary for 'road_class' can be easily determined in the web UI (click flex and hover cursor under 'road_class')
+  # For more details see: https://github.com/graphhopper/graphhopper/blob/master/core/src/main/java/com/graphhopper/routing/profiles
   # You can also define GeoJSON areas to avoid or block certain roads.
   # See the example under web/src/test/resources/com/graphhopper/http/resources/ or the CustomWeighting class for the raw details.
   #

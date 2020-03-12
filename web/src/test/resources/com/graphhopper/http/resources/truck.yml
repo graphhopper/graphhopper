@@ -4,6 +4,8 @@ profile: car
 # in meter
 vehicle_height: 3.8
 vehicle_width: 2.5
+# vehicle_length: 5
+
 # in tons
 vehicle_weight: 4.5
 

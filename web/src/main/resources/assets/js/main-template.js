@@ -264,6 +264,22 @@ $(document).ready(function (e) {
                     }
                 }
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
+                // a very simplistic helper system that shows the possible entries and encoded values
+                if(json.encoded_values) {
+                    $('#flex-input-text').bind('keyup click', function() {
+                        var cleanedText = this.value.replace(/(\r\n|\n|\r|\\n|:)/gm, ' ');
+                        var startIndex = cleanedText.substring(0, this.selectionStart).lastIndexOf(" ");
+                        startIndex = startIndex < 0 ? 0 : startIndex + 1;
+                        var endIndex = cleanedText.indexOf(" ", this.selectionStart);
+                        endIndex = endIndex < 0 ? cleanedText.length : endIndex;
+                        var wordUnderCursor = cleanedText.substring(startIndex, endIndex);
+                        if(wordUnderCursor === "priority" || wordUnderCursor === "speed_factor" || wordUnderCursor === "max_speed") {
+                           document.getElementById("ev_value").innerHTML = json.encoded_values.keys().join(", ");
+                        } else if(json.encoded_values[wordUnderCursor]) {
+                           document.getElementById("ev_value").innerHTML = json.encoded_values[wordUnderCursor].join(", ");
+                        }
+                    });
+                }
 
                 mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
 

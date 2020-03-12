@@ -17,7 +17,9 @@
  */
 package com.graphhopper.resources;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.shapes.BBox;
@@ -39,12 +41,14 @@ public class InfoResource {
 
     private final GraphHopperConfig config;
     private final GraphHopperStorage storage;
+    private final EncodedValueFactory evFactory;
     private final boolean hasElevation;
 
     @Inject
-    public InfoResource(GraphHopperConfig config, GraphHopperStorage storage, @Named("hasElevation") Boolean hasElevation) {
+    public InfoResource(GraphHopperConfig config, GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.config = config;
-        this.storage = storage;
+        this.evFactory = graphHopper.getEncodedValueFactory();
+        this.storage = graphHopper.getGraphHopperStorage();
         this.hasElevation = hasElevation;
     }
 
@@ -56,9 +60,9 @@ public class InfoResource {
 
         public BBox bbox;
         public List<String> supported_vehicles;
+        public Map<String, List<Object>> encoded_values;
         public final Map<String, PerVehicle> features = new HashMap<>();
         public String version = Constants.VERSION;
-        public String build_date = Constants.BUILD_DATE;
         public String import_date;
         public String data_date;
         public String prepare_ch_date;
@@ -88,6 +92,30 @@ public class InfoResource {
         info.data_date = storage.getProperties().get("datareader.data.date");
         info.prepare_ch_date = storage.getProperties().get("prepare.ch.date");
         info.prepare_date = storage.getProperties().get("prepare.ch.date");
+
+        // do not list all supported encoded values like the none-shared ones or *.turn_costs or max_speed (not possible within the value map)
+        List<String> ev = Arrays.asList("country", "get_off_bike", "hazmat", "hazmat_tunnel", "hazmat_water",
+                "road_access", "road_class", "road_class_link", "road_environment", "roundabout",
+                "bike_network", "foot_network", "surface", "toll", "track_type");
+        info.encoded_values = new LinkedHashMap<>();
+        for (String encodedValue : ev) {
+            if (!storage.getEncodingManager().hasEncodedValue(encodedValue))
+                continue;
+
+            List<Object> possibleValueList = new ArrayList<>();
+            try {
+                Class<? extends Enum> enumClass = evFactory.findValues(encodedValue);
+                for (Object o : enumClass.getEnumConstants()) {
+                    possibleValueList.add(o.toString());
+                }
+            } catch (IllegalArgumentException ex) {
+                // we expect BooleanEncodedValue here
+                possibleValueList.add(true);
+                possibleValueList.add(false);
+            }
+
+            info.encoded_values.put(encodedValue, possibleValueList);
+        }
         return info;
     }
 }
