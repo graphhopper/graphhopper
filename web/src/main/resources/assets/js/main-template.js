@@ -267,16 +267,18 @@ $(document).ready(function (e) {
                 // a very simplistic helper system that shows the possible entries and encoded values
                 if(json.encoded_values) {
                     $('#flex-input-text').bind('keyup click', function() {
-                        var cleanedText = this.value.replace(/(\r\n|\n|\r|\\n|:)/gm, ' ');
+                        var cleanedText = this.value.replace(/(\n|:)/gm, ' ');
                         var startIndex = cleanedText.substring(0, this.selectionStart).lastIndexOf(" ");
                         startIndex = startIndex < 0 ? 0 : startIndex + 1;
                         var endIndex = cleanedText.indexOf(" ", this.selectionStart);
                         endIndex = endIndex < 0 ? cleanedText.length : endIndex;
                         var wordUnderCursor = cleanedText.substring(startIndex, endIndex);
-                        if(wordUnderCursor === "priority" || wordUnderCursor === "speed_factor" || wordUnderCursor === "max_speed") {
-                           document.getElementById("ev_value").innerHTML = json.encoded_values.keys().join(", ");
+                        if(this.selectionStart == 0 || this.value.substr(this.selectionStart - 1, 1) === "\n") {
+                           document.getElementById("ev_value").innerHTML = "<b>root:</b> profile, vehicle_weight, vehicle_width, vehicle_height, priority, speed_factor, max_speed, max_speed_fallback, distance_influence, areas";
+                        } else if(wordUnderCursor === "priority" || wordUnderCursor === "speed_factor" || wordUnderCursor === "max_speed") {
+                           document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + Object.keys(json.encoded_values).join(", ");
                         } else if(json.encoded_values[wordUnderCursor]) {
-                           document.getElementById("ev_value").innerHTML = json.encoded_values[wordUnderCursor].join(", ");
+                           document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + json.encoded_values[wordUnderCursor].join(", ");
                         }
                     });
                 }
