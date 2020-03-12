@@ -36,12 +36,16 @@ import static java.lang.Math.*;
 public class DistancePlaneProjection extends DistanceCalcEarth {
     @Override
     public double calcDist(double fromLat, double fromLon, double toLat, double toLon) {
-        double dLat = toRadians(toLat - fromLat);
-        double dLon = toRadians(toLon - fromLon);
-        // use mean latitude as reference point for delta_lon
-        double tmp = cos(toRadians((fromLat + toLat) / 2)) * dLon;
-        double normedDist = dLat * dLat + tmp * tmp;
+        double normedDist = calcNormalizedDist(fromLat, fromLon, toLat, toLon);
         return R * sqrt(normedDist);
+    }
+
+    @Override
+    public double calcDist3D(double fromLat, double fromLon, double fromHeight,
+                             double toLat, double toLon, double toHeight) {
+        double dEleNorm = hasElevationDiff(fromHeight, toHeight) ? calcNormalizedDist(toHeight - fromHeight) : 0;
+        double normedDist = calcNormalizedDist(fromLat, fromLon, toLat, toLon);
+        return R * sqrt(normedDist + dEleNorm);
     }
 
     @Override

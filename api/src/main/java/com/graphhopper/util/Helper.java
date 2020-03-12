@@ -36,7 +36,6 @@ import java.util.Map.Entry;
  */
 public class Helper {
     public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
-    public static final DistanceCalc3D DIST_3D = new DistanceCalc3D();
     public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
     public static final AngleCalc ANGLE_CALC = new AngleCalc();
     public static final Charset UTF_CS = Charset.forName("UTF-8");

@@ -1190,7 +1190,7 @@ public class GraphHopper implements GraphHopperAPI {
         GHPoint lastPoint = points.get(0);
         GHPoint point;
         double dist;
-        DistanceCalc calc = DIST_3D;
+        DistanceCalc calc = DIST_EARTH;
         for (int i = 1; i < points.size(); i++) {
             point = points.get(i);
             dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
