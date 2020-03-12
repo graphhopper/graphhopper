@@ -18,23 +18,25 @@
 
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.Parameters;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CHProfileSelectorTest {
 
+    private static final String MULTIPLE_EDGE_BASED_ERROR = "There are multiple edge-based CH profiles matching your request. You need to specify the profile you want to use explicitly";
     private static final String MULTIPLE_MATCHES_ERROR = "There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`edge_based` and/or `u_turn_costs` parameters to be more specific";
     private static final String NO_MATCH_ERROR = "Cannot find matching CH profile for your request";
 
@@ -48,7 +50,7 @@ public class CHProfileSelectorTest {
     private Weighting weightingShortestCar;
     private Weighting weightingShortestBike;
 
-    @Before
+    @BeforeEach
     public void setup() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         FlagEncoder bikeEncoder = new BikeFlagEncoder();
@@ -76,7 +78,9 @@ public class CHProfileSelectorTest {
         assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, false, 20);
         assertProfileFound(chProfiles.get(0), chProfiles, null, null);
         assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, null, 30);
-        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, "foot", "fastest", false, null);
+        String error = assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, "foot", "fastest", false, null);
+        assertTrue(error.contains("requested:  fastest|foot|edge_based=false|u_turn_costs=*"), error);
+        assertTrue(error.contains("available: [fastest|car|edge_based=false]"), error);
     }
 
     @Test
@@ -109,17 +113,17 @@ public class CHProfileSelectorTest {
                 CHProfile.edgeBased(weightingFastestCarEdge30),
                 CHProfile.edgeBased(weightingFastestCarEdge50)
         );
-        // when no u-turns are specified we throw
-        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, true, null);
-        // when we request one that does not exist we throw
-        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, true, 40);
-        // when we request one that exists it works
-        assertProfileFound(chProfiles.get(1), chProfiles, true, 30);
+        // since there are multiple edge-based profiles we will get an error no matter if we do not specify the u-turn
+        // costs, specify some that do not exist or even specify the right u-turn costs, because we no longer allow
+        // choosing between multiple edge-based profiles without giving the profile name explicitly
+        assertCHProfileSelectionError(MULTIPLE_EDGE_BASED_ERROR, chProfiles, true, null);
+        assertCHProfileSelectionError(MULTIPLE_EDGE_BASED_ERROR, chProfiles, true, 40);
+        assertCHProfileSelectionError(MULTIPLE_EDGE_BASED_ERROR, chProfiles, true, 30);
 
-        // without specifying edge-based
-        assertProfileFound(chProfiles.get(1), chProfiles, null, 30);
-        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, null, 40);
+        // without specifying edge-based we also get an error
         assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, null, null);
+        assertCHProfileSelectionError(MULTIPLE_EDGE_BASED_ERROR, chProfiles, null, 40);
+        assertCHProfileSelectionError(MULTIPLE_EDGE_BASED_ERROR, chProfiles, null, 30);
     }
 
     @Test
@@ -173,9 +177,9 @@ public class CHProfileSelectorTest {
         // if we do not specify the vehicle but edge_based=false its clear what to return because for node-based there is only one weighting
         assertProfileFound(chProfiles.get(0), chProfiles, "", "", false, null);
         // ... for edge_based=true this is an error, because there are two edge_based profiles
-        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, "", "", true, null);
-        // .. we can however get a clear match if we specify the u-turn costs
-        assertProfileFound(chProfiles.get(1), chProfiles, "", "", true, 10);
+        assertCHProfileSelectionError(MULTIPLE_EDGE_BASED_ERROR, chProfiles, "", "", true, null);
+        // ... and its even an error if we specify the (correct) u-turn costs, because we no longer allow distinguishing the profile this way
+        assertCHProfileSelectionError(MULTIPLE_EDGE_BASED_ERROR, chProfiles, "", "", true, 10);
     }
 
     @Test
@@ -219,25 +223,27 @@ public class CHProfileSelectorTest {
     private void assertProfileFound(CHProfile expectedProfile, List<CHProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            CHProfile selectedProfile = CHProfileSelector.select(profiles, hintsMap);
+            CHProfile selectedProfile = new ProfileResolver().selectCHProfile(profiles, hintsMap);
             assertEquals(expectedProfile, selectedProfile);
-        } catch (CHProfileSelectionException e) {
+        } catch (IllegalArgumentException e) {
             fail("no profile found\nexpected: " + expectedProfile + "\nerror: " + e.getMessage());
         }
     }
 
-    private void assertCHProfileSelectionError(String expectedError, List<CHProfile> profiles, Boolean edgeBased, Integer uTurnCosts) {
-        assertCHProfileSelectionError(expectedError, profiles, "car", "fastest", edgeBased, uTurnCosts);
+    private String assertCHProfileSelectionError(String expectedError, List<CHProfile> profiles, Boolean edgeBased, Integer uTurnCosts) {
+        return assertCHProfileSelectionError(expectedError, profiles, "car", "fastest", edgeBased, uTurnCosts);
     }
 
-    private void assertCHProfileSelectionError(String expectedError, List<CHProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
+    private String assertCHProfileSelectionError(String expectedError, List<CHProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            CHProfileSelector.select(profiles, hintsMap);
+            new ProfileResolver().selectCHProfile(profiles, hintsMap);
             fail("There should have been an error");
-        } catch (CHProfileSelectionException e) {
-            assertTrue("There should have been an error message containing:\n'" + expectedError + "'\nbut was:\n'" + e.getMessage() + "'",
-                    e.getMessage().contains(expectedError));
+            return "";
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains(expectedError),
+                    "There should have been an error message containing:\n'" + expectedError + "'\nbut was:\n'" + e.getMessage() + "'");
+            return e.getMessage();
         }
     }
 

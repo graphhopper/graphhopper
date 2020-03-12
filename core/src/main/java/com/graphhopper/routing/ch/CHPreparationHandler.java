@@ -20,7 +20,6 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
@@ -164,34 +163,29 @@ public class CHPreparationHandler {
 
     /**
      * @return a {@link RoutingAlgorithmFactory} for CH or throw an error if no preparation is available for the given
-     * hints
+     * profile name
      */
-    public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
-        if (preparations.isEmpty())
-            throw new IllegalStateException("No CH preparations added yet");
-        return getPreparation(map).getRoutingAlgorithmFactory();
+    public RoutingAlgorithmFactory getAlgorithmFactory(String profile) {
+        return getPreparation(profile).getRoutingAlgorithmFactory();
     }
 
-    public PrepareContractionHierarchies getPreparation(HintsMap map) {
-        CHProfile selectedProfile = selectProfile(map);
-        return getPreparation(selectedProfile);
+    public PrepareContractionHierarchies getPreparation(String profile) {
+        if (preparations.isEmpty())
+            throw new IllegalStateException("No CH preparations added yet");
+        List<String> profileNames = new ArrayList<>(preparations.size());
+        for (PrepareContractionHierarchies preparation : preparations) {
+            profileNames.add(preparation.getCHProfile().getName());
+            if (preparation.getCHProfile().getName().equalsIgnoreCase(profile)) {
+                return preparation;
+            }
+        }
+        throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile + "'" +
+                "\nYou can try disabling CH using " + CH.DISABLE + "=true" +
+                "\navailable CH profiles: " + profileNames);
     }
 
     public PrepareContractionHierarchies getPreparation(CHProfile chProfile) {
-        for (PrepareContractionHierarchies p : getPreparations()) {
-            if (p.getCHProfile().equals(chProfile)) {
-                return p;
-            }
-        }
-        throw new IllegalStateException("Could not find CH preparation for profile: " + chProfile);
-    }
-
-    private CHProfile selectProfile(HintsMap map) {
-        try {
-            return CHProfileSelector.select(chProfiles, map);
-        } catch (CHProfileSelectionException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
+        return getPreparation(chProfile.getName());
     }
 
     public int getPreparationThreads() {

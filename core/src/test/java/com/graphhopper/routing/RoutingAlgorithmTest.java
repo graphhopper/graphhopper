@@ -23,7 +23,10 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -851,11 +854,6 @@ public class RoutingAlgorithmTest {
             @Override
             public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
                 return tmpW.calcTurnMillis(inEdge, viaNode, outEdge);
-            }
-
-            @Override
-            public boolean matches(HintsMap map) {
-                throw new UnsupportedOperationException("Not supported");
             }
 
             @Override

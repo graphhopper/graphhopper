@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -65,8 +64,4 @@ public interface Weighting {
 
     String getName();
 
-    /**
-     * Returns true if the specified weighting and encoder matches to this Weighting.
-     */
-    boolean matches(HintsMap map);
 }
