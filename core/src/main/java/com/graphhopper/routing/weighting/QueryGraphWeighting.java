@@ -21,7 +21,6 @@ package com.graphhopper.routing.weighting;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -103,11 +102,6 @@ public class QueryGraphWeighting implements Weighting {
     @Override
     public String getName() {
         return weighting.getName();
-    }
-
-    @Override
-    public boolean matches(HintsMap map) {
-        return weighting.matches(map);
     }
 
     private int getOriginalEdge(int edge) {

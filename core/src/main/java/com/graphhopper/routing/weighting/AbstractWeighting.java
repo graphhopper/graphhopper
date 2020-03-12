@@ -20,9 +20,7 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Parameters;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.util.Helper.isEmpty;
@@ -90,14 +88,6 @@ public abstract class AbstractWeighting implements Weighting {
     @Override
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
         return turnCostProvider.calcTurnMillis(inEdge, viaNode, outEdge);
-    }
-
-    @Override
-    public boolean matches(HintsMap reqMap) {
-        String requestedUTurnCosts = reqMap.get(Parameters.Routing.U_TURN_COSTS, "");
-        return (reqMap.getWeighting().isEmpty() || getName().equals(reqMap.getWeighting())) &&
-                (requestedUTurnCosts.isEmpty() || turnCostProvider.getName().equals(requestedUTurnCosts)) &&
-                (reqMap.getVehicle().isEmpty() || flagEncoder.toString().equals(reqMap.getVehicle()));
     }
 
     @Override
