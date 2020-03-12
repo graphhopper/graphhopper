@@ -18,15 +18,12 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.PrincetonReader;
-import com.graphhopper.routing.ch.CHProfileSelector;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.Directory;
@@ -45,7 +42,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.Assert.assertTrue;
 
@@ -63,9 +59,8 @@ public class RoutingAlgorithmIT {
         if (tMode.isEdgeBased())
             addStr = "turn|";
 
-        FlagEncoder encoder = hopper.getEncodingManager().getEncoder(hints.getVehicle());
-        TurnCostProvider turnCostProvider = tMode.isEdgeBased() ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
-        Weighting weighting = hopper.createWeighting(hints, encoder, turnCostProvider);
+        ProfileConfig profile = new ProfileConfig("profile").setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting()).setTurnCosts(tMode.isEdgeBased());
+        Weighting weighting = hopper.createWeighting(profile, hints);
 
         HintsMap defaultHints = new HintsMap().put(Parameters.CH.DISABLE, true).put(Parameters.Landmark.DISABLE, true)
                 .setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());
@@ -88,7 +83,7 @@ public class RoutingAlgorithmIT {
             algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(lmHints);
+                    return hopper.getAlgorithmFactory(lmHints.getVehicle() + "_profile", true, false);
                 }
             });
         }
@@ -97,12 +92,12 @@ public class RoutingAlgorithmIT {
             final HintsMap chHints = new HintsMap(defaultHints);
             chHints.put(Parameters.CH.DISABLE, false);
             chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
-            CHProfile pickedProfile = CHProfileSelector.select(hopper.getCHPreparationHandler().getCHProfiles(), chHints);
+            CHProfile pickedProfile = new ProfileResolver().selectCHProfile(hopper.getCHPreparationHandler().getCHProfiles(), chHints);
             algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|algos|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(chHints);
+                    return hopper.getAlgorithmFactory(chHints.getVehicle() + "_profile", false, true);
                 }
             });
 
@@ -110,7 +105,7 @@ public class RoutingAlgorithmIT {
                     AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|algos|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(chHints);
+                    return hopper.getAlgorithmFactory(chHints.getVehicle() + "_profile", false, true);
                 }
             });
         }
