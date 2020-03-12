@@ -24,7 +24,6 @@ import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -41,8 +40,6 @@ import org.locationtech.jts.geom.Polygon;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static junit.framework.TestCase.assertFalse;
@@ -209,51 +206,5 @@ public class SpatialRuleLookupBuilderTest {
         livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e4.setFlags(em.handleWayTags(livingStreet2, map, relFlags));
         assertEquals(MaxSpeed.UNSET_SPEED, e4.get(tmpCarMaxSpeedEnc), .1);
-    }
-
-    @Test
-    public void testSpeed() throws IOException {
-        final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleFactory rulePerCountryFactory = new SpatialRuleFactory() {
-
-            @Override
-            public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
-                return new AbstractSpatialRule(borders) {
-                    
-                    @Override
-                    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-                        return 100;
-                    }
-
-                    @Override
-                    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-                        return RoadAccess.YES;
-                    }
-
-                    @Override
-                    public String getId() {
-                        return id;
-                    }
-                };
-            }
-        };
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", rulePerCountryFactory);
-
-        // generate random points in central Europe
-        int randomPoints = 250_000;
-        long start = System.nanoTime();
-        for (int i = 0; i < randomPoints; i++) {
-            double lat = 46d + Math.random() * 7d;
-            double lon = 6d + Math.random() * 21d;
-            spatialRuleLookup.lookupRule(new GHPoint(lat, lon));
-        }
-
-        long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-        // System.out.println("Lookup of " + randomPoints + " points took " + duration + "ms");
-        // System.out.println("Average lookup duration: " + ((double) duration) / randomPoints + "ms");
-        long maxBenchmarkRuntimeMs = 5_000L;
-        assertTrue("Benchmark must be finished in less than " + maxBenchmarkRuntimeMs + "ms",
-                duration < maxBenchmarkRuntimeMs);
     }
 }
