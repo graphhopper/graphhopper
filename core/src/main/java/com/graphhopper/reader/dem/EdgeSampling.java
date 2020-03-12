@@ -11,7 +11,8 @@ import org.slf4j.LoggerFactory;
  * points along long edges and fetching elevation at each inserted point.
  *
  * This uses a simple linear approximation to interpolate between points which should be fine for short distances, but
- * for longer distances this should use a more robust algorithm like rhumb or great circle interpolation.
+ * if support for longer distances is needed or to handle segments crossing the international date line, should use a
+ * more robust algorithm that interpolates along the great circle path between points.
  */
 public class EdgeSampling {
     private static final Logger logger = LoggerFactory.getLogger(EdgeSampling.class);

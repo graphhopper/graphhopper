@@ -939,6 +939,66 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testSRTMWithLongEdgeSampling() {
+        final String vehicle = "foot";
+        final String weighting = "shortest";
+
+        GraphHopper hopper = createGraphHopper(vehicle).
+                setOSMFile(MONACO).
+                setStoreOnFlush(true).
+                setElevationSimplifyFactor(1).
+                setLongEdgeSamplingDistance(30);
+
+        hopper.setElevationProvider(new SRTMProvider(DIR));
+        hopper.importOrLoad();
+
+        GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
+                setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weighting));
+
+        PathWrapper arsp = rsp.getBest();
+        assertEquals(1645.3, arsp.getDistance(), .1);
+        assertEquals(71, arsp.getPoints().getSize());
+        assertTrue(arsp.getPoints().is3D());
+
+        InstructionList il = arsp.getInstructions();
+        assertEquals(12, il.size());
+        assertTrue(il.get(0).getPoints().is3D());
+
+        String str = arsp.getPoints().toString();
+
+        assertEquals("(43.73068455771767,7.421283689825812,62.0), " +
+                "(43.73067957305937,7.421382123709815,66.0), " +
+                "(43.730948911553966,7.421494627479344,66.0), " +
+                "(43.73109792316924,7.421546222751131,45.0), " +
+                "(43.73129908884985,7.421589994913116,45.0), " +
+                "(43.731327028527716,7.421414533736137,45.0), " +
+                "(43.73125047381037,7.421366291225693,45.0), " +
+                "(43.73125457162979,7.421274090288746,52.0), " +
+                "(43.73128213877862,7.421115579183003,52.0), " +
+                "(43.731362232521825,7.421145381506057,52.0), " +
+                "(43.731371359483255,7.421123216028286,52.0), " +
+                "(43.731485725897976,7.42117332118392,52.0), " +
+                "(43.731575132867135,7.420868778695214,52.0), " +
+                "(43.73160605277731,7.420824820268709,52.0), " +
+                "(43.7316401391843,7.420850152243305,52.0",
+                str.substring(0, 661));
+
+        assertEquals("(43.727778875703635,7.418772930326453,11.0), (43.72768239068275,7.419007064826944,11.0), (43.727679637988224,7.419198521975086,11.0)",
+                str.substring(str.length() - 132));
+
+        assertEquals(106, arsp.getAscend(), 1e-1);
+        assertEquals(157, arsp.getDescend(), 1e-1);
+
+        assertEquals(71, arsp.getPoints().size());
+        assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 62.0), arsp.getPoints().get(0));
+        assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 11.0), arsp.getPoints().get(arsp.getPoints().size() - 1));
+
+        assertEquals(62, arsp.getPoints().get(0).getElevation(), 1e-2);
+        assertEquals(66, arsp.getPoints().get(1).getElevation(), 1e-2);
+        assertEquals(52, arsp.getPoints().get(10).getElevation(), 1e-2);
+    }
+
+    @Test
     public void testKremsCyclewayInstructionsWithWayTypeInfo() {
         final String vehicle1 = "foot";
         final String vehicle2 = "bike";

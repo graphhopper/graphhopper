@@ -371,6 +371,22 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
+     * Sets the distance distance between elevation samples on long edges
+     */
+    public GraphHopper setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
+        this.longEdgeSamplingDistance = longEdgeSamplingDistance;
+        return this;
+    }
+
+    /**
+     * Sets the weight that elevation is given during simplification
+     */
+    public GraphHopper setElevationSimplifyFactor(double elevationSimplifyFactor) {
+        this.elevationSimplifyFactor = elevationSimplifyFactor;
+        return this;
+    }
+
+    /**
      * This method specifies if the returned path should be simplified or not, via douglas-peucker
      * or similar algorithm.
      */
