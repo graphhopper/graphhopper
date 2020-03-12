@@ -24,15 +24,15 @@ import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LMProfile;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
+import com.graphhopper.routing.profiles.EncodedValueFactory;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
@@ -104,6 +104,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean smoothElevation = false;
     // for routing
     private final RoutingConfig routingConfig = new RoutingConfig();
+    private ProfileResolver profileResolver = new ProfileResolver();
 
     // for index
     private LocationIndex locationIndex;
@@ -141,14 +142,11 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    /**
-     * @return the first flag encoder of the encoding manager
-     */
     FlagEncoder getDefaultVehicle() {
         if (encodingManager == null)
             throw new IllegalStateException("No encoding manager specified or loaded");
 
-        return encodingManager.fetchEdgeEncoders().get(0);
+        return profileResolver.getDefaultVehicle(encodingManager);
     }
 
     public EncodingManager getEncodingManager() {
@@ -310,7 +308,7 @@ public class GraphHopper implements GraphHopperAPI {
      *     new LMProfileConfig("your_bike")
      *   );
      * }
-     * </pre>>
+     * </pre>
      * <p>
      * See also https://github.com/graphhopper/graphhopper/pull/1922.
      *
@@ -324,15 +322,11 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper setProfiles(List<ProfileConfig> profiles) {
         profilesByName.clear();
         for (ProfileConfig profile : profiles) {
-            putProfile(profile);
+            ProfileConfig previous = this.profilesByName.put(profile.getName(), profile);
+            if (previous != null)
+                throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
         }
         return this;
-    }
-
-    private void putProfile(ProfileConfig profile) {
-        ProfileConfig previous = this.profilesByName.put(profile.getName(), profile);
-        if (previous != null)
-            throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
     }
 
     /**
@@ -351,6 +345,10 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalArgumentException("profile '" + customModel.getProfile() + "' from custom model '" + modelName + "' does not exist");
         importCustomModels.put(modelName, customModel);
         return this;
+    }
+
+    public List<ProfileConfig> getProfiles() {
+        return new ArrayList<>(profilesByName.values());
     }
 
     public int getMaxVisitedNodes() {
@@ -509,6 +507,15 @@ public class GraphHopper implements GraphHopperAPI {
 
     public GraphHopper setTagParserFactory(TagParserFactory factory) {
         this.tagParserFactory = factory;
+        return this;
+    }
+
+    public ProfileResolver getProfileResolver() {
+        return this.profileResolver;
+    }
+
+    public GraphHopper setProfileResolver(ProfileResolver profileResolver) {
+        this.profileResolver = profileResolver;
         return this;
     }
 
@@ -843,9 +850,11 @@ public class GraphHopper implements GraphHopperAPI {
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
             }
             try {
-                createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, importCustomModels.get(profile.getName()));
+                createWeighting(profile, new PMap(), importCustomModels.get(profile.getName()));
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with an unknown weighting '" + profile.getWeighting() + "', msg: " + e.getMessage());
+                throw new IllegalArgumentException("Could not create weighting for profile: '" + profile.getName() + "'.\n" +
+                        "Profile: " + profile + "\n" +
+                        "Error: " + e.getMessage());
             }
         }
         Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
@@ -870,9 +879,14 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
-        boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
-        boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
+    public ProfileConfig resolveProfile(HintsMap hints) {
+        if (encodingManager == null)
+            throw new IllegalStateException("No encoding manager specified or loaded");
+
+        return profileResolver.resolveProfile(encodingManager, chPreparationHandler.getCHProfiles(), lmPreparationHandler.getLMProfiles(), hints);
+    }
+
+    public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
         if (chPreparationHandler.isEnabled() && disableCH && !chPreparationHandler.isDisablingAllowed()) {
             throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
         }
@@ -882,9 +896,9 @@ public class GraphHopper implements GraphHopperAPI {
 
         // for now do not allow mixing CH&LM #1082,#1889
         if (chPreparationHandler.isEnabled() && !disableCH) {
-            return chPreparationHandler.getAlgorithmFactory(map);
+            return chPreparationHandler.getAlgorithmFactory(profile);
         } else if (lmPreparationHandler.isEnabled() && !disableLM) {
-            return lmPreparationHandler.getAlgorithmFactory(map);
+            return lmPreparationHandler.getAlgorithmFactory(profile);
         } else {
             return new RoutingAlgorithmFactorySimple();
         }
@@ -901,16 +915,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(chConfig.getProfile());
-            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             if (profile.isTurnCosts()) {
-                assert encoder.supportsTurnCosts() : "encoder " + encoder + " should support turn costs";
-                int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-                TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
-                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(),
-                        createWeighting(new HintsMap(profile.getWeighting()), encoder, turnCostProvider, importCustomModels.get(profile.getName()))));
+                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap(), importCustomModels.get(profile.getName()))));
             } else {
-                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(),
-                        createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, importCustomModels.get(profile.getName()))));
+                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap(), importCustomModels.get(profile.getName()))));
             }
         }
     }
@@ -925,9 +933,11 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
-            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            // note that we do not consider turn costs during LM preparation?
-            Weighting weighting = createWeighting(new HintsMap(profile.getWeighting()), encoder, NO_TURN_COST_PROVIDER, importCustomModels.get(profile.getName()));
+            // Note that turn costs will be ignored during LM preparation even when the created weighting includes
+            // turn costs, because the preparation is running node-based. This is important if we want to allow e.g.
+            // changing the u_turn_costs per request (we have to use the minimum weight settings (= no turn costs) for
+            // the preparation)
+            Weighting weighting = createWeighting(profile, new PMap(), importCustomModels.get(profile.getName()));
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1002,18 +1012,11 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Based on the hintsMap and the specified encoder a Weighting instance can be
-     * created. Note that all URL parameters are available in the hintsMap as String if
-     * you use the web module.
-     *
-     * @param hintsMap all parameters influencing the weighting. E.g. parameters coming via
-     *                 GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
-     * @param encoder  the required vehicle
-     * @return the weighting to be used for route calculation
-     * @see HintsMap
+     * @param profileConfig The profile for which the weighting shall be created
+     * @param hints         Additional hints that can be used to further specify the weighting that shall be created
      */
-    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider, CustomModel customModel) {
-        return new DefaultWeightingFactory(encodingManager, encodedValueFactory).createWeighting(hintsMap, encoder, turnCostProvider, customModel);
+    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, CustomModel customModel) {
+        return new DefaultWeightingFactory(ghStorage, encodingManager, encodedValueFactory).createWeighting(profileConfig, hints, customModel);
     }
 
     @Override
@@ -1042,36 +1045,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         customModel = CustomWeighting.prepareRequest(request, customModel, importCustomModels);
 
-        // default handling
-        String vehicle = request.getVehicle();
-        if (vehicle.isEmpty()) {
-            vehicle = getDefaultVehicle().toString();
-            request.setVehicle(vehicle);
-        }
-
         Lock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
-            if (!encodingManager.hasEncoder(vehicle))
-                throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
-
-            FlagEncoder encoder = encodingManager.getEncoder(vehicle);
             HintsMap hints = request.getHints();
-
-            // we use edge-based routing if the encoder supports turn-costs *unless* the edge_based parameter is set
-            // explicitly.
-            TraversalMode tMode = encoder.supportsTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
-            if (hints.has(Routing.EDGE_BASED))
-                tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
-
-            if (tMode.isEdgeBased() && !encoder.supportsTurnCosts()) {
-                throw new IllegalArgumentException("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true");
-            }
-
-            if (!tMode.isEdgeBased() && !request.getCurbsides().isEmpty()) {
-                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
-            }
-
             boolean disableCH = hints.getBool(CH.DISABLE, false);
             if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
                 throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
@@ -1084,7 +1061,7 @@ public class GraphHopper implements GraphHopperAPI {
                 if (request.hasFavoredHeading(0))
                     throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
-                if (request.getHints().getBool(Routing.PASS_THROUGH, false))
+                if (hints.getBool(Routing.PASS_THROUGH, false))
                     throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
             }
 
@@ -1097,7 +1074,13 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(hints);
+            ProfileConfig profile = resolveProfile(hints);
+            if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
+                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
+
+            TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
+
+            RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile.getName(), disableCH, disableLM);
             Weighting weighting;
             Graph graph = ghStorage;
             if (chPreparationHandler.isEnabled() && !disableCH) {
@@ -1113,14 +1096,12 @@ public class GraphHopper implements GraphHopperAPI {
 
             } else {
                 checkNonChMaxWaypointDistance(points);
-                final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
                     throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
                 }
-                TurnCostProvider turnCostProvider = (encoder.supportsTurnCosts() && tMode.isEdgeBased())
-                        ? new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCostsInt)
-                        : NO_TURN_COST_PROVIDER;
-                weighting = createWeighting(hints, encoder, turnCostProvider, customModel);
+                FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+                weighting = createWeighting(profile, hints, customModel);
                 if (hints.has(Routing.BLOCK_AREA))
                     weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
                             points, hints, DefaultEdgeFilter.allEdges(encoder)));
@@ -1141,7 +1122,9 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
 
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                    algorithm(algoStr).traversalMode(tMode).weighting(weighting).
+                    algorithm(algoStr).
+                    traversalMode(tMode).
+                    weighting(weighting).
                     maxVisitedNodes(maxVisitedNodesForRequest).
                     hints(hints).
                     build();
@@ -1376,35 +1359,54 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private static class DefaultWeightingFactory {
-        private final EncodedValueLookup encodedValueLookup;
+        private final GraphHopperStorage ghStorage;
+        private final EncodingManager encodingManager;
         private final EncodedValueFactory encodedValueFactory;
 
-        public DefaultWeightingFactory(EncodedValueLookup encodedValueLookup, EncodedValueFactory encodedValueFactory) {
-            this.encodedValueLookup = encodedValueLookup;
+        public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager, EncodedValueFactory encodedValueFactory) {
+            this.ghStorage = ghStorage;
+            this.encodingManager = encodingManager;
             this.encodedValueFactory = encodedValueFactory;
         }
 
-        public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, TurnCostProvider turnCostProvider, CustomModel customModel) {
-            String weightingStr = toLowerCase(hintsMap.getWeighting());
-
-            if (customModel != null) {
-                return new CustomWeighting(encoder, encodedValueLookup, encodedValueFactory, turnCostProvider, customModel);
-            } else if ("shortest".equals(weightingStr)) {
-                return new ShortestWeighting(encoder, turnCostProvider);
-            } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {
-                if (encoder.supports(PriorityWeighting.class))
-                    return new PriorityWeighting(encoder, hintsMap, turnCostProvider);
-                else
-                    return new FastestWeighting(encoder, hintsMap, turnCostProvider);
-            } else if ("curvature".equalsIgnoreCase(weightingStr)) {
-                if (encoder.supports(CurvatureWeighting.class))
-                    return new CurvatureWeighting(encoder, hintsMap, turnCostProvider);
-
-            } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
-                return new ShortFastestWeighting(encoder, hintsMap, turnCostProvider);
+        public Weighting createWeighting(ProfileConfig profile, PMap hints, CustomModel customModel) {
+            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+            TurnCostProvider turnCostProvider;
+            if (profile.isTurnCosts()) {
+                if (!encoder.supportsTurnCosts())
+                    throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
+                int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
+            } else {
+                turnCostProvider = NO_TURN_COST_PROVIDER;
             }
 
-            throw new IllegalArgumentException("weighting " + weightingStr + " not supported");
+            String weightingStr = toLowerCase(profile.getWeighting());
+            if (weightingStr.isEmpty())
+                throw new IllegalArgumentException("You have to specify a weighting");
+
+            Weighting weighting = null;
+            if (customModel != null) {
+                weighting = new CustomWeighting(encoder, encodingManager, encodedValueFactory, turnCostProvider, customModel);
+            } else if ("shortest".equalsIgnoreCase(weightingStr)) {
+                weighting = new ShortestWeighting(encoder, turnCostProvider);
+            } else if ("fastest".equalsIgnoreCase(weightingStr)) {
+                if (encoder.supports(PriorityWeighting.class))
+                    weighting = new PriorityWeighting(encoder, hints, turnCostProvider);
+                else
+                    weighting = new FastestWeighting(encoder, hints, turnCostProvider);
+            } else if ("curvature".equalsIgnoreCase(weightingStr)) {
+                if (encoder.supports(CurvatureWeighting.class))
+                    weighting = new CurvatureWeighting(encoder, hints, turnCostProvider);
+
+            } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
+                weighting = new ShortFastestWeighting(encoder, hints, turnCostProvider);
+            }
+
+            if (weighting == null)
+                throw new IllegalArgumentException("Weighting '" + weightingStr + "' not supported");
+
+            return weighting;
         }
     }
 

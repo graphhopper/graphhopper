@@ -135,12 +135,6 @@ public final class CustomWeighting extends AbstractWeighting {
     }
 
     @Override
-    public boolean matches(HintsMap reqMap) {
-        return (reqMap.getWeighting().isEmpty() || getName().equals(reqMap.getWeighting())) &&
-                (reqMap.getVehicle().isEmpty() || baseVehicle.equals(reqMap.getVehicle()));
-    }
-
-    @Override
     public String getName() {
         return "custom";
     }

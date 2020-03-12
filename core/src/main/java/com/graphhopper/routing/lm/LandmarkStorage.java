@@ -118,6 +118,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // Edge based is not really necessary because when adding turn costs while routing we can still
         // use the node based traversal as this is a smaller weight approximation and will still produce correct results
+        // In this sense its even 'better' to use node-based.
         this.traversalMode = TraversalMode.NODE_BASED;
         this.landmarkWeightDA = dir.find("landmarks_" + lmProfile.getName());
 
