@@ -22,6 +22,7 @@ import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
 import com.graphhopper.util.Helper;
@@ -37,6 +38,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.*;
 
 /**
@@ -45,7 +47,7 @@ import static org.junit.Assert.*;
 public class CustomWeightingRouteResourceLMTest {
     private static final String DIR = "./target/andorra-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -79,7 +81,7 @@ public class CustomWeightingRouteResourceLMTest {
                 " \"points\": [[1.518946,42.531453],[1.54006,42.511178]]," +
                 " \"profile\": \"car_custom\"" +
                 "}";
-        final Response response = app.client().target("http://localhost:8080/custom").request().post(Entity.json(jsonQuery));
+        final Response response = clientTarget(app, "/custom").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -156,7 +158,7 @@ public class CustomWeightingRouteResourceLMTest {
     }
 
     Response queryYaml(String yamlStr, int code) {
-        Response response = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlStr,
+        Response response = clientTarget(app, "/custom").request().post(Entity.entity(yamlStr,
                 new MediaType("application", "yaml")));
         assertEquals(code, response.getStatus());
         return response;

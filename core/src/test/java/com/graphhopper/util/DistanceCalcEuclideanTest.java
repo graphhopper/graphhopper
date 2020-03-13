@@ -23,11 +23,11 @@ import org.junit.Test;
 
 import com.graphhopper.util.shapes.GHPoint;
 
-public class DistanceCalc2DTest {
+public class DistanceCalcEuclideanTest {
 
     @Test
     public void testCrossingPointToEdge() {
-        DistanceCalc2D distanceCalc = new DistanceCalc2D();
+        DistanceCalcEuclidean distanceCalc = new DistanceCalcEuclidean();
         GHPoint point = distanceCalc.calcCrossingPointToEdge(0, 10, 0, 0, 10, 10);
         Assert.assertEquals(5, point.getLat(), 0);
         Assert.assertEquals(5, point.getLon(), 0);
@@ -35,17 +35,30 @@ public class DistanceCalc2DTest {
 
     @Test
     public void testCalcNormalizedEdgeDistance() {
-        DistanceCalc2D distanceCalc = new DistanceCalc2D();
+        DistanceCalcEuclidean distanceCalc = new DistanceCalcEuclidean();
         double distance = distanceCalc.calcNormalizedEdgeDistance(0, 10, 0, 0, 10, 10);
         Assert.assertEquals(50, distance, 0);
     }
 
     @Test
     public void testValidEdgeDistance() {
-        DistanceCalc2D distanceCalc = new DistanceCalc2D();
+        DistanceCalcEuclidean distanceCalc = new DistanceCalcEuclidean();
         boolean validEdgeDistance = distanceCalc.validEdgeDistance(5, 15, 0, 0, 10, 10);
         Assert.assertEquals(false, validEdgeDistance);
         validEdgeDistance = distanceCalc.validEdgeDistance(15, 5, 0, 0, 10, 10);
         Assert.assertEquals(false, validEdgeDistance);
+    }
+
+    @Test
+    public void testDistance3dEuclidean() {
+        DistanceCalcEuclidean distCalc = new DistanceCalcEuclidean();
+        Assert.assertEquals(1, distCalc.calcDist3D(
+                0, 0, 0,
+                0, 0, 1
+        ), 1e-6);
+        Assert.assertEquals(10, distCalc.calcDist3D(
+                0, 0, 0,
+                0, 0, 10
+        ), 1e-6);
     }
 }

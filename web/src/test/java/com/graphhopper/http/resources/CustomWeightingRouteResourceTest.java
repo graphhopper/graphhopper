@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
 import com.graphhopper.util.Helper;
@@ -22,13 +23,14 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.graphhopper.http.resources.CustomWeightingRouteResourceLMTest.assertBetween;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class CustomWeightingRouteResourceTest {
 
     private static final String DIR = "./target/north-bayreuth-gh/";
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -65,7 +67,7 @@ public class CustomWeightingRouteResourceTest {
                 " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"profile\": \"truck\"" +
                 "}";
-        final Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonQuery));
+        final Response response = clientTarget(app, "/route").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -80,7 +82,7 @@ public class CustomWeightingRouteResourceTest {
         String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: car\n";
 
-        JsonNode yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
+        JsonNode yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 500, 900);
@@ -91,7 +93,7 @@ public class CustomWeightingRouteResourceTest {
                 "  custom1:\n" +
                 "    type: \"Feature\"\n" +
                 "    geometry: { type: \"Polygon\", coordinates: [[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }";
-        yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
+        yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1400, 1600);
@@ -101,7 +103,7 @@ public class CustomWeightingRouteResourceTest {
     public void testCargoBike() throws IOException {
         String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: bike\n";
-        JsonNode yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
+        JsonNode yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 600, 700);
@@ -110,7 +112,7 @@ public class CustomWeightingRouteResourceTest {
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: bike\n" +
                 queryYamlFromFile;
-        yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
+        yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1000, 2000);
@@ -118,7 +120,7 @@ public class CustomWeightingRouteResourceTest {
         // results should be identical be it via server-side profile or query profile:
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: cargo_bike";
-        yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
+        yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         JsonNode path2 = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), path2.get("distance").asDouble(), 1);
