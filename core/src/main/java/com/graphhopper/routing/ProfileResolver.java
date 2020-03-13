@@ -147,7 +147,7 @@ public class ProfileResolver {
             return matchingProfiles.get(0);
         } else {
             throw new IllegalArgumentException("There are multiple LM profiles matching your request. Use the `weighting` and `vehicle` parameters to be more specific." +
-                    "\nYou can also try disabling LM altogether using " + Parameters.CH.DISABLE + "=true" +
+                    "\nYou can also try disabling LM altogether using " + Parameters.Landmark.DISABLE + "=true" +
                     "\nrequested:  " + getLMRequestAsString(hintsMap) + "\nmatched:   " + lmProfilesAsStrings(matchingProfiles) + "\navailable: " + lmProfilesAsStrings(lmProfiles));
         }
     }

@@ -18,12 +18,12 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.GHRequest;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
@@ -73,21 +73,6 @@ public final class CustomWeighting extends AbstractWeighting {
         distanceInfluence = customModel.getDistanceInfluence() / 1000;
         if (distanceInfluence < 0)
             throw new IllegalArgumentException("maximum distance_influence cannot be negative " + distanceInfluence);
-    }
-
-    /**
-     * This method sets the vehicle of the specified request using the profiles.
-     */
-    public static CustomModel prepareRequest(GHRequest request, CustomModel customModel, Map<String, CustomModel> models) {
-        if (customModel == null)
-            customModel = models.get(request.getProfile());
-        else
-            request.getHints().put("ch.disable", true);
-
-        if (customModel != null)
-            request.setVehicle(customModel.getProfile());
-
-        return customModel;
     }
 
     @Override

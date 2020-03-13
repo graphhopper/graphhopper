@@ -69,7 +69,7 @@ public class CustomWeightingTest {
         EdgeIteratorState edge2 = graphHopperStorage.edge(1, 2).setDistance(10).
                 set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
 
-        CustomModel vehicleModel = new CustomModel("car");
+        CustomModel vehicleModel = new CustomModel();
         Map map = new HashMap();
         map.put(PRIMARY.toString(), 2.0);
         vehicleModel.getPriority().put(KEY, map);
@@ -92,7 +92,7 @@ public class CustomWeightingTest {
     public void testNoMaxSpeed() {
         EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(10).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
-        CustomModel vehicleModel = new CustomModel("car");
+        CustomModel vehicleModel = new CustomModel();
 
         Weighting weighting = new CustomWeighting(carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
@@ -102,7 +102,7 @@ public class CustomWeightingTest {
     public void testMaxSpeedMap() {
         EdgeIteratorState edge1 = graphHopperStorage.edge(0, 1).setDistance(10).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
-        CustomModel vehicleModel = new CustomModel("car");
+        CustomModel vehicleModel = new CustomModel();
 
         Weighting weighting = new CustomWeighting(carFE, encodingManager, new DefaultEncodedValueFactory(), NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
@@ -117,7 +117,7 @@ public class CustomWeightingTest {
 
     @Test
     public void testSpeedFactorBooleanEV() {
-        CustomModel vehicleModel = new CustomModel("car");
+        CustomModel vehicleModel = new CustomModel();
 
         BooleanEncodedValue rcLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
         vehicleModel.getPriority().put(RoadClassLink.KEY, 0.5);
@@ -131,7 +131,7 @@ public class CustomWeightingTest {
 
     @Test
     public void testPriority() {
-        CustomModel vehicleModel = new CustomModel("car");
+        CustomModel vehicleModel = new CustomModel();
 
         Map map = new HashMap();
         map.put(MOTORWAY.toString(), 0.1);
@@ -151,7 +151,7 @@ public class CustomWeightingTest {
 
     @Test
     public void testAvoidArea() {
-        CustomModel vehicleModel = new CustomModel("car");
+        CustomModel vehicleModel = new CustomModel();
 
         Map map = new HashMap();
         map.put(MOTORWAY.toString(), 0.1);

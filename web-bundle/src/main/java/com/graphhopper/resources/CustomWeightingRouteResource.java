@@ -22,14 +22,13 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.MultiException;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.CustomRequest;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
+import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,13 +81,14 @@ public class CustomWeightingRouteResource {
         if (request.getHints().has(BLOCK_AREA))
             throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
 
-        // The CustomModel without 'profile' works, but makes things complicated in CustomWeighting, so fill it from GHRequest
         if (Helper.isEmpty(request.getProfile()))
-            throw new IllegalStateException("The 'profile' parameter for CustomRequest is required");
-        if (!Helper.isEmpty(model.getProfile()))
-            throw new IllegalStateException("The 'profile' parameter for CustomModel must be empty but was " + model.getProfile());
+            throw new IllegalArgumentException("The 'profile' parameter for CustomRequest is required");
 
-        model.setProfile(request.getProfile());
+        ProfileConfig profile = graphHopper.resolveProfile(request.getHints());
+        if (!(profile instanceof CustomProfileConfig))
+            throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request");
+
+        request.putHint(Parameters.CH.DISABLE, true);
         graphHopper.calcPaths(request, ghResponse, model);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);

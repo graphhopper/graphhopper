@@ -27,6 +27,7 @@ import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
@@ -143,13 +144,13 @@ public class Measurement {
             }
         };
 
-        // Currently we test speed of custom truck via: 1. raw dijkstra -> routing_custom, 2. modified car base LM-preparation -> routingLM_custom
-        // TODO test also 3. truck LM-preparation, 4. truck CH-preparation
+        // Currently we test speed of custom truck via: 1. raw dijkstra -> routing_custom,
+        // 2. car based LM-preparation -> custom_car and 3. truck based LM preparation
+
         CustomModel customModel = createCustomModel();
         // add more encoded values for CustomModel
         if (!args.has("graph.encoded_values"))
             args.put("graph.encoded_values", "max_width,max_height,toll,hazmat");
-        hopper.putCustomModel(customModelName, customModel);
 
         hopper.init(createConfigFromArgs(args, customModel)).
                 // use server to allow path simplification
@@ -286,7 +287,8 @@ public class Measurement {
         profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
         if (turnCosts)
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
-        profiles.add(customModel.createProfileConfig(customModelName));
+        profiles.add(new CustomProfileConfig("custom_car").setCustomModel(new CustomModel("custom_car")).setVehicle("car"));
+        profiles.add(new CustomProfileConfig("custom_truck").setCustomModel(customModel));
         ghConfig.setProfiles(profiles);
 
         List<CHProfileConfig> chProfiles = new ArrayList<>();
@@ -757,7 +759,7 @@ public class Measurement {
     }
 
     private CustomModel createCustomModel() {
-        CustomModel customModel = new CustomModel("car");
+        CustomModel customModel = new CustomModel("custom_car");
         customModel.setVehicleHeight(3.8);
         customModel.setVehicleWidth(2.5);
         // the default distance_factor for custom requests is currently 1 which makes it too different regarding speed

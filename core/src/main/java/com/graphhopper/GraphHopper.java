@@ -43,6 +43,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.change.ChangeGraphHelper;
@@ -85,7 +86,6 @@ import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 public class GraphHopper implements GraphHopperAPI {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Map<String, ProfileConfig> profilesByName = new LinkedHashMap<>();
-    private final Map<String, CustomModel> importCustomModels = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
@@ -326,18 +326,6 @@ public class GraphHopper implements GraphHopperAPI {
             if (previous != null)
                 throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
         }
-        return this;
-    }
-
-    /**
-     * This method adds the specified CustomModel to this GraphHopper instance.
-     */
-    public GraphHopper putCustomModel(CustomModel customModel) {
-        if (Helper.isEmpty(customModel.getProfile()))
-            throw new IllegalArgumentException("profile cannot be empty. custom model: " + customModel);
-        if (importCustomModels.containsKey(customModel.getProfile()))
-            throw new IllegalArgumentException("custom model for profile '" + customModel.getProfile() + "' already exists");
-        importCustomModels.put(customModel.getProfile(), customModel);
         return this;
     }
 
@@ -844,23 +832,21 @@ public class GraphHopper implements GraphHopperAPI {
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
             }
             try {
-                createWeighting(profile, new PMap(), importCustomModels.get(profile.getName()));
+                createWeighting(profile, new PMap(), null);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Could not create weighting for profile: '" + profile.getName() + "'.\n" +
                         "Profile: " + profile + "\n" +
                         "Error: " + e.getMessage());
             }
-        }
 
-        for (Map.Entry<String, CustomModel> entry : importCustomModels.entrySet()) {
-            CustomModel customModel = entry.getValue();
-            ProfileConfig profileConfig = profilesByName.get(customModel.getProfile());
-            if (profileConfig == null)
-                throw new IllegalArgumentException("profile '" + customModel.getProfile() + "' specified in custom model '"
-                        + entry.getKey() + "' does not exist");
-            if (!CustomWeighting.NAME.equals(profileConfig.getWeighting()))
-                throw new IllegalArgumentException("CustomModel '" + entry.getKey() + "' wants to use profile '"
-                        + profileConfig.getName() + "' but this has weighting=" + profileConfig.getWeighting());
+            if (profile instanceof CustomProfileConfig) {
+                CustomModel customModel = ((CustomProfileConfig) profile).getCustomModel();
+                if (customModel == null)
+                    throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
+                if (!CustomWeighting.NAME.equals(profile.getWeighting()))
+                    throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
+                            "weighting=" + profile.getWeighting() + " was defined");
+            }
         }
 
         Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
@@ -926,9 +912,9 @@ public class GraphHopper implements GraphHopperAPI {
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(chConfig.getProfile());
             if (profile.isTurnCosts()) {
-                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap(), importCustomModels.get(profile.getName()))));
+                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap(), null)));
             } else {
-                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap(), importCustomModels.get(profile.getName()))));
+                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap(), null)));
             }
         }
     }
@@ -947,7 +933,7 @@ public class GraphHopper implements GraphHopperAPI {
             // turn costs, because the preparation is running node-based. This is important if we want to allow e.g.
             // changing the u_turn_costs per request (we have to use the minimum weight settings (= no turn costs) for
             // the preparation)
-            Weighting weighting = createWeighting(profile, new PMap(), importCustomModels.get(profile.getName()));
+            Weighting weighting = createWeighting(profile, new PMap(), null);
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1025,8 +1011,8 @@ public class GraphHopper implements GraphHopperAPI {
      * @param profileConfig The profile for which the weighting shall be created
      * @param hints         Additional hints that can be used to further specify the weighting that shall be created
      */
-    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, CustomModel customModel) {
-        return new DefaultWeightingFactory(ghStorage, encodingManager, encodedValueFactory).createWeighting(profileConfig, hints, customModel);
+    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, CustomModel queryCustomModel) {
+        return new DefaultWeightingFactory(ghStorage, encodingManager, encodedValueFactory).createWeighting(profileConfig, hints, queryCustomModel);
     }
 
     @Override
@@ -1043,7 +1029,7 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * This method calculates the alternative path list using the low level Path objects.
      */
-    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp, CustomModel customModel) {
+    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp, CustomModel queryCustomModel) {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
@@ -1052,8 +1038,6 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
-
-        customModel = CustomWeighting.prepareRequest(request, customModel, importCustomModels);
 
         Lock readLock = readWriteLock.readLock();
         readLock.lock();
@@ -1111,7 +1095,7 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
                 }
                 FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-                weighting = createWeighting(profile, hints, customModel);
+                weighting = createWeighting(profile, hints, queryCustomModel);
                 if (hints.has(Routing.BLOCK_AREA))
                     weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
                             points, hints, DefaultEdgeFilter.allEdges(encoder)));
@@ -1379,7 +1363,7 @@ public class GraphHopper implements GraphHopperAPI {
             this.encodedValueFactory = encodedValueFactory;
         }
 
-        public Weighting createWeighting(ProfileConfig profile, PMap hints, CustomModel customModel) {
+        public Weighting createWeighting(ProfileConfig profile, PMap hints, CustomModel queryCustomModel) {
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
             if (profile.isTurnCosts()) {
@@ -1396,8 +1380,12 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("You have to specify a weighting");
 
             Weighting weighting = null;
-            if (customModel != null || CustomWeighting.NAME.equalsIgnoreCase(weightingStr) && (customModel = new CustomModel(profile.getName())) != null) {
-                weighting = new CustomWeighting(encoder, encodingManager, encodedValueFactory, turnCostProvider, customModel);
+            if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
+                if (!(profile instanceof CustomProfileConfig))
+                    throw new IllegalArgumentException("custom weighting requires a CustomProfileConfig but was profile=" + profile.getName());
+                CustomProfileConfig customProfileConfig = (CustomProfileConfig) profile;
+                queryCustomModel = queryCustomModel == null ? customProfileConfig.getCustomModel() : queryCustomModel.merge(customProfileConfig.getCustomModel());
+                weighting = new CustomWeighting(encoder, encodingManager, encodedValueFactory, turnCostProvider, queryCustomModel);
             } else if ("shortest".equalsIgnoreCase(weightingStr)) {
                 weighting = new ShortestWeighting(encoder, turnCostProvider);
             } else if ("fastest".equalsIgnoreCase(weightingStr)) {

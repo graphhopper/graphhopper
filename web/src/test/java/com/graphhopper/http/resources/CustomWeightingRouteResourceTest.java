@@ -2,9 +2,10 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -40,9 +41,11 @@ public class CustomWeightingRouteResourceTest {
                 // for the custom_profiles more than the default encoded values are necessary
                         put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 setProfiles(Arrays.asList(
-                        new ProfileConfig("truck").setWeighting("custom").setVehicle("car").
+                        new CustomProfileConfig("car").setCustomModel(new CustomModel()).setVehicle("car"),
+                        new CustomProfileConfig("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
+                        new CustomProfileConfig("truck").setVehicle("car").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/truck.yml"),
-                        new ProfileConfig("cargo_bike").setWeighting("custom").setVehicle("bike").
+                        new CustomProfileConfig("cargo_bike").setVehicle("bike").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/cargo_bike.yml"))).
                 setCHProfiles(Collections.singletonList(new CHProfileConfig("truck")));
     }
@@ -111,5 +114,13 @@ public class CustomWeightingRouteResourceTest {
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1000, 2000);
+
+        // results should be identical be it via server-side profile or query profile:
+        yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
+                "profile: cargo_bike";
+        yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
+                new MediaType("application", "yaml"))).readEntity(JsonNode.class);
+        JsonNode path2 = yamlNode.get("paths").get(0);
+        assertEquals(path.get("distance").asDouble(), path2.get("distance").asDouble(), 1);
     }
 }

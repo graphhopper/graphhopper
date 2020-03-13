@@ -17,38 +17,27 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.json.geo.JsonFeature;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class is used in combination with CustomProfileConfig.
+ */
 public class CustomModel {
 
-    // required!
-    private String profile;
+    static double DEFAULT_D_I = 70;
     // optional:
     private Double maxSpeedFallback, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
-    private double distanceInfluence = 70;
+    private double distanceInfluence = DEFAULT_D_I;
     private Map<String, Object> speedFactor = new HashMap<>();
     private Map<String, Object> maxSpeed = new HashMap<>();
     private Map<String, Object> priorityMap = new HashMap<>();
     private Map<String, JsonFeature> areas = new HashMap<>();
 
     public CustomModel() {
-    }
-
-    public CustomModel(String profile) {
-        setProfile(profile);
-    }
-
-    public void setProfile(String profile) {
-        this.profile = profile;
-    }
-
-    public String getProfile() {
-        return profile;
     }
 
     public void setVehicleWeight(Double vehicleWeight) {
@@ -122,7 +111,6 @@ public class CustomModel {
     @Override
     public String toString() {
         return "CustomModel{" +
-                "profile='" + profile + '\'' +
                 ", maxSpeedFallback=" + maxSpeedFallback +
                 ", vehicleWeight=" + vehicleWeight +
                 ", vehicleWidth=" + vehicleWidth +
@@ -134,5 +122,39 @@ public class CustomModel {
                 ", priorityMap=" + priorityMap +
                 ", #areas=" + areas.size() +
                 '}';
+    }
+
+    /**
+     * This method assumes that this object is a per-request object so we can apply the changes and keep baseCustomModel
+     * unchanged.
+     */
+    public CustomModel merge(CustomModel baseCustomModel) {
+        if (vehicleHeight == null)
+            vehicleHeight = baseCustomModel.getVehicleHeight();
+        if (vehicleLength == null)
+            vehicleLength = baseCustomModel.getVehicleLength();
+        if (vehicleWidth == null)
+            vehicleWidth = baseCustomModel.getVehicleWidth();
+        if (vehicleWeight == null)
+            vehicleWeight = baseCustomModel.getVehicleWeight();
+        if (maxSpeedFallback == null)
+            maxSpeedFallback = baseCustomModel.getMaxSpeedFallback();
+        if (Math.abs(distanceInfluence - CustomModel.DEFAULT_D_I) < 0.01)
+            distanceInfluence = baseCustomModel.getDistanceInfluence();
+
+        for (Map.Entry<String, Object> entry : baseCustomModel.getMaxSpeed().entrySet()) {
+            maxSpeed.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+        for (Map.Entry<String, Object> entry : baseCustomModel.getSpeedFactor().entrySet()) {
+            speedFactor.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+        for (Map.Entry<String, Object> entry : baseCustomModel.getPriority().entrySet()) {
+            priorityMap.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+        for (Map.Entry<String, JsonFeature> entry : baseCustomModel.getAreas().entrySet()) {
+            areas.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+
+        return this;
     }
 }

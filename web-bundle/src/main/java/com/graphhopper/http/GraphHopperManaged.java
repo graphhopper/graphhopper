@@ -31,6 +31,7 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
+import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
@@ -94,20 +95,20 @@ public class GraphHopperManaged implements Managed {
         }
 
         ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
+        List<ProfileConfig> newProfiles = new ArrayList<>();
         for (ProfileConfig profileConfig : configuration.getProfiles()) {
             String customModelLocation = profileConfig.getHints().get("custom_model_file", "");
-            if (!customModelLocation.isEmpty())
+            if (customModelLocation.isEmpty())
+                newProfiles.add(profileConfig);
+            else
                 try {
                     CustomModel customModel = yamlOM.readValue(new File(customModelLocation), CustomModel.class);
-                    if (!Helper.isEmpty(customModel.getProfile()))
-                        throw new IllegalArgumentException("custom model at " + customModelLocation + " must not specify profile. " +
-                                "This is only possible for a request and instead the profile must specify the custom_model_file and weighting=custom");
-                    customModel.setProfile(profileConfig.getName());
-                    graphHopper.putCustomModel(customModel);
+                    newProfiles.add(new CustomProfileConfig(profileConfig).setCustomModel(customModel));
                 } catch (Exception ex) {
                     throw new RuntimeException("Cannot load custom_model from " + customModelLocation + " for profile " + profileConfig.getName(), ex);
                 }
         }
+        configuration.setProfiles(newProfiles);
 
         graphHopper.init(configuration);
     }
