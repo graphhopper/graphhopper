@@ -67,6 +67,7 @@ Here is an overview:
  * stefanholder, Stefan Holder, BMW AG, refactored unfavoring of virtual edges #885
  * stevensnoeijen, fixes like #1568
  * Svantulden, improved documentation and nearest API
+ * taulinger, hopefully more to come 
  * thehereward, code cleanups like #620
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd

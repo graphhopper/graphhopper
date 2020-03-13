@@ -19,7 +19,7 @@
 package com.graphhopper.http.resources;
 
 import com.graphhopper.http.GraphHopperApplication;
-import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.resources.PtIsochroneResource;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -39,6 +39,7 @@ import java.time.ZoneId;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 public class PtIsochroneTest {
 
@@ -46,7 +47,7 @@ public class PtIsochroneTest {
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private GeometryFactory geometryFactory = new GeometryFactory();
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration()
@@ -57,7 +58,7 @@ public class PtIsochroneTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(GraphHopperApplication.class, config);
 
     @BeforeClass
     @AfterClass
@@ -67,8 +68,7 @@ public class PtIsochroneTest {
 
     @Test
     public void testIsoline() {
-        WebTarget webTarget = app.client()
-                .target("http://localhost:8080/isochrone")
+        WebTarget webTarget = clientTarget(app, "/isochrone")
                 .queryParam("vehicle", "pt")
                 .queryParam("point", "36.914893,-116.76821") // NADAV
                 .queryParam("pt.earliest_departure_time", LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant())
