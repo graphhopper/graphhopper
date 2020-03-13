@@ -30,9 +30,12 @@ import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
+import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
@@ -41,7 +44,6 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-
 import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +77,6 @@ public class Measurement {
     private long seed;
     private int maxNode;
     private String weighting = "fastest";
-    private String customModelName = "truck";
 
     public static void main(String[] strs) throws IOException {
         PMap args = PMap.read(strs);
@@ -157,15 +158,17 @@ public class Measurement {
             }
         };
 
-        // Currently we test speed of custom truck via: 1. raw dijkstra -> routing_custom,
-        // 2. car based LM-preparation -> custom_car and 3. truck based LM preparation
+        // Currently we test speed of custom truck via:
+        // 1. raw dijkstra -> routing_custom,
+        // 2. car based LM-preparation (TODO)
+        // 3. truck based LM preparation -> truck
 
-        CustomModel customModel = createCustomModel();
+        CustomProfileConfig customProfile = createCustomProfile();
         // add more encoded values for CustomModel
         if (!args.has("graph.encoded_values"))
             args.put("graph.encoded_values", "max_width,max_height,toll,hazmat");
 
-        hopper.init(createConfigFromArgs(args, customModel)).
+        hopper.init(createConfigFromArgs(args, customProfile)).
                 // use server to allow path simplification
                         forServer();
         if (cleanGraph) {
@@ -195,36 +198,36 @@ public class Measurement {
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
             String blockAreaStr = "49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512";
             if (runSlow) {
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing", vehicleStr, count / 20, isCH, isLM).
-                        withInstructions());
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
+                        vehicle(vehicleStr).withInstructions());
                 if (encoder.supportsTurnCosts()) {
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", vehicleStr, count / 20, isCH, isLM).
-                            withInstructions().edgeBased());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
+                            vehicle(vehicleStr).withInstructions().edgeBased());
                 }
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", customModelName, count / 30, isCH, isLM).
-                        withInstructions().customModel(customModel));
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", vehicleStr, count / 20, isCH, isLM).
-                        withInstructions().blockArea(blockAreaStr));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", count / 30, isCH, isLM).
+                        profile("custom_car").withInstructions().queryCustomModel(customProfile.getCustomModel()));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
+                        vehicle(vehicleStr).withInstructions().blockArea(blockAreaStr));
             }
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
                 System.gc();
                 isLM = true;
                 for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, vehicleStr, count / 4, isCH, isLM).
-                            withInstructions().activeLandmarks(activeLMCount));
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
+                            vehicle(vehicleStr).withInstructions().activeLandmarks(activeLMCount));
                     if (encoder.supportsTurnCosts()) {
-                        printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", vehicleStr, count / 4, isCH, isLM).
-                                withInstructions().activeLandmarks(activeLMCount).edgeBased());
+                        printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 4, isCH, isLM).
+                                vehicle(vehicleStr).withInstructions().activeLandmarks(activeLMCount).edgeBased());
                     }
                 }
 
                 final int activeLMCount = 8;
-                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", vehicleStr, count / 4, isCH, isLM).
-                        withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", count / 4, isCH, isLM).
+                        vehicle(vehicleStr).withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
 
-                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_custom", customModelName, count / 5, isCH, isLM).
-                        withInstructions().activeLandmarks(activeLMCount).customModel(customModel));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_custom", count / 5, isCH, isLM).
+                        profile(customProfile.getName()).withInstructions().activeLandmarks(activeLMCount));
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
 
@@ -238,32 +241,32 @@ public class Measurement {
                     CHGraph lg = g.getCHGraph(chProfile);
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", vehicleStr, count, isCH, isLM).
-                            withInstructions().sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_alt", vehicleStr, count / 10, isCH, isLM).
-                            withInstructions().sod().alternative());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_with_hints", vehicleStr, count, isCH, isLM).
-                            withInstructions().sod().withPointHints());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_sod", vehicleStr, count, isCH, isLM).
-                            withInstructions());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_instr", vehicleStr, count, isCH, isLM).
-                            sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", vehicleStr, count, isCH, isLM).
-                            withInstructions().withPointHints().sod().simplify());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", count, isCH, isLM).
+                            vehicle(vehicleStr).withInstructions().sod());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_alt", count / 10, isCH, isLM).
+                            vehicle(vehicleStr).withInstructions().sod().alternative());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
+                            vehicle(vehicleStr).withInstructions().sod().withPointHints());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_sod", count, isCH, isLM).
+                            vehicle(vehicleStr).withInstructions());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_instr", count, isCH, isLM).
+                            vehicle(vehicleStr).sod());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
+                            vehicle(vehicleStr).withInstructions().withPointHints().sod().simplify());
                 }
                 if (!hopper.getCHPreparationHandler().getEdgeBasedCHProfiles().isEmpty()) {
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", vehicleStr, count, isCH, isLM).
-                            edgeBased().withInstructions());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", vehicleStr, count, isCH, isLM).
-                            edgeBased());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", vehicleStr, count, isCH, isLM).
-                            edgeBased().withInstructions().withPointHints().simplify());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
+                            vehicle(vehicleStr).edgeBased().withInstructions());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
+                            vehicle(vehicleStr).edgeBased());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
+                            vehicle(vehicleStr).edgeBased().withInstructions().withPointHints().simplify());
                 }
             }
             if (!isEmpty(countryBordersDirectory)) {
                 printSpatialRuleLookupTest(countryBordersDirectory, count * 100);
             }
-            
+
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
             put("error", ex.toString());
@@ -287,7 +290,7 @@ public class Measurement {
         }
     }
 
-    private GraphHopperConfig createConfigFromArgs(PMap args, CustomModel customModel) {
+    private GraphHopperConfig createConfigFromArgs(PMap args, CustomProfileConfig customProfile) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         String encodingManagerString = args.get("graph.flag_encoders", "car");
         List<FlagEncoder> tmpEncoders = EncodingManager.create(encodingManagerString).fetchEdgeEncoders();
@@ -305,7 +308,7 @@ public class Measurement {
         if (turnCosts)
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
         profiles.add(new CustomProfileConfig("custom_car").setCustomModel(new CustomModel()).setVehicle("car"));
-        profiles.add(new CustomProfileConfig("custom_truck").setCustomModel(customModel));
+        profiles.add(customProfile);
         ghConfig.setProfiles(profiles);
 
         List<CHProfileConfig> chProfiles = new ArrayList<>();
@@ -316,26 +319,31 @@ public class Measurement {
         ghConfig.setCHProfiles(chProfiles);
         if (useLM) {
             String lmProfile = turnCosts ? "profile_tc" : "profile_no_tc";
-            ghConfig.setLMProfiles(Arrays.asList(new LMProfileConfig(lmProfile), new LMProfileConfig(customModelName)));
+            ghConfig.setLMProfiles(Arrays.asList(new LMProfileConfig(lmProfile), new LMProfileConfig(customProfile.getName())));
         }
         return ghConfig;
     }
 
     private static class QuerySettings {
-        private final String prefix, vehicle;
-        private final int count;
+        final String prefix;
+        String vehicle;
+        final int count;
         final boolean ch, lm;
         int activeLandmarks = -1;
         boolean withInstructions, withPointHints, sod, edgeBased, simplify, alternative;
-        String blockArea;
-        CustomModel customModel;
+        String blockArea, profile;
+        CustomModel queryCustomModel;
 
-        QuerySettings(String prefix, String vehicle, int count, boolean isCH, boolean isLM) {
-            this.vehicle = vehicle;
+        QuerySettings(String prefix, int count, boolean isCH, boolean isLM) {
             this.prefix = prefix;
             this.count = count;
             this.ch = isCH;
             this.lm = isLM;
+        }
+
+        QuerySettings vehicle(String vehicle) {
+            this.vehicle = vehicle;
+            return this;
         }
 
         QuerySettings withInstructions() {
@@ -378,8 +386,13 @@ public class Measurement {
             return this;
         }
 
-        public QuerySettings customModel(CustomModel customModel) {
-            this.customModel = customModel;
+        public QuerySettings queryCustomModel(CustomModel customModel) {
+            this.queryCustomModel = customModel;
+            return this;
+        }
+
+        public QuerySettings profile(String name) {
+            this.profile = name;
             return this;
         }
     }
@@ -495,12 +508,12 @@ public class Measurement {
         }.setIterations(count).start();
         print("unit_tests" + description + ".get_edge_state", miniPerf);
     }
-    
+
     private void printSpatialRuleLookupTest(String countryBordersDirectory, int count) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        
+
         List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(countryBordersDirectory), "*.{geojson,json}")) {
             for (Path borderFile : stream) {
@@ -513,9 +526,9 @@ public class Measurement {
             logger.error("Failed to load borders.", e);
             return;
         }
-        
+
         SpatialRuleFactory rulePerCountryFactory = new SpatialRuleFactory() {
-            
+
             @Override
             public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
                 return new AbstractSpatialRule(borders) {
@@ -526,9 +539,9 @@ public class Measurement {
                 };
             }
         };
-        
+
         final SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO_A3", rulePerCountryFactory);
-    
+
         // generate random points in central Europe
         final List<GHPoint> randomPoints = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
@@ -536,14 +549,14 @@ public class Measurement {
             double lon = 6d + Math.random() * 21d;
             randomPoints.add(new GHPoint(lat, lon));
         }
-        
+
         MiniPerfTest lookupPerfTest = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
                 return spatialRuleLookup.lookupRule(randomPoints.get(run)).hashCode();
             }
         }.setIterations(count).start();
-        
+
         print("spatialrulelookup", lookupPerfTest);
     }
 
@@ -668,10 +681,10 @@ public class Measurement {
                 double toLat = na.getLatitude(to);
                 double toLon = na.getLongitude(to);
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon);
-                if (querySettings.customModel == null)
+                if (querySettings.profile == null)
                     req.setWeighting(weighting).setVehicle(querySettings.vehicle);
                 else
-                    req.getHints().put("profile", querySettings.vehicle);
+                    req.setProfile(querySettings.profile);
 
                 req.getHints().put(CH.DISABLE, !querySettings.ch).
                         put("stall_on_demand", querySettings.sod).
@@ -713,7 +726,7 @@ public class Measurement {
 
                 GHResponse rsp = new GHResponse();
                 try {
-                    hopper.calcPaths(req, rsp, querySettings.customModel);
+                    hopper.calcPaths(req, rsp, querySettings.queryCustomModel);
                 } catch (Exception ex) {
                     // 'not found' can happen if import creates more than one subnetwork
                     throw new RuntimeException("Error while calculating route! "
@@ -826,7 +839,7 @@ public class Measurement {
         }
     }
 
-    private CustomModel createCustomModel() {
+    private CustomProfileConfig createCustomProfile() {
         CustomModel customModel = new CustomModel();
         customModel.setVehicleHeight(3.8);
         customModel.setVehicleWidth(2.5);
@@ -851,7 +864,7 @@ public class Measurement {
         customModel.getSpeedFactor().put("road_class", map);
 
         customModel.setMaxSpeedFallback(110.0);
-        return customModel;
+        return new CustomProfileConfig("truck").setCustomModel(customModel);
     }
 
     private void storeProperties(String propLocation) {
