@@ -287,7 +287,7 @@ public class Measurement {
         profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
         if (turnCosts)
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
-        profiles.add(new CustomProfileConfig("custom_car").setCustomModel(new CustomModel("custom_car")).setVehicle("car"));
+        profiles.add(new CustomProfileConfig("custom_car").setCustomModel(new CustomModel()).setVehicle("car"));
         profiles.add(new CustomProfileConfig("custom_truck").setCustomModel(customModel));
         ghConfig.setProfiles(profiles);
 
@@ -759,7 +759,7 @@ public class Measurement {
     }
 
     private CustomModel createCustomModel() {
-        CustomModel customModel = new CustomModel("custom_car");
+        CustomModel customModel = new CustomModel();
         customModel.setVehicleHeight(3.8);
         customModel.setVehicleWidth(2.5);
         // the default distance_factor for custom requests is currently 1 which makes it too different regarding speed
