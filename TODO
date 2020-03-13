@@ -1,5 +1,0 @@
-- size analysis
-- performance hit on import?
-- units on elevation factor?
-- warn when bad combinations of inputs:
-  - new flags without bilinear interpolation or elevation factor without elevation
