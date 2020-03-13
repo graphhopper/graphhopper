@@ -55,9 +55,9 @@ public class CustomWeightingRouteResourceLMTest {
                 put("graph.encoded_values", "surface").
                 put("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new ProfileConfig("car").setWeighting("fastest").setVehicle("car"),
-                        new ProfileConfig("foot").setWeighting("fastest").setVehicle("foot"))).
-                setLMProfiles(Arrays.asList(new LMProfileConfig("car"), new LMProfileConfig("foot")));
+                        new ProfileConfig("car_profile").setVehicle("car").setWeighting("custom"),
+                        new ProfileConfig("foot_profile").setVehicle("foot").setWeighting("fastest"))).
+                setLMProfiles(Arrays.asList(new LMProfileConfig("car_profile"), new LMProfileConfig("foot_profile")));
     }
 
     @ClassRule

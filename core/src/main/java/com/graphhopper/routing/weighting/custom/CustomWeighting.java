@@ -45,13 +45,13 @@ import java.util.Map;
  * underestimates the weight.
  */
 public final class CustomWeighting extends AbstractWeighting {
+    public static final String NAME = "custom";
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
      * costs or traffic light costs etc)
      */
     private final static double SPEED_CONV = 3.6;
     private final BooleanEncodedValue baseVehicleAccessEnc;
-    private final String baseVehicle;
     private final double maxSpeed;
     private final double distanceInfluence;
     private final SpeedCustomConfig speedConfig;
@@ -64,10 +64,6 @@ public final class CustomWeighting extends AbstractWeighting {
             throw new IllegalStateException("CustomModel cannot be null");
 
         baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
-        baseVehicle = customModel.getProfile();
-        if (!baseVehicle.equals(baseFlagEncoder.toString()))
-            throw new IllegalStateException("profile '" + baseVehicle + "' must be identical to encoder " + baseFlagEncoder.toString());
-
         speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), lookup, factory);
         maxSpeed = speedConfig.getMaxSpeed() / SPEED_CONV;
 
@@ -136,11 +132,6 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public String getName() {
-        return "custom";
-    }
-
-    @Override
-    public String toString() {
-        return getName();
+        return NAME;
     }
 }

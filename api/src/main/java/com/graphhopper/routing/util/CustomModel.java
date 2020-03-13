@@ -119,10 +119,6 @@ public class CustomModel {
         return areas;
     }
 
-    public ProfileConfig createProfileConfig(String name) {
-        return new ProfileConfig(name).setVehicle(getProfile()).setWeighting("custom");
-    }
-
     @Override
     public String toString() {
         return "CustomModel{" +

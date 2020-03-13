@@ -332,18 +332,12 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * This method adds the specified CustomModel to this GraphHopper instance.
      */
-    public GraphHopper putCustomModel(String modelName, CustomModel customModel) {
-        ProfileConfig.validateProfileName(modelName);
+    public GraphHopper putCustomModel(CustomModel customModel) {
         if (Helper.isEmpty(customModel.getProfile()))
             throw new IllegalArgumentException("profile cannot be empty. custom model: " + customModel);
-        if (modelName.equals(customModel.getProfile()))
-            throw new IllegalArgumentException("custom model name '" + modelName + "' cannot be the same like the profile name");
-        if (importCustomModels.containsKey(modelName))
-            throw new IllegalArgumentException("custom model '" + modelName + "' already exists");
-        // we can check this only if profiles are set before
-        if (!profilesByName.isEmpty() && profilesByName.containsKey(customModel.getProfile()))
-            throw new IllegalArgumentException("profile '" + customModel.getProfile() + "' from custom model '" + modelName + "' does not exist");
-        importCustomModels.put(modelName, customModel);
+        if (importCustomModels.containsKey(customModel.getProfile()))
+            throw new IllegalArgumentException("custom model for profile '" + customModel.getProfile() + "' already exists");
+        importCustomModels.put(customModel.getProfile(), customModel);
         return this;
     }
 
@@ -857,6 +851,18 @@ public class GraphHopper implements GraphHopperAPI {
                         "Error: " + e.getMessage());
             }
         }
+
+        for (Map.Entry<String, CustomModel> entry : importCustomModels.entrySet()) {
+            CustomModel customModel = entry.getValue();
+            ProfileConfig profileConfig = profilesByName.get(customModel.getProfile());
+            if (profileConfig == null)
+                throw new IllegalArgumentException("profile '" + customModel.getProfile() + "' specified in custom model '"
+                        + entry.getKey() + "' does not exist");
+            if (!CustomWeighting.NAME.equals(profileConfig.getWeighting()))
+                throw new IllegalArgumentException("CustomModel '" + entry.getKey() + "' wants to use profile '"
+                        + profileConfig.getName() + "' but this has weighting=" + profileConfig.getWeighting());
+        }
+
         Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             boolean added = chProfileSet.add(chConfig.getProfile());
@@ -880,6 +886,10 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public ProfileConfig resolveProfile(HintsMap hints) {
+        // TODO NOW replace with request.getProfile()
+        ProfileConfig profile = profilesByName.get(hints.get("profile", ""));
+        if (profile != null)
+            return profile;
         if (encodingManager == null)
             throw new IllegalStateException("No encoding manager specified or loaded");
 
@@ -1386,7 +1396,7 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("You have to specify a weighting");
 
             Weighting weighting = null;
-            if (customModel != null) {
+            if (customModel != null || CustomWeighting.NAME.equalsIgnoreCase(weightingStr) && (customModel = new CustomModel(profile.getName())) != null) {
                 weighting = new CustomWeighting(encoder, encodingManager, encodedValueFactory, turnCostProvider, customModel);
             } else if ("shortest".equalsIgnoreCase(weightingStr)) {
                 weighting = new ShortestWeighting(encoder, turnCostProvider);

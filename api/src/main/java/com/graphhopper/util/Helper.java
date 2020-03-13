@@ -164,26 +164,6 @@ public class Helper {
         return file.delete();
     }
 
-    /**
-     * @return a collection of files with the specified file ending or all files if the collection is empty. The String
-     * key is the base file name. Files with only one dot are supported.
-     */
-    public static List<Map.Entry<String, File>> listFiles(File directory, Collection<String> fileEndings) {
-        if (!directory.isDirectory())
-            throw new IllegalArgumentException("location " + directory + " must be directory but wasn't.");
-        List<Map.Entry<String, File>> result = new ArrayList<>();
-        for (File file : directory.listFiles()) {
-            try {
-                String[] fileNameParts = file.getName().split("\\.");
-                if (fileNameParts.length == 2 && (fileEndings.isEmpty() || fileEndings.contains(fileNameParts[1])))
-                    result.add(new MapEntry<>(fileNameParts[0], file));
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-        return result;
-    }
-
     public static long getTotalMB() {
         return Runtime.getRuntime().totalMemory() / MB;
     }

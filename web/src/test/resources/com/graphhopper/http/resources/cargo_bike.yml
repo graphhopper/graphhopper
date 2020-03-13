@@ -1,4 +1,5 @@
-profile: bike
+# For a custom request you need to specify a profile (with weighting=custom) but on import we don't need this
+# profile: bike
 
 vehicle_height: 2.3
 vehicle_width: 1.2

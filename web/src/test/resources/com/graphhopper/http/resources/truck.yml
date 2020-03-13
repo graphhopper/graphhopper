@@ -1,5 +1,5 @@
-# Specify a vehicle (FlagEncoder) or another custom profile like
-profile: car
+# For a custom request you need to specify a profile (with weighting=custom) but on import we don't need this
+# profile: car
 
 # in meter
 vehicle_height: 3.8

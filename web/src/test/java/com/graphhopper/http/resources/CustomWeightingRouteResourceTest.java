@@ -39,11 +39,11 @@ public class CustomWeightingRouteResourceTest {
                 put("graph.location", DIR).
                 // for the custom_profiles more than the default encoded values are necessary
                         put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
-                // profiles are automatically created using the yaml files in this directory
-                        put("custom_profiles.directory", "./src/test/resources/com/graphhopper/http/resources/").
                 setProfiles(Arrays.asList(
-                        new ProfileConfig("bike").setVehicle("bike").setWeighting("fastest"),
-                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest"))).
+                        new ProfileConfig("truck").setWeighting("custom").setVehicle("car").
+                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/truck.yml"),
+                        new ProfileConfig("cargo_bike").setWeighting("custom").setVehicle("bike").
+                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/cargo_bike.yml"))).
                 setCHProfiles(Collections.singletonList(new CHProfileConfig("truck")));
     }
 
@@ -105,6 +105,7 @@ public class CustomWeightingRouteResourceTest {
 
         String queryYamlFromFile = Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml"));
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
+                "profile: bike\n" +
                 queryYamlFromFile;
         yamlNode = app.client().target("http://localhost:8080/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);

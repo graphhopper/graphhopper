@@ -46,9 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static com.graphhopper.util.Helper.UTF_CS;
 
@@ -95,20 +93,20 @@ public class GraphHopperManaged implements Managed {
                     new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
         }
 
-        String customModelLocation = configuration.get("custom_profiles.directory", "");
-        if (!customModelLocation.isEmpty()) {
-            ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
-            for (Map.Entry<String, File> entry : Helper.listFiles(new File(customModelLocation), Arrays.asList("yaml", "yml"))) {
+        ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
+        for (ProfileConfig profileConfig : configuration.getProfiles()) {
+            String customModelLocation = profileConfig.getHints().get("custom_model_file", "");
+            if (!customModelLocation.isEmpty())
                 try {
-                    CustomModel customModel = yamlOM.readValue(entry.getValue(), CustomModel.class);
-                    List<ProfileConfig> list = new ArrayList<>(configuration.getProfiles());
-                    list.add(customModel.createProfileConfig(entry.getKey()));
-                    configuration.setProfiles(list);
-                    graphHopper.putCustomModel(entry.getKey(), customModel);
+                    CustomModel customModel = yamlOM.readValue(new File(customModelLocation), CustomModel.class);
+                    if (!Helper.isEmpty(customModel.getProfile()))
+                        throw new IllegalArgumentException("custom model at " + customModelLocation + " must not specify profile. " +
+                                "This is only possible for a request and instead the profile must specify the custom_model_file and weighting=custom");
+                    customModel.setProfile(profileConfig.getName());
+                    graphHopper.putCustomModel(customModel);
                 } catch (Exception ex) {
-                    throw new RuntimeException("Cannot load custom_model from " + entry.getValue(), ex);
+                    throw new RuntimeException("Cannot load custom_model from " + customModelLocation + " for profile " + profileConfig.getName(), ex);
                 }
-            }
         }
 
         graphHopper.init(configuration);
