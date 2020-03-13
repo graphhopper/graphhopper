@@ -28,6 +28,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -53,7 +54,7 @@ public class GraphHopperProfileConfigTest {
     @Test
     public void duplicateProfileName_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
-        assertIllegalArgument("Profile names must be unique. Duplicate name: 'my_profile'", new Runnable() {
+        assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
                 hopper.setProfiles(
@@ -62,43 +63,46 @@ public class GraphHopperProfileConfigTest {
                         new ProfileConfig("my_profile").setVehicle("car").setWeighting("shortest")
                 );
             }
-        });
+        }, "Profile names must be unique. Duplicate name: 'my_profile'");
     }
 
     @Test
     public void vehicleDoesNotExist_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
         hopper.setProfiles(new ProfileConfig("profile").setVehicle("your_car"));
-        assertIllegalArgument("Unknown vehicle 'your_car' in profile: name=profile", new Runnable() {
+        assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
                 hopper.load(GH_LOCATION);
             }
-        });
+        }, "Unknown vehicle 'your_car' in profile: name=profile");
     }
 
     @Test
     public void vehicleWithoutTurnCostSupport_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
         hopper.setProfiles(new ProfileConfig("profile").setVehicle("car").setTurnCosts(true));
-        assertIllegalArgument("The profile 'profile' was configured with 'turn_costs=true', but the corresponding vehicle 'car' does not support turn costs", new Runnable() {
+        assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
                 hopper.load(GH_LOCATION);
             }
-        });
+        }, "The profile 'profile' was configured with 'turn_costs=true', but the corresponding vehicle 'car' does not support turn costs");
     }
 
     @Test
     public void profileWithUnknownWeighting_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
         hopper.setProfiles(new ProfileConfig("profile").setVehicle("car").setWeighting("your_weighting"));
-        assertIllegalArgument("The profile 'profile' was configured with an unknown weighting 'your_weighting'", new Runnable() {
-            @Override
-            public void run() {
-                hopper.load(GH_LOCATION);
-            }
-        });
+        assertIllegalArgument(new Runnable() {
+                                  @Override
+                                  public void run() {
+                                      hopper.load(GH_LOCATION);
+                                  }
+                              },
+                "Could not create weighting for profile: 'profile'",
+                "Weighting 'your_weighting' not supported"
+        );
     }
 
     @Test
@@ -106,12 +110,12 @@ public class GraphHopperProfileConfigTest {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
         hopper.setProfiles(new ProfileConfig("profile1").setVehicle("car"));
         hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("other_profile"));
-        assertIllegalArgument("CH profile references unknown profile 'other_profile'", new Runnable() {
+        assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
                 hopper.load(GH_LOCATION);
             }
-        });
+        }, "CH profile references unknown profile 'other_profile'");
     }
 
     @Test
@@ -122,12 +126,12 @@ public class GraphHopperProfileConfigTest {
                 new CHProfileConfig("profile"),
                 new CHProfileConfig("profile")
         );
-        assertIllegalArgument("Duplicate CH reference to profile 'profile'", new Runnable() {
+        assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
                 hopper.load(GH_LOCATION);
             }
-        });
+        }, "Duplicate CH reference to profile 'profile'");
     }
 
     @Test
@@ -135,12 +139,12 @@ public class GraphHopperProfileConfigTest {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
         hopper.setProfiles(new ProfileConfig("profile1").setVehicle("car"));
         hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig("other_profile"));
-        assertIllegalArgument("LM profile references unknown profile 'other_profile'", new Runnable() {
+        assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
                 hopper.load(GH_LOCATION);
             }
-        });
+        }, "LM profile references unknown profile 'other_profile'");
     }
 
     @Test
@@ -151,12 +155,12 @@ public class GraphHopperProfileConfigTest {
                 new LMProfileConfig("profile"),
                 new LMProfileConfig("profile")
         );
-        assertIllegalArgument("Duplicate LM reference to profile 'profile'", new Runnable() {
+        assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
                 hopper.load(GH_LOCATION);
             }
-        });
+        }, "Duplicate LM reference to profile 'profile'");
     }
 
 
@@ -168,12 +172,14 @@ public class GraphHopperProfileConfigTest {
         return hopper;
     }
 
-    private static void assertIllegalArgument(String messagePart, Runnable runnable) {
+    private static void assertIllegalArgument(Runnable runnable, String... messageParts) {
         try {
             runnable.run();
-            fail("There should have been an error containing:\n\t" + messagePart);
+            fail("There should have been an error containing:\n\t" + Arrays.asList(messageParts));
         } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().contains(messagePart), "Unexpected error message:\n\t" + e.getMessage() + "\nExpected the message to contain:\n\t" + messagePart);
+            for (String messagePart : messageParts) {
+                assertTrue(e.getMessage().contains(messagePart), "Unexpected error message:\n\t" + e.getMessage() + "\nExpected the message to contain:\n\t" + messagePart);
+            }
         }
     }
 }

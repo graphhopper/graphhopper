@@ -21,7 +21,6 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
@@ -181,33 +180,27 @@ public class LMPreparationHandler {
 
     /**
      * @return a {@link RoutingAlgorithmFactory} for LM or throw an error if no preparation is available for the given
-     * hints
+     * profile name
      */
-    public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
-        PrepareLandmarks preparation = getPreparation(map);
+    public RoutingAlgorithmFactory getAlgorithmFactory(String profile) {
+        PrepareLandmarks preparation = getPreparation(profile);
         return preparation.getRoutingAlgorithmFactory().setDefaultActiveLandmarks(activeLandmarkCount);
     }
 
-    private PrepareLandmarks getPreparation(HintsMap map) {
+    private PrepareLandmarks getPreparation(String profile) {
         if (preparations.isEmpty())
             throw new IllegalStateException("No LM preparations added yet");
 
-        List<String> lmProfiles = new ArrayList<>(preparations.size());
-        for (final PrepareLandmarks p : preparations) {
-            lmProfiles.add(p.getLMProfile().getName());
-            if (p.getLMProfile().getWeighting().matches(map))
-                return p;
+        List<String> profileNames = new ArrayList<>(preparations.size());
+        for (PrepareLandmarks preparation : preparations) {
+            profileNames.add(preparation.getLMProfile().getName());
+            if (preparation.getLMProfile().getName().equals(profile)) {
+                return preparation;
+            }
         }
-
-        // There are situations where we can use the requested encoder/weighting with an existing LM preparation, even
-        // though the preparation was done with a different weighting. For example this works when the new weighting
-        // only yields higher (but never lower) weights than the one that was used for the preparation. However, its not
-        // trivial to check whether or not this is the case so we do not allow this for now.
-        String requestedString = (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) + "|" +
-                (map.getVehicle().isEmpty() ? "*" : map.getVehicle());
-        throw new IllegalArgumentException("Cannot find matching LM profile for your request. Please check your parameters." +
-                "\nYou can try disabling LM by setting " + Parameters.Landmark.DISABLE + "=true" +
-                "\nrequested: " + requestedString + "\navailable: " + lmProfiles);
+        throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'" +
+                "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
+                "\navailable LM profiles: " + profileNames);
     }
 
     /**
