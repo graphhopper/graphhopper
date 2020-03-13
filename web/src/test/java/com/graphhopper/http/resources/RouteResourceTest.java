@@ -50,9 +50,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static com.graphhopper.http.util.TestUtils.clientUrl;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -113,7 +113,7 @@ public class RouteResourceTest {
 
         // we currently just ignore URL parameters
         jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
-        response = app.client().target("http://localhost:8080/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
+        response = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         assertFalse(response.readEntity(JsonNode.class).get("info").has("errors"));
     }
