@@ -192,7 +192,7 @@ public class DirectionResolver {
             }
             // we are interested in the coordinates of the next point on this edge, it could be the adj tower node
             // but also a pillar node
-            final PointList geometry = iter.fetchWayGeometry(3);
+            final PointList geometry = iter.fetchWayGeometry(FetchWayGeometry.ALL);
             double nextPointLat = geometry.getLat(1);
             double nextPointLon = geometry.getLon(1);
 

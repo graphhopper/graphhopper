@@ -540,7 +540,7 @@ class BaseGraph implements Graph {
         // copy the rest with higher level API
         to.setDistance(from.getDistance()).
                 setName(from.getName()).
-                setWayGeometry(from.fetchWayGeometry(0));
+                setWayGeometry(from.fetchWayGeometry(FetchWayGeometry.PILLAR_ONLY));
 
         return to;
     }
@@ -950,8 +950,8 @@ class BaseGraph implements Graph {
         return bytes;
     }
 
-    private PointList fetchWayGeometry_(long edgePointer, boolean reverse, int mode, int baseNode, int adjNode) {
-        if (mode == 4) {
+    private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchWayGeometry mode, int baseNode, int adjNode) {
+        if (mode == FetchWayGeometry.TOWER_ONLY) {
             // no reverse handling required as adjNode and baseNode is already properly switched
             PointList pillarNodes = new PointList(2, nodeAccess.is3D());
             pillarNodes.add(nodeAccess, baseNode);
@@ -968,14 +968,14 @@ class BaseGraph implements Graph {
             geoRef += 4L;
             bytes = new byte[count * nodeAccess.getDimension() * 4];
             wayGeometry.getBytes(geoRef, bytes, bytes.length);
-        } else if (mode == 0)
+        } else if (mode == FetchWayGeometry.PILLAR_ONLY)
             return PointList.EMPTY;
 
-        PointList pillarNodes = new PointList(count + mode, nodeAccess.is3D());
+        PointList pillarNodes = new PointList(FetchWayGeometry.count(count, mode), nodeAccess.is3D());
         if (reverse) {
-            if ((mode & 2) != 0)
+            if (mode == FetchWayGeometry.ALL || mode == FetchWayGeometry.PILLAR_AND_ADJ)
                 pillarNodes.add(nodeAccess, adjNode);
-        } else if ((mode & 1) != 0)
+        } else if (mode == FetchWayGeometry.ALL || mode == FetchWayGeometry.BASE_AND_PILLAR)
             pillarNodes.add(nodeAccess, baseNode);
 
         int index = 0;
@@ -993,11 +993,11 @@ class BaseGraph implements Graph {
         }
 
         if (reverse) {
-            if ((mode & 1) != 0)
+            if (mode == FetchWayGeometry.ALL || mode == FetchWayGeometry.BASE_AND_PILLAR)
                 pillarNodes.add(nodeAccess, baseNode);
 
             pillarNodes.reverse();
-        } else if ((mode & 2) != 0)
+        } else if (mode == FetchWayGeometry.ALL || mode == FetchWayGeometry.PILLAR_AND_ADJ)
             pillarNodes.add(nodeAccess, adjNode);
 
         return pillarNodes;
@@ -1358,7 +1358,7 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public PointList fetchWayGeometry(int mode) {
+        public PointList fetchWayGeometry(FetchWayGeometry mode) {
             return baseGraph.fetchWayGeometry_(edgePointer, reverse, mode, getBaseNode(), getAdjNode());
         }
 

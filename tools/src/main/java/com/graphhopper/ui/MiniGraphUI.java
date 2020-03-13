@@ -38,6 +38,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.FetchWayGeometry;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.PointList;
@@ -280,7 +281,7 @@ public class MiniGraphUI {
                     boolean fwd = edge.get(accessEnc);
                     boolean bwd = edge.getReverse(accessEnc);
                     float width = speed > 90 ? 1f : 0.8f;
-                    PointList pl = edge.fetchWayGeometry(3);
+                    PointList pl = edge.fetchWayGeometry(FetchWayGeometry.ALL);
                     for (int i = 1; i < pl.size(); i++) {
                         if (fwd && !bwd) {
                             mg.plotDirectedEdge(g2, pl.getLatitude(i - 1), pl.getLongitude(i - 1), pl.getLatitude(i), pl.getLongitude(i), width);
