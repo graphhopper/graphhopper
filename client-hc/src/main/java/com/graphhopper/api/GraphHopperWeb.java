@@ -259,12 +259,25 @@ public class GraphHopperWeb implements GraphHopperAPI {
         requestJson.put("optimize", ghRequest.getHints().get("optimize", optimize));
 
         Map<String, Object> hintsMap = ghRequest.getHints().toMap();
-        for (String hintKey : hintsMap.keySet()) {
+        for (Map.Entry<String, Object> entry : hintsMap.entrySet()) {
+            String hintKey = entry.getKey();
             if (ignoreSetForPost.contains(hintKey))
                 continue;
 
-            Object hint = hintsMap.get(hintKey);
-            requestJson.put(hintKey, hint.toString());
+            // try proper JSON conversion at least for numbers and booleans
+            Object hint = entry.getValue();
+            if (hint instanceof Boolean)
+                requestJson.put(hintKey, (Boolean) hint);
+            else if (hint instanceof Integer)
+                requestJson.put(hintKey, (Integer) hint);
+            else if (hint instanceof Long)
+                requestJson.put(hintKey, (Long) hint);
+            else if (hint instanceof Float)
+                requestJson.put(hintKey, (Float) hint);
+            else if (hint instanceof Double)
+                requestJson.put(hintKey, (Double) hint);
+            else
+                requestJson.put(hintKey, hint.toString());
         }
         String stringData = requestJson.toString();
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
