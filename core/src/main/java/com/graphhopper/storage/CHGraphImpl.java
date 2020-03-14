@@ -856,7 +856,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public final PointList fetchWayGeometry(FetchWayGeometry mode) {
+        public final PointList fetchWayGeometry(FetchMode mode) {
             checkShortcut(false, "fetchWayGeometry");
             return edgeIterable.fetchWayGeometry(mode);
         }

@@ -79,7 +79,7 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public PointList fetchWayGeometry(FetchWayGeometry mode) {
+    public PointList fetchWayGeometry(FetchMode mode) {
         return getCurrentEdge().fetchWayGeometry(mode);
     }
 

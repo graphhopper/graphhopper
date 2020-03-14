@@ -88,14 +88,14 @@ class GraphModificationBuilder {
             boolean doReverse = base > closestEdge.getAdjNode();
             if (base == closestEdge.getAdjNode()) {
                 // check for special case #162 where adj == base and force direction via latitude comparison
-                PointList pl = closestEdge.fetchWayGeometry(FetchWayGeometry.PILLAR_ONLY);
+                PointList pl = closestEdge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
                 if (pl.size() > 1)
                     doReverse = pl.getLatitude(0) > pl.getLatitude(pl.size() - 1);
             }
 
             if (doReverse) {
                 closestEdge = closestEdge.detach(true);
-                PointList fullPL = closestEdge.fetchWayGeometry(FetchWayGeometry.ALL);
+                PointList fullPL = closestEdge.fetchWayGeometry(FetchMode.ALL);
                 res.setClosestEdge(closestEdge);
                 if (res.getSnappedPosition() == QueryResult.Position.PILLAR)
                     // ON pillar node
@@ -126,7 +126,7 @@ class GraphModificationBuilder {
             public boolean apply(int edgeId, List<QueryResult> results) {
                 // we can expect at least one entry in the results
                 EdgeIteratorState closestEdge = results.get(0).getClosestEdge();
-                final PointList fullPL = closestEdge.fetchWayGeometry(FetchWayGeometry.ALL);
+                final PointList fullPL = closestEdge.fetchWayGeometry(FetchMode.ALL);
                 int baseNode = closestEdge.getBaseNode();
                 Collections.sort(results, new Comparator<QueryResult>() {
                     @Override

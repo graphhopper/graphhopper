@@ -59,7 +59,7 @@ public class WrapperGraph implements Graph {
             }
             extraEdgesBySource.put(extraEdge.getBaseNode(), extraEdge);
             extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalEdgeKey(), extraEdge.getEdge(), extraEdge.getAdjNode(),
-                    extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(FetchWayGeometry.ALL), true));
+                    extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(FetchMode.ALL), true));
         }
     }
 
@@ -154,7 +154,7 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public PointList fetchWayGeometry(FetchWayGeometry mode) {
+            public PointList fetchWayGeometry(FetchMode mode) {
                 throw new UnsupportedOperationException();
             }
 
@@ -352,7 +352,7 @@ public class WrapperGraph implements Graph {
                     }
 
                     @Override
-                    public PointList fetchWayGeometry(FetchWayGeometry mode) {
+                    public PointList fetchWayGeometry(FetchMode mode) {
                         return current.fetchWayGeometry(mode);
                     }
 

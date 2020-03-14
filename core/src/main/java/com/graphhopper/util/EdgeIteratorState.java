@@ -106,10 +106,10 @@ public interface EdgeIteratorState {
      * (docs/core/low-level-api.md#what-are-pillar-and-tower-nodes). Updates to the returned list
      * are not reflected in the graph, for that you've to use setWayGeometry.
      *
-     * @param mode {@link FetchWayGeometry}
+     * @param mode {@link FetchMode}
      * @return the pillar and/or tower nodes depending on the mode.
      */
-    PointList fetchWayGeometry(FetchWayGeometry mode);
+    PointList fetchWayGeometry(FetchMode mode);
 
     /**
      * @param list is a sorted collection of coordinates between the base node and the current adjacent node. Specify

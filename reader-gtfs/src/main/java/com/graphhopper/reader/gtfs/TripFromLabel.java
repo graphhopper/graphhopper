@@ -387,8 +387,8 @@ class TripFromLabel {
         List<Coordinate> coordinates = new ArrayList<>();
         final Iterator<Label.Transition> iterator = transitions.iterator();
         iterator.next();
-        coordinates.addAll(toCoordinateArray(iterator.next().edge.edgeIteratorState.fetchWayGeometry(FetchWayGeometry.ALL)));
-        iterator.forEachRemaining(transition -> coordinates.addAll(toCoordinateArray(transition.edge.edgeIteratorState.fetchWayGeometry(FetchWayGeometry.PILLAR_AND_ADJ))));
+        coordinates.addAll(toCoordinateArray(iterator.next().edge.edgeIteratorState.fetchWayGeometry(FetchMode.ALL)));
+        iterator.forEachRemaining(transition -> coordinates.addAll(toCoordinateArray(transition.edge.edgeIteratorState.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ))));
         return geometryFactory.createLineString(coordinates.toArray(new Coordinate[coordinates.size()]));
     }
 

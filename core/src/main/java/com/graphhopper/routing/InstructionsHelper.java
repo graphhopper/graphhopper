@@ -75,7 +75,7 @@ class InstructionsHelper {
     static GHPoint getPointForOrientationCalculation(EdgeIteratorState edgeIteratorState, NodeAccess nodeAccess) {
         double tmpLat;
         double tmpLon;
-        PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(FetchWayGeometry.ALL);
+        PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(FetchMode.ALL);
         if (tmpWayGeo.getSize() <= 2) {
             tmpLat = nodeAccess.getLatitude(edgeIteratorState.getAdjNode());
             tmpLon = nodeAccess.getLongitude(edgeIteratorState.getAdjNode());

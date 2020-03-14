@@ -57,7 +57,7 @@ public class GraphEdgeIdFinder {
         locationIndex.query(shape.getBounds(), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer(filter)) {
             @Override
             public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
-                if (shape.intersects(edge.fetchWayGeometry(FetchWayGeometry.ALL).makeImmutable()))
+                if (shape.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()))
                     edgeIds.add(edge.getEdge());
             }
         });
@@ -74,7 +74,7 @@ public class GraphEdgeIdFinder {
             locationIndex.query(BBox.fromEnvelope(geometry.getEnvelopeInternal()), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer(filter)) {
                 @Override
                 public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
-                    if (geometry.intersects(edge.fetchWayGeometry(FetchWayGeometry.ALL).toLineString(false)))
+                    if (geometry.intersects(edge.fetchWayGeometry(FetchMode.ALL).toLineString(false)))
                         edgeIds.add(edge.getEdge());
                 }
             });
@@ -218,7 +218,7 @@ public class GraphEdgeIdFinder {
                 Shape shape = blockedShapes.get(shapeIdx);
                 if (shape.getBounds().intersects(bbox)) {
                     if (pointList == null)
-                        pointList = edgeState.fetchWayGeometry(FetchWayGeometry.ALL).makeImmutable();
+                        pointList = edgeState.fetchWayGeometry(FetchMode.ALL).makeImmutable();
                     if (shape.intersects(pointList))
                         return true;
                 }

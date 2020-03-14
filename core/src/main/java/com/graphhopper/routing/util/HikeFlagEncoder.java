@@ -95,7 +95,7 @@ public class HikeFlagEncoder extends FootFlagEncoder {
 
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        PointList pl = edge.fetchWayGeometry(FetchWayGeometry.ALL);
+        PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
         if (!pl.is3D())
             return;
 

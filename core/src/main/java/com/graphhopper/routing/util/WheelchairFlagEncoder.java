@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchWayGeometry;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
@@ -217,7 +217,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
      */
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        PointList pl = edge.fetchWayGeometry(FetchWayGeometry.ALL);
+        PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
 
         double prevEle = pl.getElevation(0);
         double fullDist2D = edge.getDistance();

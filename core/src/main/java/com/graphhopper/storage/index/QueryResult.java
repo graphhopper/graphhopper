@@ -21,7 +21,7 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchWayGeometry;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
@@ -145,7 +145,7 @@ public class QueryResult {
         if (snappedPoint != null)
             throw new IllegalStateException("Calculate snapped point only once");
 
-        PointList fullPL = getClosestEdge().fetchWayGeometry(FetchWayGeometry.ALL);
+        PointList fullPL = getClosestEdge().fetchWayGeometry(FetchMode.ALL);
         double tmpLat = fullPL.getLatitude(wayIndex);
         double tmpLon = fullPL.getLongitude(wayIndex);
         double tmpEle = fullPL.getElevation(wayIndex);

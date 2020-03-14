@@ -24,7 +24,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchWayGeometry;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 
 import java.util.ArrayList;
@@ -282,7 +282,7 @@ public class Path {
         forEveryEdge(new EdgeVisitor() {
             @Override
             public void next(EdgeIteratorState eb, int index, int prevEdgeId) {
-                PointList pl = eb.fetchWayGeometry(FetchWayGeometry.PILLAR_AND_ADJ);
+                PointList pl = eb.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
                 for (int j = 0; j < pl.getSize(); j++) {
                     points.add(pl, j);
                 }

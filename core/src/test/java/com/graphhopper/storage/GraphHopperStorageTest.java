@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
-import static com.graphhopper.util.FetchWayGeometry.*;
+import static com.graphhopper.util.FetchMode.*;
 import static org.junit.Assert.*;
 
 /**

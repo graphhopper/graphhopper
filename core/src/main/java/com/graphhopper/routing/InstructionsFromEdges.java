@@ -151,7 +151,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         double adjLon = nodeAccess.getLongitude(adjNode);
         double latitude, longitude;
 
-        PointList wayGeo = edge.fetchWayGeometry(FetchWayGeometry.ALL);
+        PointList wayGeo = edge.fetchWayGeometry(FetchMode.ALL);
         boolean isRoundabout = edge.get(roundaboutEnc);
 
         if (wayGeo.getSize() <= 2) {
