@@ -219,7 +219,7 @@ class GraphModificationBuilder {
         if (!isPillar) {
             basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
         }
-        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(FetchWayGeometry.ALL) returns at least 2
+        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(FetchMode.ALL) returns at least 2
         assert basePoints.size() >= 2 : "basePoints must have at least two points";
 
         PointList baseReversePoints = basePoints.clone(true);
