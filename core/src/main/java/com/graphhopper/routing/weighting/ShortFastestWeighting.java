@@ -19,6 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
@@ -37,11 +38,11 @@ public class ShortFastestWeighting extends FastestWeighting {
     private final double distanceFactor;
     private final double timeFactor;
 
-    public ShortFastestWeighting(FlagEncoder encoder, PMap map) {
+    public ShortFastestWeighting(FlagEncoder encoder, OMap map) {
         this(encoder, map, NO_TURN_COST_PROVIDER);
     }
 
-    public ShortFastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
+    public ShortFastestWeighting(FlagEncoder encoder, OMap map, TurnCostProvider turnCostProvider) {
         super(encoder, turnCostProvider);
         timeFactor = checkBounds(TIME_FACTOR, map.getDouble(TIME_FACTOR, 1), 0, 10);
 

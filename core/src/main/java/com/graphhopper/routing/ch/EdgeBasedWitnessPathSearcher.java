@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.OMap;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -105,9 +105,9 @@ public class EdgeBasedWitnessPathSearcher {
     private final Stats currentBatchStats = new Stats();
     private final Stats totalStats = new Stats();
 
-    public EdgeBasedWitnessPathSearcher(PrepareCHGraph chGraph, PMap pMap) {
+    public EdgeBasedWitnessPathSearcher(PrepareCHGraph chGraph, OMap oMap) {
         this.chGraph = chGraph;
-        extractParams(pMap);
+        extractParams(oMap);
 
         outEdgeExplorer = chGraph.createOutEdgeExplorer();
         origInEdgeExplorer = chGraph.createOriginalInEdgeExplorer();
@@ -119,10 +119,10 @@ public class EdgeBasedWitnessPathSearcher {
         initCollections();
     }
 
-    private void extractParams(PMap pMap) {
-        params.sigmaFactor = pMap.getDouble(SIGMA_FACTOR, params.sigmaFactor);
-        params.minimumMaxSettledEdges = pMap.getInt(MIN_MAX_SETTLED_EDGES, params.minimumMaxSettledEdges);
-        params.settledEdgeStatsResetInterval = pMap.getInt(SETTLED_EDGES_RESET_INTERVAL, params.settledEdgeStatsResetInterval);
+    private void extractParams(OMap oMap) {
+        params.sigmaFactor = oMap.getDouble(SIGMA_FACTOR, params.sigmaFactor);
+        params.minimumMaxSettledEdges = oMap.getInt(MIN_MAX_SETTLED_EDGES, params.minimumMaxSettledEdges);
+        params.settledEdgeStatsResetInterval = oMap.getInt(SETTLED_EDGES_RESET_INTERVAL, params.settledEdgeStatsResetInterval);
     }
 
     /**

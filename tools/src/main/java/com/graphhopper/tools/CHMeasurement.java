@@ -62,7 +62,7 @@ public class CHMeasurement {
         // map=berlin.pbf stats_file=stats.dat period_updates=0 lazy_updates=100 neighbor_updates=0 contract_nodes=100 log_messages=20 edge_quotient_weight=1.0 orig_edge_quotient_weight=3.0 hierarchy_depth_weight=2.0 sigma_factor=3.0 min_max_settled_edges=100 reset_interval=10000 landmarks=0 cleanup=true turncosts=true threshold=0.1 seed=456 comp_iterations=10 perf_iterations=100 quick=false
         long start = nanoTime();
         PMap map = PMap.read(args);
-        GraphHopperConfig ghConfig = new GraphHopperConfig(map);
+        GraphHopperConfig ghConfig = new GraphHopperConfig(OMap.fromPMap(map.toMap()));
         LOGGER.info("Running analysis with parameters {}", ghConfig);
         String osmFile = ghConfig.get("map", "local/maps/unterfranken-latest.osm.pbf");
         ghConfig.put("datareader.file", osmFile);
@@ -133,8 +133,7 @@ public class CHMeasurement {
         if (cleanup) {
             graphHopper.clean();
         }
-
-        PMap results = new PMap(ghConfig.asPMap());
+        OMap results = ghConfig.asOMap();
 
         StopWatch sw = new StopWatch();
         sw.start();
@@ -160,7 +159,7 @@ public class CHMeasurement {
 
         graphHopper.close();
 
-        Map<String, String> resultMap = results.toMap();
+        Map<String, Object> resultMap = results.toMap();
         TreeSet<String> sortedKeys = new TreeSet<>(resultMap.keySet());
         for (String key : sortedKeys) {
             LOGGER.info(key + "=" + resultMap.get(key));
@@ -199,7 +198,7 @@ public class CHMeasurement {
         return sb.toString();
     }
 
-    private static String getStatLine(TreeSet<String> keys, Map<String, String> results) {
+    private static String getStatLine(TreeSet<String> keys, Map<String, Object> results) {
         StringBuilder sb = new StringBuilder();
         for (String key : keys) {
             sb.append(results.get(key)).append(";");
@@ -209,7 +208,7 @@ public class CHMeasurement {
     }
 
     private static void runCompareTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts, final int uTurnCosts,
-                                       long seed, final int iterations, final double threshold, final PMap results) {
+                                       long seed, final int iterations, final double threshold, final OMap results) {
         LOGGER.info("Running compare test for {}, using seed {}", algo, seed);
         Graph g = graphHopper.getGraphHopperStorage();
         final int numNodes = g.getNodes();
@@ -293,7 +292,7 @@ public class CHMeasurement {
     }
 
     private static void runPerformanceTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts,
-                                           long seed, final int iterations, final PMap results) {
+                                           long seed, final int iterations, final OMap results) {
         Graph g = graphHopper.getGraphHopperStorage();
         final int numNodes = g.getNodes();
         final NodeAccess nodeAccess = g.getNodeAccess();

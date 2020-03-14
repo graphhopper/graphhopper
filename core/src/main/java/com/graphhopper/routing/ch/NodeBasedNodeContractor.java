@@ -18,6 +18,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
 
@@ -43,15 +44,15 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     // each edge can exist in both directions
     private double meanDegree;
 
-    NodeBasedNodeContractor(PrepareCHGraph prepareGraph, PMap pMap) {
+    NodeBasedNodeContractor(PrepareCHGraph prepareGraph, OMap oMap) {
         super(prepareGraph);
-        extractParams(pMap);
+        extractParams(oMap);
     }
 
-    private void extractParams(PMap pMap) {
-        params.edgeDifferenceWeight = pMap.getFloat(EDGE_DIFFERENCE_WEIGHT, params.edgeDifferenceWeight);
-        params.originalEdgesCountWeight = pMap.getFloat(ORIGINAL_EDGE_COUNT_WEIGHT, params.originalEdgesCountWeight);
-        params.contractedNeighborsWeight = pMap.getFloat(CONTRACTED_NEIGHBORS_WEIGHT, params.contractedNeighborsWeight);
+    private void extractParams(OMap oMap) {
+        params.edgeDifferenceWeight = oMap.getFloat(EDGE_DIFFERENCE_WEIGHT, params.edgeDifferenceWeight);
+        params.originalEdgesCountWeight = oMap.getFloat(ORIGINAL_EDGE_COUNT_WEIGHT, params.originalEdgesCountWeight);
+        params.contractedNeighborsWeight = oMap.getFloat(CONTRACTED_NEIGHBORS_WEIGHT, params.contractedNeighborsWeight);
     }
 
     @Override

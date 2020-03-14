@@ -6,6 +6,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.PMap;
 import org.junit.After;
 import org.junit.Before;
@@ -68,7 +69,7 @@ public class IsochroneTest {
     @Test
     public void testSearch() {
         initDirectedAndDiffSpeed(graph);
-        PMap pMap = new PMap();
+        OMap pMap = new OMap(0);
         Isochrone instance = new Isochrone(graph, new FastestWeighting(carEncoder, pMap), false);
         // limit to certain seconds
         instance.setTimeLimit(60);

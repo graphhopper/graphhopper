@@ -49,8 +49,8 @@ public class RouteResourceIssue1574Test {
         // this is the reason we put this test into an extra file: we can only reproduce the bug of issue 1574 by increasing the one-way-network size
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
-                put("prepare.min_network_size", "0").
-                put("prepare.min_one_way_network_size", "12").
+                put("prepare.min_network_size", 0).
+                put("prepare.min_one_way_network_size", 12).
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", DIR)
                 .setProfiles(Collections.singletonList(

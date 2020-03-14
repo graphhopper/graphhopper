@@ -65,9 +65,9 @@ public class RouteResourceTest {
     static {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
-                put("routing.ch.disabling_allowed", "true").
-                put("prepare.min_network_size", "0").
-                put("prepare.min_one_way_network_size", "0").
+                put("routing.ch.disabling_allowed", true).
+                put("prepare.min_network_size", 0).
+                put("prepare.min_one_way_network_size", 0).
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 put("graph.location", DIR)

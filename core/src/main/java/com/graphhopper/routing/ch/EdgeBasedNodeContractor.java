@@ -20,7 +20,7 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +49,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private final ShortcutHandler addingShortcutHandler = new AddingShortcutHandler();
     private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
     private final Params params = new Params();
-    private final PMap pMap;
+    private final OMap oMap;
     private ShortcutHandler activeShortcutHandler;
     private final StopWatch dijkstraSW = new StopWatch();
     private final SearchStrategy activeStrategy = new AggressiveStrategy();
@@ -74,22 +74,22 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // counters used for performance analysis
     private int numPolledEdges;
 
-    public EdgeBasedNodeContractor(PrepareCHGraph prepareGraph, PMap pMap) {
+    public EdgeBasedNodeContractor(PrepareCHGraph prepareGraph, OMap oMap) {
         super(prepareGraph);
-        this.pMap = pMap;
-        extractParams(pMap);
+        this.oMap = oMap;
+        extractParams(oMap);
     }
 
-    private void extractParams(PMap pMap) {
-        params.edgeQuotientWeight = pMap.getFloat(EDGE_QUOTIENT_WEIGHT, params.edgeQuotientWeight);
-        params.originalEdgeQuotientWeight = pMap.getFloat(ORIGINAL_EDGE_QUOTIENT_WEIGHT, params.originalEdgeQuotientWeight);
-        params.hierarchyDepthWeight = pMap.getFloat(HIERARCHY_DEPTH_WEIGHT, params.hierarchyDepthWeight);
+    private void extractParams(OMap oMap) {
+        params.edgeQuotientWeight = oMap.getFloat(EDGE_QUOTIENT_WEIGHT, params.edgeQuotientWeight);
+        params.originalEdgeQuotientWeight = oMap.getFloat(ORIGINAL_EDGE_QUOTIENT_WEIGHT, params.originalEdgeQuotientWeight);
+        params.hierarchyDepthWeight = oMap.getFloat(HIERARCHY_DEPTH_WEIGHT, params.hierarchyDepthWeight);
     }
 
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        witnessPathSearcher = new EdgeBasedWitnessPathSearcher(prepareGraph, pMap);
+        witnessPathSearcher = new EdgeBasedWitnessPathSearcher(prepareGraph, oMap);
         inEdgeExplorer = prepareGraph.createInEdgeExplorer();
         outEdgeExplorer = prepareGraph.createOutEdgeExplorer();
         allEdgeExplorer = prepareGraph.createAllEdgeExplorer();

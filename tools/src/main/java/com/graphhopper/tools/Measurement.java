@@ -155,7 +155,7 @@ public class Measurement {
             }
         };
 
-        hopper.init(createConfigFromArgs(args)).
+        hopper.init(createConfigFromArgs(OMap.fromPMap(args.toMap()))).
                 // use server to allow path simplification
                         forServer();
         if (cleanGraph) {
@@ -272,7 +272,7 @@ public class Measurement {
         }
     }
 
-    private GraphHopperConfig createConfigFromArgs(PMap args) {
+    private GraphHopperConfig createConfigFromArgs(OMap args) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         String encodingManagerString = args.get("graph.flag_encoders", "car");
         List<FlagEncoder> tmpEncoders = EncodingManager.create(encodingManagerString).fetchEdgeEncoders();

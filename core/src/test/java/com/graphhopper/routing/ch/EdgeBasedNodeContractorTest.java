@@ -29,6 +29,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Rule;
@@ -1379,7 +1380,7 @@ public class EdgeBasedNodeContractorTest {
 
     private EdgeBasedNodeContractor createNodeContractor() {
         PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, chGraph.getCHProfile().getWeighting());
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, new PMap());
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, new OMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

@@ -33,6 +33,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
@@ -63,7 +64,7 @@ public class NodeBasedNodeContractorTest {
     }
 
     private NodeContractor createNodeContractor(PrepareCHGraph chGraph) {
-        NodeContractor nodeContractor = new NodeBasedNodeContractor(chGraph, new PMap());
+        NodeContractor nodeContractor = new NodeBasedNodeContractor(chGraph, new OMap());
         nodeContractor.initFromGraph();
         nodeContractor.prepareContraction();
         return nodeContractor;

@@ -833,7 +833,7 @@ public class GraphHopper implements GraphHopperAPI {
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
             }
             try {
-                createWeighting(profile, new PMap());
+                createWeighting(profile, new OMap());
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Could not create weighting for profile: '" + profile.getName() + "'.\n" +
                         "Profile: " + profile + "\n" +
@@ -899,9 +899,9 @@ public class GraphHopper implements GraphHopperAPI {
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(chConfig.getProfile());
             if (profile.isTurnCosts()) {
-                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
+                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new OMap(0))));
             } else {
-                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
+                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new OMap(0))));
             }
         }
     }
@@ -920,7 +920,7 @@ public class GraphHopper implements GraphHopperAPI {
             // turn costs, because the preparation is running node-based. This is important if we want to allow e.g.
             // changing the u_turn_costs per request (we have to use the minimum weight settings (= no turn costs) for
             // the preparation)
-            Weighting weighting = createWeighting(profile, new PMap());
+            Weighting weighting = createWeighting(profile, new OMap(0));
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1000,7 +1000,7 @@ public class GraphHopper implements GraphHopperAPI {
      * @param profileConfig The profile for which the weighting shall be created
      * @param hints         Additional hints that can be used to further specify the weighting that shall be created
      */
-    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints) {
+    public Weighting createWeighting(ProfileConfig profileConfig, OMap hints) {
         return new DefaultWeightingFactory(encodingManager, ghStorage).createWeighting(profileConfig, hints);
     }
 
@@ -1080,7 +1080,7 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
                 }
                 FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-                weighting = createWeighting(profile, hints);
+                weighting = createWeighting(profile, OMap.fromPMap(hints.toMap()));
                 if (hints.has(Routing.BLOCK_AREA))
                     weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
                             points, hints, DefaultEdgeFilter.allEdges(encoder)));
@@ -1347,7 +1347,7 @@ public class GraphHopper implements GraphHopperAPI {
             this.ghStorage = ghStorage;
         }
 
-        public Weighting createWeighting(ProfileConfig profile, PMap hints) {
+        public Weighting createWeighting(ProfileConfig profile, OMap hints) {
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
             if (profile.isTurnCosts()) {

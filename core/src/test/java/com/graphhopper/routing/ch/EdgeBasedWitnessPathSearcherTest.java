@@ -25,7 +25,7 @@ import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.OMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -125,7 +125,7 @@ public class EdgeBasedWitnessPathSearcherTest {
 
     private EdgeBasedWitnessPathSearcher createFinder() {
         PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, weighting);
-        return new EdgeBasedWitnessPathSearcher(prepareGraph, new PMap());
+        return new EdgeBasedWitnessPathSearcher(prepareGraph, new OMap());
     }
 
     private void setMaxLevelOnAllNodes() {

@@ -26,7 +26,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +71,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
     private float[] oldPriorities;
-    private PMap pMap = new PMap();
+    private OMap oMap = new OMap();
     private int checkCounter;
 
     public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHProfile chProfile) {
@@ -89,20 +89,20 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
             }
             prepareGraph = PrepareCHGraph.edgeBased(chGraph, chProfile.getWeighting());
-            nodeContractor = new EdgeBasedNodeContractor(prepareGraph, pMap);
+            nodeContractor = new EdgeBasedNodeContractor(prepareGraph, oMap);
         } else {
             prepareGraph = PrepareCHGraph.nodeBased(chGraph, chProfile.getWeighting());
-            nodeContractor = new NodeBasedNodeContractor(prepareGraph, pMap);
+            nodeContractor = new NodeBasedNodeContractor(prepareGraph, oMap);
         }
     }
 
-    public PrepareContractionHierarchies setParams(PMap pMap) {
-        this.pMap = pMap;
-        params.setPeriodicUpdatesPercentage(pMap.getInt(PERIODIC_UPDATES, params.getPeriodicUpdatesPercentage()));
-        params.setLastNodesLazyUpdatePercentage(pMap.getInt(LAST_LAZY_NODES_UPDATES, params.getLastNodesLazyUpdatePercentage()));
-        params.setNeighborUpdatePercentage(pMap.getInt(NEIGHBOR_UPDATES, params.getNeighborUpdatePercentage()));
-        params.setNodesContractedPercentage(pMap.getInt(CONTRACTED_NODES, params.getNodesContractedPercentage()));
-        params.setLogMessagesPercentage(pMap.getInt(LOG_MESSAGES, params.getLogMessagesPercentage()));
+    public PrepareContractionHierarchies setParams(OMap oMap) {
+        this.oMap = oMap;
+        params.setPeriodicUpdatesPercentage(this.oMap.getInt(PERIODIC_UPDATES, params.getPeriodicUpdatesPercentage()));
+        params.setLastNodesLazyUpdatePercentage(this.oMap.getInt(LAST_LAZY_NODES_UPDATES, params.getLastNodesLazyUpdatePercentage()));
+        params.setNeighborUpdatePercentage(this.oMap.getInt(NEIGHBOR_UPDATES, params.getNeighborUpdatePercentage()));
+        params.setNodesContractedPercentage(this.oMap.getInt(CONTRACTED_NODES, params.getNodesContractedPercentage()));
+        params.setLogMessagesPercentage(this.oMap.getInt(LOG_MESSAGES, params.getLogMessagesPercentage()));
         return this;
     }
 

@@ -38,6 +38,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.PointList;
@@ -143,7 +144,7 @@ public class MiniGraphUI {
 
         } else {
             routingGraph = graph;
-            weighting = hopper.createWeighting(profile, new PMap());
+            weighting = hopper.createWeighting(profile, new OMap(0));
             boolean disableCH = true;
             boolean disableLM = false;
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
@@ -386,7 +387,7 @@ public class MiniGraphUI {
 
     public static void main(String[] strs) {
         PMap args = PMap.read(strs);
-        GraphHopperConfig ghConfig = new GraphHopperConfig(args);
+        GraphHopperConfig ghConfig = new GraphHopperConfig(OMap.fromPMap(args.toMap()));
         ghConfig.setProfiles(Arrays.asList(
                 new ProfileConfig("profile")
                         .setVehicle("car")

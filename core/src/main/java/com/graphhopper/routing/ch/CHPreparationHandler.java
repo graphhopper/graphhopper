@@ -23,7 +23,7 @@ import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,7 @@ public class CHPreparationHandler {
     private boolean disablingAllowed = false;
     private int preparationThreads;
     private ExecutorService threadPool;
-    private PMap pMap = new PMap();
+    private OMap oMap = new OMap();
 
     public CHPreparationHandler() {
         setPreparationThreads(1);
@@ -69,7 +69,7 @@ public class CHPreparationHandler {
         setPreparationThreads(ghConfig.getInt(CH.PREPARE + "threads", getPreparationThreads()));
         setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
         setCHProfileConfigs(ghConfig.getCHProfiles());
-        pMap = ghConfig.asPMap();
+        oMap = ghConfig.asOMap();
     }
 
     public final boolean isEnabled() {
@@ -247,7 +247,7 @@ public class CHPreparationHandler {
 
     private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHProfile chProfile) {
         PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chProfile);
-        pch.setParams(pMap);
+        pch.setParams(oMap);
         return pch;
     }
 }

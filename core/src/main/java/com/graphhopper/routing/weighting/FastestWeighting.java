@@ -20,10 +20,9 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.Parameters.Routing;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
@@ -49,18 +48,18 @@ public class FastestWeighting extends AbstractWeighting {
     private final double destinationPenalty, privatePenalty;
 
     public FastestWeighting(FlagEncoder encoder) {
-        this(encoder, new HintsMap(0));
+        this(encoder, new OMap(0));
     }
 
     public FastestWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        this(encoder, new HintsMap(0), turnCostProvider);
+        this(encoder, new OMap(0), turnCostProvider);
     }
 
-    public FastestWeighting(FlagEncoder encoder, PMap map) {
+    public FastestWeighting(FlagEncoder encoder, OMap map) {
         this(encoder, map, NO_TURN_COST_PROVIDER);
     }
 
-    public FastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
+    public FastestWeighting(FlagEncoder encoder, OMap map, TurnCostProvider turnCostProvider) {
         super(encoder, turnCostProvider);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);

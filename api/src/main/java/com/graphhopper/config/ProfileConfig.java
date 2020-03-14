@@ -18,6 +18,7 @@
 
 package com.graphhopper.config;
 
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.PMap;
 
 /**
@@ -32,7 +33,7 @@ public class ProfileConfig {
     private String vehicle = "car";
     private String weighting = "fastest";
     private boolean turnCosts = false;
-    private PMap hints = new PMap();
+    private OMap hints = new OMap();
 
     public static void validateProfileName(String profileName) {
         // currently allowing dash/minus, maybe remove later
@@ -87,7 +88,7 @@ public class ProfileConfig {
         return this;
     }
 
-    public PMap getHints() {
+    public OMap getHints() {
         return hints;
     }
 

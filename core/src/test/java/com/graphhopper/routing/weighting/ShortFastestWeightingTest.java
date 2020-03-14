@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
@@ -49,7 +50,7 @@ public class ShortFastestWeightingTest {
     @Test
     public void testTooSmall() {
         try {
-            new ShortFastestWeighting(encoder, new PMap("short_fastest.distance_factor=0|short_fastest.time_factor=0"));
+            new ShortFastestWeighting(encoder, OMap.fromPMap(new PMap("short_fastest.distance_factor=0|short_fastest.time_factor=0").toMap()));
             fail();
         } catch (Exception ex) {
         }

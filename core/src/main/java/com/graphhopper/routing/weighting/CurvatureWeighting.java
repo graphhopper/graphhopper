@@ -21,6 +21,7 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.OMap;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
@@ -34,12 +35,12 @@ public class CurvatureWeighting extends PriorityWeighting {
     private final DecimalEncodedValue curvatureEnc;
     private final DecimalEncodedValue avSpeedEnc;
 
-    public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap) {
+    public CurvatureWeighting(FlagEncoder flagEncoder, OMap pMap) {
         this(flagEncoder, pMap, NO_TURN_COST_PROVIDER);
     }
 
-    public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap, TurnCostProvider turnCostProvider) {
-        super(flagEncoder, pMap, turnCostProvider);
+    public CurvatureWeighting(FlagEncoder flagEncoder, OMap oMap, TurnCostProvider turnCostProvider) {
+        super(flagEncoder, oMap, turnCostProvider);
 
         priorityEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "priority"));
         curvatureEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "curvature"));
