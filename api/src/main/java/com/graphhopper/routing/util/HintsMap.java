@@ -49,8 +49,14 @@ public class HintsMap extends PMap {
     }
 
     @Override
-    public HintsMap put(String key, Object str) {
-        super.put(key, str);
+    public HintsMap putObject(String key, Object object) {
+        super.putObject(key, object);
+        return this;
+    }
+
+    @Override
+    public HintsMap put(String key, String string) {
+        super.put(key, string);
         return this;
     }
 

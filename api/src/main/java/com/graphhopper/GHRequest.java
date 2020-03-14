@@ -252,13 +252,14 @@ public class GHRequest {
     }
 
     /**
-     * This method sets a key value pair in the hints and is equivalent to getHints().put(String, String) but unrelated
-     * to the setPointHints method. It is mainly used for deserialization with Jackson.
+     * This method sets a key value pair in the hints and is unrelated to the setPointHints method.
+     * It is mainly used for deserialization with Jackson.
      *
      * @see #setPointHints(List)
      */
-    public void putHint(String fieldName, Object value) {
-        this.hints.put(fieldName, value);
+    public GHRequest putHint(String fieldName, Object value) {
+        this.hints.putObject(fieldName, value);
+        return this;
     }
 
     public GHRequest setPointHints(List<String> pointHints) {

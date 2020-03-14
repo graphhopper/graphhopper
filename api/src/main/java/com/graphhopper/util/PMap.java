@@ -30,7 +30,7 @@ import static com.graphhopper.util.Helper.toLowerCase;
  * @author Peter Karich
  */
 public class PMap {
-    private final Map<String, String> map;
+    private final Map<String, Object> map;
 
     public PMap() {
         this(5);
@@ -40,7 +40,7 @@ public class PMap {
         this(new HashMap<>(capacity));
     }
 
-    public PMap(Map<String, String> map) {
+    public PMap(Map<String, Object> map) {
         this.map = new HashMap<>(map);
     }
 
@@ -66,7 +66,7 @@ public class PMap {
      * Reads a PMap from a string array consisting of key=value pairs
      */
     public static PMap read(String[] args) {
-        Map<String, String> map = new LinkedHashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         for (String arg : args) {
             int index = arg.indexOf("=");
             if (index <= 0) {
@@ -83,7 +83,7 @@ public class PMap {
             }
 
             String value = arg.substring(index + 1);
-            String old = map.put(toLowerCase(key), value);
+            Object old = map.put(toLowerCase(key), value);
             if (old != null)
                 throw new IllegalArgumentException("Pair '" + toLowerCase(key) + "'='" + value + "' not possible to " +
                         "add to the PMap-object as the key already exists with '" + old + "'");
@@ -96,124 +96,72 @@ public class PMap {
         return this;
     }
 
-    public PMap put(String key, Object str) {
+    /**
+     * @deprecated use {@link #putObject(String, Object)} instead
+     */
+    public PMap put(String key, String str) {
         if (str == null)
             throw new NullPointerException("Value cannot be null. Use remove instead.");
-
-        // store in under_score
-        map.put(Helper.camelCaseToUnderScore(key), str.toString());
+        map.put(Helper.camelCaseToUnderScore(key), Helper.toObject(str));
         return this;
     }
 
     public PMap remove(String key) {
         // query accepts camelCase and under_score
-        map.remove(Helper.camelCaseToUnderScore(key));
+        map.remove(key);
         return this;
     }
 
     public boolean has(String key) {
         // query accepts camelCase and under_score
-        return map.containsKey(Helper.camelCaseToUnderScore(key));
-    }
-
-    public long getLong(String key, long _default) {
-        String str = get(key);
-        if (!Helper.isEmpty(str)) {
-            try {
-                return Long.parseLong(str);
-            } catch (Exception ex) {
-            }
-        }
-        return _default;
-    }
-
-    public int getInt(String key, int _default) {
-        String str = get(key);
-        if (!Helper.isEmpty(str)) {
-            try {
-                return Integer.parseInt(str);
-            } catch (Exception ex) {
-            }
-        }
-        return _default;
+        return map.containsKey(key);
     }
 
     public boolean getBool(String key, boolean _default) {
-        String str = get(key);
-        if (!Helper.isEmpty(str)) {
-            try {
-                return Boolean.parseBoolean(str);
-            } catch (Exception ex) {
-            }
-        }
-        return _default;
+        Object object = map.get(key);
+        return object instanceof Boolean ? (Boolean) object : _default;
     }
 
-    public double getDouble(String key, double _default) {
-        String str = get(key);
-        if (!Helper.isEmpty(str)) {
-            try {
-                return Double.parseDouble(str);
-            } catch (Exception ex) {
-            }
-        }
-        return _default;
+    public int getInt(String key, int _default) {
+        Object object = map.get(key);
+        return object instanceof Number ? ((Number) object).intValue() : _default;
+    }
+
+    public long getLong(String key, long _default) {
+        Object object = map.get(key);
+        return object instanceof Number ? ((Number) object).longValue() : _default;
     }
 
     public float getFloat(String key, float _default) {
-        String str = get(key);
-        if (!Helper.isEmpty(str)) {
-            try {
-                return Float.parseFloat(str);
-            } catch (Exception ex) {
-            }
-        }
-        return _default;
+        Object object = map.get(key);
+        return object instanceof Number ? ((Number) object).floatValue() : _default;
+    }
+
+    public double getDouble(String key, double _default) {
+        Object object = map.get(key);
+        return object instanceof Number ? ((Number) object).doubleValue() : _default;
     }
 
     public String get(String key, String _default) {
-        String str = get(key);
-        if (Helper.isEmpty(str))
-            return _default;
-
-        return str;
+        Object object = map.get(key);
+        return object instanceof String ? (String) object : _default;
     }
 
-    String get(String key) {
-        if (Helper.isEmpty(key))
-            return "";
+    public Object getObject(String key, Object _default) {
+        Object object = map.get(key);
+        return object == null ? _default : object;
+    }
 
-        // query accepts camelCase and under_score
-        String val = map.get(Helper.camelCaseToUnderScore(key));
-        if (val == null)
-            return "";
-
-        return val;
+    public PMap putObject(String key, Object object) {
+        map.put(key, object);
+        return this;
     }
 
     /**
      * This method copies the underlying structure into a new Map object
      */
-    public Map<String, String> toMap() {
+    public Map<String, Object> toMap() {
         return new HashMap<>(map);
-    }
-
-    private Map<String, String> getMap() {
-        return map;
-    }
-
-    public PMap merge(PMap read) {
-        return merge(read.getMap());
-    }
-
-    PMap merge(Map<String, String> map) {
-        for (Map.Entry<String, String> e : map.entrySet()) {
-            if (Helper.isEmpty(e.getKey()))
-                continue;
-
-            put(e.getKey(), e.getValue());
-        }
-        return this;
     }
 
     public boolean isEmpty() {
@@ -222,6 +170,6 @@ public class PMap {
 
     @Override
     public String toString() {
-        return getMap().toString();
+        return map.toString();
     }
 }

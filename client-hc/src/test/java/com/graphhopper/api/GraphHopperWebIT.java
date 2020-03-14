@@ -65,9 +65,9 @@ public class GraphHopperWebIT {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
-        req.getHints().put("elevation", false);
-        req.getHints().put("instructions", true);
-        req.getHints().put("calc_points", true);
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
         GHResponse res = gh.route(req);
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         PathWrapper alt = res.getBest();
@@ -94,9 +94,9 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(52.042989, 10.373926)).
                 addPoint(new GHPoint(52.042289, 10.384043));
         req.setAlgorithm("alternative_route");
-        req.getHints().put("instructions", true);
-        req.getHints().put("calc_points", true);
-        req.getHints().put("ch.disable", true);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("ch.disable", true);
         GHResponse res = gh.route(req);
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         List<PathWrapper> paths = res.getAll();
@@ -121,7 +121,7 @@ public class GraphHopperWebIT {
         GHResponse res = gh.route(req);
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
 
-        req.getHints().put(GraphHopperWeb.TIMEOUT, 1);
+        req.putHint(GraphHopperWeb.TIMEOUT, 1);
         try {
             gh.route(req);
             fail();
@@ -136,8 +136,8 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
 
-        req.getHints().put("instructions", false);
-        req.getHints().put("calc_points", false);
+        req.putHint("instructions", false);
+        req.putHint("calc_points", false);
         GHResponse res = gh.route(req);
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         PathWrapper alt = res.getBest();
@@ -177,7 +177,7 @@ public class GraphHopperWebIT {
                 "Continue", "Keep left", "Turn right onto B 246", "Turn right onto Dorfaue, K 6156", "Turn right onto B 96"
         ), given);
 
-        req.getHints().put("turn_description", false);
+        req.putHint("turn_description", false);
         res = gh.route(req);
         given = extractInstructionNames(res.getBest(), 5);
         assertEquals(Arrays.asList(
@@ -235,7 +235,7 @@ public class GraphHopperWebIT {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(52.261434, 13.485718)).
                 addPoint(new GHPoint(52.399067, 13.469238));
-        req.getHints().put("turn_description", false);
+        req.putHint("turn_description", false);
         GHResponse res = gh.route(req);
         InstructionList instructions = res.getBest().getInstructions();
         String finishInstructionName = instructions.get(instructions.size() - 1).getName();
@@ -247,10 +247,10 @@ public class GraphHopperWebIT {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
-        req.getHints().put("elevation", false);
-        req.getHints().put("instructions", true);
-        req.getHints().put("calc_points", true);
-        req.getHints().put("type", "gpx");
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("type", "gpx");
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));
         assertTrue(res.contains("<rtept lat="));
@@ -263,11 +263,11 @@ public class GraphHopperWebIT {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
-        req.getHints().put("elevation", false);
-        req.getHints().put("instructions", true);
-        req.getHints().put("calc_points", true);
-        req.getHints().put("type", "gpx");
-        req.getHints().put("gpx.track", "false");
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("type", "gpx");
+        req.putHint("gpx.track", "false");
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));
         assertTrue(res.contains("<rtept lat="));
@@ -334,11 +334,11 @@ public class GraphHopperWebIT {
         GHMRequest req = new GHMRequest();
         req.addPoint(new GHPoint(49.6724, 11.3494));
         req.addPoint(new GHPoint(49.6550, 11.4180));
-        req.getHints().put("something", "xy");
+        req.putHint("something", "xy");
         ghMatrix.route(req);
 
         // clashing parameter will overwrite!
-        req.getHints().put("vehicle", "xy");
+        req.putHint("vehicle", "xy");
         assertEquals("xy", req.getVehicle());
     }
 

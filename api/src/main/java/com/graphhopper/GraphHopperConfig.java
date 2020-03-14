@@ -75,7 +75,7 @@ public class GraphHopperConfig {
     }
 
     public GraphHopperConfig put(String key, Object value) {
-        map.put(key, value);
+        map.putObject(key, value);
         return this;
     }
 
@@ -130,7 +130,7 @@ public class GraphHopperConfig {
             sb.append("\n");
         }
         sb.append("properties:\n");
-        for (Map.Entry<String, String> entry : map.toMap().entrySet()) {
+        for (Map.Entry<String, Object> entry : map.toMap().entrySet()) {
             sb.append(entry.getKey()).append(": ").append(entry.getValue());
             sb.append("\n");
         }

@@ -106,13 +106,13 @@ public abstract class GHMatrixAbstractRequester {
         // requestJson.put("elevation", ghRequest.getHints().getBool("elevation", false));
         requestJson.put("fail_fast", ghRequest.getFailFast());
 
-        Map<String, String> hintsMap = ghRequest.getHints().toMap();
+        Map<String, Object> hintsMap = ghRequest.getHints().toMap();
         for (String hintKey : hintsMap.keySet()) {
             if (ignoreSet.contains(hintKey))
                 continue;
 
-            String hint = hintsMap.get(hintKey);
-            requestJson.put(hintKey, hint);
+            Object hint = hintsMap.get(hintKey);
+            requestJson.put(hintKey, hint.toString());
         }
         return requestJson;
     }

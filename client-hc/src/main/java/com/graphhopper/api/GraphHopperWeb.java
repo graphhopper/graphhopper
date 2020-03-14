@@ -258,13 +258,13 @@ public class GraphHopperWeb implements GraphHopperAPI {
         requestJson.put("elevation", ghRequest.getHints().getBool("elevation", elevation));
         requestJson.put("optimize", ghRequest.getHints().get("optimize", optimize));
 
-        Map<String, String> hintsMap = ghRequest.getHints().toMap();
+        Map<String, Object> hintsMap = ghRequest.getHints().toMap();
         for (String hintKey : hintsMap.keySet()) {
             if (ignoreSetForPost.contains(hintKey))
                 continue;
 
-            String hint = hintsMap.get(hintKey);
-            requestJson.put(hintKey, hint);
+            Object hint = hintsMap.get(hintKey);
+            requestJson.put(hintKey, hint.toString());
         }
         String stringData = requestJson.toString();
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
@@ -341,9 +341,9 @@ public class GraphHopperWeb implements GraphHopperAPI {
             url += "&key=" + WebHelper.encodeURL(key);
         }
 
-        for (Map.Entry<String, String> entry : ghRequest.getHints().toMap().entrySet()) {
+        for (Map.Entry<String, Object> entry : ghRequest.getHints().toMap().entrySet()) {
             String urlKey = entry.getKey();
-            String urlValue = entry.getValue();
+            String urlValue = entry.getValue().toString();
 
             // use lower case conversion for check only!
             if (ignoreSet.contains(toLowerCase(urlKey))) {

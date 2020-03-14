@@ -23,9 +23,7 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -138,9 +136,9 @@ public class RouteResource {
                 setSnapPreventions(snapPreventions).
                 setPathDetails(pathDetails).
                 getHints().
-                put(CALC_POINTS, calcPoints).
-                put(INSTRUCTIONS, instructions).
-                put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+                putObject(CALC_POINTS, calcPoints).
+                putObject(INSTRUCTIONS, instructions).
+                putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
         GHResponse ghResponse = graphHopper.route(request);
 
@@ -224,7 +222,7 @@ public class RouteResource {
             if (!request.getHints().getBool(EDGE_BASED, true)) {
                 throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
             } else {
-                request.getHints().put(EDGE_BASED, true);
+                request.getHints().putObject(EDGE_BASED, true);
             }
         }
     }
@@ -254,22 +252,14 @@ public class RouteResource {
     static void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
         for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
             if (e.getValue().size() == 1) {
-                m.put(e.getKey(), e.getValue().get(0));
+                m.putObject(Helper.camelCaseToUnderScore(e.getKey()), Helper.toObject(e.getValue().get(0)));
             } else {
-                // Do nothing.
-                // TODO: this is dangerous: I can only silently swallow
-                // the forbidden multiparameter. If I comment-in the line below,
-                // I get an exception, because "point" regularly occurs
-                // multiple times.
-                // I think either unknown parameters (hints) should be allowed
-                // to be multiparameters, too, or we shouldn't use them for
-                // known parameters either, _or_ known parameters
-                // must be filtered before they come to this code point,
-                // _or_ we stop passing unknown parameters alltogether..
-                //
+                // TODO point occurs multiple times and we cannot throw an exception here
+                //  unknown parameters (hints) should be allowed to be multiparameters, too, or we shouldn't use them for
+                //  known parameters either, _or_ known parameters must be filtered before they come to this code point,
+                //  _or_ we stop passing unknown parameters alltogether.
                 // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
             }
         }
     }
-
 }

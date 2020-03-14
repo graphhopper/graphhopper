@@ -28,7 +28,7 @@ public class PMapTest {
     public void singleStringPropertyCanBeRetrieved() {
         PMap subject = new PMap("foo=bar");
 
-        Assert.assertEquals("bar", subject.get("foo"));
+        Assert.assertEquals("bar", subject.get("foo", ""));
     }
 
     @Test
