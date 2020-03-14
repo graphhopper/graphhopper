@@ -159,9 +159,9 @@ public class Measurement {
         };
 
         // Currently we test speed of custom truck via:
-        // 1. raw dijkstra -> routing_custom,
-        // 2. car based LM-preparation (TODO)
-        // 3. truck based LM preparation -> truck
+        // 1. raw dijkstra & custom model -> routing_custom
+        // 2. car based LM-preparation (TODO LATER)
+        // 3. truck based LM preparation -> profile=truck
 
         CustomProfileConfig customProfile = createCustomProfile();
         // add more encoded values for CustomModel
