@@ -1003,17 +1003,17 @@ class BaseGraph implements Graph {
         return pillarNodes;
     }
 
-    static int getPointListLength(int count, FetchMode mode) {
+    static int getPointListLength(int pillarNodes, FetchMode mode) {
         switch (mode) {
             case TOWER_ONLY:
                 return 2;
             case PILLAR_ONLY:
-                return count;
+                return pillarNodes;
             case BASE_AND_PILLAR:
             case PILLAR_AND_ADJ:
-                return count + 1;
+                return pillarNodes + 1;
             case ALL:
-                return count + 2;
+                return pillarNodes + 2;
         }
         throw new IllegalArgumentException("Mode isn't handled " + mode);
     }
