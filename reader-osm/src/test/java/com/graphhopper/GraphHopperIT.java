@@ -958,8 +958,8 @@ public class GraphHopperIT {
         assertEquals(1601.6, arsp.getDistance(), .1);
         assertEquals(55, arsp.getPoints().getSize());
         assertTrue(arsp.getPoints().is3D());
-        assertEquals(72.5, arsp.getAscend(), 1e-1);
-        assertEquals(125, arsp.getDescend(), 1e-1);
+        assertEquals(69, arsp.getAscend(), 1e-1);
+        assertEquals(121, arsp.getDescend(), 1e-1);
         assertEquals(64.5, arsp.getPoints().get(0).getElevation(), 1e-2);
     }
 
