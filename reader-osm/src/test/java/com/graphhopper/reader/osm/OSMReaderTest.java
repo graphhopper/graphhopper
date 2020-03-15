@@ -564,6 +564,7 @@ public class OSMReaderTest {
         hopper.setEncodingManager(new EncodingManager.Builder().
                 add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser()).
                 add(encoder).build());
+        hopper.setProfiles(new ProfileConfig("car").setVehicle("car").setWeighting("fastest"));
         hopper.importOrLoad();
 
         DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
@@ -712,7 +713,13 @@ public class OSMReaderTest {
 
         GraphHopper hopper = new GraphHopperOSM().
                 setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
-                setGraphHopperLocation(dir).setEncodingManager(manager).importOrLoad();
+                setGraphHopperLocation(dir).setEncodingManager(manager).
+                setProfiles(
+                        new ProfileConfig("bike").setVehicle("bike").setWeighting("fastest"),
+                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
+                        new ProfileConfig("truck").setVehicle("truck").setWeighting("fastest")
+                ).
+                importOrLoad();
 
         DecimalEncodedValue carTCEnc = manager.getDecimalEncodedValue(TurnCost.key("car"));
         DecimalEncodedValue truckTCEnc = manager.getDecimalEncodedValue(TurnCost.key("truck"));
@@ -968,6 +975,11 @@ public class OSMReaderTest {
             footEncoder = new FootFlagEncoder();
             setEncodingManager(new EncodingManager.Builder().add(footEncoder).add(carEncoder).add(bikeEncoder).
                     setPreferredLanguage(prefLang).build());
+            setProfiles(
+                    new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
+                    new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
+                    new ProfileConfig("bike").setVehicle("bike").setWeighting("fastest")
+            );
             carAccessEnc = carEncoder.getAccessEnc();
         }
 

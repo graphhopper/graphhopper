@@ -8,6 +8,7 @@ import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
@@ -41,12 +42,14 @@ public class IsochroneResource {
     private static final Logger logger = LoggerFactory.getLogger(IsochroneResource.class);
 
     private final GraphHopper graphHopper;
+    private final ProfileResolver profileResolver;
     private final EncodingManager encodingManager;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Inject
-    public IsochroneResource(GraphHopper graphHopper, EncodingManager encodingManager) {
+    public IsochroneResource(GraphHopper graphHopper, ProfileResolver profileResolver, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
+        this.profileResolver = profileResolver;
         this.encodingManager = encodingManager;
     }
 
@@ -76,7 +79,7 @@ public class IsochroneResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         hintsMap.put(Parameters.CH.DISABLE, true);
         hintsMap.put(Parameters.Landmark.DISABLE, true);
-        ProfileConfig profile = graphHopper.resolveProfile(hintsMap);
+        ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
         if (profile.isTurnCosts()) {
             throw new IllegalArgumentException("Isochrone calculation does not support turn costs yet");
         }

@@ -21,7 +21,9 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.InstructionList;
@@ -58,11 +60,13 @@ public class RouteResource {
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
     private final GraphHopperAPI graphHopper;
+    private final ProfileResolver profileResolver;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopperAPI graphHopper, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopperAPI graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
+        this.profileResolver = profileResolver;
         this.hasElevation = hasElevation;
     }
 
@@ -129,8 +133,11 @@ public class RouteResource {
         initHints(request.getHints(), uriInfo.getQueryParameters());
         translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
-        request.setVehicle(vehicleStr).
-                setWeighting(weighting).
+        ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
+        // remove legacy parameters, they should only be used to resolve the profile
+        request.getHints().setWeighting("");
+        request.getHints().setVehicle("");
+        request.setProfile(profile.getName()).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
                 setPointHints(pointHints).
@@ -178,6 +185,10 @@ public class RouteResource {
             throw new IllegalArgumentException("Empty request");
 
         StopWatch sw = new StopWatch().start();
+        ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
+        request.setProfile(profile.getName());
+        request.setWeighting("");
+        request.setVehicle("");
         GHResponse ghResponse = graphHopper.route(request);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);

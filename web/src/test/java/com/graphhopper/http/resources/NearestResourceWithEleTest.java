@@ -19,6 +19,7 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
@@ -28,10 +29,11 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Collections;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 /**
  * @author svantulden
@@ -48,7 +50,8 @@ public class NearestResourceWithEleTest {
                 put("prepare.min_one_way_network_size", "0").
                 put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/monaco.osm.gz").
-                put("graph.location", dir);
+                put("graph.location", dir).
+                setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
     }
 
     @ClassRule

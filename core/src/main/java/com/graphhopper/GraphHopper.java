@@ -24,7 +24,10 @@ import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMPreparationHandler;
@@ -102,8 +105,6 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean smoothElevation = false;
     // for routing
     private final RoutingConfig routingConfig = new RoutingConfig();
-    private ProfileResolver profileResolver = new ProfileResolver();
-
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -138,13 +139,6 @@ public class GraphHopper implements GraphHopperAPI {
         setFullyLoaded();
         initLocationIndex();
         return this;
-    }
-
-    FlagEncoder getDefaultVehicle() {
-        if (encodingManager == null)
-            throw new IllegalStateException("No encoding manager specified or loaded");
-
-        return profileResolver.getDefaultVehicle(encodingManager);
     }
 
     public EncodingManager getEncodingManager() {
@@ -488,15 +482,6 @@ public class GraphHopper implements GraphHopperAPI {
 
     public GraphHopper setTagParserFactory(TagParserFactory factory) {
         this.tagParserFactory = factory;
-        return this;
-    }
-
-    public ProfileResolver getProfileResolver() {
-        return this.profileResolver;
-    }
-
-    public GraphHopper setProfileResolver(ProfileResolver profileResolver) {
-        this.profileResolver = profileResolver;
         return this;
     }
 
@@ -865,13 +850,6 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("LM profile references unknown profile '" + lmConfig.getProfile() + "'");
             }
         }
-    }
-
-    public ProfileConfig resolveProfile(HintsMap hints) {
-        if (encodingManager == null)
-            throw new IllegalStateException("No encoding manager specified or loaded");
-
-        return profileResolver.resolveProfile(encodingManager, chPreparationHandler.getCHProfiles(), lmPreparationHandler.getLMProfiles(), hints);
     }
 
     public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {

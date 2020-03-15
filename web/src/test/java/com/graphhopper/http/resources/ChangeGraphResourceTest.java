@@ -18,18 +18,22 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import java.io.File;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import org.junit.AfterClass;
-import static org.junit.Assert.*;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import java.io.File;
+import java.util.Collections;
+
 import static com.graphhopper.http.util.TestUtils.clientTarget;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -44,7 +48,8 @@ public class ChangeGraphResourceTest {
                 put("graph.flag_encoders", "car").
                 put("web.change_graph.enabled", "true").
                 put("graph.location", DIR).
-                put("datareader.file", "../core/files/andorra.osm.pbf");
+                put("datareader.file", "../core/files/andorra.osm.pbf").
+                setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
     }
 
     @ClassRule
@@ -57,7 +62,7 @@ public class ChangeGraphResourceTest {
     }
 
     @Test
-    public void testBlockAccessViaPoint() throws Exception {
+    public void testBlockAccessViaPoint() {
         Response response = clientTarget(app, "route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);

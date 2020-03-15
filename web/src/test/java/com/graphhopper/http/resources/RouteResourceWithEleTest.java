@@ -18,9 +18,9 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -29,7 +29,9 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Collections;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.*;
 
 /**
@@ -47,12 +49,15 @@ public class RouteResourceWithEleTest {
                 put("prepare.min_one_way_network_size", "0").
                 put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/monaco.osm.gz").
-                put("graph.location", dir);
+                put("graph.location", dir).
+                setProfiles(Collections.singletonList(
+                        new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")
+                ));
+
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
-            GraphHopperApplication.class, config);
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(GraphHopperApplication.class, config);
 
 
     @AfterClass
@@ -61,7 +66,7 @@ public class RouteResourceWithEleTest {
     }
 
     @Test
-    public void testElevation() throws Exception {
+    public void testElevation() {
         final Response response = clientTarget(app, "/route?" + "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -81,7 +86,7 @@ public class RouteResourceWithEleTest {
     }
 
     @Test
-    public void testNoElevation() throws Exception {
+    public void testNoElevation() {
         // default is elevation=false
         Response response = clientTarget(app, "/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());

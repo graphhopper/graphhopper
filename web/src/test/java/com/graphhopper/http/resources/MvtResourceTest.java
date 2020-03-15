@@ -17,6 +17,7 @@
  */
 package com.graphhopper.http.resources;
 
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
@@ -37,12 +38,13 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 /**
  * @author Peter Karich
@@ -59,7 +61,8 @@ public class MvtResourceTest {
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR);
+                put("graph.location", DIR).
+                setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
     }
 
     @ClassRule

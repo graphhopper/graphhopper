@@ -50,9 +50,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static com.graphhopper.http.util.TestUtils.clientUrl;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -72,8 +72,7 @@ public class RouteResourceTest {
                 put("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 put("graph.location", DIR)
                 .setProfiles(Collections.singletonList(new ProfileConfig("my_car").setVehicle("car").setWeighting("fastest")))
-                .setCHProfiles(Collections.singletonList(new CHProfileConfig("my_car"))
-                );
+                .setCHProfiles(Collections.singletonList(new CHProfileConfig("my_car")));
     }
 
     @ClassRule

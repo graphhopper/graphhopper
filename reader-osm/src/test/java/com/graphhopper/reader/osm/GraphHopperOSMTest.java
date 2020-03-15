@@ -317,6 +317,7 @@ public class GraphHopperOSMTest {
         }.setStoreOnFlush(true).
                 setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc).
+                setProfiles(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")).
                 setDataReaderFile(testOsm);
         final AtomicReference<Exception> ar = new AtomicReference<>();
         Thread thread = new Thread() {
@@ -339,7 +340,7 @@ public class GraphHopperOSMTest {
             latch2.await(3, TimeUnit.SECONDS);
             // now importOrLoad should have create a lock which this load call does not like
             instance2.load(ghLoc);
-            fail();
+            fail("There should have been an error because of the lock");
         } catch (RuntimeException ex) {
             assertNotNull(ex);
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("To avoid reading partial data"));
@@ -471,7 +472,11 @@ public class GraphHopperOSMTest {
                         put("datareader.file", testOsm3).
                         put("datareader.dataaccess", "RAM").
                         put("graph.flag_encoders", "foot,car")).
-                setGraphHopperLocation(ghLoc);
+                setGraphHopperLocation(ghLoc).
+                setProfiles(Arrays.asList(
+                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
+                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest")
+                ));
         instance.importOrLoad();
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
         instance.close();
@@ -483,7 +488,10 @@ public class GraphHopperOSMTest {
                             put("datareader.file", testOsm3).
                             put("datareader.dataaccess", "RAM").
                             put("graph.flag_encoders", "foot")).
-                    setDataReaderFile(testOsm3);
+                    setDataReaderFile(testOsm3).
+                    setProfiles(Collections.singletonList(
+                            new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")
+                    ));
             tmpGH.load(ghLoc);
             fail();
         } catch (Exception ex) {
@@ -496,7 +504,11 @@ public class GraphHopperOSMTest {
                     put("datareader.file", testOsm3).
                     put("datareader.dataaccess", "RAM").
                     put("graph.flag_encoders", "car,foot")).
-                    setDataReaderFile(testOsm3);
+                    setDataReaderFile(testOsm3).
+                    setProfiles(Arrays.asList(
+                            new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
+                            new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")
+                    ));
             tmpGH.load(ghLoc);
             fail();
         } catch (Exception ex) {
@@ -510,7 +522,11 @@ public class GraphHopperOSMTest {
                         put("datareader.dataaccess", "RAM").
                         put("graph.encoded_values", "road_class").
                         put("graph.flag_encoders", "foot,car")).
-                setDataReaderFile(testOsm3);
+                setDataReaderFile(testOsm3).
+                setProfiles(Arrays.asList(
+                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
+                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest")
+                ));
         try {
             instance.load(ghLoc);
             fail();
@@ -527,7 +543,10 @@ public class GraphHopperOSMTest {
         })).init(new GraphHopperConfig().
                 put("datareader.file", testOsm3).
                 put("datareader.dataaccess", "RAM")).
-                setDataReaderFile(testOsm3);
+                setDataReaderFile(testOsm3).
+                setProfiles(Collections.singletonList(
+                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest")
+                ));
         try {
             instance.load(ghLoc);
             fail();
@@ -543,6 +562,10 @@ public class GraphHopperOSMTest {
                         put("datareader.file", testOsm3).
                         put("datareader.dataaccess", "RAM").
                         put("graph.flag_encoders", "foot,car")).
+                setProfiles(Arrays.asList(
+                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
+                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest")
+                )).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         // older versions <= 0.12 did not store this property, ensure that we fail to load it
@@ -558,6 +581,10 @@ public class GraphHopperOSMTest {
                         put("datareader.dataaccess", "RAM").
                         put("graph.encoded_values", "road_environment,road_class").
                         put("graph.flag_encoders", "foot,car")).
+                setProfiles(Arrays.asList(
+                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
+                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest")
+                )).
                 setDataReaderFile(testOsm3);
         try {
             instance.load(ghLoc);
@@ -1055,8 +1082,14 @@ public class GraphHopperOSMTest {
     }
 
     private GraphHopper createGraphHopper(String vehicles) {
+        EncodingManager em = EncodingManager.create(vehicles);
+        List<ProfileConfig> profiles = new ArrayList<>();
+        for (FlagEncoder enc : em.fetchEdgeEncoders()) {
+            profiles.add(new ProfileConfig(enc.toString()).setVehicle(enc.toString()).setWeighting("fastest"));
+        }
         return new GraphHopperOSM().
-                setEncodingManager(EncodingManager.create(vehicles));
+                setEncodingManager(em).
+                setProfiles(profiles);
     }
 
     private static class TestEncoder extends CarFlagEncoder {
