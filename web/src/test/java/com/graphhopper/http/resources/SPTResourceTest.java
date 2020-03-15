@@ -31,10 +31,10 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 
 public class SPTResourceTest {

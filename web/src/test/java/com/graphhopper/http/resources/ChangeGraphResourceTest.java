@@ -20,7 +20,7 @@ package com.graphhopper.http.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
-import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -32,6 +32,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.*;
 
 /**
@@ -40,7 +41,7 @@ import static org.junit.Assert.*;
 public class ChangeGraphResourceTest {
     private static final String DIR = "./target/andorra-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -52,9 +53,8 @@ public class ChangeGraphResourceTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
-
 
     @AfterClass
     public static void cleanUp() {
@@ -63,7 +63,7 @@ public class ChangeGraphResourceTest {
 
     @Test
     public void testBlockAccessViaPoint() {
-        Response response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006&profile=profile").request().buildGet().invoke();
+        Response response = clientTarget(app, "route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));
@@ -85,13 +85,13 @@ public class ChangeGraphResourceTest {
                 + "    \"access\": false"
                 + "  }}]}";
 
-        response = app.client().target("http://localhost:8080/change").request().post(Entity.json(geoJson));
+        response = clientTarget(app, "/change").request().post(Entity.json(geoJson));
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
         assertEquals(1, json.get("updates").asInt());
 
         // route around blocked road => longer
-        response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006&profile=profile").request().buildGet().invoke();
+        response = clientTarget(app, "/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));

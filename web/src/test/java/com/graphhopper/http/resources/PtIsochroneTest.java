@@ -37,9 +37,9 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 public class PtIsochroneTest {
 

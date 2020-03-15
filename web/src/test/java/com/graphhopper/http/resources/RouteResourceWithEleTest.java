@@ -20,7 +20,7 @@ package com.graphhopper.http.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
-import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -31,6 +31,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.*;
 
 /**
@@ -39,7 +40,7 @@ import static org.junit.Assert.*;
 public class RouteResourceWithEleTest {
     private static final String dir = "./target/monaco-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -53,8 +54,7 @@ public class RouteResourceWithEleTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
-            GraphHopperApplication.class, config);
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(GraphHopperApplication.class, config);
 
 
     @AfterClass
@@ -64,7 +64,7 @@ public class RouteResourceWithEleTest {
 
     @Test
     public void testElevation() {
-        final Response response = app.client().target("http://localhost:8080/route?profile=profile&" +
+        final Response response = clientTarget(app, "/route?profile=profile&" +
                 "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -86,7 +86,7 @@ public class RouteResourceWithEleTest {
     @Test
     public void testNoElevation() {
         // default is elevation=false
-        Response response = app.client().target("http://localhost:8080/route?profile=profile&" +
+        Response response = clientTarget(app, "/route?profile=profile&" +
                 "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -100,7 +100,7 @@ public class RouteResourceWithEleTest {
         assertTrue("Elevation should not be included!", cson.toString().contains("[7.421392,43.7307]"));
 
         // disable elevation
-        response = app.client().target("http://localhost:8080/route?profile=profile&" +
+        response = clientTarget(app, "/route?profile=profile&" +
                 "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);

@@ -19,6 +19,7 @@ package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -29,6 +30,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.*;
 
 /**
@@ -39,7 +41,7 @@ import static org.junit.Assert.*;
 public class SpatialRulesTest {
     private static final String DIR = "./target/north-bayreuth-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
      // The EncodedValue "country" requires the setting "spatial_rules.borders_directory" as "country" does not load via DefaultTagParserFactory
@@ -55,7 +57,7 @@ public class SpatialRulesTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -65,7 +67,7 @@ public class SpatialRulesTest {
 
     @Test
     public void testDetourToComplyWithSpatialRule() {
-        final Response response = app.client().target("http://localhost:8080/route?profile=profile&"
+        final Response response = clientTarget(app, "/route?profile=profile&"
                 + "point=49.995933,11.54809&point=50.004871,11.517191").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);

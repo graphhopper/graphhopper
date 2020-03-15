@@ -29,9 +29,9 @@ import org.junit.Test;
 import javax.ws.rs.core.Response;
 import java.io.File;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 /**
  * @author svantulden
@@ -59,7 +59,7 @@ public class NearestResourceTest {
     }
 
     @Test
-    public void testBasicNearestQuery() throws Exception {
+    public void testBasicNearestQuery() {
         final Response response = clientTarget(app, "/nearest?point=42.554851,1.536198").request().buildGet().invoke();
         assertThat("HTTP status", response.getStatus(), is(200));
         NearestResource.Response json = response.readEntity(NearestResource.Response.class);

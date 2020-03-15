@@ -11,9 +11,9 @@ import org.junit.Test;
 import javax.ws.rs.core.Response;
 import java.io.File;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 public class I18nResourceTest {
     private static final String DIR = "./target/andorra-gh/";

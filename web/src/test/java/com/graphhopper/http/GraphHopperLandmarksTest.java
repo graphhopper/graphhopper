@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -31,6 +32,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -42,7 +44,7 @@ import static org.junit.Assert.assertTrue;
 public class GraphHopperLandmarksTest {
     private static final String DIR = "./target/landmark-test-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -67,7 +69,7 @@ public class GraphHopperLandmarksTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -77,7 +79,7 @@ public class GraphHopperLandmarksTest {
 
     @Test
     public void testQueries() {
-        Response response = app.client().target("http://localhost:8080/route?profile=car_profile&" +
+        Response response = clientTarget(app, "/route?profile=car_profile&" +
                 "point=55.99022,29.129734&point=56.001069,29.150848").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -85,7 +87,7 @@ public class GraphHopperLandmarksTest {
         double distance = path.get("distance").asDouble();
         assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
 
-        response = app.client().target("http://localhost:8080/route?profile=car_profile&" +
+        response = clientTarget(app, "/route?profile=car_profile&" +
                 "point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true").request().buildGet().invoke();
         json = response.readEntity(JsonNode.class);
         distance = json.get("paths").get(0).get("distance").asDouble();
@@ -96,14 +98,14 @@ public class GraphHopperLandmarksTest {
     public void testLandmarkDisconnect() {
         // if one algorithm is disabled then the following chain is executed: CH -> LM -> flexible
         // disconnected for landmarks
-        Response response = app.client().target("http://localhost:8080/route?profile=car_profile&" +
+        Response response = clientTarget(app, "/route?profile=car_profile&" +
                 "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.get("message").toString().contains("Different subnetworks"));
 
         // without landmarks it should work
-        response = app.client().target("http://localhost:8080/route?profile=car_profile&" +
+        response = clientTarget(app, "/route?profile=car_profile&" +
                 "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
