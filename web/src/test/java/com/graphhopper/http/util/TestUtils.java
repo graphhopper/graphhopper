@@ -19,10 +19,10 @@ package com.graphhopper.http.util;
 
 import io.dropwizard.Configuration;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+
 import javax.ws.rs.client.WebTarget;
 
 /**
- *
  * @author thomas aulinger
  */
 public class TestUtils {
