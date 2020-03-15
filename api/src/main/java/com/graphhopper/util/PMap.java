@@ -18,10 +18,7 @@
 package com.graphhopper.util;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
-
-import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * A properties map (String to String) with convenient accessors
@@ -66,7 +63,7 @@ public class PMap {
      * Reads a PMap from a string array consisting of key=value pairs
      */
     public static PMap read(String[] args) {
-        Map<String, Object> map = new LinkedHashMap<>();
+        PMap map = new PMap();
         for (String arg : args) {
             int index = arg.indexOf("=");
             if (index <= 0) {
@@ -83,12 +80,12 @@ public class PMap {
             }
 
             String value = arg.substring(index + 1);
-            Object old = map.put(toLowerCase(key), value);
+            Object old = map.map.put(Helper.camelCaseToUnderScore(key), Helper.toObject(value));
             if (old != null)
-                throw new IllegalArgumentException("Pair '" + toLowerCase(key) + "'='" + value + "' not possible to " +
+                throw new IllegalArgumentException("Pair '" + Helper.camelCaseToUnderScore(key) + "'='" + value + "' not possible to " +
                         "add to the PMap-object as the key already exists with '" + old + "'");
         }
-        return new PMap(map);
+        return map;
     }
 
     public PMap put(PMap map) {
