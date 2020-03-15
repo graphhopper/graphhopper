@@ -289,7 +289,7 @@ public class GHUtility {
         String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
-                    + iter.fetchWayGeometry(0).getSize() + ", edgeId:" + iter.getEdge()
+                    + iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).getSize() + ", edgeId:" + iter.getEdge()
                     + "\t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
         }
         return str;
@@ -526,7 +526,7 @@ public class GHUtility {
             }
 
             @Override
-            public PointList fetchWayGeometry(int type) {
+            public PointList fetchWayGeometry(FetchMode type) {
                 return Helper.createPointList(0, 2, 6, 4);
             }
 
@@ -639,7 +639,7 @@ public class GHUtility {
         na.setNode(node, lat, lon);
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
         while (iter.next()) {
-            iter.setDistance(iter.fetchWayGeometry(3).calcDistance(DIST_EARTH));
+            iter.setDistance(iter.fetchWayGeometry(FetchMode.ALL).calcDistance(DIST_EARTH));
             // System.out.println(node + "->" + adj + ": " + iter.getDistance());
         }
     }
@@ -731,7 +731,7 @@ public class GHUtility {
         }
 
         @Override
-        public PointList fetchWayGeometry(int type) {
+        public PointList fetchWayGeometry(FetchMode type) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
@@ -969,7 +969,7 @@ public class GHUtility {
     }
 
     public static BBox createBBox(EdgeIteratorState edgeState) {
-        PointList towerNodes = edgeState.fetchWayGeometry(4);
+        PointList towerNodes = edgeState.fetchWayGeometry(FetchMode.TOWER_ONLY);
         int secondIndex = towerNodes.getSize() == 1 ? 0 : 1;
         return BBox.fromPoints(towerNodes.getLatitude(0), towerNodes.getLongitude(0),
                 towerNodes.getLatitude(secondIndex), towerNodes.getLongitude(secondIndex));

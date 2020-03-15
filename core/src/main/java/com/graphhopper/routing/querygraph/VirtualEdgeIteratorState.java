@@ -22,10 +22,7 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
@@ -86,24 +83,24 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public PointList fetchWayGeometry(int mode) {
+    public PointList fetchWayGeometry(FetchMode mode) {
         if (pointList.getSize() == 0)
             return PointList.EMPTY;
         // due to API we need to create a new instance per call!
-        if (mode == 4) {
+        if (mode == FetchMode.TOWER_ONLY) {
             if (pointList.getSize() < 3)
                 return pointList.clone(false);
             PointList towerNodes = new PointList(2, pointList.is3D());
             towerNodes.add(pointList, 0);
             towerNodes.add(pointList, pointList.getSize() - 1);
             return towerNodes;
-        } else if (mode == 3)
+        } else if (mode == FetchMode.ALL)
             return pointList.clone(false);
-        else if (mode == 1)
+        else if (mode == FetchMode.BASE_AND_PILLAR)
             return pointList.copy(0, pointList.getSize() - 1);
-        else if (mode == 2)
+        else if (mode == FetchMode.PILLAR_AND_ADJ)
             return pointList.copy(1, pointList.getSize());
-        else if (mode == 0) {
+        else if (mode == FetchMode.PILLAR_ONLY) {
             if (pointList.getSize() == 1)
                 return PointList.EMPTY;
             return pointList.copy(1, pointList.getSize() - 1);

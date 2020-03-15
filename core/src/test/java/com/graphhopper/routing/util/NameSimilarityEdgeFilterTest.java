@@ -21,6 +21,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
@@ -257,7 +258,7 @@ public class NameSimilarityEdgeFilterTest {
             }
 
             @Override
-            public PointList fetchWayGeometry(int type) {
+            public PointList fetchWayGeometry(FetchMode type) {
                 PointList list = new PointList();
                 list.add(basePoint);
                 return list;
