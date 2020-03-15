@@ -70,7 +70,7 @@ public class GHUtilityTest {
 
     double getLengthOfAllEdges(Graph graph) {
         double distance = 0;
-        DistanceCalc calc = new DistanceCalc2D();
+        DistanceCalc calc = new DistanceCalcEuclidean();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             // This is meant to verify that all of the same edges (including tower nodes)

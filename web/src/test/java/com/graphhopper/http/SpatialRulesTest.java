@@ -18,16 +18,16 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import java.io.File;
+import javax.ws.rs.core.Response;
 import org.junit.AfterClass;
+import static org.junit.Assert.*;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import javax.ws.rs.core.Response;
-import java.io.File;
-
-import static org.junit.Assert.*;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 /**
  * Tests the DataFlagEncoder with the SpatialRuleLookup enabled
@@ -37,10 +37,10 @@ import static org.junit.Assert.*;
 public class SpatialRulesTest {
     private static final String DIR = "./target/north-bayreuth-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
-     // The EncodedValue "country" requires the setting "spatial_rules.borders_directory" as "country" does not load via DefaultTagParserFactory
+        // The EncodedValue "country" requires the setting "spatial_rules.borders_directory" as "country" does not load via DefaultTagParserFactory
         // TODO should we automatically detect this somehow and include a default country file?
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
@@ -52,7 +52,7 @@ public class SpatialRulesTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -62,7 +62,7 @@ public class SpatialRulesTest {
 
     @Test
     public void testDetourToComplyWithSpatialRule() {
-        final Response response = app.client().target("http://localhost:8080/route?" + "point=49.995933,11.54809&point=50.004871,11.517191").request().buildGet().invoke();
+        final Response response = clientTarget(app, "route?" + "point=49.995933,11.54809&point=50.004871,11.517191").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));

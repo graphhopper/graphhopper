@@ -18,7 +18,7 @@
 package com.graphhopper.http.resources;
 
 import com.graphhopper.http.GraphHopperApplication;
-import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.MvtReader;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.TagKeyValueMapConverter;
@@ -42,6 +42,7 @@ import java.util.Map;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 /**
  * @author Peter Karich
@@ -49,7 +50,7 @@ import static org.junit.Assert.assertEquals;
 public class MvtResourceTest {
     private static final String DIR = "./target/andorra-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -62,7 +63,7 @@ public class MvtResourceTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(GraphHopperApplication.class, config);
 
     @BeforeClass
     @AfterClass
@@ -72,7 +73,7 @@ public class MvtResourceTest {
 
     @Test
     public void testBasicMvtQuery() throws IOException {
-        final Response response = app.client().target("http://localhost:8080/mvt/15/16528/12099.mvt").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/mvt/15/16528/12099.mvt").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
         JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());
@@ -88,7 +89,7 @@ public class MvtResourceTest {
 
     @Test
     public void testWithDetailsInResponse() throws IOException {
-        final Response response = app.client().target("http://localhost:8080/mvt/15/16522/12102.mvt?details=max_speed&details=road_class&details=road_environment").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/mvt/15/16522/12102.mvt?details=max_speed&details=road_class&details=road_environment").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
         JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());

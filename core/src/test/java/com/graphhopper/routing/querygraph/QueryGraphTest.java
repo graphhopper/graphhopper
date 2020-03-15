@@ -274,7 +274,7 @@ public class QueryGraphTest {
         EdgeIteratorState edge = g.edge(0, 1);
         EdgeIteratorState edgeReverse = edge.detach(true);
 
-        DistanceCalc2D distCalc = new DistanceCalc2D();
+        DistanceCalcEuclidean distCalc = new DistanceCalcEuclidean();
         QueryResult qr = new QueryResult(0, 0.00005);
         qr.setClosestEdge(edge);
         qr.setWayIndex(0);
@@ -310,7 +310,7 @@ public class QueryGraphTest {
         QueryResult qr = new QueryResult(-0.0005, 0.001);
         qr.setClosestEdge(edge);
         qr.setWayIndex(1);
-        qr.calcSnappedPoint(new DistanceCalc2D());
+        qr.calcSnappedPoint(new DistanceCalcEuclidean());
 
         QueryGraph qg = lookup(qr);
         EdgeExplorer ee = qg.createEdgeExplorer();
@@ -342,7 +342,7 @@ public class QueryGraphTest {
         QueryResult qr = new QueryResult(0.0011, 0.0009);
         qr.setClosestEdge(edge);
         qr.setWayIndex(1);
-        qr.calcSnappedPoint(new DistanceCalc2D());
+        qr.calcSnappedPoint(new DistanceCalcEuclidean());
 
         QueryGraph qg = lookup(qr);
         EdgeExplorer ee = qg.createEdgeExplorer();
@@ -545,7 +545,7 @@ public class QueryGraphTest {
         qr.setClosestEdge(edge);
         qr.setWayIndex(wayIndex);
         qr.setSnappedPosition(EDGE);
-        qr.calcSnappedPoint(new DistanceCalc2D());
+        qr.calcSnappedPoint(new DistanceCalcEuclidean());
         return qr;
     }
 
