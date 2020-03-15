@@ -1,7 +1,7 @@
 package com.graphhopper.http.resources;
 
 import com.graphhopper.http.GraphHopperApplication;
-import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -13,11 +13,12 @@ import java.io.File;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 public class I18nResourceTest {
     private static final String DIR = "./target/andorra-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -27,7 +28,7 @@ public class I18nResourceTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -37,12 +38,12 @@ public class I18nResourceTest {
 
     @Test
     public void requestI18n() {
-        Response response = app.client().target("http://localhost:8080/i18n").request().buildGet().invoke();
+        Response response = clientTarget(app, "/i18n").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         assertTrue(str, str.contains("\"en\":") && str.contains("\"locale\":\"\""));
 
-        response = app.client().target("http://localhost:8080/i18n/de").request().buildGet().invoke();
+        response = clientTarget(app, "/i18n/de").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         str = response.readEntity(String.class);
         assertTrue(str, str.contains("\"default\":") && str.contains("\"locale\":\"de\""));

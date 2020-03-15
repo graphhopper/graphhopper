@@ -17,6 +17,8 @@
  */
 package com.graphhopper.tools;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
@@ -24,9 +26,12 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
@@ -34,13 +39,20 @@ import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
+
+import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -75,6 +87,7 @@ public class Measurement {
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start(PMap args) throws IOException {
         final String graphLocation = args.get("graph.location", "");
+        final String countryBordersDirectory = args.get("spatial_rules.borders_directory", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
         String summaryLocation = args.get("measurement.summaryfile", "");
@@ -233,6 +246,10 @@ public class Measurement {
                             edgeBased().withInstructions().withPointHints().simplify());
                 }
             }
+            if (!isEmpty(countryBordersDirectory)) {
+                printSpatialRuleLookupTest(countryBordersDirectory, count * 100);
+            }
+            
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
             put("error", ex.toString());
@@ -455,6 +472,57 @@ public class Measurement {
             }
         }.setIterations(count).start();
         print("unit_tests" + description + ".get_edge_state", miniPerf);
+    }
+    
+    private void printSpatialRuleLookupTest(String countryBordersDirectory, int count) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        
+        List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(countryBordersDirectory), "*.{geojson,json}")) {
+            for (Path borderFile : stream) {
+                try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
+                    JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+                    jsonFeatureCollections.add(jsonFeatureCollection);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Failed to load borders.", e);
+            return;
+        }
+        
+        SpatialRuleFactory rulePerCountryFactory = new SpatialRuleFactory() {
+            
+            @Override
+            public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
+                return new AbstractSpatialRule(borders) {
+                    @Override
+                    public String getId() {
+                        return id;
+                    }
+                };
+            }
+        };
+        
+        final SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO_A3", rulePerCountryFactory);
+    
+        // generate random points in central Europe
+        final List<GHPoint> randomPoints = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            double lat = 46d + Math.random() * 7d;
+            double lon = 6d + Math.random() * 21d;
+            randomPoints.add(new GHPoint(lat, lon));
+        }
+        
+        MiniPerfTest lookupPerfTest = new MiniPerfTest() {
+            @Override
+            public int doCalc(boolean warmup, int run) {
+                return spatialRuleLookup.lookupRule(randomPoints.get(run)).hashCode();
+            }
+        }.setIterations(count).start();
+        
+        print("spatialrulelookup", lookupPerfTest);
     }
 
     private void compareRouting(final GraphHopper hopper, int count) {
