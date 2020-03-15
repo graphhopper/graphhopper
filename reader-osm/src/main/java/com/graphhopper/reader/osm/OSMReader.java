@@ -75,7 +75,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private final NodeAccess nodeAccess;
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
-    private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean smoothElevation = false;
     private final boolean exitOnlyPillarNodeException = true;

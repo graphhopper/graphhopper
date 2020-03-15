@@ -20,7 +20,7 @@ package com.graphhopper.http.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.http.GraphHopperApplication;
-import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -31,6 +31,7 @@ import java.io.File;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 /**
  * @author svantulden
@@ -38,7 +39,7 @@ import static org.junit.Assert.assertTrue;
 public class NearestResourceWithEleTest {
     private static final String dir = "./target/monaco-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -51,7 +52,7 @@ public class NearestResourceWithEleTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -61,7 +62,7 @@ public class NearestResourceWithEleTest {
 
     @Test
     public void testWithEleQuery() throws Exception {
-        JsonNode json = app.client().target("http://localhost:8080/nearest?point=43.730864,7.420771&elevation=true").request().buildGet().invoke().readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/nearest?point=43.730864,7.420771&elevation=true").request().buildGet().invoke().readEntity(JsonNode.class);
         assertFalse(json.has("error"));
         ArrayNode point = (ArrayNode) json.get("coordinates");
         assertTrue("returned point is not 3D: " + point, point.size() == 3);
@@ -73,7 +74,7 @@ public class NearestResourceWithEleTest {
 
     @Test
     public void testWithoutEleQuery() throws Exception {
-        JsonNode json = app.client().target("http://localhost:8080/nearest?point=43.730864,7.420771&elevation=false").request().buildGet().invoke().readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/nearest?point=43.730864,7.420771&elevation=false").request().buildGet().invoke().readEntity(JsonNode.class);
         assertFalse(json.has("error"));
         ArrayNode point = (ArrayNode) json.get("coordinates");
         assertTrue("returned point is not 2D: " + point, point.size() == 2);
@@ -82,7 +83,7 @@ public class NearestResourceWithEleTest {
         assertTrue("nearest point wasn't correct: lat=" + lat + ", lon=" + lon, lat == 43.73070006215647 && lon == 7.421392181993846);
 
         // Default elevation is false        
-        json = app.client().target("http://localhost:8080/nearest?point=43.730864,7.420771").request().buildGet().invoke().readEntity(JsonNode.class);
+        json = clientTarget(app, "/nearest?point=43.730864,7.420771").request().buildGet().invoke().readEntity(JsonNode.class);
         assertFalse(json.has("error"));
         point = (ArrayNode) json.get("coordinates");
         assertTrue("returned point is not 2D: " + point, point.size() == 2);

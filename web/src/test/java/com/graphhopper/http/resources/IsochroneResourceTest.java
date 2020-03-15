@@ -20,7 +20,8 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.http.GraphHopperApplication;
-import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -42,7 +43,7 @@ import static org.junit.Assert.assertEquals;
 public class IsochroneResourceTest {
     private static final String DIR = "./target/andorra-gh/";
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
         config.getGraphHopperConfiguration().
@@ -52,7 +53,7 @@ public class IsochroneResourceTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
+    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -64,7 +65,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestByTimeLimit() {
-        Response rsp = app.client().target("http://localhost:8080/isochrone")
+        Response rsp = clientTarget(app, "/isochrone")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
@@ -85,7 +86,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestByDistanceLimit() {
-        Response rsp = app.client().target("http://localhost:8080/isochrone")
+        Response rsp = clientTarget(app, "/isochrone")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("distance_limit", 3_000)
                 .queryParam("buckets", 2)
@@ -106,7 +107,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestReverseFlow() {
-        Response rsp = app.client().target("http://localhost:8080/isochrone")
+        Response rsp = clientTarget(app, "/isochrone")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("reverse_flow", true)
                 .queryParam("time_limit", 5 * 60)
@@ -131,13 +132,13 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestBadRequest() {
-        Response response = app.client().target("http://localhost:8080/route?point=-1.816719,51.557148").request().buildGet().invoke();
+        Response response = clientTarget(app, "/route?point=-1.816719,51.557148").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
 
     @Test
     public void requestWithShortest() {
-        Response rsp = app.client().target("http://localhost:8080/isochrone")
+        Response rsp = clientTarget(app, "/isochrone")
                 .queryParam("point", "42.509644,1.540554")
                 .queryParam("time_limit", 130)
                 .queryParam("buckets", 1)
@@ -155,7 +156,7 @@ public class IsochroneResourceTest {
         // more like a circle => shorter is expected
         assertTrue(polygon0.getCoordinates().length < 185);
 
-        rsp = app.client().target("http://localhost:8080/isochrone")
+        rsp = clientTarget(app, "/isochrone")
                 .queryParam("point", "42.509644,1.540554")
                 .queryParam("time_limit", 130)
                 .queryParam("buckets", 1)
@@ -169,7 +170,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestJsonBadType() {
-        Response response = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130&type=xml")
+        Response response = clientTarget(app, "/isochrone?point=42.531073,1.573792&time_limit=130&type=xml")
                 .request().buildGet().invoke();
 
         JsonNode json = response.readEntity(JsonNode.class);
@@ -180,7 +181,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestWithBlockArea() {
-        Response rsp = app.client().target("http://localhost:8080/isochrone")
+        Response rsp = clientTarget(app, "/isochrone")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
@@ -204,7 +205,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestJsonWithType() {
-        Response response = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130&type=json")
+        Response response = clientTarget(app, "/isochrone?point=42.531073,1.573792&time_limit=130&type=json")
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("polygons"));
@@ -213,7 +214,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestJsonNoType() {
-        Response response = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130")
+        Response response = clientTarget(app, "/isochrone?point=42.531073,1.573792&time_limit=130")
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("polygons"));
@@ -222,7 +223,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestGeoJsonPolygons() {
-        Response response = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson")
+        Response response = clientTarget(app, "/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson")
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
 
@@ -246,7 +247,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestGeoJsonPolygonsBuckets() {
-        Response response = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson&buckets=3")
+        Response response = clientTarget(app, "/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson&buckets=3")
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
 

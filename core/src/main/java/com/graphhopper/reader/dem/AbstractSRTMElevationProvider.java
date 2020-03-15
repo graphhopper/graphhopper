@@ -131,7 +131,7 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
 
             demProvider = new HeightTile(minLat, minLon, width, width, precision, DEGREE, DEGREE);
             cacheData.put(intKey, demProvider);
-            demProvider.setCalcMean(calcMean);
+            demProvider.setInterpolate(interpolate);
             demProvider.setHeights(heights);
         }
 
