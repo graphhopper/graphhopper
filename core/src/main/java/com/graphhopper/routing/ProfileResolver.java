@@ -29,8 +29,6 @@ import com.graphhopper.util.Parameters;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
-
 public class ProfileResolver {
 
     public ProfileConfig resolveProfile(EncodingManager encodingManager, List<CHProfile> chProfiles, List<LMProfile> lmProfiles, HintsMap hints) {
@@ -200,10 +198,10 @@ public class ProfileResolver {
     }
 
     private Boolean getEdgeBased(HintsMap hintsMap) {
-        return hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
+        return (Boolean) hintsMap.getObject(Parameters.Routing.EDGE_BASED, null);
     }
 
     private Integer getUTurnCosts(HintsMap hintsMap) {
-        return hintsMap.has(Parameters.Routing.U_TURN_COSTS) ? hintsMap.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
+        return (Integer) hintsMap.getObject(Parameters.Routing.U_TURN_COSTS, null);
     }
 }

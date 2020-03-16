@@ -104,13 +104,11 @@ public class PMap {
     }
 
     public PMap remove(String key) {
-        // query accepts camelCase and under_score
         map.remove(key);
         return this;
     }
 
     public boolean has(String key) {
-        // query accepts camelCase and under_score
         return map.containsKey(key);
     }
 
