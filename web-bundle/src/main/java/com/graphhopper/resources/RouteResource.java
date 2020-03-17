@@ -137,6 +137,7 @@ public class RouteResource {
         // remove legacy parameters, they should only be used to resolve the profile
         request.getHints().setWeighting("");
         request.getHints().setVehicle("");
+
         request.setProfile(profile.getName()).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).

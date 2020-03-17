@@ -75,7 +75,7 @@ public class ProfileResolver {
         String vehicle = hints.getVehicle();
         if (!vehicle.isEmpty() && !encodingManager.hasEncoder(hints.getVehicle()))
             throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString() +
-                    " You should consider using the profile parameter instead of specifying a vehicle");
+                    " You should consider using the profile parameter instead of specifying a vehicle, see #1859");
 
         // unless CH/LM are disabled we select the profile based on the given request hints and the available preparations
         if (!chProfiles.isEmpty() && !disableCH) {
@@ -167,7 +167,7 @@ public class ProfileResolver {
     private ProfileConfig selectProfileUnprepared(HintsMap hints) {
         String vehicle = hints.getVehicle();
         if (vehicle.isEmpty()) {
-            vehicle = getDefaultVehicle(encodingManager).toString();
+            vehicle = getDefaultVehicle().toString();
         }
         String weighting = hints.getWeighting();
         if (weighting.isEmpty()) {
@@ -194,10 +194,7 @@ public class ProfileResolver {
                 "\nYou should specify a profile using the `profile` parameter");
     }
 
-    /**
-     * @return the first flag encoder of the encoding manager
-     */
-    public FlagEncoder getDefaultVehicle(EncodingManager encodingManager) {
+    private FlagEncoder getDefaultVehicle() {
         return encodingManager.fetchEdgeEncoders().get(0);
     }
 
