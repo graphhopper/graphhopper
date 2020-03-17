@@ -37,6 +37,8 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
     private final int DEFAULT_WIDTH;
+    private final int MIN_LAT;
+    private final int MAX_LAT;
     private final int WIDTH_BYTE_INDEX = 0;
     private final int DEGREE = 1;
     // use a map as an array is not quite useful if we want to hold only parts of the world
@@ -44,11 +46,13 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
     private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
 
-    public AbstractSRTMElevationProvider(String baseUrl, String cacheDir, String downloaderName, int defaultWidt) {
+    public AbstractSRTMElevationProvider(String baseUrl, String cacheDir, String downloaderName, int minLat, int maxLat, int defaultWidth) {
         super(cacheDir);
         this.baseUrl = baseUrl;
         downloader = new Downloader(downloaderName).setTimeout(10000);
-        this.DEFAULT_WIDTH = defaultWidt;
+        this.DEFAULT_WIDTH = defaultWidth;
+        this.MIN_LAT = minLat;
+        this.MAX_LAT = maxLat;
     }
 
     // use int key instead of string for lower memory usage
@@ -80,7 +84,7 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
     public double getEle(double lat, double lon) {
         // Return fast, if there is no data available
         // See https://www2.jpl.nasa.gov/srtm/faq.html
-        if (lat >= 60 || lat <= -56)
+        if (lat >= MAX_LAT || lat <= MIN_LAT)
             return 0;
 
         lat = (int) (lat * precision) / precision;
@@ -182,6 +186,22 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
             }
 
         return readFile(file);
+    }
+
+    protected String getPaddedLonString(int lonInt) {
+        lonInt = Math.abs(lonInt);
+        String lonString = lonInt < 100 ? "0" : "";
+        if (lonInt < 10)
+            lonString += "0";
+        lonString += lonInt;
+        return lonString;
+    }
+
+    protected String getPaddedLatString(int latInt) {
+        latInt = Math.abs(latInt);
+        String latString = latInt < 10 ? "0" : "";
+        latString += latInt;
+        return latString;
     }
 
     abstract byte[] readFile(File file) throws IOException;

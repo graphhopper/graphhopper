@@ -146,7 +146,7 @@ public class EdgeElevationInterpolator {
                 double lon1 = nodeAccess.getLon(secondNodeId);
                 double ele1 = nodeAccess.getEle(secondNodeId);
 
-                final PointList pointList = edge.fetchWayGeometry(3);
+                final PointList pointList = edge.fetchWayGeometry(FetchMode.ALL);
                 final int count = pointList.size();
                 for (int index = 1; index < count - 1; index++) {
                     double lat = pointList.getLat(index);
