@@ -152,7 +152,7 @@ public class QueryGraph implements Graph {
         for (int edgePos : edgePositions) {
             VirtualEdgeIteratorState edge = getVirtualEdge(virtNodeIDintern * 4 + edgePos);
 
-            PointList wayGeo = edge.fetchWayGeometry(3);
+            PointList wayGeo = edge.fetchWayGeometry(FetchMode.ALL);
             double edgeOrientation;
             if (incoming) {
                 int numWayPoints = wayGeo.getSize();

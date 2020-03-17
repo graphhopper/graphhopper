@@ -843,13 +843,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                 throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
         }
 
-        private void checkShortcutAndEdgeBased(String method) {
-            checkShortcut(true, method);
-            if (!chProfile.isEdgeBased()) {
-                throw new IllegalStateException("Method " + method + " only allowed when CH graph is configured for edge based traversal");
-            }
-        }
-
         @Override
         public final String getName() {
             checkShortcut(false, "getName");
@@ -863,7 +856,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public final PointList fetchWayGeometry(int mode) {
+        public final PointList fetchWayGeometry(FetchMode mode) {
             checkShortcut(false, "fetchWayGeometry");
             return edgeIterable.fetchWayGeometry(mode);
         }
