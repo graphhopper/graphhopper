@@ -971,18 +971,22 @@ public class GraphHopperIT {
 
     @Test
     public void testSkadiElevationProvider() {
+        final String profile = "profile";
         final String vehicle = "foot";
         final String weighting = "shortest";
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
+                setProfiles(
+                        new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)
+                ).
                 setStoreOnFlush(true);
 
         hopper.setElevationProvider(new SkadiProvider(DIR));
         hopper.importOrLoad();
 
-        GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
-                setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weighting));
+        GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199)
+                .setProfile(profile));
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(1601.6, arsp.getDistance(), .1);
