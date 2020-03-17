@@ -59,6 +59,11 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
         this.interpolate = interpolate;
     }
 
+    @Override
+    public boolean getInterpolate() {
+        return this.interpolate;
+    }
+
     void setSleep(long sleep) {
         this.sleep = sleep;
     }

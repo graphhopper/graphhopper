@@ -378,7 +378,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Sets the max distance between way points and the simplified polyline in meters
+     * Sets the max elevation discrepancy between way points and the simplified polyline in meters
      */
     public GraphHopper setElevationWayPointMaxDistance(double elevationWayPointMaxDistance) {
         this.elevationWayPointMaxDistance = elevationWayPointMaxDistance;
@@ -564,6 +564,9 @@ public class GraphHopper implements GraphHopperAPI {
         this.elevationWayPointMaxDistance = ghConfig.getDouble("graph.elevation.way_point_max_distance", Double.MAX_VALUE);
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);
+
+        if (longEdgeSamplingDistance < Double.MAX_VALUE && !elevationProvider.getInterpolate())
+            logger.warn("Long edge sampling enabled, but bilinear interpolation disabled. See #1953");
 
         // optimizable prepare
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);

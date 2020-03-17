@@ -83,6 +83,11 @@ public class MultiSourceElevationProvider implements ElevationProvider {
     }
 
     @Override
+    public boolean getInterpolate() {
+        return srtmProvider.getInterpolate() && globalProvider.getInterpolate();
+    }
+
+    @Override
     public void release() {
         srtmProvider.release();
         globalProvider.release();
