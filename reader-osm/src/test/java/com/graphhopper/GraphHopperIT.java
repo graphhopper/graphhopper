@@ -1432,8 +1432,8 @@ public class GraphHopperIT {
 
     @Test
     public void testTurnCostsOnOff() {
-        final String profile1 = "profile1";
-        final String profile2 = "profile2";
+        final String profile1 = "profile_no_turn_costs";
+        final String profile2 = "profile_turn_costs";
         final String vehicle = "car";
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
@@ -1446,18 +1446,16 @@ public class GraphHopperIT {
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        // without turn costs
-        req.setProfile("profile1");
+        req.setProfile("profile_no_turn_costs");
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
-        // with turn costs
-        req.setProfile("profile2");
+        req.setProfile("profile_turn_costs");
         assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 
     @Test
     public void testTurnCostsOnOffCH() {
-        final String profile1 = "my_profile1";
-        final String profile2 = "my_profile2";
+        final String profile1 = "profile_turn_costs";
+        final String profile2 = "profile_no_turn_costs";
         final String vehicle = "car";
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
@@ -1475,11 +1473,9 @@ public class GraphHopperIT {
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        // without turn costs
-        req.setProfile("my_profile2");
+        req.setProfile("profile_no_turn_costs");
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
-        // with turn costs
-        req.setProfile("my_profile1");
+        req.setProfile("profile_turn_costs");
         assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 

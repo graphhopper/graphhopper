@@ -75,7 +75,7 @@ public class ProfileResolver {
         String vehicle = hints.getVehicle();
         if (!vehicle.isEmpty() && !encodingManager.hasEncoder(hints.getVehicle()))
             throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString() +
-                    " You should consider using the profile parameter instead of specifying a vehicle, see #1859");
+                    " You should consider using the profile parameter instead of specifying a vehicle, see #todonow");
 
         // unless CH/LM are disabled we select the profile based on the given request hints and the available preparations
         if (!chProfiles.isEmpty() && !disableCH) {

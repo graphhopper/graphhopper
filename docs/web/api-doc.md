@@ -71,6 +71,7 @@ empty list for `profiles_ch`.
 Parameter        | Default    | Description
 :----------------|:-----------|:-----------
 ch.disable       | `false`    | Use this parameter in combination with one or more parameters of this table
+# todonow: update docs regarding profile etc.
 weighting        | `fastest`  | Which kind of 'best' route calculation you need. Other option is `shortest` (e.g. for `vehicle=foot` or `bike`), `short_fastest` if time and distance is expensive (e.g. for `vehicle=truck`) and `curvature` (only for `vehicle=motorcycle`)
 algorithm        |`astarbi`   | The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip`
 block_area       | -          | Block road access via a point with the format `latitude,longitude` or an area defined by a circle `lat,lon,radius` or a rectangle `lat1,lon1,lat2,lon2`. Separate multiple areas with a semicolon `;`.
