@@ -84,7 +84,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 }
 
                 @Override
-                public DataReader setElevationSimplifyFactor(double elevationSimplifyFactor) {
+                public DataReader setWayPointElevationMaxDistance(double elevationWayPointMaxDistance) {
                     return this;
                 }
 

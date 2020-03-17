@@ -947,7 +947,7 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
-                setElevationSimplifyFactor(1).
+                setElevationWayPointMaxDistance(1).
                 setLongEdgeSamplingDistance(30);
 
         ElevationProvider elevationProvider = new SRTMProvider(DIR);

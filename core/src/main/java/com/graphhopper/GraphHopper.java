@@ -100,8 +100,8 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean allowWrites = true;
     private boolean fullyLoaded = false;
     private boolean smoothElevation = false;
-    private double longEdgeSamplingDistance = 0;
-    private double elevationSimplifyFactor = 0;
+    private double longEdgeSamplingDistance = Double.MAX_VALUE;
+    private double elevationWayPointMaxDistance = Double.MAX_VALUE;
     // for routing
     private final RoutingConfig routingConfig = new RoutingConfig();
     private ProfileResolver profileResolver = new ProfileResolver();
@@ -378,10 +378,10 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Sets the weight that elevation is given during simplification
+     * Sets the max distance between way points and the simplified polyline in meters
      */
-    public GraphHopper setElevationSimplifyFactor(double elevationSimplifyFactor) {
-        this.elevationSimplifyFactor = elevationSimplifyFactor;
+    public GraphHopper setElevationWayPointMaxDistance(double elevationWayPointMaxDistance) {
+        this.elevationWayPointMaxDistance = elevationWayPointMaxDistance;
         return this;
     }
 
@@ -560,8 +560,8 @@ public class GraphHopper implements GraphHopperAPI {
 
         // elevation
         this.smoothElevation = ghConfig.getBool("graph.elevation.smoothing", false);
-        this.longEdgeSamplingDistance = ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", 0);
-        this.elevationSimplifyFactor = ghConfig.getDouble("graph.elevation.simplify_factor", 0);
+        this.longEdgeSamplingDistance = ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", Double.MAX_VALUE);
+        this.elevationWayPointMaxDistance = ghConfig.getDouble("graph.elevation.way_point_max_distance", Double.MAX_VALUE);
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);
 
@@ -756,7 +756,7 @@ public class GraphHopper implements GraphHopperAPI {
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
-                setElevationSimplifyFactor(elevationSimplifyFactor).
+                setWayPointElevationMaxDistance(elevationWayPointMaxDistance).
                 setSmoothElevation(smoothElevation).
                 setLongEdgeSamplingDistance(longEdgeSamplingDistance);
     }
@@ -1140,7 +1140,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             DouglasPeucker peucker = new DouglasPeucker().
                     setMaxDistance(wayPointMaxDistance).
-                    setElevationFactor(elevationSimplifyFactor);
+                    setElevationMaxDistance(elevationWayPointMaxDistance);
             PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
                     setCalcPoints(tmpCalcPoints).
                     setDouglasPeucker(peucker).

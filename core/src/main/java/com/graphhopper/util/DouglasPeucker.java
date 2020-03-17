@@ -28,7 +28,8 @@ package com.graphhopper.util;
  */
 public class DouglasPeucker {
     private double normedMaxDist;
-    private double elevationFactor;
+    private double elevationMaxDistance;
+    private double maxDistance;
     private DistanceCalc calc;
     private boolean approx;
 
@@ -37,7 +38,7 @@ public class DouglasPeucker {
         // 1m
         setMaxDistance(1);
         // elevation ignored by default
-        setElevationFactor(0);
+        setElevationMaxDistance(Double.MAX_VALUE);
     }
 
     public void setApproximation(boolean a) {
@@ -53,17 +54,15 @@ public class DouglasPeucker {
      */
     public DouglasPeucker setMaxDistance(double dist) {
         this.normedMaxDist = calc.calcNormalizedDist(dist);
+        this.maxDistance = dist;
         return this;
     }
 
     /**
-     * Weight to give elevation changes during simplification:
-     * 0 means elevation is ignored during simplification
-     * 0.2 means that 5 meters of elevation change is treated like
-     * 1m of lat/lon change
+     * maximum elevation distance of discrepancy (from the normal way) in meters
      */
-    public DouglasPeucker setElevationFactor(double factor) {
-        this.elevationFactor = factor;
+    public DouglasPeucker setElevationMaxDistance(double dist) {
+        this.elevationMaxDistance = dist;
         return this;
     }
 
@@ -122,6 +121,7 @@ public class DouglasPeucker {
         }
         int indexWithMaxDist = -1;
         double maxDist = -1;
+        double elevationFactor = maxDistance / elevationMaxDistance;
         double firstLat = points.getLatitude(fromIndex);
         double firstLon = points.getLongitude(fromIndex);
         double firstEle = points.getElevation(fromIndex);
@@ -135,7 +135,7 @@ public class DouglasPeucker {
             }
             double lon = points.getLongitude(i);
             double ele = points.getElevation(i);
-            double dist = (points.is3D() && elevationFactor > 0 && !Double.isNaN(firstEle) && !Double.isNaN(lastEle) && !Double.isNaN(ele))
+            double dist = (points.is3D() && elevationMaxDistance < Double.MAX_VALUE && !Double.isNaN(firstEle) && !Double.isNaN(lastEle) && !Double.isNaN(ele))
                     ? calc.calcNormalizedEdgeDistance3D(
                             lat, lon, ele * elevationFactor,
                             firstLat, firstLon, firstEle * elevationFactor,

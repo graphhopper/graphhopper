@@ -672,7 +672,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             pointList = GraphElevationSmoothing.smoothElevation(pointList);
 
         // sample points along long edges
-        if (this.longEdgeSamplingDistance > 0 && pointList.is3D())
+        if (this.longEdgeSamplingDistance < Double.MAX_VALUE && pointList.is3D())
             pointList = EdgeSampling.sample(pointList, longEdgeSamplingDistance, distCalc, eleProvider);
 
         double towerNodeDistance = pointList.calcDistance(distCalc);
@@ -902,8 +902,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     }
 
     @Override
-    public DataReader setElevationSimplifyFactor(double elevationSimplifyFactor) {
-        simplifyAlgo.setElevationFactor(elevationSimplifyFactor);
+    public DataReader setWayPointElevationMaxDistance(double elevationWayPointMaxDistance) {
+        simplifyAlgo.setElevationMaxDistance(elevationWayPointMaxDistance);
         return this;
     }
 
