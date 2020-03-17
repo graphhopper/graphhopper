@@ -133,10 +133,9 @@ public class RouteResource {
         initHints(request.getHints(), uriInfo.getQueryParameters());
         translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
+        // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
-        // remove legacy parameters, they should only be used to resolve the profile
-        request.getHints().setWeighting("");
-        request.getHints().setVehicle("");
+        removeLegacyParameters(request);
 
         request.setProfile(profile.getName()).
                 setAlgorithm(algoStr).
@@ -186,10 +185,10 @@ public class RouteResource {
             throw new IllegalArgumentException("Empty request");
 
         StopWatch sw = new StopWatch().start();
+        // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
         request.setProfile(profile.getName());
-        request.setWeighting("");
-        request.setVehicle("");
+        removeLegacyParameters(request);
         GHResponse ghResponse = graphHopper.route(request);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
@@ -249,6 +248,12 @@ public class RouteResource {
             }
             request.getHints().put(EDGE_BASED, turnCosts.get(0));
         }
+    }
+
+    private void removeLegacyParameters(GHRequest request) {
+        // these parameters should only be used to resolve the profile, but should not be passed to GraphHopper
+        request.getHints().setWeighting("");
+        request.getHints().setVehicle("");
     }
 
     private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String

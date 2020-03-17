@@ -1048,7 +1048,7 @@ public class GraphHopper implements GraphHopperAPI {
             checkIfPointsAreInBounds(points);
 
             if (Helper.isEmpty(request.getProfile())) {
-                throw new IllegalArgumentException("You need to specify a profile to perform a routing request");
+                throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see #todonow");
             }
             ProfileConfig profile = profilesByName.get(request.getProfile());
             if (profile == null) {

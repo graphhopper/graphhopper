@@ -67,6 +67,7 @@ public class SPTResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         hintsMap.put(Parameters.CH.DISABLE, true);
         hintsMap.put(Parameters.Landmark.DISABLE, true);
+        // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
         if (profile.isTurnCosts()) {
             throw new IllegalArgumentException("SPT calculation does not support turn costs yet");
