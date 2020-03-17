@@ -110,7 +110,7 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals("street 123, B 122", iter.getName());
         assertEquals(n50, iter.getAdjNode());
-        AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));
+        AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
         assertTrue(iter.get(carAccessEnc));
         assertTrue(iter.getReverse(carAccessEnc));
 
@@ -186,12 +186,12 @@ public class OSMReaderTest {
         EdgeIterator iter = carOutExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals(n40, iter.getAdjNode());
-        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(0));
+        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
         assertEquals(93146.888, iter.getDistance(), 1);
         assertTrue(iter.next());
-        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(0));
+        AbstractGraphStorageTester.assertPList(Helper.createPointList(), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
         assertEquals(n10, iter.getAdjNode());
         assertEquals(88643, iter.getDistance(), 1);
 
@@ -670,7 +670,7 @@ public class OSMReaderTest {
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 49);
 
         EdgeIteratorState edge = GHUtility.getEdge(graph, n20, n50);
-        assertEquals(Helper.createPointList3D(52, 9, -10, 51.25, 9.43, 100, 49, 10, -30), edge.fetchWayGeometry(3));
+        assertEquals(Helper.createPointList3D(52, 9, -10, 51.25, 9.43, 100, 49, 10, -30), edge.fetchWayGeometry(FetchMode.ALL));
     }
 
     @Test
@@ -688,11 +688,11 @@ public class OSMReaderTest {
 
         EdgeIteratorState edge = GHUtility.getEdge(graph, n50, n30);
         assertEquals(Helper.createPointList3D(49.5001, 11.501, 426, 49.5002, 11.5015, 441, 49.5011, 11.502, 410.0),
-                edge.fetchWayGeometry(3));
+                edge.fetchWayGeometry(FetchMode.ALL));
 
         edge = GHUtility.getEdge(graph, n10, n50);
         assertEquals(Helper.createPointList3D(49.501, 11.5001, 383.0, 49.5001, 11.501, 426.0),
-                edge.fetchWayGeometry(3));
+                edge.fetchWayGeometry(FetchMode.ALL));
     }
 
     /**

@@ -21,6 +21,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -84,7 +85,7 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
                 calc.startInterval(lastIndex);
             }
         }
-        lastIndex += edge.fetchWayGeometry(2).size();
+        lastIndex += edge.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ).size();
     }
 
     @Override

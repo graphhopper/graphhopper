@@ -22,10 +22,7 @@ import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.util.shapes.*;
 import org.locationtech.jts.algorithm.RectangleLineIntersector;
@@ -60,7 +57,7 @@ public class GraphEdgeIdFinder {
         locationIndex.query(shape.getBounds(), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer(filter)) {
             @Override
             public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
-                if (shape.intersects(edge.fetchWayGeometry(3).makeImmutable()))
+                if (shape.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()))
                     edgeIds.add(edge.getEdge());
             }
         });
@@ -77,7 +74,7 @@ public class GraphEdgeIdFinder {
             locationIndex.query(BBox.fromEnvelope(geometry.getEnvelopeInternal()), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer(filter)) {
                 @Override
                 public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
-                    if (geometry.intersects(edge.fetchWayGeometry(3).toLineString(false)))
+                    if (geometry.intersects(edge.fetchWayGeometry(FetchMode.ALL).toLineString(false)))
                         edgeIds.add(edge.getEdge());
                 }
             });
@@ -221,7 +218,7 @@ public class GraphEdgeIdFinder {
                 Shape shape = blockedShapes.get(shapeIdx);
                 if (shape.getBounds().intersects(bbox)) {
                     if (pointList == null)
-                        pointList = edgeState.fetchWayGeometry(3).makeImmutable();
+                        pointList = edgeState.fetchWayGeometry(FetchMode.ALL).makeImmutable();
                     if (shape.intersects(pointList))
                         return true;
                 }

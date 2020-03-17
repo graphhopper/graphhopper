@@ -22,6 +22,7 @@ import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
@@ -967,6 +968,30 @@ public class GraphHopperIT {
         assertEquals(25.03, pointList.getEle(3), .1);
         assertEquals(28.65, pointList.getEle(4), .1);
         assertEquals(31.32, pointList.getEle(5), .1);
+    }
+
+    @Test
+    public void testSkadiElevationProvider() {
+        final String vehicle = "foot";
+        final String weighting = "shortest";
+
+        GraphHopper hopper = createGraphHopper(vehicle).
+                setOSMFile(MONACO).
+                setStoreOnFlush(true);
+
+        hopper.setElevationProvider(new SkadiProvider(DIR));
+        hopper.importOrLoad();
+
+        GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
+                setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weighting));
+
+        PathWrapper arsp = rsp.getBest();
+        assertEquals(1601.6, arsp.getDistance(), .1);
+        assertEquals(55, arsp.getPoints().getSize());
+        assertTrue(arsp.getPoints().is3D());
+        assertEquals(69, arsp.getAscend(), 1e-1);
+        assertEquals(121, arsp.getDescend(), 1e-1);
+        assertEquals(64.5, arsp.getPoints().get(0).getElevation(), 1e-2);
     }
 
     @Test

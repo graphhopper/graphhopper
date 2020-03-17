@@ -625,6 +625,8 @@ public class GraphHopper implements GraphHopperAPI {
             elevationProvider = new SRTMGL1Provider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("multi")) {
             elevationProvider = new MultiSourceElevationProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("skadi")) {
+            elevationProvider = new SkadiProvider(cacheDirStr);
         }
 
         elevationProvider.setAutoRemoveTemporaryFiles(removeTempElevationFiles);

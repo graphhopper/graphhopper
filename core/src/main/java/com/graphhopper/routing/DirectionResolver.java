@@ -18,8 +18,6 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -192,7 +190,7 @@ public class DirectionResolver {
             }
             // we are interested in the coordinates of the next point on this edge, it could be the adj tower node
             // but also a pillar node
-            final PointList geometry = iter.fetchWayGeometry(3);
+            final PointList geometry = iter.fetchWayGeometry(FetchMode.ALL);
             double nextPointLat = geometry.getLat(1);
             double nextPointLon = geometry.getLon(1);
 
