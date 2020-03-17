@@ -82,10 +82,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
                 return new DijkstraBidirectionCHNoSOD(g);
             }
         } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
-            AlternativeRouteCH altRouteAlgo = new AlternativeRouteCH(g);
-            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
-            altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
-            return altRouteAlgo;
+            return new AlternativeRouteCH(g, opts.getHints());
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for node-based Contraction Hierarchies. Try with ch.disable=true");
         }
