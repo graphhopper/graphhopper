@@ -301,10 +301,15 @@ public class Measurement {
         if (useCHEdge)
             chProfiles.add(new CHProfileConfig("profile_tc"));
         ghConfig.setCHProfiles(chProfiles);
+        List<LMProfileConfig> lmProfiles = new ArrayList<>();
         if (useLM) {
-            String lmProfile = turnCosts ? "profile_tc" : "profile_no_tc";
-            ghConfig.setLMProfiles(Collections.singletonList(new LMProfileConfig(lmProfile)));
+            // todonow: as long as we do not allow cross-querying LM with turn costs=true/false we have to add both
+            // profiles and this currently leads to two identical LM preparations
+            lmProfiles.add(new LMProfileConfig("profile_no_tc"));
+            if (turnCosts)
+                lmProfiles.add(new LMProfileConfig("profile_tc"));
         }
+        ghConfig.setLMProfiles(lmProfiles);
         return ghConfig;
     }
 
