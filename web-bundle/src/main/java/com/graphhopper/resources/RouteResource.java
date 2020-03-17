@@ -189,6 +189,10 @@ public class RouteResource {
         }
 
         StopWatch sw = new StopWatch().start();
+        // todo: #1934, only try to resolve the profile if no profile is given!
+        ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
+        request.setProfile(profile.getName());
+        removeLegacyParameters(request);
         GHResponse ghResponse = graphHopper.route(request);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
@@ -248,6 +252,15 @@ public class RouteResource {
             }
             request.getHints().put(EDGE_BASED, turnCosts.get(0));
         }
+    }
+
+    private void removeLegacyParameters(GHRequest request) {
+        // these parameters should only be used to resolve the profile, but should not be passed to GraphHopper
+        request.getHints().setWeighting("");
+        request.getHints().setVehicle("");
+        // todonow: shall we keep these for cross querying LM with turn costs or even running queries without turn costs with edge-based algos?a
+        request.getHints().remove("edge_based");
+        request.getHints().remove("turn_costs");
     }
 
     private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String

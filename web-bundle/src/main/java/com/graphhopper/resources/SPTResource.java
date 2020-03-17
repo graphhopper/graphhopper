@@ -3,6 +3,7 @@ package com.graphhopper.resources;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.isochrone.algorithm.Isochrone;
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -38,11 +39,13 @@ public class SPTResource {
     private static final Logger logger = LoggerFactory.getLogger(SPTResource.class);
 
     private final GraphHopper graphHopper;
+    private final ProfileResolver profileResolver;
     private final EncodingManager encodingManager;
 
     @Inject
-    public SPTResource(GraphHopper graphHopper, EncodingManager encodingManager) {
+    public SPTResource(GraphHopper graphHopper, ProfileResolver profileResolver, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
+        this.profileResolver = profileResolver;
         this.encodingManager = encodingManager;
     }
 
@@ -64,7 +67,8 @@ public class SPTResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         hintsMap.put(Parameters.CH.DISABLE, true);
         hintsMap.put(Parameters.Landmark.DISABLE, true);
-        ProfileConfig profile = graphHopper.resolveProfile(hintsMap);
+        // todo: #1934, only try to resolve the profile if no profile is given!
+        ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
         if (profile.isTurnCosts()) {
             throw new IllegalArgumentException("SPT calculation does not support turn costs yet");
         }

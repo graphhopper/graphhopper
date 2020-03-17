@@ -40,7 +40,6 @@ import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -972,18 +971,22 @@ public class GraphHopperIT {
 
     @Test
     public void testSkadiElevationProvider() {
+        final String profile = "profile";
         final String vehicle = "foot";
         final String weighting = "shortest";
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
+                setProfiles(
+                        new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)
+                ).
                 setStoreOnFlush(true);
 
         hopper.setElevationProvider(new SkadiProvider(DIR));
         hopper.importOrLoad();
 
-        GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
-                setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weighting));
+        GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199)
+                .setProfile(profile));
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(1601.6, arsp.getDistance(), .1);
@@ -1069,8 +1072,6 @@ public class GraphHopperIT {
         );
         hopper.importOrLoad();
 
-        assertEquals(vehicle1, hopper.getDefaultVehicle().toString());
-
         assertEquals(2, hopper.getCHPreparationHandler().getPreparations().size());
 
         GHResponse rsp = hopper.route(new GHRequest(43.745084, 7.430513, 43.745247, 7.430347)
@@ -1115,10 +1116,7 @@ public class GraphHopperIT {
         );
         hopper.importOrLoad();
 
-        assertEquals(vehicle1, hopper.getDefaultVehicle().toString());
-
         assertEquals(2, hopper.getCHPreparationHandler().getPreparations().size());
-
         GHResponse rsp = hopper.route(new GHRequest(52.513505, 13.350443, 52.513505, 13.350245)
                 .setProfile(profile1));
 
@@ -1131,8 +1129,6 @@ public class GraphHopperIT {
 
     @Test
     public void testMultipleVehiclesWithCH() {
-        // todonow: previously this test also was about the selection of the defaultvehicle, maybe do sth. similar
-        // for the converter
         final String profile1 = "profile1";
         final String profile2 = "profile2";
         final String vehicle1 = "bike";
@@ -1151,7 +1147,6 @@ public class GraphHopperIT {
                 new CHProfileConfig(profile2)
         );
         hopper.importOrLoad();
-        assertEquals(vehicle1, hopper.getDefaultVehicle().toString());
         String str = hopper.getEncodingManager().toString();
         GHResponse rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile2"));
@@ -1441,8 +1436,8 @@ public class GraphHopperIT {
 
     @Test
     public void testTurnCostsOnOff() {
-        final String profile1 = "profile1";
-        final String profile2 = "profile2";
+        final String profile1 = "profile_no_turn_costs";
+        final String profile2 = "profile_turn_costs";
         final String vehicle = "car";
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
@@ -1455,18 +1450,16 @@ public class GraphHopperIT {
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        // without turn costs
-        req.setProfile("profile1");
+        req.setProfile("profile_no_turn_costs");
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
-        // with turn costs
-        req.setProfile("profile2");
+        req.setProfile("profile_turn_costs");
         assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 
     @Test
     public void testTurnCostsOnOffCH() {
-        final String profile1 = "my_profile1";
-        final String profile2 = "my_profile2";
+        final String profile1 = "profile_turn_costs";
+        final String profile2 = "profile_no_turn_costs";
         final String vehicle = "car";
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
@@ -1484,11 +1477,9 @@ public class GraphHopperIT {
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        // without turn costs
-        req.setProfile("my_profile2");
+        req.setProfile("profile_no_turn_costs");
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
-        // with turn costs
-        req.setProfile("my_profile1");
+        req.setProfile("profile_turn_costs");
         assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 
@@ -1524,8 +1515,6 @@ public class GraphHopperIT {
 
     @Test
     public void testNodeBasedCHOnlyButTurnCostForNonCH() {
-        // todonow: tests with missing edge_based parameter for the different configurations probably need to go to
-        // converter tests
         final String profile1 = "car_profile_tc";
         final String profile2 = "car_profile_notc";
         final String weighting = "fastest";
@@ -1562,52 +1551,6 @@ public class GraphHopperIT {
                 "\navailable CH profiles: [car_profile_notc]";
         assertTrue("unexpected error:\n" + rsp.getErrors().toString() + "\nwhen expecting an error containing:\n" + expected,
                 rsp.getErrors().toString().contains(expected));
-    }
-
-    @Test
-    public void testEdgeBasedByDefaultIfOnlyEdgeBased() {
-        // todonow: remove this comment but make sure this is included in converter tests?
-        // when there is only one edge-based CH profile, there is no need to specify edge_based=true explicitly,
-        // see #1637
-        // todonow: and maybe (re)move or at least rename this whole test
-        final String weighting = "fastest";
-        GraphHopper hopper = createGraphHopper("car|turn_costs=true").
-                setOSMFile(MOSCOW).
-                setProfiles(new ProfileConfig("profile").setVehicle("car").setWeighting(weighting).setTurnCosts(true)).
-                setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("profile"));
-        hopper.getCHPreparationHandler().setDisablingAllowed(true);
-        hopper.importOrLoad();
-
-        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        req.setProfile("profile");
-        req.getHints().put(CH.DISABLE, false);
-        assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
-        req.getHints().put(CH.DISABLE, true);
-        assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
-    }
-
-    @Disabled
-    @Test
-    public void testEdgeBasedRequiresTurnCostSupport() {
-        // todonow: move this test to converter tests as it makes no more sense here
-        String profile = "profile";
-        String vehicle = "foot";
-        String weighting = "fastest";
-        GraphHopper hopper = createGraphHopper(vehicle).
-                setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
-                setStoreOnFlush(true).
-                importOrLoad();
-        GHPoint p = new GHPoint(43.727687, 7.418737);
-        GHPoint q = new GHPoint(43.74958, 7.436566);
-        GHRequest req = new GHRequest(p, q);
-        req.getHints().put(Routing.EDGE_BASED, true);
-        req.setProfile(profile);
-        GHResponse rsp = hopper.route(req);
-        assertTrue(rsp.hasErrors());
-        assertTrue("using edge-based for encoder without turncost support should be an error, but got:\n" + rsp.getErrors(),
-                rsp.getErrors().toString().contains("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true"));
     }
 
     @Test
@@ -1762,9 +1705,6 @@ public class GraphHopperIT {
         GHPoint q = new GHPoint(43.73222, 7.415557);
         GHRequest req = new GHRequest(p, q);
         req.setProfile("my_profile");
-        // todonow: remove this comment and create a corresponding converter test
-        // note that we do *not* set the weighting on the request, it will be determined automatically from the
-        // CH profile, see #1788
         // we force the start/target directions such that there are u-turns right after we start and right before
         // we reach the target
         req.setCurbsides(Arrays.asList("right", "right"));

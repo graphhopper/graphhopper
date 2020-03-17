@@ -149,6 +149,7 @@ public class GraphHopperAPITest {
             }
         }
                 .setEncodingManager(encodingManager)
+                .setProfiles(new ProfileConfig(vehicle).setVehicle(vehicle).setWeighting("fastest"))
                 .setElevation(true);
         instance.load(loc);
         instance.flush();
@@ -163,6 +164,7 @@ public class GraphHopperAPITest {
             }
         }
                 .setEncodingManager(encodingManager)
+                .setProfiles(new ProfileConfig(vehicle).setVehicle(vehicle).setWeighting("fastest"))
                 .setElevation(true);
         instance.load(loc);
         instance.flush();
@@ -267,6 +269,7 @@ public class GraphHopperAPITest {
 
     private GraphHopper createGraphHopper(String vehicle) {
         return new GraphHopper()
-                .setEncodingManager(EncodingManager.create(vehicle));
+                .setEncodingManager(EncodingManager.create(vehicle))
+                .setProfiles(new ProfileConfig(vehicle).setVehicle(vehicle).setWeighting("fastest"));
     }
 }

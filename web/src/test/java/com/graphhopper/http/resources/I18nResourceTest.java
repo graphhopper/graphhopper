@@ -1,5 +1,6 @@
 package com.graphhopper.http.resources;
 
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
@@ -10,6 +11,7 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Collections;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.assertEquals;
@@ -24,7 +26,8 @@ public class I18nResourceTest {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR);
+                put("graph.location", DIR).
+                setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
     }
 
     @ClassRule

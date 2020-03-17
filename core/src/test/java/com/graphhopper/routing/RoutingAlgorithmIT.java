@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.PrincetonReader;
 import com.graphhopper.routing.util.EncodingManager;
@@ -25,7 +26,6 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -37,10 +37,7 @@ import com.graphhopper.util.StopWatch;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
@@ -83,8 +80,7 @@ public class RoutingAlgorithmIT {
 
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMPreparationHandler().isEnabled()) {
-            final HintsMap lmHints = new HintsMap(defaultHints)
-                    .put(Parameters.Landmark.DISABLE, false);
+            final HintsMap lmHints = new HintsMap(defaultHints).put(Parameters.Landmark.DISABLE, false);
             algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
@@ -97,8 +93,8 @@ public class RoutingAlgorithmIT {
             final HintsMap chHints = new HintsMap(defaultHints);
             chHints.put(Parameters.CH.DISABLE, false);
             chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
-            CHProfile pickedProfile = new ProfileResolver().selectCHProfile(hopper.getCHPreparationHandler().getCHProfiles(), chHints);
-            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
+            ProfileConfig pickedProfile = new ProfileResolver(hopper.getEncodingManager(), hopper.getProfiles(), hopper.getCHPreparationHandler().getCHProfileConfigs(), Collections.<LMProfileConfig>emptyList()).selectProfileCH(chHints);
+            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + weightingStr) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {

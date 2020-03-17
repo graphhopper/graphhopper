@@ -49,8 +49,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static com.graphhopper.http.util.TestUtils.clientUrl;
 import static org.junit.Assert.*;
 
 /**
@@ -228,7 +226,7 @@ public class RouteResourceTest {
     @Test
     public void testPathDetails() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(clientUrl(app, "/route")));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setProfile("my_car");
         request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
@@ -267,7 +265,7 @@ public class RouteResourceTest {
     @Test
     public void testPathDetailsSamePoint() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(clientUrl(app, "/route")));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.554851, 1.536198);
         request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
         request.setProfile("my_car");
@@ -279,7 +277,7 @@ public class RouteResourceTest {
     @Test
     public void testPathDetailsNoConnection() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(clientUrl(app, "/route")));
         GHRequest request = new GHRequest(42.542078, 1.45586, 42.537841, 1.439981);
         request.setPathDetails(Collections.singletonList("average_speed"));
         request.setProfile("my_car");
@@ -319,7 +317,7 @@ public class RouteResourceTest {
     @Test
     public void testInitInstructionsWithTurnDescription() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
+        assertTrue(hopper.load(clientUrl(app, "/route")));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         request.setProfile("my_car");
         GHResponse rsp = hopper.route(request);

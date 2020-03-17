@@ -18,6 +18,7 @@
 
 package com.graphhopper.http.resources;
 
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.resources.PtIsochroneResource;
@@ -36,6 +37,7 @@ import javax.ws.rs.client.WebTarget;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.assertFalse;
@@ -53,7 +55,8 @@ public class PtIsochroneTest {
         config.getGraphHopperConfiguration()
                 .put("graph.flag_encoders", "foot")
                 .put("graph.location", GRAPH_LOC)
-                .put("gtfs.file", "../reader-gtfs/files/sample-feed.zip");
+                .put("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
+                setProfiles(Collections.singletonList(new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
     }
 

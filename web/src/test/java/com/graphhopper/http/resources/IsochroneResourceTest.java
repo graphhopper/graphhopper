@@ -19,9 +19,9 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -34,7 +34,9 @@ import org.locationtech.jts.geom.GeometryFactory;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Arrays;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
@@ -49,7 +51,11 @@ public class IsochroneResourceTest {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR);
+                put("graph.location", DIR).
+                setProfiles(Arrays.asList(
+                        new ProfileConfig("fast_car").setVehicle("car").setWeighting("fastest"),
+                        new ProfileConfig("short_car").setVehicle("car").setWeighting("shortest")
+                ));
     }
 
     @ClassRule

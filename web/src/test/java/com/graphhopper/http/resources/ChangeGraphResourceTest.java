@@ -48,8 +48,8 @@ public class ChangeGraphResourceTest {
                 put("graph.flag_encoders", "car").
                 put("web.change_graph.enabled", "true").
                 put("graph.location", DIR).
-                put("datareader.file", "../core/files/andorra.osm.pbf")
-                .setProfiles(Collections.singletonList(new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")));
+                put("datareader.file", "../core/files/andorra.osm.pbf").
+                setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
     }
 
     @ClassRule

@@ -629,6 +629,7 @@ public class RoutingAlgorithmWithOSMIT {
                 setWayPointMaxDistance(0).
                 setDataReaderFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
+                setProfiles(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")).
                 importOrLoad();
         final Graph g = hopper.getGraphHopperStorage();
         final LocationIndex idx = hopper.getLocationIndex();

@@ -49,8 +49,10 @@ public class RouteResourceWithEleTest {
                 put("prepare.min_one_way_network_size", "0").
                 put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/monaco.osm.gz").
-                put("graph.location", dir)
-                .setProfiles(Collections.singletonList(new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")));
+                put("graph.location", dir).
+                setProfiles(Collections.singletonList(
+                        new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")
+                ));
     }
 
     @ClassRule
