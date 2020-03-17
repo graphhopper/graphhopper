@@ -429,7 +429,7 @@ public class Helper {
                     try {
                         return Double.parseDouble(string);
                     } catch (NumberFormatException ex4) {
-                        // give up and store as string
+                        // give up and simply return the string
                         return string;
                     }
                 }
