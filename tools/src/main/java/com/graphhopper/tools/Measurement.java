@@ -251,7 +251,7 @@ public class Measurement {
             if (!isEmpty(countryBordersDirectory)) {
                 printSpatialRuleLookupTest(countryBordersDirectory, count * 100);
             }
-            
+
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
             put("error", ex.toString());
@@ -475,12 +475,12 @@ public class Measurement {
         }.setIterations(count).start();
         print("unit_tests" + description + ".get_edge_state", miniPerf);
     }
-    
+
     private void printSpatialRuleLookupTest(String countryBordersDirectory, int count) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        
+
         List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(countryBordersDirectory), "*.{geojson,json}")) {
             for (Path borderFile : stream) {
@@ -493,9 +493,9 @@ public class Measurement {
             logger.error("Failed to load borders.", e);
             return;
         }
-        
+
         SpatialRuleFactory rulePerCountryFactory = new SpatialRuleFactory() {
-            
+
             @Override
             public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
                 return new AbstractSpatialRule(borders) {
@@ -506,9 +506,9 @@ public class Measurement {
                 };
             }
         };
-        
+
         final SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO_A3", rulePerCountryFactory);
-    
+
         // generate random points in central Europe
         final List<GHPoint> randomPoints = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
@@ -516,14 +516,14 @@ public class Measurement {
             double lon = 6d + Math.random() * 21d;
             randomPoints.add(new GHPoint(lat, lon));
         }
-        
+
         MiniPerfTest lookupPerfTest = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
                 return spatialRuleLookup.lookupRule(randomPoints.get(run)).hashCode();
             }
         }.setIterations(count).start();
-        
+
         print("spatialrulelookup", lookupPerfTest);
     }
 
