@@ -34,6 +34,14 @@ import java.util.Map;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
+/**
+ * Before the `profile` parameter was introduced in #todonow the cost-function used for route calculations could be
+ * specified by setting the vehicle, weighting and a turn_costs flag. This class does the conversion between these
+ * legacy parameters and the corresponding profile. To resolve a profile we consider both the request parameters as
+ * well as the available LM/CH preparations.
+ * Note that this class is meant to be only used for the top-most web layer, while the GH engine should only deal with
+ * the profile parameter.
+ */
 public class ProfileResolver {
     private final EncodingManager encodingManager;
     private final List<ProfileConfig> profiles;
