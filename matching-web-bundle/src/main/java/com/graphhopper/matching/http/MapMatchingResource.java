@@ -97,7 +97,7 @@ public class MapMatchingResource {
 
         MapMatching matching = new MapMatching(graphHopper,
                 // set default values from annotation for certain keys
-                createHintsMap(uriInfo.getQueryParameters()).setVehicle(vehicleStr).put(MAX_VISITED_NODES, maxVisitedNodes));
+                createHintsMap(uriInfo.getQueryParameters()).setVehicle(vehicleStr).putObject(MAX_VISITED_NODES, maxVisitedNodes));
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
         List<Observation> measurements = gpx.trk.get(0).getEntries();
@@ -183,7 +183,7 @@ public class MapMatchingResource {
         for (int emIndex = 0; emIndex < result.getEdgeMatches().size(); emIndex++) {
             ObjectNode link = links.addObject();
             EdgeMatch edgeMatch = result.getEdgeMatches().get(emIndex);
-            PointList pointList = edgeMatch.getEdgeState().fetchWayGeometry(emIndex == 0 ? 3 : 2);
+            PointList pointList = edgeMatch.getEdgeState().fetchWayGeometry(emIndex == 0 ? FetchMode.ALL : FetchMode.PILLAR_AND_ADJ);
             final ObjectNode geometry = link.putObject("geometry");
             if (pointList.size() < 2) {
                 geometry.putPOJO("coordinates", pointsEncoded ? WebHelper.encodePolyline(pointList, elevation) : pointList.toLineString(elevation));

@@ -85,8 +85,8 @@ public class MapMatchingTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> algoOptions() {
         return Arrays.asList(new Object[][]{
-                {"non-CH", new HintsMap().put(Parameters.CH.DISABLE, true)},
-                {"CH", new HintsMap().put(Parameters.CH.DISABLE, false)}
+                {"non-CH", new HintsMap().putObject(Parameters.CH.DISABLE, true)},
+                {"CH", new HintsMap().putObject(Parameters.CH.DISABLE, false)}
         });
     }
 
@@ -188,7 +188,7 @@ public class MapMatchingTest {
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
 
         // not OK when we only allow a small number of visited nodes:
-        HintsMap opts = new HintsMap(algoOptions).put(Parameters.Routing.MAX_VISITED_NODES, 1);
+        HintsMap opts = new HintsMap(algoOptions).putObject(Parameters.Routing.MAX_VISITED_NODES, 1);
         mapMatching = new MapMatching(graphHopper, opts);
         try {
             mr = mapMatching.doWork(inputGPXEntries);
@@ -283,7 +283,7 @@ public class MapMatchingTest {
     public void testUTurns() throws IOException {
         final HintsMap algoOptions = new HintsMap(this.algoOptions)
                 // Reduce penalty to allow U-turns
-                .put(Parameters.Routing.HEADING_PENALTY, 50);
+                .putObject(Parameters.Routing.HEADING_PENALTY, 50);
 
         MapMatching mapMatching = new MapMatching(graphHopper, algoOptions);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour4-with-uturn.gpx"), Gpx.class);

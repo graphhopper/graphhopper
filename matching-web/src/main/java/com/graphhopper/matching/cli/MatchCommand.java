@@ -67,13 +67,13 @@ public class MatchCommand extends Command {
         graphHopperConfiguration.put("graph.location", "graph-cache");
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
         System.out.println("loading graph from cache");
-        hopper.load(graphHopperConfiguration.get("graph.location", "graph-cache"));
+        hopper.load(graphHopperConfiguration.getString("graph.location", "graph-cache"));
 
         String vehicle = args.getString("vehicle");
         FlagEncoder encoder = Helper.isEmpty(vehicle) ? hopper.getEncodingManager().fetchEdgeEncoders().get(0) : hopper.getEncodingManager().getEncoder(vehicle);
         // Penalizing inner-link U-turns only works with fastest weighting, since
         // shortest weighting does not apply penalties to unfavored virtual edges.
-        HintsMap hintsMap = new HintsMap().setWeighting("fastest").setVehicle(encoder.toString()).put(MAX_VISITED_NODES, args.getInt("max_visited_nodes"));
+        HintsMap hintsMap = new HintsMap().setWeighting("fastest").setVehicle(encoder.toString()).putObject(MAX_VISITED_NODES, args.getInt("max_visited_nodes"));
         Weighting weighting = new FastestWeighting(encoder);
         MapMatching mapMatching = new MapMatching(hopper, hintsMap);
         mapMatching.setTransitionProbabilityBeta(args.getDouble("transition_probability_beta"));
