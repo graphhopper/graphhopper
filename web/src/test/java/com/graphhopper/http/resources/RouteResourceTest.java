@@ -65,9 +65,9 @@ public class RouteResourceTest {
     static {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
-                put("routing.ch.disabling_allowed", "true").
-                put("prepare.min_network_size", "0").
-                put("prepare.min_one_way_network_size", "0").
+                put("routing.ch.disabling_allowed", true).
+                put("prepare.min_network_size", 0).
+                put("prepare.min_one_way_network_size", 0).
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.encoded_values", "surface").
                 put("graph.location", DIR)
@@ -320,7 +320,7 @@ public class RouteResourceTest {
         GHResponse rsp = hopper.route(request);
         assertEquals("Continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());
 
-        request.getHints().put("turn_description", false);
+        request.getHints().putObject("turn_description", false);
         rsp = hopper.route(request);
         assertFalse(rsp.hasErrors());
         assertEquals("Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());

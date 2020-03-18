@@ -29,7 +29,6 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -375,8 +374,8 @@ public final class PtRouteResource {
             if (discoveredSolutions.isEmpty() && router.getVisitedNodes() >= maxVisitedNodesForRequest) {
                 response.addError(new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest));
             }
-            response.getHints().put("visited_nodes.sum", visitedNodes);
-            response.getHints().put("visited_nodes.average", visitedNodes);
+            response.getHints().putObject("visited_nodes.sum", visitedNodes);
+            response.getHints().putObject("visited_nodes.average", visitedNodes);
             if (discoveredSolutions.isEmpty()) {
                 response.addError(new RuntimeException("No route found"));
             }

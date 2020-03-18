@@ -99,7 +99,7 @@ public class MVTResource {
                 LineString lineString;
                 RoadClass rc = edge.get(roadClassEnc);
                 if (zInfo >= 14) {
-                    PointList pl = edge.fetchWayGeometry(3);
+                    PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
                     lineString = pl.toLineString(false);
                 } else if (rc == RoadClass.MOTORWAY
                         || zInfo > 10 && (rc == RoadClass.PRIMARY || rc == RoadClass.TRUNK)

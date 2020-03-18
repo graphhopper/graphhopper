@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
+import static com.graphhopper.util.FetchMode.*;
 import static org.junit.Assert.*;
 
 /**
@@ -130,14 +131,14 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0), iter.fetchWayGeometry(0));
+        assertEquals(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0), iter.fetchWayGeometry(PILLAR_ONLY));
 
         assertTrue(iter.next());
-        assertEquals(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0), iter.fetchWayGeometry(0));
-        assertEquals(Helper.createPointList3D(10, 10, 0, 1.5, 1, 0, 2, 3, 0), iter.fetchWayGeometry(1));
-        assertEquals(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0, 11, 20, 1), iter.fetchWayGeometry(2));
-        assertEquals(Helper.createPointList3D(10, 10, 0, 11, 20, 1), iter.fetchWayGeometry(4));
-        assertEquals(Helper.createPointList3D(11, 20, 1, 10, 10, 0), iter.detach(true).fetchWayGeometry(4));
+        assertEquals(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0), iter.fetchWayGeometry(PILLAR_ONLY));
+        assertEquals(Helper.createPointList3D(10, 10, 0, 1.5, 1, 0, 2, 3, 0), iter.fetchWayGeometry(BASE_AND_PILLAR));
+        assertEquals(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0, 11, 20, 1), iter.fetchWayGeometry(PILLAR_AND_ADJ));
+        assertEquals(Helper.createPointList3D(10, 10, 0, 11, 20, 1), iter.fetchWayGeometry(TOWER_ONLY));
+        assertEquals(Helper.createPointList3D(11, 20, 1, 10, 10, 0), iter.detach(true).fetchWayGeometry(TOWER_ONLY));
 
         assertEquals(11, na.getLatitude(1), 1e-2);
         assertEquals(20, na.getLongitude(1), 1e-2);
@@ -151,9 +152,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
 
         EdgeIteratorState eib = GHUtility.getEdge(g, 1, 2);
-        assertEquals(Helper.createPointList3D(), eib.fetchWayGeometry(0));
-        assertEquals(Helper.createPointList3D(11, 20, 1), eib.fetchWayGeometry(1));
-        assertEquals(Helper.createPointList3D(12, 12, 0.4), eib.fetchWayGeometry(2));
+        assertEquals(Helper.createPointList3D(), eib.fetchWayGeometry(PILLAR_ONLY));
+        assertEquals(Helper.createPointList3D(11, 20, 1), eib.fetchWayGeometry(BASE_AND_PILLAR));
+        assertEquals(Helper.createPointList3D(12, 12, 0.4), eib.fetchWayGeometry(PILLAR_AND_ADJ));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(2)));
     }
 

@@ -176,11 +176,11 @@ public class QueryGraphTest {
 
         QueryGraph queryGraph = QueryGraph.lookup(g, qr);
         EdgeIteratorState state = GHUtility.getEdge(queryGraph, 0, 1);
-        assertEquals(4, state.fetchWayGeometry(3).size());
+        assertEquals(4, state.fetchWayGeometry(FetchMode.ALL).size());
 
         //  fetch virtual edge and check way geometry
         state = GHUtility.getEdge(queryGraph, 4, 3);
-        assertEquals(2, state.fetchWayGeometry(3).size());
+        assertEquals(2, state.fetchWayGeometry(FetchMode.ALL).size());
 
         // now we actually test the edges at the real tower nodes (virtual ones should be added and some real ones removed)
         assertEquals("[1->4, 1 1-0]", ((VirtualEdgeIterator) queryGraph.createEdgeExplorer().setBaseNode(1)).getEdges().toString());
@@ -415,7 +415,7 @@ public class QueryGraphTest {
         EdgeIteratorState edge = GHUtility.getEdge(g, base, adj);
         if (edge == null)
             throw new IllegalStateException("edge " + base + "-" + adj + " not found");
-        return edge.fetchWayGeometry(3);
+        return edge.fetchWayGeometry(FetchMode.ALL);
     }
 
     public QueryResult createLocationResult(double lat, double lon,
@@ -677,19 +677,19 @@ public class QueryGraphTest {
 
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
-        assertEquals(1, iter.fetchWayGeometry(0).size());
-        assertEquals(2, iter.fetchWayGeometry(1).size());
-        assertEquals(2, iter.fetchWayGeometry(2).size());
-        assertEquals(3, iter.fetchWayGeometry(3).size());
-        assertEquals(Helper.createPointList(0.15, 0.15, 0.1, 0.1, 0.0, 0.0), iter.fetchWayGeometry(3));
+        assertEquals(1, iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).size());
+        assertEquals(2, iter.fetchWayGeometry(FetchMode.BASE_AND_PILLAR).size());
+        assertEquals(2, iter.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ).size());
+        assertEquals(3, iter.fetchWayGeometry(FetchMode.ALL).size());
+        assertEquals(Helper.createPointList(0.15, 0.15, 0.1, 0.1, 0.0, 0.0), iter.fetchWayGeometry(FetchMode.ALL));
 
         assertTrue(iter.next());
         assertEquals(1, iter.getAdjNode());
-        assertEquals(1, iter.fetchWayGeometry(0).size());
-        assertEquals(2, iter.fetchWayGeometry(1).size());
-        assertEquals(2, iter.fetchWayGeometry(2).size());
-        assertEquals(3, iter.fetchWayGeometry(3).size());
-        assertEquals(Helper.createPointList(0.15, 0.15, 0.2, 0.2, 0.3, 0.3), iter.fetchWayGeometry(3));
+        assertEquals(1, iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).size());
+        assertEquals(2, iter.fetchWayGeometry(FetchMode.BASE_AND_PILLAR).size());
+        assertEquals(2, iter.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ).size());
+        assertEquals(3, iter.fetchWayGeometry(FetchMode.ALL).size());
+        assertEquals(Helper.createPointList(0.15, 0.15, 0.2, 0.2, 0.3, 0.3), iter.fetchWayGeometry(FetchMode.ALL));
 
         assertFalse(iter.next());
     }
@@ -718,19 +718,19 @@ public class QueryGraphTest {
 
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
-        assertEquals(1, iter.fetchWayGeometry(0).size());
-        assertEquals(2, iter.fetchWayGeometry(1).size());
-        assertEquals(2, iter.fetchWayGeometry(2).size());
-        assertEquals(3, iter.fetchWayGeometry(3).size());
-        assertEquals(Helper.createPointList(0.2, 0.2, 0.1, 0.1, 0.0, 0.0), iter.fetchWayGeometry(3));
+        assertEquals(1, iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).size());
+        assertEquals(2, iter.fetchWayGeometry(FetchMode.BASE_AND_PILLAR).size());
+        assertEquals(2, iter.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ).size());
+        assertEquals(3, iter.fetchWayGeometry(FetchMode.ALL).size());
+        assertEquals(Helper.createPointList(0.2, 0.2, 0.1, 0.1, 0.0, 0.0), iter.fetchWayGeometry(FetchMode.ALL));
 
         assertTrue(iter.next());
         assertEquals(1, iter.getAdjNode());
-        assertEquals(0, iter.fetchWayGeometry(0).size());
-        assertEquals(1, iter.fetchWayGeometry(1).size());
-        assertEquals(1, iter.fetchWayGeometry(2).size());
-        assertEquals(2, iter.fetchWayGeometry(3).size());
-        assertEquals(Helper.createPointList(0.2, 0.2, 0.5, 0.1), iter.fetchWayGeometry(3));
+        assertEquals(0, iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).size());
+        assertEquals(1, iter.fetchWayGeometry(FetchMode.BASE_AND_PILLAR).size());
+        assertEquals(1, iter.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ).size());
+        assertEquals(2, iter.fetchWayGeometry(FetchMode.ALL).size());
+        assertEquals(Helper.createPointList(0.2, 0.2, 0.5, 0.1), iter.fetchWayGeometry(FetchMode.ALL));
 
         assertFalse(iter.next());
     }

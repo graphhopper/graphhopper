@@ -288,7 +288,7 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(edge.getName(), newEdge.getName());
         assertEquals(edge.getDistance(), newEdge.getDistance(), 1e-7);
         assertEquals(edge.getFlags(), newEdge.getFlags());
-        assertEquals(edge.fetchWayGeometry(0), newEdge.fetchWayGeometry(0));
+        assertEquals(edge.fetchWayGeometry(FetchMode.PILLAR_ONLY), newEdge.fetchWayGeometry(FetchMode.PILLAR_ONLY));
     }
 
     @Test
@@ -620,11 +620,11 @@ public abstract class AbstractGraphStorageTester {
         EdgeIterator iter = carAllExplorer.setBaseNode(id9);
         assertTrue(iter.next());
         assertEquals(id12, iter.getAdjNode());
-        assertEquals(2, iter.fetchWayGeometry(0).getLongitude(0), 1e-7);
+        assertEquals(2, iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLongitude(0), 1e-7);
 
         assertTrue(iter.next());
         assertEquals(id11, iter.getAdjNode());
-        assertEquals(2, iter.fetchWayGeometry(0).getLongitude(0), 1e-7);
+        assertEquals(2, iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLongitude(0), 1e-7);
     }
 
     @Test
@@ -843,33 +843,33 @@ public abstract class AbstractGraphStorageTester {
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
         assertEquals(14, iter.getAdjNode());
-        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0), iter.fetchWayGeometry(0));
-        assertPList(Helper.createPointList(0.01, 0.01, 1, 11, 1, 12, 1, 13.0), iter.fetchWayGeometry(1));
-        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0, 0.14, 0.14), iter.fetchWayGeometry(2));
-        assertPList(Helper.createPointList(0.01, 0.01, 1, 11, 1, 12, 1, 13.0, 0.14, 0.14), iter.fetchWayGeometry(3));
+        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
+        assertPList(Helper.createPointList(0.01, 0.01, 1, 11, 1, 12, 1, 13.0), iter.fetchWayGeometry(FetchMode.BASE_AND_PILLAR));
+        assertPList(Helper.createPointList(1, 11, 1, 12, 1, 13.0, 0.14, 0.14), iter.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ));
+        assertPList(Helper.createPointList(0.01, 0.01, 1, 11, 1, 12, 1, 13.0, 0.14, 0.14), iter.fetchWayGeometry(FetchMode.ALL));
 
         assertTrue(iter.next());
         assertEquals(4, iter.getAdjNode());
-        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(0));
-        assertPList(Helper.createPointList(0.01, 0.01, 1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(1));
-        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3, 0.4, 0.4), iter.fetchWayGeometry(2));
-        assertPList(Helper.createPointList(0.01, 0.01, 1, 1, 1, 2, 1, 3, 0.4, 0.4), iter.fetchWayGeometry(3));
+        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
+        assertPList(Helper.createPointList(0.01, 0.01, 1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(FetchMode.BASE_AND_PILLAR));
+        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3, 0.4, 0.4), iter.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ));
+        assertPList(Helper.createPointList(0.01, 0.01, 1, 1, 1, 2, 1, 3, 0.4, 0.4), iter.fetchWayGeometry(FetchMode.ALL));
 
         assertFalse(iter.next());
 
         iter = carOutExplorer.setBaseNode(0);
         assertTrue(iter.next());
         assertEquals(4, iter.getAdjNode());
-        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(0));
+        assertPList(Helper.createPointList(1, 1, 1, 2, 1, 3), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
         assertFalse(iter.next());
 
         iter = carInExplorer.setBaseNode(10);
         assertTrue(iter.next());
         assertEquals(4, iter.getAdjNode());
-        assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.fetchWayGeometry(0));
-        assertPList(Helper.createPointList(0.99, 0.99, 1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.fetchWayGeometry(1));
-        assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5, 0.4, 0.4), iter.fetchWayGeometry(2));
-        assertPList(Helper.createPointList(0.99, 0.99, 1, 9, 1, 8, 1, 7, 1, 6, 1, 5, 0.4, 0.4), iter.fetchWayGeometry(3));
+        assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.fetchWayGeometry(FetchMode.PILLAR_ONLY));
+        assertPList(Helper.createPointList(0.99, 0.99, 1, 9, 1, 8, 1, 7, 1, 6, 1, 5), iter.fetchWayGeometry(FetchMode.BASE_AND_PILLAR));
+        assertPList(Helper.createPointList(1, 9, 1, 8, 1, 7, 1, 6, 1, 5, 0.4, 0.4), iter.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ));
+        assertPList(Helper.createPointList(0.99, 0.99, 1, 9, 1, 8, 1, 7, 1, 6, 1, 5, 0.4, 0.4), iter.fetchWayGeometry(FetchMode.ALL));
         assertFalse(iter.next());
     }
 
@@ -1040,9 +1040,9 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(100, na.getEle(1), 1e-1);
 
         graph.edge(0, 1).setWayGeometry(Helper.createPointList3D(10, 27, 72, 11, 20, 1));
-        assertEquals(Helper.createPointList3D(10, 27, 72, 11, 20, 1), GHUtility.getEdge(graph, 0, 1).fetchWayGeometry(0));
-        assertEquals(Helper.createPointList3D(10, 20, -10, 10, 27, 72, 11, 20, 1, 11, 2, 100), GHUtility.getEdge(graph, 0, 1).fetchWayGeometry(3));
-        assertEquals(Helper.createPointList3D(11, 2, 100, 11, 20, 1, 10, 27, 72, 10, 20, -10), GHUtility.getEdge(graph, 1, 0).fetchWayGeometry(3));
+        assertEquals(Helper.createPointList3D(10, 27, 72, 11, 20, 1), GHUtility.getEdge(graph, 0, 1).fetchWayGeometry(FetchMode.PILLAR_ONLY));
+        assertEquals(Helper.createPointList3D(10, 20, -10, 10, 27, 72, 11, 20, 1, 11, 2, 100), GHUtility.getEdge(graph, 0, 1).fetchWayGeometry(FetchMode.ALL));
+        assertEquals(Helper.createPointList3D(11, 2, 100, 11, 20, 1, 10, 27, 72, 10, 20, -10), GHUtility.getEdge(graph, 1, 0).fetchWayGeometry(FetchMode.ALL));
     }
 
     @Test
@@ -1091,14 +1091,14 @@ public abstract class AbstractGraphStorageTester {
         iter.next();
         EdgeIteratorState edgeState02 = iter.detach(false);
         assertEquals(2, iter.getAdjNode());
-        assertEquals(1, edgeState02.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(1, edgeState02.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLatitude(0), 1e-1);
         assertEquals(2, edgeState02.getAdjNode());
         assertTrue(edgeState02.get(carAccessEnc));
 
         EdgeIteratorState edgeState20 = iter.detach(true);
         assertEquals(0, edgeState20.getAdjNode());
         assertEquals(2, edgeState20.getBaseNode());
-        assertEquals(3, edgeState20.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(3, edgeState20.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLatitude(0), 1e-1);
         assertFalse(edgeState20.get(carAccessEnc));
         assertEquals(GHUtility.getEdge(graph, 0, 2).getFlags(), edgeState02.getFlags());
         assertEquals(GHUtility.getEdge(graph, 2, 0).getFlags(), edgeState20.getFlags());
@@ -1108,9 +1108,9 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(2, edgeState02.getAdjNode());
         assertEquals(2, edgeState20.getBaseNode());
 
-        assertEquals(0, iter.fetchWayGeometry(0).size());
-        assertEquals(1, edgeState02.fetchWayGeometry(0).getLatitude(0), 1e-1);
-        assertEquals(3, edgeState20.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(0, iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).size());
+        assertEquals(1, edgeState02.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLatitude(0), 1e-1);
+        assertEquals(3, edgeState20.fetchWayGeometry(FetchMode.PILLAR_ONLY).getLatitude(0), 1e-1);
 
         // #162 a directed self referencing edge should be able to reverse its state too
         GHUtility.setProperties(graph.edge(3, 3, 2, true), carEncoder, 10, true, false);

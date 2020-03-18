@@ -23,10 +23,7 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
@@ -91,14 +88,14 @@ class GraphModificationBuilder {
             boolean doReverse = base > closestEdge.getAdjNode();
             if (base == closestEdge.getAdjNode()) {
                 // check for special case #162 where adj == base and force direction via latitude comparison
-                PointList pl = closestEdge.fetchWayGeometry(0);
+                PointList pl = closestEdge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
                 if (pl.size() > 1)
                     doReverse = pl.getLatitude(0) > pl.getLatitude(pl.size() - 1);
             }
 
             if (doReverse) {
                 closestEdge = closestEdge.detach(true);
-                PointList fullPL = closestEdge.fetchWayGeometry(3);
+                PointList fullPL = closestEdge.fetchWayGeometry(FetchMode.ALL);
                 res.setClosestEdge(closestEdge);
                 if (res.getSnappedPosition() == QueryResult.Position.PILLAR)
                     // ON pillar node
@@ -129,7 +126,7 @@ class GraphModificationBuilder {
             public boolean apply(int edgeId, List<QueryResult> results) {
                 // we can expect at least one entry in the results
                 EdgeIteratorState closestEdge = results.get(0).getClosestEdge();
-                final PointList fullPL = closestEdge.fetchWayGeometry(3);
+                final PointList fullPL = closestEdge.fetchWayGeometry(FetchMode.ALL);
                 int baseNode = closestEdge.getBaseNode();
                 Collections.sort(results, new Comparator<QueryResult>() {
                     @Override
@@ -222,7 +219,7 @@ class GraphModificationBuilder {
         if (!isPillar) {
             basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
         }
-        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
+        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(FetchMode.ALL) returns at least 2
         assert basePoints.size() >= 2 : "basePoints must have at least two points";
 
         PointList baseReversePoints = basePoints.clone(true);

@@ -64,9 +64,9 @@ public class CHMeasurement {
         PMap map = PMap.read(args);
         GraphHopperConfig ghConfig = new GraphHopperConfig(map);
         LOGGER.info("Running analysis with parameters {}", ghConfig);
-        String osmFile = ghConfig.get("map", "local/maps/unterfranken-latest.osm.pbf");
+        String osmFile = ghConfig.getString("map", "local/maps/unterfranken-latest.osm.pbf");
         ghConfig.put("datareader.file", osmFile);
-        final String statsFile = ghConfig.get("stats_file", null);
+        final String statsFile = ghConfig.getString("stats_file", null);
         final int periodicUpdates = ghConfig.getInt("period_updates", 0);
         final int lazyUpdates = ghConfig.getInt("lazy_updates", 100);
         final int neighborUpdates = ghConfig.getInt("neighbor_updates", 0);
@@ -140,7 +140,7 @@ public class CHMeasurement {
         sw.start();
         graphHopper.importOrLoad();
         sw.stop();
-        results.put("_prepare_time", sw.getSeconds());
+        results.putObject("_prepare_time", sw.getSeconds());
         LOGGER.info("Import and preparation took {}s", sw.getMillis() / 1000);
 
         if (!quick) {
@@ -160,7 +160,7 @@ public class CHMeasurement {
 
         graphHopper.close();
 
-        Map<String, String> resultMap = results.toMap();
+        Map<String, Object> resultMap = results.toMap();
         TreeSet<String> sortedKeys = new TreeSet<>(resultMap.keySet());
         for (String key : sortedKeys) {
             LOGGER.info(key + "=" + resultMap.get(key));
@@ -199,7 +199,7 @@ public class CHMeasurement {
         return sb.toString();
     }
 
-    private static String getStatLine(TreeSet<String> keys, Map<String, String> results) {
+    private static String getStatLine(TreeSet<String> keys, Map<String, Object> results) {
         StringBuilder sb = new StringBuilder();
         for (String key : keys) {
             sb.append(results.get(key)).append(";");
@@ -234,24 +234,24 @@ public class CHMeasurement {
                     String avgChTime = fmt(chTime * 1.e-6 / run);
                     String avgNoChTime = fmt(noChTime * 1.e-6 / run);
                     LOGGER.info("Finished all ({}) runs, CH: {}ms, without CH: {}ms", iterations, avgChTime, avgNoChTime);
-                    results.put("_" + algo + ".time_comp_ch", avgChTime);
-                    results.put("_" + algo + ".time_comp", avgNoChTime);
-                    results.put("_" + algo + ".errors_ch", chErrors);
-                    results.put("_" + algo + ".errors", noChErrors);
-                    results.put("_" + algo + ".deviations", chDeviations);
+                    results.putObject("_" + algo + ".time_comp_ch", avgChTime);
+                    results.putObject("_" + algo + ".time_comp", avgNoChTime);
+                    results.putObject("_" + algo + ".errors_ch", chErrors);
+                    results.putObject("_" + algo + ".errors", noChErrors);
+                    results.putObject("_" + algo + ".deviations", chDeviations);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
-                req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
-                req.getHints().put(Parameters.CH.DISABLE, false);
-                req.getHints().put(Parameters.Landmark.DISABLE, true);
-                req.getHints().put(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
+                req.getHints().putObject(Parameters.Routing.EDGE_BASED, withTurnCosts);
+                req.getHints().putObject(Parameters.CH.DISABLE, false);
+                req.getHints().putObject(Parameters.Landmark.DISABLE, true);
+                req.getHints().putObject(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
                 req.setAlgorithm(algo);
                 long start = nanoTime();
                 GHResponse chRoute = graphHopper.route(req);
                 if (!warmup)
                     chTime += (nanoTime() - start);
 
-                req.getHints().put(Parameters.CH.DISABLE, true);
+                req.getHints().putObject(Parameters.CH.DISABLE, true);
                 start = nanoTime();
                 GHResponse nonChRoute = graphHopper.route(req);
                 if (!warmup)
@@ -317,13 +317,13 @@ public class CHMeasurement {
                     results.put("_" + algo + ".time_ch", avg);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
-                req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
-                req.getHints().put(Parameters.CH.DISABLE, lm);
-                req.getHints().put(Parameters.Landmark.DISABLE, !lm);
+                req.putHint(Parameters.Routing.EDGE_BASED, withTurnCosts);
+                req.putHint(Parameters.CH.DISABLE, lm);
+                req.putHint(Parameters.Landmark.DISABLE, !lm);
                 if (!lm) {
                     req.setAlgorithm(algo);
                 } else {
-                    req.getHints().put(Parameters.Landmark.ACTIVE_COUNT, "8");
+                    req.putHint(Parameters.Landmark.ACTIVE_COUNT, 8);
                     req.setWeighting("fastest"); // why do we need this for lm, but not ch ?
                 }
                 long start = nanoTime();
