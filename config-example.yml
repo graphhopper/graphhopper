@@ -79,7 +79,7 @@ graphhopper:
   # graph.elevation.dataaccess: RAM_STORE
 
 
-  # To enable bilinear interpolation when sampling elevation at points:
+  # To enable bilinear interpolation when sampling elevation at points (default uses nearest neighbor):
   # graph.elevation.interpolate: bilinear
 
 
@@ -88,7 +88,8 @@ graphhopper:
   # these features (see #1953 for details).
   # - first, set the distance (in meters) at which elevation samples should be taken on long edges
   # graph.elevation.long_edge_sampling_distance: 30
-  # - second, set the elevation tolerance (in meters) to use when simplifying polylines
+  # - second, set the elevation tolerance (in meters) to use when simplifying polylines since the default ignores
+  #   elevation and will remove the extra points that long edge sampling added
   # graph.elevation.way_point_max_distance: 1
 
 
