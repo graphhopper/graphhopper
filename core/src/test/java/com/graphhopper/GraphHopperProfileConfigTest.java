@@ -47,8 +47,8 @@ public class GraphHopperProfileConfigTest {
         assertEquals("fastest", profileConfig.getWeighting());
         assertTrue(profileConfig.isTurnCosts());
         assertEquals(2, profileConfig.getHints().toMap().size());
-        assertEquals("bar", profileConfig.getHints().get("foo", ""));
-        assertEquals("buzz", profileConfig.getHints().get("baz", ""));
+        assertEquals("bar", profileConfig.getHints().getString("foo", ""));
+        assertEquals("buzz", profileConfig.getHints().getString("baz", ""));
     }
 
     @Test

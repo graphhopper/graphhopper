@@ -1,4 +1,5 @@
 1.0
+    PMap refactored. It is recommended to use putObject(String, Object) instead of put, #1956
     removed UnsafeDataAccess as not maintained, see #1620
     add profiles parameter and replace prepare.ch/lm.weightings and prepare.ch.edge_based with profiles_ch/lm config parameters, #1922
     Properties in config.yml have to follow the snake_case, #1918, easy convert via https://github.com/karussell/snake_case

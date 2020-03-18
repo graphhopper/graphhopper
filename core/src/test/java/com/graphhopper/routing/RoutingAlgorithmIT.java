@@ -62,7 +62,7 @@ public class RoutingAlgorithmIT {
         ProfileConfig profile = new ProfileConfig("profile").setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting()).setTurnCosts(tMode.isEdgeBased());
         Weighting weighting = hopper.createWeighting(profile, hints);
 
-        HintsMap defaultHints = new HintsMap().put(Parameters.CH.DISABLE, true).put(Parameters.Landmark.DISABLE, true)
+        HintsMap defaultHints = new HintsMap().putObject(Parameters.CH.DISABLE, true).putObject(Parameters.Landmark.DISABLE, true)
                 .setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());
 
         AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
@@ -79,7 +79,7 @@ public class RoutingAlgorithmIT {
 
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMPreparationHandler().isEnabled()) {
-            final HintsMap lmHints = new HintsMap(defaultHints).put(Parameters.Landmark.DISABLE, false);
+            final HintsMap lmHints = new HintsMap(defaultHints).putObject(Parameters.Landmark.DISABLE, false);
             algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
@@ -90,8 +90,8 @@ public class RoutingAlgorithmIT {
 
         if (hopper.getCHPreparationHandler().isEnabled()) {
             final HintsMap chHints = new HintsMap(defaultHints);
-            chHints.put(Parameters.CH.DISABLE, false);
-            chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
+            chHints.putObject(Parameters.CH.DISABLE, false);
+            chHints.putObject(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             CHProfile pickedProfile = new ProfileResolver().selectCHProfile(hopper.getCHPreparationHandler().getCHProfiles(), chHints);
             algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|algos|" + hints.getWeighting()) {

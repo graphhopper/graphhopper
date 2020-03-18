@@ -30,7 +30,10 @@ import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -40,7 +43,6 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-
 import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,18 +87,18 @@ public class Measurement {
     // creates properties file in the format key=value
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start(PMap args) throws IOException {
-        final String graphLocation = args.get("graph.location", "");
-        final String countryBordersDirectory = args.get("spatial_rules.borders_directory", "");
+        final String graphLocation = args.getString("graph.location", "");
+        final String countryBordersDirectory = args.getString("spatial_rules.borders_directory", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
-        String summaryLocation = args.get("measurement.summaryfile", "");
+        String summaryLocation = args.getString("measurement.summaryfile", "");
         final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
         put("measurement.timestamp", timeStamp);
-        String propFolder = args.get("measurement.folder", "");
+        String propFolder = args.getString("measurement.folder", "");
         if (!propFolder.isEmpty()) {
             Files.createDirectories(Paths.get(propFolder));
         }
-        String propFilename = args.get("measurement.filename", "");
+        String propFilename = args.getString("measurement.filename", "");
         if (isEmpty(propFilename)) {
             if (useJson) {
                 // if we start from IDE or otherwise jar was not built using maven the git commit id will be unknown
@@ -108,9 +110,9 @@ public class Measurement {
         }
         final String propLocation = Paths.get(propFolder).resolve(propFilename).toString();
         seed = args.getLong("measurement.seed", 123);
-        put("measurement.gitinfo", args.get("measurement.gitinfo", ""));
+        put("measurement.gitinfo", args.getString("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
-        put("measurement.map", args.get("datareader.file", "unknown"));
+        put("measurement.map", args.getString("datareader.file", "unknown"));
 
         final boolean useMeasurementTimeAsRefTime = args.getBool("measurement.use_measurement_time_as_ref_time", false);
         if (useMeasurementTimeAsRefTime && !useJson) {
@@ -248,7 +250,7 @@ public class Measurement {
             if (!isEmpty(countryBordersDirectory)) {
                 printSpatialRuleLookupTest(countryBordersDirectory, count * 100);
             }
-            
+
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
             put("error", ex.toString());
@@ -274,14 +276,14 @@ public class Measurement {
 
     private GraphHopperConfig createConfigFromArgs(PMap args) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
-        String encodingManagerString = args.get("graph.flag_encoders", "car");
+        String encodingManagerString = args.getString("graph.flag_encoders", "car");
         List<FlagEncoder> tmpEncoders = EncodingManager.create(encodingManagerString).fetchEdgeEncoders();
         if (tmpEncoders.size() != 1) {
             logger.warn("You configured multiple encoders, only the first one is used for the measurements");
         }
         String vehicle = tmpEncoders.get(0).toString();
         boolean turnCosts = tmpEncoders.get(0).supportsTurnCosts();
-        weighting = args.get("measurement.weighting", weighting);
+        weighting = args.getString("measurement.weighting", weighting);
         boolean useCHEdge = args.getBool("measurement.ch.edge", true);
         boolean useCHNode = args.getBool("measurement.ch.node", true);
         boolean useLM = args.getBool("measurement.lm", true);
@@ -473,12 +475,12 @@ public class Measurement {
         }.setIterations(count).start();
         print("unit_tests" + description + ".get_edge_state", miniPerf);
     }
-    
+
     private void printSpatialRuleLookupTest(String countryBordersDirectory, int count) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        
+
         List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(countryBordersDirectory), "*.{geojson,json}")) {
             for (Path borderFile : stream) {
@@ -491,9 +493,9 @@ public class Measurement {
             logger.error("Failed to load borders.", e);
             return;
         }
-        
+
         SpatialRuleFactory rulePerCountryFactory = new SpatialRuleFactory() {
-            
+
             @Override
             public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
                 return new AbstractSpatialRule(borders) {
@@ -504,9 +506,9 @@ public class Measurement {
                 };
             }
         };
-        
+
         final SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO_A3", rulePerCountryFactory);
-    
+
         // generate random points in central Europe
         final List<GHPoint> randomPoints = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
@@ -514,14 +516,14 @@ public class Measurement {
             double lon = 6d + Math.random() * 21d;
             randomPoints.add(new GHPoint(lat, lon));
         }
-        
+
         MiniPerfTest lookupPerfTest = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
                 return spatialRuleLookup.lookupRule(randomPoints.get(run)).hashCode();
             }
         }.setIterations(count).start();
-        
+
         print("spatialrulelookup", lookupPerfTest);
     }
 
@@ -546,7 +548,7 @@ public class Measurement {
                     setAlgorithm(algo);
 
             GHResponse lmRsp = hopper.route(req);
-            req.getHints().put(Landmark.DISABLE, true);
+            req.putHint(Landmark.DISABLE, true);
             GHResponse originalRsp = hopper.route(req);
 
             String locStr = " iteration " + i + ". " + fromLat + "," + fromLon + " -> " + toLat + "," + toLon;
@@ -590,7 +592,7 @@ public class Measurement {
                     setWeighting(weighting).
                     setVehicle(vehicle).
                     setAlgorithm(DIJKSTRA_BI);
-            noSodReq.getHints().put("stall_on_demand", false);
+            noSodReq.putHint("stall_on_demand", false);
 
             GHResponse sodRsp = hopper.route(sodReq);
             GHResponse noSodRsp = hopper.route(noSodReq);
@@ -649,12 +651,12 @@ public class Measurement {
                         setWeighting(weighting).
                         setVehicle(querySettings.vehicle);
 
-                req.getHints().put(CH.DISABLE, !querySettings.ch).
-                        put("stall_on_demand", querySettings.sod).
-                        put(Parameters.Routing.EDGE_BASED, querySettings.edgeBased).
-                        put(Landmark.DISABLE, !querySettings.lm).
-                        put(Landmark.ACTIVE_COUNT, querySettings.activeLandmarks).
-                        put("instructions", querySettings.withInstructions);
+                req.getHints().putObject(CH.DISABLE, !querySettings.ch).
+                        putObject("stall_on_demand", querySettings.sod).
+                        putObject(Parameters.Routing.EDGE_BASED, querySettings.edgeBased).
+                        putObject(Landmark.DISABLE, !querySettings.lm).
+                        putObject(Landmark.ACTIVE_COUNT, querySettings.activeLandmarks).
+                        putObject("instructions", querySettings.withInstructions);
 
                 if (querySettings.alternative)
                     req.setAlgorithm(ALT_ROUTE);
@@ -666,7 +668,7 @@ public class Measurement {
                     req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED, Parameters.Details.EDGE_ID, Parameters.Details.STREET_NAME));
                 } else {
                     // disable path simplification by setting the distance to zero
-                    req.getHints().put(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
+                    req.getHints().putObject(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
                 }
 
                 if (querySettings.blockArea != null)
