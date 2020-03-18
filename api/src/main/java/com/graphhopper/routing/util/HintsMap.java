@@ -61,7 +61,7 @@ public class HintsMap extends PMap {
     }
 
     public String getWeighting() {
-        return toLowerCase(super.get("weighting", ""));
+        return toLowerCase(super.getString("weighting", ""));
     }
 
     public HintsMap setWeighting(String w) {
@@ -71,7 +71,7 @@ public class HintsMap extends PMap {
     }
 
     public String getVehicle() {
-        return toLowerCase(super.get("vehicle", ""));
+        return toLowerCase(super.getString("vehicle", ""));
     }
 
     public HintsMap setVehicle(String v) {

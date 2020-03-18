@@ -87,18 +87,18 @@ public class Measurement {
     // creates properties file in the format key=value
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start(PMap args) throws IOException {
-        final String graphLocation = args.get("graph.location", "");
-        final String countryBordersDirectory = args.get("spatial_rules.borders_directory", "");
+        final String graphLocation = args.getString("graph.location", "");
+        final String countryBordersDirectory = args.getString("spatial_rules.borders_directory", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
-        String summaryLocation = args.get("measurement.summaryfile", "");
+        String summaryLocation = args.getString("measurement.summaryfile", "");
         final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
         put("measurement.timestamp", timeStamp);
-        String propFolder = args.get("measurement.folder", "");
+        String propFolder = args.getString("measurement.folder", "");
         if (!propFolder.isEmpty()) {
             Files.createDirectories(Paths.get(propFolder));
         }
-        String propFilename = args.get("measurement.filename", "");
+        String propFilename = args.getString("measurement.filename", "");
         if (isEmpty(propFilename)) {
             if (useJson) {
                 // if we start from IDE or otherwise jar was not built using maven the git commit id will be unknown
@@ -110,9 +110,9 @@ public class Measurement {
         }
         final String propLocation = Paths.get(propFolder).resolve(propFilename).toString();
         seed = args.getLong("measurement.seed", 123);
-        put("measurement.gitinfo", args.get("measurement.gitinfo", ""));
+        put("measurement.gitinfo", args.getString("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
-        put("measurement.map", args.get("datareader.file", "unknown"));
+        put("measurement.map", args.getString("datareader.file", "unknown"));
 
         final boolean useMeasurementTimeAsRefTime = args.getBool("measurement.use_measurement_time_as_ref_time", false);
         if (useMeasurementTimeAsRefTime && !useJson) {
@@ -276,14 +276,14 @@ public class Measurement {
 
     private GraphHopperConfig createConfigFromArgs(PMap args) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
-        String encodingManagerString = args.get("graph.flag_encoders", "car");
+        String encodingManagerString = args.getString("graph.flag_encoders", "car");
         List<FlagEncoder> tmpEncoders = EncodingManager.create(encodingManagerString).fetchEdgeEncoders();
         if (tmpEncoders.size() != 1) {
             logger.warn("You configured multiple encoders, only the first one is used for the measurements");
         }
         String vehicle = tmpEncoders.get(0).toString();
         boolean turnCosts = tmpEncoders.get(0).supportsTurnCosts();
-        weighting = args.get("measurement.weighting", weighting);
+        weighting = args.getString("measurement.weighting", weighting);
         boolean useCHEdge = args.getBool("measurement.ch.edge", true);
         boolean useCHNode = args.getBool("measurement.ch.node", true);
         boolean useLM = args.getBool("measurement.lm", true);

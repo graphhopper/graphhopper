@@ -64,9 +64,9 @@ public class CHMeasurement {
         PMap map = PMap.read(args);
         GraphHopperConfig ghConfig = new GraphHopperConfig(map);
         LOGGER.info("Running analysis with parameters {}", ghConfig);
-        String osmFile = ghConfig.get("map", "local/maps/unterfranken-latest.osm.pbf");
+        String osmFile = ghConfig.getString("map", "local/maps/unterfranken-latest.osm.pbf");
         ghConfig.put("datareader.file", osmFile);
-        final String statsFile = ghConfig.get("stats_file", null);
+        final String statsFile = ghConfig.getString("stats_file", null);
         final int periodicUpdates = ghConfig.getInt("period_updates", 0);
         final int lazyUpdates = ghConfig.getInt("lazy_updates", 100);
         final int neighborUpdates = ghConfig.getInt("neighbor_updates", 0);

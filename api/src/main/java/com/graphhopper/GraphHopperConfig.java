@@ -103,8 +103,8 @@ public class GraphHopperConfig {
         return map.getDouble(key, _default);
     }
 
-    public String get(String key, String _default) {
-        return map.get(key, _default);
+    public String getString(String key, String _default) {
+        return map.getString(key, _default);
     }
 
     public PMap asPMap() {

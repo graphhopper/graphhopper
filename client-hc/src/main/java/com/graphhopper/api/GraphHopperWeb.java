@@ -232,7 +232,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     private Request createPostRequest(GHRequest ghRequest) {
-        String tmpServiceURL = ghRequest.getHints().get(SERVICE_URL, routeServiceUrl);
+        String tmpServiceURL = ghRequest.getHints().getString(SERVICE_URL, routeServiceUrl);
         String url = tmpServiceURL + "?";
         if (!Helper.isEmpty(key))
             url += "key=" + key;
@@ -256,7 +256,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         requestJson.put(INSTRUCTIONS, ghRequest.getHints().getBool(INSTRUCTIONS, instructions));
         requestJson.put(CALC_POINTS, ghRequest.getHints().getBool(CALC_POINTS, calcPoints));
         requestJson.put("elevation", ghRequest.getHints().getBool("elevation", elevation));
-        requestJson.put("optimize", ghRequest.getHints().get("optimize", optimize));
+        requestJson.put("optimize", ghRequest.getHints().getString("optimize", optimize));
 
         Map<String, Object> hintsMap = ghRequest.getHints().toMap();
         for (Map.Entry<String, Object> entry : hintsMap.entrySet()) {
@@ -281,7 +281,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private Request createGetRequest(GHRequest ghRequest) {
         boolean tmpInstructions = ghRequest.getHints().getBool(INSTRUCTIONS, instructions);
         boolean tmpCalcPoints = ghRequest.getHints().getBool(CALC_POINTS, calcPoints);
-        String tmpOptimize = ghRequest.getHints().get("optimize", optimize);
+        String tmpOptimize = ghRequest.getHints().getString("optimize", optimize);
 
         if (tmpInstructions && !tmpCalcPoints) {
             throw new IllegalStateException("Cannot calculate instructions without points (only points without instructions). "
@@ -295,7 +295,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
             places += "point=" + round6(p.lat) + "," + round6(p.lon) + "&";
         }
 
-        String type = ghRequest.getHints().get("type", "json");
+        String type = ghRequest.getHints().getString("type", "json");
 
         String url = routeServiceUrl
                 + "?"

@@ -137,7 +137,7 @@ public class PMap {
         return object instanceof Number ? ((Number) object).doubleValue() : _default;
     }
 
-    public String get(String key, String _default) {
+    public String getString(String key, String _default) {
         Object object = map.get(key);
         return object instanceof String ? (String) object : _default;
     }

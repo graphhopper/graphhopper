@@ -285,8 +285,8 @@ public abstract class GHMatrixAbstractRequester {
 
     protected String buildURLNoHints(String path, GHMRequest ghRequest) {
         // allow per request service URLs
-        String url = ghRequest.getHints().get(SERVICE_URL, serviceUrl) + path + "?";
-        String key = ghRequest.getHints().get(KEY, "");
+        String url = ghRequest.getHints().getString(SERVICE_URL, serviceUrl) + path + "?";
+        String key = ghRequest.getHints().getString(KEY, "");
         if (!Helper.isEmpty(key)) {
             url += "key=" + key;
         }

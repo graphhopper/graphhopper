@@ -179,7 +179,7 @@ public class RouteResource {
         GHResponse ghResponse = graphHopper.route(request);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
-        boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().get("type", "json"));
+        boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().getString("type", "json"));
         instructions = writeGPX || instructions;
         boolean enableElevation = request.getHints().getBool("elevation", false);
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
@@ -189,8 +189,8 @@ public class RouteResource {
         boolean withRoute = request.getHints().getBool("gpx.route", true);
         boolean withTrack = request.getHints().getBool("gpx.track", true);
         boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
-        String trackName = request.getHints().get("gpx.trackname", "GraphHopper Track");
-        String timeString = request.getHints().get("gpx.millis", "");
+        String trackName = request.getHints().getString("gpx.trackname", "GraphHopper Track");
+        String timeString = request.getHints().getString("gpx.millis", "");
         float took = sw.stop().getSeconds();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + request.getPoints().size() + ", took:"
