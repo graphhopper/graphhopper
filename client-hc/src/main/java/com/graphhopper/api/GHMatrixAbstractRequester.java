@@ -112,7 +112,10 @@ public abstract class GHMatrixAbstractRequester {
                 continue;
 
             Object hint = hintsMap.get(hintKey);
-            requestJson.put(hintKey, hint.toString());
+            if (hint instanceof String)
+                requestJson.put(hintKey, (String) hint);
+            else
+                requestJson.putPOJO(hintKey, hint);
         }
         return requestJson;
     }

@@ -64,7 +64,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean calcPoints = true;
     private boolean elevation = false;
     private String optimize = "false";
-    private boolean postRequest = true;
+    boolean postRequest = true;
     int maxUnzippedLength = 1000;
     private final Set<String> ignoreSet;
     private final Set<String> ignoreSetForPost;
@@ -264,20 +264,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
             if (ignoreSetForPost.contains(hintKey))
                 continue;
 
-            // try proper JSON conversion at least for numbers and booleans
-            Object hint = entry.getValue();
-            if (hint instanceof Boolean)
-                requestJson.put(hintKey, (Boolean) hint);
-            else if (hint instanceof Integer)
-                requestJson.put(hintKey, (Integer) hint);
-            else if (hint instanceof Long)
-                requestJson.put(hintKey, (Long) hint);
-            else if (hint instanceof Float)
-                requestJson.put(hintKey, (Float) hint);
-            else if (hint instanceof Double)
-                requestJson.put(hintKey, (Double) hint);
+            // special case for String required, see testPutPOJO
+            if (entry.getValue() instanceof String)
+                requestJson.put(hintKey, (String) entry.getValue());
             else
-                requestJson.put(hintKey, hint.toString());
+                requestJson.putPOJO(hintKey, entry.getValue());
         }
         String stringData = requestJson.toString();
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));

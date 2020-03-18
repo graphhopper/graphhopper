@@ -2,6 +2,7 @@ package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
@@ -53,9 +54,8 @@ public class GraphHopperWebIT {
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {false, -1},
-                // TODO later: test post request against API
-//                {true, 1000},
-//                {true, 0}
+                {true, 1000},
+                {true, 0}
         });
     }
 
@@ -88,7 +88,21 @@ public class GraphHopperWebIT {
     }
 
     @Test
+    public void testPutPOJO() {
+        ObjectNode requestJson = new ObjectMapper().createObjectNode();
+        requestJson.putPOJO("double", 1.0);
+        requestJson.putPOJO("int", 1);
+        requestJson.putPOJO("boolean", true);
+        // does not work requestJson.putPOJO("string", "test");
+        assertEquals("{\"double\":1.0,\"int\":1,\"boolean\":true}", requestJson.toString());
+    }
+
+    @Test
     public void testAlternativeRoute() {
+        // TODO
+        if (gh.postRequest)
+            return;
+
         // https://graphhopper.com/maps/?point=52.042989%2C10.373926&point=52.042289%2C10.384043&algorithm=alternative_route&ch.disable=true
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(52.042989, 10.373926)).
