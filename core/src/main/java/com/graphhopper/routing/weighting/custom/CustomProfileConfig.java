@@ -4,13 +4,11 @@ import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.util.CustomModel;
 
 public class CustomProfileConfig extends ProfileConfig {
-    private CustomModel customModel;
 
     public CustomProfileConfig(ProfileConfig profileConfig) {
         this(profileConfig.getName());
         setVehicle(profileConfig.getVehicle());
-        if (profileConfig instanceof CustomProfileConfig)
-            setCustomModel(((CustomProfileConfig) profileConfig).getCustomModel());
+        getHints().put(profileConfig.getHints());
     }
 
     public CustomProfileConfig(String name) {
@@ -19,11 +17,11 @@ public class CustomProfileConfig extends ProfileConfig {
     }
 
     public CustomProfileConfig setCustomModel(CustomModel customModel) {
-        this.customModel = customModel;
+        getHints().putObject(CustomModel.KEY, customModel);
         return this;
     }
 
     public CustomModel getCustomModel() {
-        return customModel;
+        return getHints().getObject(CustomModel.KEY, null);
     }
 }
