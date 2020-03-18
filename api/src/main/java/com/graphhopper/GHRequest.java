@@ -230,7 +230,7 @@ public class GHRequest {
     }
 
     public String getProfile() {
-        return toLowerCase(hints.get("profile", ""));
+        return toLowerCase(hints.getString("profile", ""));
     }
 
     public GHRequest setProfile(String profile) {

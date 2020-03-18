@@ -97,7 +97,7 @@ public class GraphHopperManaged implements Managed {
         ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
         List<ProfileConfig> newProfiles = new ArrayList<>();
         for (ProfileConfig profileConfig : configuration.getProfiles()) {
-            String customModelLocation = profileConfig.getHints().get("custom_model_file", "");
+            String customModelLocation = profileConfig.getHints().getString("custom_model_file", "");
             if (customModelLocation.isEmpty())
                 newProfiles.add(profileConfig);
             else

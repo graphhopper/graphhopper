@@ -684,7 +684,7 @@ public class Measurement {
                 if (querySettings.profile == null)
                     req.setWeighting(weighting).setVehicle(querySettings.vehicle);
                 else
-                    req.setProfile(querySettings.profile);
+                    req.setProfile(querySettings.profile).getHints().putObject(CustomModel.KEY, querySettings.queryCustomModel);
 
                 req.getHints().putObject(CH.DISABLE, !querySettings.ch).
                         putObject("stall_on_demand", querySettings.sod).
@@ -726,7 +726,7 @@ public class Measurement {
 
                 GHResponse rsp = new GHResponse();
                 try {
-                    hopper.calcPaths(req, rsp, querySettings.queryCustomModel);
+                    hopper.calcPaths(req, rsp);
                 } catch (Exception ex) {
                     // 'not found' can happen if import creates more than one subnetwork
                     throw new RuntimeException("Error while calculating route! "

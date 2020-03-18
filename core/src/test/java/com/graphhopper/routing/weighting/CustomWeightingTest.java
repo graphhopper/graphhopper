@@ -27,6 +27,7 @@ import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Before;
 import org.junit.Test;
@@ -179,7 +180,7 @@ public class CustomWeightingTest {
 
         // intersect polygon => nearly double weight (would be exactly doubled if vehicleModel.setDistanceTermConstant(0);)
         EdgeIteratorState edge2 = graphHopperStorage.edge(2, 3).setDistance(500).set(avSpeedEnc, 15).set(accessEnc, true);
-        assertTrue(poly.intersects(edge2.fetchWayGeometry(3).toLineString(false)));
+        assertTrue(poly.intersects(edge2.fetchWayGeometry(FetchMode.ALL).toLineString(false)));
         assertEquals(275, weighting.calcEdgeWeight(edge2, false), 0.01);
     }
 }

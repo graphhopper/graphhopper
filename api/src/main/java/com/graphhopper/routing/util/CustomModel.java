@@ -27,6 +27,8 @@ import java.util.Map;
  */
 public class CustomModel {
 
+    public static final String KEY = "custom_model";
+
     static double DEFAULT_D_I = 70;
     // optional:
     private Double maxSpeedFallback, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;

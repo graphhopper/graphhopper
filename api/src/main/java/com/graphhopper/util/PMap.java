@@ -142,9 +142,9 @@ public class PMap {
         return object instanceof String ? (String) object : _default;
     }
 
-    public Object getObject(String key, Object _default) {
+    public <T> T getObject(String key, T _default) {
         Object object = map.get(key);
-        return object == null ? _default : object;
+        return object == null ? _default : (T) object;
     }
 
     public PMap putObject(String key, Object object) {

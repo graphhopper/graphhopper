@@ -28,6 +28,7 @@ import com.graphhopper.jackson.CustomRequest;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import org.slf4j.Logger;
@@ -89,10 +90,11 @@ public class CustomWeightingRouteResource {
             throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request");
 
         request.putHint(Parameters.CH.DISABLE, true);
-        graphHopper.calcPaths(request, ghResponse, model);
+        request.putHint(CustomModel.KEY, model);
+        graphHopper.calcPaths(request, ghResponse);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
-        boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().get("type", "json"));
+        boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().getString("type", "json"));
         instructions = writeGPX || instructions;
         boolean enableElevation = request.getHints().getBool("elevation", false);
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
@@ -102,8 +104,8 @@ public class CustomWeightingRouteResource {
         boolean withRoute = request.getHints().getBool("gpx.route", true);
         boolean withTrack = request.getHints().getBool("gpx.track", true);
         boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
-        String trackName = request.getHints().get("gpx.trackname", "GraphHopper Track");
-        String timeString = request.getHints().get("gpx.millis", "");
+        String trackName = request.getHints().getString("gpx.trackname", "GraphHopper Track");
+        String timeString = request.getHints().getString("gpx.millis", "");
         float took = sw.stop().getSeconds();
         String logStr = (httpReq.getQueryString() == null ? "-" : httpReq.getQueryString())
                 + " " + httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent")

@@ -60,7 +60,7 @@ public class RoutingAlgorithmIT {
             addStr = "turn|";
 
         ProfileConfig profile = new ProfileConfig("profile").setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting()).setTurnCosts(tMode.isEdgeBased());
-        Weighting weighting = hopper.createWeighting(profile, hints, null);
+        Weighting weighting = hopper.createWeighting(profile, hints);
 
         HintsMap defaultHints = new HintsMap().putObject(Parameters.CH.DISABLE, true).putObject(Parameters.Landmark.DISABLE, true)
                 .setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());

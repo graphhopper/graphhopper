@@ -90,7 +90,7 @@ public class IsochroneResource {
         Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
 
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap, null);
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));

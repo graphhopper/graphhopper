@@ -46,6 +46,7 @@ import java.util.Map;
  */
 public final class CustomWeighting extends AbstractWeighting {
     public static final String NAME = "custom";
+
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
      * costs or traffic light costs etc)

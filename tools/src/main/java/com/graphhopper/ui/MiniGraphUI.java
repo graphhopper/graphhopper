@@ -144,7 +144,7 @@ public class MiniGraphUI {
 
         } else {
             routingGraph = graph;
-            weighting = hopper.createWeighting(profile, new PMap(), null);
+            weighting = hopper.createWeighting(profile, new PMap());
             boolean disableCH = true;
             boolean disableLM = false;
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);

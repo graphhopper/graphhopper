@@ -20,6 +20,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
@@ -52,7 +53,7 @@ final class GeoToValueEntry implements EdgeToValueEntry {
     public double getValue(EdgeIteratorState edgeState, boolean reverse) {
         BBox bbox = GHUtility.createBBox(edgeState);
         if (ghPolygon.getBounds().intersects(bbox)) {
-            if (ghPolygon.intersects(edgeState.fetchWayGeometry(3).makeImmutable()))
+            if (ghPolygon.intersects(edgeState.fetchWayGeometry(FetchMode.ALL).makeImmutable()))
                 return value;
         }
         return elseValue;

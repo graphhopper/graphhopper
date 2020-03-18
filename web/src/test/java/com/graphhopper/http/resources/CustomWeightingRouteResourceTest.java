@@ -35,9 +35,9 @@ public class CustomWeightingRouteResourceTest {
     static {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "bike,car").
-                put("routing.ch.disabling_allowed", "true").
-                put("prepare.min_network_size", "0").
-                put("prepare.min_one_way_network_size", "0").
+                put("routing.ch.disabling_allowed", true).
+                put("prepare.min_network_size", 0).
+                put("prepare.min_one_way_network_size", 0).
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 put("graph.location", DIR).
                 // for the custom_profiles more than the default encoded values are necessary

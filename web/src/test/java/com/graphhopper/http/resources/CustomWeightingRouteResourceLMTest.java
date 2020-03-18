@@ -52,9 +52,9 @@ public class CustomWeightingRouteResourceLMTest {
     static {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car,foot").
-                put("routing.lm.disabling_allowed", "true").
-                put("prepare.min_network_size", "0").
-                put("prepare.min_one_way_network_size", "0").
+                put("routing.lm.disabling_allowed", true).
+                put("prepare.min_network_size", 0).
+                put("prepare.min_one_way_network_size", 0).
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.encoded_values", "surface").
                 put("graph.location", DIR)

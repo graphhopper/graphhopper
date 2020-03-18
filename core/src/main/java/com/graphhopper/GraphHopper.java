@@ -836,7 +836,7 @@ public class GraphHopper implements GraphHopperAPI {
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
             }
             try {
-                createWeighting(profile, new PMap(), null);
+                createWeighting(profile, new PMap());
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Could not create weighting for profile: '" + profile.getName() + "'.\n" +
                         "Profile: " + profile + "\n" +
@@ -877,7 +877,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     public ProfileConfig resolveProfile(HintsMap hints) {
         // TODO NOW replace with request.getProfile()
-        ProfileConfig profile = profilesByName.get(hints.get("profile", ""));
+        ProfileConfig profile = profilesByName.get(hints.getString("profile", ""));
         if (profile != null)
             return profile;
         if (encodingManager == null)
@@ -916,9 +916,9 @@ public class GraphHopper implements GraphHopperAPI {
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(chConfig.getProfile());
             if (profile.isTurnCosts()) {
-                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap(), null)));
+                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
             } else {
-                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap(), null)));
+                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
             }
         }
     }
@@ -937,7 +937,7 @@ public class GraphHopper implements GraphHopperAPI {
             // turn costs, because the preparation is running node-based. This is important if we want to allow e.g.
             // changing the u_turn_costs per request (we have to use the minimum weight settings (= no turn costs) for
             // the preparation)
-            Weighting weighting = createWeighting(profile, new PMap(), null);
+            Weighting weighting = createWeighting(profile, new PMap());
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1015,8 +1015,8 @@ public class GraphHopper implements GraphHopperAPI {
      * @param profileConfig The profile for which the weighting shall be created
      * @param hints         Additional hints that can be used to further specify the weighting that shall be created
      */
-    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, CustomModel queryCustomModel) {
-        return new DefaultWeightingFactory(ghStorage, encodingManager, encodedValueFactory).createWeighting(profileConfig, hints, queryCustomModel);
+    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints) {
+        return new DefaultWeightingFactory(ghStorage, encodingManager, encodedValueFactory).createWeighting(profileConfig, hints);
     }
 
     @Override
@@ -1026,14 +1026,10 @@ public class GraphHopper implements GraphHopperAPI {
         return response;
     }
 
-    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
-        return calcPaths(request, ghRsp, null);
-    }
-
     /**
      * This method calculates the alternative path list using the low level Path objects.
      */
-    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp, CustomModel queryCustomModel) {
+    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
@@ -1099,7 +1095,7 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
                 }
                 FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-                weighting = createWeighting(profile, hints, queryCustomModel);
+                weighting = createWeighting(profile, hints);
                 if (hints.has(Routing.BLOCK_AREA))
                     weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
                             points, hints, DefaultEdgeFilter.allEdges(encoder)));
@@ -1367,7 +1363,7 @@ public class GraphHopper implements GraphHopperAPI {
             this.encodedValueFactory = encodedValueFactory;
         }
 
-        public Weighting createWeighting(ProfileConfig profile, PMap hints, CustomModel queryCustomModel) {
+        public Weighting createWeighting(ProfileConfig profile, PMap hints) {
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
             if (profile.isTurnCosts()) {
@@ -1387,6 +1383,7 @@ public class GraphHopper implements GraphHopperAPI {
             if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
                 if (!(profile instanceof CustomProfileConfig))
                     throw new IllegalArgumentException("custom weighting requires a CustomProfileConfig but was profile=" + profile.getName());
+                CustomModel queryCustomModel = hints.getObject(CustomModel.KEY, null);
                 CustomProfileConfig customProfileConfig = (CustomProfileConfig) profile;
                 queryCustomModel = queryCustomModel == null ? customProfileConfig.getCustomModel() : queryCustomModel.merge(customProfileConfig.getCustomModel());
                 weighting = new CustomWeighting(encoder, encodingManager, encodedValueFactory, turnCostProvider, queryCustomModel);
