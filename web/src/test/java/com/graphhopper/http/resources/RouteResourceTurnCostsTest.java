@@ -50,13 +50,13 @@ public class RouteResourceTurnCostsTest {
     private static GraphHopperServerTestConfiguration createConfig() {
         GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car|turn_costs=true").
-                put("routing.ch.disabling_allowed", "true").
-                put("prepare.min_network_size", "0").
-                put("prepare.min_one_way_network_size", "0").
-                put("datareader.file", "../core/files/moscow.osm.gz").
-                put("graph.encoded_values", "road_class,surface,road_environment,max_speed").
-                put("graph.location", DIR)
+                putObject("graph.flag_encoders", "car|turn_costs=true").
+                putObject("routing.ch.disabling_allowed", true).
+                putObject("prepare.min_network_size", 0).
+                putObject("prepare.min_one_way_network_size", 0).
+                putObject("datareader.file", "../core/files/moscow.osm.gz").
+                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new ProfileConfig("my_car_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
                         new ProfileConfig("my_car_no_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(false)
@@ -81,10 +81,9 @@ public class RouteResourceTurnCostsTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "",
-            // todonow: how shall we deal with turn cost cross querying for LM?
-//            "&ch.disable=true",
+            "&ch.disable=true",
             "&ch.disable=true&lm.disable=true"})
-    public void queryGet(String hints) {
+    public void getQuery_canToggleTurnCostsOnOff(String hints) {
         String pointsStr = "point=55.813357,37.5958585&point=55.811042,37.594689";
 
         assertDistanceGet(pointsStr + hints, 1044);

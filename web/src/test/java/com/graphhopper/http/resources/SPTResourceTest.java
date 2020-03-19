@@ -46,10 +46,10 @@ public class SPTResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car").
-                put("graph.encoded_values", "max_speed,road_class").
-                put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR).
+                putObject("graph.flag_encoders", "car").
+                putObject("graph.encoded_values", "max_speed,road_class").
+                putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
     }
 

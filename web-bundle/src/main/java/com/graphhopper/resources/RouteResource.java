@@ -28,7 +28,6 @@ import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -251,7 +250,7 @@ public class RouteResource {
             if (turnCosts.size() != 1) {
                 throw new IllegalArgumentException("You may only specify the turn_costs parameter once");
             }
-            request.getHints().put(EDGE_BASED, turnCosts.get(0));
+            request.putHint(EDGE_BASED, Helper.toObject(turnCosts.get(0)));
         }
     }
 
@@ -259,7 +258,6 @@ public class RouteResource {
         // these parameters should only be used to resolve the profile, but should not be passed to GraphHopper
         request.getHints().setWeighting("");
         request.getHints().setVehicle("");
-        // todonow: shall we keep these for cross querying LM with turn costs or even running queries without turn costs with edge-based algos?a
         request.getHints().remove("edge_based");
         request.getHints().remove("turn_costs");
     }

@@ -1012,15 +1012,15 @@ public class GraphHopper implements GraphHopperAPI {
         readLock.lock();
         try {
             if (!request.getVehicle().isEmpty())
-                throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #todonow");
+                throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
             if (!request.getWeighting().isEmpty())
-                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #todonow");
-            if (!request.getHints().get(Routing.TURN_COSTS, "").isEmpty())
-                throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #todonow");
-            // todonow: maybe still allow something like running a (non CH) profile edge-based or not (if no turn costs or something)?, also see traversal mode below
-            if (!request.getHints().get(Routing.EDGE_BASED, "").isEmpty())
-                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #todonow");
-            // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
+                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
+            if (request.getHints().has(Routing.TURN_COSTS))
+                throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
+            if (request.getHints().has(Routing.EDGE_BASED))
+                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
+
+            // todo later: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
 
             HintsMap hints = request.getHints();
             boolean disableCH = hints.getBool(CH.DISABLE, false);
@@ -1049,7 +1049,7 @@ public class GraphHopper implements GraphHopperAPI {
             checkIfPointsAreInBounds(points);
 
             if (Helper.isEmpty(request.getProfile())) {
-                throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see #todonow");
+                throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see #1958");
             }
             ProfileConfig profile = profilesByName.get(request.getProfile());
             if (profile == null) {
@@ -1059,7 +1059,7 @@ public class GraphHopper implements GraphHopperAPI {
                 // todonow: this is a bit ugly: curbside requires edge-based traversal but not necessarily turn costs?!
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
 
-            // todonow: should we be able to control this using the edge_based parameter?
+            // todo later: should we be able to control this using the edge_based parameter?
             TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
             RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile.getName(), disableCH, disableLM);
@@ -1350,13 +1350,20 @@ public class GraphHopper implements GraphHopperAPI {
             this.ghStorage = ghStorage;
         }
 
-        public Weighting createWeighting(ProfileConfig profile, PMap hints) {
+        public Weighting createWeighting(ProfileConfig profile, PMap requestHints) {
+            // Merge profile hints with request hints, the request hints take precedence.
+            // Note that so far we do not check if overwriting the profile hints actually works with the preparation
+            // for LM/CH. Later we should also limit the number of parameters that can be used to modify the profile.
+            PMap hints = new PMap();
+            hints.putAll(profile.getHints());
+            hints.putAll(requestHints);
+
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
             if (profile.isTurnCosts() && !hints.getBool("__disable_turn_costs_for_lm_preparation", false)) {
                 if (!encoder.supportsTurnCosts())
                     throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
-                int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                int uTurnCosts = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
             } else {
                 turnCostProvider = NO_TURN_COST_PROVIDER;

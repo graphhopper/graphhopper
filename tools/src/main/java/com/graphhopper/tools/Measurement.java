@@ -301,10 +301,15 @@ public class Measurement {
         if (useCHEdge)
             chProfiles.add(new CHProfileConfig("profile_tc"));
         ghConfig.setCHProfiles(chProfiles);
+        List<LMProfileConfig> lmProfiles = new ArrayList<>();
         if (useLM) {
-            String lmProfile = turnCosts ? "profile_tc" : "profile_no_tc";
-            ghConfig.setLMProfiles(Collections.singletonList(new LMProfileConfig(lmProfile)));
+            // as currently we do not allow cross-querying LM with turn costs=true/false we have to add both
+            // profiles and this currently leads to two identical LM preparations
+            lmProfiles.add(new LMProfileConfig("profile_no_tc"));
+            if (turnCosts)
+                lmProfiles.add(new LMProfileConfig("profile_tc"));
         }
+        ghConfig.setLMProfiles(lmProfiles);
         return ghConfig;
     }
 
@@ -646,7 +651,8 @@ public class Measurement {
                 double toLon = na.getLongitude(to);
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon);
                 req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
-                req.getHints().putObject(CH.DISABLE, !querySettings.ch).
+                req.getHints().
+                        putObject(CH.DISABLE, !querySettings.ch).
                         putObject("stall_on_demand", querySettings.sod).
                         putObject(Landmark.DISABLE, !querySettings.lm).
                         putObject(Landmark.ACTIVE_COUNT, querySettings.activeLandmarks).
@@ -666,7 +672,7 @@ public class Measurement {
                 }
 
                 if (querySettings.blockArea != null)
-                    req.getHints().put(BLOCK_AREA, querySettings.blockArea);
+                    req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
 
                 if (querySettings.withPointHints) {
                     EdgeIterator iter = edgeExplorer.setBaseNode(from);
