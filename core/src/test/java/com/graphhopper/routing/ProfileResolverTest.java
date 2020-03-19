@@ -99,7 +99,7 @@ public class ProfileResolverTest {
                 Collections.singletonList(new ProfileConfig("profile").setVehicle("foot").setWeighting("fastest")),
                 Collections.<CHProfileConfig>emptyList(), Collections.<LMProfileConfig>emptyList());
 
-        HintsMap hints = new HintsMap().put(Parameters.Routing.EDGE_BASED, true);
+        HintsMap hints = new HintsMap().putObject(Parameters.Routing.EDGE_BASED, true);
         try {
             profileResolver.resolveProfile(hints);
         } catch (IllegalArgumentException e) {

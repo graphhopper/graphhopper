@@ -241,10 +241,10 @@ public class ProfileResolver {
     }
 
     private Boolean getEdgeBased(PMap hintsMap) {
-        return (Boolean) hintsMap.getObject(Parameters.Routing.EDGE_BASED, null);
+        return hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
     }
 
     private Integer getUTurnCosts(PMap hintsMap) {
-        return (Integer) hintsMap.getObject(Parameters.Routing.U_TURN_COSTS, null);
+        return hintsMap.has(Parameters.Routing.U_TURN_COSTS) ? hintsMap.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
     }
 }

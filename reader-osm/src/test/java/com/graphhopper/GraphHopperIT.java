@@ -1502,11 +1502,11 @@ public class GraphHopperIT {
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         req.setProfile("my_car");
         // with CH
-        req.getHints().put(CH.DISABLE, true);
+        req.putHint(CH.DISABLE, true);
         GHResponse rsp1 = hopper.route(req);
         assertEquals(1044, rsp1.getBest().getDistance(), 1);
         // without CH
-        req.getHints().put(CH.DISABLE, false);
+        req.putHint(CH.DISABLE, false);
         GHResponse rsp2 = hopper.route(req);
         assertEquals(1044, rsp2.getBest().getDistance(), 1);
         // just a quick check that we did not run the same algorithm twice
@@ -1533,14 +1533,14 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         // without CH, turn turn costs on and off
-        req.getHints().put(CH.DISABLE, true);
+        req.putHint(CH.DISABLE, true);
         req.setProfile(profile1);
         assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
         req.setProfile(profile2);
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
 
         // with CH, turn turn costs on and off, since turn costs not supported for CH throw an error
-        req.getHints().put(CH.DISABLE, false);
+        req.putHint(CH.DISABLE, false);
         req.setProfile(profile2);
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
         req.setProfile(profile1);

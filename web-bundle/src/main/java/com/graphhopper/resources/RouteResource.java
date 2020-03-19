@@ -25,7 +25,10 @@ import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -244,7 +247,7 @@ public class RouteResource {
             if (turnCosts.size() != 1) {
                 throw new IllegalArgumentException("You may only specify the turn_costs parameter once");
             }
-            request.getHints().put(EDGE_BASED, turnCosts.get(0));
+            request.putHint(EDGE_BASED, Helper.toObject(turnCosts.get(0)));
         }
     }
 
