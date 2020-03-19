@@ -36,6 +36,7 @@ import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 import org.junit.jupiter.api.AfterEach;
@@ -43,6 +44,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
 import java.util.*;
@@ -1090,7 +1092,6 @@ public class GraphHopperIT {
         assertEquals(5, ((RoundaboutInstruction) instr).getExitNumber());
     }
 
-
     @Test
     public void testMultipleVehiclesWithCH() {
         final String profile1 = "profile1";
@@ -1406,6 +1407,83 @@ public class GraphHopperIT {
         req.putHint(Landmark.DISABLE, true);
         res = hopper.route(req);
         assertTrue(res.getHints().getInt("visited_nodes.sum", 0) > 200);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void testCompareAlgos(boolean turnCosts) {
+        final String profile = "car";
+        final String vehicle = "car";
+        final String weighting = "fastest";
+        GraphHopper hopper = createGraphHopper("car|turn_costs=true").
+                setOSMFile(MOSCOW).
+                setProfiles(Collections.singletonList(
+                        new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(turnCosts)
+                ));
+        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile)).setDisablingAllowed(true);
+        hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig(profile)).setDisablingAllowed(true);
+        hopper.importOrLoad();
+
+        long seed = System.nanoTime();
+        Random rnd = new Random(seed);
+        for (int i = 0; i < 100; i++) {
+            BBox bounds = hopper.getGraphHopperStorage().getBounds();
+            double lat1 = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
+            double lat2 = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
+            double lon1 = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
+            double lon2 = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
+            GHRequest req = new GHRequest(lat1, lon1, lat2, lon2);
+            req.getHints().putObject(Routing.EDGE_BASED, turnCosts);
+            req.getHints().putObject(CH.DISABLE, false).putObject(Landmark.DISABLE, true);
+            PathWrapper pathCH = hopper.route(req).getBest();
+            req.getHints().putObject(CH.DISABLE, true).putObject(Landmark.DISABLE, false);
+            PathWrapper pathLM = hopper.route(req).getBest();
+            req.getHints().putObject(CH.DISABLE, true).putObject(Landmark.DISABLE, true);
+            PathWrapper path = hopper.route(req).getBest();
+
+            assertEquals(path.hasErrors(), pathCH.hasErrors());
+            assertEquals(path.hasErrors(), pathLM.hasErrors());
+
+            if (!path.hasErrors()) {
+                assertEquals(path.getDistance(), pathCH.getDistance(), 0.1);
+                assertEquals(path.getDistance(), pathLM.getDistance(), 0.1);
+
+                assertEquals(path.getTime(), pathCH.getTime());
+                assertEquals(path.getTime(), pathLM.getTime());
+            }
+        }
+    }
+
+    @Test
+    public void testIssue1960() {
+        final String profile = "car";
+        final String vehicle = "car";
+        final String weighting = "fastest";
+        GraphHopper hopper = createGraphHopper("car|turn_costs=true").
+                setOSMFile(MOSCOW).
+                setProfiles(Collections.singletonList(
+                        new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true)
+                ));
+        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile)).setDisablingAllowed(true);
+        hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig(profile)).setDisablingAllowed(true);
+
+        hopper.importOrLoad();
+
+        GHRequest req = new GHRequest(55.815670, 37.604613, 55.806151, 37.617823);
+        req.getHints().putObject(CH.DISABLE, false).putObject(Landmark.DISABLE, true);
+        PathWrapper pathCH = hopper.route(req).getBest();
+        req.getHints().putObject(CH.DISABLE, true).putObject(Landmark.DISABLE, false);
+        PathWrapper pathLM = hopper.route(req).getBest();
+        req.getHints().putObject(CH.DISABLE, true).putObject(Landmark.DISABLE, true);
+        PathWrapper path = hopper.route(req).getBest();
+
+        assertEquals(1995.38, pathCH.getDistance(), 0.1);
+        assertEquals(1995.38, pathLM.getDistance(), 0.1);
+        assertEquals(1995.38, path.getDistance(), 0.1);
+
+        assertEquals(149496, pathCH.getTime());
+        assertEquals(149496, pathLM.getTime());
+        assertEquals(149496, path.getTime());
     }
 
     @Test
