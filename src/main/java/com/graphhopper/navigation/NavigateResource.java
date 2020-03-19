@@ -171,12 +171,11 @@ public class NavigateResource {
         request.setVehicle(vehicleStr).
                 setWeighting(weighting).
                 setLocale(localeStr).
-                getHints().
-                put(CALC_POINTS, true).
-                put(INSTRUCTIONS, enableInstructions).
-                put(WAY_POINT_MAX_DISTANCE, minPathPrecision).
-                put(Parameters.CH.DISABLE, true).
-                put(Parameters.Routing.PASS_THROUGH, false);
+                putHint(CALC_POINTS, true).
+                putHint(INSTRUCTIONS, enableInstructions).
+                putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision).
+                putHint(Parameters.CH.DISABLE, true).
+                putHint(Parameters.Routing.PASS_THROUGH, false);
 
         return graphHopper.route(request);
     }
