@@ -180,11 +180,11 @@ public class GraphHopperIT {
         GHRequest request = new GHRequest().setAlgorithm(ASTAR).setProfile(profile);
         request.addPoint(new GHPoint(43.729584, 7.410965));
         request.addPoint(new GHPoint(43.732499, 7.426758));
-        request.getHints().put("instructions", true);
+        request.getHints().putObject("instructions", true);
         GHResponse routeRsp = hopper.route(request);
         int withInstructionsPoints = routeRsp.getBest().getPoints().size();
 
-        request.getHints().put("instructions", false);
+        request.getHints().putObject("instructions", false);
         routeRsp = hopper.route(request);
 
         assertTrue("there should not be more points if instructions are disabled due to simplify but was " + withInstructionsPoints + " vs " + routeRsp.getBest().getPoints().size(),
@@ -263,8 +263,8 @@ public class GraphHopperIT {
         if (ch) {
             GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                     setProfile(profile);
-            req.getHints().put(CH.DISABLE, false);
-            req.getHints().put(Landmark.DISABLE, true);
+            req.putHint(CH.DISABLE, false);
+            req.putHint(Landmark.DISABLE, true);
             GHResponse rsp = hopper.route(req);
 
             PathWrapper bestPath = rsp.getBest();
@@ -279,8 +279,8 @@ public class GraphHopperIT {
             GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                     setProfile(profile).
                     setAlgorithm(Parameters.Algorithms.ASTAR_BI);
-            req.getHints().put(CH.DISABLE, true);
-            req.getHints().put(Landmark.DISABLE, false);
+            req.putHint(CH.DISABLE, true);
+            req.putHint(Landmark.DISABLE, false);
             GHResponse rsp = hopper.route(req);
 
             PathWrapper bestPath = rsp.getBest();
@@ -294,8 +294,8 @@ public class GraphHopperIT {
         // flexible
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setProfile(profile);
-        req.getHints().put(CH.DISABLE, true);
-        req.getHints().put(Landmark.DISABLE, true);
+        req.putHint(CH.DISABLE, true);
+        req.putHint(Landmark.DISABLE, true);
         GHResponse rsp = hopper.route(req);
 
         PathWrapper bestPath = rsp.getBest();
@@ -354,8 +354,8 @@ public class GraphHopperIT {
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
         assertEquals(1432, rsp.getAll().get(1).getTime() / 1000);
 
-        req.getHints().put("alternative_route.max_paths", "3");
-        req.getHints().put("alternative_route.min_plateau_factor", "0.1");
+        req.putHint("alternative_route.max_paths", 3);
+        req.putHint("alternative_route.min_plateau_factor", 0.1);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getAll().size());
@@ -378,7 +378,7 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest(50.028917, 11.496506, 49.985228, 11.600876).
                 setAlgorithm(ALT_ROUTE).setProfile(profile);
-        req.getHints().put("alternative_route.max_paths", "3");
+        req.putHint("alternative_route.max_paths", 3);
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
 
@@ -404,7 +404,7 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
                 setAlgorithm(ALT_ROUTE).setProfile(profile);
-        req.getHints().put("alternative_route.max_paths", "3");
+        req.putHint("alternative_route.max_paths", 3);
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
 
@@ -492,7 +492,7 @@ public class GraphHopperIT {
         assertEquals(122, rsp.getBest().getDistance(), 1);
 
         // block point 49.985759,11.50687
-        req.getHints().put(Routing.BLOCK_AREA, "49.985759,11.50687");
+        req.putHint(Routing.BLOCK_AREA, "49.985759,11.50687");
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(365, rsp.getBest().getDistance(), 1);
@@ -506,30 +506,30 @@ public class GraphHopperIT {
 
         // block by area
         String someArea = "49.97986,11.472902,50.003946,11.534357";
-        req.getHints().put(Routing.BLOCK_AREA, someArea);
+        req.putHint(Routing.BLOCK_AREA, someArea);
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(13988, rsp.getBest().getDistance(), 1);
 
         // Add blocked point to above area, to increase detour        
-        req.getHints().put(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
+        req.putHint(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(14602, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small circular area
-        req.getHints().put(Routing.BLOCK_AREA, "49.979929,11.520066,200");
+        req.putHint(Routing.BLOCK_AREA, "49.979929,11.520066,200");
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
-        req.getHints().put(Routing.BLOCK_AREA, "49.980868,11.516397,150");
+        req.putHint(Routing.BLOCK_AREA, "49.980868,11.516397,150");
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small rectangular area
-        req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
+        req.putHint(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
@@ -541,7 +541,7 @@ public class GraphHopperIT {
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(1807, rsp.getBest().getDistance(), 1);
 
-        req.getHints().put(Routing.BLOCK_AREA, "50.018277,11.492336");
+        req.putHint(Routing.BLOCK_AREA, "50.018277,11.492336");
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(3363, rsp.getBest().getDistance(), 1);
@@ -554,7 +554,7 @@ public class GraphHopperIT {
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(155, rsp.getBest().getDistance(), 10);
 
-        req.getHints().put(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
+        req.putHint(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
         rsp = hopper.route(req);
         assertEquals(11.508, rsp.getBest().getWaypoints().getLongitude(0), 0.001);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -563,7 +563,7 @@ public class GraphHopperIT {
         // first point is contained in block_area => error
         req = new GHRequest(49.979, 11.516, 49.986107, 11.507202).
                 setProfile(profile);
-        req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
+        req.putHint(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = hopper.route(req);
         assertTrue("expected errors", rsp.hasErrors());
     }
@@ -697,7 +697,7 @@ public class GraphHopperIT {
                 addPoint(new GHPoint(43.741069, 7.426854), 0.).
                 addPoint(new GHPoint(43.744445, 7.429483), 190.).
                 setProfile(profile);
-        req.getHints().put(Routing.HEADING_PENALTY, "300");
+        req.putHint(Routing.HEADING_PENALTY, "300");
         GHResponse rsp = hopper.route(req);
 
         PathWrapper arsp = rsp.getBest();
@@ -722,7 +722,7 @@ public class GraphHopperIT {
                 addPoint(from).
                 addPoint(to).
                 setProfile(profile);
-        req.getHints().put(Routing.MAX_VISITED_NODES, 5);
+        req.putHint(Routing.MAX_VISITED_NODES, 5);
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
@@ -827,7 +827,7 @@ public class GraphHopperIT {
                 addPoint(new GHPoint(43.740371, 7.426946)).
                 addPoint(new GHPoint(43.740794, 7.427294)).
                 setProfile(profile);
-        rq.getHints().put(Routing.PASS_THROUGH, true);
+        rq.putHint(Routing.PASS_THROUGH, true);
         GHResponse rsp = hopper.route(rq);
 
         PathWrapper arsp = rsp.getBest();
@@ -840,7 +840,7 @@ public class GraphHopperIT {
                 addPoint(new GHPoint(43.741069, 7.426854)).
                 addPoint(new GHPoint(43.740371, 7.426946)).
                 setProfile(profile);
-        rq.getHints().put(Routing.PASS_THROUGH, true);
+        rq.putHint(Routing.PASS_THROUGH, true);
         rsp = hopper.route(rq);
         assertEquals(91, rsp.getBest().getDistance(), 5.);
     }
@@ -1235,8 +1235,8 @@ public class GraphHopperIT {
                 addPoint(new GHPoint(43.741069, 7.426854), 50).
                 setProfile(profile).
                 setAlgorithm(ROUND_TRIP);
-        rq.getHints().put(RoundTrip.DISTANCE, 1000);
-        rq.getHints().put(RoundTrip.SEED, 0);
+        rq.putHint(RoundTrip.DISTANCE, 1000);
+        rq.putHint(RoundTrip.SEED, 0);
 
         GHResponse rsp = hopper.route(rq);
 
@@ -1314,8 +1314,8 @@ public class GraphHopperIT {
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setProfile(profile);
         // request speed mode
-        req.getHints().put(Landmark.DISABLE, true);
-        req.getHints().put(CH.DISABLE, false);
+        req.putHint(Landmark.DISABLE, true);
+        req.putHint(CH.DISABLE, false);
 
         GHResponse rsp = hopper.route(req);
         long chSum = rsp.getHints().getLong("visited_nodes.sum", 0);
@@ -1326,8 +1326,8 @@ public class GraphHopperIT {
 
         // request flex mode
         req.setAlgorithm(Parameters.Algorithms.ASTAR_BI);
-        req.getHints().put(Landmark.DISABLE, true);
-        req.getHints().put(CH.DISABLE, true);
+        req.putHint(Landmark.DISABLE, true);
+        req.putHint(CH.DISABLE, true);
         rsp = hopper.route(req);
         long flexSum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertTrue("Too few visited nodes for flex mode " + flexSum, flexSum > 60);
@@ -1337,8 +1337,8 @@ public class GraphHopperIT {
         assertEquals(91, bestPath.getPoints().getSize());
 
         // request hybrid mode
-        req.getHints().put(Landmark.DISABLE, false);
-        req.getHints().put(CH.DISABLE, true);
+        req.putHint(Landmark.DISABLE, false);
+        req.putHint(CH.DISABLE, true);
         rsp = hopper.route(req);
 
         long hSum = rsp.getHints().getLong("visited_nodes.sum", 0);
@@ -1383,22 +1383,22 @@ public class GraphHopperIT {
                 setProfile(profile2);
 
         // try with CH
-        req.getHints().put(CH.DISABLE, false);
-        req.getHints().put(Landmark.DISABLE, false);
+        req.putHint(CH.DISABLE, false);
+        req.putHint(Landmark.DISABLE, false);
         GHResponse res = hopper.route(req);
         assertTrue(res.getErrors().toString(), res.hasErrors());
         assertTrue(res.getErrors().toString(), res.getErrors().get(0).getMessage().contains("Cannot find CH preparation for the requested profile: 'short_fast_profile'"));
 
         // try with LM
-        req.getHints().put(CH.DISABLE, true);
-        req.getHints().put(Landmark.DISABLE, false);
+        req.putHint(CH.DISABLE, true);
+        req.putHint(Landmark.DISABLE, false);
         res = hopper.route(req);
         assertTrue(res.getErrors().toString(), res.hasErrors());
         assertTrue(res.getErrors().toString(), res.getErrors().get(0).getMessage().contains("Cannot find LM preparation for the requested profile: 'short_fast_profile'"));
 
         // falling back to non-prepared algo works
-        req.getHints().put(CH.DISABLE, true);
-        req.getHints().put(Landmark.DISABLE, true);
+        req.putHint(CH.DISABLE, true);
+        req.putHint(Landmark.DISABLE, true);
         res = hopper.route(req);
         assertFalse(res.getErrors().toString(), res.hasErrors());
         assertEquals(3587, res.getBest().getDistance(), 1);
@@ -1425,11 +1425,11 @@ public class GraphHopperIT {
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setProfile(profile);
 
-        req.getHints().put(Landmark.DISABLE, false);
+        req.putHint(Landmark.DISABLE, false);
         GHResponse res = hopper.route(req);
         assertTrue(res.getHints().getInt("visited_nodes.sum", 0) < 150);
 
-        req.getHints().put(Landmark.DISABLE, true);
+        req.putHint(Landmark.DISABLE, true);
         res = hopper.route(req);
         assertTrue(res.getHints().getInt("visited_nodes.sum", 0) > 200);
     }
@@ -1510,7 +1510,7 @@ public class GraphHopperIT {
         GHResponse rsp2 = hopper.route(req);
         assertEquals(1044, rsp2.getBest().getDistance(), 1);
         // just a quick check that we did not run the same algorithm twice
-        assertNotEquals(rsp1.getHints().get("visited_nodes.sum", "_"), rsp2.getHints().get("visited_nodes.sum", "_"));
+        assertNotEquals(rsp1.getHints().getInt("visited_nodes.sum", -1), rsp2.getHints().getInt("visited_nodes.sum", -1));
     }
 
     @Test
@@ -1682,7 +1682,7 @@ public class GraphHopperIT {
 
     private GHResponse calcCurbsidePath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides, boolean force) {
         GHRequest req = new GHRequest(source, target);
-        req.getHints().put(Routing.FORCE_CURBSIDE, force);
+        req.putHint(Routing.FORCE_CURBSIDE, force);
         req.setProfile("my_profile");
         req.setCurbsides(curbsides);
         return hopper.route(req);
@@ -1737,7 +1737,7 @@ public class GraphHopperIT {
                 .addPoint(new GHPoint(50.003464, 11.49157))
                 .setProfile(profile)
                 .setPathDetails(Arrays.asList("street_name", "max_speed"));
-        req.putHint("elevation", "true");
+        req.putHint("elevation", true);
 
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());

@@ -401,11 +401,11 @@ public class GraphHopperOSMTest {
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);
         req.setProfile(profile);
         boolean old = instance.getEncodingManager().isEnableInstructions();
-        req.getHints().put("instructions", true);
+        req.putHint("instructions", true);
         instance.route(req);
         assertEquals(old, instance.getEncodingManager().isEnableInstructions());
 
-        req.getHints().put("instructions", false);
+        req.putHint("instructions", false);
         instance.route(req);
         assertEquals("route method should not change instance field", old, instance.getEncodingManager().isEnableInstructions());
     }
@@ -818,7 +818,7 @@ public class GraphHopperOSMTest {
         // Via Point betweeen 8-3
         GHPoint via = new GHPoint(0.0015, 0.001);
         GHRequest req = new GHRequest().addPoint(start).addPoint(via).addPoint(end).setProfile("profile");
-        req.getHints().put(Routing.PASS_THROUGH, true);
+        req.putHint(Routing.PASS_THROUGH, true);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -839,7 +839,7 @@ public class GraphHopperOSMTest {
         // First go south and than come from west to via-point at 7-6. Then go back over previously punished (11)-4 edge
         GHPoint via = new GHPoint(0.000, 0.0015);
         GHRequest req = new GHRequest().addPoint(start, 0.).addPoint(via, 3.14 / 2).addPoint(end).setProfile("profile");
-        req.getHints().put(Routing.PASS_THROUGH, true);
+        req.putHint(Routing.PASS_THROUGH, true);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
