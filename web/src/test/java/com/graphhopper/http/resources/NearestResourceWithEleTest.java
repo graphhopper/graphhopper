@@ -43,12 +43,12 @@ public class NearestResourceWithEleTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.elevation.provider", "srtm").
-                put("graph.elevation.cachedir", "../core/files/").
-                put("prepare.min_one_way_network_size", 0).
-                put("graph.flag_encoders", "car").
-                put("datareader.file", "../core/files/monaco.osm.gz").
-                put("graph.location", dir);
+                putObject("graph.elevation.provider", "srtm").
+                putObject("graph.elevation.cachedir", "../core/files/").
+                putObject("prepare.min_one_way_network_size", 0).
+                putObject("graph.flag_encoders", "car").
+                putObject("datareader.file", "../core/files/monaco.osm.gz").
+                putObject("graph.location", dir);
     }
 
     @ClassRule

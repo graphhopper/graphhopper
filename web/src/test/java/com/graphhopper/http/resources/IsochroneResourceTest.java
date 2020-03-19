@@ -47,9 +47,9 @@ public class IsochroneResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car").
-                put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR);
+                putObject("graph.flag_encoders", "car").
+                putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("graph.location", DIR);
     }
 
     @ClassRule

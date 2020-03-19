@@ -155,7 +155,7 @@ public class AlgorithmOptions {
         }
 
         public Builder hints(PMap hints) {
-            this.opts.hints.put(hints);
+            this.opts.hints.putAll(hints);
             return this;
         }
 

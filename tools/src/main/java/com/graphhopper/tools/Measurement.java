@@ -662,7 +662,7 @@ public class Measurement {
                         break;
 
                     try {
-                        req.getHints().put(BLOCK_AREA, querySettings.blockArea);
+                        req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
                         GraphEdgeIdFinder.createBlockArea(hopper.getGraphHopperStorage(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
                         break;
                     } catch (IllegalArgumentException ex) {
