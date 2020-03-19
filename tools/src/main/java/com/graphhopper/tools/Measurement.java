@@ -672,7 +672,7 @@ public class Measurement {
                 }
 
                 if (querySettings.blockArea != null)
-                    req.getHints().put(BLOCK_AREA, querySettings.blockArea);
+                    req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
 
                 if (querySettings.withPointHints) {
                     EdgeIterator iter = edgeExplorer.setBaseNode(from);

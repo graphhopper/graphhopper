@@ -65,7 +65,7 @@ public class CHMeasurement {
         GraphHopperConfig ghConfig = new GraphHopperConfig(map);
         LOGGER.info("Running analysis with parameters {}", ghConfig);
         String osmFile = ghConfig.getString("map", "local/maps/unterfranken-latest.osm.pbf");
-        ghConfig.put("datareader.file", osmFile);
+        ghConfig.putObject("datareader.file", osmFile);
         final String statsFile = ghConfig.getString("stats_file", null);
         final int periodicUpdates = ghConfig.getInt("period_updates", 0);
         final int lazyUpdates = ghConfig.getInt("lazy_updates", 100);
@@ -91,7 +91,7 @@ public class CHMeasurement {
         final GraphHopper graphHopper = new GraphHopperOSM();
         String profile = "car_profile";
         if (withTurnCosts) {
-            ghConfig.put("graph.flag_encoders", "car|turn_costs=true");
+            ghConfig.putObject("graph.flag_encoders", "car|turn_costs=true");
             ghConfig.setProfiles(Collections.singletonList(
                     new ProfileConfig(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true)
             ));
@@ -102,27 +102,27 @@ public class CHMeasurement {
                 ghConfig.setLMProfiles(Collections.singletonList(
                         new LMProfileConfig(profile)
                 ));
-                ghConfig.put("prepare.lm.landmarks", landmarks);
+                ghConfig.putObject("prepare.lm.landmarks", landmarks);
             }
         } else {
-            ghConfig.put("graph.flag_encoders", "car");
+            ghConfig.putObject("graph.flag_encoders", "car");
             ghConfig.setProfiles(Collections.singletonList(
                     new ProfileConfig(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(false)
             ));
         }
         CHPreparationHandler chHandler = graphHopper.getCHPreparationHandler();
         chHandler.setDisablingAllowed(true);
-        ghConfig.put(PERIODIC_UPDATES, periodicUpdates);
-        ghConfig.put(LAST_LAZY_NODES_UPDATES, lazyUpdates);
-        ghConfig.put(NEIGHBOR_UPDATES, neighborUpdates);
-        ghConfig.put(CONTRACTED_NODES, contractedNodes);
-        ghConfig.put(LOG_MESSAGES, logMessages);
-        ghConfig.put(EDGE_QUOTIENT_WEIGHT, edgeQuotientWeight);
-        ghConfig.put(ORIGINAL_EDGE_QUOTIENT_WEIGHT, origEdgeQuotientWeight);
-        ghConfig.put(HIERARCHY_DEPTH_WEIGHT, hierarchyDepthWeight);
-        ghConfig.put(SIGMA_FACTOR, sigmaFactor);
-        ghConfig.put(MIN_MAX_SETTLED_EDGES, minMaxSettledEdges);
-        ghConfig.put(SETTLED_EDGES_RESET_INTERVAL, resetInterval);
+        ghConfig.putObject(PERIODIC_UPDATES, periodicUpdates);
+        ghConfig.putObject(LAST_LAZY_NODES_UPDATES, lazyUpdates);
+        ghConfig.putObject(NEIGHBOR_UPDATES, neighborUpdates);
+        ghConfig.putObject(CONTRACTED_NODES, contractedNodes);
+        ghConfig.putObject(LOG_MESSAGES, logMessages);
+        ghConfig.putObject(EDGE_QUOTIENT_WEIGHT, edgeQuotientWeight);
+        ghConfig.putObject(ORIGINAL_EDGE_QUOTIENT_WEIGHT, origEdgeQuotientWeight);
+        ghConfig.putObject(HIERARCHY_DEPTH_WEIGHT, hierarchyDepthWeight);
+        ghConfig.putObject(SIGMA_FACTOR, sigmaFactor);
+        ghConfig.putObject(MIN_MAX_SETTLED_EDGES, minMaxSettledEdges);
+        ghConfig.putObject(SETTLED_EDGES_RESET_INTERVAL, resetInterval);
 
         LMPreparationHandler lmHandler = graphHopper.getLMPreparationHandler();
         lmHandler.setDisablingAllowed(true);
@@ -314,7 +314,7 @@ public class CHMeasurement {
                 if (run == iterations - 1) {
                     String avg = fmt(queryTime * 1.e-6 / run);
                     LOGGER.info("Finished all ({}) runs, avg time: {}ms", iterations, avg);
-                    results.put("_" + algo + ".time_ch", avg);
+                    results.putObject("_" + algo + ".time_ch", avg);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
                 req.putHint(Parameters.Routing.EDGE_BASED, withTurnCosts);

@@ -50,9 +50,9 @@ public class RealtimeIT {
     @BeforeClass
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.put("graph.flag_encoders", "car,foot");
-        ghConfig.put("gtfs.file", "files/sample-feed.zip");
-        ghConfig.put("graph.location", GRAPH_LOC).
+        ghConfig.putObject("graph.flag_encoders", "car,foot");
+        ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
+        ghConfig.putObject("graph.location", GRAPH_LOC).
                 setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);

@@ -88,7 +88,7 @@ public class PMap {
         return map;
     }
 
-    public PMap put(PMap map) {
+    public PMap putAll(PMap map) {
         this.map.putAll(map.map);
         return this;
     }
@@ -96,6 +96,7 @@ public class PMap {
     /**
      * @deprecated use {@link #putObject(String, Object)} instead
      */
+    @Deprecated
     public PMap put(String key, String str) {
         if (str == null)
             throw new NullPointerException("Value cannot be null. Use remove instead.");
@@ -142,9 +143,9 @@ public class PMap {
         return object instanceof String ? (String) object : _default;
     }
 
-    public Object getObject(String key, Object _default) {
+    public <T> T getObject(String key, T _default) {
         Object object = map.get(key);
-        return object == null ? _default : object;
+        return object == null ? _default : (T) object;
     }
 
     public PMap putObject(String key, Object object) {
