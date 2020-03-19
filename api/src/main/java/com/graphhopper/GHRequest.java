@@ -34,7 +34,7 @@ import java.util.Locale;
  */
 public class GHRequest {
     private List<GHPoint> points;
-    // todonow: keep this here or put it into hints, and even more important: can we remove vehicle+weighting from
+    // todo #1934: keep this here or put it into hints, and even more important: remove vehicle+weighting from
     // hints?
     private String profile = "";
     private final HintsMap hints = new HintsMap();
