@@ -1348,13 +1348,20 @@ public class GraphHopper implements GraphHopperAPI {
             this.ghStorage = ghStorage;
         }
 
-        public Weighting createWeighting(ProfileConfig profile, PMap hints) {
+        public Weighting createWeighting(ProfileConfig profile, PMap requestHints) {
+            // Merge profile hints with request hints, the request hints take precedence.
+            // Note that so far we do not check if overwriting the profile hints actually works with the preparation
+            // for LM/CH. Later we should also limit the number of parameters that can be used to modify the profile.
+            PMap hints = new PMap();
+            hints.put(profile.getHints());
+            hints.put(requestHints);
+
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
             if (profile.isTurnCosts()) {
                 if (!encoder.supportsTurnCosts())
                     throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
-                int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                int uTurnCosts = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
             } else {
                 turnCostProvider = NO_TURN_COST_PROVIDER;
