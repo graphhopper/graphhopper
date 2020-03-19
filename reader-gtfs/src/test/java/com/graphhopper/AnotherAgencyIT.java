@@ -50,10 +50,10 @@ public class AnotherAgencyIT {
     @BeforeClass
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.put("graph.flag_encoders", "car,foot");
-        ghConfig.put("graph.location", GRAPH_LOC);
-        ghConfig.put("datareader.file", "files/beatty.osm");
-        ghConfig.put("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
+        ghConfig.putObject("graph.flag_encoders", "car,foot");
+        ghConfig.putObject("graph.location", GRAPH_LOC);
+        ghConfig.putObject("datareader.file", "files/beatty.osm");
+        ghConfig.putObject("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

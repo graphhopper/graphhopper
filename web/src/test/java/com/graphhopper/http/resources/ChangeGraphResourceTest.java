@@ -41,10 +41,10 @@ public class ChangeGraphResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car").
-                put("web.change_graph.enabled", true).
-                put("graph.location", DIR).
-                put("datareader.file", "../core/files/andorra.osm.pbf");
+                putObject("graph.flag_encoders", "car").
+                putObject("web.change_graph.enabled", true).
+                putObject("graph.location", DIR).
+                putObject("datareader.file", "../core/files/andorra.osm.pbf");
     }
 
     @ClassRule
