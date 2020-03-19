@@ -513,7 +513,7 @@ public class GraphHopperIT {
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(13988, rsp.getBest().getDistance(), 1);
 
-        // Add blocked point to above area, to increase detour        
+        // Add blocked point to above area, to increase detour
         req.putHint(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
         rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
