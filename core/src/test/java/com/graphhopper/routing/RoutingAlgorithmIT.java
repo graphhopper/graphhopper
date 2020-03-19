@@ -94,7 +94,7 @@ public class RoutingAlgorithmIT {
             chHints.putObject(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             ProfileConfig pickedProfile = new ProfileResolver(hopper.getEncodingManager(), hopper.getProfiles(), hopper.getCHPreparationHandler().getCHProfileConfigs(), Collections.<LMProfileConfig>emptyList()).selectProfileCH(chHints);
             algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
-                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|algos|" + hints.getWeighting()) {
+                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(chHints.getVehicle() + "_profile", false, true);
@@ -102,7 +102,7 @@ public class RoutingAlgorithmIT {
             });
 
             algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
-                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|algos|" + hints.getWeighting()) {
+                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(chHints.getVehicle() + "_profile", false, true);
