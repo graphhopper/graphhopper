@@ -126,7 +126,7 @@ public class ProfileResolver {
                     match1.isTurnCosts() != match2.isTurnCosts()) {
                 return match1.isTurnCosts() ? match1 : match2;
             }
-            throw new IllegalArgumentException("There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`edge_based` and/or `u_turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
+            throw new IllegalArgumentException("There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`turn_costs` and/or `u_turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
                     "\nYou can also try disabling CH altogether using " + Parameters.CH.DISABLE + "=true" +
                     "\nrequested:  " + getCHRequestAsString(hintsMap, edgeBased, uTurnCosts) + "\nmatched:   " + chProfilesAsString(matchingProfiles) + "\navailable: " + chProfilesAsString(chProfiles));
 
@@ -157,18 +157,31 @@ public class ProfileResolver {
         if (matchingProfiles.isEmpty()) {
             throw new IllegalArgumentException("Cannot find matching LM profile for your request. Please check your parameters." +
                     "\nYou can try disabling LM by setting " + Parameters.Landmark.DISABLE + "=true" +
-                    "\nrequested: " + getLMRequestAsString(hintsMap) + "\navailable: " + lmProfilesAsStrings(lmProfiles));
+                    "\nrequested:  " + getLMRequestAsString(hintsMap) + "\navailable: " + lmProfilesAsStrings(lmProfiles));
         } else if (matchingProfiles.size() == 1) {
             return matchingProfiles.get(0);
         } else {
-            throw new IllegalArgumentException("There are multiple LM profiles matching your request. Use the `weighting` and `vehicle` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
+            // special case: prefer profile with turn costs over one without turn costs if both are available and there
+            // aren't any other options
+            ProfileConfig match1 = matchingProfiles.get(0);
+            ProfileConfig match2 = matchingProfiles.get(1);
+            Boolean edgeBased = getEdgeBased(hintsMap);
+            if (edgeBased == null && matchingProfiles.size() == 2 &&
+                    match1.getWeighting().equals(match2.getWeighting()) &&
+                    match1.getVehicle().equals(match2.getVehicle()) &&
+                    match1.isTurnCosts() != match2.isTurnCosts()) {
+                return match1.isTurnCosts() ? match1 : match2;
+            }
+            throw new IllegalArgumentException("There are multiple LM profiles matching your request. Use the `weighting`, `vehicle` and `turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
                     "\nYou can also try disabling LM altogether using " + Parameters.Landmark.DISABLE + "=true" +
                     "\nrequested:  " + getLMRequestAsString(hintsMap) + "\nmatched:   " + lmProfilesAsStrings(matchingProfiles) + "\navailable: " + lmProfilesAsStrings(lmProfiles));
         }
     }
 
     protected boolean lmProfileMatchesHints(ProfileConfig p, HintsMap hintsMap) {
-        return (hintsMap.getWeighting().isEmpty() || p.getWeighting().equals(hintsMap.getWeighting())) &&
+        Boolean edgeBased = getEdgeBased(hintsMap);
+        return (edgeBased == null || p.isTurnCosts() == edgeBased) &&
+                (hintsMap.getWeighting().isEmpty() || p.getWeighting().equals(hintsMap.getWeighting())) &&
                 (hintsMap.getVehicle().isEmpty() || p.getVehicle().equals(hintsMap.getVehicle()));
     }
 
@@ -207,9 +220,12 @@ public class ProfileResolver {
     }
 
     private String getLMRequestAsString(HintsMap map) {
+        Boolean edgeBased = getEdgeBased(map);
         return (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) +
                 "|" +
-                (map.getVehicle().isEmpty() ? "*" : map.getVehicle());
+                (map.getVehicle().isEmpty() ? "*" : map.getVehicle()) +
+                "|" +
+                "turn_costs=" + (edgeBased != null ? edgeBased : "*");
     }
 
     private String getCHRequestAsString(HintsMap hintsMap, Boolean edgeBased, Integer uTurnCosts) {
@@ -217,7 +233,7 @@ public class ProfileResolver {
                 "|" +
                 (hintsMap.getVehicle().isEmpty() ? "*" : hintsMap.getVehicle()) +
                 "|" +
-                "edge_based=" + (edgeBased != null ? edgeBased : "*") +
+                "turn_costs=" + (edgeBased != null ? edgeBased : "*") +
                 "|" +
                 "u_turn_costs=" + (uTurnCosts != null ? uTurnCosts : "*");
     }
@@ -225,7 +241,7 @@ public class ProfileResolver {
     private List<String> lmProfilesAsStrings(List<ProfileConfig> profiles) {
         List<String> result = new ArrayList<>(profiles.size());
         for (ProfileConfig p : profiles) {
-            result.add(p.getWeighting() + "|" + p.getVehicle());
+            result.add(p.getWeighting() + "|" + p.getVehicle() + "|turn_costs=" + p.isTurnCosts());
         }
         return result;
     }
@@ -233,7 +249,7 @@ public class ProfileResolver {
     private List<String> chProfilesAsString(List<ProfileConfig> profiles) {
         List<String> result = new ArrayList<>(profiles.size());
         for (ProfileConfig p : profiles) {
-            String str = p.getWeighting() + "|" + p.getVehicle() + "|edge_based=" + p.isTurnCosts();
+            String str = p.getWeighting() + "|" + p.getVehicle() + "|turn_costs=" + p.isTurnCosts();
             str += (p.isTurnCosts() ? "|u_turn_costs=" + p.getHints().getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : "");
             result.add(str);
         }

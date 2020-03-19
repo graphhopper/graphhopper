@@ -81,10 +81,9 @@ public class RouteResourceTurnCostsTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "",
-            // todonow: how shall we deal with turn cost cross querying for LM?
-//            "&ch.disable=true",
+            "&ch.disable=true",
             "&ch.disable=true&lm.disable=true"})
-    public void queryGet(String hints) {
+    public void getQuery_canToggleTurnCostsOnOff(String hints) {
         String pointsStr = "point=55.813357,37.5958585&point=55.811042,37.594689";
 
         assertDistanceGet(pointsStr + hints, 1044);
