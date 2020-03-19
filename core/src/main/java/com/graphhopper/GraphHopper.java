@@ -918,11 +918,12 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
-            // Note that turn costs will be ignored during LM preparation even when the created weighting includes
-            // turn costs, because the preparation is running node-based. This is important if we want to allow e.g.
-            // changing the u_turn_costs per request (we have to use the minimum weight settings (= no turn costs) for
-            // the preparation)
-            Weighting weighting = createWeighting(profile, new PMap());
+            // Note that we have to make sure the weighting used for LM preparation does not include turn costs, because
+            // the LM preparation is running node-based and the landmark weights will be wrong if there are non-zero
+            // turn costs, see discussion in #1960
+            // Running the preparation without turn costs can be useful to allow e.g. changing the u_turn_costs per
+            // request (we have to use the minimum weight settings (= no turn costs) for the preparation)
+            Weighting weighting = createWeighting(profile, new PMap().putObject("__disable_turn_costs_for_lm_preparation", true));
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1352,7 +1353,7 @@ public class GraphHopper implements GraphHopperAPI {
         public Weighting createWeighting(ProfileConfig profile, PMap hints) {
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
-            if (profile.isTurnCosts()) {
+            if (profile.isTurnCosts() && !hints.getBool("__disable_turn_costs_for_lm_preparation", false)) {
                 if (!encoder.supportsTurnCosts())
                     throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
                 int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
