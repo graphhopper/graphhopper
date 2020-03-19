@@ -67,7 +67,8 @@ public class SpatialRulesTest {
 
     @Test
     public void testDetourToComplyWithSpatialRule() {
-        final Response response = clientTarget(app, "route?" + "point=49.995933,11.54809&point=50.004871,11.517191").request().buildGet().invoke();
+        final Response response = clientTarget(app, "route?profile=profile&"
+                + "point=49.995933,11.54809&point=50.004871,11.517191").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));
