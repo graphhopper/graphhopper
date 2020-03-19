@@ -1549,7 +1549,7 @@ public class GraphHopperIT {
     private GHResponse runMoscow(GraphHopper hopper, String edgeBasedParam, boolean ch) {
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         if (edgeBasedParam.equals("true") || edgeBasedParam.equals("false")) {
-            req.getHints().putObject(Routing.EDGE_BASED, edgeBasedParam);
+            req.getHints().putObject(Routing.EDGE_BASED, Helper.toObject(edgeBasedParam));
         } else {
             req.getHints().remove(Routing.EDGE_BASED);
         }

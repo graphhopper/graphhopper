@@ -233,7 +233,7 @@ public class RouteResource {
             if (turnCosts.size() != 1) {
                 throw new IllegalArgumentException("You may only specify the turn_costs parameter once");
             }
-            request.putHint(EDGE_BASED, turnCosts.get(0));
+            request.putHint(EDGE_BASED, Helper.toObject(turnCosts.get(0)));
         }
     }
 
