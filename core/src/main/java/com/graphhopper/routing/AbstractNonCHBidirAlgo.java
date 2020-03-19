@@ -33,7 +33,6 @@ import com.graphhopper.util.GHUtility;
 import java.util.PriorityQueue;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 /**
  * Common subclass for bidirectional algorithms.
@@ -220,8 +219,9 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (!access) {
             return Double.POSITIVE_INFINITY;
         }
-        int incomingEdge = traversalMode.isEdgeBased() ? getIncomingEdge(currEdge) : NO_EDGE;
-        return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, incomingEdge) + currEdge.getWeightOfVisitedPath();
+        // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
+        // turn weights, see discussion in #1960
+        return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
     }
 
     @Override
