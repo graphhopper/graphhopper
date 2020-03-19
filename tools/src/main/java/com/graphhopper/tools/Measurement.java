@@ -303,7 +303,7 @@ public class Measurement {
         ghConfig.setCHProfiles(chProfiles);
         List<LMProfileConfig> lmProfiles = new ArrayList<>();
         if (useLM) {
-            // todonow: as long as we do not allow cross-querying LM with turn costs=true/false we have to add both
+            // as currently we do not allow cross-querying LM with turn costs=true/false we have to add both
             // profiles and this currently leads to two identical LM preparations
             lmProfiles.add(new LMProfileConfig("profile_no_tc"));
             if (turnCosts)
