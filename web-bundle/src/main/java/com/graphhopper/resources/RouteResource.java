@@ -83,9 +83,7 @@ public class RouteResource {
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
-            @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
-            @QueryParam("weighting") @DefaultValue("fastest") String weighting,
-            @QueryParam("profile") String profile,
+            @QueryParam("profile") String profileName,
             @QueryParam("algorithm") @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(POINT_HINT) List<String> pointHints,
@@ -134,9 +132,12 @@ public class RouteResource {
         initHints(request.getHints(), uriInfo.getQueryParameters());
         translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
-        request.
-                // todonow: if not set this should be set by the converter
-                        setProfile(profile).
+        if (Helper.isEmpty(profileName)) {
+            profileName = profileResolver.resolveProfile(request.getHints()).getName();
+        }
+        removeLegacyParameters(request);
+
+        request.setProfile(profileName).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
                 setPointHints(pointHints).
@@ -150,10 +151,11 @@ public class RouteResource {
 
         GHResponse ghResponse = graphHopper.route(request);
 
-        float took = sw.stop().getSeconds();
+        long took = sw.stop().getNanos() / 1000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        // todonow: is there any reason we should keep logging vehicle/weighting? maybe to keep track of the number of 'legacy' requests or something?
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
-                + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
+                + took + "micros, " + algoStr + ", " + profileName;
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
@@ -183,15 +185,9 @@ public class RouteResource {
         if (request == null)
             throw new IllegalArgumentException("Empty request");
 
-        // todonow: converter
-        if (Helper.isEmpty(request.getProfile())) {
-            throw new IllegalArgumentException("You need to specify a `profile` when doing a routing request");
-        }
-
         StopWatch sw = new StopWatch().start();
-        // todo: #1934, only try to resolve the profile if no profile is given!
-        ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
-        request.setProfile(profile.getName());
+        if (Helper.isEmpty(request.getProfile()))
+            request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
         removeLegacyParameters(request);
         GHResponse ghResponse = graphHopper.route(request);
 
@@ -208,10 +204,10 @@ public class RouteResource {
         boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
         String trackName = request.getHints().getString("gpx.trackname", "GraphHopper Track");
         String timeString = request.getHints().getString("gpx.millis", "");
-        float took = sw.stop().getSeconds();
+        long took = sw.stop().getNanos() / 1000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + request.getPoints().size() + ", took:"
-                + took + ", " + request.getAlgorithm() + ", " + request.getProfile() + ", " + request.getWeighting() + ", " + request.getVehicle();
+                + took + "micros, " + request.getAlgorithm() + ", " + request.getWeighting() + ", " + request.getVehicle();
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());

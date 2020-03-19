@@ -44,7 +44,7 @@ public class SpatialRulesTest {
     private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
 
     static {
-     // The EncodedValue "country" requires the setting "spatial_rules.borders_directory" as "country" does not load via DefaultTagParserFactory
+        // The EncodedValue "country" requires the setting "spatial_rules.borders_directory" as "country" does not load via DefaultTagParserFactory
         // TODO should we automatically detect this somehow and include a default country file?
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
@@ -67,7 +67,7 @@ public class SpatialRulesTest {
 
     @Test
     public void testDetourToComplyWithSpatialRule() {
-        final Response response = clientTarget(app, "/route?profile=profile&"
+        final Response response = clientTarget(app, "route?profile=profile&"
                 + "point=49.995933,11.54809&point=50.004871,11.517191").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);

@@ -1056,7 +1056,6 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
             }
             if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
-                // todonow: this is a bit ugly: curbside requires edge-based traversal but not necessarily turn costs?!
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
 
             // todo later: should we be able to control this using the edge_based parameter?
