@@ -32,8 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
-
 public class ProfileResolver {
     private final EncodingManager encodingManager;
     private final List<ProfileConfig> profiles;

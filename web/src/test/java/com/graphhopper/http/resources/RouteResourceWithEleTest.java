@@ -46,7 +46,7 @@ public class RouteResourceWithEleTest {
         config.getGraphHopperConfiguration().
                 put("graph.elevation.provider", "srtm").
                 put("graph.elevation.cachedir", "../core/files/").
-                put("prepare.min_one_way_network_size", "0").
+                put("prepare.min_one_way_network_size", 0).
                 put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/monaco.osm.gz").
                 put("graph.location", dir).

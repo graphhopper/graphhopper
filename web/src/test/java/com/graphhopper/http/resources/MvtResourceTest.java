@@ -58,8 +58,8 @@ public class MvtResourceTest {
         config.getGraphHopperConfiguration().
                 put("graph.flag_encoders", "car").
                 put("graph.encoded_values", "road_class,road_environment,max_speed,surface").
-                put("prepare.min_network_size", "0").
-                put("prepare.min_one_way_network_size", "0").
+                put("prepare.min_network_size", 0).
+                put("prepare.min_one_way_network_size", 0).
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", DIR).
                 setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));

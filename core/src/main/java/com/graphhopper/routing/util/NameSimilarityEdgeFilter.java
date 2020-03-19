@@ -82,6 +82,10 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         put("s", "south");
         put("w", "west");
         put("e", "east");
+        put("ne", "northeast");
+        put("nw", "northwest");
+        put("se", "southeast");
+        put("sw", "southwest");
     }};
     private static final Pattern WORD_CHAR = Pattern.compile("\\p{LD}+");
     private static final JaroWinkler jaroWinkler = new JaroWinkler();

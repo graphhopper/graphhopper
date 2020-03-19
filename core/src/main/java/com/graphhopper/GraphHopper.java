@@ -493,11 +493,11 @@ public class GraphHopper implements GraphHopperAPI {
         if (ghConfig.has("osmreader.osm"))
             throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see core/files/changelog.txt");
 
-        String tmpOsmFile = ghConfig.get("datareader.file", "");
+        String tmpOsmFile = ghConfig.getString("datareader.file", "");
         if (!isEmpty(tmpOsmFile))
             dataReaderFile = tmpOsmFile;
 
-        String graphHopperFolder = ghConfig.get("graph.location", "");
+        String graphHopperFolder = ghConfig.getString("graph.location", "");
         if (isEmpty(graphHopperFolder) && isEmpty(ghLocation)) {
             if (isEmpty(dataReaderFile))
                 throw new IllegalArgumentException("If no graph.location is provided you need to specify an OSM file.");
@@ -509,7 +509,7 @@ public class GraphHopper implements GraphHopperAPI {
         setGraphHopperLocation(graphHopperFolder);
         defaultSegmentSize = ghConfig.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
 
-        String graphDATypeStr = ghConfig.get("graph.dataaccess", "RAM_STORE");
+        String graphDATypeStr = ghConfig.getString("graph.dataaccess", "RAM_STORE");
         dataAccessType = DAType.fromString(graphDATypeStr);
 
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
@@ -520,7 +520,7 @@ public class GraphHopper implements GraphHopperAPI {
             setEncodingManager(encodingManager);
         }
 
-        if (ghConfig.get("graph.locktype", "native").equals("simple"))
+        if (ghConfig.getString("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
         else
             lockFactory = new NativeFSLockFactory();
@@ -559,8 +559,8 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private EncodingManager createEncodingManager(GraphHopperConfig ghConfig) {
-        String flagEncodersStr = ghConfig.get("graph.flag_encoders", "");
-        String encodedValueStr = ghConfig.get("graph.encoded_values", "");
+        String flagEncodersStr = ghConfig.getString("graph.flag_encoders", "");
+        String encodedValueStr = ghConfig.getString("graph.encoded_values", "");
         if (flagEncodersStr.isEmpty() && encodedValueStr.isEmpty()) {
             return null;
         } else {
@@ -571,34 +571,34 @@ public class GraphHopper implements GraphHopperAPI {
             if (!flagEncodersStr.isEmpty())
                 emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
             emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
-            emBuilder.setPreferredLanguage(ghConfig.get("datareader.preferred_language", ""));
-            emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.get("datareader.date_range_parser_day", "")));
+            emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
+            emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
             return emBuilder.build();
         }
     }
 
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
-        String eleProviderStr = toLowerCase(ghConfig.get("graph.elevation.provider", "noop"));
+        String eleProviderStr = toLowerCase(ghConfig.getString("graph.elevation.provider", "noop"));
 
         if (ghConfig.has("graph.elevation.calcmean"))
             throw new IllegalArgumentException("graph.elevation.calcmean is deprecated, use graph.elevation.interpolate");
 
         boolean interpolate = ghConfig.has("graph.elevation.interpolate")
-                ? "bilinear".equals(ghConfig.get("graph.elevation.interpolate", "none"))
+                ? "bilinear".equals(ghConfig.getString("graph.elevation.interpolate", "none"))
                 : ghConfig.getBool("graph.elevation.calc_mean", false);
 
-        String cacheDirStr = ghConfig.get("graph.elevation.cache_dir", "");
+        String cacheDirStr = ghConfig.getString("graph.elevation.cache_dir", "");
         if (cacheDirStr.isEmpty())
-            cacheDirStr = ghConfig.get("graph.elevation.cachedir", "");
+            cacheDirStr = ghConfig.getString("graph.elevation.cachedir", "");
 
-        String baseURL = ghConfig.get("graph.elevation.base_url", "");
+        String baseURL = ghConfig.getString("graph.elevation.base_url", "");
         if (baseURL.isEmpty())
-            ghConfig.get("graph.elevation.baseurl", "");
+            ghConfig.getString("graph.elevation.baseurl", "");
 
         boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
         removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
 
-        DAType elevationDAType = DAType.fromString(ghConfig.get("graph.elevation.dataaccess", "MMAP"));
+        DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
         ElevationProvider elevationProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm")) {
             elevationProvider = new SRTMProvider(cacheDirStr);
@@ -899,11 +899,12 @@ public class GraphHopper implements GraphHopperAPI {
 
         for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
-            // Note that turn costs will be ignored during LM preparation even when the created weighting includes
-            // turn costs, because the preparation is running node-based. This is important if we want to allow e.g.
-            // changing the u_turn_costs per request (we have to use the minimum weight settings (= no turn costs) for
-            // the preparation)
-            Weighting weighting = createWeighting(profile, new PMap());
+            // Note that we have to make sure the weighting used for LM preparation does not include turn costs, because
+            // the LM preparation is running node-based and the landmark weights will be wrong if there are non-zero
+            // turn costs, see discussion in #1960
+            // Running the preparation without turn costs can be useful to allow e.g. changing the u_turn_costs per
+            // request (we have to use the minimum weight settings (= no turn costs) for the preparation)
+            Weighting weighting = createWeighting(profile, new PMap().putObject("__disable_turn_costs_for_lm_preparation", true));
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1352,7 +1353,7 @@ public class GraphHopper implements GraphHopperAPI {
         public Weighting createWeighting(ProfileConfig profile, PMap hints) {
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
-            if (profile.isTurnCosts()) {
+            if (profile.isTurnCosts() && !hints.getBool("__disable_turn_costs_for_lm_preparation", false)) {
                 if (!encoder.supportsTurnCosts())
                     throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
                 int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);

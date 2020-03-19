@@ -61,8 +61,8 @@ public class RoutingAlgorithmIT {
         Weighting weighting = hopper.createWeighting(profile, new PMap());
 
         HintsMap defaultHints = new HintsMap()
-                .put(Parameters.CH.DISABLE, true)
-                .put(Parameters.Landmark.DISABLE, true)
+                .putObject(Parameters.CH.DISABLE, true)
+                .putObject(Parameters.Landmark.DISABLE, true)
                 .setVehicle(vehicleStr)
                 .setWeighting(weightingStr);
 
@@ -80,7 +80,7 @@ public class RoutingAlgorithmIT {
 
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMPreparationHandler().isEnabled()) {
-            final HintsMap lmHints = new HintsMap(defaultHints).put(Parameters.Landmark.DISABLE, false);
+            final HintsMap lmHints = new HintsMap(defaultHints).putObject(Parameters.Landmark.DISABLE, false);
             algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
@@ -91,8 +91,8 @@ public class RoutingAlgorithmIT {
 
         if (hopper.getCHPreparationHandler().isEnabled()) {
             final HintsMap chHints = new HintsMap(defaultHints);
-            chHints.put(Parameters.CH.DISABLE, false);
-            chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
+            chHints.putObject(Parameters.CH.DISABLE, false);
+            chHints.putObject(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             ProfileConfig pickedProfile = new ProfileResolver(hopper.getEncodingManager(), hopper.getProfiles(), hopper.getCHPreparationHandler().getCHProfileConfigs(), Collections.<LMProfileConfig>emptyList()).selectProfileCH(chHints);
             algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + weightingStr) {

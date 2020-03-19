@@ -77,8 +77,8 @@ public class IsochroneResource {
 
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
-        hintsMap.put(Parameters.CH.DISABLE, true);
-        hintsMap.put(Parameters.Landmark.DISABLE, true);
+        hintsMap.putObject(Parameters.CH.DISABLE, true);
+        hintsMap.putObject(Parameters.Landmark.DISABLE, true);
         // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
         if (profile.isTurnCosts()) {
