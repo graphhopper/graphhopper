@@ -53,9 +53,9 @@ public class PtIsochroneTest {
 
     static {
         config.getGraphHopperConfiguration()
-                .put("graph.flag_encoders", "foot")
-                .put("graph.location", GRAPH_LOC)
-                .put("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
+                .putObject("graph.flag_encoders", "foot")
+                .putObject("graph.location", GRAPH_LOC)
+                .putObject("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
                 setProfiles(Collections.singletonList(new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
     }
