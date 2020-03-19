@@ -84,8 +84,7 @@ public class RouteResource {
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
-            @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
-            @QueryParam("weighting") @DefaultValue("fastest") String weighting,
+            @QueryParam("profile") String profileName,
             @QueryParam("algorithm") @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(POINT_HINT) List<String> pointHints,
@@ -134,11 +133,12 @@ public class RouteResource {
         initHints(request.getHints(), uriInfo.getQueryParameters());
         translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
-        // todo: #1934, only try to resolve the profile if no profile is given!
-        ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
+        if (Helper.isEmpty(profileName)) {
+            profileName = profileResolver.resolveProfile(request.getHints()).getName();
+        }
         removeLegacyParameters(request);
 
-        request.setProfile(profile.getName()).
+        request.setProfile(profileName).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
                 setPointHints(pointHints).
@@ -154,8 +154,9 @@ public class RouteResource {
 
         float took = sw.stop().getSeconds();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        // todonow: is there any reason we should keep logging vehicle/weighting? maybe to keep track of the number of 'legacy' requests or something?
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
-                + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
+                + took + ", " + algoStr + ", " + profileName;
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
