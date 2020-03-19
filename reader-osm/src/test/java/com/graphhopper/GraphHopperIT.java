@@ -1459,8 +1459,7 @@ public class GraphHopperIT {
             double lon1 = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
             double lon2 = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
             GHRequest req = new GHRequest(lat1, lon1, lat2, lon2);
-            req.setProfile("car");
-            req.getHints().putObject(Routing.EDGE_BASED, turnCosts);
+            req.setProfile(profile);
             req.getHints().putObject(CH.DISABLE, false).putObject(Landmark.DISABLE, true);
             PathWrapper pathCH = hopper.route(req).getBest();
             req.getHints().putObject(CH.DISABLE, true).putObject(Landmark.DISABLE, false);
