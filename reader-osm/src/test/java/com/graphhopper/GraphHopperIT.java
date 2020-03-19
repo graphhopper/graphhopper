@@ -406,7 +406,7 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
                 setAlgorithm(ALT_ROUTE).setProfile(profile);
-        req.getHints().putObject("alternative_route.max_paths", 3);
+        req.putHint("alternative_route.max_paths", 3);
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
 
@@ -565,7 +565,7 @@ public class GraphHopperIT {
         // first point is contained in block_area => error
         req = new GHRequest(49.979, 11.516, 49.986107, 11.507202).
                 setProfile(profile);
-        req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
+        req.putHint(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = hopper.route(req);
         assertTrue("expected errors", rsp.hasErrors());
     }
@@ -1580,11 +1580,11 @@ public class GraphHopperIT {
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         req.setProfile("my_car");
         // with CH
-        req.getHints().put(CH.DISABLE, true);
+        req.putHint(CH.DISABLE, true);
         GHResponse rsp1 = hopper.route(req);
         assertEquals(1044, rsp1.getBest().getDistance(), 1);
         // without CH
-        req.getHints().put(CH.DISABLE, false);
+        req.putHint(CH.DISABLE, false);
         GHResponse rsp2 = hopper.route(req);
         assertEquals(1044, rsp2.getBest().getDistance(), 1);
         // just a quick check that we did not run the same algorithm twice
@@ -1611,14 +1611,14 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         // without CH, turn turn costs on and off
-        req.getHints().put(CH.DISABLE, true);
+        req.putHint(CH.DISABLE, true);
         req.setProfile(profile1);
         assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
         req.setProfile(profile2);
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
 
         // with CH, turn turn costs on and off, since turn costs not supported for CH throw an error
-        req.getHints().put(CH.DISABLE, false);
+        req.putHint(CH.DISABLE, false);
         req.setProfile(profile2);
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
         req.setProfile(profile1);

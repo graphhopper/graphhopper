@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CHProfileSelectorTest {
 
-    private static final String MULTIPLE_MATCHES_ERROR = "There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`edge_based` and/or `u_turn_costs` parameters to be more specific";
+    private static final String MULTIPLE_MATCHES_ERROR = "There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`turn_costs` and/or `u_turn_costs` parameters to be more specific";
     private static final String NO_MATCH_ERROR = "Cannot find matching profile that supports CH for your request";
 
     private ProfileConfig fastCar;
@@ -81,8 +81,8 @@ public class CHProfileSelectorTest {
         assertProfileFound(profiles.get(0), profiles, chProfiles, null, null);
         assertCHProfileSelectionError(NO_MATCH_ERROR, profiles, chProfiles, null, 30);
         String error = assertCHProfileSelectionError(NO_MATCH_ERROR, profiles, chProfiles, "foot", "fastest", false, null);
-        assertTrue(error.contains("requested:  fastest|foot|edge_based=false|u_turn_costs=*"), error);
-        assertTrue(error.contains("available: [fastest|car|edge_based=false]"), error);
+        assertTrue(error.contains("requested:  fastest|foot|turn_costs=false|u_turn_costs=*"), error);
+        assertTrue(error.contains("available: [fastest|car|turn_costs=false]"), error);
     }
 
     @Test
@@ -134,9 +134,9 @@ public class CHProfileSelectorTest {
         assertProfileFound(profiles.get(1), profiles, chProfiles, null, 30);
         assertCHProfileSelectionError(NO_MATCH_ERROR, profiles, chProfiles, null, 40);
         String error = assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, null, null);
-        assertTrue(error.contains("requested:  fastest|car|edge_based=*|u_turn_costs=*"), error);
-        assertTrue(error.contains("matched:   [fastest|car|edge_based=false, fastest|car|edge_based=true|u_turn_costs=30, fastest|car|edge_based=true|u_turn_costs=50]"), error);
-        assertTrue(error.contains("available: [fastest|car|edge_based=false, fastest|car|edge_based=true|u_turn_costs=30, fastest|car|edge_based=true|u_turn_costs=50]"), error);
+        assertTrue(error.contains("requested:  fastest|car|turn_costs=*|u_turn_costs=*"), error);
+        assertTrue(error.contains("matched:   [fastest|car|turn_costs=false, fastest|car|turn_costs=true|u_turn_costs=30, fastest|car|turn_costs=true|u_turn_costs=50]"), error);
+        assertTrue(error.contains("available: [fastest|car|turn_costs=false, fastest|car|turn_costs=true|u_turn_costs=30, fastest|car|turn_costs=true|u_turn_costs=50]"), error);
     }
 
     @Test
