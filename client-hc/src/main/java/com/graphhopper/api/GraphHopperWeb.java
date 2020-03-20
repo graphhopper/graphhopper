@@ -301,8 +301,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
         String url = routeServiceUrl
                 + "?"
-                + "&profile=" + ghRequest.getProfile()
                 + places
+                + "&profile=" + ghRequest.getProfile()
                 + "&type=" + type
                 + "&instructions=" + tmpInstructions
                 + "&points_encoded=true"
