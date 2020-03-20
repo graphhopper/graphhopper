@@ -258,7 +258,7 @@ public class GraphHopperWebIT {
 
     @Test
     public void testSimpleExport() {
-        // todonow: why does this give bad request? is it not allowed to add the profile parameter?
+        // todonow: is it ok/meant to be that export() always uses get (regardless of the setting)
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
@@ -275,6 +275,7 @@ public class GraphHopperWebIT {
 
     @Test
     public void testExportWithoutTrack() {
+        // todonow: is it ok/meant to be that export() always uses get (regardless of the setting)
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
