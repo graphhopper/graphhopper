@@ -15,7 +15,7 @@ matrix:
     - jdk: openjdk8
     - env: JDK='OpenJDK 14'
       install: . ./install-jdk.sh -F 14 -C
-    - env: JDK='OpenJDK 15' SKIP_EXT_TESTS=true
+    - env: JDK='OpenJDK 15'
       install: . ./install-jdk.sh -F 15 -C
     
 # avoid default dependency command for maven, 'true' means 'return true' and continue
