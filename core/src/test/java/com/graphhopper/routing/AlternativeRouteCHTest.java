@@ -105,6 +105,7 @@ public class AlternativeRouteCHTest {
         PMap hints = new PMap();
         hints.putObject("alternative_route.max_weight_factor", 2.3);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
+        hints.putObject("alternative_route.max_paths", 4);
         AlternativeRouteCH altDijkstra = new AlternativeRouteCH(new RoutingCHGraphImpl(g.getCHGraph(), weighting), hints);
         List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
         assertEquals(3, pathInfos.size());
@@ -118,6 +119,7 @@ public class AlternativeRouteCHTest {
         PMap hints = new PMap();
         hints.putObject("alternative_route.max_weight_factor", 4);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
+        hints.putObject("alternative_route.max_paths", 4);
         AlternativeRouteCH altDijkstra = new AlternativeRouteCH(new RoutingCHGraphImpl(g.getCHGraph(), weighting), hints);
         List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
         assertEquals(4, pathInfos.size());

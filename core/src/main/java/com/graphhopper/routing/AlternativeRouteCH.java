@@ -44,6 +44,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
     private final double maxWeightFactor;
     private final double maxShareFactor;
     private final double localOptimalityFactor;
+    private final int maxPaths;
     private int extraVisitedNodes = 0;
     private List<AlternativeInfo> alternatives = new ArrayList<>();
 
@@ -52,6 +53,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
         maxWeightFactor = hints.getDouble("alternative_route.max_weight_factor", 1.25);
         maxShareFactor = hints.getDouble("alternative_route.max_share_factor", 0.8);
         localOptimalityFactor = hints.getDouble("alternative_route.local_optimality_factor", 0.25);
+        maxPaths = hints.getInt("alternative_route.max_paths", 3);
     }
 
     @Override
@@ -80,6 +82,8 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
         alternatives.add(new AlternativeInfo(bestPath, 0));
 
+        final ArrayList<PotentialAlternativeInfo> potentialAlternativeInfos = new ArrayList<>();
+
         bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
             @Override
             public boolean apply(final int v, final SPTEntry fromSPTEntry) {
@@ -99,49 +103,60 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 if (preliminaryShare > maxShareFactor) {
                     return true;
                 }
-
-                // Okay, now we want the s -> v -> t shortest via-path, so we route s -> v and v -> t
-                // and glue them together.
-                DijkstraBidirectionCHNoSOD svRouter = new DijkstraBidirectionCHNoSOD(graph);
-                final Path svPath = svRouter.calcPath(s, v);
-                extraVisitedNodes += svRouter.getVisitedNodes();
-
-                DijkstraBidirectionCHNoSOD vtRouter = new DijkstraBidirectionCHNoSOD(graph);
-                final Path vtPath = vtRouter.calcPath(v, t);
-                Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
-                extraVisitedNodes += vtRouter.getVisitedNodes();
-
-                double sharedDistanceWithShortest = sharedDistanceWithShortest(path);
-                double detourLength = path.getDistance() - sharedDistanceWithShortest;
-                double directLength = bestPath.getDistance() - sharedDistanceWithShortest;
-                if (detourLength > directLength * maxWeightFactor) {
-                    return true;
-                }
-
-                double share = calculateShare(path);
-                if (share > maxShareFactor) {
-                    return true;
-                }
-
-                // This is the final test we need: Discard paths that are not "locally shortest" around v.
-                // So move a couple of nodes to the left and right from v on our path,
-                // route, and check if v is on the shortest path.
-                final IntIndexedContainer svNodes = svPath.calcNodes();
-                int vIndex = svNodes.size() - 1;
-                if (!tTest(path, vIndex))
-                    return true;
-
-                alternatives.add(new AlternativeInfo(path, share));
+                PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
+                potentialAlternativeInfo.v = v;
+                potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
+                potentialAlternativeInfos.add(potentialAlternativeInfo);
                 return true;
             }
 
         });
-        Collections.sort(alternatives, new Comparator<AlternativeInfo>() {
+
+        Collections.sort(potentialAlternativeInfos, new Comparator<PotentialAlternativeInfo>() {
             @Override
-            public int compare(AlternativeInfo o1, AlternativeInfo o2) {
-                return Double.compare(o1.path.getWeight(), o2.path.getWeight());
+            public int compare(PotentialAlternativeInfo o1, PotentialAlternativeInfo o2) {
+                return Double.compare(o1.weight, o2.weight);
             }
         });
+
+        for (PotentialAlternativeInfo potentialAlternativeInfo : potentialAlternativeInfos) {
+            int v = potentialAlternativeInfo.v;
+
+            // Okay, now we want the s -> v -> t shortest via-path, so we route s -> v and v -> t
+            // and glue them together.
+            DijkstraBidirectionCHNoSOD svRouter = new DijkstraBidirectionCHNoSOD(graph);
+            final Path svPath = svRouter.calcPath(s, v);
+            extraVisitedNodes += svRouter.getVisitedNodes();
+
+            DijkstraBidirectionCHNoSOD vtRouter = new DijkstraBidirectionCHNoSOD(graph);
+            final Path vtPath = vtRouter.calcPath(v, t);
+            Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
+            extraVisitedNodes += vtRouter.getVisitedNodes();
+
+            double sharedDistanceWithShortest = sharedDistanceWithShortest(path);
+            double detourLength = path.getDistance() - sharedDistanceWithShortest;
+            double directLength = bestPath.getDistance() - sharedDistanceWithShortest;
+            if (detourLength > directLength * maxWeightFactor) {
+                continue;
+            }
+
+            double share = calculateShare(path);
+            if (share > maxShareFactor) {
+                continue;
+            }
+
+            // This is the final test we need: Discard paths that are not "locally shortest" around v.
+            // So move a couple of nodes to the left and right from v on our path,
+            // route, and check if v is on the shortest path.
+            final IntIndexedContainer svNodes = svPath.calcNodes();
+            int vIndex = svNodes.size() - 1;
+            if (!tTest(path, vIndex))
+                continue;
+
+            alternatives.add(new AlternativeInfo(path, share));
+            if (alternatives.size() >= maxPaths)
+                break;
+        }
         return alternatives;
     }
 
@@ -249,6 +264,11 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
             paths.add(a.path);
         }
         return paths;
+    }
+
+    public static class PotentialAlternativeInfo {
+        int v;
+        double weight;
     }
 
     public static class AlternativeInfo {
