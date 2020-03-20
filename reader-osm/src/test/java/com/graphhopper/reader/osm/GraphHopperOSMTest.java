@@ -390,11 +390,11 @@ public class GraphHopperOSMTest {
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);
         req.setVehicle(vehicle).setWeighting(weighting);
         boolean old = instance.getEncodingManager().isEnableInstructions();
-        req.getHints().put("instructions", true);
+        req.putHint("instructions", true);
         instance.route(req);
         assertEquals(old, instance.getEncodingManager().isEnableInstructions());
 
-        req.getHints().put("instructions", false);
+        req.putHint("instructions", false);
         instance.route(req);
         assertEquals("route method should not change instance field", old, instance.getEncodingManager().isEnableInstructions());
     }
@@ -452,9 +452,9 @@ public class GraphHopperOSMTest {
     public void testFailsForWrongConfig() {
         instance = new GraphHopperOSM().init(
                 new GraphHopperConfig().
-                        put("datareader.file", testOsm3).
-                        put("datareader.dataaccess", "RAM").
-                        put("graph.flag_encoders", "foot,car")).
+                        putObject("datareader.file", testOsm3).
+                        putObject("datareader.dataaccess", "RAM").
+                        putObject("graph.flag_encoders", "foot,car")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
@@ -464,9 +464,9 @@ public class GraphHopperOSMTest {
         try {
             GraphHopper tmpGH = new GraphHopperOSM().init(
                     new GraphHopperConfig().
-                            put("datareader.file", testOsm3).
-                            put("datareader.dataaccess", "RAM").
-                            put("graph.flag_encoders", "foot")).
+                            putObject("datareader.file", testOsm3).
+                            putObject("datareader.dataaccess", "RAM").
+                            putObject("graph.flag_encoders", "foot")).
                     setDataReaderFile(testOsm3);
             tmpGH.load(ghLoc);
             fail();
@@ -477,9 +477,9 @@ public class GraphHopperOSMTest {
         // different order is no longer okay, see #350
         try {
             GraphHopper tmpGH = new GraphHopperOSM().init(new GraphHopperConfig().
-                    put("datareader.file", testOsm3).
-                    put("datareader.dataaccess", "RAM").
-                    put("graph.flag_encoders", "car,foot")).
+                    putObject("datareader.file", testOsm3).
+                    putObject("datareader.dataaccess", "RAM").
+                    putObject("graph.flag_encoders", "car,foot")).
                     setDataReaderFile(testOsm3);
             tmpGH.load(ghLoc);
             fail();
@@ -490,10 +490,10 @@ public class GraphHopperOSMTest {
         // different encoded values should fail to load
         instance = new GraphHopperOSM().init(
                 new GraphHopperConfig().
-                        put("datareader.file", testOsm3).
-                        put("datareader.dataaccess", "RAM").
-                        put("graph.encoded_values", "road_class").
-                        put("graph.flag_encoders", "foot,car")).
+                        putObject("datareader.file", testOsm3).
+                        putObject("datareader.dataaccess", "RAM").
+                        putObject("graph.encoded_values", "road_class").
+                        putObject("graph.flag_encoders", "foot,car")).
                 setDataReaderFile(testOsm3);
         try {
             instance.load(ghLoc);
@@ -509,8 +509,8 @@ public class GraphHopperOSMTest {
                 return 0;
             }
         })).init(new GraphHopperConfig().
-                put("datareader.file", testOsm3).
-                put("datareader.dataaccess", "RAM")).
+                putObject("datareader.file", testOsm3).
+                putObject("datareader.dataaccess", "RAM")).
                 setDataReaderFile(testOsm3);
         try {
             instance.load(ghLoc);
@@ -524,9 +524,9 @@ public class GraphHopperOSMTest {
     public void testFailsForWrongEVConfig() {
         instance = new GraphHopperOSM().init(
                 new GraphHopperConfig().
-                        put("datareader.file", testOsm3).
-                        put("datareader.dataaccess", "RAM").
-                        put("graph.flag_encoders", "foot,car")).
+                        putObject("datareader.file", testOsm3).
+                        putObject("datareader.dataaccess", "RAM").
+                        putObject("graph.flag_encoders", "foot,car")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         // older versions <= 0.12 did not store this property, ensure that we fail to load it
@@ -538,10 +538,10 @@ public class GraphHopperOSMTest {
         // different encoded values should fail to load
         instance = new GraphHopperOSM().init(
                 new GraphHopperConfig().
-                        put("datareader.file", testOsm3).
-                        put("datareader.dataaccess", "RAM").
-                        put("graph.encoded_values", "road_environment,road_class").
-                        put("graph.flag_encoders", "foot,car")).
+                        putObject("datareader.file", testOsm3).
+                        putObject("datareader.dataaccess", "RAM").
+                        putObject("graph.encoded_values", "road_environment,road_class").
+                        putObject("graph.flag_encoders", "foot,car")).
                 setDataReaderFile(testOsm3);
         try {
             instance.load(ghLoc);
@@ -668,9 +668,9 @@ public class GraphHopperOSMTest {
         final String weighting = "fastest";
         instance = new GraphHopperOSM().setStoreOnFlush(true).
                 init(new GraphHopperConfig().
-                        put("datareader.file", testOsm3).
-                        put("prepare.min_network_size", "1").
-                        put("graph.flag_encoders", vehicle)
+                        putObject("datareader.file", testOsm3).
+                        putObject("prepare.min_network_size", 1).
+                        putObject("graph.flag_encoders", vehicle)
                         .setProfiles(Collections.singletonList(new ProfileConfig("profile").setVehicle(vehicle).setWeighting(weighting)))
                         .setCHProfiles(Collections.singletonList(new CHProfileConfig("profile")))
                 ).
@@ -769,7 +769,7 @@ public class GraphHopperOSMTest {
         // Via Point betweeen 8-3
         GHPoint via = new GHPoint(0.0015, 0.001);
         GHRequest req = new GHRequest().addPoint(start).addPoint(via).addPoint(end).setVehicle("car").setWeighting("fastest");
-        req.getHints().put(Routing.PASS_THROUGH, true);
+        req.putHint(Routing.PASS_THROUGH, true);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -790,7 +790,7 @@ public class GraphHopperOSMTest {
         // First go south and than come from west to via-point at 7-6. Then go back over previously punished (11)-4 edge
         GHPoint via = new GHPoint(0.000, 0.0015);
         GHRequest req = new GHRequest().addPoint(start, 0.).addPoint(via, 3.14 / 2).addPoint(end).setVehicle("car").setWeighting("fastest");
-        req.getHints().put(Routing.PASS_THROUGH, true);
+        req.putHint(Routing.PASS_THROUGH, true);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());

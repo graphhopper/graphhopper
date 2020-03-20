@@ -259,7 +259,7 @@ public class DijkstraBidirectionCHTest {
 
     private RoutingAlgorithm createCHAlgo(CHGraph chGraph, boolean withSOD, AlgorithmOptions algorithmOptions) {
         if (!withSOD) {
-            algorithmOptions.getHints().put("stall_on_demand", false);
+            algorithmOptions.getHints().putObject("stall_on_demand", false);
         }
         return new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, algorithmOptions);
     }

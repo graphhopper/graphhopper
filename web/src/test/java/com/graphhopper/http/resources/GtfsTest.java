@@ -43,10 +43,10 @@ public class GtfsTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "foot").
-                put("datareader.file", "../reader-gtfs/files/beatty.osm").
-                put("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
-                put("graph.location", DIR);
+                putObject("graph.flag_encoders", "foot").
+                putObject("datareader.file", "../reader-gtfs/files/beatty.osm").
+                putObject("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
+                putObject("graph.location", DIR);
     }
 
     @ClassRule

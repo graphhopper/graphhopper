@@ -115,7 +115,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
         algoOpts = AlgorithmOptions.start(algoOpts).
                 algorithm(Parameters.Algorithms.ASTAR_BI).
                 weighting(avoidPathWeighting).build();
-        algoOpts.getHints().put(Algorithms.AStarBi.EPSILON, 2);
+        algoOpts.getHints().putObject(Algorithms.AStarBi.EPSILON, 2);
 
         long visitedNodesSum = 0L;
         QueryResult start = queryResults.get(0);
@@ -138,8 +138,8 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
             avoidPathWeighting.addEdges(path.calcEdges());
         }
 
-        ghResponse.getHints().put("visited_nodes.sum", visitedNodesSum);
-        ghResponse.getHints().put("visited_nodes.average", (float) visitedNodesSum / (queryResults.size() - 1));
+        ghResponse.getHints().putObject("visited_nodes.sum", visitedNodesSum);
+        ghResponse.getHints().putObject("visited_nodes.average", (float) visitedNodesSum / (queryResults.size() - 1));
 
         return pathList;
     }

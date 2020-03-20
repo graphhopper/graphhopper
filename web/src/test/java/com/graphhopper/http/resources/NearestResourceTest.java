@@ -43,9 +43,9 @@ public class NearestResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car").
-                put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", dir);
+                putObject("graph.flag_encoders", "car").
+                putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("graph.location", dir);
     }
 
     @ClassRule

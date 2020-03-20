@@ -24,6 +24,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,12 +41,15 @@ import java.util.List;
  */
 public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
-    private double maxWeightFactor = 1.4;
-    private double maxShareFactor = 0.6;
-    public static final double T = 10000.0;
+    private final double maxWeightFactor;
+    private final double maxShareFactor;
+    private final double localOptimalityFactor;
 
-    public AlternativeRouteCH(RoutingCHGraph graph) {
+    public AlternativeRouteCH(RoutingCHGraph graph, PMap hints) {
         super(graph);
+        maxWeightFactor = hints.getDouble("alternative_route.max_weight_factor", 1.25);
+        maxShareFactor = hints.getDouble("alternative_route.max_share_factor", 0.8);
+        localOptimalityFactor = hints.getDouble("alternative_route.local_optimality_factor", 0.25);
     }
 
     List<AlternativeInfo> calcAlternatives(final int s, final int t) {
@@ -60,7 +64,6 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
         final List<AlternativeInfo> alternatives = new ArrayList<>();
         alternatives.add(new AlternativeInfo(bestPath, 0));
-        final double maxWeight = maxWeightFactor * bestPath.getWeight();
 
         bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
             @Override
@@ -69,8 +72,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 if (toSPTEntry == null)
                     return true;
 
-                // Filter alternatives that are too long
-                if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > maxWeight)
+                if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > bestPath.getWeight() * maxWeightFactor)
                     return true;
 
                 // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
@@ -91,8 +93,13 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 final Path vtPath = vtRouter.calcPath(v, t);
                 Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
 
-                // And calculate the share again, because this can be totally different.
-                // The first filter is a good heuristic, but we still need this one.
+                double sharedDistanceWithShortest = sharedDistanceWithShortest(path);
+                double detourLength = path.getDistance() - sharedDistanceWithShortest;
+                double directLength = bestPath.getDistance() - sharedDistanceWithShortest;
+                if (detourLength > directLength * maxWeightFactor) {
+                    return true;
+                }
+
                 double share = calculateShare(path);
                 if (share > maxShareFactor) {
                     return true;
@@ -111,6 +118,11 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
             }
 
             private double calculateShare(final Path path) {
+                double sharedDistance = sharedDistance(path);
+                return sharedDistance / path.getDistance();
+            }
+
+            private double sharedDistance(Path path) {
                 double sharedDistance = 0.0;
                 List<EdgeIteratorState> edges = path.calcEdges();
                 for (EdgeIteratorState edge : edges) {
@@ -118,7 +130,18 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                         sharedDistance += edge.getDistance();
                     }
                 }
-                return sharedDistance / path.getDistance();
+                return sharedDistance;
+            }
+
+            private double sharedDistanceWithShortest(Path path) {
+                double sharedDistance = 0.0;
+                List<EdgeIteratorState> edges = path.calcEdges();
+                for (EdgeIteratorState edge : edges) {
+                    if (alternatives.get(0).nodes.contains(edge.getBaseNode()) && alternatives.get(0).nodes.contains(edge.getAdjNode())) {
+                        sharedDistance += edge.getDistance();
+                    }
+                }
+                return sharedDistance;
             }
 
             private boolean nodesInCurrentAlternativeSetContains(int v) {
@@ -132,15 +155,22 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
             private boolean tTest(Path path, int vIndex) {
                 if (path.getEdgeCount() == 0) return true;
-                int fromNode = getPreviousNodeTMetersAway(path, vIndex);
-                int toNode = getNextNodeTMetersAway(path, vIndex);
+                double detourDistance = detourDistance(path);
+                double T = 0.5 * localOptimalityFactor * detourDistance;
+                int fromNode = getPreviousNodeTMetersAway(path, vIndex, T);
+                int toNode = getNextNodeTMetersAway(path, vIndex, T);
                 DijkstraBidirectionCHNoSOD tRouter = new DijkstraBidirectionCHNoSOD(graph);
                 Path tPath = tRouter.calcPath(fromNode, toNode);
                 IntIndexedContainer tNodes = tPath.calcNodes();
-                return tNodes.contains(path.calcNodes().get(vIndex));
+                int v = path.calcNodes().get(vIndex);
+                return tNodes.contains(v);
             }
 
-            private int getPreviousNodeTMetersAway(Path path, int vIndex) {
+            private double detourDistance(Path path) {
+                return path.getDistance() - sharedDistanceWithShortest(path);
+            }
+
+            private int getPreviousNodeTMetersAway(Path path, int vIndex, double T) {
                 List<EdgeIteratorState> edges = path.calcEdges();
                 double distance = 0.0;
                 int i = vIndex;
@@ -151,7 +181,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 return edges.get(i).getBaseNode();
             }
 
-            private int getNextNodeTMetersAway(Path path, int vIndex) {
+            private int getNextNodeTMetersAway(Path path, int vIndex, double T) {
                 List<EdgeIteratorState> edges = path.calcEdges();
                 double distance = 0.0;
                 int i = vIndex;
@@ -202,17 +232,9 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
         return paths;
     }
 
-    public void setMaxWeightFactor(double maxWeightFactor) {
-        this.maxWeightFactor = maxWeightFactor;
-    }
-
-    public void setMaxShareFactor(double maxShareFactor) {
-        this.maxShareFactor = maxShareFactor;
-    }
-
     public static class AlternativeInfo {
-        final Path path;
         final double shareWeight;
+        final Path path;
         final IntIndexedContainer nodes;
 
         AlternativeInfo(Path path, double shareWeight) {
@@ -221,18 +243,18 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
             this.nodes = path.calcNodes();
         }
 
+        @Override
+        public String toString() {
+            return "AlternativeInfo{" +
+                    "shareWeight=" + shareWeight +
+                    ", path=" + path.calcNodes() +
+                    '}';
+        }
+
         public Path getPath() {
             return path;
         }
 
-        @Override
-        public String toString() {
-            return "AlternativeInfo{" +
-                    "path=" + path +
-                    ", shareWeight=" + shareWeight +
-                    ", nodes=" + nodes +
-                    '}';
-        }
     }
 
 }

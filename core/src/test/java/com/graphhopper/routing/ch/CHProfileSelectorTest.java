@@ -250,10 +250,10 @@ public class CHProfileSelectorTest {
     private HintsMap createHintsMap(String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         HintsMap hintsMap = new HintsMap().setWeighting(weighting).setVehicle(vehicle);
         if (edgeBased != null) {
-            hintsMap.put(Parameters.Routing.EDGE_BASED, edgeBased);
+            hintsMap.putObject(Parameters.Routing.EDGE_BASED, edgeBased);
         }
         if (uTurnCosts != null) {
-            hintsMap.put(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
+            hintsMap.putObject(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
         }
         return hintsMap;
     }

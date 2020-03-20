@@ -76,7 +76,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
     }
 
     public static WeightApproximator getApproximation(String prop, AlgorithmOptions opts, NodeAccess na) {
-        String approxAsStr = opts.getHints().get(prop + ".approximation", "BeelineSimplification");
+        String approxAsStr = opts.getHints().getString(prop + ".approximation", "BeelineSimplification");
         double epsilon = opts.getHints().getDouble(prop + ".epsilon", 1);
 
         BeelineWeightApproximator approx = new BeelineWeightApproximator(na, opts.getWeighting());

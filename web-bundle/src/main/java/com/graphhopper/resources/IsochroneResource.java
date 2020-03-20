@@ -74,8 +74,8 @@ public class IsochroneResource {
 
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
-        hintsMap.put(Parameters.CH.DISABLE, true);
-        hintsMap.put(Parameters.Landmark.DISABLE, true);
+        hintsMap.putObject(Parameters.CH.DISABLE, true);
+        hintsMap.putObject(Parameters.Landmark.DISABLE, true);
         ProfileConfig profile = graphHopper.resolveProfile(hintsMap);
         if (profile.isTurnCosts()) {
             throw new IllegalArgumentException("Isochrone calculation does not support turn costs yet");

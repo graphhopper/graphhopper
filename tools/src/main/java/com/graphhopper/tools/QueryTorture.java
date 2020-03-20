@@ -64,9 +64,9 @@ public class QueryTorture {
     }
 
     public void start(PMap args) {
-        String logfile = args.get("logfile", "");
+        String logfile = args.getString("logfile", "");
         int workers = args.getInt("workers", 1);
-        baseUrl = args.get("baseurl", "");
+        baseUrl = args.getString("baseurl", "");
         tooShortDistance = args.getDouble("too_short_distance", 50d);
         maxQueries = args.getLong("maxqueries", 1000L);
         timeout = args.getInt("timeout", 3000);

@@ -92,7 +92,7 @@ public class ProfileConfig {
     }
 
     public ProfileConfig putHint(String key, Object value) {
-        this.hints.put(key, value);
+        this.hints.putObject(key, value);
         return this;
     }
 

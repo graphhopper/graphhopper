@@ -166,7 +166,8 @@ public class RandomCHRoutingTest {
                     continue;
                 }
 
-                RoutingAlgorithm algo = pch.getRoutingAlgorithmFactory().createAlgo(chQueryGraph, AlgorithmOptions.start().hints(new PMap().put("stall_on_demand", true)).build());
+                RoutingAlgorithm algo = pch.getRoutingAlgorithmFactory().createAlgo(chQueryGraph, AlgorithmOptions.start().
+                        hints(new PMap().putObject("stall_on_demand", true)).build());
                 Path path = algo.calcPath(from, to);
                 if (!path.isFound()) {
                     fail("path not found for " + from + "->" + to + ", expected weight: " + refWeight);

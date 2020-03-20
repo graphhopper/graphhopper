@@ -13,10 +13,10 @@ env:
 matrix:
   include:
     - jdk: openjdk8
-    - env: JDK='OpenJDK 13'
-      install: . ./install-jdk.sh -F 13 -C
-    - env: JDK='OpenJDK 14' SKIP_EXT_TESTS=true
+    - env: JDK='OpenJDK 14'
       install: . ./install-jdk.sh -F 14 -C
+    - env: JDK='OpenJDK 15'
+      install: . ./install-jdk.sh -F 15 -C
     
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
@@ -29,10 +29,6 @@ before_install:
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
   - 'wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh'
   - nvm install $NODE_VERSION
-
-# avoid increase of memory via travis https://github.com/travis-ci/travis-ci/issues/8408
-before_script:
-  - _JAVA_OPTIONS=
 
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
 before_script:

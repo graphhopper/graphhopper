@@ -84,8 +84,8 @@ public class RoundTripRoutingTemplateTest {
 
         GHRequest ghRequest =
                 new GHRequest(Collections.singletonList(start), Collections.singletonList(heading));
-        ghRequest.getHints().put(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
-        ghRequest.getHints().put(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
+        ghRequest.putHint(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
+        ghRequest.putHint(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         RoundTripRoutingTemplate routingTemplate =
                 new RoundTripRoutingTemplate(ghRequest, new GHResponse(), locationIndex, em, fastestWeighting, 1);
