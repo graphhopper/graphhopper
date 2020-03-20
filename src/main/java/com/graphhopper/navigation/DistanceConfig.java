@@ -33,7 +33,7 @@ public class DistanceConfig {
     }
 
     public List<VoiceInstructionConfig.VoiceInstructionValue> getVoiceInstructionsForDistance(double distance, String turnDescription, String thenVoiceInstruction) {
-        List<VoiceInstructionConfig.VoiceInstructionValue> instructionsConfigs = new ArrayList(voiceInstructions.size());
+        List<VoiceInstructionConfig.VoiceInstructionValue> instructionsConfigs = new ArrayList<>(voiceInstructions.size());
         for (VoiceInstructionConfig voiceConfig : voiceInstructions) {
             VoiceInstructionConfig.VoiceInstructionValue confi = voiceConfig.getConfigForDistance(distance, turnDescription, thenVoiceInstruction);
             if(confi!=null){

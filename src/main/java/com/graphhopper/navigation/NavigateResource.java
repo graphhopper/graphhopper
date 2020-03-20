@@ -160,7 +160,8 @@ public class NavigateResource {
         }
     }
 
-    private GHResponse calcRoute(List<Double> favoredHeadings, List<GHPoint> requestPoints, String vehicleStr, String weighting, String localeStr, boolean enableInstructions, double minPathPrecision) {
+    private GHResponse calcRoute(List<Double> favoredHeadings, List<GHPoint> requestPoints, String vehicleStr,
+                                 String weighting, String localeStr, boolean enableInstructions, double minPathPrecision) {
         GHRequest request;
         if (favoredHeadings.size() > 0) {
             request = new GHRequest(requestPoints, favoredHeadings);
