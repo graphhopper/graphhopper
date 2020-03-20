@@ -64,7 +64,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPT() {
-        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?profile=car&point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -76,7 +76,7 @@ public class SPTResourceTest {
         assertEquals(118, Integer.parseInt(row[2]) / 1000, 1);
         assertEquals(2263, Integer.parseInt(row[3]), 1);
 
-        rsp = clientTarget(app, "/spt?point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
+        rsp = clientTarget(app, "/spt?profile=car&point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
         rspCsvString = rsp.readEntity(String.class);
         lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -90,7 +90,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestDetails() {
-        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?profile=car&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);

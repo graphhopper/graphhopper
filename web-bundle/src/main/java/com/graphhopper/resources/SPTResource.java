@@ -39,12 +39,17 @@ public class SPTResource {
     private static final Logger logger = LoggerFactory.getLogger(SPTResource.class);
 
     private final GraphHopper graphHopper;
+    private final Map<String, ProfileConfig> profilesByName;
     private final ProfileResolver profileResolver;
     private final EncodingManager encodingManager;
 
     @Inject
     public SPTResource(GraphHopper graphHopper, ProfileResolver profileResolver, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
+        this.profilesByName = new LinkedHashMap<>(graphHopper.getProfiles().size());
+        for (ProfileConfig p : graphHopper.getProfiles()) {
+            profilesByName.put(p.getName(), p);
+        }
         this.profileResolver = profileResolver;
         this.encodingManager = encodingManager;
     }
@@ -53,6 +58,7 @@ public class SPTResource {
     @Produces("text/csv")
     public Response doGet(
             @Context UriInfo uriInfo,
+            @QueryParam("profile") String profileName,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") GHPoint point,
             @QueryParam("columns") String columnsParam,
@@ -67,8 +73,13 @@ public class SPTResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
-        // todo: #1934, only try to resolve the profile if no profile is given!
-        ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
+        if (Helper.isEmpty(profileName)) {
+            profileName = profileResolver.resolveProfile(hintsMap).getName();
+        }
+        ProfileConfig profile = profilesByName.get(profileName);
+        if (profile == null) {
+            throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
+        }
         if (profile.isTurnCosts()) {
             throw new IllegalArgumentException("SPT calculation does not support turn costs yet");
         }

@@ -23,11 +23,7 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.ProfileResolver;
-import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -270,7 +266,7 @@ public class RouteResource {
                 header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
     }
 
-    static void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
+    static void initHints(PMap m, MultivaluedMap<String, String> parameterMap) {
         for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
             if (e.getValue().size() == 1) {
                 m.putObject(Helper.camelCaseToUnderScore(e.getKey()), Helper.toObject(e.getValue().get(0)));
