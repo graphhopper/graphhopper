@@ -28,9 +28,9 @@ public class ImportCommand extends Command {
     @Override
     public void run(Bootstrap<?> bootstrap, Namespace args) {
         GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
-        graphHopperConfiguration.put("graph.flag_encoders", args.getString("vehicle"));
-        graphHopperConfiguration.put("datareader.file", args.getString("datasource"));
-        graphHopperConfiguration.put("graph.location", "graph-cache");
+        graphHopperConfiguration.putObject("graph.flag_encoders", args.getString("vehicle"));
+        graphHopperConfiguration.putObject("datareader.file", args.getString("datasource"));
+        graphHopperConfiguration.putObject("graph.location", "graph-cache");
 
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
         hopper.importOrLoad();

@@ -64,7 +64,7 @@ public class MatchCommand extends Command {
     @Override
     public void run(Bootstrap bootstrap, Namespace args) {
         GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
-        graphHopperConfiguration.put("graph.location", "graph-cache");
+        graphHopperConfiguration.putObject("graph.location", "graph-cache");
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
         System.out.println("loading graph from cache");
         hopper.load(graphHopperConfiguration.getString("graph.location", "graph-cache"));

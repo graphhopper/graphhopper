@@ -87,7 +87,7 @@ public class MeasurementCommand extends Command {
     public void run(Bootstrap bootstrap, Namespace args) {
         // read and initialize arguments:
         GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
-        graphHopperConfiguration.put("graph.location", "graph-cache");
+        graphHopperConfiguration.putObject("graph.location", "graph-cache");
         seed = args.getLong("seed");
         count = args.getInt("count");
 

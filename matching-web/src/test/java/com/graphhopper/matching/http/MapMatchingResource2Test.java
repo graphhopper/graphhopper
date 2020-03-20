@@ -42,9 +42,9 @@ public class MapMatchingResource2Test {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "bike").
-                put("datareader.file", "../map-data/leipzig_germany.osm.pbf").
-                put("graph.location", DIR);
+                putObject("graph.flag_encoders", "bike").
+                putObject("datareader.file", "../map-data/leipzig_germany.osm.pbf").
+                putObject("graph.location", DIR);
     }
 
     @ClassRule
