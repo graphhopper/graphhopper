@@ -91,6 +91,7 @@ public class Parameters {
      * Parameters that can be passed as hints and influence routing per request.
      */
     public static final class Routing {
+        // todonow: when trying to remove HintsMap from server also remove these?
         public static final String EDGE_BASED = "edge_based";
         public static final String TURN_COSTS = "turn_costs";
         public static final String U_TURN_COSTS = "u_turn_costs";
