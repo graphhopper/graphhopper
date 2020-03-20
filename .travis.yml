@@ -30,10 +30,6 @@ before_install:
   - 'wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh'
   - nvm install $NODE_VERSION
 
-# avoid increase of memory via travis https://github.com/travis-ci/travis-ci/issues/8408
-before_script:
-  - _JAVA_OPTIONS=
-
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
   - _JAVA_OPTIONS=
