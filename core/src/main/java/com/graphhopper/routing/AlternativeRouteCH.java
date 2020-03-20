@@ -124,11 +124,11 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
             // Okay, now we want the s -> v -> t shortest via-path, so we route s -> v and v -> t
             // and glue them together.
-            DijkstraBidirectionCHNoSOD svRouter = new DijkstraBidirectionCHNoSOD(graph);
+            DijkstraBidirectionCH svRouter = new DijkstraBidirectionCH(graph);
             final Path svPath = svRouter.calcPath(s, v);
             extraVisitedNodes += svRouter.getVisitedNodes();
 
-            DijkstraBidirectionCHNoSOD vtRouter = new DijkstraBidirectionCHNoSOD(graph);
+            DijkstraBidirectionCH vtRouter = new DijkstraBidirectionCH(graph);
             final Path vtPath = vtRouter.calcPath(v, t);
             Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
             extraVisitedNodes += vtRouter.getVisitedNodes();
@@ -202,7 +202,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
         double T = 0.5 * localOptimalityFactor * detourDistance;
         int fromNode = getPreviousNodeTMetersAway(path, vIndex, T);
         int toNode = getNextNodeTMetersAway(path, vIndex, T);
-        DijkstraBidirectionCHNoSOD tRouter = new DijkstraBidirectionCHNoSOD(graph);
+        DijkstraBidirectionCH tRouter = new DijkstraBidirectionCH(graph);
         Path tPath = tRouter.calcPath(fromNode, toNode);
         extraVisitedNodes += tRouter.getVisitedNodes();
         IntIndexedContainer tNodes = tPath.calcNodes();
