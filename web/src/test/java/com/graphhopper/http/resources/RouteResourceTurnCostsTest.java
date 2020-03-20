@@ -83,7 +83,7 @@ public class RouteResourceTurnCostsTest {
             "",
             "&ch.disable=true",
             "&ch.disable=true&lm.disable=true"})
-    public void getQuery_canToggleTurnCostsOnOff(String hints) {
+    public void getQuery_legacyParameters_canToggleTurnCostsOnOff(String hints) {
         String pointsStr = "point=55.813357,37.5958585&point=55.811042,37.594689";
 
         assertDistanceGet(pointsStr + hints, 1044);

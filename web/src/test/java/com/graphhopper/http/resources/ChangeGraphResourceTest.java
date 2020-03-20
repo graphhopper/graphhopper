@@ -63,7 +63,7 @@ public class ChangeGraphResourceTest {
 
     @Test
     public void testBlockAccessViaPoint() {
-        Response response = clientTarget(app, "route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
+        Response response = clientTarget(app, "route?profile=car&point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));
@@ -91,7 +91,7 @@ public class ChangeGraphResourceTest {
         assertEquals(1, json.get("updates").asInt());
 
         // route around blocked road => longer
-        response = clientTarget(app, "/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
+        response = clientTarget(app, "/route?profile=car&point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));
