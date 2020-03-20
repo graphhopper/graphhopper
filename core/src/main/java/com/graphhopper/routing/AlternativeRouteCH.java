@@ -52,6 +52,16 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
         localOptimalityFactor = hints.getDouble("alternative_route.local_optimality_factor", 0.25);
     }
 
+    @Override
+    public boolean finished() {
+        // we need to finish BOTH searches for CH!
+        if (finishedFrom && finishedTo)
+            return true;
+
+        // changed also the final finish condition for CH
+        return currFrom.weight >= bestWeight * maxWeightFactor && currTo.weight >= bestWeight * maxWeightFactor;
+    }
+
     List<AlternativeInfo> calcAlternatives(final int s, final int t) {
         // First, do a regular bidirectional route search
         checkAlreadyRun();
