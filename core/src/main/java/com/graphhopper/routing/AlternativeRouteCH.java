@@ -44,6 +44,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
     private final double maxWeightFactor;
     private final double maxShareFactor;
     private final double localOptimalityFactor;
+    private int extraVisitedNodes = 0;
 
     public AlternativeRouteCH(RoutingCHGraph graph, PMap hints) {
         super(graph);
@@ -54,12 +55,16 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
     @Override
     public boolean finished() {
-        // we need to finish BOTH searches for CH!
         if (finishedFrom && finishedTo)
             return true;
 
-        // changed also the final finish condition for CH
+        // Continue search longer than for point to point search -- not sure if makes a difference at all
         return currFrom.weight >= bestWeight * maxWeightFactor && currTo.weight >= bestWeight * maxWeightFactor;
+    }
+
+    @Override
+    public int getVisitedNodes() {
+        return visitedCountFrom + visitedCountTo + extraVisitedNodes;
     }
 
     List<AlternativeInfo> calcAlternatives(final int s, final int t) {
@@ -99,9 +104,12 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 // and glue them together.
                 DijkstraBidirectionCHNoSOD svRouter = new DijkstraBidirectionCHNoSOD(graph);
                 final Path svPath = svRouter.calcPath(s, v);
+                extraVisitedNodes += svRouter.getVisitedNodes();
+
                 DijkstraBidirectionCHNoSOD vtRouter = new DijkstraBidirectionCHNoSOD(graph);
                 final Path vtPath = vtRouter.calcPath(v, t);
                 Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
+                extraVisitedNodes += vtRouter.getVisitedNodes();
 
                 double sharedDistanceWithShortest = sharedDistanceWithShortest(path);
                 double detourLength = path.getDistance() - sharedDistanceWithShortest;
@@ -171,6 +179,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 int toNode = getNextNodeTMetersAway(path, vIndex, T);
                 DijkstraBidirectionCHNoSOD tRouter = new DijkstraBidirectionCHNoSOD(graph);
                 Path tPath = tRouter.calcPath(fromNode, toNode);
+                extraVisitedNodes += tRouter.getVisitedNodes();
                 IntIndexedContainer tNodes = tPath.calcNodes();
                 int v = path.calcNodes().get(vIndex);
                 return tNodes.contains(v);
