@@ -19,15 +19,13 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHProfile;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.RoutingCHGraphImpl;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
@@ -75,8 +73,8 @@ public class AlternativeRouteCHTest {
         graph.edge(9, 2, 10000, true);
         graph.edge(2, 3, 10000, true);
 
-        graph.edge(4, 11, 10000, true);
-        graph.edge(11, 12, 5000, true);
+        graph.edge(4, 11, 9000, true);
+        graph.edge(11, 12, 9000, true);
         graph.edge(12, 10, 10000, true);
 
         graph.freeze();
@@ -110,7 +108,21 @@ public class AlternativeRouteCHTest {
         AlternativeRouteCH altDijkstra = new AlternativeRouteCH(new RoutingCHGraphImpl(g.getCHGraph(), weighting), hints);
         List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
         assertEquals(3, pathInfos.size());
+        // 4 -> 11 -> 12 is shorter than 4 -> 10 -> 12 (11 is an admissible via node), BUT
         // 4 -> 11 -> 12 -> 10 is too long compared to 4 -> 10
+    }
+
+    @Test
+    public void testRelaxMaximumStretch() {
+        GraphHopperStorage g = createTestGraph(em);
+        PMap hints = new PMap();
+        hints.putObject("alternative_route.max_weight_factor", 4);
+        hints.putObject("alternative_route.local_optimality_factor", 0.5);
+        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(new RoutingCHGraphImpl(g.getCHGraph(), weighting), hints);
+        List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
+        assertEquals(4, pathInfos.size());
+        // 4 -> 11 -> 12 is shorter than 4 -> 10 -> 12 (11 is an admissible via node), AND
+        // 4 -> 11 -> 12 -> 10 is not too long compared to 4 -> 10
     }
 
 }
