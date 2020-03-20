@@ -60,11 +60,11 @@ public class RoutingAlgorithmIT {
         ProfileConfig profile = new ProfileConfig("profile").setVehicle(vehicleStr).setWeighting(weightingStr).setTurnCosts(tMode.isEdgeBased());
         Weighting weighting = hopper.createWeighting(profile, new PMap());
 
-        HintsMap defaultHints = new HintsMap()
+        PMap defaultHints = new PMap()
                 .putObject(Parameters.CH.DISABLE, true)
                 .putObject(Parameters.Landmark.DISABLE, true)
-                .setVehicle(vehicleStr)
-                .setWeighting(weightingStr);
+                .putObject("vehicle", vehicleStr)
+                .putObject("weighting", weightingStr);
 
         AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
         List<AlgoHelperEntry> algos = new ArrayList<>();
@@ -80,7 +80,7 @@ public class RoutingAlgorithmIT {
 
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMPreparationHandler().isEnabled()) {
-            final HintsMap lmHints = new HintsMap(defaultHints).putObject(Parameters.Landmark.DISABLE, false);
+            final PMap lmHints = new PMap(defaultHints).putObject(Parameters.Landmark.DISABLE, false);
             algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
