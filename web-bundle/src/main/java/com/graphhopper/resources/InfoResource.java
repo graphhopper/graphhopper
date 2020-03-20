@@ -18,6 +18,7 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.shapes.BBox;
@@ -54,7 +55,13 @@ public class InfoResource {
             public boolean turn_costs;
         }
 
+        public static class ProfileData {
+            public String profileName;
+            public String vehicle;
+        }
+
         public BBox bbox;
+        public final Map<String, ProfileData> profiles = new LinkedHashMap<>();
         public List<String> supported_vehicles;
         public final Map<String, PerVehicle> features = new HashMap<>();
         public String version = Constants.VERSION;
@@ -70,6 +77,12 @@ public class InfoResource {
         final Info info = new Info();
         // use bbox always without elevation (for backward compatibility)
         info.bbox = new BBox(storage.getBounds().minLon, storage.getBounds().maxLon, storage.getBounds().minLat, storage.getBounds().maxLat);
+        for (ProfileConfig p : config.getProfiles()) {
+            Info.ProfileData profileData = new Info.ProfileData();
+            profileData.profileName = p.getName();
+            profileData.vehicle = p.getVehicle();
+            info.profiles.put(p.getName(), profileData);
+        }
         List<String> encoderNames = Arrays.asList(storage.getEncodingManager().toString().split(","));
         info.supported_vehicles = new ArrayList<>(encoderNames);
         if (config.has("gtfs.file")) {
