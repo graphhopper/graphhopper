@@ -589,7 +589,9 @@ public class RoutingAlgorithmWithOSMIT {
             TraversalMode tMode = importVehicles.contains("turn_costs=true")
                     ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Collection<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper, weightStr, vehicle, tMode);
+            HintsMap hints = new HintsMap().setWeighting(weightStr).setVehicle(vehicle);
+
+            Collection<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper, hints, tMode);
 
             EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
             for (AlgoHelperEntry entry : prepares) {

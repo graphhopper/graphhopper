@@ -249,8 +249,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
             requestJson.putArray("details").addAll(createStringList(ghRequest.getPathDetails()));
 
         requestJson.put("locale", ghRequest.getLocale().toString());
-        if (!ghRequest.getProfile().isEmpty())
-            requestJson.put("profile", ghRequest.getProfile());
         if (!ghRequest.getAlgorithm().isEmpty())
             requestJson.put("algorithm", ghRequest.getAlgorithm());
 
@@ -301,7 +299,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
         String url = routeServiceUrl
                 + "?"
-                + "&profile=" + ghRequest.getProfile()
                 + places
                 + "&type=" + type
                 + "&instructions=" + tmpInstructions

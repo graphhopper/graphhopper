@@ -91,11 +91,8 @@ public class Parameters {
      * Parameters that can be passed as hints and influence routing per request.
      */
     public static final class Routing {
-        // todonow: search and remove usages
         public static final String EDGE_BASED = "edge_based";
-        // todonow: search and remove usages
         public static final String TURN_COSTS = "turn_costs";
-        // todonow: search and remove usages
         public static final String U_TURN_COSTS = "u_turn_costs";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = ROUTING_INIT_PREFIX + "max_visited_nodes";
