@@ -54,12 +54,15 @@ public class ProfileResolver {
         if (turnCosts && !encoder.supportsTurnCosts())
             throw new IllegalArgumentException("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true");
 
-        String profileName = resolveProfileName(chProfiles, lmProfiles, hints);
+        // we make sure that 1) the hints are not modified and 2) the default vehicle is set in case it was missing
+        String profileName = resolveProfileName(chProfiles, lmProfiles, new HintsMap(hints).setVehicle(vehicle));
 
-        return new ProfileConfig(profileName)
+        ProfileConfig profile = new ProfileConfig(profileName)
                 .setVehicle(vehicle)
                 .setWeighting(weighting)
                 .setTurnCosts(turnCosts);
+        profile.getHints().put(hints);
+        return profile;
     }
 
     private String resolveProfileName(List<CHProfile> chProfiles, List<LMProfile> lmProfiles, HintsMap hints) {
