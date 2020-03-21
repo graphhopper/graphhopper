@@ -61,7 +61,7 @@ public class ProfileResolver {
                 .setVehicle(vehicle)
                 .setWeighting(weighting)
                 .setTurnCosts(turnCosts);
-        profile.getHints().put(hints);
+        profile.getHints().putAll(hints);
         return profile;
     }
 
