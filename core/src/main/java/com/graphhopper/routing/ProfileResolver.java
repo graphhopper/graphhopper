@@ -86,6 +86,7 @@ public class ProfileResolver {
      * @param hintsMap   a map used to describe the CH profile that shall be selected
      * @throws IllegalArgumentException if no CH profile could be selected for the given parameters
      */
+    // todo: make private and/or make sure default vehicle is used
     public CHProfile selectCHProfile(List<CHProfile> chProfiles, HintsMap hintsMap) {
         int numMatchingEdgeBased = 0;
         List<CHProfile> matchingProfiles = new ArrayList<>();
@@ -130,6 +131,7 @@ public class ProfileResolver {
         }
     }
 
+    // todo: make private and/or make sure default vehicle is used
     public LMProfile selectLMProfile(List<LMProfile> lmProfiles, HintsMap hintsMap) {
         List<LMProfile> matchingProfiles = new ArrayList<>();
         for (LMProfile p : lmProfiles) {
