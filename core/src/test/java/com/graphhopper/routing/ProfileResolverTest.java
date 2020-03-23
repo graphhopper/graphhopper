@@ -108,6 +108,38 @@ public class ProfileResolverTest {
         }
     }
 
+    @Test
+    public void testDefaultVehicle() {
+        final String profile1 = "foot_profile";
+        final String profile2 = "car_profile";
+        final String vehicle1 = "foot";
+        final String vehicle2 = "car";
+        final String weighting = "shortest";
+
+        ProfileResolver profileResolver = new ProfileResolver(
+                EncodingManager.create(vehicle1 + "," + vehicle2),
+                Arrays.asList(
+                        new ProfileConfig(profile1).setVehicle(vehicle1).setWeighting(weighting),
+                        new ProfileConfig(profile2).setVehicle(vehicle2).setWeighting(weighting)
+                ),
+                Arrays.asList(new CHProfileConfig(profile1), new CHProfileConfig(profile2)),
+                Arrays.asList(new LMProfileConfig(profile1), new LMProfileConfig(profile2))
+        );
+        // we do not specify vehicle/weighting, but we get a clear match because the default vehicle will be used
+        HintsMap hints = new HintsMap().putObject(Parameters.CH.DISABLE, false).putObject(Parameters.Landmark.DISABLE, false);
+        ProfileConfig p = profileResolver.resolveProfile(hints);
+        assertEquals("foot_profile", p.getName());
+        assertEquals("foot", p.getVehicle());
+
+        p = profileResolver.resolveProfile(hints.putObject(Parameters.CH.DISABLE, true));
+        assertEquals("foot_profile", p.getName());
+        assertEquals("foot", p.getVehicle());
+
+        p = profileResolver.resolveProfile(hints.putObject(Parameters.Landmark.DISABLE, true));
+        assertEquals("unprepared_profile", p.getName());
+        assertEquals("foot", p.getVehicle());
+    }
+
     private void assertProfileNotFound(ProfileResolver profileResolver, HintsMap hints) {
         try {
             profileResolver.resolveProfile(hints);
