@@ -43,6 +43,7 @@ import static org.junit.Assert.assertFalse;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceProfileSelectionTest {
+    // todonow: make sure we pick everything we need from master here (discarded it all during merge)
     private static final String DIR = "./target/route-resource-profile-selection-gh/";
     private DropwizardAppExtension<GraphHopperServerTestConfiguration> app = new DropwizardAppExtension(GraphHopperApplication.class, createConfig());
 
