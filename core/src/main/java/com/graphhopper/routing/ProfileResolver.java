@@ -98,7 +98,6 @@ public class ProfileResolver {
      * @param hintsMap a map used to describe the profile that shall be selected
      * @throws IllegalArgumentException if no profile supporting CH could be selected for the given parameters
      */
-    // todo: make private and/or make sure default vehicle is used
     public ProfileConfig selectProfileCH(HintsMap hintsMap) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
         for (ProfileConfig p : chProfiles) {
@@ -143,7 +142,6 @@ public class ProfileResolver {
                 (hintsMap.getVehicle().isEmpty() || p.getVehicle().equals(hintsMap.getVehicle()));
     }
 
-    // todo: make private and/or make sure default vehicle is used
     public ProfileConfig selectProfileLM(HintsMap hintsMap) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
         for (ProfileConfig p : lmProfiles) {
