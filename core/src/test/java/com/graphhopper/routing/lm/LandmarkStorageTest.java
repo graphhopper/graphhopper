@@ -215,7 +215,7 @@ public class LandmarkStorageTest {
                     rule = ruleLeft;
                 }
 
-                return new SpatialRuleSet(Collections.singletonList(rule), rules.indexOf(rule));
+                return new SpatialRuleSet(Collections.singletonList(rule), rules.indexOf(rule)+1);
             }
             
             @Override

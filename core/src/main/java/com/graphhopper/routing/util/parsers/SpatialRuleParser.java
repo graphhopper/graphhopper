@@ -54,7 +54,7 @@ public class SpatialRuleParser implements TagParser {
         if (estimatedCenter != null) {
             SpatialRuleSet ruleSet = spatialRuleLookup.lookupRules(estimatedCenter.lat, estimatedCenter.lon);
             way.setTag("spatial_rule_set", ruleSet);
-            spatialRuleEnc.setInt(false, edgeFlags, ruleSet.getSpatialId() + 1);
+            spatialRuleEnc.setInt(false, edgeFlags, ruleSet.getSpatialId());
         }
         return edgeFlags;
     }

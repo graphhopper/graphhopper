@@ -115,7 +115,7 @@ public class SpatialRuleLookupJTS implements SpatialRuleLookup {
         
         Collections.sort(applicableRules, RULE_COMP);
         
-        int spatialId = rules.indexOf(applicableRules.get(applicableRules.size() - 1));
+        int spatialId = rules.indexOf(applicableRules.get(applicableRules.size() - 1)) + 1;
         
         return new SpatialRuleSet(applicableRules, spatialId);
     }

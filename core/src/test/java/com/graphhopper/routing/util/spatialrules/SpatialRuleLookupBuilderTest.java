@@ -127,7 +127,7 @@ public class SpatialRuleLookupBuilderTest {
             public SpatialRuleSet lookupRules(double lat, double lon) {
                 for (Polygon polygon : germany.getBorders()) {
                     if (polygon.covers(fac.createPoint(new Coordinate(lon, lat)))) {
-                        return new SpatialRuleSet(Collections.singletonList(germany), 0);
+                        return new SpatialRuleSet(Collections.singletonList(germany), 1);
                     }
                 }
                 return SpatialRuleSet.EMPTY;

@@ -29,7 +29,7 @@ import com.graphhopper.routing.profiles.RoadClass;
  * @author Thomas Butz
  */
 public class SpatialRuleSet {
-    public static final SpatialRuleSet EMPTY = new SpatialRuleSet(Collections.<SpatialRule>emptyList(), -1);
+    public static final SpatialRuleSet EMPTY = new SpatialRuleSet(Collections.<SpatialRule>emptyList(), 0);
     
     private final List<SpatialRule> rules;
     private final int spatialId;
@@ -83,8 +83,8 @@ public class SpatialRuleSet {
     }
 
     /**
-     * @return the index of the rule with the highest priority or
-     *         <i>-1</i> if the set doesn't contain any rules
+     * @return the id of the rule with the highest priority or
+     *         <i>0</i> if the set doesn't contain any rules
      */
     public int getSpatialId() {
         return spatialId;
