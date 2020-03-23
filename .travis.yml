@@ -5,10 +5,8 @@ dist: trusty
 matrix:
   include:
     - jdk: openjdk8
-    - env: JDK='OpenJDK 12'
-      install: . ./install-jdk.sh -F 12 -C
-    - env: JDK='OpenJDK 11'
-      install: . ./install-jdk.sh -F 11 -C
+    - env: JDK='OpenJDK 14'
+      install: . ./install-jdk.sh -F 14 -C
 
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
