@@ -19,6 +19,7 @@
 package com.graphhopper;
 
 import com.carrotsearch.hppc.IntHashSet;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -53,7 +54,11 @@ public class AnotherAgencyIT {
         ghConfig.putObject("graph.flag_encoders", "car,foot");
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("datareader.file", "files/beatty.osm");
-        ghConfig.putObject("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
+        ghConfig.putObject("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip").
+                setProfiles(Arrays.asList(
+                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
+                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")
+                ));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

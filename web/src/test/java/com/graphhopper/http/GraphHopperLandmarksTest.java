@@ -24,16 +24,17 @@ import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.junit.AfterClass;
+import org.junit.ClassRule;
+import org.junit.Test;
+
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import org.junit.ClassRule;
-import org.junit.Test;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
-import javax.ws.rs.core.Response;
-import org.junit.AfterClass;
 
 /**
  * Tests the creation of Landmarks and parsing the map.geo.json file

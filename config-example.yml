@@ -22,7 +22,8 @@ graphhopper:
 
   ##### Routing Profiles ####
 
-  # Routing can be done for the following list of profiles. The fields of each profile are as follows:
+  # Routing can be done for the following list of profiles. Note that it is required to specify all the profiles you
+  # would like to use here. The fields of each profile are as follows:
   # - name (required): a unique string identifier for the profile
   # - vehicle (required): refers to the `graph.flag_encoders` used for this profile
   # - weighting (required): the weighting used for this profile, e.g. fastest,shortest or short_fastest

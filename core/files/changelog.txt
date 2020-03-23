@@ -1,4 +1,7 @@
 1.0
+    removed vehicle,weighting and edge_based from GraphHopper class, replaced with new profile parameter, #1958
+    all routing profiles have to be configured when setting up GraphHopper, #1958
+    there no longer is a default vehicle, not setting the vehicle now only works if there is exactly one profile that matches the other parameters. anyway you should use the new profile rather than the vehicle parameter.
     removed IPFilter. Use a firewall instead.
     PMap refactored. It is recommended to use putObject(String, Object) instead of put, #1956
     removed UnsafeDataAccess as not maintained, see #1620

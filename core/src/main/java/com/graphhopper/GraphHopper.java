@@ -24,7 +24,10 @@ import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMPreparationHandler;
@@ -102,8 +105,6 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean smoothElevation = false;
     // for routing
     private final RoutingConfig routingConfig = new RoutingConfig();
-    private ProfileResolver profileResolver = new ProfileResolver();
-
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -138,13 +139,6 @@ public class GraphHopper implements GraphHopperAPI {
         setFullyLoaded();
         initLocationIndex();
         return this;
-    }
-
-    FlagEncoder getDefaultVehicle() {
-        if (encodingManager == null)
-            throw new IllegalStateException("No encoding manager specified or loaded");
-
-        return profileResolver.getDefaultVehicle(encodingManager);
     }
 
     public EncodingManager getEncodingManager() {
@@ -491,15 +485,6 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public ProfileResolver getProfileResolver() {
-        return this.profileResolver;
-    }
-
-    public GraphHopper setProfileResolver(ProfileResolver profileResolver) {
-        this.profileResolver = profileResolver;
-        return this;
-    }
-
     /**
      * Reads the configuration from a {@link GraphHopperConfig} object which can be manually filled, or more typically
      * is read from `config.yml`.
@@ -824,6 +809,11 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void checkProfilesConsistency() {
+        // todo: strictly speaking no profiles are needed, e.g. when we only use the location index, but this is rather
+        // the exception. we can move this check closer to the code that actually requires profiles after #1901
+        if (profilesByName.isEmpty()) {
+            throw new IllegalArgumentException("No routing profiles have been specified, you need to configure at least one");
+        }
         for (ProfileConfig profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
@@ -862,13 +852,6 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("LM profile references unknown profile '" + lmConfig.getProfile() + "'");
             }
         }
-    }
-
-    public ProfileConfig resolveProfile(HintsMap hints) {
-        if (encodingManager == null)
-            throw new IllegalStateException("No encoding manager specified or loaded");
-
-        return profileResolver.resolveProfile(encodingManager, chPreparationHandler.getCHProfiles(), lmPreparationHandler.getLMProfiles(), hints);
     }
 
     public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
@@ -1030,7 +1013,18 @@ public class GraphHopper implements GraphHopperAPI {
         Lock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
-            HintsMap hints = request.getHints();
+            if (!request.getVehicle().isEmpty())
+                throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
+            if (!request.getWeighting().isEmpty())
+                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
+            if (request.getHints().has(Routing.TURN_COSTS))
+                throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
+            if (request.getHints().has(Routing.EDGE_BASED))
+                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
+
+            // todo later: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
+
+            PMap hints = request.getHints();
             boolean disableCH = hints.getBool(CH.DISABLE, false);
             if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
                 throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
@@ -1056,10 +1050,17 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            ProfileConfig profile = resolveProfile(hints);
+            if (Helper.isEmpty(request.getProfile())) {
+                throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see #1958");
+            }
+            ProfileConfig profile = profilesByName.get(request.getProfile());
+            if (profile == null) {
+                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
+            }
             if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
 
+            // todo later: should we be able to control this using the edge_based parameter?
             TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
             RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile.getName(), disableCH, disableLM);
@@ -1350,13 +1351,22 @@ public class GraphHopper implements GraphHopperAPI {
             this.ghStorage = ghStorage;
         }
 
-        public Weighting createWeighting(ProfileConfig profile, PMap hints) {
+        public Weighting createWeighting(ProfileConfig profile, PMap requestHints) {
+            // Merge profile hints with request hints, the request hints take precedence.
+            // Note that so far we do not check if overwriting the profile hints actually works with the preparation
+            // for LM/CH. Later we should also limit the number of parameters that can be used to modify the profile.
+            // todo: since we are not dealing with block_area here yet we cannot really apply any merging rules
+            // for it, see discussion here: https://github.com/graphhopper/graphhopper/pull/1958#discussion_r395462901
+            PMap hints = new PMap();
+            hints.putAll(profile.getHints());
+            hints.putAll(requestHints);
+
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
             if (profile.isTurnCosts() && !hints.getBool("__disable_turn_costs_for_lm_preparation", false)) {
                 if (!encoder.supportsTurnCosts())
                     throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
-                int uTurnCosts = profile.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                int uTurnCosts = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
             } else {
                 turnCostProvider = NO_TURN_COST_PROVIDER;

@@ -82,30 +82,31 @@ public class RouteResourceProfileSelectionTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"CH", "LM", "flex"})
-    public void defaultVehicle(String mode) {
+    public void missingVehicleOrWeighting(String mode) {
         assertDistance("car", "fastest", mode, 3563);
         assertDistance("foot", "shortest", mode, 2935);
         assertDistance("bike", "short_fastest", mode, 3085);
-        // for bike we can skip the vehicle here, because its the first of the encoders
+        // we can also skip the vehicles, because the weighting is enough to distinguish a single profile
+        assertDistance(null, "fastest", mode, 3563);
+        assertDistance(null, "shortest", mode, 2935);
         assertDistance(null, "short_fastest", mode, 3085);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"CH", "LM", "flex"})
-    public void noWeighting(String mode) {
-        // for car this works fine as the default weighting is fastest and we fall back to this
+        // the same goes for the weighting
         assertDistance("car", null, mode, 3563);
-        // for foot and bike this does not work except for CH, because we get the wrong weighting (they are not using fastest)
-        // todo: this situation will be improved once we fully make use of profiles
-        if (mode.equals("CH")) {
-            assertDistance("foot", null, mode, 2935);
-            assertDistance("bike", null, mode, 3085);
-        }
+        assertDistance("foot", null, mode, 2935);
+        assertDistance("bike", null, mode, 3085);
+        // not giving any information does not work however, because all three profiles match
+        assertError((String) null, null, mode, "multiple", "profiles matching your request");
+
     }
 
     private void assertDistance(String vehicle, String weighting, String mode, double expectedDistance) {
         assertDistance(doGet(vehicle, weighting, mode), expectedDistance);
         assertDistance(doPost(vehicle, weighting, mode), expectedDistance);
+    }
+
+    private void assertError(String vehicle, String weighting, String mode, String... expectedErrors) {
+        assertError(doGet(vehicle, weighting, mode), expectedErrors);
+        assertError(doPost(vehicle, weighting, mode), expectedErrors);
     }
 
     private Response doGet(String vehicle, String weighting, String mode) {
@@ -146,6 +147,8 @@ public class RouteResourceProfileSelectionTest {
     }
 
     private void assertError(Response response, String... expectedErrors) {
+        if (expectedErrors.length == 0)
+            throw new IllegalArgumentException("there should be at least one expected error");
         JsonNode json = response.readEntity(JsonNode.class);
         assertEquals(400, response.getStatus(), "there should have been an error containing: " + Arrays.toString(expectedErrors));
         assertTrue(json.has("message"));

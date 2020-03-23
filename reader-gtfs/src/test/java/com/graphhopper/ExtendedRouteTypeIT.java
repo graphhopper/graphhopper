@@ -18,6 +18,7 @@
 
 package com.graphhopper;
 
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.Request;
@@ -30,6 +31,7 @@ import org.junit.Test;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 
 import static com.graphhopper.reader.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
@@ -47,7 +49,11 @@ public class ExtendedRouteTypeIT {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.flag_encoders", "car,foot");
         ghConfig.putObject("graph.location", GRAPH_LOC);
-        ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
+        ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip").
+                setProfiles(Arrays.asList(
+                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
+                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")
+                ));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
