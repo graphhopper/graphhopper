@@ -49,8 +49,8 @@ public class ProfileResolverTest {
                         new ProfileConfig("your_car").setVehicle("car")
                 ),
                 Collections.<CHProfileConfig>emptyList(), Collections.<LMProfileConfig>emptyList());
-        // first encoder represents default vehicle
-        assertEquals("your_car", profileResolver.resolveProfile(new HintsMap()).getName());
+        // without specifying the vehicle we get an error, because there are multiple matches
+        assertMultiMatchError(profileResolver, new HintsMap(), "There are multiple profiles matching your request");
         // use vehicle to specify profile
         assertEquals("your_car", profileResolver.resolveProfile(new HintsMap().setVehicle("car")).getName());
         assertEquals("my_bike", profileResolver.resolveProfile(new HintsMap().setVehicle("bike")).getName());
@@ -65,8 +65,8 @@ public class ProfileResolverTest {
                         new ProfileConfig("short_bike").setVehicle("bike").setWeighting("shortest")
                 ),
                 Collections.<CHProfileConfig>emptyList(), Collections.<LMProfileConfig>emptyList());
-        // use "fastest" weighting by default
-        assertEquals("fast_bike", profileResolver.resolveProfile(new HintsMap()).getName());
+        // without specifying the weighting we get an error, because there are multiple matches
+        assertMultiMatchError(profileResolver, new HintsMap(), "There are multiple profiles matching your request");
         // use weighting to specify profile
         assertEquals("short_bike", profileResolver.resolveProfile(new HintsMap().setWeighting("shortest")).getName());
         assertEquals("fast_bike", profileResolver.resolveProfile(new HintsMap().setWeighting("fastest")).getName());
@@ -81,35 +81,33 @@ public class ProfileResolverTest {
                         new ProfileConfig("short_bike").setVehicle("bike").setWeighting("shortest")
                 ),
                 Collections.<CHProfileConfig>emptyList(), Collections.<LMProfileConfig>emptyList());
-        // since 'car' is the default vehicle and there are no car profiles we get an error unless the vehicle is set to 'bike'
-        assertProfileNotFound(profileResolver, new HintsMap());
+        // there is a car encoder but no associated profile
         assertProfileNotFound(profileResolver, new HintsMap().setVehicle("car"));
-        assertProfileNotFound(profileResolver, new HintsMap().setWeighting("shortest"));
-
-        // now set vehicle to 'bike'
-        assertEquals("fast_bike", profileResolver.resolveProfile(new HintsMap().setVehicle("bike")).getName());
+        // if we do not specify a vehicle or weighting we even have multiple matches
+        assertMultiMatchError(profileResolver, new HintsMap(), "There are multiple profiles matching your request");
+        // if we specify the weighting its clear which profile we want
+        assertEquals("short_bike", profileResolver.resolveProfile(new HintsMap().setWeighting("shortest")).getName());
+        // setting the vehicle to bike is not enough
+        assertMultiMatchError(profileResolver, new HintsMap().setVehicle("bike"), "There are multiple profiles matching your request");
+        // if we set the weighting as well it works
         assertEquals("fast_bike", profileResolver.resolveProfile(new HintsMap().setVehicle("bike").setWeighting("fastest")).getName());
         assertEquals("short_bike", profileResolver.resolveProfile(new HintsMap().setVehicle("bike").setWeighting("shortest")).getName());
     }
 
     @Test
-    public void edgeBasedRequiresTurnCostSupport() {
+    public void edgeBasedAndTurnCosts() {
         ProfileResolver profileResolver = new ProfileResolver(
                 EncodingManager.create("foot"),
                 Collections.singletonList(new ProfileConfig("profile").setVehicle("foot").setWeighting("fastest")),
                 Collections.<CHProfileConfig>emptyList(), Collections.<LMProfileConfig>emptyList());
 
-        HintsMap hints = new HintsMap().putObject(Parameters.Routing.EDGE_BASED, true);
-        try {
-            profileResolver.resolveProfile(hints);
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().contains("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true"),
-                    "using edge_based=true for encoder without turncost support should be an error, but got:\n" + e.getMessage());
-        }
+        assertProfileNotFound(profileResolver, new HintsMap().putObject(Parameters.Routing.EDGE_BASED, true));
+        assertEquals("profile", profileResolver.resolveProfile(new HintsMap()).getName());
+        assertEquals("profile", profileResolver.resolveProfile(new HintsMap().putObject(Parameters.Routing.EDGE_BASED, false)).getName());
     }
 
     @Test
-    public void testDefaultVehicle() {
+    public void defaultVehicleAllAlgos() {
         final String profile1 = "foot_profile";
         final String profile2 = "car_profile";
         final String vehicle1 = "foot";
@@ -125,19 +123,37 @@ public class ProfileResolverTest {
                 Arrays.asList(new CHProfileConfig(profile1), new CHProfileConfig(profile2)),
                 Arrays.asList(new LMProfileConfig(profile1), new LMProfileConfig(profile2))
         );
-        // we do not specify vehicle/weighting, but we get a clear match because the default vehicle will be used
-        HintsMap hints = new HintsMap().putObject(Parameters.CH.DISABLE, false).putObject(Parameters.Landmark.DISABLE, false);
-        ProfileConfig p = profileResolver.resolveProfile(hints);
-        assertEquals("foot_profile", p.getName());
-        assertEquals("foot", p.getVehicle());
+        // when we do not specify vehicle/weighting, we get an error because there are multiple matches
+        HintsMap hints = new HintsMap();
+        assertMultiMatchError(profileResolver, hints, "There are multiple CH profiles matching your request");
+        assertMultiMatchError(profileResolver, hints.putObject(Parameters.CH.DISABLE, true), "There are multiple LM profiles matching your request");
+        assertMultiMatchError(profileResolver, hints.putObject(Parameters.Landmark.DISABLE, true), "There are multiple profiles matching your request");
 
-        p = profileResolver.resolveProfile(hints.putObject(Parameters.CH.DISABLE, true));
-        assertEquals("foot_profile", p.getName());
-        assertEquals("foot", p.getVehicle());
+        // using the weighting is not enough, because its the same for both profiles
+        hints = new HintsMap().setWeighting("shortest");
+        assertMultiMatchError(profileResolver, hints, "There are multiple CH profiles matching your request");
+        assertMultiMatchError(profileResolver, hints.putObject(Parameters.CH.DISABLE, true), "There are multiple LM profiles matching your request");
+        assertMultiMatchError(profileResolver, hints.putObject(Parameters.Landmark.DISABLE, true), "There are multiple profiles matching your request");
 
-        p = profileResolver.resolveProfile(hints.putObject(Parameters.Landmark.DISABLE, true));
-        assertEquals("unprepared_profile", p.getName());
-        assertEquals("foot", p.getVehicle());
+        // using the vehicle to select one of the profiles works
+        hints = new HintsMap().setVehicle(vehicle1);
+        assertEquals(profile1, profileResolver.resolveProfile(hints).getName());
+        assertEquals(profile1, profileResolver.resolveProfile(hints.putObject(Parameters.CH.DISABLE, true)).getName());
+        assertEquals(profile1, profileResolver.resolveProfile(hints.putObject(Parameters.Landmark.DISABLE, true)).getName());
+    }
+
+    private void assertMultiMatchError(ProfileResolver profileResolver, HintsMap hints, String... expectedErrors) {
+        if (expectedErrors.length == 0) {
+            throw new IllegalArgumentException("there must be at least one expected error");
+        }
+        try {
+            profileResolver.resolveProfile(hints);
+            fail();
+        } catch (IllegalArgumentException e) {
+            for (String expectedError : expectedErrors) {
+                assertTrue(e.getMessage().contains(expectedError), e.getMessage());
+            }
+        }
     }
 
     private void assertProfileNotFound(ProfileResolver profileResolver, HintsMap hints) {
@@ -145,7 +161,7 @@ public class ProfileResolverTest {
             profileResolver.resolveProfile(hints);
             fail();
         } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().contains("No profile could be found"), e.getMessage());
+            assertTrue(e.getMessage().contains("Cannot find matching profile for your request"), e.getMessage());
         }
     }
 

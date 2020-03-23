@@ -22,7 +22,6 @@ import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -127,7 +126,8 @@ public class ProfileResolver {
                     match1.isTurnCosts() != match2.isTurnCosts()) {
                 return match1.isTurnCosts() ? match1 : match2;
             }
-            throw new IllegalArgumentException("There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`turn_costs` and/or `u_turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
+            throw new IllegalArgumentException("There are multiple CH profiles matching your request. Use the `weighting`," +
+                    "`vehicle`,`turn_costs` and/or `u_turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
                     "\nYou can also try disabling CH altogether using " + Parameters.CH.DISABLE + "=true" +
                     "\nrequested:  " + getCHRequestAsString(hintsMap, edgeBased, uTurnCosts) + "\nmatched:   " + chProfilesAsString(matchingProfiles) + "\navailable: " + chProfilesAsString(chProfiles));
 
@@ -147,7 +147,7 @@ public class ProfileResolver {
     public ProfileConfig selectProfileLM(HintsMap hintsMap) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
         for (ProfileConfig p : lmProfiles) {
-            if (!lmProfileMatchesHints(p, hintsMap))
+            if (!profileMatchesHints(p, hintsMap))
                 continue;
             matchingProfiles.add(p);
         }
@@ -159,7 +159,7 @@ public class ProfileResolver {
         if (matchingProfiles.isEmpty()) {
             throw new IllegalArgumentException("Cannot find matching LM profile for your request. Please check your parameters." +
                     "\nYou can try disabling LM by setting " + Parameters.Landmark.DISABLE + "=true" +
-                    "\nrequested:  " + getLMRequestAsString(hintsMap) + "\navailable: " + lmProfilesAsStrings(lmProfiles));
+                    "\nrequested:  " + getRequestAsString(hintsMap) + "\navailable: " + profilesAsString(lmProfiles));
         } else if (matchingProfiles.size() == 1) {
             return matchingProfiles.get(0);
         } else {
@@ -174,54 +174,51 @@ public class ProfileResolver {
                     match1.isTurnCosts() != match2.isTurnCosts()) {
                 return match1.isTurnCosts() ? match1 : match2;
             }
-            throw new IllegalArgumentException("There are multiple LM profiles matching your request. Use the `weighting`, `vehicle` and `turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
+            throw new IllegalArgumentException("There are multiple LM profiles matching your request. Use the `weighting`," +
+                    " `vehicle` and `turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
                     "\nYou can also try disabling LM altogether using " + Parameters.Landmark.DISABLE + "=true" +
-                    "\nrequested:  " + getLMRequestAsString(hintsMap) + "\nmatched:   " + lmProfilesAsStrings(matchingProfiles) + "\navailable: " + lmProfilesAsStrings(lmProfiles));
+                    "\nrequested:  " + getRequestAsString(hintsMap) + "\nmatched:   " + profilesAsString(matchingProfiles) + "\navailable: " + profilesAsString(lmProfiles));
         }
-    }
-
-    protected boolean lmProfileMatchesHints(ProfileConfig p, HintsMap hintsMap) {
-        Boolean edgeBased = getEdgeBased(hintsMap);
-        return (edgeBased == null || p.isTurnCosts() == edgeBased) &&
-                (hintsMap.getWeighting().isEmpty() || p.getWeighting().equals(hintsMap.getWeighting())) &&
-                (hintsMap.getVehicle().isEmpty() || p.getVehicle().equals(hintsMap.getVehicle()));
     }
 
     private ProfileConfig selectProfileUnprepared(HintsMap hints) {
-        String vehicle = hints.getVehicle();
-        if (vehicle.isEmpty()) {
-            vehicle = getDefaultVehicle().toString();
+        List<ProfileConfig> matchingProfiles = new ArrayList<>();
+        for (ProfileConfig p : profiles) {
+            if (!profileMatchesHints(p, hints))
+                continue;
+            matchingProfiles.add(p);
         }
-        String weighting = hints.getWeighting();
-        if (weighting.isEmpty()) {
-            weighting = "fastest";
+        if (matchingProfiles.isEmpty()) {
+            throw new IllegalArgumentException("Cannot find matching profile for your request. Please check your parameters." +
+                    "\nrequested: " + getRequestAsString(hints) + "\navailable: " + profilesAsString(profiles));
+        } else if (matchingProfiles.size() == 1) {
+            return matchingProfiles.get(0);
+        } else {
+            // special case: prefer profile with turn costs over one without turn costs if both are available and there
+            // aren't any other options
+            ProfileConfig match1 = matchingProfiles.get(0);
+            ProfileConfig match2 = matchingProfiles.get(1);
+            Boolean edgeBased = getEdgeBased(hints);
+            if (edgeBased == null && matchingProfiles.size() == 2 &&
+                    match1.getWeighting().equals(match2.getWeighting()) &&
+                    match1.getVehicle().equals(match2.getVehicle()) &&
+                    match1.isTurnCosts() != match2.isTurnCosts()) {
+                return match1.isTurnCosts() ? match1 : match2;
+            }
+            throw new IllegalArgumentException("There are multiple profiles matching your request. Use the `weighting`," +
+                    " `vehicle and `turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
+                    "\nrequested:  " + getRequestAsString(hints) + "\nmatched:   " + profilesAsString(matchingProfiles) + "\navailable: " + profilesAsString(profiles));
         }
-        if (!encodingManager.hasEncoder(vehicle))
-            throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
-        FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-        // we use turn costs if the encoder supports it *unless* the edge_based parameter is set explicitly
-        boolean turnCosts = encoder.supportsTurnCosts();
-        if (hints.has(Parameters.Routing.EDGE_BASED))
-            turnCosts = hints.getBool(Parameters.Routing.EDGE_BASED, false);
-        if (turnCosts && !encoder.supportsTurnCosts())
-            throw new IllegalArgumentException("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true");
-
-        for (ProfileConfig profile : profiles) {
-            if (profile.getWeighting().equals(weighting) &&
-                    profile.getVehicle().equals(vehicle) &&
-                    profile.isTurnCosts() == turnCosts)
-                return profile;
-        }
-
-        throw new IllegalArgumentException("No profile could be found for weighting=" + weighting + ", vehicle=" + vehicle + ", turn_costs=" + turnCosts +
-                "\nYou should specify a profile using the `profile` parameter");
     }
 
-    private FlagEncoder getDefaultVehicle() {
-        return encodingManager.fetchEdgeEncoders().get(0);
+    private boolean profileMatchesHints(ProfileConfig p, HintsMap hints) {
+        Boolean edgeBased = getEdgeBased(hints);
+        return (edgeBased == null || p.isTurnCosts() == edgeBased) &&
+                (hints.getWeighting().isEmpty() || p.getWeighting().equals(hints.getWeighting())) &&
+                (hints.getVehicle().isEmpty() || p.getVehicle().equals(hints.getVehicle()));
     }
 
-    private String getLMRequestAsString(HintsMap map) {
+    private String getRequestAsString(HintsMap map) {
         Boolean edgeBased = getEdgeBased(map);
         return (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) +
                 "|" +
@@ -240,7 +237,7 @@ public class ProfileResolver {
                 "u_turn_costs=" + (uTurnCosts != null ? uTurnCosts : "*");
     }
 
-    private List<String> lmProfilesAsStrings(List<ProfileConfig> profiles) {
+    private List<String> profilesAsString(List<ProfileConfig> profiles) {
         List<String> result = new ArrayList<>(profiles.size());
         for (ProfileConfig p : profiles) {
             result.add(p.getWeighting() + "|" + p.getVehicle() + "|turn_costs=" + p.isTurnCosts());

@@ -72,6 +72,7 @@ public class IsochroneResourceTest {
     @Test
     public void requestByTimeLimit() {
         Response rsp = clientTarget(app, "/isochrone")
+                .queryParam("weighting", "fastest")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
@@ -93,6 +94,7 @@ public class IsochroneResourceTest {
     @Test
     public void requestByDistanceLimit() {
         Response rsp = clientTarget(app, "/isochrone")
+                .queryParam("weighting", "fastest")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("distance_limit", 3_000)
                 .queryParam("buckets", 2)
@@ -114,6 +116,7 @@ public class IsochroneResourceTest {
     @Test
     public void requestReverseFlow() {
         Response rsp = clientTarget(app, "/isochrone")
+                .queryParam("weighting", "fastest")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("reverse_flow", true)
                 .queryParam("time_limit", 5 * 60)
@@ -138,7 +141,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestBadRequest() {
-        Response response = clientTarget(app, "/route?point=-1.816719,51.557148").request().buildGet().invoke();
+        Response response = clientTarget(app, "/route?weighting=fastest&point=-1.816719,51.557148").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
 
@@ -176,7 +179,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestJsonBadType() {
-        Response response = clientTarget(app, "/isochrone?point=42.531073,1.573792&time_limit=130&type=xml")
+        Response response = clientTarget(app, "/isochrone?weighting=fastest&point=42.531073,1.573792&time_limit=130&type=xml")
                 .request().buildGet().invoke();
 
         JsonNode json = response.readEntity(JsonNode.class);
@@ -188,6 +191,7 @@ public class IsochroneResourceTest {
     @Test
     public void requestWithBlockArea() {
         Response rsp = clientTarget(app, "/isochrone")
+                .queryParam("weighting", "fastest")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
@@ -211,7 +215,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestJsonWithType() {
-        Response response = clientTarget(app, "/isochrone?point=42.531073,1.573792&time_limit=130&type=json")
+        Response response = clientTarget(app, "/isochrone?weighting=fastest&point=42.531073,1.573792&time_limit=130&type=json")
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("polygons"));
@@ -220,7 +224,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestJsonNoType() {
-        Response response = clientTarget(app, "/isochrone?point=42.531073,1.573792&time_limit=130")
+        Response response = clientTarget(app, "/isochrone?weighting=fastest&point=42.531073,1.573792&time_limit=130")
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("polygons"));
@@ -229,7 +233,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestGeoJsonPolygons() {
-        Response response = clientTarget(app, "/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson")
+        Response response = clientTarget(app, "/isochrone?weighting=fastest&point=42.531073,1.573792&time_limit=130&type=geojson")
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
 
@@ -253,7 +257,7 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestGeoJsonPolygonsBuckets() {
-        Response response = clientTarget(app, "/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson&buckets=3")
+        Response response = clientTarget(app, "/isochrone?weighting=fastest&point=42.531073,1.573792&time_limit=130&type=geojson&buckets=3")
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
 
