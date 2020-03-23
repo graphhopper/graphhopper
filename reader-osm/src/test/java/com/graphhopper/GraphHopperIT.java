@@ -30,6 +30,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
@@ -1356,65 +1357,25 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testDefaultVehicle() {
-        final String profile1 = "foot_profile";
-        final String profile2 = "car_profile";
-        final String vehicle1 = "foot";
-        final String vehicle2 = "car";
-        final String weighting = "shortest";
-
-        GraphHopper hopper = createGraphHopper(vehicle1 + "," + vehicle2).
-                setOSMFile(MONACO).
-                setProfiles(
-                        new ProfileConfig(profile1).setVehicle(vehicle1).setWeighting(weighting),
-                        new ProfileConfig(profile2).setVehicle(vehicle2).setWeighting(weighting)
-                );
-
-        hopper.getCHPreparationHandler().
-                setCHProfileConfigs(new CHProfileConfig(profile1), new CHProfileConfig(profile2)).
-                setDisablingAllowed(true);
-
-        hopper.getLMPreparationHandler().
-                setLMProfileConfigs(new LMProfileConfig(profile1), new LMProfileConfig(profile2)).
-                setDisablingAllowed(true);
-
-        hopper.importOrLoad();
-        // we do not specify vehicle/weighting, but we get a clear match because the default vehicle will be used
-        HintsMap hints = new HintsMap().putObject(CH.DISABLE, false).putObject(Landmark.DISABLE, false);
-        ProfileConfig p = hopper.resolveProfile(hints);
-        assertEquals("foot_profile", p.getName());
-        assertEquals("foot", p.getVehicle());
-
-        p = hopper.resolveProfile(hints.putObject(CH.DISABLE, true));
-        assertEquals("foot_profile", p.getName());
-        assertEquals("foot", p.getVehicle());
-
-        p = hopper.resolveProfile(hints.putObject(Landmark.DISABLE, true));
-        assertEquals("unprepared_profile", p.getName());
-        assertEquals("foot", p.getVehicle());
-    }
-
-    @Test
-    public void testHintsForUnpreparedProfile() {
+    public void testCreateWeightingHintsMerging() {
         final String profile = "profile";
         final String vehicle = "mtb";
         final String weighting = "shortest";
 
         GraphHopper hopper = createGraphHopper(vehicle + "|turn_costs=true").
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
+                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true).putHint(U_TURN_COSTS, 123));
         hopper.importOrLoad();
 
-        // since we are creating unprepared profiles on the fly we have to make sure they preserve all hints
-        HintsMap hints = new HintsMap().setVehicle(vehicle).setWeighting(weighting).putObject("abc", 22);
-        ProfileConfig p = hopper.resolveProfile(hints);
-        assertEquals(22, p.getHints().getInt("abc", -1));
-        assertEquals("unprepared_profile", p.getName());
+        // if we do not pass u_turn_costs with the request hints we get those from the profile
+        HintsMap hints = new HintsMap().setVehicle(vehicle).setWeighting(weighting);
+        Weighting w = hopper.createWeighting(hopper.getProfiles().get(0), hints);
+        assertEquals("shortest|mtb|u_turn_costs=123", w.toString());
 
-        hints = new HintsMap().setVehicle(vehicle).setWeighting(weighting).putObject("abc", 46);
-        p = hopper.resolveProfile(hints);
-        assertEquals("unprepared_profile", p.getName());
-        assertEquals(46, p.getHints().getInt("abc", -1));
+        // we can overwrite the u_turn_costs given in the profile
+        hints = new HintsMap().setVehicle(vehicle).setWeighting(weighting).putObject(U_TURN_COSTS, 46);
+        w = hopper.createWeighting(hopper.getProfiles().get(0), hints);
+        assertEquals("shortest|mtb|u_turn_costs=46", w.toString());
     }
 
     @Test

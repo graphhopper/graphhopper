@@ -61,7 +61,6 @@ public class RouteResourceProfileSelectionTest {
                         new ProfileConfig("my_car").setVehicle("car").setWeighting("fastest"),
                         new ProfileConfig("my_bike").setVehicle("bike").setWeighting("short_fastest"),
                         new ProfileConfig("my_feet").setVehicle("foot").setWeighting("shortest")
-
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfileConfig("my_car"),

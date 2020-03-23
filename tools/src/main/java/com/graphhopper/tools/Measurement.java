@@ -194,7 +194,7 @@ public class Measurement {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
                             withInstructions().edgeBased());
                 if (!blockAreaStr.isEmpty())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area",count / 20, isCH, isLM).
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
                             withInstructions().blockArea(blockAreaStr));
             }
 
@@ -646,9 +646,8 @@ public class Measurement {
             @Override
             public int doCalc(boolean warmup, int run) {
                 int from = -1, to = -1;
-                Double fromLat = null, fromLon = null, toLat = null, toLon = null;
+                double fromLat = 0, fromLon = 0, toLat = 0, toLon = 0;
                 GHRequest req = null;
-
                 for (int i = 0; i < 5; i++) {
                     from = rand.nextInt(maxNode);
                     to = rand.nextInt(maxNode);
@@ -657,8 +656,7 @@ public class Measurement {
                     toLat = na.getLatitude(to);
                     toLon = na.getLongitude(to);
                     req = new GHRequest(fromLat, fromLon, toLat, toLon);
-                    req.setProfile(querySettings.edgeBased ? "profile_tc": "profile_no_tc");
-
+                    req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
                     if (querySettings.blockArea == null)
                         break;
 
@@ -673,7 +671,8 @@ public class Measurement {
                     }
                 }
 
-                req.getHints().putObject(CH.DISABLE, !querySettings.ch).
+                req.getHints().
+                        putObject(CH.DISABLE, !querySettings.ch).
                         putObject("stall_on_demand", querySettings.sod).
                         putObject(Landmark.DISABLE, !querySettings.lm).
                         putObject(Landmark.ACTIVE_COUNT, querySettings.activeLandmarks).
