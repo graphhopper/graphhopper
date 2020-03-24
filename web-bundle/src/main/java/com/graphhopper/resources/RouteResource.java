@@ -129,6 +129,7 @@ public class RouteResource {
         translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
         // todonow: should it be illegal to specify profile AND vehicle/weighting/turn_costs?
+        // also for /isochrone and /spt?
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(request.getHints()).getName();
         }

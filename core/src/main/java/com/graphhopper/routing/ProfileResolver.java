@@ -35,9 +35,9 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
 /**
  * Before the `profile` parameter was introduced in #1958 the cost-function used for route calculations could be
- * specified by setting the vehicle, weighting and a turn_costs flag. This class does the conversion between these
- * legacy parameters and the corresponding profile. To resolve a profile we consider both the request parameters as
- * well as the available LM/CH preparations.
+ * specified by setting the vehicle and weighting parameters as well as the turn_costs/edge_based flag. This class does
+ * the conversion between these legacy parameters and the corresponding profile. To resolve a profile we consider both
+ * the request parameters as well as the available LM/CH preparations.
  * Note that this class is meant to be only used for the top-most web layer, while the GH engine should only deal with
  * the profile parameter.
  */
@@ -84,7 +84,7 @@ public class ProfileResolver {
             throw new IllegalArgumentException("Vehicle not supported: `" + vehicle + "`. Supported are: `" + encodingManager.toString() +
                     "`\nYou should consider using the profile parameter instead of specifying a vehicle, see #1958");
 
-        // unless CH/LM are disabled we select the profile based on the given request hints and the available preparations
+        // we select the profile based on the given request hints and the available profiles
         if (!chProfiles.isEmpty() && !disableCH) {
             return selectProfileCH(hints);
         } else if (!lmProfiles.isEmpty() && !disableLM) {

@@ -33,24 +33,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceProfileSelectionTest {
-    // todonow: make sure we pick everything we need from master here (discarded it all during merge)
     private static final String DIR = "./target/route-resource-profile-selection-gh/";
     private DropwizardAppExtension<GraphHopperServerTestConfiguration> app = new DropwizardAppExtension(GraphHopperApplication.class, createConfig());
 
     private static GraphHopperServerTestConfiguration createConfig() {
         GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car,bike,foot").
+                putObject("graph.flag_encoders", "bike,car,foot").
                 putObject("routing.ch.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
                 putObject("prepare.min_one_way_network_size", 0).
@@ -82,77 +81,91 @@ public class RouteResourceProfileSelectionTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "",
-            "&ch.disable=true",
-            "&ch.disable=true&lm.disable=true"})
-    public void selectUsingProfile(String hints) {
-        String pointsStr = "point=43.727879,7.409678&point=43.745987,7.429848";
-        assertDistanceGet(pointsStr + "&profile=my_car" + hints, 3563);
-        assertDistanceGet(pointsStr + "&profile=my_bike" + hints, 3085);
-        assertDistanceGet(pointsStr + "&profile=my_feet" + hints, 2935);
+    @ValueSource(strings = {"CH", "LM", "flex"})
+    public void selectUsingProfile(String mode) {
+        assertDistance("my_car", null, null, mode, 3563);
+        assertDistance("my_bike", null, null, mode, 3085);
+        assertDistance("my_feet", null, null, mode, 2935);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "",
-            "&ch.disable=true"})
-    public void selectUsingWeighting(String hints) {
-        // for prepared algos the weighting is enough to select a profile
-        String pointsStr = "point=43.727879,7.409678&point=43.745987,7.429848";
-        assertDistanceGet(pointsStr + "&weighting=fastest" + hints, 3563);
-        assertDistanceGet(pointsStr + "&weighting=short_fastest" + hints, 3085);
-        assertDistanceGet(pointsStr + "&weighting=shortest" + hints, 2935);
+    @ValueSource(strings = {"CH", "LM", "flex"})
+    public void withoutProfile(String mode) {
+        // for legacy reasons we can skip the profile parameter and use the vehicle/weighting parameters instead,
+        // see ProfileResolver
+        assertDistance(null, "car", "fastest", mode, 3563);
+        assertDistance(null, "foot", "shortest", mode, 2935);
+        assertDistance(null, "bike", "short_fastest", mode, 3085);
+        // we can also skip the vehicles, because the weighting is enough to distinguish a single profile
+        assertDistance(null, null, "fastest", mode, 3563);
+        assertDistance(null, null, "shortest", mode, 2935);
+        assertDistance(null, null, "short_fastest", mode, 3085);
+        // the same goes for the weighting
+        assertDistance(null, "car", null, mode, 3563);
+        assertDistance(null, "foot", null, mode, 2935);
+        assertDistance(null, "bike", null, mode, 3085);
+        // not giving any information does not work however, because all three profiles match
+        assertError((String) null, null, null, mode, "multiple", "profiles matching your request");
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "",
-            "&ch.disable=true",
-            "&ch.disable=true&lm.disable=true"})
-    public void selectUsingWeightingNonPrepared(String hints) {
-        String pointsStr = "point=43.727879,7.409678&point=43.745987,7.429848";
-        // if we do not specify the vehicle it will be the the default vehicle (the first one encoder)
-        assertDistanceGet(pointsStr + "&weighting=fastest" + hints, 3563);
-        assertDistanceGet(pointsStr + "&vehicle=car&weighting=fastest" + hints, 3563);
-        assertDistanceGet(pointsStr + "&vehicle=bike&weighting=short_fastest" + hints, 3085);
-        assertDistanceGet(pointsStr + "&vehicle=foot&weighting=shortest" + hints, 2935);
+    private void assertDistance(String profile, String vehicle, String weighting, String mode, double expectedDistance) {
+        assertDistance(doGet(profile, vehicle, weighting, mode), expectedDistance);
+        assertDistance(doPost(profile, vehicle, weighting, mode), expectedDistance);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "",
-            "&ch.disable=true"})
-    // note that this does not work for non-prepared algos, because in this case the weighting is always 'fastest'
-    public void selectUsingVehicle(String hints) {
-        String pointsStr = "point=43.727879,7.409678&point=43.745987,7.429848";
-        assertDistanceGet(pointsStr + "&vehicle=car" + hints, 3563);
-        assertDistanceGet(pointsStr + "&vehicle=bike" + hints, 3085);
-        assertDistanceGet(pointsStr + "&vehicle=foot" + hints, 2935);
+    private void assertError(String profile, String vehicle, String weighting, String mode, String... expectedErrors) {
+        assertError(doGet(profile, vehicle, weighting, mode), expectedErrors);
+        assertError(doPost(profile, vehicle, weighting, mode), expectedErrors);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "",
-            "&ch.disable=true",
-            "&ch.disable=true&lm.disable=true"})
-    public void selectUsingVehicleNonPrepared(String hints) {
-        String pointsStr = "point=43.727879,7.409678&point=43.745987,7.429848";
-        // if the weighting is fastest we can skip it, because its the default, otherwise we have to pass it along
-        assertDistanceGet(pointsStr + "&vehicle=car" + hints, 3563);
-        assertDistanceGet(pointsStr + "&vehicle=car&weighting=fastest" + hints, 3563);
-        assertDistanceGet(pointsStr + "&vehicle=bike&weighting=short_fastest" + hints, 3085);
-        assertDistanceGet(pointsStr + "&vehicle=foot&weighting=shortest" + hints, 2935);
+    private Response doGet(String profile, String vehicle, String weighting, String mode) {
+        String urlParams = "point=43.727879,7.409678&point=43.745987,7.429848";
+        if (profile != null)
+            urlParams += "&profile=" + profile;
+        if (vehicle != null)
+            urlParams += "&vehicle=" + vehicle;
+        if (weighting != null)
+            urlParams += "&weighting=" + weighting;
+        if (mode.equals("LM") || mode.equals("flex"))
+            urlParams += "&ch.disable=true";
+        if (mode.equals("flex"))
+            urlParams += "&lm.disable=true";
+        return clientTarget(app, "/route?" + urlParams).request().buildGet().invoke();
     }
 
-    private void assertDistanceGet(String urlParams, double expectedDistance) {
-        final Response response = clientTarget(app, "/route?" + urlParams).request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
+    private Response doPost(String profile, String vehicle, String weighting, String mode) {
+        String jsonStr = "{\"points\": [[7.409678,43.727879], [7.429848, 43.745987]]";
+        if (profile != null)
+            jsonStr += ",\"profile\": \"" + profile + "\"";
+        if (vehicle != null)
+            jsonStr += ",\"vehicle\": \"" + vehicle + "\"";
+        if (weighting != null)
+            jsonStr += ",\"weighting\": \"" + weighting + "\"";
+        if (mode.equals("LM") || mode.equals("flex"))
+            jsonStr += ",\"ch.disable\": true";
+        if (mode.equals("flex"))
+            jsonStr += ",\"lm.disable\": true";
+        jsonStr += " }";
+        return clientTarget(app, "/route").request().post(Entity.json(jsonStr));
+    }
+
+    private void assertDistance(Response response, double expectedDistance) {
         JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(200, response.getStatus(), (json.has("message") ? json.get("message").toString() : ""));
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
         assertEquals(expectedDistance, distance, 10);
+    }
+
+    private void assertError(Response response, String... expectedErrors) {
+        if (expectedErrors.length == 0)
+            throw new IllegalArgumentException("there should be at least one expected error");
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(400, response.getStatus(), "there should have been an error containing: " + Arrays.toString(expectedErrors));
+        assertTrue(json.has("message"));
+        for (String expectedError : expectedErrors)
+            assertTrue(json.get("message").toString().contains(expectedError), json.get("message").toString());
     }
 }
