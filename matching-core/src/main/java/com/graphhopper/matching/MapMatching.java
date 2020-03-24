@@ -81,7 +81,7 @@ public class MapMatching {
     public MapMatching(GraphHopper graphHopper, HintsMap hints) {
         this.locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
 
-        if (!hints.has("vehicle")) hints.put("vehicle", "car");
+        if (!hints.has("vehicle")) hints.putObject("vehicle", "car");
 
         // Convert heading penalty [s] into U-turn penalty [m]
         // The heading penalty is automatically taken into account by GraphHopper routing,
