@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
@@ -24,9 +25,9 @@ public class NavigateResponseConverterTest {
     public static final String DIR = "files";
     private static final String graphFolder = "target/graphhopper-test-car";
     private static final String osmFile = DIR + "/andorra.osm.gz";
-    private static final String importVehicles = "car";
     private static GraphHopper hopper;
-    private final String vehicle = "car";
+    private static final String vehicle = "car";
+    private static final String profile = "my_car";
 
     private final TranslationMap trMap = new TranslationMap().doImport();
     private final TranslationMap mtrMap = new NavigateResponseConverterTranslationMap().doImport();
@@ -41,7 +42,8 @@ public class NavigateResponseConverterTest {
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFolder).
-                setEncodingManager(EncodingManager.create(importVehicles)).
+                setEncodingManager(EncodingManager.create(vehicle)).
+                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting("fastest").setTurnCosts(false)).
                 importOrLoad();
     }
 
@@ -54,7 +56,7 @@ public class NavigateResponseConverterTest {
     public void basicTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setVehicle(vehicle));
+                setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
@@ -124,7 +126,7 @@ public class NavigateResponseConverterTest {
     public void voiceInstructionsTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setVehicle(vehicle));
+                setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
@@ -156,7 +158,7 @@ public class NavigateResponseConverterTest {
     public void voiceInstructionsImperialTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setVehicle(vehicle));
+                setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, mtrMap, Locale.ENGLISH));
 
@@ -191,7 +193,7 @@ public class NavigateResponseConverterTest {
     public void alternativeRoutesTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setVehicle(vehicle).setAlgorithm(Parameters.Algorithms.ALT_ROUTE));
+                setProfile(profile).setAlgorithm(Parameters.Algorithms.ALT_ROUTE));
 
         assertEquals(2, rsp.getAll().size());
 
@@ -208,7 +210,7 @@ public class NavigateResponseConverterTest {
     public void voiceInstructionTranslationTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setVehicle(vehicle));
+                setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
@@ -217,7 +219,7 @@ public class NavigateResponseConverterTest {
         assertEquals("In 2 kilometers keep right", voiceInstruction.get("announcement").asText());
 
         rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setVehicle(vehicle).setLocale(Locale.GERMAN));
+                setProfile(profile).setLocale(Locale.GERMAN));
 
         DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, mtrMap, Locale.GERMAN);
 
@@ -233,7 +235,7 @@ public class NavigateResponseConverterTest {
     public void roundaboutDegreesTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setVehicle(vehicle));
+                setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
@@ -257,7 +259,7 @@ public class NavigateResponseConverterTest {
         request.addPoint(new GHPoint(42.504776, 1.527209));
         request.addPoint(new GHPoint(42.505144, 1.526113));
         request.addPoint(new GHPoint(42.50529, 1.527218));
-        request.setVehicle(vehicle);
+        request.setProfile(profile);
 
         GHResponse rsp = hopper.route(request);
 
@@ -310,7 +312,7 @@ public class NavigateResponseConverterTest {
     @Test
     public void testError() {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 111.536198, 42.510071, 1.548128).
-                setVehicle(vehicle));
+                setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponseError(rsp);
 
