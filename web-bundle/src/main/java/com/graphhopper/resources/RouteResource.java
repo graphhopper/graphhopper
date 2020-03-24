@@ -21,9 +21,14 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -56,11 +61,13 @@ public class RouteResource {
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
     private final GraphHopperAPI graphHopper;
+    private final ProfileResolver profileResolver;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopperAPI graphHopper, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopperAPI graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
+        this.profileResolver = profileResolver;
         this.hasElevation = hasElevation;
     }
 
@@ -77,8 +84,8 @@ public class RouteResource {
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
-            @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
-            @QueryParam("weighting") @DefaultValue("fastest") String weighting,
+            @QueryParam("vehicle") @DefaultValue("") String vehicleStr,
+            @QueryParam("weighting") @DefaultValue("") String weighting,
             @QueryParam("algorithm") @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(POINT_HINT) List<String> pointHints,
@@ -127,8 +134,11 @@ public class RouteResource {
         initHints(request.getHints(), uriInfo.getQueryParameters());
         translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
-        request.setVehicle(vehicleStr).
-                setWeighting(weighting).
+        // todo: #1934, only try to resolve the profile if no profile is given!
+        ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
+        removeLegacyParameters(request);
+
+        request.setProfile(profile.getName()).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
                 setPointHints(pointHints).
@@ -176,6 +186,10 @@ public class RouteResource {
             throw new IllegalArgumentException("Empty request");
 
         StopWatch sw = new StopWatch().start();
+        // todo: #1934, only try to resolve the profile if no profile is given!
+        ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
+        request.setProfile(profile.getName());
+        removeLegacyParameters(request);
         GHResponse ghResponse = graphHopper.route(request);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
@@ -235,6 +249,14 @@ public class RouteResource {
             }
             request.putHint(EDGE_BASED, Helper.toObject(turnCosts.get(0)));
         }
+    }
+
+    private void removeLegacyParameters(GHRequest request) {
+        // these parameters should only be used to resolve the profile, but should not be passed to GraphHopper
+        request.getHints().setWeighting("");
+        request.getHints().setVehicle("");
+        request.getHints().remove("edge_based");
+        request.getHints().remove("turn_costs");
     }
 
     private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String

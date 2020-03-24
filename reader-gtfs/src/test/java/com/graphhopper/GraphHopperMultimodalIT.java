@@ -18,6 +18,7 @@
 
 package com.graphhopper;
 
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.Request;
@@ -32,6 +33,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,7 +51,11 @@ public class GraphHopperMultimodalIT {
         ghConfig.putObject("graph.flag_encoders", "car,foot");
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
-        ghConfig.putObject("graph.location", GRAPH_LOC);
+        ghConfig.putObject("graph.location", GRAPH_LOC).
+                setProfiles(Arrays.asList(
+                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
+                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")
+                ));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

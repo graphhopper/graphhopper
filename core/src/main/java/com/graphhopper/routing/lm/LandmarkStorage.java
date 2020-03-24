@@ -817,7 +817,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             if ((double) maxedout.get() / map.size() > 0.1) {
                 LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
                         "too many weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor than " + lms.factor
-                        + ". For example use the following in the config.yml: weighting=" + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * 1.2);
+                        + ". For example use maximum_lm_weight: " + finalMaxWeight.getValue() * 1.2 + " in your LM profile definition");
             }
         }
     }
