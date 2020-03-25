@@ -18,6 +18,7 @@
 package com.graphhopper.matching.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -28,27 +29,29 @@ import org.junit.Test;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class MapMatchingResource2Test {
+public class MapMatchingResourceBikeTest {
 
     private static final String DIR = "../target/mapmatching2test";
 
-    private static final MapMatchingServerConfiguration config = new MapMatchingServerConfiguration();
-
-    static {
+    private static MapMatchingServerConfiguration createConfig() {
+        MapMatchingServerConfiguration config = new MapMatchingServerConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "bike").
                 putObject("datareader.file", "../map-data/leipzig_germany.osm.pbf").
-                putObject("graph.location", DIR);
+                putObject("graph.location", DIR).
+                setProfiles(Collections.singletonList(new ProfileConfig("fast_bike").setVehicle("bike").setWeighting("fastest")));
+        return config;
     }
 
     @ClassRule
-    public static final DropwizardAppRule<MapMatchingServerConfiguration> app = new DropwizardAppRule(MapMatchingApplication.class, config);
+    public static final DropwizardAppRule<MapMatchingServerConfiguration> app = new DropwizardAppRule(MapMatchingApplication.class, createConfig());
 
     @AfterClass
     public static void cleanUp() {

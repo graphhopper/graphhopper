@@ -64,7 +64,7 @@ public class MapMatching2Test {
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        MapMatching mapMatching = new MapMatching(hopper, new HintsMap());
+        MapMatching mapMatching = new MapMatching(hopper, new HintsMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-13.gpx"), Gpx.class);
         MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
@@ -96,7 +96,7 @@ public class MapMatching2Test {
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        MapMatching mapMatching = new MapMatching(hopper, new HintsMap());
+        MapMatching mapMatching = new MapMatching(hopper, new HintsMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-70.gpx"), Gpx.class);
         MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
@@ -123,7 +123,7 @@ public class MapMatching2Test {
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        MapMatching mapMatching = new MapMatching(hopper, new HintsMap());
+        MapMatching mapMatching = new MapMatching(hopper, new HintsMap().putObject("profile", "my_profile"));
 
         // query with two identical points
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-127.gpx"), Gpx.class);

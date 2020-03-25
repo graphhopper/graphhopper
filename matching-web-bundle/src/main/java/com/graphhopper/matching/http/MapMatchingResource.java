@@ -24,9 +24,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.matching.*;
 import com.graphhopper.matching.gpx.Gpx;
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
@@ -53,11 +55,13 @@ public class MapMatchingResource {
     private static final Logger logger = LoggerFactory.getLogger(MapMatchingResource.class);
 
     private final GraphHopper graphHopper;
+    private final ProfileResolver profileResolver;
     private final TranslationMap trMap;
 
     @Inject
-    public MapMatchingResource(GraphHopper graphHopper, TranslationMap trMap) {
+    public MapMatchingResource(GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap) {
         this.graphHopper = graphHopper;
+        this.profileResolver = profileResolver;
         this.trMap = trMap;
     }
 
@@ -95,9 +99,17 @@ public class MapMatchingResource {
 
         StopWatch sw = new StopWatch().start();
 
-        MapMatching matching = new MapMatching(graphHopper,
-                // set default values from annotation for certain keys
-                createHintsMap(uriInfo.getQueryParameters()).setVehicle(vehicleStr).putObject(MAX_VISITED_NODES, maxVisitedNodes));
+        HintsMap hints = createHintsMap(uriInfo.getQueryParameters());
+        // add values that are not in hints because they were explicitly listed in query params
+        hints.setVehicle(vehicleStr);
+        hints.putObject(MAX_VISITED_NODES, maxVisitedNodes);
+        // resolve profile and remove legacy vehicle/weighting parameters
+        String profile = profileResolver.resolveProfile(hints).getName();
+        hints.remove("vehicle");
+        hints.remove("weighting");
+        hints.putObject("profile", profile);
+
+        MapMatching matching = new MapMatching(graphHopper, hints);
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
         List<Observation> measurements = gpx.trk.get(0).getEntries();
@@ -166,7 +178,7 @@ public class MapMatchingResource {
         HintsMap m = new HintsMap();
         for (Map.Entry<String, List<String>> e : queryParameters.entrySet()) {
             if (e.getValue().size() == 1) {
-                m.put(e.getKey(), e.getValue().get(0));
+                m.putObject(Helper.camelCaseToUnderScore(e.getKey()), Helper.toObject(e.getValue().get(0)));
             } else {
                 // TODO ugly: ignore multi parameters like point to avoid exception. See RouteResource.initHints
             }

@@ -41,7 +41,7 @@ java -jar matching-web/target/graphhopper-map-matching-web-1.0-SNAPSHOT.jar impo
 OpenStreetMap data in pbf or xml format are available from [here](http://download.geofabrik.de/).
 
 The optional parameter `--vehicle` defines the routing profile like `car`, `bike`, `motorcycle` or `foot`.
-You can also provide a comma separated list. For all supported values see the variables in the [FlagEncoderFactory](https://github.com/graphhopper/graphhopper/blob/0.13/core/src/main/java/com/graphhopper/routing/util/FlagEncoderFactory.java) of GraphHopper. 
+You can also provide a comma separated list. For all supported values see the variables in the [FlagEncoderFactory](https://github.com/graphhopper/graphhopper/blob/0.13/core/src/main/java/com/graphhopper/routing/util/FlagEncoderFactory.java) of GraphHopper.
 
 Before re-importing, you need to delete the `graph-cache` directory, which is created by the import.
 
@@ -49,6 +49,8 @@ Now you can match GPX traces against the map:
 ```bash
 java -jar matching-web/target/graphhopper-map-matching-web-1.0-SNAPSHOT.jar match matching-web/src/test/resources/*.gpx
 ```
+If you were using multiple vehicles for the import you can use `--vehicle` to select one of them, otherwise the first
+one will be used.
 
 ### Web app
 

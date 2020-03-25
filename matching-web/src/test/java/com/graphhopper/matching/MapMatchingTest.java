@@ -60,7 +60,7 @@ public class MapMatchingTest {
 
     private final String parameterName;
     private static GraphHopper graphHopper;
-    private final HintsMap algoOptions;
+    private final PMap hints;
 
 
     @BeforeClass
@@ -85,14 +85,14 @@ public class MapMatchingTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> algoOptions() {
         return Arrays.asList(new Object[][]{
-                {"non-CH", new HintsMap().putObject(Parameters.CH.DISABLE, true)},
-                {"CH", new HintsMap().putObject(Parameters.CH.DISABLE, false)}
+                {"non-CH", new PMap().putObject(Parameters.CH.DISABLE, true)},
+                {"CH", new PMap().putObject(Parameters.CH.DISABLE, false)}
         });
     }
 
-    public MapMatchingTest(String parameterName, HintsMap algoOption) {
+    public MapMatchingTest(String parameterName, PMap hints) {
         this.parameterName = parameterName;
-        this.algoOptions = algoOption;
+        this.hints = hints.putObject("profile", "my_profile");
     }
 
     /**
@@ -100,11 +100,11 @@ public class MapMatchingTest {
      */
     @Test
     public void testDoWork() {
-        MapMatching mapMatching = new MapMatching(graphHopper, algoOptions);
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
         PathWrapper route2 = graphHopper.route(new GHRequest(
                 new GHPoint(51.358735, 12.360574),
                 new GHPoint(51.358594, 12.360032))
-                .setWeighting("fastest")).getBest();
+                .setProfile("my_profile")).getBest();
         List<Observation> inputGPXEntries = createRandomGPXEntriesAlongRoute(route2);
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
@@ -130,7 +130,7 @@ public class MapMatchingTest {
         PathWrapper route1 = graphHopper.route(new GHRequest(
                 new GHPoint(51.33099, 12.380267),
                 new GHPoint(51.330531, 12.380396))
-                .setWeighting("fastest")).getBest();
+                .setProfile("my_profile")).getBest();
         inputGPXEntries = createRandomGPXEntriesAlongRoute(route1);
         mapMatching.setMeasurementErrorSigma(5);
         mr = mapMatching.doWork(inputGPXEntries);
@@ -151,9 +151,9 @@ public class MapMatchingTest {
         PathWrapper route = graphHopper.route(new GHRequest(
                 new GHPoint(51.377781, 12.338333),
                 new GHPoint(51.323317, 12.387085))
-                .setWeighting("fastest")).getBest();
+                .setProfile("my_profile")).getBest();
         inputGPXEntries = createRandomGPXEntriesAlongRoute(route);
-        mapMatching = new MapMatching(graphHopper, algoOptions);
+        mapMatching = new MapMatching(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
         mr = mapMatching.doWork(inputGPXEntries);
 
@@ -175,11 +175,11 @@ public class MapMatchingTest {
     @Test
     public void testDistantPoints() {
         // OK with 1000 visited nodes:
-        MapMatching mapMatching = new MapMatching(graphHopper, algoOptions);
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
         PathWrapper route = graphHopper.route(new GHRequest(
                 new GHPoint(51.23, 12.18),
                 new GHPoint(51.45, 12.59))
-                .setWeighting("fastest")).getBest();
+                .setProfile("my_profile")).getBest();
         List<Observation> inputGPXEntries = createRandomGPXEntriesAlongRoute(route);
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
@@ -188,7 +188,7 @@ public class MapMatchingTest {
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
 
         // not OK when we only allow a small number of visited nodes:
-        HintsMap opts = new HintsMap(algoOptions).putObject(Parameters.Routing.MAX_VISITED_NODES, 1);
+        PMap opts = new PMap(hints).putObject(Parameters.Routing.MAX_VISITED_NODES, 1);
         mapMatching = new MapMatching(graphHopper, opts);
         try {
             mr = mapMatching.doWork(inputGPXEntries);
@@ -204,11 +204,11 @@ public class MapMatchingTest {
      */
     @Test
     public void testClosePoints() {
-        MapMatching mapMatching = new MapMatching(graphHopper, algoOptions);
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
         PathWrapper route = graphHopper.route(new GHRequest(
                 new GHPoint(51.342422, 12.3613358),
                 new GHPoint(51.342328, 12.3613358))
-                .setWeighting("fastest")).getBest();
+                .setProfile("my_profile")).getBest();
         List<Observation> inputGPXEntries = createRandomGPXEntriesAlongRoute(route);
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
@@ -227,7 +227,7 @@ public class MapMatchingTest {
     @Test
     public void testSmallSeparatedSearchDistance() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour3-with-long-edge.gpx"), Gpx.class);
-        MapMatching mapMatching = new MapMatching(graphHopper, algoOptions);
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
         MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
         assertEquals(Arrays.asList("Weinligstraße", "Weinligstraße", "Weinligstraße",
@@ -241,7 +241,7 @@ public class MapMatchingTest {
      */
     @Test
     public void testLoop() throws IOException {
-        MapMatching mapMatching = new MapMatching(graphHopper, algoOptions);
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
 
         // Need to reduce GPS accuracy because too many GPX are filtered out otherwise.
         mapMatching.setMeasurementErrorSigma(40);
@@ -262,7 +262,7 @@ public class MapMatchingTest {
      */
     @Test
     public void testLoop2() throws IOException {
-        MapMatching mapMatching = new MapMatching(graphHopper, algoOptions);
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
         // TODO smaller sigma like 40m leads to U-turn at Tschaikowskistraße
         mapMatching.setMeasurementErrorSigma(50);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour-with-loop.gpx"), Gpx.class);
@@ -281,11 +281,11 @@ public class MapMatchingTest {
      */
     @Test
     public void testUTurns() throws IOException {
-        final HintsMap algoOptions = new HintsMap(this.algoOptions)
+        final PMap hints = new PMap(this.hints)
                 // Reduce penalty to allow U-turns
                 .putObject(Parameters.Routing.HEADING_PENALTY, 50);
 
-        MapMatching mapMatching = new MapMatching(graphHopper, algoOptions);
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour4-with-uturn.gpx"), Gpx.class);
 
         // with large measurement error, we expect no U-turn

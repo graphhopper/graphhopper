@@ -64,14 +64,14 @@ public class RoutingAdditivityTest {
         PathWrapper route1 = graphHopper.route(new GHRequest(
                 new GHPoint(51.23, 12.18),
                 new GHPoint(51.45, 12.59))
-                .setWeighting("fastest")).getBest();
+                .setProfile("my_profile")).getBest();
 
         // Re-route from snapped point to snapped point.
         // It's the only way to be sure.
         PathWrapper route2 = graphHopper.route(new GHRequest(
                 route1.getWaypoints().get(0),
                 route1.getWaypoints().get(1))
-                .setWeighting("fastest")).getBest();
+                .setProfile("my_profile")).getBest();
 
         assertThat(route1.getTime(), is(equalTo(route2.getTime())));
 
@@ -80,7 +80,7 @@ public class RoutingAdditivityTest {
             PathWrapper segment = graphHopper.route(new GHRequest(
                     route2.getPoints().get(i),
                     route2.getPoints().get(i + 1))
-                    .setWeighting("fastest")).getBest();
+                    .setProfile("my_profile")).getBest();
             travelTime += segment.getTime();
         }
 

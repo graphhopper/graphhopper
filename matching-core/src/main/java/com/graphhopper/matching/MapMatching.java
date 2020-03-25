@@ -29,7 +29,6 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -78,10 +77,31 @@ public class MapMatching {
     private final boolean ch;
     private QueryGraph queryGraph;
 
-    public MapMatching(GraphHopper graphHopper, HintsMap hints) {
+    public MapMatching(GraphHopper graphHopper, PMap hints) {
         this.locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
 
-        if (!hints.has("vehicle")) hints.putObject("vehicle", "car");
+        if (hints.has("vehicle"))
+            throw new IllegalArgumentException("MapMatching hints may no longer contain a vehicle, use the profile parameter instead, see core/#1958");
+        if (hints.has("weighting"))
+            throw new IllegalArgumentException("MapMatching hints may no longer contain a weighting, use the profile parameter instead, see core/#1958");
+
+        if (graphHopper.getProfiles().isEmpty()) {
+            throw new IllegalArgumentException("No profiles found, you need to configure at least one profile to use map matching");
+        }
+        if (!hints.has("profile")) {
+            throw new IllegalArgumentException("You need to specify a profile to perform map matching");
+        }
+        ProfileConfig profile = null;
+        String profileStr = hints.getString("profile", "");
+        List<String> profiles = new ArrayList<>(graphHopper.getProfiles().size());
+        for (ProfileConfig p : graphHopper.getProfiles()) {
+            profiles.add(p.getName());
+            if (p.getName().equals(profileStr)) {
+                profile = p;
+            }
+        }
+        if (profile == null)
+            throw new IllegalArgumentException("Could not find profile '" + profileStr + "', choose one of: " + profiles);
 
         // Convert heading penalty [s] into U-turn penalty [m]
         // The heading penalty is automatically taken into account by GraphHopper routing,
@@ -94,7 +114,6 @@ public class MapMatching {
         final double headingTimePenalty = hints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY);
         uTurnDistancePenalty = headingTimePenalty * PENALTY_CONVERSION_VELOCITY;
 
-        ProfileConfig profile = graphHopper.resolveProfile(hints);
         boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
         RoutingAlgorithmFactory routingAlgorithmFactory = graphHopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
