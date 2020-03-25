@@ -64,6 +64,9 @@ public class SPTResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
+        // make sure to explicitly disable turn costs when resolving the profile, otherwise it might be true depending
+        // on the encoder
+        hintsMap.putObject(Parameters.Routing.EDGE_BASED, false);
         ProfileConfig profile = graphHopper.resolveProfile(hintsMap);
         if (profile.isTurnCosts()) {
             throw new IllegalArgumentException("SPT calculation does not support turn costs yet");
