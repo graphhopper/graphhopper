@@ -976,6 +976,7 @@ public class GraphHopperIT {
 
     @Test
     public void testSRTMWithLongEdgeSampling() {
+        final String profile = "profile";
         final String vehicle = "foot";
         final String weighting = "shortest";
 
@@ -983,6 +984,7 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setElevationWayPointMaxDistance(1).
+                setProfiles(new ProfileConfig("profile").setVehicle(vehicle).setWeighting(weighting)).
                 setLongEdgeSamplingDistance(30);
 
         ElevationProvider elevationProvider = new SRTMProvider(DIR);
@@ -991,7 +993,7 @@ public class GraphHopperIT {
         hopper.importOrLoad();
 
         GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
-                setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weighting));
+                setAlgorithm(ASTAR).setProfile(profile));
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(1570.4, arsp.getDistance(), .1);
