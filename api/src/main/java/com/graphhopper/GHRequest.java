@@ -243,6 +243,8 @@ public class GHRequest {
      * By default it supports fastest and shortest. Or specify empty to use default.
      */
     public GHRequest setWeighting(String w) {
+        // todonow: setting weighting/vehicle only works on the client side, but no longer with GHRequest in GraphHopper
+        // should we remove it?
         hints.setWeighting(w);
         return this;
     }
