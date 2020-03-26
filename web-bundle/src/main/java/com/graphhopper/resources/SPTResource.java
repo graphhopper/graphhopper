@@ -62,6 +62,15 @@ public class SPTResource {
         StopWatch sw = new StopWatch().start();
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
+        if (!hintsMap.getBool(Parameters.CH.DISABLE, true))
+            throw new IllegalArgumentException("Currently you cannot use speed mode for /spt, Do not use `ch.disable=false`");
+        if (!hintsMap.getBool(Parameters.Landmark.DISABLE, true))
+            throw new IllegalArgumentException("Currently you cannot use hybrid mode for /spt, Do not use `ch.disable=false`");
+        if (hintsMap.getBool(Parameters.Routing.EDGE_BASED, false))
+            throw new IllegalArgumentException("Currently you cannot use edge-based for /spt. Do not use `edge_based=true`");
+        if (hintsMap.getBool(Parameters.Routing.TURN_COSTS, false))
+            throw new IllegalArgumentException("Currently you cannot use turn costs for /spt, Do not use `turn_costs=true`");
+
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
         // make sure to explicitly disable turn costs when resolving the profile, otherwise it might be true depending
