@@ -70,14 +70,13 @@ public class DirectedRoutingTest {
                 {Algo.ASTAR, INFINITE_U_TURN_COSTS, false, false},
                 {Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false},
                 {Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false},
-                // todo: yields warnings and fails, see #1665, #1687, #1745
-//                {Algo.LM, INFINITE_UTURN_COSTS, false, true}
+                // todo: LM+directed still fails sometimes, #1971
+//                {Algo.LM, INFINITE_U_TURN_COSTS, false, true},
                 {Algo.ASTAR, 40, false, false},
                 {Algo.CH_ASTAR, 40, true, false},
                 {Algo.CH_DIJKSTRA, 40, true, false},
-                // todo: yields warnings and fails, see #1665, 1687, #1745
+                // todo: LM+directed still fails sometimes, #1971
 //                {Algo.LM, 40, false, true}
-                // todo: add AlternativeRoute ?
         });
     }
 
@@ -106,7 +105,8 @@ public class DirectedRoutingTest {
         turnCostStorage = graph.getTurnCostStorage();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
         chProfile = CHProfile.edgeBased(weighting);
-        lmProfile = new LMProfile(weighting);
+        // important: for LM preparation we need to use a weighting without turn costs #1960
+        lmProfile = new LMProfile(new FastestWeighting(encoder));
         graph.addCHGraph(chProfile);
         graph.create(1000);
     }
@@ -141,7 +141,7 @@ public class DirectedRoutingTest {
             case CH_ASTAR:
                 return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM:
-                return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).traversalMode(TraversalMode.EDGE_BASED).build());
+                return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(TraversalMode.EDGE_BASED).build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }
