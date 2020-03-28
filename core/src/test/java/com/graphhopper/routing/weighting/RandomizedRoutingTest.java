@@ -10,7 +10,6 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMProfile;
 import com.graphhopper.routing.lm.PerfectApproximator;
 import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
@@ -157,95 +156,9 @@ public class RandomizedRoutingTest {
     }
 
     @Test
-    public void lm_problem_to_node_of_fallback_approximator() {
-        // Before #1745 this test used to fail for LM, because when the distance was approximated for the start node 0
-        // the LMApproximator used the fall back approximator for which the to node was never set. This in turn meant
-        // that the to coordinates were zero and a way too large approximation was returned.
-        // Eventually the best path was not updated correctly because the spt entry of the fwd search already had a way
-        // too large weight.
-
-        //   ---<---
-        //   |     |
-        //   | 4   |
-        //   |/  \ 0
-        //   1   | |
-        //     \ | |
-        //       3 |
-        // 2 --<----
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 49.405150, 9.709054);
-        na.setNode(1, 49.403705, 9.700517);
-        na.setNode(2, 49.400112, 9.700209);
-        na.setNode(3, 49.403009, 9.708364);
-        na.setNode(4, 49.409021, 9.703622);
-        // 30s
-        graph.edge(4, 3, 1000, true).set(speedEnc, 120);
-        graph.edge(0, 2, 1000, false).set(speedEnc, 120);
-        // 360s
-        graph.edge(1, 3, 1000, true).set(speedEnc, 10);
-        // 80s
-        graph.edge(0, 1, 1000, false).set(speedEnc, 45);
-        graph.edge(1, 4, 1000, true).set(speedEnc, 45);
-        preProcessGraph();
-
-        int source = 0;
-        int target = 3;
-
-        Path refPath = new DijkstraBidirectionRef(graph, weighting, NODE_BASED)
-                .calcPath(source, target);
-        Path path = createAlgo()
-                .calcPath(0, 3);
-        comparePaths(refPath, path, source, target, -1);
-    }
-
-    @Test
-    public void lm_issue2() {
-        // Before #1745 This would fail for LM, because an underrun of 'delta' would not be treated correctly,
-        // and the remaining weight would be over-approximated
-
-        //                    ---
-        //                  /     \
-        // 0 - 1 - 5 - 6 - 9 - 4 - 0
-        //          \     /
-        //            ->-
-        NodeAccess na = graph.getNodeAccess();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        na.setNode(0, 49.406987, 9.709767);
-        na.setNode(1, 49.403612, 9.702953);
-        na.setNode(2, 49.409755, 9.706517);
-        na.setNode(3, 49.409021, 9.708649);
-        na.setNode(4, 49.400674, 9.700906);
-        na.setNode(5, 49.408735, 9.709486);
-        na.setNode(6, 49.406402, 9.700937);
-        na.setNode(7, 49.406965, 9.702660);
-        na.setNode(8, 49.405227, 9.702863);
-        na.setNode(9, 49.409411, 9.709085);
-        graph.edge(0, 1, 623.197000, true).set(speedEnc, 112);
-        graph.edge(5, 1, 741.414000, true).set(speedEnc, 13);
-        graph.edge(9, 4, 1140.835000, true).set(speedEnc, 35);
-        graph.edge(5, 6, 670.689000, true).set(speedEnc, 18);
-        graph.edge(5, 9, 80.731000, false).set(speedEnc, 88);
-        graph.edge(0, 9, 273.948000, true).set(speedEnc, 82);
-        graph.edge(4, 0, 956.552000, true).set(speedEnc, 60);
-        preProcessGraph();
-        int source = 5;
-        int target = 4;
-        Path refPath = new DijkstraBidirectionRef(graph, weighting, NODE_BASED)
-                .calcPath(source, target);
-        Path path = createAlgo()
-                .calcPath(source, target);
-        comparePaths(refPath, path, source, target, -1);
-    }
-
-    @Test
     @Repeat(times = 5)
     public void randomGraph() {
         final long seed = System.nanoTime();
-        run(seed);
-    }
-
-    private void run(long seed) {
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
@@ -277,10 +190,6 @@ public class RandomizedRoutingTest {
     @Repeat(times = 5)
     public void randomGraph_withQueryGraph() {
         final long seed = System.nanoTime();
-        runWithQueryGraph(seed);
-    }
-
-    private void runWithQueryGraph(long seed) {
         final int numQueries = 50;
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
