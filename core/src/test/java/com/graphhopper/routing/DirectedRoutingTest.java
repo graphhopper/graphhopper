@@ -29,14 +29,12 @@ import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,12 +44,12 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
+import static com.graphhopper.routing.RandomizedRoutingTest.getRandomPoints;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
@@ -224,7 +222,7 @@ public class DirectedRoutingTest {
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
-            List<GHPoint> points = getRandomPoints(2, index, rnd);
+            List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
 
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
@@ -254,24 +252,6 @@ public class DirectedRoutingTest {
         if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
         }
-    }
-
-    private List<GHPoint> getRandomPoints(int numPoints, LocationIndex index, Random rnd) {
-        List<GHPoint> points = new ArrayList<>(numPoints);
-        BBox bounds = graph.getBounds();
-        final int maxAttempts = 100 * numPoints;
-        int attempts = 0;
-        while (attempts < maxAttempts && points.size() < numPoints) {
-            double lat = rnd.nextDouble() * (bounds.maxLat - bounds.minLat) + bounds.minLat;
-            double lon = rnd.nextDouble() * (bounds.maxLon - bounds.minLon) + bounds.minLon;
-            QueryResult queryResult = index.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
-            if (queryResult.isValid()) {
-                points.add(new GHPoint(lat, lon));
-            }
-            attempts++;
-        }
-        assertEquals("could not find valid random points after " + attempts + " attempts", numPoints, points.size());
-        return points;
     }
 
     private List<QueryResult> findQueryResults(LocationIndexTree index, List<GHPoint> ghPoints) {

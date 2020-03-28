@@ -231,7 +231,7 @@ public class RandomizedRoutingTest {
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
-            List<GHPoint> points = getRandomPoints(2, index, rnd);
+            List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
 
@@ -252,9 +252,8 @@ public class RandomizedRoutingTest {
         }
     }
 
-    private List<GHPoint> getRandomPoints(int numPoints, LocationIndex index, Random rnd) {
+    static List<GHPoint> getRandomPoints(BBox bounds, int numPoints, LocationIndex index, Random rnd) {
         List<GHPoint> points = new ArrayList<>(numPoints);
-        BBox bounds = graph.getBounds();
         final int maxAttempts = 100 * numPoints;
         int attempts = 0;
         while (attempts < maxAttempts && points.size() < numPoints) {
@@ -306,7 +305,7 @@ public class RandomizedRoutingTest {
         return strictViolations;
     }
 
-    private static IntIndexedContainer removeConsecutiveDuplicates(IntIndexedContainer arr) {
+    static IntIndexedContainer removeConsecutiveDuplicates(IntIndexedContainer arr) {
         if (arr.size() < 2) {
             return arr;
         }
