@@ -53,7 +53,7 @@ public class DirectedRoutingTest {
     private CHProfile chProfile;
     private LMProfile lmProfile;
     private CHGraph chGraph;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private Weighting weighting;
@@ -98,7 +98,7 @@ public class DirectedRoutingTest {
     public void init() {
         dir = new RAMDirectory();
         maxTurnCosts = 10;
-        // todonow: make this work with speed_both_directions=true!
+        // todo: make this work for MotorCycleFlagEncoder, #1972
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();

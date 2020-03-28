@@ -50,9 +50,13 @@ public class RandomizedRoutingTest {
     private Directory dir;
     private GraphHopperStorage graph;
     private List<CHProfile> chProfiles;
+    private LMProfile lmProfile;
     private CHGraph chGraph;
     private FlagEncoder encoder;
+    private TurnCostStorage turnCostStorage;
+    private int maxTurnCosts;
     private Weighting weighting;
+    private EncodingManager encodingManager;
     private PrepareContractionHierarchies pch;
     private PrepareLandmarks lm;
 
@@ -100,14 +104,19 @@ public class RandomizedRoutingTest {
 
     @Before
     public void init() {
+        maxTurnCosts = 10;
         dir = new RAMDirectory();
-        encoder = new MotorcycleFlagEncoder(5, 5, 1);
-        EncodingManager encodingManager = EncodingManager.create(encoder);
+        // todo: this test fails sometimes with MotorCycleEncoder (for dijkstra, LM and CH) unless we disable turn costs! #1972
+        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+        encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("motorcycle|fastest|node", "motorcycle|fastest|edge")
+                .setCHProfileStrings("car|fastest|node", "car|fastest|edge")
                 .setDir(dir)
                 .create();
+        turnCostStorage = graph.getTurnCostStorage();
         chProfiles = graph.getCHProfiles();
+        // important: for LM preparation we need to use a weighting without turn costs #1960
+        lmProfile = new LMProfile(chProfiles.get(0).getWeighting());
         weighting = traversalMode.isEdgeBased() ? chProfiles.get(1).getWeighting() : chProfiles.get(0).getWeighting();
     }
 
@@ -120,7 +129,7 @@ public class RandomizedRoutingTest {
             chGraph = graph.getCHGraph(chProfile);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, new LMProfile(weighting), 16);
+            lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
             lm.setMaximumWeight(10000);
             lm.doWork();
         }
@@ -133,11 +142,11 @@ public class RandomizedRoutingTest {
     private RoutingAlgorithm createAlgo(Graph graph) {
         switch (algo) {
             case DIJKSTRA:
-                return new Dijkstra(graph, weighting, traversalMode);
+                return new Dijkstra(graph, graph.wrapWeighting(weighting), traversalMode);
             case ASTAR_UNIDIR:
-                return new AStar(graph, weighting, traversalMode);
+                return new AStar(graph, graph.wrapWeighting(weighting), traversalMode);
             case ASTAR_BIDIR:
-                return new AStarBidirection(graph, weighting, traversalMode);
+                return new AStarBidirection(graph, graph.wrapWeighting(weighting), traversalMode);
             case CH_DIJKSTRA:
                 return pch.getRoutingAlgorithmFactory().createAlgo(graph instanceof QueryGraph ? graph : chGraph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
             case CH_ASTAR:
@@ -162,6 +171,7 @@ public class RandomizedRoutingTest {
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
@@ -169,7 +179,7 @@ public class RandomizedRoutingTest {
             int source = getRandom(rnd);
             int target = getRandom(rnd);
 //            System.out.println("source: " + source + ", target: " + target);
-            Path refPath = new DijkstraBidirectionRef(graph, weighting, NODE_BASED)
+            Path refPath = new DijkstraBidirectionRef(graph, weighting, traversalMode)
                     .calcPath(source, target);
             Path path = createAlgo()
                     .calcPath(source, target);
@@ -191,11 +201,13 @@ public class RandomizedRoutingTest {
     public void randomGraph_withQueryGraph() {
         final long seed = System.nanoTime();
         final int numQueries = 50;
+
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(graph, dir);
@@ -212,7 +224,7 @@ public class RandomizedRoutingTest {
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();
 
-            Path refPath = new DijkstraBidirectionRef(queryGraph, weighting, traversalMode).calcPath(source, target);
+            Path refPath = new DijkstraBidirectionRef(queryGraph, queryGraph.wrapWeighting(weighting), traversalMode).calcPath(source, target);
             Path path = createAlgo(chQueryGraph).calcPath(source, target);
             strictViolations.addAll(comparePaths(refPath, path, source, target, seed));
         }
