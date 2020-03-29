@@ -132,8 +132,8 @@ public class RouteResource {
         }
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
-        translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
+        translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
         removeLegacyParameters(request);
@@ -186,6 +186,7 @@ public class RouteResource {
             throw new IllegalArgumentException("Empty request");
 
         StopWatch sw = new StopWatch().start();
+        enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
         if (request.getHints().has(TURN_COSTS)) {
             request.getHints().putObject(EDGE_BASED, request.getHints().getBool(TURN_COSTS, false));
         }
@@ -236,11 +237,11 @@ public class RouteResource {
 
     private void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, GHRequest request) {
         if (!curbsides.isEmpty()) {
-            if (!request.getHints().getBool(EDGE_BASED, true)) {
+            if (!request.getHints().getBool(TURN_COSTS, true))
+                throw new IllegalArgumentException("Disabling '" + TURN_COSTS + "' when using '" + CURBSIDE + "' is not allowed");
+            if (!request.getHints().getBool(EDGE_BASED, true))
                 throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
-            } else {
-                request.getHints().putObject(EDGE_BASED, true);
-            }
+            request.getHints().putObject(EDGE_BASED, true);
         }
     }
 
