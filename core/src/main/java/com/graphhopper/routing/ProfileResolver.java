@@ -254,7 +254,12 @@ public class ProfileResolver {
     }
 
     private Boolean getEdgeBased(PMap hintsMap) {
-        return hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
+        if (hintsMap.has(Parameters.Routing.TURN_COSTS))
+            return hintsMap.getBool(Parameters.Routing.TURN_COSTS, false);
+        else if (hintsMap.has(Parameters.Routing.EDGE_BASED))
+            return hintsMap.getBool(Parameters.Routing.EDGE_BASED, false);
+        else
+            return null;
     }
 
     private Integer getUTurnCosts(PMap hintsMap) {
