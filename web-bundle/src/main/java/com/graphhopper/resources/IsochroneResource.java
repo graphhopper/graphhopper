@@ -77,13 +77,19 @@ public class IsochroneResource {
 
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
+        if (!hintsMap.getBool(Parameters.CH.DISABLE, true))
+            throw new IllegalArgumentException("Currently you cannot use speed mode for /isochrone, Do not use `ch.disable=true`");
+        if (!hintsMap.getBool(Parameters.Landmark.DISABLE, true))
+            throw new IllegalArgumentException("Currently you cannot use hybrid mode for /isochrone, Do not use `ch.disable=true`");
+        if (hintsMap.getBool(Parameters.Routing.EDGE_BASED, false))
+            throw new IllegalArgumentException("Currently you cannot use edge-based for /isochrone. Do not use `edge_based=true`");
+        if (hintsMap.getBool(Parameters.Routing.TURN_COSTS, false))
+            throw new IllegalArgumentException("Currently you cannot use turn costs for /isochrone, Do not use `turn_costs=true`");
+
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
         // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
-        if (profile.isTurnCosts()) {
-            throw new IllegalArgumentException("Isochrone calculation does not support turn costs yet");
-        }
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
@@ -94,7 +100,8 @@ public class IsochroneResource {
         Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
 
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
+        // have to disable turn costs, as isochrones are running node-based
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap, true);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
