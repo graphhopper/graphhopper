@@ -186,6 +186,9 @@ public class RouteResource {
             throw new IllegalArgumentException("Empty request");
 
         StopWatch sw = new StopWatch().start();
+        if (request.getHints().has(TURN_COSTS)) {
+            request.getHints().putObject(EDGE_BASED, request.getHints().getBool(TURN_COSTS, false));
+        }
         // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
         request.setProfile(profile.getName());

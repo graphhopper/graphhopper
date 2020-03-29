@@ -33,13 +33,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceTurnCostsTest {
@@ -79,24 +80,53 @@ public class RouteResourceTurnCostsTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "",
-            "&ch.disable=true",
-            "&ch.disable=true&lm.disable=true"})
-    public void getQuery_canToggleTurnCostsOnOff(String hints) {
-        String pointsStr = "point=55.813357,37.5958585&point=55.811042,37.594689";
-
-        assertDistanceGet(pointsStr + hints, 1044);
-        assertDistanceGet(pointsStr + "&edge_based=true" + hints, 1044);
-        assertDistanceGet(pointsStr + "&turn_costs=true" + hints, 1044);
-        assertDistanceGet(pointsStr + "&edge_based=false" + hints, 400);
-        assertDistanceGet(pointsStr + "&turn_costs=false" + hints, 400);
+    @ValueSource(strings = {"flex", "LM", "CH"})
+    public void canToggleTurnCostsOnOff(String mode) {
+        assertDistance(mode, null, null, 1044);
+        assertDistance(mode, true, null, 1044);
+        assertDistance(mode, null, true, 1044);
+        assertDistance(mode, false, null, 400);
+        assertDistance(mode, null, false, 400);
     }
 
-    private void assertDistanceGet(String urlParams, double expectedDistance) {
+    private void assertDistance(String mode, Boolean edgeBased, Boolean turnCosts, double expectedDistance) {
+        assertDistanceGet(mode, edgeBased, turnCosts, expectedDistance);
+        assertDistancePost(mode, edgeBased, turnCosts, expectedDistance);
+    }
+
+    private void assertDistanceGet(String mode, Boolean edgeBased, Boolean turnCosts, double expectedDistance) {
+        String urlParams = "point=55.813357,37.5958585&point=55.811042,37.594689";
+        if (mode.equals("LM"))
+            urlParams += "&ch.disable=true";
+        if (mode.equals("flex"))
+            urlParams += "&ch.disable=true&lm.disable=true";
+        if (edgeBased != null)
+            urlParams += "&edge_based=" + edgeBased;
+        if (turnCosts != null)
+            urlParams += "&turn_costs=" + turnCosts;
         final Response response = clientTarget(app, "/route?" + urlParams).request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
+        assertDistance(response, expectedDistance);
+    }
+
+    private void assertDistancePost(String mode, Boolean edgeBased, Boolean turnCosts, double expectedDistance) {
+        String jsonStr = "{";
+        jsonStr += "\"points\": [[37.5958585,55.813357],[37.594689,55.811042]]";
+        if (mode.equals("LM"))
+            jsonStr += ", \"ch.disable\": true";
+        if (mode.equals("flex"))
+            jsonStr += ", \"ch.disable\": true, \"lm.disable\": true";
+        if (edgeBased != null)
+            jsonStr += ", \"edge_based\": " + edgeBased;
+        if (turnCosts != null)
+            jsonStr += ", \"turn_costs\": " + turnCosts;
+        jsonStr += "}";
+        final Response response = clientTarget(app, "/route?").request().post(Entity.json(jsonStr));
+        assertDistance(response, expectedDistance);
+    }
+
+    private void assertDistance(Response response, double expectedDistance) {
         JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(200, response.getStatus(), json.asText());
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
