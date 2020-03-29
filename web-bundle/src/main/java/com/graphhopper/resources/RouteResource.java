@@ -132,7 +132,6 @@ public class RouteResource {
         }
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
-        translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
         // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
@@ -186,6 +185,7 @@ public class RouteResource {
             throw new IllegalArgumentException("Empty request");
 
         StopWatch sw = new StopWatch().start();
+        enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
         // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
         request.setProfile(profile.getName());
@@ -233,21 +233,11 @@ public class RouteResource {
 
     private void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, GHRequest request) {
         if (!curbsides.isEmpty()) {
-            if (!request.getHints().getBool(EDGE_BASED, true)) {
+            if (!request.getHints().getBool(TURN_COSTS, true))
+                throw new IllegalArgumentException("Disabling '" + TURN_COSTS + "' when using '" + CURBSIDE + "' is not allowed");
+            if (!request.getHints().getBool(EDGE_BASED, true))
                 throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
-            } else {
-                request.getHints().putObject(EDGE_BASED, true);
-            }
-        }
-    }
-
-    private void translateTurnCostsParamToEdgeBased(GHRequest request, MultivaluedMap<String, String> queryParams) {
-        if (queryParams.containsKey(TURN_COSTS)) {
-            List<String> turnCosts = queryParams.get(TURN_COSTS);
-            if (turnCosts.size() != 1) {
-                throw new IllegalArgumentException("You may only specify the turn_costs parameter once");
-            }
-            request.putHint(EDGE_BASED, Helper.toObject(turnCosts.get(0)));
+            request.getHints().putObject(EDGE_BASED, true);
         }
     }
 
