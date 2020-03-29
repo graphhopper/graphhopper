@@ -96,6 +96,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
         this.lmProfile = lmProfile;
         this.weighting = lmProfile.getWeighting();
+        if (weighting.hasTurnCosts()) {
+            throw new IllegalArgumentException("Landmark preparation cannot be used with weightings returning turn costs, because this can lead to wrong results during the (node-based) landmark calculation, see #1960");
+        }
         this.encoder = weighting.getFlagEncoder();
         // allowing arbitrary weighting is too dangerous
         this.lmSelectionWeighting = new ShortestWeighting(encoder) {

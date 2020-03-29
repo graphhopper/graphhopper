@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -51,7 +52,10 @@ public class AlternativeRouteTest {
         FlagEncoder carFE = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(carFE);
         graph = new GraphBuilder(em).withTurnCosts(true).create();
-        weighting = new FastestWeighting(carFE, new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage()));
+        TurnCostProvider turnCostProvider = tMode.isEdgeBased()
+                ? new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage())
+                : TurnCostProvider.NO_TURN_COST_PROVIDER;
+        weighting = new FastestWeighting(carFE, turnCostProvider);
     }
 
     /**

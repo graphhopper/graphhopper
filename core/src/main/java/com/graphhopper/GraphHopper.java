@@ -904,9 +904,9 @@ public class GraphHopper implements GraphHopperAPI {
             // Note that we have to make sure the weighting used for LM preparation does not include turn costs, because
             // the LM preparation is running node-based and the landmark weights will be wrong if there are non-zero
             // turn costs, see discussion in #1960
-            // Running the preparation without turn costs can be useful to allow e.g. changing the u_turn_costs per
+            // Running the preparation without turn costs can also be useful to allow e.g. changing the u_turn_costs per
             // request (we have to use the minimum weight settings (= no turn costs) for the preparation)
-            Weighting weighting = createWeighting(profile, new PMap().putObject("__disable_turn_costs_for_lm_preparation", true));
+            Weighting weighting = createWeighting(profile, new PMap(), true);
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -982,12 +982,19 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
+    final public Weighting createWeighting(ProfileConfig profileConfig, PMap hints) {
+        return createWeighting(profileConfig, hints, false);
+    }
+
     /**
-     * @param profileConfig The profile for which the weighting shall be created
-     * @param hints         Additional hints that can be used to further specify the weighting that shall be created
+     * @param profileConfig    The profile for which the weighting shall be created
+     * @param hints            Additional hints that can be used to further specify the weighting that shall be created
+     * @param disableTurnCosts Can be used to explicitly create the weighting without turn costs. This is sometimes needed when the
+     *                         weighting shall be used by some algorithm that can only be run with node-based graph traversal, like
+     *                         LM preparation or Isochrones
      */
-    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints) {
-        return new DefaultWeightingFactory(encodingManager, ghStorage).createWeighting(profileConfig, hints);
+    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, boolean disableTurnCosts) {
+        return new DefaultWeightingFactory(encodingManager, ghStorage).createWeighting(profileConfig, hints, disableTurnCosts);
     }
 
     @Override
@@ -1351,7 +1358,7 @@ public class GraphHopper implements GraphHopperAPI {
             this.ghStorage = ghStorage;
         }
 
-        public Weighting createWeighting(ProfileConfig profile, PMap requestHints) {
+        public Weighting createWeighting(ProfileConfig profile, PMap requestHints, boolean disableTurnCosts) {
             // Merge profile hints with request hints, the request hints take precedence.
             // Note that so far we do not check if overwriting the profile hints actually works with the preparation
             // for LM/CH. Later we should also limit the number of parameters that can be used to modify the profile.
@@ -1363,7 +1370,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
-            if (profile.isTurnCosts() && !hints.getBool("__disable_turn_costs_for_lm_preparation", false)) {
+            if (profile.isTurnCosts() && !disableTurnCosts) {
                 if (!encoder.supportsTurnCosts())
                     throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
                 int uTurnCosts = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);

@@ -125,6 +125,11 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     }
 
     @Override
+    public boolean hasTurnCosts() {
+        return weighting.hasTurnCosts();
+    }
+
+    @Override
     public double getTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
         return weighting.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
     }
