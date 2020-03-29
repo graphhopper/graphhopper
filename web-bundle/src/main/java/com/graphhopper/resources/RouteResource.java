@@ -133,7 +133,6 @@ public class RouteResource {
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
-        translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
         removeLegacyParameters(request);
@@ -187,9 +186,6 @@ public class RouteResource {
 
         StopWatch sw = new StopWatch().start();
         enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
-        if (request.getHints().has(TURN_COSTS)) {
-            request.getHints().putObject(EDGE_BASED, request.getHints().getBool(TURN_COSTS, false));
-        }
         // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(request.getHints());
         request.setProfile(profile.getName());
@@ -242,16 +238,6 @@ public class RouteResource {
             if (!request.getHints().getBool(EDGE_BASED, true))
                 throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
             request.getHints().putObject(EDGE_BASED, true);
-        }
-    }
-
-    private void translateTurnCostsParamToEdgeBased(GHRequest request, MultivaluedMap<String, String> queryParams) {
-        if (queryParams.containsKey(TURN_COSTS)) {
-            List<String> turnCosts = queryParams.get(TURN_COSTS);
-            if (turnCosts.size() != 1) {
-                throw new IllegalArgumentException("You may only specify the turn_costs parameter once");
-            }
-            request.putHint(EDGE_BASED, Helper.toObject(turnCosts.get(0)));
         }
     }
 
