@@ -30,6 +30,9 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.*;
 
+import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
+import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
+
 /**
  * This resource provides the entire shortest path tree as response. In a simple CSV format discussed at #1577.
  */
@@ -76,6 +79,9 @@ public class SPTResource {
 
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
+        // ignore these parameters for profile selection, because we fall back to node-based without turn costs so far
+        hintsMap.remove(TURN_COSTS);
+        hintsMap.remove(EDGE_BASED);
         // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());

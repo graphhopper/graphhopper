@@ -36,6 +36,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
+import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
+import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
+
 @Path("isochrone")
 public class IsochroneResource {
 
@@ -83,11 +86,14 @@ public class IsochroneResource {
             throw new IllegalArgumentException("Currently you cannot use hybrid mode for /isochrone, Do not use `lm.disable=true`");
         if (hintsMap.getBool(Parameters.Routing.EDGE_BASED, false))
             throw new IllegalArgumentException("Currently you cannot use edge-based for /isochrone. Do not use `edge_based=true`");
-        if (hintsMap.getBool(Parameters.Routing.TURN_COSTS, false))
+        if (hintsMap.getBool(TURN_COSTS, false))
             throw new IllegalArgumentException("Currently you cannot use turn costs for /isochrone, Do not use `turn_costs=true`");
 
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
+        // ignore these parameters for profile selection, because we fall back to node-based without turn costs so far
+        hintsMap.remove(TURN_COSTS);
+        hintsMap.remove(EDGE_BASED);
         // todo: #1934, only try to resolve the profile if no profile is given!
         ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
