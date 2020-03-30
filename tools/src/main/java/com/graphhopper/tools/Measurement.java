@@ -29,6 +29,7 @@ import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
@@ -145,9 +146,10 @@ public class Measurement {
 
             @Override
             protected void loadOrPrepareLM(boolean closeEarly) {
-                StopWatch sw = new StopWatch().start();
                 super.loadOrPrepareLM(closeEarly);
-                put(Landmark.PREPARE + "time", sw.stop().getMillis());
+                for (PrepareLandmarks plm : getLMPreparationHandler().getPreparations()) {
+                    put(Landmark.PREPARE + plm.getLMProfile().getName() + ".time", plm.getTotalPrepareTime());
+                }
             }
 
             @Override
@@ -164,12 +166,12 @@ public class Measurement {
         // 2. car based LM-preparation (TODO LATER)
         // 3. truck based LM preparation -> profile=truck
 
-        CustomProfileConfig customProfile = createCustomProfile();
+        CustomProfileConfig truckProfile = createCustomProfile();
         // add more encoded values for CustomModel
         if (!args.has("graph.encoded_values"))
             args.put("graph.encoded_values", "max_width,max_height,toll,hazmat");
 
-        hopper.init(createConfigFromArgs(args, customProfile)).
+        hopper.init(createConfigFromArgs(args, truckProfile)).
                 // use server to allow path simplification
                         forServer();
         if (cleanGraph) {
@@ -208,7 +210,7 @@ public class Measurement {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
                             withInstructions().blockArea(blockAreaStr));
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", count / 30, isCH, isLM).
-                        profile("custom_car").withInstructions().queryCustomModel(customProfile.getCustomModel()));
+                        profile("profile_custom").withInstructions().queryCustomModel(truckProfile.getCustomModel()));
             }
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
@@ -229,7 +231,7 @@ public class Measurement {
                             withInstructions().activeLandmarks(blockAreaActiveLMCount).blockArea(blockAreaStr));
 
                 printTimeOfRouteQuery(hopper, new QuerySettings("routingLM8_custom", count / 5, isCH, isLM).
-                        profile(customProfile.getName()).withInstructions().activeLandmarks(8));
+                        profile(truckProfile.getName()).withInstructions().activeLandmarks(8));
             }
 
             if (hopper.getCHPreparationHandler().isEnabled()) {
@@ -308,7 +310,7 @@ public class Measurement {
         profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
         if (turnCosts)
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
-        profiles.add(new CustomProfileConfig("custom_car").setCustomModel(new CustomModel()).setVehicle("car"));
+        profiles.add(new CustomProfileConfig("profile_custom").setCustomModel(new CustomModel()).setVehicle("car"));
         profiles.add(customProfile);
         ghConfig.setProfiles(profiles);
 
@@ -320,6 +322,7 @@ public class Measurement {
         ghConfig.setCHProfiles(chProfiles);
         List<LMProfileConfig> lmProfiles = new ArrayList<>();
         if (useLM) {
+            lmProfiles.add(new LMProfileConfig("truck"));
             // as currently we do not allow cross-querying LM with turn costs=true/false we have to add both
             // profiles and this currently leads to two identical LM preparations
             lmProfiles.add(new LMProfileConfig("profile_no_tc"));
@@ -684,11 +687,11 @@ public class Measurement {
                     toLat = na.getLatitude(to);
                     toLon = na.getLongitude(to);
                     req = new GHRequest(fromLat, fromLon, toLat, toLon);
-                    String profile = querySettings.edgeBased ? "profile_tc" : "profile_no_tc";
-                    if (querySettings.queryCustomModel != null) {
-                        profile = querySettings.profile;
+
+                    String profile = querySettings.profile != null ? querySettings.profile : (querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
+                    if (querySettings.queryCustomModel != null)
                         req.getHints().putObject(CustomModel.KEY, querySettings.queryCustomModel);
-                    }
+
                     req.setProfile(profile);
                     if (querySettings.blockArea == null)
                         break;
