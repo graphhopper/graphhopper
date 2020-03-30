@@ -670,7 +670,6 @@ public class Measurement {
         final NodeAccess na = g.getNodeAccess();
 
         MiniPerfTest miniPerf = new MiniPerfTest() {
-            EdgeExplorer edgeExplorer;
 
             @Override
             public int doCalc(boolean warmup, int run) {
@@ -685,7 +684,12 @@ public class Measurement {
                     toLat = na.getLatitude(to);
                     toLon = na.getLongitude(to);
                     req = new GHRequest(fromLat, fromLon, toLat, toLon);
-                    req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
+                    String profile = querySettings.edgeBased ? "profile_tc" : "profile_no_tc";
+                    if (querySettings.queryCustomModel != null) {
+                        profile = querySettings.profile;
+                        req.getHints().putObject(CustomModel.KEY, querySettings.queryCustomModel);
+                    }
+                    req.setProfile(profile);
                     if (querySettings.blockArea == null)
                         break;
 
