@@ -78,7 +78,7 @@ public class CustomWeightingRouteResourceTest {
     }
 
     @Test
-    public void testAvoidArea() throws IOException {
+    public void testAvoidArea() {
         String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: car\n";
 

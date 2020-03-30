@@ -129,7 +129,7 @@ public class CustomWeightingRouteResourceLMTest {
         String yamlQuery = "points: [[1.540875,42.510672], [1.54212,42.511131]]\n" +
                 "profile: unknown";
         JsonNode yamlNode = queryYaml(yamlQuery, 400).readEntity(JsonNode.class);
-        assertTrue(yamlNode.get("message").asText().startsWith("There are multiple LM profiles matching your request"));
+        assertTrue(yamlNode.get("message").asText().startsWith("profile 'unknown' cannot be used for a custom request"));
     }
 
     @Test

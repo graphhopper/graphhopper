@@ -28,10 +28,7 @@ import com.graphhopper.jackson.CustomRequest;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +85,7 @@ public class CustomWeightingRouteResource {
 
         ProfileConfig profile = null;
         for (ProfileConfig profileConfig : graphHopper.getProfiles()) {
-            if (request.getProfile().equals(profileConfig.getName())) {
+            if (profileConfig.getName().equals(request.getProfile())) {
                 profile = profileConfig;
                 break;
             }
@@ -96,6 +93,7 @@ public class CustomWeightingRouteResource {
         if (!(profile instanceof CustomProfileConfig))
             throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request");
 
+        request.putHint(Parameters.CH.DISABLE, true);
         request.putHint(CustomModel.KEY, model);
         graphHopper.calcPaths(request, ghResponse);
 
