@@ -209,13 +209,16 @@ public class Measurement {
                 if (!blockAreaStr.isEmpty())
                     printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
                             withInstructions().blockArea(blockAreaStr));
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom", count / 30, isCH, isLM).
-                        profile("profile_custom").withInstructions().queryCustomModel(truckProfile.getCustomModel()));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom_car", count / 20, isCH, isLM).
+                        profile("custom_car").withInstructions());
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom_truck", count / 20, isCH, isLM).
+                        profile("custom_car").withInstructions().queryCustomModel(truckProfile.getCustomModel()));
             }
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
                 System.gc();
                 isLM = true;
+                // TODO maybe for node-based do only LM=8 and compare different LM only for edge-based?
                 for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
@@ -225,13 +228,15 @@ public class Measurement {
                     }
                 }
 
-                final int blockAreaActiveLMCount = 8;
+                final int otherLMCount = 8;
                 if (!blockAreaStr.isEmpty())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + blockAreaActiveLMCount + "_block_area", count / 4, isCH, isLM).
-                            withInstructions().activeLandmarks(blockAreaActiveLMCount).blockArea(blockAreaStr));
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + otherLMCount + "_block_area", count / 4, isCH, isLM).
+                            withInstructions().activeLandmarks(otherLMCount).blockArea(blockAreaStr));
 
-                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM8_custom", count / 5, isCH, isLM).
-                        profile(truckProfile.getName()).withInstructions().activeLandmarks(8));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + otherLMCount + "_custom_car", count / 4, isCH, isLM).
+                        profile("custom_car").withInstructions().activeLandmarks(otherLMCount));
+                printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + otherLMCount + "_custom_truck", count / 4, isCH, isLM).
+                        profile("custom_truck").withInstructions().activeLandmarks(otherLMCount));
             }
 
             if (hopper.getCHPreparationHandler().isEnabled()) {
@@ -293,7 +298,7 @@ public class Measurement {
         }
     }
 
-    private GraphHopperConfig createConfigFromArgs(PMap args, CustomProfileConfig customProfile) {
+    private GraphHopperConfig createConfigFromArgs(PMap args, CustomProfileConfig customTruck) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         String encodingManagerString = args.getString("graph.flag_encoders", "car");
         List<FlagEncoder> tmpEncoders = EncodingManager.create(encodingManagerString).fetchEdgeEncoders();
@@ -310,8 +315,8 @@ public class Measurement {
         profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
         if (turnCosts)
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
-        profiles.add(new CustomProfileConfig("profile_custom").setCustomModel(new CustomModel()).setVehicle("car"));
-        profiles.add(customProfile);
+        profiles.add(new CustomProfileConfig("custom_car").setCustomModel(new CustomModel()).setVehicle("car"));
+        profiles.add(customTruck);
         ghConfig.setProfiles(profiles);
 
         List<CHProfileConfig> chProfiles = new ArrayList<>();
@@ -322,7 +327,8 @@ public class Measurement {
         ghConfig.setCHProfiles(chProfiles);
         List<LMProfileConfig> lmProfiles = new ArrayList<>();
         if (useLM) {
-            lmProfiles.add(new LMProfileConfig("truck"));
+            lmProfiles.add(new LMProfileConfig("custom_car"));
+            lmProfiles.add(new LMProfileConfig("custom_truck"));
             // as currently we do not allow cross-querying LM with turn costs=true/false we have to add both
             // profiles and this currently leads to two identical LM preparations
             lmProfiles.add(new LMProfileConfig("profile_no_tc"));
@@ -880,7 +886,7 @@ public class Measurement {
         customModel.getSpeedFactor().put("road_class", map);
 
         customModel.setMaxSpeedFallback(110.0);
-        return new CustomProfileConfig("truck").setCustomModel(customModel);
+        return new CustomProfileConfig("custom_truck").setCustomModel(customModel);
     }
 
     private void storeProperties(String propLocation) {
