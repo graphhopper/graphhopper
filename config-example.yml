@@ -68,7 +68,7 @@ graphhopper:
   ##### Elevation #####
 
 
-  # To populate your graph with elevation data use SRTM, default is noop (no elevation)
+  # To populate your graph with elevation data use SRTM, default is noop (no elevation). Read more about it in docs/core/elevation.md
   # graph.elevation.provider: srtm
 
 
