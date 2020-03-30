@@ -28,7 +28,10 @@ import com.graphhopper.jackson.CustomRequest;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,15 +83,19 @@ public class CustomWeightingRouteResource {
             throw new IllegalArgumentException("No custom model properties found");
         if (request.getHints().has(BLOCK_AREA))
             throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
-
         if (Helper.isEmpty(request.getProfile()))
             throw new IllegalArgumentException("The 'profile' parameter for CustomRequest is required");
 
-        ProfileConfig profile = graphHopper.resolveProfile(request.getHints());
+        ProfileConfig profile = null;
+        for (ProfileConfig profileConfig : graphHopper.getProfiles()) {
+            if (request.getProfile().equals(profileConfig.getName())) {
+                profile = profileConfig;
+                break;
+            }
+        }
         if (!(profile instanceof CustomProfileConfig))
             throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request");
 
-        request.putHint(Parameters.CH.DISABLE, true);
         request.putHint(CustomModel.KEY, model);
         graphHopper.calcPaths(request, ghResponse);
 

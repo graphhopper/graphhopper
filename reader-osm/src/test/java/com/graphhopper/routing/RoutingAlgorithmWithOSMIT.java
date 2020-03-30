@@ -37,7 +37,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -621,7 +620,7 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     @Test
-    public void testMonacoParallel() throws IOException {
+    public void testMonacoParallel() {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/monaco-gh";
         Helper.removeDir(new File(graphFile));
@@ -632,6 +631,7 @@ public class RoutingAlgorithmWithOSMIT {
                 setWayPointMaxDistance(0).
                 setDataReaderFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
+                setProfiles(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")).
                 importOrLoad();
         final Graph g = hopper.getGraphHopperStorage();
         final LocationIndex idx = hopper.getLocationIndex();

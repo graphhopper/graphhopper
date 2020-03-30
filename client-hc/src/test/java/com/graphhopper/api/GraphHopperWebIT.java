@@ -285,7 +285,7 @@ public class GraphHopperWebIT {
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));
         assertTrue(res.contains("<rtept lat="));
-        assertTrue(!res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
+        assertFalse(res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
         assertTrue(res.endsWith("</gpx>"));
     }
 

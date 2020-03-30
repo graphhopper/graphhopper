@@ -51,15 +51,15 @@ public class CustomWeightingRouteResourceLMTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car,foot").
-                put("routing.lm.disabling_allowed", true).
-                put("prepare.min_network_size", 0).
-                put("prepare.min_one_way_network_size", 0).
-                put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.encoded_values", "surface").
-                put("graph.location", DIR)
+                putObject("graph.flag_encoders", "car,foot").
+                putObject("routing.lm.disabling_allowed", true).
+                putObject("prepare.min_network_size", 0).
+                putObject("prepare.min_one_way_network_size", 0).
+                putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("graph.encoded_values", "surface").
+                putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        // give strange profile names to ensure that we do not mix encoder and profile:
+                        // give strange profile names to ensure that we do not mix vehicle and profile:
                         new CustomProfileConfig("car_custom").setCustomModel(new CustomModel()).setVehicle("car"),
                         new ProfileConfig("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfileConfig("foot_custom").setCustomModel(new CustomModel()).setVehicle("foot"))).

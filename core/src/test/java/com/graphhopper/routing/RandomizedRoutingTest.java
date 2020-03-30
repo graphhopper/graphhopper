@@ -1,18 +1,34 @@
-package com.graphhopper.routing.weighting;
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.AStar;
-import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMProfile;
 import com.graphhopper.routing.lm.PerfectApproximator;
 import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -51,9 +67,13 @@ public class RandomizedRoutingTest {
     private Directory dir;
     private GraphHopperStorage graph;
     private List<CHProfile> chProfiles;
+    private LMProfile lmProfile;
     private CHGraph chGraph;
     private FlagEncoder encoder;
+    private TurnCostStorage turnCostStorage;
+    private int maxTurnCosts;
     private Weighting weighting;
+    private EncodingManager encodingManager;
     private PrepareContractionHierarchies pch;
     private PrepareLandmarks lm;
 
@@ -101,14 +121,19 @@ public class RandomizedRoutingTest {
 
     @Before
     public void init() {
+        maxTurnCosts = 10;
         dir = new RAMDirectory();
-        encoder = new CarFlagEncoder(5, 5, 1).setSpeedTwoDirections(true);
-        EncodingManager encodingManager = EncodingManager.create(encoder);
+        // todo: this test fails sometimes with MotorCycleEncoder (for dijkstra, LM and CH) unless we disable turn costs! #1972
+        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+        encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHProfileStrings("car|fastest|node", "car|fastest|edge")
                 .setDir(dir)
                 .create();
+        turnCostStorage = graph.getTurnCostStorage();
         chProfiles = graph.getCHProfiles();
+        // important: for LM preparation we need to use a weighting without turn costs #1960
+        lmProfile = new LMProfile(chProfiles.get(0).getWeighting());
         weighting = traversalMode.isEdgeBased() ? chProfiles.get(1).getWeighting() : chProfiles.get(0).getWeighting();
     }
 
@@ -121,7 +146,7 @@ public class RandomizedRoutingTest {
             chGraph = graph.getCHGraph(chProfile);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, new LMProfile(weighting), 16);
+            lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
             lm.setMaximumWeight(10000);
             lm.doWork();
         }
@@ -134,11 +159,11 @@ public class RandomizedRoutingTest {
     private RoutingAlgorithm createAlgo(Graph graph) {
         switch (algo) {
             case DIJKSTRA:
-                return new Dijkstra(graph, weighting, traversalMode);
+                return new Dijkstra(graph, graph.wrapWeighting(weighting), traversalMode);
             case ASTAR_UNIDIR:
-                return new AStar(graph, weighting, traversalMode);
+                return new AStar(graph, graph.wrapWeighting(weighting), traversalMode);
             case ASTAR_BIDIR:
-                return new AStarBidirection(graph, weighting, traversalMode);
+                return new AStarBidirection(graph, graph.wrapWeighting(weighting), traversalMode);
             case CH_DIJKSTRA:
                 return pch.getRoutingAlgorithmFactory().createAlgo(graph instanceof QueryGraph ? graph : chGraph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
             case CH_ASTAR:
@@ -157,98 +182,13 @@ public class RandomizedRoutingTest {
     }
 
     @Test
-    public void lm_problem_to_node_of_fallback_approximator() {
-        // Before #1745 this test used to fail for LM, because when the distance was approximated for the start node 0
-        // the LMApproximator used the fall back approximator for which the to node was never set. This in turn meant
-        // that the to coordinates were zero and a way too large approximation was returned.
-        // Eventually the best path was not updated correctly because the spt entry of the fwd search already had a way
-        // too large weight.
-
-        //   ---<---
-        //   |     |
-        //   | 4   |
-        //   |/  \ 0
-        //   1   | |
-        //     \ | |
-        //       3 |
-        // 2 --<----
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 49.405150, 9.709054);
-        na.setNode(1, 49.403705, 9.700517);
-        na.setNode(2, 49.400112, 9.700209);
-        na.setNode(3, 49.403009, 9.708364);
-        na.setNode(4, 49.409021, 9.703622);
-        // 30s
-        graph.edge(4, 3, 1000, true).set(speedEnc, 120);
-        graph.edge(0, 2, 1000, false).set(speedEnc, 120);
-        // 360s
-        graph.edge(1, 3, 1000, true).set(speedEnc, 10);
-        // 80s
-        graph.edge(0, 1, 1000, false).set(speedEnc, 45);
-        graph.edge(1, 4, 1000, true).set(speedEnc, 45);
-        preProcessGraph();
-
-        int source = 0;
-        int target = 3;
-
-        Path refPath = new DijkstraBidirectionRef(graph, weighting, NODE_BASED)
-                .calcPath(source, target);
-        Path path = createAlgo()
-                .calcPath(0, 3);
-        comparePaths(refPath, path, source, target, -1);
-    }
-
-    @Test
-    public void lm_issue2() {
-        // Before #1745 This would fail for LM, because an underrun of 'delta' would not be treated correctly,
-        // and the remaining weight would be over-approximated
-
-        //                    ---
-        //                  /     \
-        // 0 - 1 - 5 - 6 - 9 - 4 - 0
-        //          \     /
-        //            ->-
-        NodeAccess na = graph.getNodeAccess();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        na.setNode(0, 49.406987, 9.709767);
-        na.setNode(1, 49.403612, 9.702953);
-        na.setNode(2, 49.409755, 9.706517);
-        na.setNode(3, 49.409021, 9.708649);
-        na.setNode(4, 49.400674, 9.700906);
-        na.setNode(5, 49.408735, 9.709486);
-        na.setNode(6, 49.406402, 9.700937);
-        na.setNode(7, 49.406965, 9.702660);
-        na.setNode(8, 49.405227, 9.702863);
-        na.setNode(9, 49.409411, 9.709085);
-        graph.edge(0, 1, 623.197000, true).set(speedEnc, 112);
-        graph.edge(5, 1, 741.414000, true).set(speedEnc, 13);
-        graph.edge(9, 4, 1140.835000, true).set(speedEnc, 35);
-        graph.edge(5, 6, 670.689000, true).set(speedEnc, 18);
-        graph.edge(5, 9, 80.731000, false).set(speedEnc, 88);
-        graph.edge(0, 9, 273.948000, true).set(speedEnc, 82);
-        graph.edge(4, 0, 956.552000, true).set(speedEnc, 60);
-        preProcessGraph();
-        int source = 5;
-        int target = 4;
-        Path refPath = new DijkstraBidirectionRef(graph, weighting, NODE_BASED)
-                .calcPath(source, target);
-        Path path = createAlgo()
-                .calcPath(source, target);
-        comparePaths(refPath, path, source, target, -1);
-    }
-
-    @Test
     @Repeat(times = 5)
     public void randomGraph() {
         final long seed = System.nanoTime();
-        run(seed);
-    }
-
-    private void run(long seed) {
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
@@ -256,7 +196,7 @@ public class RandomizedRoutingTest {
             int source = getRandom(rnd);
             int target = getRandom(rnd);
 //            System.out.println("source: " + source + ", target: " + target);
-            Path refPath = new DijkstraBidirectionRef(graph, weighting, NODE_BASED)
+            Path refPath = new DijkstraBidirectionRef(graph, weighting, traversalMode)
                     .calcPath(source, target);
             Path path = createAlgo()
                     .calcPath(source, target);
@@ -277,23 +217,21 @@ public class RandomizedRoutingTest {
     @Repeat(times = 5)
     public void randomGraph_withQueryGraph() {
         final long seed = System.nanoTime();
-        runWithQueryGraph(seed);
-    }
-
-    private void runWithQueryGraph(long seed) {
         final int numQueries = 50;
+
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(graph, dir);
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
-            List<GHPoint> points = getRandomPoints(2, index, rnd);
+            List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
 
@@ -303,7 +241,7 @@ public class RandomizedRoutingTest {
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();
 
-            Path refPath = new DijkstraBidirectionRef(queryGraph, weighting, traversalMode).calcPath(source, target);
+            Path refPath = new DijkstraBidirectionRef(queryGraph, queryGraph.wrapWeighting(weighting), traversalMode).calcPath(source, target);
             Path path = createAlgo(chQueryGraph).calcPath(source, target);
             strictViolations.addAll(comparePaths(refPath, path, source, target, seed));
         }
@@ -314,9 +252,8 @@ public class RandomizedRoutingTest {
         }
     }
 
-    private List<GHPoint> getRandomPoints(int numPoints, LocationIndex index, Random rnd) {
+    static List<GHPoint> getRandomPoints(BBox bounds, int numPoints, LocationIndex index, Random rnd) {
         List<GHPoint> points = new ArrayList<>(numPoints);
-        BBox bounds = graph.getBounds();
         final int maxAttempts = 100 * numPoints;
         int attempts = 0;
         while (attempts < maxAttempts && points.size() < numPoints) {
@@ -368,7 +305,7 @@ public class RandomizedRoutingTest {
         return strictViolations;
     }
 
-    private static IntIndexedContainer removeConsecutiveDuplicates(IntIndexedContainer arr) {
+    static IntIndexedContainer removeConsecutiveDuplicates(IntIndexedContainer arr) {
         if (arr.size() < 2) {
             return arr;
         }

@@ -253,14 +253,14 @@ public class GraphHopperMatrixIT {
                     assertEquals(0, time);
                     assertTrue(connected);
                 } else if (i == 1 && j == 3) {
-                    assertEquals(1075, weight, 20);
-                    assertEquals(13926, distance, 100);
-                    assertEquals(867000, time, 20000);
+                    assertEquals(1039, weight, 20);
+                    assertEquals(13733, distance, 100);
+                    assertEquals(837000, time, 20000);
                     assertTrue(connected);
                 } else if (i == 3 && j == 1) {
-                    assertEquals(1073, weight, 20);
-                    assertEquals(13856, distance, 100);
-                    assertEquals(864000, time, 20000);
+                    assertEquals(1039, weight, 20);
+                    assertEquals(13654, distance, 100);
+                    assertEquals(834000, time, 20000);
                     assertTrue(connected);
                 } else {
                     assertEquals(Double.MAX_VALUE, weight, 1.e-3);

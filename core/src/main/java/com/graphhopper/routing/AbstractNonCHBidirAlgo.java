@@ -219,6 +219,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (!access) {
             return Double.POSITIVE_INFINITY;
         }
+        // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
+        // turn weights, see discussion in #1960
         return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
     }
 

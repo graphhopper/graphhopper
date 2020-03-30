@@ -74,7 +74,7 @@ public class GraphHopperConfig {
         return this;
     }
 
-    public GraphHopperConfig put(String key, Object value) {
+    public GraphHopperConfig putObject(String key, Object value) {
         map.putObject(key, value);
         return this;
     }

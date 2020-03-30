@@ -22,7 +22,6 @@ import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
@@ -34,6 +33,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -48,11 +48,11 @@ public class RouteResourceIssue1574Test {
     static {
         // this is the reason we put this test into an extra file: we can only reproduce the bug of issue 1574 by increasing the one-way-network size
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car").
-                put("prepare.min_network_size", 0).
-                put("prepare.min_one_way_network_size", 12).
-                put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR)
+                putObject("graph.flag_encoders", "car").
+                putObject("prepare.min_network_size", 0).
+                putObject("prepare.min_one_way_network_size", 12).
+                putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("graph.location", DIR)
                 .setProfiles(Collections.singletonList(
                         new ProfileConfig("car_profile").setVehicle("car").setWeighting("fastest")
                 ))
@@ -72,7 +72,7 @@ public class RouteResourceIssue1574Test {
 
     @Test
     public void testStallOnDemandBug_issue1574() {
-        final Response response = clientTarget(app, "/route?point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&&vehicle=car&weighting=fastest&stall_on_demand=true").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&vehicle=car&weighting=fastest&stall_on_demand=true").request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse("there should be no error, but: " + json.get("message"), json.has("message"));
         System.out.println(json);

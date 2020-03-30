@@ -8,7 +8,7 @@ public class CustomProfileConfig extends ProfileConfig {
     public CustomProfileConfig(ProfileConfig profileConfig) {
         this(profileConfig.getName());
         setVehicle(profileConfig.getVehicle());
-        getHints().put(profileConfig.getHints());
+        getHints().putAll(profileConfig.getHints());
     }
 
     public CustomProfileConfig(String name) {

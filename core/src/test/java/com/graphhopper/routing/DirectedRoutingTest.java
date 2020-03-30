@@ -1,22 +1,40 @@
-package com.graphhopper.routing.weighting;
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package com.graphhopper.routing;
 
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMProfile;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Rule;
@@ -26,12 +44,12 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
+import static com.graphhopper.routing.RandomizedRoutingTest.getRandomPoints;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
@@ -53,7 +71,7 @@ public class DirectedRoutingTest {
     private CHProfile chProfile;
     private LMProfile lmProfile;
     private CHGraph chGraph;
-    private CarFlagEncoder encoder;
+    private FlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private Weighting weighting;
@@ -70,14 +88,13 @@ public class DirectedRoutingTest {
                 {Algo.ASTAR, INFINITE_U_TURN_COSTS, false, false},
                 {Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false},
                 {Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false},
-                // todo: yields warnings and fails, see #1665, #1687, #1745
-//                {Algo.LM, INFINITE_UTURN_COSTS, false, true}
+                // todo: LM+directed still fails sometimes, #1971
+//                {Algo.LM, INFINITE_U_TURN_COSTS, false, true},
                 {Algo.ASTAR, 40, false, false},
                 {Algo.CH_ASTAR, 40, true, false},
                 {Algo.CH_DIJKSTRA, 40, true, false},
-                // todo: yields warnings and fails, see #1665, 1687, #1745
+                // todo: LM+directed still fails sometimes, #1971
 //                {Algo.LM, 40, false, true}
-                // todo: add AlternativeRoute ?
         });
     }
 
@@ -99,14 +116,15 @@ public class DirectedRoutingTest {
     public void init() {
         dir = new RAMDirectory();
         maxTurnCosts = 10;
-        // todo: make this work with speed_two_directions=true!
+        // todo: make this work for MotorCycleFlagEncoder, #1972
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
         chProfile = CHProfile.edgeBased(weighting);
-        lmProfile = new LMProfile(weighting);
+        // important: for LM preparation we need to use a weighting without turn costs #1960
+        lmProfile = new LMProfile(new FastestWeighting(encoder));
         graph.addCHGraph(chProfile);
         graph.create(1000);
     }
@@ -141,7 +159,7 @@ public class DirectedRoutingTest {
             case CH_ASTAR:
                 return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM:
-                return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).traversalMode(TraversalMode.EDGE_BASED).build());
+                return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(TraversalMode.EDGE_BASED).build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }
@@ -204,7 +222,7 @@ public class DirectedRoutingTest {
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
-            List<GHPoint> points = getRandomPoints(2, index, rnd);
+            List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
 
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
@@ -234,24 +252,6 @@ public class DirectedRoutingTest {
         if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
         }
-    }
-
-    private List<GHPoint> getRandomPoints(int numPoints, LocationIndex index, Random rnd) {
-        List<GHPoint> points = new ArrayList<>(numPoints);
-        BBox bounds = graph.getBounds();
-        final int maxAttempts = 100 * numPoints;
-        int attempts = 0;
-        while (attempts < maxAttempts && points.size() < numPoints) {
-            double lat = rnd.nextDouble() * (bounds.maxLat - bounds.minLat) + bounds.minLat;
-            double lon = rnd.nextDouble() * (bounds.maxLon - bounds.minLon) + bounds.minLon;
-            QueryResult queryResult = index.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
-            if (queryResult.isValid()) {
-                points.add(new GHPoint(lat, lon));
-            }
-            attempts++;
-        }
-        assertEquals("could not find valid random points after " + attempts + " attempts", numPoints, points.size());
-        return points;
     }
 
     private List<QueryResult> findQueryResults(LocationIndexTree index, List<GHPoint> ghPoints) {

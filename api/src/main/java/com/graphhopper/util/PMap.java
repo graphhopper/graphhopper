@@ -88,7 +88,7 @@ public class PMap {
         return map;
     }
 
-    public PMap put(PMap map) {
+    public PMap putAll(PMap map) {
         this.map.putAll(map.map);
         return this;
     }
@@ -96,6 +96,7 @@ public class PMap {
     /**
      * @deprecated use {@link #putObject(String, Object)} instead
      */
+    @Deprecated
     public PMap put(String key, String str) {
         if (str == null)
             throw new NullPointerException("Value cannot be null. Use remove instead.");

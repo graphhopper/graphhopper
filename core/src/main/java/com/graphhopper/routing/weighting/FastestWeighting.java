@@ -20,7 +20,6 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -49,11 +48,11 @@ public class FastestWeighting extends AbstractWeighting {
     private final double destinationPenalty, privatePenalty;
 
     public FastestWeighting(FlagEncoder encoder) {
-        this(encoder, new HintsMap(0));
+        this(encoder, new PMap(0));
     }
 
     public FastestWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        this(encoder, new HintsMap(0), turnCostProvider);
+        this(encoder, new PMap(0), turnCostProvider);
     }
 
     public FastestWeighting(FlagEncoder encoder, PMap map) {

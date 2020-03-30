@@ -55,6 +55,7 @@ public class HintsMap extends PMap {
     }
 
     @Override
+    @Deprecated
     public HintsMap put(String key, String string) {
         super.put(key, string);
         return this;
@@ -66,7 +67,7 @@ public class HintsMap extends PMap {
 
     public HintsMap setWeighting(String w) {
         if (w != null)
-            super.put("weighting", w);
+            super.putObject("weighting", w);
         return this;
     }
 
@@ -76,7 +77,7 @@ public class HintsMap extends PMap {
 
     public HintsMap setVehicle(String v) {
         if (v != null)
-            super.put("vehicle", v);
+            super.putObject("vehicle", v);
         return this;
     }
 }

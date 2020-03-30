@@ -19,15 +19,14 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHProfile;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.RoutingCHGraphImpl;
+import com.graphhopper.storage.*;
+import com.graphhopper.util.PMap;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -48,9 +47,9 @@ public class AlternativeRouteCHTest {
 
         /*
 
-           9
-          /\
-         1  2-3-4-10
+           9      11
+          /\     /  \
+         1  2-3-4-10-12
          \   /   \
          5--6-7---8
         
@@ -60,25 +59,30 @@ public class AlternativeRouteCHTest {
         // has to be locally-shortest to be considered.
         // So we get all three alternatives.
 
-        graph.edge(5, 6, AlternativeRouteCH.T, true);
-        graph.edge(6, 3, AlternativeRouteCH.T, true);
-        graph.edge(3, 4, AlternativeRouteCH.T, true);
-        graph.edge(4, 10, AlternativeRouteCH.T, true);
+        graph.edge(5, 6, 10000, true);
+        graph.edge(6, 3, 10000, true);
+        graph.edge(3, 4, 10000, true);
+        graph.edge(4, 10, 10000, true);
 
-        graph.edge(6, 7, AlternativeRouteCH.T, true);
-        graph.edge(7, 8, AlternativeRouteCH.T, true);
-        graph.edge(8, 4, AlternativeRouteCH.T, true);
+        graph.edge(6, 7, 10000, true);
+        graph.edge(7, 8, 10000, true);
+        graph.edge(8, 4, 10000, true);
 
-        graph.edge(5, 1, AlternativeRouteCH.T, true);
-        graph.edge(1, 9, AlternativeRouteCH.T, true);
-        graph.edge(9, 2, AlternativeRouteCH.T, true);
-        graph.edge(2, 3, AlternativeRouteCH.T, true);
+        graph.edge(5, 1, 10000, true);
+        graph.edge(1, 9, 10000, true);
+        graph.edge(9, 2, 10000, true);
+        graph.edge(2, 3, 10000, true);
+
+        graph.edge(4, 11, 9000, true);
+        graph.edge(11, 12, 9000, true);
+        graph.edge(12, 10, 10000, true);
 
         graph.freeze();
 
         // Carefully construct the CH so that the forward tree and the backward tree
-        // meet on all three possible paths from 5 to 10
-        final List<Integer> nodeOrdering = Arrays.asList(0, 10, 4, 3, 2, 5, 1, 6, 7, 8, 9);
+        // meet on all four possible paths from 5 to 10
+        // 5 ---> 11 will be reachable via shortcuts, as 11 is on shortest path 5 --> 12
+        final List<Integer> nodeOrdering = Arrays.asList(0, 10, 12, 4, 3, 2, 5, 1, 6, 7, 8, 9, 11);
         PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
         contractionHierarchies.useFixedNodeOrdering(new NodeOrderingProvider() {
             @Override
@@ -98,11 +102,29 @@ public class AlternativeRouteCHTest {
     @Test
     public void testCalcAlternatives() {
         GraphHopperStorage g = createTestGraph(em);
-        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(new RoutingCHGraphImpl(g.getCHGraph(), weighting));
-        altDijkstra.setMaxShareFactor(0.9);
-        altDijkstra.setMaxWeightFactor(10);
+        PMap hints = new PMap();
+        hints.putObject("alternative_route.max_weight_factor", 2.3);
+        hints.putObject("alternative_route.local_optimality_factor", 0.5);
+        hints.putObject("alternative_route.max_paths", 4);
+        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(new RoutingCHGraphImpl(g.getCHGraph(), weighting), hints);
         List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
         assertEquals(3, pathInfos.size());
+        // 4 -> 11 -> 12 is shorter than 4 -> 10 -> 12 (11 is an admissible via node), BUT
+        // 4 -> 11 -> 12 -> 10 is too long compared to 4 -> 10
+    }
+
+    @Test
+    public void testRelaxMaximumStretch() {
+        GraphHopperStorage g = createTestGraph(em);
+        PMap hints = new PMap();
+        hints.putObject("alternative_route.max_weight_factor", 4);
+        hints.putObject("alternative_route.local_optimality_factor", 0.5);
+        hints.putObject("alternative_route.max_paths", 4);
+        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(new RoutingCHGraphImpl(g.getCHGraph(), weighting), hints);
+        List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
+        assertEquals(4, pathInfos.size());
+        // 4 -> 11 -> 12 is shorter than 4 -> 10 -> 12 (11 is an admissible via node), AND
+        // 4 -> 11 -> 12 -> 10 is not too long compared to 4 -> 10
     }
 
 }

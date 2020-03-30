@@ -34,14 +34,14 @@ public class CustomWeightingRouteResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "bike,car").
-                put("routing.ch.disabling_allowed", true).
-                put("prepare.min_network_size", 0).
-                put("prepare.min_one_way_network_size", 0).
-                put("datareader.file", "../core/files/north-bayreuth.osm.gz").
-                put("graph.location", DIR).
+                putObject("graph.flag_encoders", "bike,car").
+                putObject("routing.ch.disabling_allowed", true).
+                putObject("prepare.min_network_size", 0).
+                putObject("prepare.min_one_way_network_size", 0).
+                putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
+                putObject("graph.location", DIR).
                 // for the custom_profiles more than the default encoded values are necessary
-                        put("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
+                        putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 setProfiles(Arrays.asList(
                         new CustomProfileConfig("car").setCustomModel(new CustomModel()).setVehicle("car"),
                         new CustomProfileConfig("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
