@@ -80,6 +80,8 @@ public class AlternativeRoute implements RoutingAlgorithm {
     private WeightApproximator weightApproximator;
 
     public AlternativeRoute(Graph graph, Weighting weighting, TraversalMode traversalMode) {
+        if (weighting.hasTurnCosts() && !traversalMode.isEdgeBased())
+            throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
         this.graph = graph;
         this.weighting = weighting;
         this.traversalMode = traversalMode;

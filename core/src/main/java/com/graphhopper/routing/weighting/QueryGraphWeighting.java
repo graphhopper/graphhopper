@@ -95,6 +95,11 @@ public class QueryGraphWeighting implements Weighting {
     }
 
     @Override
+    public boolean hasTurnCosts() {
+        return weighting.hasTurnCosts();
+    }
+
+    @Override
     public FlagEncoder getFlagEncoder() {
         return weighting.getFlagEncoder();
     }

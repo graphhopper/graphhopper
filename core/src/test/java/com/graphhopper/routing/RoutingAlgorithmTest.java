@@ -857,6 +857,11 @@ public class RoutingAlgorithmTest {
             }
 
             @Override
+            public boolean hasTurnCosts() {
+                return tmpW.hasTurnCosts();
+            }
+
+            @Override
             public String getName() {
                 return "custom";
             }
