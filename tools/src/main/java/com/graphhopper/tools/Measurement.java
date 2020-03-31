@@ -162,14 +162,14 @@ public class Measurement {
         };
 
         // Currently we test speed of custom truck via:
-        // 1. raw dijkstra & custom model -> routing_custom
-        // 2. car based LM-preparation (TODO LATER)
-        // 3. truck based LM preparation -> profile=truck
+        // 1. raw dijkstra & custom model
+        // 2. car based LM-preparation -> custom_car
+        // 3. truck based LM preparation -> custom_truck
 
         CustomProfileConfig truckProfile = createCustomProfile();
         // add more encoded values for CustomModel
         if (!args.has("graph.encoded_values"))
-            args.put("graph.encoded_values", "max_width,max_height,toll,hazmat");
+            args.putObject("graph.encoded_values", "max_width,max_height,toll,hazmat");
 
         hopper.init(createConfigFromArgs(args, truckProfile)).
                 // use server to allow path simplification
@@ -212,7 +212,7 @@ public class Measurement {
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom_car", count / 20, isCH, isLM).
                         profile("custom_car").withInstructions());
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom_truck", count / 20, isCH, isLM).
-                        profile("custom_car").withInstructions().queryCustomModel(truckProfile.getCustomModel()));
+                        profile("custom_truck").withInstructions().queryCustomModel(truckProfile.getCustomModel()));
             }
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
