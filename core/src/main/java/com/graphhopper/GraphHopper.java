@@ -20,7 +20,6 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
-import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -47,8 +46,6 @@ import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.change.ChangeGraphHelper;
-import com.graphhopper.storage.change.ChangeGraphResponse;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
@@ -68,9 +65,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
@@ -125,7 +119,6 @@ public class GraphHopper implements GraphHopperAPI {
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
-    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     public GraphHopper() {
@@ -1017,8 +1010,6 @@ public class GraphHopper implements GraphHopperAPI {
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        Lock readLock = readWriteLock.readLock();
-        readLock.lock();
         try {
             if (!request.getVehicle().isEmpty())
                 throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
@@ -1143,8 +1134,6 @@ public class GraphHopper implements GraphHopperAPI {
         } catch (IllegalArgumentException ex) {
             ghRsp.addError(ex);
             return Collections.emptyList();
-        } finally {
-            readLock.unlock();
         }
     }
 
@@ -1157,31 +1146,6 @@ public class GraphHopper implements GraphHopperAPI {
         else
             routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
         return routingTemplate;
-    }
-
-    /**
-     * This method applies the changes to the graph specified as feature collection. It does so by locking the routing
-     * to avoid concurrent changes which could result in incorrect routing (like when done while a Dijkstra search) or
-     * also while just reading one edge row (inconsistent edge properties).
-     */
-    public ChangeGraphResponse changeGraph(Collection<JsonFeature> collection) {
-        // TODO allow calling this method if called before CH preparation
-        if (getCHPreparationHandler().isEnabled())
-            throw new IllegalArgumentException("To use the changeGraph API you need to turn off CH");
-
-        Lock writeLock = readWriteLock.writeLock();
-        writeLock.lock();
-        try {
-            ChangeGraphHelper overlay = createChangeGraphHelper(ghStorage, locationIndex);
-            long updateCount = overlay.applyChanges(encodingManager, collection);
-            return new ChangeGraphResponse(updateCount);
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
-        return new ChangeGraphHelper(graph, locationIndex);
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {
