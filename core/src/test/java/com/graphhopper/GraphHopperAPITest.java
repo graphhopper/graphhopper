@@ -18,25 +18,15 @@
 package com.graphhopper;
 
 import com.graphhopper.config.ProfileConfig;
-import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.change.ChangeGraphHelper;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
