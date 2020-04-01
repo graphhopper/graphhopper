@@ -315,8 +315,10 @@ public class Measurement {
         profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
         if (turnCosts)
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
-        profiles.add(new CustomProfileConfig("custom_car").setCustomModel(new CustomModel()).setVehicle("car"));
+
         profiles.add(customTruck);
+        // for better performance comparison use 0 distance influence:
+        profiles.add(new CustomProfileConfig("custom_car").setCustomModel(new CustomModel().setDistanceInfluence(0)).setVehicle("car"));
         ghConfig.setProfiles(profiles);
 
         List<CHProfileConfig> chProfiles = new ArrayList<>();

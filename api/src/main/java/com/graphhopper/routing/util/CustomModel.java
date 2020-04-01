@@ -42,32 +42,36 @@ public class CustomModel {
     public CustomModel() {
     }
 
-    public void setVehicleWeight(Double vehicleWeight) {
+    public CustomModel setVehicleWeight(Double vehicleWeight) {
         this.vehicleWeight = vehicleWeight;
+        return this;
     }
 
     public Double getVehicleWeight() {
         return vehicleWeight;
     }
 
-    public void setVehicleHeight(Double vehicleHeight) {
+    public CustomModel setVehicleHeight(Double vehicleHeight) {
         this.vehicleHeight = vehicleHeight;
+        return this;
     }
 
     public Double getVehicleHeight() {
         return vehicleHeight;
     }
 
-    public void setVehicleLength(Double vehicleLength) {
+    public CustomModel setVehicleLength(Double vehicleLength) {
         this.vehicleLength = vehicleLength;
+        return this;
     }
 
     public Double getVehicleLength() {
         return vehicleLength;
     }
 
-    public void setVehicleWidth(Double vehicleWidth) {
+    public CustomModel setVehicleWidth(Double vehicleWidth) {
         this.vehicleWidth = vehicleWidth;
+        return this;
     }
 
     public Double getVehicleWidth() {
@@ -82,8 +86,9 @@ public class CustomModel {
         return maxSpeed;
     }
 
-    public void setMaxSpeedFallback(Double maxSpeedFallback) {
+    public CustomModel setMaxSpeedFallback(Double maxSpeedFallback) {
         this.maxSpeedFallback = maxSpeedFallback;
+        return this;
     }
 
     public Double getMaxSpeedFallback() {
@@ -94,16 +99,18 @@ public class CustomModel {
         return priorityMap;
     }
 
-    public void setDistanceInfluence(double distanceFactor) {
+    public CustomModel setDistanceInfluence(double distanceFactor) {
         this.distanceInfluence = distanceFactor;
+        return this;
     }
 
     public double getDistanceInfluence() {
         return distanceInfluence;
     }
 
-    public void setAreas(Map<String, JsonFeature> areas) {
+    public CustomModel setAreas(Map<String, JsonFeature> areas) {
         this.areas = areas;
+        return this;
     }
 
     public Map<String, JsonFeature> getAreas() {
