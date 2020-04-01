@@ -53,6 +53,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     public AbstractNonCHBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(tMode);
         this.weighting = weighting;
+        if (weighting.hasTurnCosts() && !tMode.isEdgeBased())
+            throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
         this.flagEncoder = weighting.getFlagEncoder();
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();

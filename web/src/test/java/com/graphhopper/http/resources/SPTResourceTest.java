@@ -46,11 +46,12 @@ public class SPTResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car").
+                putObject("graph.flag_encoders", "car|turn_costs=true").
                 putObject("graph.encoded_values", "max_speed,road_class").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
+                // use turn costs to make sure this is not a problem
+                        setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true)));
     }
 
     @ClassRule

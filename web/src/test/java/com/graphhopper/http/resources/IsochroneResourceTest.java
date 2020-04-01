@@ -49,12 +49,13 @@ public class IsochroneResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car").
+                // isochrone does not support turn costs yet, but use it anyway to make sure this is handled correctly
+                        putObject("graph.flag_encoders", "car|turn_costs=true").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig("fast_car").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("short_car").setVehicle("car").setWeighting("shortest")
+                        new ProfileConfig("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
+                        new ProfileConfig("short_car").setVehicle("car").setWeighting("shortest").setTurnCosts(true)
                 ));
     }
 
@@ -98,6 +99,12 @@ public class IsochroneResourceTest {
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("distance_limit", 3_000)
                 .queryParam("buckets", 2)
+                // explicitly disabling turn costs should be ok
+                .queryParam("turn_costs", false)
+                .queryParam("edge_based", false)
+                // explicitly disabling speed mode should be ok
+                .queryParam("ch.disable", true)
+                .queryParam("lm.disable", true)
                 .queryParam("type", "geojson")
                 .request().buildGet().invoke();
         JsonFeatureCollection featureCollection = rsp.readEntity(JsonFeatureCollection.class);
@@ -143,6 +150,23 @@ public class IsochroneResourceTest {
     public void requestBadRequest() {
         Response response = clientTarget(app, "/route?weighting=fastest&point=-1.816719,51.557148").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertTrue(json.get("message").toString().contains("Point 0 is out of bounds"));
+    }
+
+    @Test
+    public void certainParametersNotAllowed() {
+        assertNotAllowed("&ch.disable=false", "Currently you cannot use speed mode for /isochrone");
+        assertNotAllowed("&lm.disable=false", "Currently you cannot use hybrid mode for /isochrone");
+        assertNotAllowed("&turn_costs=true", "Currently you cannot use turn costs for /isochrone");
+        assertNotAllowed("&edge_based=true", "Currently you cannot use edge-based for /isochrone");
+    }
+
+    private void assertNotAllowed(String hint, String error) {
+        Response rsp = clientTarget(app, "/isochrone?weighting=fastest&point=42.531073,1.573792" + hint).request().buildGet().invoke();
+        assertEquals(400, rsp.getStatus());
+        JsonNode json = rsp.readEntity(JsonNode.class);
+        assertTrue(json.toString(), json.get("message").toString().contains(error));
     }
 
     @Test
