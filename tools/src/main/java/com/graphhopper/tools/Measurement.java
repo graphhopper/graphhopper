@@ -163,9 +163,9 @@ public class Measurement {
 
         // Currently we test speed of custom truck via:
         // 1. raw dijkstra & custom model
-        // 2. car based LM-preparation -> custom_car
+        // 2. car based LM-preparation -> custom_car & ch.disable=true
         // 3. truck based LM preparation -> custom_truck
-
+        // 4. car based CH-preparation -> custom_car
         CustomProfileConfig truckProfile = createCustomProfile();
         // add more encoded values for CustomModel
         if (!args.has("graph.encoded_values"))
@@ -261,6 +261,9 @@ public class Measurement {
                             sod());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
                             withInstructions().withPointHints().sod().simplify());
+
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_custom_car", count, isCH, isLM).
+                            profile("custom_car").withInstructions().sod());
                 }
                 if (!hopper.getCHPreparationHandler().getEdgeBasedCHProfiles().isEmpty()) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
@@ -326,6 +329,7 @@ public class Measurement {
             chProfiles.add(new CHProfileConfig("profile_no_tc"));
         if (useCHEdge)
             chProfiles.add(new CHProfileConfig("profile_tc"));
+        chProfiles.add(new CHProfileConfig("custom_car"));
         ghConfig.setCHProfiles(chProfiles);
         List<LMProfileConfig> lmProfiles = new ArrayList<>();
         if (useLM) {
