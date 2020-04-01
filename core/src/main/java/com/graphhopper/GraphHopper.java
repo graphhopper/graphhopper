@@ -319,6 +319,13 @@ public class GraphHopper implements GraphHopperAPI {
         return new ArrayList<>(profilesByName.values());
     }
 
+    /**
+     * Returns the profile for the given profile name, or null if it does not exist
+     */
+    public ProfileConfig getProfile(String profileName) {
+        return profilesByName.get(profileName);
+    }
+
     public int getMaxVisitedNodes() {
         return routingConfig.getMaxVisitedNodes();
     }
