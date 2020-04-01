@@ -66,6 +66,8 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
             return new DijkstraBidirectionEdgeCHNoSOD(g);
+        } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
+            return new AlternativeRouteEdgeCH(g, opts.getHints());
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for edge-based Contraction Hierarchies. Try with ch.disable=true");
         }
