@@ -1020,12 +1020,14 @@ public class GraphHopper implements GraphHopperAPI {
         try {
             if (!request.getVehicle().isEmpty())
                 throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
-            if (!request.getWeighting().isEmpty())
-                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
+            // todo: #1980, weighting should be also forbidden
+//            if (!request.getWeighting().isEmpty())
+//                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
             if (request.getHints().has(Routing.TURN_COSTS))
                 throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
-            if (request.getHints().has(Routing.EDGE_BASED))
-                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
+            // todo: #1980, edge based should also be forbidden
+//            if (request.getHints().has(Routing.EDGE_BASED))
+//                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
 
             // todo later: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
 
