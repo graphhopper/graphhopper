@@ -30,11 +30,9 @@ import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
+import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
 import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
 import com.graphhopper.storage.*;
@@ -320,8 +318,9 @@ public class Measurement {
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
 
         profiles.add(customTruck);
-        // for better performance comparison use 0 distance influence:
-        profiles.add(new CustomProfileConfig("custom_car").setCustomModel(new CustomModel().setDistanceInfluence(0)).setVehicle("car"));
+        // create CustomWeighting similar to FastestWeighting for better comparison
+        profiles.add(new CustomProfileConfig("custom_car").
+                setCustomModel(createSimilarToFastest(TransportationMode.MOTOR_VEHICLE)).setVehicle("car"));
         ghConfig.setProfiles(profiles);
 
         List<CHProfileConfig> chProfiles = new ArrayList<>();
@@ -865,6 +864,15 @@ public class Measurement {
         } catch (IOException e) {
             logger.error("Problem while storing json in: " + jsonLocation, e);
         }
+    }
+
+    public static CustomModel createSimilarToFastest(TransportationMode mode) {
+        CustomModel model = new CustomModel();
+        Map<String, Object> map = new HashMap<>();
+        map.put(RoadAccess.PRIVATE.toString(), mode == TransportationMode.MOTOR_VEHICLE ? 0.1 : 1.0 / 1.2);
+        map.put(RoadAccess.DESTINATION.toString(), mode == TransportationMode.MOTOR_VEHICLE ? 0.2 : 1.0);
+        model.getPriority().put(RoadAccess.KEY, map);
+        return model;
     }
 
     private CustomProfileConfig createCustomProfile() {

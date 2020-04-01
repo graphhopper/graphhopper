@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.util.Parameters;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,6 +33,7 @@ public class CustomModel {
     static double DEFAULT_D_I = 70;
     // optional:
     private Double maxSpeedFallback, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
+    private Double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceInfluence = DEFAULT_D_I;
     private Map<String, Object> speedFactor = new HashMap<>();
@@ -99,6 +101,15 @@ public class CustomModel {
         return priorityMap;
     }
 
+    public CustomModel setAreas(Map<String, JsonFeature> areas) {
+        this.areas = areas;
+        return this;
+    }
+
+    public Map<String, JsonFeature> getAreas() {
+        return areas;
+    }
+
     public CustomModel setDistanceInfluence(double distanceFactor) {
         this.distanceInfluence = distanceFactor;
         return this;
@@ -108,13 +119,12 @@ public class CustomModel {
         return distanceInfluence;
     }
 
-    public CustomModel setAreas(Map<String, JsonFeature> areas) {
-        this.areas = areas;
-        return this;
+    public void setHeadingPenalty(double headingPenalty) {
+        this.headingPenalty = headingPenalty;
     }
 
-    public Map<String, JsonFeature> getAreas() {
-        return areas;
+    public double getHeadingPenalty() {
+        return headingPenalty;
     }
 
     @Override

@@ -17,17 +17,18 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -55,6 +56,7 @@ public final class CustomWeighting extends AbstractWeighting {
     private final BooleanEncodedValue baseVehicleAccessEnc;
     private final double maxSpeed;
     private final double distanceInfluence;
+    private final double headingPenaltySeconds;
     private final SpeedCustomConfig speedConfig;
     private final PriorityCustomConfig priorityConfig;
 
@@ -64,6 +66,7 @@ public final class CustomWeighting extends AbstractWeighting {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
 
+        headingPenaltySeconds = customModel.getHeadingPenalty();
         baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
         speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), lookup, factory);
         maxSpeed = speedConfig.getMaxSpeed() / SPEED_CONV;
@@ -93,22 +96,24 @@ public final class CustomWeighting extends AbstractWeighting {
         return seconds / priorityConfig.calcPriority(edgeState, reverse) + distanceInfluence;
     }
 
-    double calcSeconds(double distance, EdgeIteratorState edge, boolean reverse) {
+    double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
         // special case for loop edges: since they do not have a meaningful direction we always need to read them in forward direction
-        if (edge.getBaseNode() == edge.getAdjNode())
+        if (edgeState.getBaseNode() == edgeState.getAdjNode())
             reverse = false;
 
         // TODO see #1835
-        if (reverse ? !edge.getReverse(baseVehicleAccessEnc) : !edge.get(baseVehicleAccessEnc))
+        if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
             return Double.POSITIVE_INFINITY;
 
-        double speed = speedConfig.calcSpeed(edge, reverse);
+        double speed = speedConfig.calcSpeed(edgeState, reverse);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
 
-        return distance / speed * SPEED_CONV;
+        double seconds = distance / speed * SPEED_CONV;
+        // add penalty at start/stop/via points
+        return edgeState.get(EdgeIteratorState.UNFAVORED_EDGE) ? seconds + headingPenaltySeconds : seconds;
     }
 
     @Override
