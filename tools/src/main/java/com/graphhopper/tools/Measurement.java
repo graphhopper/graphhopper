@@ -870,7 +870,7 @@ public class Measurement {
         CustomModel model = new CustomModel();
         Map<String, Object> map = new HashMap<>();
         map.put(RoadAccess.PRIVATE.toString(), mode == TransportationMode.MOTOR_VEHICLE ? 0.1 : 1.0 / 1.2);
-        map.put(RoadAccess.DESTINATION.toString(), mode == TransportationMode.MOTOR_VEHICLE ? 0.2 : 1.0);
+        map.put(RoadAccess.DESTINATION.toString(), mode == TransportationMode.MOTOR_VEHICLE ? 0.1 : 1.0);
         model.getPriority().put(RoadAccess.KEY, map);
         return model;
     }
