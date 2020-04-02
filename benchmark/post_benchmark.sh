@@ -13,6 +13,10 @@ set -euo pipefail
 # use curl to post results (requires external variables to be set)
 for f in $1*.json
   # use some options to curl to make sure we notice when error is returned
-  do curl --show-error --fail -XPOST -u $2:$3 -H "Content-Type: application/json" -d @$f $4
+  do curl --show-error -XPOST -u $2:$3 -H "Content-Type: application/json" -d @$f $4
+  res=$?
+  if [ "$res" != "0" ]; then
+    exit 1
+  fi
 done
 
