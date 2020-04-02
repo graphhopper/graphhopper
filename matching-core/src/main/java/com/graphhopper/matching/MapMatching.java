@@ -105,7 +105,8 @@ public class MapMatching {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();
         }
-        weighting = graphHopper.createWeighting(profile, hints);
+        // since map matching does not support turn costs we have to disable them here explicitly
+        weighting = graphHopper.createWeighting(profile, new PMap(hints).putObject("__disable_turn_costs_for_lm_preparation", true));
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
     }
 
