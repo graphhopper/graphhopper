@@ -1370,7 +1370,7 @@ public class GraphHopper implements GraphHopperAPI {
             if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
                 if (!(profile instanceof CustomProfileConfig))
                     throw new IllegalArgumentException("custom weighting requires a CustomProfileConfig but was profile=" + profile.getName());
-                CustomModel queryCustomModel = hints.getObject(CustomModel.KEY, null);
+                CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
                 CustomProfileConfig customProfileConfig = (CustomProfileConfig) profile;
                 queryCustomModel = queryCustomModel == null ? customProfileConfig.getCustomModel() : queryCustomModel.merge(customProfileConfig.getCustomModel());
                 weighting = new CustomWeighting(encoder, encodingManager, encodedValueFactory, turnCostProvider, queryCustomModel);
