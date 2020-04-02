@@ -31,6 +31,7 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -91,17 +92,16 @@ public class MapMatching {
         if (!hints.has("profile")) {
             throw new IllegalArgumentException("You need to specify a profile to perform map matching");
         }
-        ProfileConfig profile = null;
         String profileStr = hints.getString("profile", "");
-        List<String> profiles = new ArrayList<>(graphHopper.getProfiles().size());
-        for (ProfileConfig p : graphHopper.getProfiles()) {
-            profiles.add(p.getName());
-            if (p.getName().equals(profileStr)) {
-                profile = p;
+        ProfileConfig profile = graphHopper.getProfile(profileStr);
+        if (profile == null) {
+            List<ProfileConfig> profiles = graphHopper.getProfiles();
+            List<String> profileNames = new ArrayList<>(profiles.size());
+            for (ProfileConfig p : profiles) {
+                profileNames.add(p.getName());
             }
+            throw new IllegalArgumentException("Could not find profile '" + profileStr + "', choose one of: " + profileNames);
         }
-        if (profile == null)
-            throw new IllegalArgumentException("Could not find profile '" + profileStr + "', choose one of: " + profiles);
 
         // Convert heading penalty [s] into U-turn penalty [m]
         // The heading penalty is automatically taken into account by GraphHopper routing,
@@ -124,7 +124,8 @@ public class MapMatching {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();
         }
-        weighting = graphHopper.createWeighting(profile, hints);
+        // since map matching does not support turn costs we have to disable them here explicitly
+        weighting = graphHopper.createWeighting(profile, hints, true);
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
     }
 
