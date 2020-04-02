@@ -157,10 +157,10 @@ public class WebHelper {
         return json;
     }
 
-    public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
+    public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.putPOJO("hints", ghRsp.getHints().toMap());
-        jsonResponsePutInfo(json, took);
+//        jsonResponsePutInfo(json, took);
         ArrayNode jsonPathList = json.putArray("paths");
         for (PathWrapper ar : ghRsp.getAll()) {
             ObjectNode jsonPath = jsonPathList.addObject();

@@ -47,6 +47,7 @@ public class InstructionListSerializer extends JsonSerializer<InstructionList> {
                 instrJson.put("annotation_importance", ia.getImportance());
             }
 
+            instrJson.put("points", instruction.getPoints().toString());
             instrJson.put("street_name", instruction.getName());
             instrJson.put("time", instruction.getTime());
             instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
