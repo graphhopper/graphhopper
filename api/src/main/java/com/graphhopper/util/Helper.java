@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.coll.MapEntry;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.*;
@@ -516,9 +515,9 @@ public class Helper {
             Enum enumValue = getValueOf(enumClass, encValEntry.getKey());
             tmp[enumValue.ordinal()] = ((Number) encValEntry.getValue()).doubleValue();
             if (tmp[enumValue.ordinal()] < minValue)
-                throw new IllegalArgumentException(name + " cannot be lower than " + minValue);
+                throw new IllegalArgumentException(name + " cannot be smaller than " + minValue + ", was " + tmp[enumValue.ordinal()]);
             if (tmp[enumValue.ordinal()] > maxValue)
-                throw new IllegalArgumentException(name + " cannot be bigger than " + maxValue);
+                throw new IllegalArgumentException(name + " cannot be bigger than " + maxValue + ", was " + tmp[enumValue.ordinal()]);
         }
         return tmp;
     }

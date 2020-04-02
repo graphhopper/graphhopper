@@ -20,7 +20,9 @@ package com.graphhopper.routing.util;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.util.Parameters;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,6 +44,41 @@ public class CustomModel {
     private Map<String, JsonFeature> areas = new HashMap<>();
 
     public CustomModel() {
+    }
+
+    public CustomModel(CustomModel toCopy) {
+        this.maxSpeedFallback = toCopy.maxSpeedFallback;
+        this.vehicleWeight = toCopy.vehicleWeight;
+        this.vehicleWidth = toCopy.vehicleWidth;
+        this.vehicleLength = toCopy.vehicleLength;
+        this.vehicleHeight = toCopy.vehicleHeight;
+        this.headingPenalty = toCopy.headingPenalty;
+        this.distanceInfluence = toCopy.distanceInfluence;
+
+        speedFactor = deepCopy(toCopy.getSpeedFactor());
+        maxSpeed = deepCopy(toCopy.getMaxSpeed());
+        priorityMap = deepCopy(toCopy.getPriority());
+
+        areas.putAll(toCopy.getAreas());
+    }
+
+    private <T> T deepCopy(T originalObject) {
+        if (originalObject instanceof List) {
+            List<Object> newList = new ArrayList<>(((List) originalObject).size());
+            for (Object item : (List) originalObject) {
+                newList.add(deepCopy(item));
+            }
+            return (T) newList;
+        } else if (originalObject instanceof Map) {
+            Map copy = new HashMap<>(((Map) originalObject).size());
+            for (Object o : ((Map) originalObject).entrySet()) {
+                Map.Entry entry = (Map.Entry) o;
+                copy.put(entry.getKey(), deepCopy(entry.getValue()));
+            }
+            return (T) copy;
+        } else {
+            return originalObject;
+        }
     }
 
     public CustomModel setVehicleWeight(Double vehicleWeight) {
@@ -147,71 +184,85 @@ public class CustomModel {
      * This method assumes that this object is a per-request object so we can apply the changes and keep baseCustomModel
      * unchanged.
      */
-    public CustomModel merge(CustomModel baseCustomModel) {
-        if (vehicleWeight == null)
-            vehicleWeight = baseCustomModel.getVehicleWeight();
-        else if (baseCustomModel.getVehicleWeight() != null & vehicleWeight < baseCustomModel.getVehicleWeight())
-            throw new IllegalArgumentException("CustomModel in query can only use vehicle_weight bigger or equal to " + vehicleWeight);
-
-        if (vehicleHeight == null)
-            vehicleHeight = baseCustomModel.getVehicleHeight();
-        else if (baseCustomModel.getVehicleHeight() != null && vehicleHeight < baseCustomModel.getVehicleHeight())
-            throw new IllegalArgumentException("CustomModel in query can only use vehicle_height bigger or equal to " + vehicleHeight);
-        if (vehicleLength == null)
-            vehicleLength = baseCustomModel.getVehicleLength();
-        else if (baseCustomModel.getVehicleLength() != null && vehicleLength < baseCustomModel.getVehicleLength())
-            throw new IllegalArgumentException("CustomModel in query can only use vehicle_length bigger or equal to " + vehicleLength);
-        if (vehicleWidth == null)
-            vehicleWidth = baseCustomModel.getVehicleWidth();
-        else if (baseCustomModel.getVehicleWidth() != null && vehicleWidth < baseCustomModel.getVehicleWidth())
-            throw new IllegalArgumentException("CustomModel in query can only use vehicle_width bigger or equal to " + vehicleWidth);
-
-        if (maxSpeedFallback == null)
-            maxSpeedFallback = baseCustomModel.getMaxSpeedFallback();
-        else if (baseCustomModel.getMaxSpeedFallback() != null && maxSpeedFallback < baseCustomModel.getMaxSpeedFallback())
-            throw new IllegalArgumentException("CustomModel in query can only use max_speed_fallback bigger or equal to " + maxSpeedFallback);
-        if (Math.abs(distanceInfluence - CustomModel.DEFAULT_D_I) < 0.01)
-            distanceInfluence = baseCustomModel.getDistanceInfluence();
-        else if (distanceInfluence < baseCustomModel.getDistanceInfluence())
-            throw new IllegalArgumentException("CustomModel in query can only use distance_influence bigger or equal to " + distanceInfluence);
+    public static CustomModel merge(CustomModel baseModel, CustomModel queryModel) {
+        // avoid changing the specified CustomModel via deep copy otherwise query-CustomModel would be modified
+        CustomModel mergedCM = new CustomModel(baseModel);
+        if (queryModel.vehicleWeight != null) {
+            if (mergedCM.vehicleWeight != null && mergedCM.vehicleWeight > queryModel.vehicleWeight)
+                throw new IllegalArgumentException("CustomModel in query can only use vehicle_weight bigger or equal to " + mergedCM.vehicleWeight);
+            mergedCM.vehicleWeight = queryModel.vehicleWeight;
+        }
+        if (queryModel.vehicleHeight != null) {
+            if (mergedCM.vehicleHeight != null && mergedCM.vehicleHeight > queryModel.vehicleHeight)
+                throw new IllegalArgumentException("CustomModel in query can only use vehicle_height bigger or equal to " + mergedCM.vehicleHeight);
+            mergedCM.vehicleHeight = queryModel.vehicleHeight;
+        }
+        if (queryModel.vehicleLength != null) {
+            if (mergedCM.vehicleLength != null && mergedCM.vehicleLength > queryModel.vehicleLength)
+                throw new IllegalArgumentException("CustomModel in query can only use vehicle_length bigger or equal to " + mergedCM.vehicleLength);
+            mergedCM.vehicleLength = queryModel.vehicleLength;
+        }
+        if (queryModel.vehicleWidth != null) {
+            if (mergedCM.vehicleWidth != null && mergedCM.vehicleWidth > queryModel.vehicleWidth)
+                throw new IllegalArgumentException("CustomModel in query can only use vehicle_width bigger or equal to " + mergedCM.vehicleWidth);
+            mergedCM.vehicleWidth = queryModel.vehicleWidth;
+        }
+        if (queryModel.maxSpeedFallback != null) {
+            if (mergedCM.maxSpeedFallback != null && mergedCM.maxSpeedFallback > queryModel.maxSpeedFallback)
+                throw new IllegalArgumentException("CustomModel in query can only use max_speed_fallback bigger or equal to " + mergedCM.maxSpeedFallback);
+            mergedCM.maxSpeedFallback = queryModel.maxSpeedFallback;
+        }
+        if (Math.abs(queryModel.distanceInfluence - CustomModel.DEFAULT_D_I) > 0.01) {
+            if (mergedCM.distanceInfluence > queryModel.distanceInfluence)
+                throw new IllegalArgumentException("CustomModel in query can only use distance_influence bigger or equal to " + mergedCM.distanceInfluence);
+            mergedCM.distanceInfluence = queryModel.distanceInfluence;
+        }
 
         // example
         // max_speed: { road_class: { secondary : 10 } }
-        for (Map.Entry<String, Object> baseEntry : baseCustomModel.getMaxSpeed().entrySet()) {
-            Object value = maxSpeed.get(baseEntry.getKey());
-            if (value instanceof Map && baseEntry.getValue() instanceof Map)
-                applyChange((Map) baseEntry.getValue(), (Map) value);
+        for (Map.Entry<String, Object> queryEntry : queryModel.getMaxSpeed().entrySet()) {
+            Object value = mergedCM.maxSpeed.get(queryEntry.getKey());
+            applyChange(mergedCM.maxSpeed, value, queryEntry);
         }
-        for (Map.Entry<String, Object> baseEntry : baseCustomModel.getSpeedFactor().entrySet()) {
-            Object value = speedFactor.get(baseEntry.getKey());
-            if (value instanceof Map && baseEntry.getValue() instanceof Map)
-                applyChange((Map) baseEntry.getValue(), (Map) value);
+        for (Map.Entry<String, Object> queryEntry : queryModel.getSpeedFactor().entrySet()) {
+            Object value = mergedCM.speedFactor.get(queryEntry.getKey());
+            applyChange(mergedCM.speedFactor, value, queryEntry);
         }
-        for (Map.Entry<String, Object> baseEntry : baseCustomModel.getPriority().entrySet()) {
-            Object value = priorityMap.get(baseEntry.getKey());
-            if (value instanceof Map && baseEntry.getValue() instanceof Map)
-                applyChange((Map) baseEntry.getValue(), (Map) value);
+        for (Map.Entry<String, Object> queryEntry : queryModel.getPriority().entrySet()) {
+            Object value = mergedCM.priorityMap.get(queryEntry.getKey());
+            applyChange(mergedCM.priorityMap, value, queryEntry);
         }
-        for (Map.Entry<String, JsonFeature> entry : baseCustomModel.getAreas().entrySet()) {
-            JsonFeature feature = areas.get(entry.getKey());
-            if (feature == null)
-                areas.put(entry.getKey(), entry.getValue());
-            else
+        for (Map.Entry<String, JsonFeature> entry : queryModel.getAreas().entrySet()) {
+            if (mergedCM.areas.containsKey(entry.getKey()))
                 throw new IllegalArgumentException("area " + entry.getKey() + " already exists");
+            mergedCM.areas.put(entry.getKey(), entry.getValue());
         }
 
-        return this;
+        return mergedCM;
     }
 
-    private void applyChange(Map<Object, Object> base, Map<Object, Object> change) {
-        for (Map.Entry baseEntry : base.entrySet()) {
-            Object value = change.get(baseEntry.getKey());
-            if (value == null) {
-                change.put(baseEntry.getKey(), baseEntry.getValue());
-            } else if (baseEntry.getValue() instanceof Number && value instanceof Number) {
-                change.put(baseEntry.getKey(), ((Number) baseEntry.getValue()).doubleValue() * ((Number) value).doubleValue());
+    private static void applyChange(Map<String, Object> mergedSuperMap,
+                                    Object mergedObj, Map.Entry<String, Object> querySuperEntry) {
+        if (mergedObj == null) {
+            // no need for a "merge"
+            mergedSuperMap.put(querySuperEntry.getKey(), querySuperEntry.getValue());
+            return;
+        }
+        if (!(mergedObj instanceof Map))
+            throw new IllegalArgumentException("entry is not a map: " + mergedObj);
+        Object queryObj = querySuperEntry.getValue();
+        if (!(queryObj instanceof Map))
+            throw new IllegalArgumentException("query entry is not a map: " + queryObj);
+        Map<Object, Object> mergedMap = (Map) mergedObj;
+        Map<Object, Object> queryMap = (Map) queryObj;
+        for (Map.Entry queryEntry : queryMap.entrySet()) {
+            Object mergedValue = mergedMap.get(queryEntry.getKey());
+            if (mergedValue == null) {
+                mergedMap.put(queryEntry.getKey(), queryEntry.getValue());
+            } else if (queryEntry.getValue() instanceof Number && mergedValue instanceof Number) {
+                mergedMap.put(queryEntry.getKey(), ((Number) queryEntry.getValue()).doubleValue() * ((Number) mergedValue).doubleValue());
             } else {
-                throw new IllegalArgumentException("Cannot merge value " + baseEntry.getValue() + " for key " + baseEntry.getKey());
+                throw new IllegalArgumentException("Cannot merge value " + queryEntry.getValue() + " for key " + queryEntry.getKey() + ", merged value: " + mergedValue);
             }
         }
     }
