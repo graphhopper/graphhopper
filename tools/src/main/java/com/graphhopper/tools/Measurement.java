@@ -867,7 +867,7 @@ public class Measurement {
     }
 
     public static CustomModel createSimilarToFastest(TransportationMode mode) {
-        CustomModel model = new CustomModel();
+        CustomModel model = new CustomModel().setDistanceInfluence(0);
         Map<String, Object> map = new HashMap<>();
         map.put(RoadAccess.PRIVATE.toString(), mode == TransportationMode.MOTOR_VEHICLE ? 0.1 : 1.0 / 1.2);
         map.put(RoadAccess.DESTINATION.toString(), mode == TransportationMode.MOTOR_VEHICLE ? 0.1 : 1.0);
