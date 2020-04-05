@@ -145,7 +145,7 @@ public class ProfileResolver {
     public ProfileConfig selectProfileLM(HintsMap hintsMap) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
         for (ProfileConfig p : lmProfiles) {
-            if (!profileMatchesHints(p, hintsMap))
+            if (!lmProfileMatchesHints(p, hintsMap))
                 continue;
             matchingProfiles.add(p);
         }
@@ -179,6 +179,10 @@ public class ProfileResolver {
         }
     }
 
+    protected boolean lmProfileMatchesHints(ProfileConfig p, HintsMap hints) {
+        return profileMatchesHints(p, hints);
+    }
+
     private ProfileConfig selectProfileUnprepared(HintsMap hints) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
         for (ProfileConfig p : profiles) {
@@ -209,7 +213,7 @@ public class ProfileResolver {
         }
     }
 
-    private boolean profileMatchesHints(ProfileConfig p, HintsMap hints) {
+    protected boolean profileMatchesHints(ProfileConfig p, HintsMap hints) {
         Boolean edgeBased = getEdgeBased(hints);
         return (edgeBased == null || p.isTurnCosts() == edgeBased) &&
                 (hints.getWeighting().isEmpty() || p.getWeighting().equals(hints.getWeighting())) &&

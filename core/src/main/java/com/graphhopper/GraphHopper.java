@@ -20,7 +20,6 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
-import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -47,8 +46,6 @@ import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.change.ChangeGraphHelper;
-import com.graphhopper.storage.change.ChangeGraphResponse;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
@@ -68,9 +65,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
@@ -127,7 +121,6 @@ public class GraphHopper implements GraphHopperAPI {
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
-    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     public GraphHopper() {
@@ -326,6 +319,13 @@ public class GraphHopper implements GraphHopperAPI {
 
     public List<ProfileConfig> getProfiles() {
         return new ArrayList<>(profilesByName.values());
+    }
+
+    /**
+     * Returns the profile for the given profile name, or null if it does not exist
+     */
+    public ProfileConfig getProfile(String profileName) {
+        return profilesByName.get(profileName);
     }
 
     public int getMaxVisitedNodes() {
@@ -929,9 +929,9 @@ public class GraphHopper implements GraphHopperAPI {
             // Note that we have to make sure the weighting used for LM preparation does not include turn costs, because
             // the LM preparation is running node-based and the landmark weights will be wrong if there are non-zero
             // turn costs, see discussion in #1960
-            // Running the preparation without turn costs can be useful to allow e.g. changing the u_turn_costs per
+            // Running the preparation without turn costs can also be useful to allow e.g. changing the u_turn_costs per
             // request (we have to use the minimum weight settings (= no turn costs) for the preparation)
-            Weighting weighting = createWeighting(profile, new PMap().putObject("__disable_turn_costs_for_lm_preparation", true));
+            Weighting weighting = createWeighting(profile, new PMap(), true);
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
         }
     }
@@ -1007,12 +1007,19 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
+    final public Weighting createWeighting(ProfileConfig profileConfig, PMap hints) {
+        return createWeighting(profileConfig, hints, false);
+    }
+
     /**
-     * @param profileConfig The profile for which the weighting shall be created
-     * @param hints         Additional hints that can be used to further specify the weighting that shall be created
+     * @param profileConfig    The profile for which the weighting shall be created
+     * @param hints            Additional hints that can be used to further specify the weighting that shall be created
+     * @param disableTurnCosts Can be used to explicitly create the weighting without turn costs. This is sometimes needed when the
+     *                         weighting shall be used by some algorithm that can only be run with node-based graph traversal, like
+     *                         LM preparation or Isochrones
      */
-    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints) {
-        return new DefaultWeightingFactory(encodingManager, ghStorage).createWeighting(profileConfig, hints);
+    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, boolean disableTurnCosts) {
+        return new DefaultWeightingFactory(encodingManager, ghStorage).createWeighting(profileConfig, hints, disableTurnCosts);
     }
 
     @Override
@@ -1035,17 +1042,17 @@ public class GraphHopper implements GraphHopperAPI {
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        Lock readLock = readWriteLock.readLock();
-        readLock.lock();
         try {
             if (!request.getVehicle().isEmpty())
                 throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
-            if (!request.getWeighting().isEmpty())
-                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
+            // todo: #1980, weighting should be also forbidden
+//            if (!request.getWeighting().isEmpty())
+//                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
             if (request.getHints().has(Routing.TURN_COSTS))
                 throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
-            if (request.getHints().has(Routing.EDGE_BASED))
-                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
+            // todo: #1980, edge based should also be forbidden
+//            if (request.getHints().has(Routing.EDGE_BASED))
+//                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
 
             // todo later: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
 
@@ -1163,8 +1170,6 @@ public class GraphHopper implements GraphHopperAPI {
         } catch (IllegalArgumentException ex) {
             ghRsp.addError(ex);
             return Collections.emptyList();
-        } finally {
-            readLock.unlock();
         }
     }
 
@@ -1177,31 +1182,6 @@ public class GraphHopper implements GraphHopperAPI {
         else
             routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
         return routingTemplate;
-    }
-
-    /**
-     * This method applies the changes to the graph specified as feature collection. It does so by locking the routing
-     * to avoid concurrent changes which could result in incorrect routing (like when done while a Dijkstra search) or
-     * also while just reading one edge row (inconsistent edge properties).
-     */
-    public ChangeGraphResponse changeGraph(Collection<JsonFeature> collection) {
-        // TODO allow calling this method if called before CH preparation
-        if (getCHPreparationHandler().isEnabled())
-            throw new IllegalArgumentException("To use the changeGraph API you need to turn off CH");
-
-        Lock writeLock = readWriteLock.writeLock();
-        writeLock.lock();
-        try {
-            ChangeGraphHelper overlay = createChangeGraphHelper(ghStorage, locationIndex);
-            long updateCount = overlay.applyChanges(encodingManager, collection);
-            return new ChangeGraphResponse(updateCount);
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
-        return new ChangeGraphHelper(graph, locationIndex);
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {
@@ -1378,7 +1358,7 @@ public class GraphHopper implements GraphHopperAPI {
             this.ghStorage = ghStorage;
         }
 
-        public Weighting createWeighting(ProfileConfig profile, PMap requestHints) {
+        public Weighting createWeighting(ProfileConfig profile, PMap requestHints, boolean disableTurnCosts) {
             // Merge profile hints with request hints, the request hints take precedence.
             // Note that so far we do not check if overwriting the profile hints actually works with the preparation
             // for LM/CH. Later we should also limit the number of parameters that can be used to modify the profile.
@@ -1390,7 +1370,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
             TurnCostProvider turnCostProvider;
-            if (profile.isTurnCosts() && !hints.getBool("__disable_turn_costs_for_lm_preparation", false)) {
+            if (profile.isTurnCosts() && !disableTurnCosts) {
                 if (!encoder.supportsTurnCosts())
                     throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
                 int uTurnCosts = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);

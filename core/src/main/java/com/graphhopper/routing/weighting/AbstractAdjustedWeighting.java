@@ -59,6 +59,11 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
         return superWeighting.calcTurnMillis(inEdge, viaNode, outEdge);
     }
 
+    @Override
+    public boolean hasTurnCosts() {
+        return superWeighting.hasTurnCosts();
+    }
+
     /**
      * Returns the flagEncoder of the superWeighting. Usually we do not have a FlagEncoder here.
      */
