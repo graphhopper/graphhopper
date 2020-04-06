@@ -144,35 +144,6 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         });
     }
 
-    public List<Set<Integer>> search(int from, final int bucketCount) {
-        searchInternal(from);
-
-        final double bucketSize = limit / bucketCount;
-        final List<Set<Integer>> list = new ArrayList<>(bucketCount);
-
-        for (int i = 0; i < bucketCount; i++) {
-            list.add(new HashSet<Integer>());
-        }
-
-        fromMap.forEach((IntObjectProcedure<IsoLabel>) (nodeId, label) -> {
-            if (finished()) {
-                return;
-            }
-
-            int bucketIndex = (int) (getExploreValue(label) / bucketSize);
-            if (bucketIndex < 0) {
-                throw new IllegalArgumentException("edge cannot have negative explore value " + nodeId + ", " + label);
-            } else if (bucketIndex == bucketCount) {
-                bucketIndex = bucketCount - 1;
-            } else if (bucketIndex > bucketCount) {
-                return;
-            }
-
-            list.get(bucketIndex).add(nodeId);
-        });
-        return list;
-    }
-
     private void searchInternal(int from) {
         checkAlreadyRun();
         currEdge = new IsoLabel(-1, from, 0, 0, 0);
