@@ -122,8 +122,11 @@ public class IsochroneResource {
             limit = timeLimitInSeconds * 1000;
             shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
         }
+        ArrayList<Double> zs = new ArrayList<>();
+        for (int i = 0; i < nBuckets; i++) {
+            zs.add(limit / (nBuckets - i));
+        }
 
-        final double bucketSize = limit / nBuckets;
         final NodeAccess na = queryGraph.getNodeAccess();
         Collection<ConstraintVertex> sites = new ArrayList<>();
         shortestPathTree.search(qr.getClosestNode(), label -> {
@@ -133,11 +136,10 @@ public class IsochroneResource {
             } else {
                 exploreValue = label.time;
             }
-            int bucketIndex = (int) (exploreValue / bucketSize);
             double lat = na.getLatitude(label.adjNode);
             double lon = na.getLongitude(label.adjNode);
             ConstraintVertex site = new ConstraintVertex(new Coordinate(lon, lat));
-            site.setZ(bucketIndex);
+            site.setZ(exploreValue);
             sites.add(site);
 
             // guess center of road to increase precision a bit for longer roads
@@ -145,7 +147,7 @@ public class IsochroneResource {
                 double lat2 = na.getLatitude(label.parent.adjNode);
                 double lon2 = na.getLongitude(label.parent.adjNode);
                 ConstraintVertex site2 = new ConstraintVertex(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
-                site2.setZ(bucketIndex);
+                site2.setZ(exploreValue);
                 sites.add(site2);
             }
         });
@@ -184,11 +186,6 @@ public class IsochroneResource {
         ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
         ContourBuilder contourBuilder = new ContourBuilder(tin.getEdges());
 
-        ArrayList<Double> zs = new ArrayList<>();
-        for (int i = 0; i < nBuckets; i++) {
-            zs.add((double) i + 0.5);
-        }
-        System.out.println(zs);
         for (Double z : zs) {
             MultiPolygon multiPolygon = contourBuilder.computeIsoline(z);
             Polygon maxPolygon = heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.lon, point.lat)));
