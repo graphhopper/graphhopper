@@ -1,12 +1,13 @@
 package com.graphhopper.isochrone.algorithm;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class QuadEdgeSubdivisionTest {
 
@@ -49,7 +50,7 @@ public class QuadEdgeSubdivisionTest {
         ContourBuilder contourBuilder = new ContourBuilder(quadEdgeSubdivision.getEdges());
 
         Geometry geometry = contourBuilder.computeIsoline(0.5);
-        Assert.assertEquals("MULTIPOLYGON (((1 0, 0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 1 0)))", geometry.toString());
+        assertEquals("MULTIPOLYGON (((1 0, 0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 1 0)))", geometry.toString());
     }
 
     @Test
@@ -90,7 +91,7 @@ public class QuadEdgeSubdivisionTest {
         ContourBuilder contourBuilder = new ContourBuilder(triangulation.getEdges());
 
         Geometry geometry = contourBuilder.computeIsoline(0.5);
-        Assert.assertEquals("MULTIPOLYGON (((0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 0.5 -0.5)))", geometry.toString());
+        assertEquals("MULTIPOLYGON (((0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 0.5 -0.5)))", geometry.toString());
     }
 
     @Test
@@ -135,26 +136,26 @@ public class QuadEdgeSubdivisionTest {
         ContourBuilder contourBuilder = new ContourBuilder(triangulation.getEdges());
 
         Geometry geometry = contourBuilder.computeIsoline(0.5);
-        Assert.assertEquals("MULTIPOLYGON (((0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 0.5 -0.5)))", geometry.toString());
+        assertEquals("MULTIPOLYGON (((0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 0.5 -0.5)))", geometry.toString());
     }
 
     private void assertVertex(QuadEdge ee1, QuadEdge ee2, QuadEdge ee3) {
-        Assert.assertEquals(ee2, ee1.oNext());
-        Assert.assertEquals(ee3, ee2.oNext());
-        Assert.assertEquals(ee1, ee3.oNext());
+        assertEquals(ee2, ee1.oNext());
+        assertEquals(ee3, ee2.oNext());
+        assertEquals(ee1, ee3.oNext());
     }
 
     private void assertVertex(QuadEdge ee1, QuadEdge ee2, QuadEdge ee3, QuadEdge ee4) {
-        Assert.assertEquals(ee2, ee1.oNext());
-        Assert.assertEquals(ee3, ee2.oNext());
-        Assert.assertEquals(ee4, ee3.oNext());
-        Assert.assertEquals(ee1, ee4.oNext());
+        assertEquals(ee2, ee1.oNext());
+        assertEquals(ee3, ee2.oNext());
+        assertEquals(ee4, ee3.oNext());
+        assertEquals(ee1, ee4.oNext());
     }
 
     private void assertTriangle(QuadEdge e1, QuadEdge e2, QuadEdge e3) {
-        Assert.assertEquals(e2, e1.lNext());
-        Assert.assertEquals(e3, e2.lNext());
-        Assert.assertEquals(e1, e3.lNext());
+        assertEquals(e2, e1.lNext());
+        assertEquals(e3, e2.lNext());
+        assertEquals(e1, e3.lNext());
     }
 
 }

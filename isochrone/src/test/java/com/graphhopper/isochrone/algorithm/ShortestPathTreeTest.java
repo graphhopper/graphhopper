@@ -8,16 +8,16 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
+import static java.util.Comparator.comparing;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -28,13 +28,13 @@ public class ShortestPathTreeTest {
     private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private GraphHopperStorage graph;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
         graph.create(1000);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         graph.close();
     }
@@ -70,41 +70,22 @@ public class ShortestPathTreeTest {
     @Test
     public void testSearch60Seconds() {
         fillTestGraph(graph);
+        List<ShortestPathTree.IsoLabelWithCoordinates> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
         instance.setTimeLimit(60);
-        List<Set<Integer>> res = searchFromNode0Into5Buckets(instance);
-        assertEquals("[[0, 4], [6], [1, 7], [5], [2, 3]]", res.toString());
+        instance.search(0, result::add);
+        result.sort(comparing(label -> label.nodeId));
+        assertEquals(8, result.size());
+        assertAll(
+                () -> assertEquals(0, result.get(0).timeMillis),
+                () -> assertEquals(25200, result.get(1).timeMillis),
+                () -> assertEquals(54000, result.get(2).timeMillis),
+                () -> assertEquals(55800, result.get(3).timeMillis),
+                () -> assertEquals(9000, result.get(4).timeMillis),
+                () -> assertEquals(36000, result.get(5).timeMillis),
+                () -> assertEquals(18000, result.get(6).timeMillis),
+                () -> assertEquals(27000, result.get(7).timeMillis)
+        );
     }
 
-    @Test
-    public void testSearch30Seconds() {
-        fillTestGraph(graph);
-        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
-        instance.setTimeLimit(30);
-        List<Set<Integer>> res = searchFromNode0Into5Buckets(instance);
-        assertEquals("[[0], [4], [], [6], [1, 7]]", res.toString());
-    }
-
-    private List<Set<Integer>> searchFromNode0Into5Buckets(ShortestPathTree instance) {
-        final double bucketSize = instance.limit / 5;
-        final List<Set<Integer>> list = new ArrayList<>(5);
-
-        for (int i = 0; i < 5; i++) {
-            list.add(new HashSet<>());
-        }
-
-        instance.search(0, isoLabelWithCoordinates -> {
-            int bucketIndex = (int) (isoLabelWithCoordinates.timeMillis / bucketSize);
-            if (bucketIndex < 0) {
-                throw new IllegalArgumentException("edge cannot have negative explore value " + isoLabelWithCoordinates.nodeId + ", " + isoLabelWithCoordinates);
-            } else if (bucketIndex == 5) {
-                bucketIndex = 5 - 1;
-            } else if (bucketIndex > 5) {
-                return;
-            }
-
-            list.get(bucketIndex).add(isoLabelWithCoordinates.nodeId);
-        });
-        return list;
-    }
 }
