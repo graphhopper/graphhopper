@@ -809,11 +809,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void checkProfilesConsistency() {
-        // todo: strictly speaking no profiles are needed, e.g. when we only use the location index, but this is rather
-        // the exception. we can move this check closer to the code that actually requires profiles after #1901
-        if (profilesByName.isEmpty()) {
-            throw new IllegalArgumentException("No routing profiles have been specified, you need to configure at least one");
-        }
         for (ProfileConfig profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
