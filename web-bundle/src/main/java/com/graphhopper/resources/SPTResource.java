@@ -71,7 +71,7 @@ public class SPTResource {
         if (!hintsMap.getBool(Parameters.CH.DISABLE, true))
             throw new IllegalArgumentException("Currently you cannot use speed mode for /spt, Do not use `ch.disable=false`");
         if (!hintsMap.getBool(Parameters.Landmark.DISABLE, true))
-            throw new IllegalArgumentException("Currently you cannot use hybrid mode for /spt, Do not use `ch.disable=false`");
+            throw new IllegalArgumentException("Currently you cannot use hybrid mode for /spt, Do not use `lm.disable=false`");
         if (hintsMap.getBool(Parameters.Routing.EDGE_BASED, false))
             throw new IllegalArgumentException("Currently you cannot use edge-based for /spt. Do not use `edge_based=true`");
         if (hintsMap.getBool(Parameters.Routing.TURN_COSTS, false))
