@@ -2,7 +2,7 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.ProfileConfig;
-import com.graphhopper.isochrone.algorithm.Isochrone;
+import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -100,12 +100,12 @@ public class SPTResource {
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
 
-        Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {
-            isochrone.setDistanceLimit(distanceInMeter);
+            shortestPathTree.setDistanceLimit(distanceInMeter);
         } else {
-            isochrone.setTimeLimit(timeLimitInSeconds);
+            shortestPathTree.setTimeLimit(timeLimitInSeconds);
         }
 
         final String COL_SEP = ",", LINE_SEP = "\n";
@@ -134,7 +134,7 @@ public class SPTResource {
                 }
                 sb.append(LINE_SEP);
                 writer.write(sb.toString());
-                isochrone.search(qr.getClosestNode(), label -> {
+                shortestPathTree.search(qr.getClosestNode(), label -> {
                     sb.setLength(0);
                     for (int colIndex = 0; colIndex < columns.size(); colIndex++) {
                         String col = columns.get(colIndex);
@@ -217,7 +217,7 @@ public class SPTResource {
                     }
                 });
 
-                logger.info("took: " + sw.stop().getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
+                logger.info("took: " + sw.stop().getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

@@ -36,13 +36,13 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.graphhopper.isochrone.algorithm.Isochrone.ExploreType.DISTANCE;
-import static com.graphhopper.isochrone.algorithm.Isochrone.ExploreType.TIME;
+import static com.graphhopper.isochrone.algorithm.ShortestPathTree.ExploreType.DISTANCE;
+import static com.graphhopper.isochrone.algorithm.ShortestPathTree.ExploreType.TIME;
 
 /**
  * @author Peter Karich
  */
-public class Isochrone extends AbstractRoutingAlgorithm {
+public class ShortestPathTree extends AbstractRoutingAlgorithm {
 
     enum ExploreType {TIME, DISTANCE}
 
@@ -72,7 +72,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     private ExploreType exploreType = TIME;
     private final boolean reverseFlow;
 
-    public Isochrone(Graph g, Weighting weighting, boolean reverseFlow) {
+    public ShortestPathTree(Graph g, Weighting weighting, boolean reverseFlow) {
         super(g, weighting, TraversalMode.NODE_BASED);
         fromHeap = new PriorityQueue<>(1000);
         fromMap = new GHIntObjectHashMap<>(1000);

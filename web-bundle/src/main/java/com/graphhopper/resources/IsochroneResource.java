@@ -6,7 +6,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
-import com.graphhopper.isochrone.algorithm.Isochrone;
+import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -112,22 +112,22 @@ public class IsochroneResource {
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
-        Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {
-            isochrone.setDistanceLimit(distanceInMeter);
+            shortestPathTree.setDistanceLimit(distanceInMeter);
         } else {
-            isochrone.setTimeLimit(timeLimitInSeconds);
+            shortestPathTree.setTimeLimit(timeLimitInSeconds);
         }
 
-        final double bucketSize = isochrone.limit / nBuckets;
+        final double bucketSize = shortestPathTree.limit / nBuckets;
         final List<List<Coordinate>> buckets = new ArrayList<>(nBuckets);
 
         for (int i1 = 0; i1 < nBuckets + 1; i1++) {
             buckets.add(new ArrayList<>());
         }
         final NodeAccess na = queryGraph.getNodeAccess();
-        isochrone.search(qr.getClosestNode(), label -> {
+        shortestPathTree.search(qr.getClosestNode(), label -> {
             double exploreValue;
             if (distanceInMeter > 0) {
                 exploreValue = label.distance;
@@ -152,8 +152,8 @@ public class IsochroneResource {
                 buckets.get(bucketIndex).add(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
             }
         });
-        if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
-            throw new IllegalArgumentException("Too many nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
+        if (shortestPathTree.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
+            throw new IllegalArgumentException("Too many nodes would have to explored (" + shortestPathTree.getVisitedNodes() + "). Let us know if you need this increased.");
         }
 
         ArrayList<JsonFeature> features = new ArrayList<>();
@@ -225,7 +225,7 @@ public class IsochroneResource {
         }
 
         sw.stop();
-        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
+        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
         return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
                 build();
     }

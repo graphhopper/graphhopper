@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Peter Karich
  */
-public class IsochroneTest {
+public class ShortestPathTreeTest {
 
     private final EncodingManager encodingManager = EncodingManager.create("car");
     private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
@@ -71,19 +71,19 @@ public class IsochroneTest {
     public void testSearch() {
         initDirectedAndDiffSpeed(graph);
         PMap pMap = new PMap();
-        Isochrone instance = new Isochrone(graph, new FastestWeighting(carEncoder, pMap), false);
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, pMap), false);
         // limit to certain seconds
         instance.setTimeLimit(60);
         List<Set<Integer>> res = searchFromNode0Into5Buckets(instance);
         assertEquals("[[0, 4], [6], [1, 7], [5], [2, 3]]", res.toString());
 
-        instance = new Isochrone(graph, new FastestWeighting(carEncoder, pMap), false);
+        instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, pMap), false);
         instance.setTimeLimit(30);
         res = searchFromNode0Into5Buckets(instance);
         assertEquals("[[0], [4], [], [6], [1, 7]]", res.toString());
     }
 
-    private List<Set<Integer>> searchFromNode0Into5Buckets(Isochrone instance) {
+    private List<Set<Integer>> searchFromNode0Into5Buckets(ShortestPathTree instance) {
         final double bucketSize = instance.limit / 5;
         final List<Set<Integer>> list = new ArrayList<>(5);
 
