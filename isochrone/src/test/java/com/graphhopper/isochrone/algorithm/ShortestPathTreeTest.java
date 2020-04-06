@@ -68,6 +68,24 @@ public class ShortestPathTreeTest {
     }
 
     @Test
+    public void testSearch25Seconds() {
+        fillTestGraph(graph);
+        List<ShortestPathTree.IsoLabelWithCoordinates> result = new ArrayList<>();
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
+        instance.setTimeLimit(26_000);
+        instance.search(0, result::add);
+        result.sort(comparing(label -> label.nodeId));
+        assertEquals(5, result.size());
+        assertAll(
+                () -> assertEquals(0, result.get(0).timeMillis),
+                () -> assertEquals(25200, result.get(1).timeMillis),
+                () -> assertEquals(9000, result.get(2).timeMillis),
+                () -> assertEquals(18000, result.get(3).timeMillis),
+                () -> assertEquals(27000, result.get(4).timeMillis)
+        );
+    }
+
+    @Test
     public void testSearch60Seconds() {
         fillTestGraph(graph);
         List<ShortestPathTree.IsoLabelWithCoordinates> result = new ArrayList<>();

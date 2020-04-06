@@ -18,7 +18,6 @@
 package com.graphhopper.isochrone.algorithm;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
-import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
@@ -112,38 +111,13 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     }
 
     public void search(int from, final Consumer<IsoLabelWithCoordinates> callback) {
-        searchInternal(from);
-
-        final NodeAccess na = graph.getNodeAccess();
-        fromMap.forEach((IntObjectProcedure<IsoLabel>) (nodeId, label) -> {
-            double lat = na.getLatitude(nodeId);
-            double lon = na.getLongitude(nodeId);
-            IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(nodeId);
-            isoLabelWC.coordinate = new GHPoint(lat, lon);
-            isoLabelWC.timeMillis = Math.round(label.time);
-            isoLabelWC.distance = (int) Math.round(label.distance);
-            isoLabelWC.edgeId = label.edge;
-            if (label.parent != null) {
-                IsoLabel prevLabel = (IsoLabel) label.parent;
-                nodeId = prevLabel.adjNode;
-                double prevLat = na.getLatitude(nodeId);
-                double prevLon = na.getLongitude(nodeId);
-                isoLabelWC.prevNodeId = nodeId;
-                isoLabelWC.prevEdgeId = prevLabel.edge;
-                isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);
-                isoLabelWC.prevDistance = (int) Math.round(prevLabel.distance);
-                isoLabelWC.prevTimeMillis = Math.round(prevLabel.time);
-            }
-            callback.accept(isoLabelWC);
-        });
-    }
-
-    private void searchInternal(int from) {
         checkAlreadyRun();
+        final NodeAccess na = graph.getNodeAccess();
         currEdge = new IsoLabel(-1, from, 0, 0, 0);
         fromMap.put(from, currEdge);
         EdgeFilter filter = reverseFlow ? inEdgeFilter : outEdgeFilter;
         while (true) {
+            visit(callback, na, currEdge);
             visitedNodes++;
             if (finished()) {
                 break;
@@ -192,6 +166,28 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
                 throw new AssertionError("Empty edge cannot happen");
             }
         }
+    }
+
+    private void visit(Consumer<IsoLabelWithCoordinates> callback, NodeAccess na, IsoLabel label) {
+        double lat = na.getLatitude(label.adjNode);
+        double lon = na.getLongitude(label.adjNode);
+        IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(label.adjNode);
+        isoLabelWC.coordinate = new GHPoint(lat, lon);
+        isoLabelWC.timeMillis = Math.round(label.time);
+        isoLabelWC.distance = (int) Math.round(label.distance);
+        isoLabelWC.edgeId = label.edge;
+        if (label.parent != null) {
+            IsoLabel prevLabel = (IsoLabel) label.parent;
+            int prevNodeId = prevLabel.adjNode;
+            double prevLat = na.getLatitude(prevNodeId);
+            double prevLon = na.getLongitude(prevNodeId);
+            isoLabelWC.prevNodeId = prevNodeId;
+            isoLabelWC.prevEdgeId = prevLabel.edge;
+            isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);
+            isoLabelWC.prevDistance = (int) Math.round(prevLabel.distance);
+            isoLabelWC.prevTimeMillis = Math.round(prevLabel.time);
+        }
+        callback.accept(isoLabelWC);
     }
 
     private double getExploreValue(IsoLabel label) {
