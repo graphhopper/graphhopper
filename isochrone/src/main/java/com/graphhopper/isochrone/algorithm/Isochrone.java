@@ -154,37 +154,30 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     }
 
     public List<List<Coordinate>> searchGPS(int from, final int bucketCount) {
-        searchInternal(from);
-
         final double bucketSize = limit / bucketCount;
         final List<List<Coordinate>> buckets = new ArrayList<>(bucketCount);
 
         for (int i = 0; i < bucketCount + 1; i++) {
-            buckets.add(new ArrayList<Coordinate>());
+            buckets.add(new ArrayList<>());
         }
         final NodeAccess na = graph.getNodeAccess();
-        fromMap.forEach(new IntObjectProcedure<IsoLabel>() {
+        search(from, label -> {
+            int bucketIndex = (int) (getExploreValue(label) / bucketSize);
+            if (bucketIndex < 0) {
+                throw new IllegalArgumentException("edge cannot have negative explore value " + label.nodeId + ", " + label);
+            } else if (bucketIndex > bucketCount) {
+                return;
+            }
 
-            @Override
-            public void apply(int nodeId, IsoLabel label) {
-                int bucketIndex = (int) (getExploreValue(label) / bucketSize);
-                if (bucketIndex < 0) {
-                    throw new IllegalArgumentException("edge cannot have negative explore value " + nodeId + ", " + label);
-                } else if (bucketIndex > bucketCount) {
-                    return;
-                }
+            double lat = na.getLatitude(label.nodeId);
+            double lon = na.getLongitude(label.nodeId);
+            buckets.get(bucketIndex).add(new Coordinate(lon, lat));
 
-                double lat = na.getLatitude(nodeId);
-                double lon = na.getLongitude(nodeId);
-                buckets.get(bucketIndex).add(new Coordinate(lon, lat));
-
-                // guess center of road to increase precision a bit for longer roads
-                if (label.parent != null) {
-                    nodeId = label.parent.adjNode;
-                    double lat2 = na.getLatitude(nodeId);
-                    double lon2 = na.getLongitude(nodeId);
-                    buckets.get(bucketIndex).add(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
-                }
+            // guess center of road to increase precision a bit for longer roads
+            if (label.prevNodeId != 0) {
+                double lat2 = na.getLatitude(label.prevNodeId);
+                double lon2 = na.getLongitude(label.prevNodeId);
+                buckets.get(bucketIndex).add(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
             }
         });
         return buckets;
@@ -282,6 +275,13 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     private double getExploreValue(IsoLabel label) {
         if (exploreType == TIME)
             return label.time;
+        // if(exploreType == DISTANCE)
+        return label.distance;
+    }
+
+    private double getExploreValue(IsoLabelWithCoordinates label) {
+        if (exploreType == TIME)
+            return label.timeMillis;
         // if(exploreType == DISTANCE)
         return label.distance;
     }
