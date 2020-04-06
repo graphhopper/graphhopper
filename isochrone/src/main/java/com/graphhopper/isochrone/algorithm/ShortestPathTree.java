@@ -85,11 +85,11 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     }
 
     /**
-     * Time limit in seconds
+     * Time limit in milliseconds
      */
     public void setTimeLimit(double limit) {
         exploreType = TIME;
-        this.limit = limit * 1000;
+        this.limit = limit;
         // we explore until all spt-entries are '>timeLimitInSeconds' 
         // and add some more into this bucket for car we need a bit more as 
         // we otherwise get artifacts for motorway endings

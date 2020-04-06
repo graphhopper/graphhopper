@@ -105,7 +105,7 @@ public class SPTResource {
         if (distanceInMeter > 0) {
             shortestPathTree.setDistanceLimit(distanceInMeter);
         } else {
-            shortestPathTree.setTimeLimit(timeLimitInSeconds);
+            shortestPathTree.setTimeLimit(timeLimitInSeconds * 1000);
         }
 
         final String COL_SEP = ",", LINE_SEP = "\n";

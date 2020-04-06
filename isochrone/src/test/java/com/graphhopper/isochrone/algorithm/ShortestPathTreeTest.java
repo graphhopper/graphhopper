@@ -72,7 +72,7 @@ public class ShortestPathTreeTest {
         fillTestGraph(graph);
         List<ShortestPathTree.IsoLabelWithCoordinates> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
-        instance.setTimeLimit(60);
+        instance.setTimeLimit(60_000);
         instance.search(0, result::add);
         result.sort(comparing(label -> label.nodeId));
         assertEquals(8, result.size());

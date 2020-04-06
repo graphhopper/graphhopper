@@ -117,7 +117,7 @@ public class IsochroneResource {
         if (distanceInMeter > 0) {
             shortestPathTree.setDistanceLimit(distanceInMeter);
         } else {
-            shortestPathTree.setTimeLimit(timeLimitInSeconds);
+            shortestPathTree.setTimeLimit(timeLimitInSeconds * 1000);
         }
 
         final double bucketSize = shortestPathTree.limit / nBuckets;
