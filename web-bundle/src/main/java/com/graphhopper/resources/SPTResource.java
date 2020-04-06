@@ -103,9 +103,10 @@ public class SPTResource {
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {
-            shortestPathTree.setDistanceLimit(distanceInMeter);
+            shortestPathTree.setDistanceLimit(distanceInMeter + Math.max(distanceInMeter * 0.14, 2_000));
         } else {
-            shortestPathTree.setTimeLimit(timeLimitInSeconds * 1000);
+            double limit = timeLimitInSeconds * 1000;
+            shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
         }
 
         final String COL_SEP = ",", LINE_SEP = "\n";

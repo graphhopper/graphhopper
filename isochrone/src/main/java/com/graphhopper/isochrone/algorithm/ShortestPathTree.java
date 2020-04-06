@@ -67,7 +67,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     private PriorityQueue<IsoLabel> fromHeap;
     private IsoLabel currEdge;
     private int visitedNodes;
-    private double finishLimit = -1;
+    private double limit = -1;
     private ExploreType exploreType = TIME;
     private final boolean reverseFlow;
 
@@ -88,10 +88,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
      */
     public void setTimeLimit(double limit) {
         exploreType = TIME;
-        // we explore until all spt-entries are '>timeLimitInSeconds'
-        // and add some more into this bucket for car we need a bit more as 
-        // we otherwise get artifacts for motorway endings
-        this.finishLimit = limit + Math.max(limit * 0.14, 200_000);
+        this.limit = limit;
     }
 
     /**
@@ -99,7 +96,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
      */
     public void setDistanceLimit(double limit) {
         exploreType = DISTANCE;
-        this.finishLimit = limit + Math.max(limit * 0.14, 2_000);
+        this.limit = limit;
     }
 
     public static class IsoLabelWithCoordinates {
@@ -206,7 +203,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
 
     @Override
     protected boolean finished() {
-        return getExploreValue(currEdge) >= finishLimit;
+        return getExploreValue(currEdge) >= limit;
     }
 
     @Override
