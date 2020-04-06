@@ -114,13 +114,16 @@ public class IsochroneResource {
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow);
 
+        double limit;
         if (distanceInMeter > 0) {
-            shortestPathTree.setDistanceLimit(distanceInMeter);
+            limit = distanceInMeter;
+            shortestPathTree.setDistanceLimit(limit);
         } else {
-            shortestPathTree.setTimeLimit(timeLimitInSeconds * 1000);
+            limit = timeLimitInSeconds * 1000;
+            shortestPathTree.setTimeLimit(limit);
         }
 
-        final double bucketSize = shortestPathTree.limit / nBuckets;
+        final double bucketSize = limit / nBuckets;
         final List<List<Coordinate>> buckets = new ArrayList<>(nBuckets);
 
         for (int i1 = 0; i1 < nBuckets + 1; i1++) {
