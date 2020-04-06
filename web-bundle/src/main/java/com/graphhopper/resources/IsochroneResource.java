@@ -163,7 +163,7 @@ public class IsochroneResource {
             }
         }
         ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
-        ContourBuilder contourBuilder = new ContourBuilder(tin);
+        ContourBuilder contourBuilder = new ContourBuilder(tin.getEdges());
         for (int i = 0; i < buckets.size() - 1; i++) {
             MultiPolygon multiPolygon = contourBuilder.computeIsoline((double) i + 0.5);
             Polygon maxPolygon = heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.lon, point.lat)));
