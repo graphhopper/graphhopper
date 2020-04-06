@@ -128,17 +128,28 @@ public class Measurement {
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getEdges();
-                if (!getCHPreparationHandler().getNodeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
+                int i = 0;
+                for (CHProfile chProfile : getCHPreparationHandler().getNodeBasedCHProfiles()) {
                     int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
-                    put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + chProfile.getName() + ".node.shortcuts", edgesAndShortcuts - edges);
+                    put(Parameters.CH.PREPARE + chProfile.getName() + ".node.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
+                    // to compare to older measurements where only one CH profile existed
+                    if (i == 0) {
+                        put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
+                        put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
+                    }
+                    i++;
                 }
-                if (!getCHPreparationHandler().getEdgeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = getCHPreparationHandler().getEdgeBasedCHProfiles().get(0);
+                i = 0;
+                for (CHProfile chProfile : getCHPreparationHandler().getEdgeBasedCHProfiles()) {
                     int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
-                    put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + chProfile.getName() + ".edge.shortcuts", edgesAndShortcuts - edges);
+                    put(Parameters.CH.PREPARE + chProfile.getName() + ".edge.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
+                    if (i == 0) {
+                        put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
+                        put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
+                    }
+                    i++;
                 }
             }
 
