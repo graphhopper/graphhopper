@@ -99,10 +99,6 @@ public class GraphHopperWebIT {
 
     @Test
     public void testAlternativeRoute() {
-        // TODO
-        if (gh.postRequest)
-            return;
-
         // https://graphhopper.com/maps/?point=52.042989%2C10.373926&point=52.042289%2C10.384043&algorithm=alternative_route&ch.disable=true
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(52.042989, 10.373926)).
