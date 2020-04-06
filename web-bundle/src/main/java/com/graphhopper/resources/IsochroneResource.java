@@ -15,6 +15,7 @@ import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Parameters;
@@ -119,7 +120,38 @@ public class IsochroneResource {
             isochrone.setTimeLimit(timeLimitInSeconds);
         }
 
-        List<List<Coordinate>> buckets = isochrone.searchGPS(qr.getClosestNode(), nBuckets);
+        final double bucketSize = isochrone.limit / nBuckets;
+        final List<List<Coordinate>> buckets = new ArrayList<>(nBuckets);
+
+        for (int i1 = 0; i1 < nBuckets + 1; i1++) {
+            buckets.add(new ArrayList<>());
+        }
+        final NodeAccess na = queryGraph.getNodeAccess();
+        isochrone.search(qr.getClosestNode(), label -> {
+            double exploreValue;
+            if (distanceInMeter > 0) {
+                exploreValue = label.distance;
+            } else {
+                exploreValue = label.timeMillis;
+            }
+            int bucketIndex = (int) (exploreValue / bucketSize);
+            if (bucketIndex < 0) {
+                throw new IllegalArgumentException("edge cannot have negative explore value " + label.nodeId + ", " + label);
+            } else if (bucketIndex > nBuckets) {
+                return;
+            }
+
+            double lat = na.getLatitude(label.nodeId);
+            double lon = na.getLongitude(label.nodeId);
+            buckets.get(bucketIndex).add(new Coordinate(lon, lat));
+
+            // guess center of road to increase precision a bit for longer roads
+            if (label.prevNodeId != 0) {
+                double lat2 = na.getLatitude(label.prevNodeId);
+                double lon2 = na.getLongitude(label.prevNodeId);
+                buckets.get(bucketIndex).add(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
+            }
+        });
         if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
             throw new IllegalArgumentException("Too many nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
         }

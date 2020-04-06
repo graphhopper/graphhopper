@@ -32,9 +32,9 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.GHPoint;
-import org.locationtech.jts.geom.Coordinate;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.graphhopper.isochrone.algorithm.Isochrone.ExploreType.DISTANCE;
 import static com.graphhopper.isochrone.algorithm.Isochrone.ExploreType.TIME;
@@ -46,8 +46,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
 
     enum ExploreType {TIME, DISTANCE}
 
-    // TODO use same class as used in GTFS module?
-    class IsoLabel extends SPTEntry {
+    static class IsoLabel extends SPTEntry {
 
         IsoLabel(int edgeId, int adjNode, double weight, long time, double distance) {
             super(edgeId, adjNode, weight);
@@ -68,7 +67,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     private PriorityQueue<IsoLabel> fromHeap;
     private IsoLabel currEdge;
     private int visitedNodes;
-    private double limit = -1;
+    public double limit = -1;
     private double finishLimit = -1;
     private ExploreType exploreType = TIME;
     private final boolean reverseFlow;
@@ -118,69 +117,31 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         }
     }
 
-    public interface Callback {
-        void add(IsoLabelWithCoordinates label);
-    }
-
-    public void search(int from, final Callback callback) {
+    public void search(int from, final Consumer<IsoLabelWithCoordinates> callback) {
         searchInternal(from);
 
         final NodeAccess na = graph.getNodeAccess();
-        fromMap.forEach(new IntObjectProcedure<IsoLabel>() {
-
-            @Override
-            public void apply(int nodeId, IsoLabel label) {
-                double lat = na.getLatitude(nodeId);
-                double lon = na.getLongitude(nodeId);
-                IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(nodeId);
-                isoLabelWC.coordinate = new GHPoint(lat, lon);
-                isoLabelWC.timeMillis = Math.round(label.time);
-                isoLabelWC.distance = (int) Math.round(label.distance);
-                isoLabelWC.edgeId = label.edge;
-                if (label.parent != null) {
-                    IsoLabel prevLabel = (IsoLabel) label.parent;
-                    nodeId = prevLabel.adjNode;
-                    double prevLat = na.getLatitude(nodeId);
-                    double prevLon = na.getLongitude(nodeId);
-                    isoLabelWC.prevNodeId = nodeId;
-                    isoLabelWC.prevEdgeId = prevLabel.edge;
-                    isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);
-                    isoLabelWC.prevDistance = (int) Math.round(prevLabel.distance);
-                    isoLabelWC.prevTimeMillis = Math.round(prevLabel.time);
-                }
-                callback.add(isoLabelWC);
+        fromMap.forEach((IntObjectProcedure<IsoLabel>) (nodeId, label) -> {
+            double lat = na.getLatitude(nodeId);
+            double lon = na.getLongitude(nodeId);
+            IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(nodeId);
+            isoLabelWC.coordinate = new GHPoint(lat, lon);
+            isoLabelWC.timeMillis = Math.round(label.time);
+            isoLabelWC.distance = (int) Math.round(label.distance);
+            isoLabelWC.edgeId = label.edge;
+            if (label.parent != null) {
+                IsoLabel prevLabel = (IsoLabel) label.parent;
+                nodeId = prevLabel.adjNode;
+                double prevLat = na.getLatitude(nodeId);
+                double prevLon = na.getLongitude(nodeId);
+                isoLabelWC.prevNodeId = nodeId;
+                isoLabelWC.prevEdgeId = prevLabel.edge;
+                isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);
+                isoLabelWC.prevDistance = (int) Math.round(prevLabel.distance);
+                isoLabelWC.prevTimeMillis = Math.round(prevLabel.time);
             }
+            callback.accept(isoLabelWC);
         });
-    }
-
-    public List<List<Coordinate>> searchGPS(int from, final int bucketCount) {
-        final double bucketSize = limit / bucketCount;
-        final List<List<Coordinate>> buckets = new ArrayList<>(bucketCount);
-
-        for (int i = 0; i < bucketCount + 1; i++) {
-            buckets.add(new ArrayList<>());
-        }
-        final NodeAccess na = graph.getNodeAccess();
-        search(from, label -> {
-            int bucketIndex = (int) (getExploreValue(label) / bucketSize);
-            if (bucketIndex < 0) {
-                throw new IllegalArgumentException("edge cannot have negative explore value " + label.nodeId + ", " + label);
-            } else if (bucketIndex > bucketCount) {
-                return;
-            }
-
-            double lat = na.getLatitude(label.nodeId);
-            double lon = na.getLongitude(label.nodeId);
-            buckets.get(bucketIndex).add(new Coordinate(lon, lat));
-
-            // guess center of road to increase precision a bit for longer roads
-            if (label.prevNodeId != 0) {
-                double lat2 = na.getLatitude(label.prevNodeId);
-                double lon2 = na.getLongitude(label.prevNodeId);
-                buckets.get(bucketIndex).add(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
-            }
-        });
-        return buckets;
     }
 
     public List<Set<Integer>> search(int from, final int bucketCount) {
@@ -193,25 +154,21 @@ public class Isochrone extends AbstractRoutingAlgorithm {
             list.add(new HashSet<Integer>());
         }
 
-        fromMap.forEach(new IntObjectProcedure<IsoLabel>() {
-
-            @Override
-            public void apply(int nodeId, IsoLabel label) {
-                if (finished()) {
-                    return;
-                }
-
-                int bucketIndex = (int) (getExploreValue(label) / bucketSize);
-                if (bucketIndex < 0) {
-                    throw new IllegalArgumentException("edge cannot have negative explore value " + nodeId + ", " + label);
-                } else if (bucketIndex == bucketCount) {
-                    bucketIndex = bucketCount - 1;
-                } else if (bucketIndex > bucketCount) {
-                    return;
-                }
-
-                list.get(bucketIndex).add(nodeId);
+        fromMap.forEach((IntObjectProcedure<IsoLabel>) (nodeId, label) -> {
+            if (finished()) {
+                return;
             }
+
+            int bucketIndex = (int) (getExploreValue(label) / bucketSize);
+            if (bucketIndex < 0) {
+                throw new IllegalArgumentException("edge cannot have negative explore value " + nodeId + ", " + label);
+            } else if (bucketIndex == bucketCount) {
+                bucketIndex = bucketCount - 1;
+            } else if (bucketIndex > bucketCount) {
+                return;
+            }
+
+            list.get(bucketIndex).add(nodeId);
         });
         return list;
     }
@@ -275,13 +232,6 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     private double getExploreValue(IsoLabel label) {
         if (exploreType == TIME)
             return label.time;
-        // if(exploreType == DISTANCE)
-        return label.distance;
-    }
-
-    private double getExploreValue(IsoLabelWithCoordinates label) {
-        if (exploreType == TIME)
-            return label.timeMillis;
         // if(exploreType == DISTANCE)
         return label.distance;
     }
