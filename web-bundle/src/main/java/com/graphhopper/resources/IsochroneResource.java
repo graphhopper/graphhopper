@@ -124,12 +124,8 @@ public class IsochroneResource {
         }
 
         final double bucketSize = limit / nBuckets;
-        final List<List<Coordinate>> buckets = new ArrayList<>(nBuckets);
-
-        for (int i1 = 0; i1 < nBuckets + 1; i1++) {
-            buckets.add(new ArrayList<>());
-        }
         final NodeAccess na = queryGraph.getNodeAccess();
+        Collection<ConstraintVertex> sites = new ArrayList<>();
         shortestPathTree.search(qr.getClosestNode(), label -> {
             double exploreValue;
             if (distanceInMeter > 0) {
@@ -138,21 +134,19 @@ public class IsochroneResource {
                 exploreValue = label.time;
             }
             int bucketIndex = (int) (exploreValue / bucketSize);
-            if (bucketIndex < 0) {
-                throw new IllegalArgumentException("edge cannot have negative explore value " + label.adjNode + ", " + label);
-            } else if (bucketIndex > nBuckets) {
-                return;
-            }
-
             double lat = na.getLatitude(label.adjNode);
             double lon = na.getLongitude(label.adjNode);
-            buckets.get(bucketIndex).add(new Coordinate(lon, lat));
+            ConstraintVertex site = new ConstraintVertex(new Coordinate(lon, lat));
+            site.setZ(bucketIndex);
+            sites.add(site);
 
             // guess center of road to increase precision a bit for longer roads
             if (label.parent != null) {
                 double lat2 = na.getLatitude(label.parent.adjNode);
                 double lon2 = na.getLongitude(label.parent.adjNode);
-                buckets.get(bucketIndex).add(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
+                ConstraintVertex site2 = new ConstraintVertex(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
+                site2.setZ(bucketIndex);
+                sites.add(site2);
             }
         });
         if (shortestPathTree.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
@@ -160,16 +154,6 @@ public class IsochroneResource {
         }
 
         ArrayList<JsonFeature> features = new ArrayList<>();
-        Collection<ConstraintVertex> sites = new ArrayList<>();
-        for (int i = 0; i < buckets.size(); i++) {
-            List<Coordinate> level = buckets.get(i);
-            for (Coordinate coord : level) {
-                ConstraintVertex site = new ConstraintVertex(coord);
-                site.setZ(i);
-                sites.add(site);
-            }
-        }
-
         ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
         conformingDelaunayTriangulator.setConstraints(new ArrayList<>(), new ArrayList<>());
         conformingDelaunayTriangulator.formInitialDelaunay();
@@ -199,8 +183,14 @@ public class IsochroneResource {
         }
         ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
         ContourBuilder contourBuilder = new ContourBuilder(tin.getEdges());
-        for (int i = 0; i < buckets.size() - 1; i++) {
-            MultiPolygon multiPolygon = contourBuilder.computeIsoline((double) i + 0.5);
+
+        ArrayList<Double> zs = new ArrayList<>();
+        for (int i = 0; i < nBuckets; i++) {
+            zs.add((double) i + 0.5);
+        }
+        System.out.println(zs);
+        for (Double z : zs) {
+            MultiPolygon multiPolygon = contourBuilder.computeIsoline(z);
             Polygon maxPolygon = heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.lon, point.lat)));
             polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
         }
