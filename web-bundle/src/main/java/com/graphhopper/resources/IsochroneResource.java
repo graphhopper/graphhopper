@@ -135,23 +135,23 @@ public class IsochroneResource {
             if (distanceInMeter > 0) {
                 exploreValue = label.distance;
             } else {
-                exploreValue = label.timeMillis;
+                exploreValue = label.time;
             }
             int bucketIndex = (int) (exploreValue / bucketSize);
             if (bucketIndex < 0) {
-                throw new IllegalArgumentException("edge cannot have negative explore value " + label.nodeId + ", " + label);
+                throw new IllegalArgumentException("edge cannot have negative explore value " + label.adjNode + ", " + label);
             } else if (bucketIndex > nBuckets) {
                 return;
             }
 
-            double lat = na.getLatitude(label.nodeId);
-            double lon = na.getLongitude(label.nodeId);
+            double lat = na.getLatitude(label.adjNode);
+            double lon = na.getLongitude(label.adjNode);
             buckets.get(bucketIndex).add(new Coordinate(lon, lat));
 
             // guess center of road to increase precision a bit for longer roads
-            if (label.prevNodeId != 0) {
-                double lat2 = na.getLatitude(label.prevNodeId);
-                double lon2 = na.getLongitude(label.prevNodeId);
+            if (label.parent != null) {
+                double lat2 = na.getLatitude(label.parent.adjNode);
+                double lon2 = na.getLongitude(label.parent.adjNode);
                 buckets.get(bucketIndex).add(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
             }
         });

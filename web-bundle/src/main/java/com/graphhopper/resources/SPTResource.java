@@ -11,6 +11,7 @@ import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -40,6 +41,18 @@ import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
 public class SPTResource {
 
     private static final Logger logger = LoggerFactory.getLogger(SPTResource.class);
+
+    public static class IsoLabelWithCoordinates {
+        public final int nodeId;
+        public int edgeId, prevEdgeId, prevNodeId;
+        public int timeMillis, prevTimeMillis;
+        public int distance, prevDistance;
+        public GHPoint coordinate, prevCoordinate;
+
+        public IsoLabelWithCoordinates(int nodeId) {
+            this.nodeId = nodeId;
+        }
+    }
 
     private final GraphHopper graphHopper;
     private final ProfileResolver profileResolver;
@@ -93,6 +106,7 @@ public class SPTResource {
 
         Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
+        NodeAccess nodeAccess = queryGraph.getNodeAccess();
 
         // have to disable turn costs, as isochrones are running node-based
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap, true);
@@ -135,7 +149,8 @@ public class SPTResource {
                 }
                 sb.append(LINE_SEP);
                 writer.write(sb.toString());
-                shortestPathTree.search(qr.getClosestNode(), label -> {
+                shortestPathTree.search(qr.getClosestNode(), l -> {
+                    IsoLabelWithCoordinates label = isoLabelWithCoordinates(nodeAccess, l);
                     sb.setLength(0);
                     for (int colIndex = 0; colIndex < columns.size(); colIndex++) {
                         String col = columns.get(colIndex);
@@ -225,5 +240,27 @@ public class SPTResource {
         };
         // took header does not make sense as we stream
         return Response.ok(out).build();
+    }
+
+    private IsoLabelWithCoordinates isoLabelWithCoordinates(NodeAccess na, ShortestPathTree.IsoLabel label) {
+        double lat = na.getLatitude(label.adjNode);
+        double lon = na.getLongitude(label.adjNode);
+        IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(label.adjNode);
+        isoLabelWC.coordinate = new GHPoint(lat, lon);
+        isoLabelWC.timeMillis = Math.round(label.time);
+        isoLabelWC.distance = (int) Math.round(label.distance);
+        isoLabelWC.edgeId = label.edge;
+        if (label.parent != null) {
+            ShortestPathTree.IsoLabel prevLabel = (ShortestPathTree.IsoLabel) label.parent;
+            int prevNodeId = prevLabel.adjNode;
+            double prevLat = na.getLatitude(prevNodeId);
+            double prevLon = na.getLongitude(prevNodeId);
+            isoLabelWC.prevNodeId = prevNodeId;
+            isoLabelWC.prevEdgeId = prevLabel.edge;
+            isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);
+            isoLabelWC.prevDistance = (int) Math.round(prevLabel.distance);
+            isoLabelWC.prevTimeMillis = Math.round(prevLabel.time);
+        }
+        return isoLabelWC;
     }
 }

@@ -70,39 +70,39 @@ public class ShortestPathTreeTest {
     @Test
     public void testSearch25Seconds() {
         fillTestGraph(graph);
-        List<ShortestPathTree.IsoLabelWithCoordinates> result = new ArrayList<>();
+        List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
         instance.setTimeLimit(26_000);
         instance.search(0, result::add);
-        result.sort(comparing(label -> label.nodeId));
+        result.sort(comparing(label -> label.adjNode));
         assertEquals(5, result.size());
         assertAll(
-                () -> assertEquals(0, result.get(0).timeMillis),
-                () -> assertEquals(25200, result.get(1).timeMillis),
-                () -> assertEquals(9000, result.get(2).timeMillis),
-                () -> assertEquals(18000, result.get(3).timeMillis),
-                () -> assertEquals(27000, result.get(4).timeMillis)
+                () -> assertEquals(0, result.get(0).time),
+                () -> assertEquals(25200, result.get(1).time),
+                () -> assertEquals(9000, result.get(2).time),
+                () -> assertEquals(18000, result.get(3).time),
+                () -> assertEquals(27000, result.get(4).time)
         );
     }
 
     @Test
     public void testSearch60Seconds() {
         fillTestGraph(graph);
-        List<ShortestPathTree.IsoLabelWithCoordinates> result = new ArrayList<>();
+        List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
         instance.setTimeLimit(60_000);
         instance.search(0, result::add);
-        result.sort(comparing(label -> label.nodeId));
+        result.sort(comparing(label -> label.adjNode));
         assertEquals(8, result.size());
         assertAll(
-                () -> assertEquals(0, result.get(0).timeMillis),
-                () -> assertEquals(25200, result.get(1).timeMillis),
-                () -> assertEquals(54000, result.get(2).timeMillis),
-                () -> assertEquals(55800, result.get(3).timeMillis),
-                () -> assertEquals(9000, result.get(4).timeMillis),
-                () -> assertEquals(36000, result.get(5).timeMillis),
-                () -> assertEquals(18000, result.get(6).timeMillis),
-                () -> assertEquals(27000, result.get(7).timeMillis)
+                () -> assertEquals(0, result.get(0).time),
+                () -> assertEquals(25200, result.get(1).time),
+                () -> assertEquals(54000, result.get(2).time),
+                () -> assertEquals(55800, result.get(3).time),
+                () -> assertEquals(9000, result.get(4).time),
+                () -> assertEquals(36000, result.get(5).time),
+                () -> assertEquals(18000, result.get(6).time),
+                () -> assertEquals(27000, result.get(7).time)
         );
     }
 
