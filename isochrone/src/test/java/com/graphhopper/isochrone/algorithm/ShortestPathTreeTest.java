@@ -44,7 +44,7 @@ public class ShortestPathTreeTest {
     // 4-5-- |
     // |/ \--7
     // 6----/
-    private void initDirectedAndDiffSpeed(Graph graph) {
+    private void fillTestGraph(Graph graph) {
         GHUtility.setProperties(graph.edge(0, 1).setDistance(70), carEncoder, 10, true, false);
         GHUtility.setProperties(graph.edge(0, 4).setDistance(50), carEncoder, 20, true, false);
 
@@ -68,18 +68,20 @@ public class ShortestPathTreeTest {
     }
 
     @Test
-    public void testSearch() {
-        initDirectedAndDiffSpeed(graph);
-        PMap pMap = new PMap();
-        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, pMap), false);
-        // limit to certain seconds
+    public void testSearch60Seconds() {
+        fillTestGraph(graph);
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
         instance.setTimeLimit(60);
         List<Set<Integer>> res = searchFromNode0Into5Buckets(instance);
         assertEquals("[[0, 4], [6], [1, 7], [5], [2, 3]]", res.toString());
+    }
 
-        instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, pMap), false);
+    @Test
+    public void testSearch30Seconds() {
+        fillTestGraph(graph);
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
         instance.setTimeLimit(30);
-        res = searchFromNode0Into5Buckets(instance);
+        List<Set<Integer>> res = searchFromNode0Into5Buckets(instance);
         assertEquals("[[0], [4], [], [6], [1, 7]]", res.toString());
     }
 
