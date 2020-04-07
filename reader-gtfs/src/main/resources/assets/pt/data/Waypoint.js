@@ -114,14 +114,14 @@ export default class Waypoint {
     if (!apiLeg) return;
     if (apiLeg.type === Mode.PT) {
       let lastStop = apiLeg.stops[apiLeg.stops.length - 1];
-      this._arrivalTime = lastStop.plannedArrivalTime;
+      this._arrivalTime = lastStop.planned_arrival_time;
       this._arrivalDelay = this._calculateDelay(
-        lastStop.arrivalTime,
+        lastStop.arrival_time,
         this._arrivalTime
       );
-      this._isArrivalCancelled = lastStop.arrivalCancelled;
+      this._isArrivalCancelled = lastStop.arrival_cancelled;
     } else {
-      this._arrivalTime = apiLeg.arrivalTime;
+      this._arrivalTime = apiLeg.arrival_time;
     }
   }
 
@@ -129,14 +129,14 @@ export default class Waypoint {
     if (!apiLeg) return;
     if (apiLeg.type === Mode.PT) {
       let firstStop = apiLeg.stops[0];
-      this._departureTime = firstStop.plannedDepartureTime;
+      this._departureTime = firstStop.planned_departure_time;
       this._departureDelay = this._calculateDelay(
-        firstStop.departureTime,
+        firstStop.departure_time,
         this._departureTime
       );
-      this._isDepartureCancelled = firstStop.departureCancelled;
+      this._isDepartureCancelled = firstStop.departure_cancelled;
     } else {
-      this._departureTime = apiLeg.departureTime;
+      this._departureTime = apiLeg.departure_time;
     }
   }
 

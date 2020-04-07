@@ -37,10 +37,10 @@ export default class PtLeg extends Leg {
         name: apiStop.stop_name,
         departureTime: this._getDepartureTime(apiStop),
         delay: this._calculateDelay(
-          apiStop.departureTime,
-          apiStop.plannedDepartureTime
+          apiStop.departure_time,
+          apiStop.planned_departure_time
         ),
-        isCancelled: apiStop.arrivalCancelled || apiStop.departureCancelled,
+        isCancelled: apiStop.arrival_cancelled || apiStop.departure_cancelled,
         geometry: apiStop.geometry
       };
       result.push(stop);
@@ -65,8 +65,8 @@ export default class PtLeg extends Leg {
   }
 
   _getDepartureTime(apiStop) {
-    return apiStop.plannedDepartureTime
-      ? apiStop.plannedDepartureTime
-      : apiStop.departureTime;
+    return apiStop.planned_departure_time
+      ? apiStop.planned_departure_time
+      : apiStop.departure_time;
   }
 }
