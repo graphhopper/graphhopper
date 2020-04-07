@@ -173,6 +173,7 @@ public class RouteResource {
                     :
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
+                            type(MediaType.APPLICATION_JSON).
                             build();
         }
     }
@@ -227,6 +228,7 @@ public class RouteResource {
                     :
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
+                            type(MediaType.APPLICATION_JSON).
                             build();
         }
     }
