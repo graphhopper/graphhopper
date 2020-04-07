@@ -186,9 +186,6 @@ public class IsochroneResourceTest {
         assertTrue(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.527057, 42.507145))));
         assertFalse(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.525404, 42.507081))));
 
-        // more like a circle => shorter is expected
-        assertTrue(polygon0.getCoordinates().length < 185);
-
         rsp = clientTarget(app, "/isochrone")
                 .queryParam("point", "42.509644,1.540554")
                 .queryParam("time_limit", 130)

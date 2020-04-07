@@ -15,12 +15,12 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.Comparator.comparing;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
+ * @author Michael Zilske
  */
 public class ShortestPathTreeTest {
 
@@ -74,14 +74,12 @@ public class ShortestPathTreeTest {
         ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
         instance.setTimeLimit(26_000);
         instance.search(0, result::add);
-        result.sort(comparing(label -> label.adjNode));
-        assertEquals(5, result.size());
+        assertEquals(4, result.size());
         assertAll(
                 () -> assertEquals(0, result.get(0).time),
-                () -> assertEquals(25200, result.get(1).time),
-                () -> assertEquals(9000, result.get(2).time),
-                () -> assertEquals(18000, result.get(3).time),
-                () -> assertEquals(27000, result.get(4).time)
+                () -> assertEquals(9000, result.get(1).time),
+                () -> assertEquals(18000, result.get(2).time),
+                () -> assertEquals(25200, result.get(3).time)
         );
     }
 
@@ -92,17 +90,37 @@ public class ShortestPathTreeTest {
         ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
         instance.setTimeLimit(60_000);
         instance.search(0, result::add);
-        result.sort(comparing(label -> label.adjNode));
         assertEquals(8, result.size());
         assertAll(
                 () -> assertEquals(0, result.get(0).time),
-                () -> assertEquals(25200, result.get(1).time),
-                () -> assertEquals(54000, result.get(2).time),
-                () -> assertEquals(55800, result.get(3).time),
-                () -> assertEquals(9000, result.get(4).time),
+                () -> assertEquals(9000, result.get(1).time),
+                () -> assertEquals(18000, result.get(2).time),
+                () -> assertEquals(25200, result.get(3).time),
+                () -> assertEquals(27000, result.get(4).time),
                 () -> assertEquals(36000, result.get(5).time),
-                () -> assertEquals(18000, result.get(6).time),
-                () -> assertEquals(27000, result.get(7).time)
+                () -> assertEquals(54000, result.get(6).time),
+                () -> assertEquals(55800, result.get(7).time)
+        );
+    }
+
+    @Test
+    public void testSearchByDistance() {
+        fillTestGraph(graph);
+        List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false);
+        instance.setDistanceLimit(110.0);
+        instance.search(5, result::add);
+        assertEquals(6, result.size());
+        // We are searching by time, but terminating by distance.
+        // Expected distance values are out of search order,
+        // and we cannot terminate at 110 because we still need the 70's.
+        assertAll(
+                () -> assertEquals(0.0, result.get(0).distance),
+                () -> assertEquals(50.0, result.get(1).distance),
+                () -> assertEquals(110.0, result.get(2).distance),
+                () -> assertEquals(70.0, result.get(3).distance),
+                () -> assertEquals(70.0, result.get(4).distance),
+                () -> assertEquals(70.0, result.get(5).distance)
         );
     }
 

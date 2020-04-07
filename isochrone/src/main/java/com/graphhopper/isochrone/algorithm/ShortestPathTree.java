@@ -21,7 +21,6 @@ import com.carrotsearch.hppc.IntObjectHashMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.PathExtractor;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -35,9 +34,17 @@ import java.util.function.Consumer;
 
 import static com.graphhopper.isochrone.algorithm.ShortestPathTree.ExploreType.DISTANCE;
 import static com.graphhopper.isochrone.algorithm.ShortestPathTree.ExploreType.TIME;
+import static java.util.Comparator.comparingDouble;
+import static java.util.Comparator.comparingLong;
 
 /**
+ * Computes a shortest path tree by a given weighting. Terminates when all shortest paths up to
+ * a given travel time or distance have been explored. The catch is that the function for termination
+ * is different from the function for search. This implementation uses a second queue to keep track of
+ * the termination criterion.
+ *
  * @author Peter Karich
+ * @author Michael Zilske
  */
 public class ShortestPathTree extends AbstractRoutingAlgorithm {
 
@@ -61,8 +68,8 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     }
 
     private IntObjectHashMap<IsoLabel> fromMap;
-    private PriorityQueue<IsoLabel> fromHeap;
-    private IsoLabel currEdge;
+    private PriorityQueue<IsoLabel> queueByWeighting; // a.k.a. the Dijkstra queue
+    private PriorityQueue<IsoLabel> queueByZ; // so we know when we are finished
     private int visitedNodes;
     private double limit = -1;
     private ExploreType exploreType = TIME;
@@ -70,7 +77,8 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
 
     public ShortestPathTree(Graph g, Weighting weighting, boolean reverseFlow) {
         super(g, weighting, TraversalMode.NODE_BASED);
-        fromHeap = new PriorityQueue<>(1000);
+        queueByWeighting = new PriorityQueue<>(1000);
+        queueByZ = new PriorityQueue<>(1000);
         fromMap = new GHIntObjectHashMap<>(1000);
         this.reverseFlow = reverseFlow;
     }
@@ -86,6 +94,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     public void setTimeLimit(double limit) {
         exploreType = TIME;
         this.limit = limit;
+        this.queueByZ = new PriorityQueue<>(1000, comparingLong(l -> l.time));
     }
 
     /**
@@ -94,19 +103,21 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     public void setDistanceLimit(double limit) {
         exploreType = DISTANCE;
         this.limit = limit;
+        this.queueByZ = new PriorityQueue<>(1000, comparingDouble(l -> l.distance));
     }
 
     public void search(int from, final Consumer<IsoLabel> consumer) {
         checkAlreadyRun();
-        currEdge = new IsoLabel(-1, from, 0, 0, 0);
+        IsoLabel currEdge = new IsoLabel(-1, from, 0, 0, 0);
+        queueByWeighting.add(currEdge);
+        queueByZ.add(currEdge);
         fromMap.put(from, currEdge);
         EdgeFilter filter = reverseFlow ? inEdgeFilter : outEdgeFilter;
-        while (true) {
+        while (!finished()) {
+            currEdge = queueByWeighting.poll();
+            queueByZ.remove(currEdge);
             consumer.accept(currEdge);
             visitedNodes++;
-            if (finished()) {
-                break;
-            }
 
             int neighborNode = currEdge.adjNode;
             EdgeIterator iter = edgeExplorer.setBaseNode(neighborNode);
@@ -130,25 +141,19 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
                     nEdge = new IsoLabel(iter.getEdge(), tmpNode, tmpWeight, tmpTime, tmpDistance);
                     nEdge.parent = currEdge;
                     fromMap.put(tmpNode, nEdge);
-                    fromHeap.add(nEdge);
+                    queueByWeighting.add(nEdge);
+                    queueByZ.add(nEdge);
                 } else if (nEdge.weight > tmpWeight) {
-                    fromHeap.remove(nEdge);
+                    queueByWeighting.remove(nEdge);
+                    queueByZ.remove(nEdge);
                     nEdge.edge = iter.getEdge();
                     nEdge.weight = tmpWeight;
                     nEdge.distance = tmpDistance;
                     nEdge.time = tmpTime;
                     nEdge.parent = currEdge;
-                    fromHeap.add(nEdge);
+                    queueByWeighting.add(nEdge);
+                    queueByZ.add(nEdge);
                 }
-            }
-
-            if (fromHeap.isEmpty()) {
-                break;
-            }
-
-            currEdge = fromHeap.poll();
-            if (currEdge == null) {
-                throw new AssertionError("Empty edge cannot happen");
             }
         }
     }
@@ -162,15 +167,12 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
 
     @Override
     protected boolean finished() {
-        return getExploreValue(currEdge) >= limit;
+        return queueByZ.isEmpty() || getExploreValue(queueByZ.peek()) >= limit;
     }
 
     @Override
     protected Path extractPath() {
-        if (currEdge == null || !finished()) {
-            return createEmptyPath();
-        }
-        return PathExtractor.extractPath(graph, weighting, currEdge);
+        throw new UnsupportedOperationException();
     }
 
     @Override
