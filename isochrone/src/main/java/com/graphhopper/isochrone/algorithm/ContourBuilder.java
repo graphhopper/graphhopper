@@ -66,7 +66,7 @@ public class ContourBuilder {
                 } else {
                     cC = e.orig().midPoint(e.dest()).getCoordinate();
                 }
-                polyPoints.add(cC);
+                polyPoints.add(new Coordinate(cC.x, cC.y)); // Strip z coordinate
                 processed.add(e);
                 QuadEdge E1 = ccw ? e.oNext().getPrimary() : e.oPrev().getPrimary();
                 QuadEdge E2 = ccw ? e.dPrev().getPrimary() : e.dNext().getPrimary();
