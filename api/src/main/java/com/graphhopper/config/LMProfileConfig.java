@@ -28,6 +28,7 @@ import static com.graphhopper.config.ProfileConfig.validateProfileName;
  */
 public class LMProfileConfig {
     private String profile = "";
+    private String preparationProfile = "self";
     private double maximumLMWeight = -1;
 
     private LMProfileConfig() {
@@ -47,17 +48,35 @@ public class LMProfileConfig {
         this.profile = profile;
     }
 
+    public boolean usesOtherPreparation() {
+        return !preparationProfile.equals("self");
+    }
+
+    public String getPreparationProfile() {
+        return preparationProfile;
+    }
+
+    public LMProfileConfig setPreparationProfile(String preparationProfile) {
+        validateProfileName(preparationProfile);
+        if (maximumLMWeight >= 0)
+            throw new IllegalArgumentException("Using non-default maximum_lm_weight and preparation_profile at the same time is not allowed");
+        this.preparationProfile = preparationProfile;
+        return this;
+    }
+
     public double getMaximumLMWeight() {
         return maximumLMWeight;
     }
 
     public LMProfileConfig setMaximumLMWeight(double maximumLMWeight) {
+        if (usesOtherPreparation())
+            throw new IllegalArgumentException("Using non-default maximum_lm_weight and preparation_profile at the same time is not allowed");
         this.maximumLMWeight = maximumLMWeight;
         return this;
     }
 
     @Override
     public String toString() {
-        return profile + "|maximum_lm_weight=" + maximumLMWeight;
+        return profile + "|preparation_profile=" + preparationProfile + "|maximum_lm_weight=" + maximumLMWeight;
     }
 }
