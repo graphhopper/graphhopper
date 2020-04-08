@@ -1373,7 +1373,7 @@ public class GraphHopperIT {
 
         hopper.getLMPreparationHandler().
                 setLMProfileConfigs(
-                        // we have an LM setup for each profile, but only one LM preparation that we use for both!
+                        // we have an LM setup for each profile, but only one LM preparation that we use for all of them!
                         // this works because profile1's weight is the lowest for every edge
                         new LMProfileConfig(profile1),
                         new LMProfileConfig(profile2).setPreparationProfile(profile1),
