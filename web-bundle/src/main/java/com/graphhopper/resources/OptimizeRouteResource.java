@@ -1,8 +1,7 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.farmygh.RouteOptimize;
-
+import com.graphhopper.farmy.RouteOptimize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +38,7 @@ public class OptimizeRouteResource {
             e.printStackTrace();
             return Response.serverError().build();
         }
-        return Response.ok(routeOptimize.getOptimizedRoutes()).build();
+        return Response.ok().entity(routeOptimize.getOptimizedRoutes()).build();
     }
+
 }

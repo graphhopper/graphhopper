@@ -93,14 +93,54 @@ public class RouteResource {
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("gpx.millis") String timeString) {
+        boolean writeGPX = "gpx".equalsIgnoreCase(type);
+        instructions = writeGPX || instructions;
+
+        StopWatch sw = new StopWatch().start();
+
+        if (requestPoints.isEmpty())
+            throw new IllegalArgumentException("You have to pass at least one point");
+        if (enableElevation && !hasElevation)
+            throw new IllegalArgumentException("Elevation not supported!");
+        if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size())
+            throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
+                    + "or equal to the number of points (" + requestPoints.size() + ")");
+
+        // TODO these checks should be only necessary once in the core, e.g. pointHints problems are currently ignored for POST requests
+        if (pointHints.size() > 0 && pointHints.size() != requestPoints.size())
+            throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
+        if (curbsides.size() > 0 && curbsides.size() != requestPoints.size())
+            throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
         GHRequest request;
-        request = new GHRequest(requestPoints);
+        if (favoredHeadings.size() > 0) {
+            // if only one favored heading is specified take as start heading
+            if (favoredHeadings.size() == 1) {
+                List<Double> paddedHeadings = new ArrayList<>(Collections.nCopies(requestPoints.size(), Double.NaN));
+                paddedHeadings.set(0, favoredHeadings.get(0));
+                request = new GHRequest(requestPoints, paddedHeadings);
+            } else {
+                request = new GHRequest(requestPoints, favoredHeadings);
+            }
+        } else {
+            request = new GHRequest(requestPoints);
+        }
 
-        request.getHints()
-                .put(CALC_POINTS, calcPoints)
-                .put(INSTRUCTIONS, instructions)
-                .put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+        initHints(request.getHints(), uriInfo.getQueryParameters());
+        translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
+        enableEdgeBasedIfThereAreCurbsides(curbsides, request);
+        request.setVehicle(vehicleStr).
+                setWeighting(weighting).
+                setAlgorithm(algoStr).
+                setLocale(localeStr).
+                setPointHints(pointHints).
+                setCurbsides(curbsides).
+                setSnapPreventions(snapPreventions).
+                setPathDetails(pathDetails).
+                getHints().
+                put(CALC_POINTS, calcPoints).
+                put(INSTRUCTIONS, instructions).
+                put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
         GHResponse ghResponse = graphHopper.route(request);
 

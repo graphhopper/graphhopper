@@ -61,7 +61,11 @@ public class GraphHopperManaged implements Managed {
             logger.error("Problem while reading border map GeoJSON. Skipping this.", e1);
             landmarkSplittingFeatureCollection = null;
         }
-        graphHopper = new GraphHopperOSM().forServer();
+        if (configuration.has("gtfs.file")) {
+            graphHopper = new GraphHopperGtfs(configuration);
+        } else {
+            graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection).forServer();
+        }
         if (!configuration.get("spatial_rules.location", "").isEmpty()) {
             throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
         }

@@ -3,10 +3,10 @@ import 'angular'
 import 'leaflet'
 import 'leaflet-routing-machine'
 import 'lrm-graphhopper'
+import 'ng-file-upload/dist/ng-file-upload-all.min'
 
 import 'leaflet/dist/leaflet.css'
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
-
 // Import styles
 import './reset.sass';
 import './index.sass';
@@ -58,8 +58,7 @@ angular.module('FarmyVrpApp', []).component('farmyIndex', {
                 $http.get('http://localhost:8989/optimize-route').then((response)=>{
                     drawRoutes(response.data);
                     localStorage.setItem('dev.ls.routes', JSON.stringify(response.data));
-                    console.debug('[DEV][MAP] Got Routes')
-                    ;
+                    console.debug('[DEV][MAP] Got Routes', response);
                 });
             }
 
@@ -112,7 +111,7 @@ angular.module('FarmyVrpApp', []).component('farmyIndex', {
         function buildWaypoints(waypointsData) {
             let wp = [];
             waypointsData.forEach(waypoint => {
-               wp.push(L.latLng(waypoint.lat, waypoint.lon));
+               wp.push(L.latLng(waypoint[0], waypoint[1]));
             });
             return wp;
         }
@@ -124,17 +123,16 @@ angular.module('FarmyVrpApp', []).component('farmyIndex', {
                     waypoints: waypoints,
                     routeWhileDragging: true,
                     routeLine: (route) => {
-                        let line = L.Routing.line(route, {
+                        return L.Routing.line(route, {
                             styles: [
                                 {color: 'black', opacity: 0, weight: 0},
                                 {color: 'blue', opacity: 0, weight: 0},
                                 {color: vehicleRoute.color, opacity: .8, weight: 2}
                             ]
                         });
-                        return line;
                     },
                     createMarker: (waypointIndex, waypoint, numberOfWaypoints) => {
-                        return L.marker(waypoint.latLng).bindPopup(vehicleRoute.waypoints[waypointIndex].id);
+                        return L.marker(waypoint.latLng).bindPopup(vehicleRoute.waypoints[waypointIndex][3]);
                     },
                     router: $scope.router,
                     plan: undefined

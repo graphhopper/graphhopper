@@ -79,7 +79,6 @@
         <module>web-api</module>
         <module>web</module>
         <module>client-hc</module>
-        <module>farmy-gh</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -136,6 +135,24 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+
+            <dependency>
+                <groupId>com.graphhopper</groupId>
+                <artifactId>jsprit-core</artifactId>
+                <version>1.7.3</version>
+            </dependency>
+            <dependency>
+                <groupId>com.graphhopper</groupId>
+                <artifactId>jsprit-io</artifactId>
+                <version>1.7.3</version>
+            </dependency>
+            <dependency>
+                <groupId>com.graphhopper</groupId>
+                <artifactId>jsprit-analysis</artifactId>
+                <version>1.7.3</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -174,8 +191,8 @@
                     -->
 
                     <fork>true</fork>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
 
