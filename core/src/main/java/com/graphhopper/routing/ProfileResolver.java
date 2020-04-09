@@ -145,7 +145,7 @@ public class ProfileResolver {
     public ProfileConfig selectProfileLM(HintsMap hintsMap) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
         for (ProfileConfig p : lmProfiles) {
-            if (!profileMatchesHints(p, hintsMap))
+            if (!lmProfileMatchesHints(p, hintsMap))
                 continue;
             matchingProfiles.add(p);
         }
@@ -179,6 +179,10 @@ public class ProfileResolver {
         }
     }
 
+    protected boolean lmProfileMatchesHints(ProfileConfig p, HintsMap hints) {
+        return profileMatchesHints(p, hints);
+    }
+
     private ProfileConfig selectProfileUnprepared(HintsMap hints) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
         for (ProfileConfig p : profiles) {
@@ -209,7 +213,7 @@ public class ProfileResolver {
         }
     }
 
-    private boolean profileMatchesHints(ProfileConfig p, HintsMap hints) {
+    protected boolean profileMatchesHints(ProfileConfig p, HintsMap hints) {
         Boolean edgeBased = getEdgeBased(hints);
         return (edgeBased == null || p.isTurnCosts() == edgeBased) &&
                 (hints.getWeighting().isEmpty() || p.getWeighting().equals(hints.getWeighting())) &&
@@ -254,7 +258,12 @@ public class ProfileResolver {
     }
 
     private Boolean getEdgeBased(PMap hintsMap) {
-        return hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
+        if (hintsMap.has(Parameters.Routing.TURN_COSTS))
+            return hintsMap.getBool(Parameters.Routing.TURN_COSTS, false);
+        else if (hintsMap.has(Parameters.Routing.EDGE_BASED))
+            return hintsMap.getBool(Parameters.Routing.EDGE_BASED, false);
+        else
+            return null;
     }
 
     private Integer getUTurnCosts(PMap hintsMap) {

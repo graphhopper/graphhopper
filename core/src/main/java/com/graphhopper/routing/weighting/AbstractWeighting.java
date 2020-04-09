@@ -92,6 +92,11 @@ public abstract class AbstractWeighting implements Weighting {
     }
 
     @Override
+    public boolean hasTurnCosts() {
+        return turnCostProvider != NO_TURN_COST_PROVIDER;
+    }
+
+    @Override
     public FlagEncoder getFlagEncoder() {
         return flagEncoder;
     }

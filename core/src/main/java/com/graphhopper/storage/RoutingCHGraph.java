@@ -58,5 +58,7 @@ public interface RoutingCHGraph {
      */
     Graph getBaseGraph();
 
+    boolean hasTurnCosts();
+
     Weighting getWeighting();
 }

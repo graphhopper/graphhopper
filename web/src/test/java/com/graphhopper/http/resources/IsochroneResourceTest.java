@@ -41,6 +41,7 @@ import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 public class IsochroneResourceTest {
     private static final String DIR = "./target/andorra-gh/";
@@ -49,12 +50,13 @@ public class IsochroneResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car").
+                // isochrone does not support turn costs yet, but use it anyway to make sure this is handled correctly
+                        putObject("graph.flag_encoders", "car|turn_costs=true").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig("fast_car").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("short_car").setVehicle("car").setWeighting("shortest")
+                        new ProfileConfig("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
+                        new ProfileConfig("short_car").setVehicle("car").setWeighting("shortest").setTurnCosts(true)
                 ));
     }
 
@@ -98,6 +100,12 @@ public class IsochroneResourceTest {
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("distance_limit", 3_000)
                 .queryParam("buckets", 2)
+                // explicitly disabling turn costs should be ok
+                .queryParam("turn_costs", false)
+                .queryParam("edge_based", false)
+                // explicitly disabling speed mode should be ok
+                .queryParam("ch.disable", true)
+                .queryParam("lm.disable", true)
                 .queryParam("type", "geojson")
                 .request().buildGet().invoke();
         JsonFeatureCollection featureCollection = rsp.readEntity(JsonFeatureCollection.class);
@@ -145,6 +153,24 @@ public class IsochroneResourceTest {
         assertEquals(400, response.getStatus());
         String error = response.readEntity(String.class);
         assertTrue(error, error.contains("Point not found:-1.816719,51.557148"));
+        // todonow: or rather this?
+//        JsonNode json = response.readEntity(JsonNode.class);
+//        assertTrue(json.get("message").toString().contains("Point 0 is out of bounds"));
+    }
+
+    @Test
+    public void certainParametersNotAllowed() {
+        assertNotAllowed("&ch.disable=false", "Currently you cannot use speed mode for /isochrone");
+        assertNotAllowed("&lm.disable=false", "Currently you cannot use hybrid mode for /isochrone");
+        assertNotAllowed("&turn_costs=true", "Currently you cannot use turn costs for /isochrone");
+        assertNotAllowed("&edge_based=true", "Currently you cannot use edge-based for /isochrone");
+    }
+
+    private void assertNotAllowed(String hint, String error) {
+        Response rsp = clientTarget(app, "/isochrone?weighting=fastest&point=42.531073,1.573792" + hint).request().buildGet().invoke();
+        assertEquals(400, rsp.getStatus());
+        JsonNode json = rsp.readEntity(JsonNode.class);
+        assertTrue(json.toString(), json.get("message").toString().contains(error));
     }
 
     @Test
@@ -160,12 +186,10 @@ public class IsochroneResourceTest {
 
         assertEquals(1, featureCollection.getFeatures().size());
         Geometry polygon0 = featureCollection.getFeatures().get(0).getGeometry();
+        assertIs2D(polygon0);
 
         assertTrue(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.527057, 42.507145))));
         assertFalse(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.525404, 42.507081))));
-
-        // more like a circle => shorter is expected
-        assertTrue(polygon0.getCoordinates().length < 185);
 
         rsp = clientTarget(app, "/isochrone")
                 .queryParam("profile", "fast_car")
@@ -177,6 +201,10 @@ public class IsochroneResourceTest {
         featureCollection = rsp.readEntity(JsonFeatureCollection.class);
         polygon0 = featureCollection.getFeatures().get(0).getGeometry();
         assertTrue(polygon0.getCoordinates().length >= 190);
+    }
+
+    private static void assertIs2D(Geometry geometry) {
+        assertAll(Arrays.stream(geometry.getCoordinates()).map(coord -> () -> assertTrue(Double.isNaN(coord.z))));
     }
 
     @Test

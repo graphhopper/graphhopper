@@ -33,13 +33,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static java.util.Collections.emptyList;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceTurnCostsTest {
@@ -79,28 +81,93 @@ public class RouteResourceTurnCostsTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "",
-            "&ch.disable=true",
-            "&ch.disable=true&lm.disable=true"})
-    public void getQuery_legacyParameters_canToggleTurnCostsOnOff(String hints) {
-        String pointsStr = "point=55.813357,37.5958585&point=55.811042,37.594689";
-
-        assertDistanceGet(pointsStr + hints, 1044);
-        assertDistanceGet(pointsStr + "&edge_based=true" + hints, 1044);
-        assertDistanceGet(pointsStr + "&turn_costs=true" + hints, 1044);
-        assertDistanceGet(pointsStr + "&edge_based=false" + hints, 400);
-        assertDistanceGet(pointsStr + "&turn_costs=false" + hints, 400);
+    @ValueSource(strings = {"flex", "LM", "CH"})
+    public void canToggleTurnCostsOnOff(String mode) {
+        assertDistance(mode, null, null, emptyList(), 1044);
+        assertDistance(mode, true, null, emptyList(), 1044);
+        assertDistance(mode, null, true, emptyList(), 1044);
+        assertDistance(mode, false, null, emptyList(), 400);
+        assertDistance(mode, null, false, emptyList(), 400);
     }
 
-    private void assertDistanceGet(String urlParams, double expectedDistance) {
-        final Response response = clientTarget(app, "/route?" + urlParams).request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
+    @ParameterizedTest
+    @ValueSource(strings = {"flex", "LM", "CH"})
+    public void curbsides(String mode) {
+        assertDistance(mode, null, null, Arrays.asList("left", "left"), 1459);
+        assertDistance(mode, true, null, Arrays.asList("left", "left"), 1459);
+        assertDistance(mode, null, true, Arrays.asList("left", "left"), 1459);
+        assertError(mode, false, null, Arrays.asList("left", "left"), "Disabling 'edge_based' when using 'curbside' is not allowed");
+        assertError(mode, null, false, Arrays.asList("left", "left"), "Disabling 'turn_costs' when using 'curbside' is not allowed");
+    }
+
+    private void assertDistance(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides, double expectedDistance) {
+        assertDistance(doGet(mode, edgeBased, turnCosts, curbsides), expectedDistance);
+        assertDistance(doPost(mode, edgeBased, turnCosts, curbsides), expectedDistance);
+    }
+
+    private void assertError(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides, String... expectedErrors) {
+        assertError(doGet(mode, edgeBased, turnCosts, curbsides), expectedErrors);
+        assertError(doPost(mode, edgeBased, turnCosts, curbsides), expectedErrors);
+    }
+
+    private void assertDistance(Response response, double expectedDistance) {
         JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(200, response.getStatus(), json.toString());
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
         assertEquals(expectedDistance, distance, 1);
+    }
+
+    private void assertError(Response response, String... expectedErrors) {
+        assert expectedErrors.length > 0;
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(400, response.getStatus(), json.toString());
+        for (String e : expectedErrors) {
+            assertTrue(json.get("message").toString().contains(e), json.get("message").toString());
+        }
+    }
+
+    private String getUrlParams(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
+        String urlParams = "point=55.813357,37.5958585&point=55.811042,37.594689";
+        for (String curbside : curbsides)
+            urlParams += "&curbside=" + curbside;
+        if (mode.equals("LM"))
+            urlParams += "&ch.disable=true";
+        if (mode.equals("flex"))
+            urlParams += "&ch.disable=true&lm.disable=true";
+        if (edgeBased != null)
+            urlParams += "&edge_based=" + edgeBased;
+        if (turnCosts != null)
+            urlParams += "&turn_costs=" + turnCosts;
+        return urlParams;
+    }
+
+    private String getJsonStr(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
+        String jsonStr = "{";
+        jsonStr += "\"points\": [[37.5958585,55.813357],[37.594689,55.811042]]";
+        if (!curbsides.isEmpty()) {
+            assert curbsides.size() == 2;
+            jsonStr += ", \"curbsides\": [\"" + curbsides.get(0) + "\",\"" + curbsides.get(1) + "\"]";
+        }
+        if (mode.equals("LM"))
+            jsonStr += ", \"ch.disable\": true";
+        if (mode.equals("flex"))
+            jsonStr += ", \"ch.disable\": true, \"lm.disable\": true";
+        if (edgeBased != null)
+            jsonStr += ", \"edge_based\": " + edgeBased;
+        if (turnCosts != null)
+            jsonStr += ", \"turn_costs\": " + turnCosts;
+        jsonStr += "}";
+        return jsonStr;
+    }
+
+    private Response doGet(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
+        return clientTarget(app, "/route?" + getUrlParams(mode, edgeBased, turnCosts, curbsides)).request().buildGet().invoke();
+    }
+
+    private Response doPost(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
+        return clientTarget(app, "/route?").request().post(Entity.json(getJsonStr(mode, edgeBased, turnCosts, curbsides)));
     }
 }

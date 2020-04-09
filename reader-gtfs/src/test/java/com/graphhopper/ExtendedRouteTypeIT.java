@@ -49,11 +49,7 @@ public class ExtendedRouteTypeIT {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.flag_encoders", "car,foot");
         ghConfig.putObject("graph.location", GRAPH_LOC);
-        ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip").
-                setProfiles(Arrays.asList(
-                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")
-                ));
+        ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

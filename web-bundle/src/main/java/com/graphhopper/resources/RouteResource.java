@@ -126,7 +126,6 @@ public class RouteResource {
         }
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
-        translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
         // todonow: should it be illegal to specify profile AND vehicle/weighting/turn_costs?
         // also for /isochrone and /spt?
@@ -172,6 +171,7 @@ public class RouteResource {
                     :
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
+                            type(MediaType.APPLICATION_JSON).
                             build();
         }
     }
@@ -184,6 +184,7 @@ public class RouteResource {
             throw new IllegalArgumentException("Empty request");
 
         StopWatch sw = new StopWatch().start();
+        enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
         if (Helper.isEmpty(request.getProfile()))
             request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
         removeLegacyParameters(request);
@@ -224,35 +225,27 @@ public class RouteResource {
                     :
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
+                            type(MediaType.APPLICATION_JSON).
                             build();
         }
     }
 
     private void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, GHRequest request) {
         if (!curbsides.isEmpty()) {
-            if (!request.getHints().getBool(EDGE_BASED, true)) {
+            if (!request.getHints().getBool(TURN_COSTS, true))
+                throw new IllegalArgumentException("Disabling '" + TURN_COSTS + "' when using '" + CURBSIDE + "' is not allowed");
+            if (!request.getHints().getBool(EDGE_BASED, true))
                 throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
-            } else {
-                request.getHints().putObject(EDGE_BASED, true);
-            }
-        }
-    }
-
-    private void translateTurnCostsParamToEdgeBased(GHRequest request, MultivaluedMap<String, String> queryParams) {
-        if (queryParams.containsKey(TURN_COSTS)) {
-            List<String> turnCosts = queryParams.get(TURN_COSTS);
-            if (turnCosts.size() != 1) {
-                throw new IllegalArgumentException("You may only specify the turn_costs parameter once");
-            }
-            request.putHint(EDGE_BASED, Helper.toObject(turnCosts.get(0)));
+            request.getHints().putObject(EDGE_BASED, true);
         }
     }
 
     private void removeLegacyParameters(GHRequest request) {
         // these parameters should only be used to resolve the profile, but should not be passed to GraphHopper
-        request.getHints().setWeighting("");
+        // todo: #1980, these parameters should be removed as well?!
+//        request.getHints().setWeighting("");
         request.getHints().setVehicle("");
-        request.getHints().remove("edge_based");
+//        request.getHints().remove("edge_based");
         request.getHints().remove("turn_costs");
     }
 
