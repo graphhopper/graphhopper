@@ -19,7 +19,6 @@
 package com.graphhopper;
 
 import com.carrotsearch.hppc.IntHashSet;
-import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -84,7 +83,7 @@ public class AnotherAgencyIT {
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         PathWrapper transitSolution = route.getBest();
-        assertEquals("Expected total travel time == scheduled travel time + wait time", time(1, 30), transitSolution.getTime(), 0.1);
+        assertEquals("Expected total travel time == scheduled travel time + wait time", time(1, 30), transitSolution.getTime());
     }
 
     @Test
@@ -103,7 +102,7 @@ public class AnotherAgencyIT {
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         PathWrapper transitSolution = route.getBest();
-        assertEquals("Expected total travel time == scheduled travel time + wait time", time(2, 10), transitSolution.getTime(), 0.1);
+        assertEquals("Expected total travel time == scheduled travel time + wait time", time(2, 10), transitSolution.getTime());
     }
 
     @Test
