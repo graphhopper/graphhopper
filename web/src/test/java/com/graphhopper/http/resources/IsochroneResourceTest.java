@@ -153,9 +153,6 @@ public class IsochroneResourceTest {
         assertEquals(400, response.getStatus());
         String error = response.readEntity(String.class);
         assertTrue(error, error.contains("Point not found:-1.816719,51.557148"));
-        // todonow: or rather this?
-//        JsonNode json = response.readEntity(JsonNode.class);
-//        assertTrue(json.get("message").toString().contains("Point 0 is out of bounds"));
     }
 
     @Test

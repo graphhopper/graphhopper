@@ -36,7 +36,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 
 import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
 import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
@@ -47,7 +50,6 @@ public class IsochroneResource {
     private static final Logger logger = LoggerFactory.getLogger(IsochroneResource.class);
 
     private final GraphHopper graphHopper;
-    private final Map<String, ProfileConfig> profilesByName;
     private final ProfileResolver profileResolver;
     private final EncodingManager encodingManager;
     private final GeometryFactory geometryFactory = new GeometryFactory();
@@ -55,10 +57,6 @@ public class IsochroneResource {
     @Inject
     public IsochroneResource(GraphHopper graphHopper, ProfileResolver profileResolver, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
-        this.profilesByName = new LinkedHashMap<>(graphHopper.getProfiles().size());
-        for (ProfileConfig p : graphHopper.getProfiles()) {
-            profilesByName.put(p.getName(), p);
-        }
         this.profileResolver = profileResolver;
         this.encodingManager = encodingManager;
     }
@@ -100,14 +98,12 @@ public class IsochroneResource {
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
         // ignore these parameters for profile selection, because we fall back to node-based without turn costs so far
-        // todonow: no longer needed?
         hintsMap.remove(TURN_COSTS);
         hintsMap.remove(EDGE_BASED);
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(hintsMap).getName();
         }
-        // todonow: can use hopper.getProfile(profileName) here? probably the same in /spt and maybe more places?
-        ProfileConfig profile = profilesByName.get(profileName);
+        ProfileConfig profile = graphHopper.getProfile(profileName);
         if (profile == null) {
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
         }

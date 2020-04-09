@@ -55,17 +55,12 @@ public class SPTResource {
     }
 
     private final GraphHopper graphHopper;
-    private final Map<String, ProfileConfig> profilesByName;
     private final ProfileResolver profileResolver;
     private final EncodingManager encodingManager;
 
     @Inject
     public SPTResource(GraphHopper graphHopper, ProfileResolver profileResolver, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
-        this.profilesByName = new LinkedHashMap<>(graphHopper.getProfiles().size());
-        for (ProfileConfig p : graphHopper.getProfiles()) {
-            profilesByName.put(p.getName(), p);
-        }
         this.profileResolver = profileResolver;
         this.encodingManager = encodingManager;
     }
@@ -99,13 +94,12 @@ public class SPTResource {
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
         // ignore these parameters for profile selection, because we fall back to node-based without turn costs so far
-        // todonow: not anymore?!
         hintsMap.remove(TURN_COSTS);
         hintsMap.remove(EDGE_BASED);
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(hintsMap).getName();
         }
-        ProfileConfig profile = profilesByName.get(profileName);
+        ProfileConfig profile = graphHopper.getProfile(profileName);
         if (profile == null) {
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
         }
