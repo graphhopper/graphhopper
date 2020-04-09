@@ -68,12 +68,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>farmy-gh</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-
     </dependencies>
 
     <build>
