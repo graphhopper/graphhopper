@@ -62,6 +62,12 @@ class Transfers {
                 result.add(myRule);
             });
         });
+        if (result.stream().noneMatch(t -> t.from_stop_id.equals(toStopId))) {
+            final Transfer withinStationTransfer = new Transfer();
+            withinStationTransfer.from_stop_id = toStopId;
+            withinStationTransfer.to_stop_id = toStopId;
+            result.add(withinStationTransfer);
+        }
         return result;
     }
 

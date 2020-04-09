@@ -20,9 +20,6 @@ package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
-import com.conveyal.gtfs.model.Route;
-import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.storage.StorableProperties;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -64,6 +61,13 @@ public interface GtfsStorageI {
         public int hashCode() {
             return Objects.hash(route_id);
         }
+
+        @Override
+        public String toString() {
+            return "RoutePlatform{" +
+                    "route_id='" + route_id + '\'' +
+                    '}';
+        }
     }
 
     class RouteTypePlatform extends PlatformDescriptor {
@@ -80,6 +84,13 @@ public interface GtfsStorageI {
         @Override
         public int hashCode() {
             return Objects.hash(route_type);
+        }
+
+        @Override
+        public String toString() {
+            return "RouteTypePlatform{" +
+                    "route_type=" + route_type +
+                    '}';
         }
     }
 

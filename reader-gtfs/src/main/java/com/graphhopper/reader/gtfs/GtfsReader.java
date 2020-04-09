@@ -200,17 +200,12 @@ class GtfsReader {
 
     private void insertTransfers() {
         departureTimelinesByStop.forEach((toStopId, departureTimelines) ->
-                departureTimelines.forEach(((platformDescriptor, departureTimeline) ->
-                        insertTransfers(toStopId, routeIdOrNull(platformDescriptor), departureTimeline))));
+                departureTimelines.forEach(((platformDescriptor, departureTimeline) -> insertInboundTransfers(toStopId, platformDescriptor, departureTimeline))));
     }
 
-
-    private void insertTransfers(String toStopId, String toRouteId, NavigableMap<Integer, Integer> departureTimeline) {
-        final Optional<Transfer> withinStationTransfer = transfers.getTransfersToStop(toStopId, toRouteId).stream().filter(t -> t.from_stop_id.equals(toStopId)).findAny();
-        if (!withinStationTransfer.isPresent()) {
-            insertInboundTransfers(toStopId, null, 0, departureTimeline);
-        }
-        transfers.getTransfersToStop(toStopId, toRouteId).forEach(transfer ->
+    private void insertInboundTransfers(String toStopId, GtfsStorageI.PlatformDescriptor platformDescriptor, NavigableMap<Integer, Integer> departureTimeline) {
+        LOGGER.debug("Creating transfers to stop {}, platform {}", toStopId, platformDescriptor);
+        transfers.getTransfersToStop(toStopId, routeIdOrNull(platformDescriptor)).forEach(transfer ->
                 insertInboundTransfers(transfer.from_stop_id, transfer.from_route_id, transfer.min_transfer_time, departureTimeline));
     }
 
@@ -602,8 +597,9 @@ class GtfsReader {
         EdgeIterator i = graph.createEdgeExplorer().setBaseNode(stationNode);
         while (i.next()) {
             if (i.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
-                GtfsStorageI.PlatformDescriptor routeId = gtfsStorage.getRoutes().get(i.getEdge());
-                if (from_route_id == null || routeId instanceof GtfsStorageI.RouteTypePlatform || GtfsStorageI.PlatformDescriptor.route(from_route_id).equals(routeId)) {
+                GtfsStorageI.PlatformDescriptor platformDescriptor = gtfsStorage.getRoutes().get(i.getEdge());
+                if (from_route_id == null || platformDescriptor instanceof GtfsStorageI.RouteTypePlatform || GtfsStorageI.PlatformDescriptor.route(from_route_id).equals(platformDescriptor)) {
+                    LOGGER.debug("  Creating transfers from stop {}, platform {}", fromStopId, platformDescriptor);
                     EdgeIterator j = graph.createEdgeExplorer().setBaseNode(i.getAdjNode());
                     while (j.next()) {
                         if (j.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {

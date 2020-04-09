@@ -42,6 +42,20 @@ public class Transfer extends Entity {
     public String from_trip_id;
     public String to_trip_id;
 
+    @Override
+    public String toString() {
+        return "Transfer{" +
+                "from_stop_id='" + from_stop_id + '\'' +
+                ", to_stop_id='" + to_stop_id + '\'' +
+                ", transfer_type=" + transfer_type +
+                ", min_transfer_time=" + min_transfer_time +
+                ", from_route_id='" + from_route_id + '\'' +
+                ", to_route_id='" + to_route_id + '\'' +
+                ", from_trip_id='" + from_trip_id + '\'' +
+                ", to_trip_id='" + to_trip_id + '\'' +
+                '}';
+    }
+
     public static class Loader extends Entity.Loader<Transfer> {
 
         public Loader(GTFSFeed feed) {

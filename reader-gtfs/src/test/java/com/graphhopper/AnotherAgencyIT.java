@@ -37,8 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.graphhopper.reader.gtfs.GtfsHelper.time;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 public class AnotherAgencyIT {
 
@@ -102,6 +101,19 @@ public class AnotherAgencyIT {
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         PathWrapper transitSolution = route.getBest();
+        assertEquals(2, transitSolution.getLegs().size());
+        Trip.PtLeg ptLeg1 = (Trip.PtLeg) transitSolution.getLegs().get(0);
+        assertEquals("COURT2MUSEUM", ptLeg1.route_id);
+        assertEquals("MUSEUM1", ptLeg1.trip_id);
+        assertEquals("JUSTICE_COURT", ptLeg1.stops.get(0).stop_id);
+        assertEquals("MUSEUM", ptLeg1.stops.get(1).stop_id);
+
+        Trip.PtLeg ptLeg2 = (Trip.PtLeg) transitSolution.getLegs().get(1);
+        assertEquals("MUSEUM2AIRPORT", ptLeg2.route_id);
+        assertEquals("MUSEUMAIRPORT1", ptLeg2.trip_id);
+        assertEquals("NEXT_TO_MUSEUM", ptLeg2.stops.get(0).stop_id);
+        assertEquals("AIRPORT", ptLeg2.stops.get(1).stop_id);
+
         assertEquals("Expected total travel time == scheduled travel time + wait time", time(2, 10), transitSolution.getTime());
     }
 
