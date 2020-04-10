@@ -84,7 +84,7 @@ export default class Waypoint {
   _initializeName(prevApiLeg, nextApiLeg) {
     if (nextApiLeg) {
       if (nextApiLeg.type === Mode.PT) {
-        this._name = nextApiLeg.departureLocation;
+        this._name = nextApiLeg.departure_location;
       } else if (prevApiLeg) {
         this._name = this._findArrivalLocation(prevApiLeg);
       } else {
