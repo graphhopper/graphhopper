@@ -21,6 +21,7 @@ package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Transfer;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -29,47 +30,52 @@ import java.io.IOException;
 import java.util.List;
 import java.util.zip.ZipFile;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TransfersTest {
 
-    private Transfers transfers;
+    private Transfers sampleFeed;
+    private Transfers anotherSampleFeed;
 
     @BeforeAll
     public void init() throws IOException {
-        GTFSFeed gtfsFeed = new GTFSFeed();
-        gtfsFeed.loadFromFile(new ZipFile("files/another-sample-feed.zip"), "");
-        transfers = new Transfers(gtfsFeed);
+        GTFSFeed gtfsFeed1 = new GTFSFeed();
+        gtfsFeed1.loadFromFile(new ZipFile("files/sample-feed.zip"), "");
+        sampleFeed = new Transfers(gtfsFeed1);
+        GTFSFeed gtfsFeed2 = new GTFSFeed();
+        gtfsFeed2.loadFromFile(new ZipFile("files/another-sample-feed.zip"), "");
+        anotherSampleFeed = new Transfers(gtfsFeed2);
     }
 
     @Test
-    public void testTransfersByFromRouteEvenIfActuallyNotRouteSpecific() {
-        List<Transfer> transfersFromStop = transfers.getTransfersFromStop("MUSEUM", "COURT2MUSEUM");
-        assertEquals(1, transfersFromStop.size());
-        Transfer transfer = transfersFromStop.get(0);
-        assertEquals("MUSEUM", transfer.from_stop_id);
-        assertEquals("NEXT_TO_MUSEUM", transfer.to_stop_id);
-        assertEquals("COURT2MUSEUM", transfer.from_route_id);
-        assertEquals("MUSEUM2AIRPORT", transfer.to_route_id);
-    }
-
-    @Test
-    public void testTransfersByToRouteEvenIfActuallyNotRouteSpecific() {
-        List<Transfer> transfersToStop = transfers.getTransfersToStop("NEXT_TO_MUSEUM", "MUSEUM2AIRPORT");
+    public void testTransfersByToRoute() {
+        assertTrue(anotherSampleFeed.hasNoRouteSpecificArrivalTransferRules("MUSEUM"), "Transfer model says we don't have route-dependent arrival platform at from-stop");
+        assertTrue(anotherSampleFeed.hasNoRouteSpecificDepartureTransferRules("NEXT_TO_MUSEUM"), "Transfer model says we don't have route-dependent departure platform at to-stop");
+        List<Transfer> transfersToStop = anotherSampleFeed.getTransfersToStop("NEXT_TO_MUSEUM", null);
         assertEquals(2, transfersToStop.size());
         Transfer transfer = transfersToStop.get(0);
         assertEquals("MUSEUM", transfer.from_stop_id);
         assertEquals("NEXT_TO_MUSEUM", transfer.to_stop_id);
-        assertEquals("COURT2MUSEUM", transfer.from_route_id);
-        assertEquals("MUSEUM2AIRPORT", transfer.to_route_id);
+        Assertions.assertNull(transfer.from_route_id);
+        Assertions.assertNull(transfer.to_route_id);
 
         Transfer withinStationTransfer = transfersToStop.get(1);
         assertEquals("NEXT_TO_MUSEUM", withinStationTransfer.from_stop_id);
         assertEquals("NEXT_TO_MUSEUM", withinStationTransfer.to_stop_id);
         assertNull(withinStationTransfer.from_route_id);
         assertNull(withinStationTransfer.to_route_id);
+    }
+
+    @Test
+    public void testInternalTransfersByToRouteIfRouteSpecific() {
+        List<Transfer> transfersToStop = sampleFeed.getTransfersToStop("BEATTY_AIRPORT", "AB");
+        assertEquals(5, transfersToStop.size());
+        assertEquals("AB", transfersToStop.get(0).from_route_id);
+        assertEquals("FUNNY_BLOCK_AB", transfersToStop.get(1).from_route_id);
+        assertEquals("STBA", transfersToStop.get(2).from_route_id);
+        assertEquals("AAMV", transfersToStop.get(3).from_route_id);
+        assertEquals("ABBFC", transfersToStop.get(4).from_route_id);
     }
 
 }

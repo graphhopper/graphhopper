@@ -31,15 +31,31 @@ import java.util.Objects;
 public interface GtfsStorageI {
 
     public abstract class PlatformDescriptor implements Serializable {
+        String stop_id;
 
-        public static PlatformDescriptor route(String route_id) {
+        public static PlatformDescriptor route(String stop_id, String route_id) {
             RoutePlatform routePlatform = new RoutePlatform();
+            routePlatform.stop_id = stop_id;
             routePlatform.route_id = route_id;
             return routePlatform;
         }
 
-        public static RouteTypePlatform routeType(int route_type) {
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PlatformDescriptor that = (PlatformDescriptor) o;
+            return Objects.equals(stop_id, that.stop_id);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(stop_id);
+        }
+
+        public static RouteTypePlatform routeType(String stop_id, int route_type) {
             RouteTypePlatform routeTypePlatform = new RouteTypePlatform();
+            routeTypePlatform.stop_id = stop_id;
             routeTypePlatform.route_type = route_type;
             return routeTypePlatform;
         }
@@ -50,23 +66,25 @@ public interface GtfsStorageI {
         String route_id;
 
         @Override
+        public String toString() {
+            return "RoutePlatform{" +
+                    "stop_id='" + stop_id + '\'' +
+                    ", route_id='" + route_id + '\'' +
+                    '}';
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
             RoutePlatform that = (RoutePlatform) o;
-            return Objects.equals(route_id, that.route_id);
+            return route_id.equals(that.route_id);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(route_id);
-        }
-
-        @Override
-        public String toString() {
-            return "RoutePlatform{" +
-                    "route_id='" + route_id + '\'' +
-                    '}';
+            return Objects.hash(super.hashCode(), route_id);
         }
     }
 
@@ -77,19 +95,21 @@ public interface GtfsStorageI {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
             RouteTypePlatform that = (RouteTypePlatform) o;
             return route_type == that.route_type;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(route_type);
+            return Objects.hash(super.hashCode(), route_type);
         }
 
         @Override
         public String toString() {
             return "RouteTypePlatform{" +
-                    "route_type=" + route_type +
+                    "stop_id='" + stop_id + '\'' +
+                    ", route_type=" + route_type +
                     '}';
         }
     }
@@ -116,5 +136,5 @@ public interface GtfsStorageI {
 
     Map<String, Integer> getStationNodes();
 
-    Map<Integer, PlatformDescriptor> getRoutes();
+    Map<Integer, PlatformDescriptor> getPlatformDescriptorByEdge();
 }
