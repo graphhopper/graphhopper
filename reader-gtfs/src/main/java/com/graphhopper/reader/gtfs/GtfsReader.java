@@ -138,7 +138,6 @@ class GtfsReader {
         gtfsStorage.getTransfers().put(id, transfers);
         createTrips();
         wireUpStops();
-        logArrivalPlatforms();
         insertTransfers();
     }
 
@@ -208,21 +207,13 @@ class GtfsReader {
         LOGGER.debug("Creating transfers to stop {}, platform {}", toPlatformDescriptor.stop_id, toPlatformDescriptor);
         List<Transfer> transfersToPlatform = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
         transfersToPlatform.forEach(transfer -> {
-            LOGGER.debug(  "For transfer: {} {} {}", transfer.from_stop_id, transfer.from_route_id, transfer.min_transfer_time);
-            if (transfer.from_route_id != null) {
-                // We get a transfer rule about changing from a specific route.
-                // That means we expect a route-specific arrival platform at the from-stop.
-                String from_stop_id = transfer.from_stop_id;
-                String from_route_id = transfer.from_route_id;
-                boolean found = findRouteSpecificArrivalPlatform(from_stop_id, from_route_id);
-                assert(found);
-            }
             int stationNode = gtfsStorage.getStationNodes().get(transfer.from_stop_id);
             EdgeIterator i = graph.createEdgeExplorer().setBaseNode(stationNode);
             while (i.next()) {
                 if (i.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
                     GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = gtfsStorage.getPlatformDescriptorByEdge().get(i.getEdge());
-                    if (fromPlatformDescriptor.stop_id.equals(transfer.from_stop_id) && (transfer.from_route_id == null && fromPlatformDescriptor instanceof GtfsStorageI.RouteTypePlatform || GtfsStorageI.PlatformDescriptor.route(transfer.from_stop_id, transfer.from_route_id).equals(fromPlatformDescriptor))) {
+                    if (fromPlatformDescriptor.stop_id.equals(transfer.from_stop_id) &&
+                            (transfer.from_route_id == null && fromPlatformDescriptor instanceof GtfsStorageI.RouteTypePlatform || transfer.from_route_id != null && GtfsStorageI.PlatformDescriptor.route(transfer.from_stop_id, transfer.from_route_id).equals(fromPlatformDescriptor))) {
                         LOGGER.debug("  Creating transfers from stop {}, platform {}", transfer.from_stop_id, fromPlatformDescriptor);
                         EdgeIterator j = graph.createEdgeExplorer().setBaseNode(i.getAdjNode());
                         while (j.next()) {
@@ -244,21 +235,6 @@ class GtfsReader {
                 }
             }
         });
-    }
-
-    private boolean findRouteSpecificArrivalPlatform(String from_stop_id, String from_route_id) {
-        boolean found = false;
-        int stationNode = gtfsStorage.getStationNodes().get(from_stop_id);
-        EdgeIterator i = graph.createEdgeExplorer().setBaseNode(stationNode);
-        while (i.next()) {
-            if (i.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
-                GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = gtfsStorage.getPlatformDescriptorByEdge().get(i.getEdge());
-                if (fromPlatformDescriptor.equals(GtfsStorageI.PlatformDescriptor.route(from_stop_id, from_route_id))) {
-                    found = true;
-                }
-            }
-        }
-        return found;
     }
 
     void wireUpAdditionalDeparturesAndArrivals(ZoneId zoneId) {
@@ -642,29 +618,6 @@ class GtfsReader {
                 gtfsStorage.getStopSequences().put(boardEdge.getEdge(), stopTime.stop_sequence);
                 gtfsStorage.getTripDescriptors().put(boardEdge.getEdge(), tripDescriptor.toByteArray());
                 accumulatorValidity.andNot(lastTrip.tripWithStopTimes.validOnDay);
-            }
-        }
-    }
-
-    private void logArrivalPlatforms() {
-        for (String stopId : feed.stops.keySet()) {
-            logArrivalPlatforms(stopId);
-        }
-    }
-
-    private void logArrivalPlatforms(String stopId) {
-        Integer stationNode = gtfsStorage.getStationNodes().get(stopId);
-        if (stationNode == null) {
-            LOGGER.debug("Stop {} has no platform nodes -- maybe it doesn't have any trips?", stopId);
-            return;
-        }
-        EdgeIterator i = graph.createEdgeExplorer().setBaseNode(stationNode);
-        while (i.next()) {
-            if (i.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
-                GtfsStorageI.PlatformDescriptor platformDescriptor = gtfsStorage.getPlatformDescriptorByEdge().get(i.getEdge());
-                if (platformDescriptor.stop_id.equals(stopId)) {
-                    LOGGER.debug("Arrival platform station-node {}, stop {}, platform {}", stationNode, stopId, platformDescriptor);
-                }
             }
         }
     }
