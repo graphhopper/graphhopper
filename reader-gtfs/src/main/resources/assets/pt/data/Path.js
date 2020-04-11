@@ -77,8 +77,8 @@ export default class Path {
 
   _initializeSimpleValues(apiPath) {
     this._isSelected = false;
-    this._departureTime = apiPath.legs[0].departureTime;
-    this._arrivalTime = apiPath.legs[apiPath.legs.length - 1].arrivalTime;
+    this._departureTime = apiPath.legs[0].departure_time;
+    this._arrivalTime = apiPath.legs[apiPath.legs.length - 1].arrival_time;
     this._fare = apiPath.fare;
   }
 

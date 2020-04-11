@@ -41,6 +41,7 @@ import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 public class IsochroneResourceTest {
     private static final String DIR = "./target/andorra-gh/";
@@ -182,12 +183,10 @@ public class IsochroneResourceTest {
 
         assertEquals(1, featureCollection.getFeatures().size());
         Geometry polygon0 = featureCollection.getFeatures().get(0).getGeometry();
+        assertIs2D(polygon0);
 
         assertTrue(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.527057, 42.507145))));
         assertFalse(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.525404, 42.507081))));
-
-        // more like a circle => shorter is expected
-        assertTrue(polygon0.getCoordinates().length < 185);
 
         rsp = clientTarget(app, "/isochrone")
                 .queryParam("point", "42.509644,1.540554")
@@ -199,6 +198,10 @@ public class IsochroneResourceTest {
         featureCollection = rsp.readEntity(JsonFeatureCollection.class);
         polygon0 = featureCollection.getFeatures().get(0).getGeometry();
         assertTrue(polygon0.getCoordinates().length >= 190);
+    }
+
+    private static void assertIs2D(Geometry geometry) {
+        assertAll(Arrays.stream(geometry.getCoordinates()).map(coord -> () -> assertTrue(Double.isNaN(coord.z))));
     }
 
     @Test

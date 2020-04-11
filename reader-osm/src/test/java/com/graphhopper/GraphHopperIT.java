@@ -1536,15 +1536,16 @@ public class GraphHopperIT {
             req.getHints().putObject(CH.DISABLE, true).putObject(Landmark.DISABLE, true);
             PathWrapper path = hopper.route(req).getBest();
 
-            assertEquals(path.hasErrors(), pathCH.hasErrors());
-            assertEquals(path.hasErrors(), pathLM.hasErrors());
+            String failMessage = "seed: " + seed + ", i=" + i;
+            assertEquals(path.hasErrors(), pathCH.hasErrors(), failMessage);
+            assertEquals(path.hasErrors(), pathLM.hasErrors(), failMessage);
 
             if (!path.hasErrors()) {
-                assertEquals(path.getDistance(), pathCH.getDistance(), 0.1);
-                assertEquals(path.getDistance(), pathLM.getDistance(), 0.1);
+                assertEquals(path.getDistance(), pathCH.getDistance(), 0.1, failMessage);
+                assertEquals(path.getDistance(), pathLM.getDistance(), 0.1, failMessage);
 
-                assertEquals(path.getTime(), pathCH.getTime());
-                assertEquals(path.getTime(), pathLM.getTime());
+                assertEquals(path.getTime(), pathCH.getTime(), failMessage);
+                assertEquals(path.getTime(), pathLM.getTime(), failMessage);
             }
         }
     }
