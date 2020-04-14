@@ -21,10 +21,6 @@ package com.graphhopper.jackson;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public interface LMProfileConfigMixIn {
-    // todonow: maybe both of these are no longer needed because of snake case module?
     @JsonProperty("maximum_lm_weight")
     void setMaximumLMWeight(double maximumLMWeight);
-
-    @JsonProperty("preparation_profile")
-    void setPreparationProfile(String preparationProfile);
 }
