@@ -258,7 +258,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         IntHashSet blockedEdges = new IntHashSet();
 
         // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-        if (ruleLookup != null && ruleLookup.size() > 0) {
+        if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
             StopWatch sw = new StopWatch().start();
             blockedEdges = findBorderEdgeIds(ruleLookup);
             tarjanFilter = new BlockedEdgesFilter(encoder.getAccessEnc(), true, false, blockedEdges);
@@ -293,7 +293,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     GHPoint p = createPoint(graph, nextStartNode);
                     if (logDetails)
                         LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork size: " + subnetworkIds.size()
-                                + ", " + Helper.getMemInfo() + ((ruleLookup == null) ? "" : " area:" + ruleLookup.lookupRule(p).getId()));
+                                + ", " + Helper.getMemInfo() + ((ruleLookup == null) ? "" : " area:" + ruleLookup.lookupRules(p.lat, p.lon).getRules()));
 
                     if (createLandmarksForSubnetwork(nextStartNode, subnetworks, blockedEdges))
                         break;
@@ -464,10 +464,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         IntHashSet inaccessible = new IntHashSet();
         while (allEdgesIterator.next()) {
             int adjNode = allEdgesIterator.getAdjNode();
-            SpatialRule ruleAdj = ruleLookup.lookupRule(nodeAccess.getLatitude(adjNode), nodeAccess.getLongitude(adjNode));
+            SpatialRule ruleAdj = ruleLookup.lookupRules(nodeAccess.getLatitude(adjNode), nodeAccess.getLongitude(adjNode)).getRules().get(0);
 
             int baseNode = allEdgesIterator.getBaseNode();
-            SpatialRule ruleBase = ruleLookup.lookupRule(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode));
+            SpatialRule ruleBase = ruleLookup.lookupRules(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode)).getRules().get(0);
             if (ruleAdj != ruleBase) {
                 inaccessible.add(allEdgesIterator.getEdge());
             }

@@ -17,49 +17,35 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import org.locationtech.jts.geom.Envelope;
+import java.util.Collections;
+import java.util.List;
 
-import com.graphhopper.util.shapes.GHPoint;
+import org.locationtech.jts.geom.Envelope;
 
 /**
  * SpatialRuleLookup defines a container that stores SpatialRules and can lookup
- * a SpatialRule rule depending on the location.
+ * applicable rules depending on the location.
  *
  * @author Robin Boldt
  */
 public interface SpatialRuleLookup {
-
+    
     /**
-     * Return an applicable rule for this location.
-     * If there is more than one rule for the location, the implementation can decide which rule to return.
-     * For example this might be the first occurring or the most relevant, see the implementation JavaDoc.
+     * Return applicable rules for this location.
      * <p>
-     * If the requested location is outside of the supported bounds or no SpatialRule is registered at this location
-     * {@link SpatialRule#EMPTY} is returned.
+     * If multiple rules with the same priority overlap for a location, the
+     * implementation can decide which of them to return and in which order.
+     * <p>
+     * If the requested location is outside of the supported bounds or no
+     * SpatialRule is registered at this location {@link SpatialRuleSet#EMPTY}
+     * is returned.
      */
-    SpatialRule lookupRule(double lat, double lon);
+    SpatialRuleSet lookupRules(double lat, double lon);
 
     /**
-     * See {@link #lookupRule(double, double)} for details.
+     * @return the rules which are active for {@link #getBounds()}
      */
-    SpatialRule lookupRule(GHPoint point);
-
-    /**
-     * This method returns an identification number from 0 to size (exclusive) for the specified rule.
-     * The id is fix for a given set of SpatialRules.
-     */
-    int getSpatialId(SpatialRule rule);
-
-    /**
-     * This method returns the SpatialRule for a given Spatial Id. This can be used when retrieving SpatialRules from
-     * a Spatial Id stored in the graph.
-     */
-    SpatialRule getSpatialRule(int spatialId);
-
-    /**
-     * @return the number of rules added to this lookup.
-     */
-    int size();
+    List<SpatialRule> getRules();
 
     /**
      * @return the bounds of the SpatialRuleLookup
@@ -68,28 +54,13 @@ public interface SpatialRuleLookup {
 
     SpatialRuleLookup EMPTY = new SpatialRuleLookup() {
         @Override
-        public SpatialRule lookupRule(double lat, double lon) {
-            return SpatialRule.EMPTY;
+        public SpatialRuleSet lookupRules(double lat, double lon) {
+            return SpatialRuleSet.EMPTY;
         }
-
+        
         @Override
-        public SpatialRule lookupRule(GHPoint point) {
-            return SpatialRule.EMPTY;
-        }
-
-        @Override
-        public int getSpatialId(SpatialRule rule) {
-            return 0;
-        }
-
-        @Override
-        public SpatialRule getSpatialRule(int spatialId) {
-            return SpatialRule.EMPTY;
-        }
-
-        @Override
-        public int size() {
-            return 1;
+        public List<SpatialRule> getRules() {
+            return Collections.emptyList();
         }
 
         @Override
