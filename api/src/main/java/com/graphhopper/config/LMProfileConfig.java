@@ -28,7 +28,7 @@ import static com.graphhopper.config.ProfileConfig.validateProfileName;
  */
 public class LMProfileConfig {
     private String profile = "";
-    private String preparationProfile = "self";
+    private String preparationProfile = "this";
     private double maximumLMWeight = -1;
 
     private LMProfileConfig() {
@@ -49,7 +49,7 @@ public class LMProfileConfig {
     }
 
     public boolean usesOtherPreparation() {
-        return !preparationProfile.equals("self");
+        return !preparationProfile.equals("this");
     }
 
     public String getPreparationProfile() {
