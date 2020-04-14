@@ -1,11 +1,14 @@
 // Import vendors
 import 'angular'
 import 'leaflet'
+import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility';
 import 'leaflet-routing-machine'
 import 'lrm-graphhopper'
 import 'ng-file-upload/dist/ng-file-upload-all.min'
 
 import 'leaflet/dist/leaflet.css'
+import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css'
+
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
 // Import styles
 import './reset.sass';

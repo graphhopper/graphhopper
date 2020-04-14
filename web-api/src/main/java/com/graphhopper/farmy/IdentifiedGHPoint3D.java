@@ -86,6 +86,6 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
 
 
     public String[] toGeoJsonWithId() {
-        return new String[]{String.valueOf(lon), String.valueOf(lat), String.valueOf(ele), id};
+        return new String[]{String.valueOf(lat), String.valueOf(lon), String.valueOf(ele), id};
     }
 }

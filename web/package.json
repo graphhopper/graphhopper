@@ -9,9 +9,9 @@
   "dependencies": {
     "angular": "^1.7.9",
     "leaflet": "^1.6.0",
+    "leaflet-defaulticon-compatibility": "^0.1.1",
     "leaflet-routing-machine": "^3.2.12",
     "lrm-graphhopper": "^1.3.0",
-    "mini-css-extract-plugin": "^0.9.0",
     "ng-file-upload": "^12.2.13"
   },
   "description": "Farmy VRP Solution",
