@@ -1,6 +1,6 @@
 version: '{build}'
 clone_depth: 3
-image: Visual Studio 2019
+image: Ubuntu
 environment:
   DOCKER_USER:
     secure: xxxxxxx
