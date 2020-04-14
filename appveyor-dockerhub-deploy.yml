@@ -1,0 +1,23 @@
+version: '{build}'
+clone_depth: 3
+image: Visual Studio 2019
+environment:
+  DOCKER_USER:
+    secure: xxxxxxx
+  DOCKER_PASS:
+    secure: yyyyyyy
+branches:
+  only:
+    - master
+install:
+  - cmd: docker version
+build_script:
+  - docker build ./
+deploy_script:
+  - docker login -u="$env:DOCKER_USER" -p="$env:DOCKER_PASS"
+  - docker push graphhopper/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
+deploy:
+  - provider: Environment
+    name: production
+    on:
+      APPVEYOR_REPO_TAG: true
