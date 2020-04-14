@@ -43,6 +43,13 @@ public class GraphHopperConfig {
         this(new PMap());
     }
 
+    public GraphHopperConfig(GraphHopperConfig otherConfig) {
+        map = new PMap(otherConfig.map);
+        profiles = new ArrayList<>(otherConfig.profiles);
+        chProfiles = new ArrayList<>(otherConfig.chProfiles);
+        lmProfiles = new ArrayList<>(otherConfig.lmProfiles);
+    }
+
     public GraphHopperConfig(PMap pMap) {
         this.map = pMap;
     }
@@ -74,8 +81,8 @@ public class GraphHopperConfig {
         return this;
     }
 
-    public GraphHopperConfig put(String key, Object value) {
-        map.put(key, value);
+    public GraphHopperConfig putObject(String key, Object value) {
+        map.putObject(key, value);
         return this;
     }
 
@@ -103,8 +110,8 @@ public class GraphHopperConfig {
         return map.getDouble(key, _default);
     }
 
-    public String get(String key, String _default) {
-        return map.get(key, _default);
+    public String getString(String key, String _default) {
+        return map.getString(key, _default);
     }
 
     public PMap asPMap() {
@@ -130,7 +137,7 @@ public class GraphHopperConfig {
             sb.append("\n");
         }
         sb.append("properties:\n");
-        for (Map.Entry<String, String> entry : map.toMap().entrySet()) {
+        for (Map.Entry<String, Object> entry : map.toMap().entrySet()) {
             sb.append(entry.getKey()).append(": ").append(entry.getValue());
             sb.append("\n");
         }

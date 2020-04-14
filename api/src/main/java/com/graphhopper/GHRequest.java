@@ -34,6 +34,9 @@ import java.util.Locale;
  */
 public class GHRequest {
     private List<GHPoint> points;
+    // todo #1934: keep this here or put it into hints, and even more important: remove vehicle+weighting from
+    // hints?
+    private String profile = "";
     private final HintsMap hints = new HintsMap();
     // List of favored start (1st element) and arrival heading (all other).
     // Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
@@ -223,6 +226,15 @@ public class GHRequest {
         return setLocale(Helper.getLocale(localeStr));
     }
 
+    public String getProfile() {
+        return profile;
+    }
+
+    public GHRequest setProfile(String profile) {
+        this.profile = profile;
+        return this;
+    }
+
     public String getWeighting() {
         return hints.getWeighting();
     }
@@ -252,13 +264,14 @@ public class GHRequest {
     }
 
     /**
-     * This method sets a key value pair in the hints and is equivalent to getHints().put(String, String) but unrelated
-     * to the setPointHints method. It is mainly used for deserialization with Jackson.
+     * This method sets a key value pair in the hints and is unrelated to the setPointHints method.
+     * It is mainly used for deserialization with Jackson.
      *
      * @see #setPointHints(List)
      */
-    public void putHint(String fieldName, Object value) {
-        this.hints.put(fieldName, value);
+    public GHRequest putHint(String fieldName, Object value) {
+        this.hints.putObject(fieldName, value);
+        return this;
     }
 
     public GHRequest setPointHints(List<String> pointHints) {

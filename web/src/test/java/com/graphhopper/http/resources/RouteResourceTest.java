@@ -43,6 +43,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
@@ -50,9 +51,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static com.graphhopper.http.util.TestUtils.clientUrl;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -64,16 +65,15 @@ public class RouteResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car").
-                put("routing.ch.disabling_allowed", "true").
-                put("prepare.min_network_size", "0").
-                put("prepare.min_one_way_network_size", "0").
-                put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.encoded_values", "road_class,surface,road_environment,max_speed").
-                put("graph.location", DIR)
+                putObject("graph.flag_encoders", "car").
+                putObject("routing.ch.disabling_allowed", true).
+                putObject("prepare.min_network_size", 0).
+                putObject("prepare.min_one_way_network_size", 0).
+                putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("graph.location", DIR)
                 .setProfiles(Collections.singletonList(new ProfileConfig("my_car").setVehicle("car").setWeighting("fastest")))
-                .setCHProfiles(Collections.singletonList(new CHProfileConfig("my_car"))
-                );
+                .setCHProfiles(Collections.singletonList(new CHProfileConfig("my_car")));
     }
 
     @ClassRule
@@ -118,6 +118,27 @@ public class RouteResourceTest {
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue("There should be an error " + json.get("message"), json.get("message").asText().contains("Cannot parse point '1234'"));
+    }
+
+    @Test
+    public void testAcceptOnlyXmlButNoTypeParam() {
+        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&point=42.510071,1.548128")
+                .request(MediaType.APPLICATION_XML).buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+    }
+
+    @Test
+    public void testAcceptOnlyXmlButNoTypeParamPost() {
+        String jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        final Response response = clientTarget(app, "/route")
+                .request(MediaType.APPLICATION_XML).buildPost(Entity.json(jsonStr)).invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
     }
 
     @Test
@@ -314,7 +335,7 @@ public class RouteResourceTest {
         GHResponse rsp = hopper.route(request);
         assertEquals("Continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());
 
-        request.getHints().put("turn_description", false);
+        request.getHints().putObject("turn_description", false);
         rsp = hopper.route(request);
         assertFalse(rsp.hasErrors());
         assertEquals("Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());

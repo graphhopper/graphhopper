@@ -24,16 +24,17 @@ import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import org.junit.AfterClass;
+import org.junit.ClassRule;
+import org.junit.Test;
+
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import org.junit.ClassRule;
-import org.junit.Test;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
-import javax.ws.rs.core.Response;
-import org.junit.AfterClass;
 
 /**
  * Tests the creation of Landmarks and parsing the map.geo.json file
@@ -47,15 +48,15 @@ public class GraphHopperLandmarksTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car").
-                put("datareader.file", "../core/files/belarus-east.osm.gz").
-                put("prepare.min_network_size", 0).
-                put("prepare.min_one_way_network_size", 0).
-                put("routing.ch.disabling_allowed", true).
-                put("routing.lm.disabling_allowed", true).
-                put("graph.location", DIR)
+                putObject("graph.flag_encoders", "car").
+                putObject("datareader.file", "../core/files/belarus-east.osm.gz").
+                putObject("prepare.min_network_size", 0).
+                putObject("prepare.min_one_way_network_size", 0).
+                putObject("routing.ch.disabling_allowed", true).
+                putObject("routing.lm.disabling_allowed", true).
+                putObject("graph.location", DIR)
                 // force landmark creation even for tiny networks
-                .put("prepare.lm.min_network_size", 2)
+                .putObject("prepare.lm.min_network_size", 2)
                 .setProfiles(Collections.singletonList(
                         new ProfileConfig("car_profile").setVehicle("car").setWeighting("fastest")
                 ))

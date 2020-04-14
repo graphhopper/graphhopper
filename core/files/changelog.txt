@@ -1,4 +1,10 @@
 1.0
+    removed /change endpoint
+    removed vehicle,weighting and edge_based from GraphHopper class, replaced with new profile parameter, #1958
+    all routing profiles have to be configured when setting up GraphHopper, #1958
+    there no longer is a default vehicle, not setting the vehicle now only works if there is exactly one profile that matches the other parameters. anyway you should use the new profile rather than the vehicle parameter.
+    removed IPFilter. Use a firewall instead.
+    PMap refactored. It is recommended to use putObject(String, Object) instead of put, #1956
     removed UnsafeDataAccess as not maintained, see #1620
     add profiles parameter and replace prepare.ch/lm.weightings and prepare.ch.edge_based with profiles_ch/lm config parameters, #1922
     Properties in config.yml have to follow the snake_case, #1918, easy convert via https://github.com/karussell/snake_case

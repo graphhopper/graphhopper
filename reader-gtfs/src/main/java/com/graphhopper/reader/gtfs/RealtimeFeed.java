@@ -336,8 +336,8 @@ public class RealtimeFeed {
                 }
 
                 @Override
-                public Map<Integer, PlatformDescriptor> getRoutes() {
-                    return staticGtfs.getRoutes();
+                public Map<Integer, PlatformDescriptor> getPlatformDescriptorByEdge() {
+                    return staticGtfs.getPlatformDescriptorByEdge();
                 }
             };
             final GtfsReader gtfsReader = new GtfsReader(feedKey, overlayGraph, graphHopperStorage.getEncodingManager(), gtfsStorage, null);

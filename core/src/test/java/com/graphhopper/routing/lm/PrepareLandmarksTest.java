@@ -147,8 +147,7 @@ public class PrepareLandmarksTest {
         AStar expectedAlgo = new AStar(graph, weighting, tm);
         Path expectedPath = expectedAlgo.calcPath(41, 183);
 
-        PMap hints = new PMap();
-        hints.put(Parameters.Landmark.ACTIVE_COUNT, 2);
+        PMap hints = new PMap().putObject(Parameters.Landmark.ACTIVE_COUNT, 2);
 
         // landmarks with A*
         RoutingAlgorithm oneDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph,

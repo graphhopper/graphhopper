@@ -123,7 +123,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
             getGtfsStorage().create();
             GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
             int idx = 0;
-            List<String> gtfsFiles = ghConfig.has("gtfs.file") ? Arrays.asList(ghConfig.get("gtfs.file", "").split(",")) : Collections.emptyList();
+            List<String> gtfsFiles = ghConfig.has("gtfs.file") ? Arrays.asList(ghConfig.getString("gtfs.file", "").split(",")) : Collections.emptyList();
             for (String gtfsFile : gtfsFiles) {
                 try {
                     getGtfsStorage().loadGtfsFromZipFile("gtfs_" + idx++, new ZipFile(gtfsFile));

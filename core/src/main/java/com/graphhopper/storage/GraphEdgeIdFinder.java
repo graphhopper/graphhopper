@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.Polygon;
@@ -86,8 +85,8 @@ public class GraphEdgeIdFinder {
     }
 
     public static GraphEdgeIdFinder.BlockArea createBlockArea(Graph graph, LocationIndex locationIndex,
-                                                              List<GHPoint> points, HintsMap hints, EdgeFilter edgeFilter) {
-        String blockAreaStr = hints.get(Parameters.Routing.BLOCK_AREA, "");
+                                                              List<GHPoint> points, PMap hints, EdgeFilter edgeFilter) {
+        String blockAreaStr = hints.getString(Parameters.Routing.BLOCK_AREA, "");
         GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
                 parseBlockArea(blockAreaStr, edgeFilter, hints.getDouble(Parameters.Routing.BLOCK_AREA + ".edge_id_max_area", 1000 * 1000));
         for (GHPoint p : points) {

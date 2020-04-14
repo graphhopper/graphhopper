@@ -205,8 +205,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             fromQResult = toQResult;
         }
 
-        ghResponse.getHints().put("visited_nodes.sum", visitedNodesSum);
-        ghResponse.getHints().put("visited_nodes.average", (float) visitedNodesSum / (pointsCount - 1));
+        ghResponse.getHints().putObject("visited_nodes.sum", visitedNodesSum);
+        ghResponse.getHints().putObject("visited_nodes.average", (float) visitedNodesSum / (pointsCount - 1));
 
         return pathList;
     }

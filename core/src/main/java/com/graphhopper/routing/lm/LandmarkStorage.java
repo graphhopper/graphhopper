@@ -96,6 +96,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
         this.lmProfile = lmProfile;
         this.weighting = lmProfile.getWeighting();
+        if (weighting.hasTurnCosts()) {
+            throw new IllegalArgumentException("Landmark preparation cannot be used with weightings returning turn costs, because this can lead to wrong results during the (node-based) landmark calculation, see #1960");
+        }
         this.encoder = weighting.getFlagEncoder();
         // allowing arbitrary weighting is too dangerous
         this.lmSelectionWeighting = new ShortestWeighting(encoder) {
@@ -817,7 +820,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             if ((double) maxedout.get() / map.size() > 0.1) {
                 LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
                         "too many weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor than " + lms.factor
-                        + ". For example use the following in the config.yml: weighting=" + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * 1.2);
+                        + ". For example use maximum_lm_weight: " + finalMaxWeight.getValue() * 1.2 + " in your LM profile definition");
             }
         }
     }

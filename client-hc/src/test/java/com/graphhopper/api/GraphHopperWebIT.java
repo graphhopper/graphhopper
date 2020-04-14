@@ -2,6 +2,7 @@ package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
@@ -36,26 +37,19 @@ public class GraphHopperWebIT {
 
     static final String KEY = System.getProperty("key", "78da6e9a-273e-43d1-bdda-8f24e007a1fa");
     private final GraphHopperWeb gh;
-    private final GraphHopperMatrixWeb ghMatrix;
 
     public GraphHopperWebIT(boolean postRequest, int maxUnzippedLength) {
         gh = new GraphHopperWeb().setPostRequest(postRequest).
                 setKey(KEY);
         gh.maxUnzippedLength = maxUnzippedLength;
-
-        GHMatrixBatchRequester requester = new GHMatrixBatchRequester();
-        requester.maxUnzippedLength = maxUnzippedLength;
-        ghMatrix = new GraphHopperMatrixWeb(requester).
-                setKey(KEY);
     }
 
     @Parameterized.Parameters(name = "POST = {0}, maxUnzippedLength = {1}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {false, -1},
-                // TODO later: test post request against API
-//                {true, 1000},
-//                {true, 0}
+                {true, 1000},
+                {true, 0}
         });
     }
 
@@ -65,9 +59,9 @@ public class GraphHopperWebIT {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
-        req.getHints().put("elevation", false);
-        req.getHints().put("instructions", true);
-        req.getHints().put("calc_points", true);
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
         GHResponse res = gh.route(req);
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         PathWrapper alt = res.getBest();
@@ -88,15 +82,25 @@ public class GraphHopperWebIT {
     }
 
     @Test
+    public void testPutPOJO() {
+        ObjectNode requestJson = new ObjectMapper().createObjectNode();
+        requestJson.putPOJO("double", 1.0);
+        requestJson.putPOJO("int", 1);
+        requestJson.putPOJO("boolean", true);
+        // does not work requestJson.putPOJO("string", "test");
+        assertEquals("{\"double\":1.0,\"int\":1,\"boolean\":true}", requestJson.toString());
+    }
+
+    @Test
     public void testAlternativeRoute() {
         // https://graphhopper.com/maps/?point=52.042989%2C10.373926&point=52.042289%2C10.384043&algorithm=alternative_route&ch.disable=true
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(52.042989, 10.373926)).
                 addPoint(new GHPoint(52.042289, 10.384043));
         req.setAlgorithm("alternative_route");
-        req.getHints().put("instructions", true);
-        req.getHints().put("calc_points", true);
-        req.getHints().put("ch.disable", true);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("ch.disable", true);
         GHResponse res = gh.route(req);
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         List<PathWrapper> paths = res.getAll();
@@ -121,7 +125,7 @@ public class GraphHopperWebIT {
         GHResponse res = gh.route(req);
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
 
-        req.getHints().put(GraphHopperWeb.TIMEOUT, 1);
+        req.putHint(GraphHopperWeb.TIMEOUT, 1);
         try {
             gh.route(req);
             fail();
@@ -136,8 +140,8 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
 
-        req.getHints().put("instructions", false);
-        req.getHints().put("calc_points", false);
+        req.putHint("instructions", false);
+        req.putHint("calc_points", false);
         GHResponse res = gh.route(req);
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         PathWrapper alt = res.getBest();
@@ -177,7 +181,7 @@ public class GraphHopperWebIT {
                 "Continue", "Keep left", "Turn right onto B 246", "Turn right onto Dorfaue, K 6156", "Turn right onto B 96"
         ), given);
 
-        req.getHints().put("turn_description", false);
+        req.putHint("turn_description", false);
         res = gh.route(req);
         given = extractInstructionNames(res.getBest(), 5);
         assertEquals(Arrays.asList(
@@ -235,7 +239,7 @@ public class GraphHopperWebIT {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(52.261434, 13.485718)).
                 addPoint(new GHPoint(52.399067, 13.469238));
-        req.getHints().put("turn_description", false);
+        req.putHint("turn_description", false);
         GHResponse res = gh.route(req);
         InstructionList instructions = res.getBest().getInstructions();
         String finishInstructionName = instructions.get(instructions.size() - 1).getName();
@@ -247,10 +251,10 @@ public class GraphHopperWebIT {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
-        req.getHints().put("elevation", false);
-        req.getHints().put("instructions", true);
-        req.getHints().put("calc_points", true);
-        req.getHints().put("type", "gpx");
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("type", "gpx");
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));
         assertTrue(res.contains("<rtept lat="));
@@ -263,15 +267,15 @@ public class GraphHopperWebIT {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
-        req.getHints().put("elevation", false);
-        req.getHints().put("instructions", true);
-        req.getHints().put("calc_points", true);
-        req.getHints().put("type", "gpx");
-        req.getHints().put("gpx.track", "false");
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("type", "gpx");
+        req.putHint("gpx.track", "false");
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));
         assertTrue(res.contains("<rtept lat="));
-        assertTrue(!res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
+        assertFalse(res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
         assertTrue(res.endsWith("</gpx>"));
     }
 
@@ -293,75 +297,6 @@ public class GraphHopperWebIT {
         PathWrapper alt = res.getBest();
         isBetween(850, 1050, alt.getRouteWeight());
         assertEquals("[0, 2, 1, 3]", alt.getPointsOrder().toString());
-    }
-
-    @Test
-    public void testMatrix() {
-        GHMRequest req = AbstractGHMatrixWebTester.createRequest();
-        MatrixResponse res = ghMatrix.route(req);
-
-        // no distances available
-        try {
-            assertEquals(0, res.getDistance(1, 2), 1);
-            fail("there should be an exception when trying to get distances");
-        } catch (Exception ex) {
-        }
-
-        // ... only weight:
-        assertEquals(1930, res.getWeight(1, 2), 10);
-
-        req = AbstractGHMatrixWebTester.createRequest();
-        req.addOutArray("weights");
-        req.addOutArray("distances");
-        res = ghMatrix.route(req);
-
-        assertEquals(9834, res.getDistance(1, 2), 20);
-        assertEquals(1930, res.getWeight(1, 2), 10);
-    }
-
-    @Test
-    public void testMatrix_DoNotWrapHints() {
-        final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb(new GHMatrixBatchRequester() {
-            @Override
-            protected String postJson(String url, JsonNode data) throws IOException {
-                assertFalse(data.has("hints"));
-                assertTrue(data.has("something"));
-                return super.postJson(url, data);
-            }
-        });
-        ghMatrix.setKey(System.getProperty("graphhopper.key", KEY));
-
-        GHMRequest req = new GHMRequest();
-        req.addPoint(new GHPoint(49.6724, 11.3494));
-        req.addPoint(new GHPoint(49.6550, 11.4180));
-        req.getHints().put("something", "xy");
-        ghMatrix.route(req);
-
-        // clashing parameter will overwrite!
-        req.getHints().put("vehicle", "xy");
-        assertEquals("xy", req.getVehicle());
-    }
-
-    @Test
-    public void doNotIncludeEmptyCurbsidesList() {
-        final AtomicInteger counter = new AtomicInteger(0);
-        final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb(new GHMatrixBatchRequester() {
-            @Override
-            protected String postJson(String url, JsonNode data) throws IOException {
-                assertFalse(data.has("curbsides"));
-                assertTrue(data.has("points"));
-                counter.incrementAndGet();
-                return "";
-            }
-        });
-        GHMRequest req = new GHMRequest();
-        req.addPoint(new GHPoint(49.6724, 11.3494));
-        req.addPoint(new GHPoint(49.6550, 11.4180));
-        try {
-            ghMatrix.route(req);
-        } catch (Exception ex) {
-        }
-        assertEquals(1, counter.get());
     }
 
     @Test

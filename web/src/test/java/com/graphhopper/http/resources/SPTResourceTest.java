@@ -18,6 +18,7 @@
 
 package com.graphhopper.http.resources;
 
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
@@ -29,12 +30,13 @@ import org.junit.Test;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 
 
 public class SPTResourceTest {
@@ -44,10 +46,12 @@ public class SPTResourceTest {
 
     static {
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car").
-                put("graph.encoded_values", "max_speed,road_class").
-                put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR);
+                putObject("graph.flag_encoders", "car|turn_costs=true").
+                putObject("graph.encoded_values", "max_speed,road_class").
+                putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("graph.location", DIR).
+                // use turn costs to make sure this is not a problem
+                        setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true)));
     }
 
     @ClassRule
@@ -67,7 +71,7 @@ public class SPTResourceTest {
         assertTrue(lines.length > 500);
         List<String> headers = Arrays.asList(lines[0].split(","));
         assertEquals("[longitude, latitude, time, distance]", headers.toString());
-        String[] row = lines[1].split(",");
+        String[] row = lines[166].split(",");
         assertEquals(1.5552, Double.parseDouble(row[0]), 0.0001);
         assertEquals(42.5179, Double.parseDouble(row[1]), 0.0001);
         assertEquals(118, Integer.parseInt(row[2]) / 1000, 1);
@@ -81,8 +85,8 @@ public class SPTResourceTest {
         int prevTimeIndex = headers.indexOf("prev_time");
         assertNotEquals(-1, prevTimeIndex);
 
-        row = lines[1].split(",");
-        assertEquals(115, Integer.parseInt(row[prevTimeIndex]) / 1000);
+        row = lines[20].split(",");
+        assertEquals(41, Integer.parseInt(row[prevTimeIndex]) / 1000);
     }
 
     @Test
@@ -92,12 +96,12 @@ public class SPTResourceTest {
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
 
-        String[] row = lines[16].split(",");
+        String[] row = lines[368].split(",");
         assertEquals("", row[0]);
         assertEquals("service", row[1]);
         assertEquals(20, Double.parseDouble(row[2]), .1);
 
-        row = lines[9].split(",");
+        row = lines[249].split(",");
         assertEquals("Carretera d'Engolasters CS-200", row[0]);
         assertEquals("secondary", row[1]);
         assertTrue(Double.isInfinite(Double.parseDouble(row[2])));

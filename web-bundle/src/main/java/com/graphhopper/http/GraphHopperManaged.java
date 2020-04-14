@@ -53,7 +53,7 @@ public class GraphHopperManaged implements Managed {
     public GraphHopperManaged(GraphHopperConfig configuration, ObjectMapper objectMapper) {
         ObjectMapper localObjectMapper = objectMapper.copy();
         localObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        String splitAreaLocation = configuration.get(Parameters.Landmark.PREPARE + "split_area_location", "");
+        String splitAreaLocation = configuration.getString(Parameters.Landmark.PREPARE + "split_area_location", "");
         JsonFeatureCollection landmarkSplittingFeatureCollection;
         try (Reader reader = splitAreaLocation.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) : new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
             landmarkSplittingFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
@@ -66,12 +66,12 @@ public class GraphHopperManaged implements Managed {
         } else {
             graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection).forServer();
         }
-        if (!configuration.get("spatial_rules.location", "").isEmpty()) {
+        if (!configuration.getString("spatial_rules.location", "").isEmpty()) {
             throw new RuntimeException("spatial_rules.location has been deprecated. Please use spatial_rules.borders_directory instead.");
         }
-        String spatialRuleBordersDirLocation = configuration.get("spatial_rules.borders_directory", "");
+        String spatialRuleBordersDirLocation = configuration.getString("spatial_rules.borders_directory", "");
         if (!spatialRuleBordersDirLocation.isEmpty()) {
-            final BBox maxBounds = BBox.parseBBoxString(configuration.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
+            final BBox maxBounds = BBox.parseBBoxString(configuration.getString("spatial_rules.max_bbox", "-180, 180, -90, 90"));
             final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
             List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {

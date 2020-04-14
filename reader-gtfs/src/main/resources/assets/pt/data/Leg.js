@@ -45,8 +45,8 @@ export default class Leg {
   constructor(apiLeg, type) {
     this._geometry = apiLeg.geometry;
     this._type = type;
-    this._departureTime = apiLeg.departureTime;
-    this._arrivalTime = apiLeg.arrivalTime;
+    this._departureTime = apiLeg.departure_time;
+    this._arrivalTime = apiLeg.arrival_time;
     this._turns = this.initializeTurns(apiLeg);
     this._distance = this.initializeDistance(apiLeg);
   }

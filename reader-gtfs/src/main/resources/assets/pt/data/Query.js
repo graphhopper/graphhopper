@@ -6,8 +6,7 @@ const CreateQuery = (baseUrl, search) => {
     url.searchParams.delete("point");
     url.searchParams.append("point", [search.from.lat, search.from.long]);
     url.searchParams.append("point", [search.to.lat, search.to.long]);
-    let time = search.timeOption === TimeOption.NOW ? new moment().utc().format() :
-        search.departureDateTime
+    let time = search.departureDateTime
             .clone()     //otherwise the UI also displays utc time.
             .utc()
             .format();

@@ -49,28 +49,35 @@ public class HintsMap extends PMap {
     }
 
     @Override
-    public HintsMap put(String key, Object str) {
-        super.put(key, str);
+    public HintsMap putObject(String key, Object object) {
+        super.putObject(key, object);
+        return this;
+    }
+
+    @Override
+    @Deprecated
+    public HintsMap put(String key, String string) {
+        super.put(key, string);
         return this;
     }
 
     public String getWeighting() {
-        return toLowerCase(super.get("weighting", ""));
+        return toLowerCase(super.getString("weighting", ""));
     }
 
     public HintsMap setWeighting(String w) {
         if (w != null)
-            super.put("weighting", w);
+            super.putObject("weighting", w);
         return this;
     }
 
     public String getVehicle() {
-        return toLowerCase(super.get("vehicle", ""));
+        return toLowerCase(super.getString("vehicle", ""));
     }
 
     public HintsMap setVehicle(String v) {
         if (v != null)
-            super.put("vehicle", v);
+            super.putObject("vehicle", v);
         return this;
     }
 }

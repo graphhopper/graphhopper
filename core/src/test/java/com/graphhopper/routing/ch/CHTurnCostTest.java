@@ -1137,10 +1137,10 @@ public class CHTurnCostTest {
 
     private RoutingAlgorithmFactory automaticPrepareCH() {
         PMap pMap = new PMap();
-        pMap.put(PERIODIC_UPDATES, 20);
-        pMap.put(LAST_LAZY_NODES_UPDATES, 100);
-        pMap.put(NEIGHBOR_UPDATES, 4);
-        pMap.put(LOG_MESSAGES, 10);
+        pMap.putObject(PERIODIC_UPDATES, 20);
+        pMap.putObject(LAST_LAZY_NODES_UPDATES, 100);
+        pMap.putObject(NEIGHBOR_UPDATES, 4);
+        pMap.putObject(LOG_MESSAGES, 10);
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
         ch.setParams(pMap);
         ch.doWork();

@@ -19,6 +19,7 @@
 package com.graphhopper;
 
 import com.google.transit.realtime.GtfsRealtime;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.Request;
@@ -31,6 +32,7 @@ import org.junit.Test;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.*;
+import java.util.Collections;
 
 import static com.google.transit.realtime.GtfsRealtime.TripDescriptor.ScheduleRelationship.ADDED;
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SCHEDULED;
@@ -48,9 +50,9 @@ public class RealtimeIT {
     @BeforeClass
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.put("graph.flag_encoders", "car,foot");
-        ghConfig.put("gtfs.file", "files/sample-feed.zip");
-        ghConfig.put("graph.location", GRAPH_LOC);
+        ghConfig.putObject("graph.flag_encoders", "car,foot");
+        ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
+        ghConfig.putObject("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

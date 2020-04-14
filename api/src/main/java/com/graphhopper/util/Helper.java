@@ -410,6 +410,33 @@ public class Helper {
         return (int) x;
     }
 
+    /**
+     * This method probes the specified string for a boolean, int, long, float and double. If all this fails it returns
+     * the unchanged string.
+     */
+    public static Object toObject(String string) {
+        if ("true".equalsIgnoreCase(string) || "false".equalsIgnoreCase(string))
+            return Boolean.parseBoolean(string);
+        try {
+            return Integer.parseInt(string);
+        } catch (NumberFormatException ex) {
+            try {
+                return Long.parseLong(string);
+            } catch (NumberFormatException ex2) {
+                try {
+                    return Float.parseFloat(string);
+                } catch (NumberFormatException ex3) {
+                    try {
+                        return Double.parseDouble(string);
+                    } catch (NumberFormatException ex4) {
+                        // give up and simply return the string
+                        return string;
+                    }
+                }
+            }
+        }
+    }
+
     public static String camelCaseToUnderScore(String key) {
         if (key.isEmpty())
             return key;

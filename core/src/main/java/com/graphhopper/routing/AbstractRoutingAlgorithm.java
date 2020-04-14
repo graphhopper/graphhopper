@@ -51,6 +51,8 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
      * @param traversalMode how the graph is traversed e.g. if via nodes or edges.
      */
     public AbstractRoutingAlgorithm(Graph graph, Weighting weighting, TraversalMode traversalMode) {
+        if (weighting.hasTurnCosts() && !traversalMode.isEdgeBased())
+            throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
         this.weighting = weighting;
         this.flagEncoder = weighting.getFlagEncoder();
         this.traversalMode = traversalMode;

@@ -160,7 +160,7 @@ public class PtIsochroneResource {
                 }
             }
 
-            ContourBuilder contourBuilder = new ContourBuilder(tin);
+            ContourBuilder contourBuilder = new ContourBuilder(tin.getEdges());
             MultiPolygon isoline = contourBuilder.computeIsoline(targetZ);
 
             // debugging tool

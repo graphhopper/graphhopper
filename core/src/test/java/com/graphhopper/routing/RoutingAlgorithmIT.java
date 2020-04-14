@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.PrincetonReader;
 import com.graphhopper.routing.util.EncodingManager;
@@ -25,7 +26,6 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -36,10 +36,7 @@ import com.graphhopper.util.StopWatch;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
@@ -62,8 +59,11 @@ public class RoutingAlgorithmIT {
         ProfileConfig profile = new ProfileConfig("profile").setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting()).setTurnCosts(tMode.isEdgeBased());
         Weighting weighting = hopper.createWeighting(profile, hints);
 
-        HintsMap defaultHints = new HintsMap().put(Parameters.CH.DISABLE, true).put(Parameters.Landmark.DISABLE, true)
-                .setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());
+        HintsMap defaultHints = new HintsMap()
+                .putObject(Parameters.CH.DISABLE, true)
+                .putObject(Parameters.Landmark.DISABLE, true)
+                .setVehicle(hints.getVehicle())
+                .setWeighting(hints.getWeighting());
 
         AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
         List<AlgoHelperEntry> algos = new ArrayList<>();
@@ -72,14 +72,14 @@ public class RoutingAlgorithmIT {
         algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
 
         AlgorithmOptions astarbiOpts = AlgorithmOptions.start(defaultOpts).algorithm(ASTAR_BI).build();
-        astarbiOpts.getHints().put(ASTAR_BI + ".approximation", "BeelineSimplification");
+        astarbiOpts.getHints().putObject(ASTAR_BI + ".approximation", "BeelineSimplification");
         AlgorithmOptions dijkstrabiOpts = AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA_BI).build();
         algos.add(new AlgoHelperEntry(ghStorage, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
         algos.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
 
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMPreparationHandler().isEnabled()) {
-            final HintsMap lmHints = new HintsMap(defaultHints).put(Parameters.Landmark.DISABLE, false);
+            final HintsMap lmHints = new HintsMap(defaultHints).putObject(Parameters.Landmark.DISABLE, false);
             algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
@@ -90,19 +90,19 @@ public class RoutingAlgorithmIT {
 
         if (hopper.getCHPreparationHandler().isEnabled()) {
             final HintsMap chHints = new HintsMap(defaultHints);
-            chHints.put(Parameters.CH.DISABLE, false);
-            chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
-            CHProfile pickedProfile = new ProfileResolver().selectCHProfile(hopper.getCHPreparationHandler().getCHProfiles(), chHints);
-            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
-                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|algos|" + hints.getWeighting()) {
+            chHints.putObject(Parameters.CH.DISABLE, false);
+            chHints.putObject(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
+            ProfileConfig pickedProfile = new ProfileResolver(hopper.getEncodingManager(), hopper.getProfiles(), hopper.getCHPreparationHandler().getCHProfileConfigs(), Collections.<LMProfileConfig>emptyList()).selectProfileCH(chHints);
+            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
+                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(chHints.getVehicle() + "_profile", false, true);
                 }
             });
 
-            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile),
-                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|algos|" + hints.getWeighting()) {
+            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
+                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(chHints.getVehicle() + "_profile", false, true);

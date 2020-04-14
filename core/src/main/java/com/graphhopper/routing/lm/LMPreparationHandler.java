@@ -83,7 +83,7 @@ public class LMPreparationHandler {
         logDetails = ghConfig.getBool(Landmark.PREPARE + "log_details", false);
         minNodes = ghConfig.getInt(Landmark.PREPARE + "min_network_size", -1);
 
-        for (String loc : ghConfig.get(Landmark.PREPARE + "suggestions_location", "").split(",")) {
+        for (String loc : ghConfig.getString(Landmark.PREPARE + "suggestions_location", "").split(",")) {
             if (!loc.trim().isEmpty())
                 lmSuggestionsLocations.add(loc.trim());
         }
@@ -130,6 +130,8 @@ public class LMPreparationHandler {
         this.lmProfileConfigs.clear();
         this.maximumWeights.clear();
         for (LMProfileConfig config : lmProfileConfigs) {
+            if (config.usesOtherPreparation())
+                continue;
             maximumWeights.put(config.getProfile(), config.getMaximumLMWeight());
         }
         this.lmProfileConfigs.addAll(lmProfileConfigs);

@@ -6,14 +6,16 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
-import com.graphhopper.isochrone.algorithm.Isochrone;
+import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Parameters;
@@ -35,18 +37,23 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
+import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
+import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
+
 @Path("isochrone")
 public class IsochroneResource {
 
     private static final Logger logger = LoggerFactory.getLogger(IsochroneResource.class);
 
     private final GraphHopper graphHopper;
+    private final ProfileResolver profileResolver;
     private final EncodingManager encodingManager;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Inject
-    public IsochroneResource(GraphHopper graphHopper, EncodingManager encodingManager) {
+    public IsochroneResource(GraphHopper graphHopper, ProfileResolver profileResolver, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
+        this.profileResolver = profileResolver;
         this.encodingManager = encodingManager;
     }
 
@@ -74,12 +81,22 @@ public class IsochroneResource {
 
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
-        hintsMap.put(Parameters.CH.DISABLE, true);
-        hintsMap.put(Parameters.Landmark.DISABLE, true);
-        ProfileConfig profile = graphHopper.resolveProfile(hintsMap);
-        if (profile.isTurnCosts()) {
-            throw new IllegalArgumentException("Isochrone calculation does not support turn costs yet");
-        }
+        if (!hintsMap.getBool(Parameters.CH.DISABLE, true))
+            throw new IllegalArgumentException("Currently you cannot use speed mode for /isochrone, Do not use `ch.disable=false`");
+        if (!hintsMap.getBool(Parameters.Landmark.DISABLE, true))
+            throw new IllegalArgumentException("Currently you cannot use hybrid mode for /isochrone, Do not use `lm.disable=false`");
+        if (hintsMap.getBool(Parameters.Routing.EDGE_BASED, false))
+            throw new IllegalArgumentException("Currently you cannot use edge-based for /isochrone. Do not use `edge_based=true`");
+        if (hintsMap.getBool(TURN_COSTS, false))
+            throw new IllegalArgumentException("Currently you cannot use turn costs for /isochrone, Do not use `turn_costs=true`");
+
+        hintsMap.putObject(Parameters.CH.DISABLE, true);
+        hintsMap.putObject(Parameters.Landmark.DISABLE, true);
+        // ignore these parameters for profile selection, because we fall back to node-based without turn costs so far
+        hintsMap.remove(TURN_COSTS);
+        hintsMap.remove(EDGE_BASED);
+        // todo: #1934, only try to resolve the profile if no profile is given!
+        ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
@@ -90,34 +107,55 @@ public class IsochroneResource {
         Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
 
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
+        // have to disable turn costs, as isochrones are running node-based
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap, true);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
-        Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow);
 
+        double limit;
         if (distanceInMeter > 0) {
-            isochrone.setDistanceLimit(distanceInMeter);
+            limit = distanceInMeter;
+            shortestPathTree.setDistanceLimit(limit + Math.max(limit * 0.14, 2_000));
         } else {
-            isochrone.setTimeLimit(timeLimitInSeconds);
+            limit = timeLimitInSeconds * 1000;
+            shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
+        }
+        ArrayList<Double> zs = new ArrayList<>();
+        for (int i = 0; i < nBuckets; i++) {
+            zs.add(limit / (nBuckets - i));
         }
 
-        List<List<Coordinate>> buckets = isochrone.searchGPS(qr.getClosestNode(), nBuckets);
-        if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
-            throw new IllegalArgumentException("Too many nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
+        final NodeAccess na = queryGraph.getNodeAccess();
+        Collection<ConstraintVertex> sites = new ArrayList<>();
+        shortestPathTree.search(qr.getClosestNode(), label -> {
+            double exploreValue;
+            if (distanceInMeter > 0) {
+                exploreValue = label.distance;
+            } else {
+                exploreValue = label.time;
+            }
+            double lat = na.getLatitude(label.adjNode);
+            double lon = na.getLongitude(label.adjNode);
+            ConstraintVertex site = new ConstraintVertex(new Coordinate(lon, lat));
+            site.setZ(exploreValue);
+            sites.add(site);
+
+            // guess center of road to increase precision a bit for longer roads
+            if (label.parent != null) {
+                double lat2 = na.getLatitude(label.parent.adjNode);
+                double lon2 = na.getLongitude(label.parent.adjNode);
+                ConstraintVertex site2 = new ConstraintVertex(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
+                site2.setZ(exploreValue);
+                sites.add(site2);
+            }
+        });
+        if (shortestPathTree.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
+            throw new IllegalArgumentException("Too many nodes would have to explored (" + shortestPathTree.getVisitedNodes() + "). Let us know if you need this increased.");
         }
 
         ArrayList<JsonFeature> features = new ArrayList<>();
-        Collection<ConstraintVertex> sites = new ArrayList<>();
-        for (int i = 0; i < buckets.size(); i++) {
-            List<Coordinate> level = buckets.get(i);
-            for (Coordinate coord : level) {
-                ConstraintVertex site = new ConstraintVertex(coord);
-                site.setZ(i);
-                sites.add(site);
-            }
-        }
-
         ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
         conformingDelaunayTriangulator.setConstraints(new ArrayList<>(), new ArrayList<>());
         conformingDelaunayTriangulator.formInitialDelaunay();
@@ -146,9 +184,10 @@ public class IsochroneResource {
             }
         }
         ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
-        ContourBuilder contourBuilder = new ContourBuilder(tin);
-        for (int i = 0; i < buckets.size() - 1; i++) {
-            MultiPolygon multiPolygon = contourBuilder.computeIsoline((double) i + 0.5);
+        ContourBuilder contourBuilder = new ContourBuilder(tin.getEdges());
+
+        for (Double z : zs) {
+            MultiPolygon multiPolygon = contourBuilder.computeIsoline(z);
             Polygon maxPolygon = heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.lon, point.lat)));
             polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
         }
@@ -176,7 +215,7 @@ public class IsochroneResource {
         }
 
         sw.stop();
-        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
+        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
         return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
                 build();
     }
