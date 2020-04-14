@@ -52,9 +52,9 @@ after_success:
     #        mvn deploy -P release --settings core/files/settings.xml -DskipTests=true -B;
     #    elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
     #        mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
-    mvn xyz;
+        mvn xyz;
     else
-    echo "Not deploying artifacts for $TRAVIS_BRANCH";
+        echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
 
     if [[ "$?" -ne 0 ]] ; then
