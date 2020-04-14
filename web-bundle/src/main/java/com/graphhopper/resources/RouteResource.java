@@ -106,6 +106,7 @@ public class RouteResource {
                     + "or equal to the number of points (" + requestPoints.size() + ")");
 
         // TODO these checks should be only necessary once in the core, e.g. pointHints problems are currently ignored for POST requests
+        // todonow: maybe its time to fix this?
         if (pointHints.size() > 0 && pointHints.size() != requestPoints.size())
             throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
         if (curbsides.size() > 0 && curbsides.size() != requestPoints.size())
@@ -270,6 +271,7 @@ public class RouteResource {
                 //  known parameters either, _or_ known parameters must be filtered before they come to this code point,
                 //  _or_ we stop passing unknown parameters alltogether.
                 // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
+                // see also #1976
             }
         }
     }
