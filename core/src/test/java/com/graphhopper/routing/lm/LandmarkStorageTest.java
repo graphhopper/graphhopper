@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
@@ -40,6 +41,7 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -201,33 +203,24 @@ public class LandmarkStorageTest {
             }
         };
         final SpatialRuleLookup lookup = new SpatialRuleLookup() {
+            
+            private final List<SpatialRule> rules = Arrays.asList(ruleLeft, ruleRight);
 
             @Override
-            public SpatialRule lookupRule(double lat, double lon) {
-                if (lon > 0.00105)
-                    return ruleRight;
+            public SpatialRuleSet lookupRules(double lat, double lon) {
+                SpatialRule rule;
+                if (lon > 0.00105) {
+                    rule = ruleRight;
+                } else {
+                    rule = ruleLeft;
+                }
 
-                return ruleLeft;
+                return new SpatialRuleSet(Collections.singletonList(rule), rules.indexOf(rule)+1);
             }
-
+            
             @Override
-            public SpatialRule lookupRule(GHPoint point) {
-                return lookupRule(point.lat, point.lon);
-            }
-
-            @Override
-            public int getSpatialId(SpatialRule rule) {
-                throw new IllegalStateException();
-            }
-
-            @Override
-            public SpatialRule getSpatialRule(int spatialId) {
-                throw new IllegalStateException();
-            }
-
-            @Override
-            public int size() {
-                return 2;
+            public List<SpatialRule> getRules() {
+                return rules;
             }
 
             @Override

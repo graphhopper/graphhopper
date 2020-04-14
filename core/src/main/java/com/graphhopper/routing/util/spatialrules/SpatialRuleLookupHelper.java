@@ -78,7 +78,7 @@ public class SpatialRuleLookupHelper {
         }
         final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(reorder(jsonFeatureCollections, subset),
                 JSON_ID_FIELD, new CountriesSpatialRuleFactory(), maxBounds);
-        logger.info("Set spatial rule lookup with {} rules", index.size());
+        logger.info("Set spatial rule lookup with {} rules", index.getRules().size());
         final TagParserFactory oldTPF = graphHopper.getTagParserFactory();
         graphHopper.setTagParserFactory(new TagParserFactory() {
 
