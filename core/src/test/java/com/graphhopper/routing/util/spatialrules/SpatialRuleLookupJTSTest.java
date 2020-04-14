@@ -132,6 +132,51 @@ public class SpatialRuleLookupJTSTest {
         assertEquals("0", spatialRuleLookup.getRules().get(0).getId());
         assertEquals("3", spatialRuleLookup.getRules().get(3).getId());
     }
+    
+    @Test
+    public void testOverlapWithPriority() {
+        // Let the two polygons overlap
+        Polygon deBorder = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1),
+                        new Coordinate(2, 1), new Coordinate(2, 2), new Coordinate(1, 2),
+                        new Coordinate(1, 1) });
+        List<SpatialRule> spatialRules = new ArrayList<>();
+        SpatialRule germany = new AbstractSpatialRule(deBorder) {
+            @Override
+            public String getId() {
+                return "DEU";
+            }
+        };
+        spatialRules.add(germany);
+
+        Polygon atBorder = FAC.createPolygon(new Coordinate[] { new Coordinate(0.5, 1),
+                        new Coordinate(1.5, 1), new Coordinate(1.5, 2), new Coordinate(0.5, 2),
+                        new Coordinate(0.5, 1) });
+        SpatialRule austria = new AbstractSpatialRule(atBorder) {
+            @Override
+            public String getId() {
+                return "AUT";
+            }
+
+            @Override
+            public int getPriority() {
+                return 500;
+            }
+        };
+        spatialRules.add(austria);
+
+        SpatialRuleLookupJTS lookup = new SpatialRuleLookupJTS(spatialRules,
+                        new Envelope(0, 3, 0, 3));
+        SpatialRuleSet set = lookup.lookupRules(1.5, 1.25);
+        assertEquals(2, set.getRules().size());
+        // Since Austria is priority 500, Germany should be the first, Austria
+        // the second
+        assertEquals(germany.getId(), set.getRules().get(0).getId());
+        assertEquals(austria.getId(), set.getRules().get(1).getId());
+        assertEquals(1, lookup.lookupRules(1.5, 0.99).getRules().size());
+        assertEquals(2, lookup.lookupRules(1.5, 1.00).getRules().size());
+        assertEquals(2, lookup.lookupRules(1.5, 1.50).getRules().size());
+        assertEquals(1, lookup.lookupRules(1.5, 1.51).getRules().size());
+    }
 
     private Polygon parsePolygonString(String polygonString) {
         String[] germanPolygonArr = polygonString.split("\\],\\[");
