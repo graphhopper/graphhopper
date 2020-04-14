@@ -68,8 +68,9 @@ public class RouteResourceTurnCostsTest {
                         new CHProfileConfig("my_car_no_turn_costs")
                 ))
                 .setLMProfiles(Arrays.asList(
-                        new LMProfileConfig("my_car_turn_costs"),
-                        new LMProfileConfig("my_car_no_turn_costs")
+                        new LMProfileConfig("my_car_no_turn_costs"),
+                        // no need for a second LM preparation: we can just cross query here
+                        new LMProfileConfig("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs")
                 ));
         return config;
     }
