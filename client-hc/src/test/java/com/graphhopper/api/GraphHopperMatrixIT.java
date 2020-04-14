@@ -59,7 +59,7 @@ public class GraphHopperMatrixIT {
         req.addOutArray("distances");
         res = ghMatrix.route(req);
 
-        assertEquals(9970, res.getDistance(1, 2), 100);
+        assertEquals(9828, res.getDistance(1, 2), 100);
         assertEquals(1940, res.getWeight(1, 2), 20);
     }
 
