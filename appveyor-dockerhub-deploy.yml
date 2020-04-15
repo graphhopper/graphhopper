@@ -21,7 +21,5 @@ deploy_script:
   - ps: docker tag harelmazor/graphhopper:latest harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
   - ps: docker push harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
 deploy:
-  - provider: Environment
-    name: production
     on:
       APPVEYOR_REPO_TAG: true
