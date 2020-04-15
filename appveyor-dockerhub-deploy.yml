@@ -11,11 +11,7 @@ branches:
     - master
 install:
   - ps: >-
-      $SwitchDeamon = "$env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchDaemon"
-
-      Write-Host $SwitchDeamon
-
-      & "$SwitchDeamon"
+      & $env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchDaemon
       
 build_script:
   - docker build ./ -t harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME" -t harelmazor/graphhopper:latest
