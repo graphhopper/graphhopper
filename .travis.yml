@@ -24,27 +24,27 @@ install: true
 # store them into travis via https://dracoblue.net/dev/uploading-snapshots-and-releases-to-maven-central-with-travis/
 # gpg --export-secret-keys <keyID> | base64 -w 0
 # gpg --export-ownertrust | base64 -w 0
-before_install:
-  - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
-  - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
-  - 'wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh'
-  - nvm install $NODE_VERSION
+#before_install:
+#  - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
+#  - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
+#  - 'wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh'
+#  - nvm install $NODE_VERSION
 
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
-before_script:
-  - _JAVA_OPTIONS=
-  - "mvn --version"
-  - "if [ -z \"$API_KEY\" ]; then API_KEY=78da6e9a-273e-43d1-bdda-8f24e007a1fa; fi" # change in GraphHopperWebIT too
-  - cd web && npm install && BROWSERIFYSWAP_ENV='development' npm run bundleProduction && cd ..
+#before_script:
+#  - _JAVA_OPTIONS=
+#  - "mvn --version"
+#  - "if [ -z \"$API_KEY\" ]; then API_KEY=78da6e9a-273e-43d1-bdda-8f24e007a1fa; fi" # change in GraphHopperWebIT too
+#  - cd web && npm install && BROWSERIFYSWAP_ENV='development' npm run bundleProduction && cd ..
 
 script:
   - echo skip_build
 
 after_success:
   # often spotbugs etc take long to be compatible with a future JDK version so skip them
-  - if [ "$SKIP_EXT_TESTS" != "true" ]; then
-        mvn checkstyle:check forbiddenapis:check;
-    fi
+#  - if [ "$SKIP_EXT_TESTS" != "true" ]; then
+#        mvn checkstyle:check forbiddenapis:check;
+#    fi
   # if tagged deploy then release to maven central or deploy snapshot artifacts to sonatype 
   - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ]; then
         echo "release to maven central - NOT";
@@ -56,7 +56,7 @@ after_success:
     fi
 
   - if [[ "$?" -ne 0 ]]; then
-        exit 1
+        exit 1;
     fi
 
 notifications:
