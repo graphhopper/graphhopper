@@ -14,11 +14,12 @@ install:
       & $env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchDaemon
       
 build_script:
-  - docker build ./ -t harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME" -t harelmazor/graphhopper:latest
+  - ps: docker build ./ -t harelmazor/graphhopper:latest
 deploy_script:
-  - docker login -u="$env:DOCKER_USER" -p="$env:DOCKER_PASS"
-  - docker push harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
-  - docker push harelmazor/graphhopper:latest
+  - ps: docker login -u="$env:DOCKER_USER" -p="$env:DOCKER_PASS"
+  - ps: docker push harelmazor/graphhopper:latest
+  - ps: docker tag harelmazor/graphhopper:latest harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
+  - ps: docker push harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
 deploy:
   - provider: Environment
     name: production
