@@ -38,7 +38,7 @@ before_script:
   - cd web && npm install && BROWSERIFYSWAP_ENV='development' npm run bundleProduction && cd ..
 
 script:
-  - "mvn -Dkey=$API_KEY clean install -B"
+  - echo skip_build
 
 after_success:
   # often spotbugs etc take long to be compatible with a future JDK version so skip them
