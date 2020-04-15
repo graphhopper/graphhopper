@@ -11,7 +11,7 @@ branches:
     - master
 install:
   - ps: >-
-      & $env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchDaemon
+      & $env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchLinuxEngine
       
 build_script:
   - ps: docker build ./ -t harelmazor/graphhopper:latest
