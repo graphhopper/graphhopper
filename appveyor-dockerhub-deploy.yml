@@ -1,21 +1,23 @@
 version: '{build}'
 clone_depth: 3
-image: Ubuntu
+image: Visual Studio 2019
 environment:
   DOCKER_USER:
-    secure: xxxxxxx
+    secure: iC/lO9cyDWqfFa3YZzgkQg==
   DOCKER_PASS:
-    secure: yyyyyyy
+    secure: 9kYreBg7+ayysVSKa8QZrg==
 branches:
   only:
     - master
 install:
+  - ps: & $Env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchDaemon
   - cmd: docker version
 build_script:
-  - docker build ./
+  - docker build ./ -t harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME" -t harelmazor/graphhopper:latest
 deploy_script:
   - docker login -u="$env:DOCKER_USER" -p="$env:DOCKER_PASS"
-  - docker push graphhopper/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
+  - docker push harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
+  - docker push harelmazor/graphhopper:latest
 deploy:
   - provider: Environment
     name: production

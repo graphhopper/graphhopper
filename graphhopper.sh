@@ -93,7 +93,12 @@ fi
 
 # default init, https://stackoverflow.com/a/28085062/194609
 : "${CONFIG:=config.yml}"
+if [ -f $CONFIG ]; then
+  echo "copying non-default config file: $CONFIG"
+  cp $CONFIG config.yml
+fi
 if [ ! -f "config.yml" ]; then
+  echo "no config file was specified using example-config.yml"
   cp config-example.yml $CONFIG
 fi
 
@@ -153,6 +158,7 @@ function ensureMaven {
 }
 
 function execMvn {
+  ensureMaven
   "$MAVEN_HOME/bin/mvn" "$@" > /tmp/graphhopper-compile.log
   returncode=$?
   if [[ $returncode != 0 ]] ; then
@@ -171,8 +177,6 @@ function packageJar {
     echo "## existing jar found $JAR"
   fi
 }
-
-ensureMaven
 
 ## now handle actions which do not take an OSM file
 if [ "$ACTION" = "clean" ]; then
