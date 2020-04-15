@@ -57,7 +57,6 @@ after_success:
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
 
-
     if [[ "$?" -ne 0 ]] ; then
     exit 1
     fi
