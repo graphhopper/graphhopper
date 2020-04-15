@@ -63,11 +63,11 @@ public class Helper {
     }
 
     public static String toLowerCase(String string) {
-        return string.toLowerCase(Locale.ROOT);
+        return string.toLowerCase();
     }
 
     public static String toUpperCase(String string) {
-        return string.toUpperCase(Locale.ROOT);
+        return string.toUpperCase();
     }
 
     static String packageToPath(Package pkg) {
