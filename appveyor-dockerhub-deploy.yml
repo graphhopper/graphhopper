@@ -22,5 +22,5 @@ deploy_script:
   - ps: docker push harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
 deploy:
   - provider: Local
-#    on:
-#      APPVEYOR_REPO_TAG: true
+    on:
+      APPVEYOR_REPO_TAG: true

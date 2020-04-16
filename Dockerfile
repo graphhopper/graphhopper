@@ -30,7 +30,6 @@ WORKDIR /graphhopper
 
 COPY --from=build /graphhopper/web/target/*.jar ./web/target/
 COPY ./graphhopper.sh ./pom.xml ./config-example.yml ./
-COPY ./web/src/main/resources/assets/ ./web/src/main/resources/assets/
 
 VOLUME [ "/data" ]
 
