@@ -20,7 +20,7 @@ WORKDIR /graphhopper
 
 RUN ./graphhopper.sh build
 
-FROM openjdk:11.0.5-jre
+FROM openjdk:11.0-jre
 
 ENV JAVA_OPTS "-Xmx1g -Xms1g -Ddw.server.application_connectors[0].bind_host=0.0.0.0 -Ddw.server.application_connectors[0].port=8989"
 
