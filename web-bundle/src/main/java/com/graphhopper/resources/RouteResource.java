@@ -128,8 +128,8 @@ public class RouteResource {
         }
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
-        enableEdgeBasedIfThereAreCurbsides(curbsides, request);
         if (Helper.isEmpty(profileName)) {
+            enableEdgeBasedIfThereAreCurbsides(curbsides, request);
             profileName = profileResolver.resolveProfile(request.getHints()).getName();
             removeLegacyParameters(request);
         }
@@ -184,8 +184,8 @@ public class RouteResource {
             throw new IllegalArgumentException("Empty request");
 
         StopWatch sw = new StopWatch().start();
-        enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
         if (Helper.isEmpty(request.getProfile())) {
+            enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
             request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
             removeLegacyParameters(request);
         }
@@ -251,10 +251,10 @@ public class RouteResource {
                     " You used 'vehicle=" + hints.getVehicle() + "'");
         if (hints.has("edge_based"))
             throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'edge_based' parameter." +
-                    " You used 'edge_based=" + hints.getString("edge_based", "") + "'");
+                    " You used 'edge_based=" + hints.getBool("edge_based", false) + "'");
         if (hints.has("turn_costs"))
             throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'turn_costs' parameter." +
-                    " You used 'turn_costs=" + hints.getString("turn_costs", "") + "'");
+                    " You used 'turn_costs=" + hints.getBool("turn_costs", false) + "'");
     }
 
     private void removeLegacyParameters(GHRequest request) {

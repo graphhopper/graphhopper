@@ -202,7 +202,6 @@ public class RouteResourceTest {
 
     @Test
     public void testGraphHopperWeb() {
-        // todonow: there should be a test that explicitly uses GET!
         GraphHopperWeb hopper = new GraphHopperWeb();
         assertTrue(hopper.load(clientUrl(app, "/route")));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile("my_car"));

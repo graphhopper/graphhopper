@@ -156,10 +156,10 @@ public class IsochroneResourceTest {
 
     @Test
     public void certainParametersNotAllowed() {
-        assertNotAllowed("&weighting=fastest&ch.disable=false", "Currently you cannot use speed mode for /isochrone");
-        assertNotAllowed("&weighting=fastest&lm.disable=false", "Currently you cannot use hybrid mode for /isochrone");
-        assertNotAllowed("&weighting=fastest&turn_costs=true", "Currently you cannot use turn costs for /isochrone");
-        assertNotAllowed("&weighting=fastest&edge_based=true", "Currently you cannot use edge-based for /isochrone");
+        assertNotAllowed("&profile=fast_car&ch.disable=false", "Currently you cannot use speed mode for /isochrone");
+        assertNotAllowed("&profile=fast_car&lm.disable=false", "Currently you cannot use hybrid mode for /isochrone");
+        assertNotAllowed("&profile=fast_car&turn_costs=true", "Currently you cannot use turn costs for /isochrone");
+        assertNotAllowed("&profile=fast_car&edge_based=true", "Currently you cannot use edge-based for /isochrone");
     }
 
     @Test
