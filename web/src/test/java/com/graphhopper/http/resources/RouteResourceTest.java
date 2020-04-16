@@ -123,7 +123,7 @@ public class RouteResourceTest {
 
     @Test
     public void testAcceptOnlyXmlButNoTypeParam() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&point=42.510071,1.548128")
+        final Response response = clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128")
                 .request(MediaType.APPLICATION_XML).buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -133,7 +133,7 @@ public class RouteResourceTest {
 
     @Test
     public void testAcceptOnlyXmlButNoTypeParamPost() {
-        String jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        String jsonStr = "{ \"profile\": \"my_car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
         final Response response = clientTarget(app, "/route")
                 .request(MediaType.APPLICATION_XML).buildPost(Entity.json(jsonStr)).invoke();
         assertEquals(200, response.getStatus());
