@@ -19,17 +19,19 @@ package com.graphhopper.http.resources;
 
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.MvtReader;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.TagKeyValueMapConverter;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.model.JtsLayer;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.model.JtsMvt;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiLineString;
@@ -43,18 +45,19 @@ import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
  */
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class MvtResourceTest {
     private static final String DIR = "./target/andorra-gh/";
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
-
-    static {
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
                 putObject("graph.encoded_values", "road_class,road_environment,max_speed,surface").
@@ -63,13 +66,11 @@ public class MvtResourceTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
+        return config;
     }
 
-    @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(GraphHopperApplication.class, config);
-
-    @BeforeClass
-    @AfterClass
+    @BeforeAll
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
     }
