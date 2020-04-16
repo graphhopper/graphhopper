@@ -21,13 +21,16 @@ package com.graphhopper.http.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.util.Helper;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -38,17 +41,15 @@ import java.util.Arrays;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class IsochroneResourceTest {
     private static final String DIR = "./target/andorra-gh/";
+    public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
-
-    static {
+    private static GraphHopperServerTestConfiguration createConfig() {
+        GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 // isochrone does not support turn costs yet, but use it anyway to make sure this is handled correctly
                         putObject("graph.flag_encoders", "car|turn_costs=true").
@@ -58,13 +59,11 @@ public class IsochroneResourceTest {
                         new ProfileConfig("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
                         new ProfileConfig("short_car").setVehicle("car").setWeighting("shortest").setTurnCosts(true)
                 ));
+        return config;
     }
 
-    @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
-            GraphHopperApplication.class, config);
-
-    @AfterClass
+    @BeforeAll
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
     }
@@ -156,6 +155,14 @@ public class IsochroneResourceTest {
     }
 
     @Test
+    public void missingPoint() {
+        Response rsp = clientTarget(app, "/isochrone").request().buildGet().invoke();
+        assertEquals(400, rsp.getStatus());
+        JsonNode json = rsp.readEntity(JsonNode.class);
+        assertTrue(json.get("message").toString().contains("You need to specify a point at which the isochrone is centered"), json.toString());
+    }
+
+    @Test
     public void certainParametersNotAllowed() {
         assertNotAllowed("&ch.disable=false", "Currently you cannot use speed mode for /isochrone");
         assertNotAllowed("&lm.disable=false", "Currently you cannot use hybrid mode for /isochrone");
@@ -167,7 +174,7 @@ public class IsochroneResourceTest {
         Response rsp = clientTarget(app, "/isochrone?weighting=fastest&point=42.531073,1.573792" + hint).request().buildGet().invoke();
         assertEquals(400, rsp.getStatus());
         JsonNode json = rsp.readEntity(JsonNode.class);
-        assertTrue(json.toString(), json.get("message").toString().contains(error));
+        assertTrue(json.get("message").toString().contains(error), json.toString());
     }
 
     @Test
