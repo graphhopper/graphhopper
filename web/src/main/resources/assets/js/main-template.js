@@ -143,7 +143,6 @@ $(document).ready(function (e) {
                     var prefer = {"car": 1, "foot": 2, "bike": 3, "motorcycle": 10000};
                     var showAllVehicles = urlParams.vehicle && (!prefer[urlParams.vehicle] || prefer[urlParams.vehicle] > 3);
                     var vehicles = vehicleTools.getSortedVehicleKeys(json.features, prefer);
-                    console.log(json.profiles);
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
 
