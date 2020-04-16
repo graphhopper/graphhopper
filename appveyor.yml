@@ -10,9 +10,11 @@ branches:
   only:
     - master
 install:
-  - ps: |
+  - ps: >-
       mvn --version
+
       java -version
+
       
 build_script:
   - mvn clean install -DskipTests=true -B
