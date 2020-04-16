@@ -1,11 +1,10 @@
 version: '{build}'
 clone_depth: 10
 image: Visual Studio 2019
+skip_tags: true
 environment:
-  DOCKER_USER:
-    secure: iC/lO9cyDWqfFa3YZzgkQg==
-  DOCKER_PASS:
-    secure: 9kYreBg7+ayysVSKa8QZrg==
+  MAVEN_OPTS:-Xmx1g
+  JAVA_OPTS:-Xmx1g
   matrix:
     - JAVA_HOME: C:\Program Files\Java\jdk1.8.0
 branches:
@@ -13,34 +12,13 @@ branches:
     - master
 install:
   - ps: |
-      Add-Type -AssemblyName System.IO.Compression.FileSystem
-      if (!(Test-Path -Path "C:\maven" )) {
-        (new-object System.Net.WebClient).DownloadFile('http://www.us.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.zip', 'C:\maven-bin.zip')
-        [System.IO.Compression.ZipFile]::ExtractToDirectory("C:\maven-bin.zip", "C:\maven")
-      }
-
-      & $env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchLinuxEngine
+      mvn --version
+      java -version
       
-  - cmd: SET PATH=C:\maven\apache-maven-3.3.9\bin;%JAVA_HOME%\bin;%PATH%
-  - cmd: SET MAVEN_OPTS=-Xmx1g
-  - cmd: SET JAVA_OPTS=-Xmx1g
-  - cmd: mvn --version
-  - cmd: java -version
 build_script:
   - mvn clean install -DskipTests=true -B
-  - ps: docker build ./ -t harelmazor/graphhopper:latest
 test_script:
   - mvn test verify -B && mvn checkstyle:check forbiddenapis:check -B
-deploy_script:
-  - ps: |
-        docker login -u="$env:DOCKER_USER" -p="$env:DOCKER_PASS"
-        docker push harelmazor/graphhopper:latest
-        docker tag harelmazor/graphhopper:latest harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
-        docker push harelmazor/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
-deploy:
-  - provider: Local
-    on:
-      APPVEYOR_REPO_TAG: true
 cache:
   - C:\maven\
   - C:\Users\appveyor\.m2
