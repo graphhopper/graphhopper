@@ -23,6 +23,7 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.ProfileResolver;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
@@ -128,13 +129,11 @@ public class RouteResource {
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
         enableEdgeBasedIfThereAreCurbsides(curbsides, request);
-        // todonow: should it be illegal to specify profile AND vehicle/weighting/turn_costs?
-        // also for /isochrone and /spt?
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(request.getHints()).getName();
+            removeLegacyParameters(request);
         }
-        removeLegacyParameters(request);
-
+        errorIfLegacyParameters(request.getHints());
         request.setProfile(profileName).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
@@ -186,9 +185,11 @@ public class RouteResource {
 
         StopWatch sw = new StopWatch().start();
         enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
-        if (Helper.isEmpty(request.getProfile()))
+        if (Helper.isEmpty(request.getProfile())) {
             request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
-        removeLegacyParameters(request);
+            removeLegacyParameters(request);
+        }
+        errorIfLegacyParameters(request.getHints());
         GHResponse ghResponse = graphHopper.route(request);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
@@ -241,10 +242,25 @@ public class RouteResource {
         }
     }
 
+    public static void errorIfLegacyParameters(HintsMap hints) {
+        if (hints.has("weighting"))
+            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'weighting' parameter." +
+                    " You used 'weighting=" + hints.getWeighting() + "'");
+        if (hints.has("vehicle"))
+            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'vehicle' parameter." +
+                    " You used 'vehicle=" + hints.getVehicle() + "'");
+        if (hints.has("edge_based"))
+            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'edge_based' parameter." +
+                    " You used 'edge_based=" + hints.getString("edge_based", "") + "'");
+        if (hints.has("turn_costs"))
+            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'turn_costs' parameter." +
+                    " You used 'turn_costs=" + hints.getString("turn_costs", "") + "'");
+    }
+
     private void removeLegacyParameters(GHRequest request) {
         // these parameters should only be used to resolve the profile, but should not be passed to GraphHopper
-        request.getHints().setWeighting("");
-        request.getHints().setVehicle("");
+        request.getHints().remove("weighting");
+        request.getHints().remove("vehicle");
         request.getHints().remove("edge_based");
         request.getHints().remove("turn_costs");
     }

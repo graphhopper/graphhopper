@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
+import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
 import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
 import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
 
@@ -103,7 +104,10 @@ public class IsochroneResource {
         hintsMap.remove(EDGE_BASED);
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(hintsMap).getName();
+            hintsMap.remove("weighting");
+            hintsMap.remove("vehicle");
         }
+        errorIfLegacyParameters(hintsMap);
         ProfileConfig profile = graphHopper.getProfile(profileName);
         if (profile == null) {
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");

@@ -108,6 +108,15 @@ public class RouteResourceProfileSelectionTest {
         assertError((String) null, null, null, mode, "multiple", "profiles matching your request");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"CH", "LM", "flex"})
+    public void profileWithLegacyParameters_error(String mode) {
+        assertError("my_car", null, "fastest", mode, "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
+        assertError("my_car", "car", null, mode, "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=car'");
+        assertError("my_bike", null, "short_fastest", mode, "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=short_fastest'");
+        assertError("my_bike", "bike", null, mode, "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=bike'");
+    }
+
     private void assertDistance(String profile, String vehicle, String weighting, String mode, double expectedDistance) {
         assertDistance(doGet(profile, vehicle, weighting, mode), expectedDistance);
         assertDistance(doPost(profile, vehicle, weighting, mode), expectedDistance);

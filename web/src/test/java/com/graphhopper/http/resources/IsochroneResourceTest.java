@@ -155,6 +155,20 @@ public class IsochroneResourceTest {
     }
 
     @Test
+    public void certainParametersNotAllowed() {
+        assertNotAllowed("&weighting=fastest&ch.disable=false", "Currently you cannot use speed mode for /isochrone");
+        assertNotAllowed("&weighting=fastest&lm.disable=false", "Currently you cannot use hybrid mode for /isochrone");
+        assertNotAllowed("&weighting=fastest&turn_costs=true", "Currently you cannot use turn costs for /isochrone");
+        assertNotAllowed("&weighting=fastest&edge_based=true", "Currently you cannot use edge-based for /isochrone");
+    }
+
+    @Test
+    public void profileWithLegacyParametersNotAllowed() {
+        assertNotAllowed("&profile=fast_car&weighting=fastest", "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
+        assertNotAllowed("&profile=fast_car&vehicle=car", "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=car'");
+    }
+
+    @Test
     public void missingPoint() {
         Response rsp = clientTarget(app, "/isochrone").request().buildGet().invoke();
         assertEquals(400, rsp.getStatus());
@@ -162,16 +176,8 @@ public class IsochroneResourceTest {
         assertTrue(json.get("message").toString().contains("You need to specify a point at which the isochrone is centered"), json.toString());
     }
 
-    @Test
-    public void certainParametersNotAllowed() {
-        assertNotAllowed("&ch.disable=false", "Currently you cannot use speed mode for /isochrone");
-        assertNotAllowed("&lm.disable=false", "Currently you cannot use hybrid mode for /isochrone");
-        assertNotAllowed("&turn_costs=true", "Currently you cannot use turn costs for /isochrone");
-        assertNotAllowed("&edge_based=true", "Currently you cannot use edge-based for /isochrone");
-    }
-
     private void assertNotAllowed(String hint, String error) {
-        Response rsp = clientTarget(app, "/isochrone?weighting=fastest&point=42.531073,1.573792" + hint).request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/isochrone?point=42.531073,1.573792" + hint).request().buildGet().invoke();
         assertEquals(400, rsp.getStatus());
         JsonNode json = rsp.readEntity(JsonNode.class);
         assertTrue(json.get("message").toString().contains(error), json.toString());

@@ -114,4 +114,18 @@ public class SPTResourceTest {
         JsonNode json = rsp.readEntity(JsonNode.class);
         assertTrue(json.get("message").toString().contains("You need to specify a point at which the shortest path tree is centered"), json.toString());
     }
+
+    @Test
+    public void profileWithLegacyParametersNotAllowed() {
+        assertNotAllowed("&ch.disable=false", "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
+        assertNotAllowed("&profile=fast_car&weighting=fastest", "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
+        assertNotAllowed("&profile=fast_car&vehicle=car", "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=car'");
+    }
+
+    private void assertNotAllowed(String hint, String error) {
+        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed" + hint).request().buildGet().invoke();
+        assertEquals(400, rsp.getStatus());
+        JsonNode json = rsp.readEntity(JsonNode.class);
+        assertTrue(json.get("message").toString().contains(error), json.toString());
+    }
 }

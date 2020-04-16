@@ -30,6 +30,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.*;
 
+import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
 import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
 import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
 
@@ -74,7 +75,6 @@ public class SPTResource {
             @QueryParam("columns") String columnsParam,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
-
         try {
             return executeGet(uriInfo, profileName, reverseFlow, pointStr, columnsParam, timeLimitInSeconds, distanceInMeter);
         } catch (IllegalArgumentException e) {
@@ -107,7 +107,10 @@ public class SPTResource {
         hintsMap.remove(EDGE_BASED);
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(hintsMap).getName();
+            hintsMap.remove("weighting");
+            hintsMap.remove("vehicle");
         }
+        errorIfLegacyParameters(hintsMap);
         ProfileConfig profile = graphHopper.getProfile(profileName);
         if (profile == null) {
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
