@@ -3,8 +3,8 @@ clone_depth: 10
 image: Visual Studio 2019
 skip_tags: true
 environment:
-  MAVEN_OPTS:-Xmx1g
-  JAVA_OPTS:-Xmx1g
+  - MAVEN_OPTS:-Xmx1g
+  - JAVA_OPTS:-Xmx1g
   matrix:
     - JAVA_HOME: C:\Program Files\Java\jdk1.8.0
 branches:
