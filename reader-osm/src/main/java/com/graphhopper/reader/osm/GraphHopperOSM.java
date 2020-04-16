@@ -89,7 +89,7 @@ public class GraphHopperOSM extends GraphHopper {
                     });
             for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
                 // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-                if (ruleLookup != null && ruleLookup.size() > 0) {
+                if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {
                     prep.setSpatialRuleLookup(ruleLookup);
                 }
             }

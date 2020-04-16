@@ -19,7 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
@@ -57,10 +57,12 @@ public class OSMRoadAccessParser implements TagParser {
             }
         }
 
-        SpatialRule spatialRule = readerWay.getTag("spatial_rule", null);
-        if (spatialRule != null)
-            accessValue = spatialRule.getAccess(RoadClass.find(readerWay.getTag("highway", "")), TransportationMode.MOTOR_VEHICLE, YES);
-
+        SpatialRuleSet spatialRuleSet = readerWay.getTag("spatial_rule_set", null);
+        if (spatialRuleSet != null && spatialRuleSet != SpatialRuleSet.EMPTY) {
+            RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+            accessValue = spatialRuleSet.getAccess(roadClass, TransportationMode.MOTOR_VEHICLE, YES);
+        }
+            
         roadAccessEnc.setEnum(false, edgeFlags, accessValue);
         return edgeFlags;
     }
