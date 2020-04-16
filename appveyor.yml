@@ -8,14 +8,7 @@ environment:
   JAVA_HOME: C:\Program Files\Java\jdk1.8.0
 branches:
   only:
-    - master
-install:
-  - ps: >-
-      mvn --version
-
-      java -version
-
-      
+    - master      
 build_script:
   - mvn clean install -DskipTests=true -B
 test_script:
