@@ -65,7 +65,7 @@ public class SPTResource {
     }
 
     @GET
-    @Produces({"text/csv"})
+    @Produces("text/csv")
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
@@ -81,7 +81,7 @@ public class SPTResource {
         }
     }
 
-    private Response executeGet(@Context UriInfo uriInfo, @DefaultValue("false") @QueryParam("reverse_flow") boolean reverseFlow, @DefaultValue("") @QueryParam("point") String pointStr, @QueryParam("columns") String columnsParam, @DefaultValue("600") @QueryParam("time_limit") long timeLimitInSeconds, @DefaultValue("-1") @QueryParam("distance_limit") double distanceInMeter) {
+    private Response executeGet(UriInfo uriInfo, boolean reverseFlow, String pointStr, String columnsParam, long timeLimitInSeconds, double distanceInMeter) {
         if (pointStr.isEmpty())
             throw new IllegalArgumentException("You need to specify a point at which the shortest path tree is centered");
 
