@@ -247,8 +247,6 @@ public class GraphHopperWebIT {
 
     @Test
     public void testSimpleExport() {
-        // todonow: is it ok/meant to be that export() always uses get (regardless of the setting), looks like our
-        // POST endpoint does not support gpx yet?
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
@@ -265,8 +263,6 @@ public class GraphHopperWebIT {
 
     @Test
     public void testExportWithoutTrack() {
-        // todonow: is it ok/meant to be that export() always uses get (regardless of the setting), looks like our
-        // POST endpoint does not support gpx yet?
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
