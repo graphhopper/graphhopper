@@ -1,4 +1,5 @@
 1.0
+    removed HintsMap
     removed /change endpoint
     removed vehicle,weighting and edge_based from GraphHopper class, replaced with new profile parameter, #1958
     all routing profiles have to be configured when setting up GraphHopper, #1958
