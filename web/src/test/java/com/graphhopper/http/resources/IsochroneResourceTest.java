@@ -48,8 +48,8 @@ public class IsochroneResourceTest {
     private static final String DIR = "./target/andorra-gh/";
     public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static GraphHopperServerTestConfiguration createConfig() {
-        GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 // isochrone does not support turn costs yet, but use it anyway to make sure this is handled correctly
                         putObject("graph.flag_encoders", "car|turn_costs=true").
