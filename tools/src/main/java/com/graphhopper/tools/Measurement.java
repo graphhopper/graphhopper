@@ -345,8 +345,6 @@ public class Measurement {
         if (useLM) {
             lmProfiles.add(new LMProfileConfig("custom_car"));
             lmProfiles.add(new LMProfileConfig("custom_truck"));
-            // as currently we do not allow cross-querying LM with turn costs=true/false we have to add both
-            // profiles and this currently leads to two identical LM preparations
             lmProfiles.add(new LMProfileConfig("profile_no_tc"));
             if (turnCosts)
                 // no need for a second LM preparation, we can do cross queries here
@@ -764,9 +762,9 @@ public class Measurement {
                 // put(algo + ".approximation", "BeelineSimplification").
                 // put(algo + ".epsilon", 2);
 
-                GHResponse rsp = new GHResponse();
+                GHResponse rsp;
                 try {
-                    hopper.calcPaths(req, rsp);
+                    rsp = hopper.route(req);
                 } catch (Exception ex) {
                     // 'not found' can happen if import creates more than one subnetwork
                     throw new RuntimeException("Error while calculating route! "
@@ -892,9 +890,8 @@ public class Measurement {
         CustomModel customModel = new CustomModel();
         customModel.setVehicleHeight(3.8);
         customModel.setVehicleWidth(2.5);
-        // the default distance_factor for custom requests is currently 1 which makes it too different regarding speed
-        // compared to a normal car request. So, set it to 0 for a fair speed comparison.
-        customModel.setDistanceInfluence(0);
+        // we have the other custom profile for speed comparison to "fastest" so no need to avoid distance influence here
+        // customModel.setDistanceInfluence(0);
 
         Map<String, Object> map = new HashMap<>();
         map.put("motorway", 1.1);
