@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
@@ -37,17 +36,11 @@ public class GraphHopperWebIT {
 
     static final String KEY = System.getProperty("key", "78da6e9a-273e-43d1-bdda-8f24e007a1fa");
     private final GraphHopperWeb gh;
-    private final GraphHopperMatrixWeb ghMatrix;
 
     public GraphHopperWebIT(boolean postRequest, int maxUnzippedLength) {
         gh = new GraphHopperWeb().setPostRequest(postRequest).
                 setKey(KEY);
         gh.maxUnzippedLength = maxUnzippedLength;
-
-        GHMatrixBatchRequester requester = new GHMatrixBatchRequester();
-        requester.maxUnzippedLength = maxUnzippedLength;
-        ghMatrix = new GraphHopperMatrixWeb(requester).
-                setKey(KEY);
     }
 
     @Parameterized.Parameters(name = "POST = {0}, maxUnzippedLength = {1}")
@@ -79,7 +72,7 @@ public class GraphHopperWebIT {
 
         // change vehicle
         res = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180).
-                setVehicle("bike"));
+                putHint("vehicle", "bike"));
         alt = res.getBest();
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         isBetween(9000, 9500, alt.getDistance());
@@ -99,10 +92,6 @@ public class GraphHopperWebIT {
 
     @Test
     public void testAlternativeRoute() {
-        // TODO
-        if (gh.postRequest)
-            return;
-
         // https://graphhopper.com/maps/?point=52.042989%2C10.373926&point=52.042289%2C10.384043&algorithm=alternative_route&ch.disable=true
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(52.042989, 10.373926)).
@@ -307,75 +296,6 @@ public class GraphHopperWebIT {
         PathWrapper alt = res.getBest();
         isBetween(850, 1050, alt.getRouteWeight());
         assertEquals("[0, 2, 1, 3]", alt.getPointsOrder().toString());
-    }
-
-    @Test
-    public void testMatrix() {
-        GHMRequest req = AbstractGHMatrixWebTester.createRequest();
-        MatrixResponse res = ghMatrix.route(req);
-
-        // no distances available
-        try {
-            assertEquals(0, res.getDistance(1, 2), 1);
-            fail("there should be an exception when trying to get distances");
-        } catch (Exception ex) {
-        }
-
-        // ... only weight:
-        assertEquals(1930, res.getWeight(1, 2), 10);
-
-        req = AbstractGHMatrixWebTester.createRequest();
-        req.addOutArray("weights");
-        req.addOutArray("distances");
-        res = ghMatrix.route(req);
-
-        assertEquals(9834, res.getDistance(1, 2), 20);
-        assertEquals(1930, res.getWeight(1, 2), 10);
-    }
-
-    @Test
-    public void testMatrix_DoNotWrapHints() {
-        final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb(new GHMatrixBatchRequester() {
-            @Override
-            protected String postJson(String url, JsonNode data) throws IOException {
-                assertFalse(data.has("hints"));
-                assertTrue(data.has("something"));
-                return super.postJson(url, data);
-            }
-        });
-        ghMatrix.setKey(System.getProperty("graphhopper.key", KEY));
-
-        GHMRequest req = new GHMRequest();
-        req.addPoint(new GHPoint(49.6724, 11.3494));
-        req.addPoint(new GHPoint(49.6550, 11.4180));
-        req.putHint("something", "xy");
-        ghMatrix.route(req);
-
-        // clashing parameter will overwrite!
-        req.putHint("vehicle", "xy");
-        assertEquals("xy", req.getVehicle());
-    }
-
-    @Test
-    public void doNotIncludeEmptyCurbsidesList() {
-        final AtomicInteger counter = new AtomicInteger(0);
-        final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb(new GHMatrixBatchRequester() {
-            @Override
-            protected String postJson(String url, JsonNode data) throws IOException {
-                assertFalse(data.has("curbsides"));
-                assertTrue(data.has("points"));
-                counter.incrementAndGet();
-                return "";
-            }
-        });
-        GHMRequest req = new GHMRequest();
-        req.addPoint(new GHPoint(49.6724, 11.3494));
-        req.addPoint(new GHPoint(49.6550, 11.4180));
-        try {
-            ghMatrix.route(req);
-        } catch (Exception ex) {
-        }
-        assertEquals(1, counter.get());
     }
 
     @Test

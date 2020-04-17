@@ -110,11 +110,14 @@ public class CustomWeightingRouteResource {
         boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
         String trackName = request.getHints().getString("gpx.trackname", "GraphHopper Track");
         String timeString = request.getHints().getString("gpx.millis", "");
-        float took = sw.stop().getSeconds();
-        String logStr = (httpReq.getQueryString() == null ? "-" : httpReq.getQueryString())
-                + " " + httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent")
-                + " " + request.getPoints().size() + ", took:" + took + ", " + request.getAlgorithm()
-                + ", " + request.getWeighting() + ", " + request.getVehicle();
+        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
+                + ", vehicle: " + request.getHints().getString("vehicle", "");
+        long took = sw.stop().getNanos() / 1000;
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
+        String logStr = queryString + infoStr + " " + request.getPoints().size() + ", took: "
+                + took + " micros, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
+                + ", " + weightingVehicleLogStr;
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());

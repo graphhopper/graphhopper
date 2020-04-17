@@ -31,7 +31,7 @@ export default class App extends React.Component {
             to: null,
             departureDateTime: new moment(),
             limitSolutions: 5,
-            timeOption: TimeOption.NOW,
+            timeOption: TimeOption.DEPARTURE,
             routes: {
                 query: null,
                 isFetching: false

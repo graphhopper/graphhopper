@@ -23,7 +23,6 @@ function printBashUsage {
   echo "     --action build       creates the graphhopper web JAR"
   echo "     --action clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
   echo "     --action measurement does performance analysis of the current source version via random routes (Measurement class)"
-  echo "     --action torture     can be used to test real world routes via feeding graphhopper logs into a GraphHopper system (Torture class)"
   echo "-c | --config <config>    specify the application configuration"
   echo "-d | --run-background     run the application in background (detach)"
   echo "-fd| --force-download     force the download of the OSM data file if needed"
@@ -93,7 +92,12 @@ fi
 
 # default init, https://stackoverflow.com/a/28085062/194609
 : "${CONFIG:=config.yml}"
+if [ -f $CONFIG ]; then
+  echo "copying non-default config file: $CONFIG"
+  cp $CONFIG config.yml
+fi
 if [ ! -f "config.yml" ]; then
+  echo "no config file was specified using example-config.yml"
   cp config-example.yml $CONFIG
 fi
 
@@ -153,6 +157,7 @@ function ensureMaven {
 }
 
 function execMvn {
+  ensureMaven
   "$MAVEN_HOME/bin/mvn" "$@" > /tmp/graphhopper-compile.log
   returncode=$?
   if [[ $returncode != 0 ]] ; then
@@ -171,8 +176,6 @@ function packageJar {
     echo "## existing jar found $JAR"
   fi
 }
-
-ensureMaven
 
 ## now handle actions which do not take an OSM file
 if [ "$ACTION" = "clean" ]; then
@@ -263,11 +266,6 @@ if [[ "$ACTION" = "web" ]]; then
 elif [ "$ACTION" = "import" ]; then
   "$JAVA" $JAVA_OPTS -Ddw.graphhopper.datareader.file="$OSM_FILE" -Ddw.graphhopper.graph.location="$GRAPH" \
          $GH_IMPORT_OPTS -jar "$JAR" import $CONFIG
-
-elif [ "$ACTION" = "torture" ]; then
-  execMvn --projects tools -am -DskipTests clean package
-  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
-  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $@
 
 elif [ "$ACTION" = "measurement" ]; then
   ARGS="$GH_WEB_OPTS graph.location=$GRAPH datareader.file=$OSM_FILE \

@@ -160,9 +160,63 @@ public class GraphHopperProfileConfigTest {
             public void run() {
                 hopper.load(GH_LOCATION);
             }
-        }, "Duplicate LM reference to profile 'profile'");
+        }, "Multiple LM profiles are using the same profile 'profile'");
     }
 
+    @Test
+    public void unknownLMPreparationProfile_error() {
+        final GraphHopper hopper = createHopper(EncodingManager.create("car"));
+        hopper.setProfiles(new ProfileConfig("profile").setVehicle("car"));
+        hopper.getLMPreparationHandler().setLMProfileConfigs(
+                new LMProfileConfig("profile").setPreparationProfile("xyz")
+        );
+        assertIllegalArgument(new Runnable() {
+            @Override
+            public void run() {
+                hopper.load(GH_LOCATION);
+            }
+        }, "LM profile references unknown preparation profile 'xyz'");
+    }
+
+    @Test
+    public void lmPreparationProfileChain_error() {
+        final GraphHopper hopper = createHopper(EncodingManager.create("car,bike,foot"));
+        hopper.setProfiles(
+                new ProfileConfig("profile1").setVehicle("car"),
+                new ProfileConfig("profile2").setVehicle("bike"),
+                new ProfileConfig("profile3").setVehicle("foot")
+        );
+        hopper.getLMPreparationHandler().setLMProfileConfigs(
+                new LMProfileConfig("profile1"),
+                new LMProfileConfig("profile2").setPreparationProfile("profile1"),
+                new LMProfileConfig("profile3").setPreparationProfile("profile2")
+        );
+        assertIllegalArgument(new Runnable() {
+            @Override
+            public void run() {
+                hopper.load(GH_LOCATION);
+            }
+        }, "Cannot use 'profile2' as preparation_profile for LM profile 'profile3', because it uses another profile for preparation itself.");
+    }
+
+    @Test
+    public void noLMProfileForPreparationProfile_error() {
+        final GraphHopper hopper = createHopper(EncodingManager.create("car,bike,foot"));
+        hopper.setProfiles(
+                new ProfileConfig("profile1").setVehicle("car"),
+                new ProfileConfig("profile2").setVehicle("bike"),
+                new ProfileConfig("profile3").setVehicle("foot")
+        );
+        hopper.getLMPreparationHandler().setLMProfileConfigs(
+                new LMProfileConfig("profile1").setPreparationProfile("profile2")
+        );
+        assertIllegalArgument(new Runnable() {
+            @Override
+            public void run() {
+                hopper.load(GH_LOCATION);
+            }
+        }, "Unknown LM preparation profile 'profile2' in LM profile 'profile1' cannot be used as preparation_profile");
+    }
 
     private GraphHopper createHopper(EncodingManager encodingManager) {
         final GraphHopper hopper = new GraphHopper();

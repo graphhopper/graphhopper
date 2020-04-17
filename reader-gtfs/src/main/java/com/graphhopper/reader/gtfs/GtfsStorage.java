@@ -219,7 +219,7 @@ public class GtfsStorage implements GtfsStorageI {
 	}
 
     @Override
-    public Map<Integer, PlatformDescriptor> getRoutes() {
+    public Map<Integer, PlatformDescriptor> getPlatformDescriptorByEdge() {
         return routes;
     }
 

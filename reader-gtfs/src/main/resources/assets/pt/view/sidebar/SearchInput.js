@@ -11,9 +11,6 @@ export default (({
     });
 });
 const options = [{
-    value: TimeOption.NOW,
-    label: "Leave Now"
-}, {
     value: TimeOption.DEPARTURE,
     label: "Departure at"
 }, {

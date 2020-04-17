@@ -19,13 +19,16 @@ package com.graphhopper.http.resources;
 
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.resources.NearestResource;
 import com.graphhopper.util.Helper;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -38,25 +41,23 @@ import static org.junit.Assert.assertThat;
 /**
  * @author svantulden
  */
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class NearestResourceTest {
     private static final String dir = "./target/andorra-gh/";
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
-
-    static {
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", dir).
                 setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
+        return config;
     }
 
-    @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
-            GraphHopperApplication.class, config);
-
-
-    @AfterClass
+    @BeforeAll
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(dir));
     }
