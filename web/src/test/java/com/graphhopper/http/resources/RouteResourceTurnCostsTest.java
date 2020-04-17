@@ -23,6 +23,7 @@ import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -45,12 +46,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceTurnCostsTest {
-
     private static final String DIR = "./target/route-resource-turn-costs-gh/";
-    private DropwizardAppExtension<GraphHopperServerTestConfiguration> app = new DropwizardAppExtension(GraphHopperApplication.class, createConfig());
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static GraphHopperServerTestConfiguration createConfig() {
-        GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car|turn_costs=true").
                 putObject("routing.ch.disabling_allowed", true).
@@ -68,8 +68,9 @@ public class RouteResourceTurnCostsTest {
                         new CHProfileConfig("my_car_no_turn_costs")
                 ))
                 .setLMProfiles(Arrays.asList(
-                        new LMProfileConfig("my_car_turn_costs"),
-                        new LMProfileConfig("my_car_no_turn_costs")
+                        new LMProfileConfig("my_car_no_turn_costs"),
+                        // no need for a second LM preparation: we can just cross query here
+                        new LMProfileConfig("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs")
                 ));
         return config;
     }

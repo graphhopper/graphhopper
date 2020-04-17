@@ -130,6 +130,8 @@ public class LMPreparationHandler {
         this.lmProfileConfigs.clear();
         this.maximumWeights.clear();
         for (LMProfileConfig config : lmProfileConfigs) {
+            if (config.usesOtherPreparation())
+                continue;
             maximumWeights.put(config.getProfile(), config.getMaximumLMWeight());
         }
         this.lmProfileConfigs.addAll(lmProfileConfigs);

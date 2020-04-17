@@ -48,20 +48,33 @@ class Transfers {
                 .collect(Collectors.groupingBy(t -> t.from_stop_id));
         final List<Transfer> result = new ArrayList<>();
         byFromStop.forEach((fromStop, transfers) -> {
-            routesByStop.getOrDefault(fromStop, Collections.emptySet()).forEach(fromRoute -> {
-                final Transfer mostSpecificRule = findMostSpecificRule(transfers, fromRoute, toRouteId);
-                final Transfer myRule = new Transfer();
-                myRule.to_route_id = toRouteId;
-                myRule.from_route_id = fromRoute;
-                myRule.to_stop_id = mostSpecificRule.to_stop_id;
-                myRule.from_stop_id = mostSpecificRule.from_stop_id;
-                myRule.transfer_type = mostSpecificRule.transfer_type;
-                myRule.min_transfer_time = mostSpecificRule.min_transfer_time;
-                myRule.from_trip_id = mostSpecificRule.from_trip_id;
-                myRule.to_trip_id = mostSpecificRule.to_trip_id;
+            if (hasNoRouteSpecificArrivalTransferRules(fromStop)) {
+                Transfer myRule = new Transfer();
+                myRule.from_stop_id = fromStop;
+                myRule.to_stop_id = toStopId;
                 result.add(myRule);
-            });
+            } else {
+                routesByStop.getOrDefault(fromStop, Collections.emptySet()).forEach(fromRoute -> {
+                    final Transfer mostSpecificRule = findMostSpecificRule(transfers, fromRoute, toRouteId);
+                    final Transfer myRule = new Transfer();
+                    myRule.to_route_id = toRouteId;
+                    myRule.from_route_id = fromRoute;
+                    myRule.to_stop_id = mostSpecificRule.to_stop_id;
+                    myRule.from_stop_id = mostSpecificRule.from_stop_id;
+                    myRule.transfer_type = mostSpecificRule.transfer_type;
+                    myRule.min_transfer_time = mostSpecificRule.min_transfer_time;
+                    myRule.from_trip_id = mostSpecificRule.from_trip_id;
+                    myRule.to_trip_id = mostSpecificRule.to_trip_id;
+                    result.add(myRule);
+                });
+            }
         });
+        if (result.stream().noneMatch(t -> t.from_stop_id.equals(toStopId))) {
+            final Transfer withinStationTransfer = new Transfer();
+            withinStationTransfer.from_stop_id = toStopId;
+            withinStationTransfer.to_stop_id = toStopId;
+            result.add(withinStationTransfer);
+        }
         return result;
     }
 

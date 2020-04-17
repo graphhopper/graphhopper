@@ -1,5 +1,7 @@
 package com.graphhopper.resources;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
@@ -21,10 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -70,13 +69,23 @@ public class SPTResource {
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("point") GHPoint point,
+            @QueryParam("point") @DefaultValue("") String pointStr,
             @QueryParam("columns") String columnsParam,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
 
-        if (point == null)
-            throw new IllegalArgumentException("point parameter cannot be null");
+        try {
+            return executeGet(uriInfo, reverseFlow, pointStr, columnsParam, timeLimitInSeconds, distanceInMeter);
+        } catch (IllegalArgumentException e) {
+            return returnBadRequest(e.getMessage());
+        }
+    }
+
+    private Response executeGet(UriInfo uriInfo, boolean reverseFlow, String pointStr, String columnsParam, long timeLimitInSeconds, double distanceInMeter) {
+        if (pointStr.isEmpty())
+            throw new IllegalArgumentException("You need to specify a point at which the shortest path tree is centered");
+
+        GHPoint point = GHPoint.fromString(pointStr);
 
         StopWatch sw = new StopWatch().start();
         HintsMap hintsMap = new HintsMap();
@@ -240,6 +249,12 @@ public class SPTResource {
         };
         // took header does not make sense as we stream
         return Response.ok(out).build();
+    }
+
+    private Response returnBadRequest(String message) {
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        json.put("message", message);
+        return Response.status(Response.Status.BAD_REQUEST).entity(json).type(MediaType.APPLICATION_JSON).build();
     }
 
     private IsoLabelWithCoordinates isoLabelWithCoordinates(NodeAccess na, ShortestPathTree.IsoLabel label) {

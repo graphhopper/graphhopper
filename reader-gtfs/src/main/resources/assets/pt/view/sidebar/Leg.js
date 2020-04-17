@@ -61,11 +61,11 @@ class Leg extends React.Component {
             {viewBox: "0 0 460 240"},
             React.createElement(
                 "line",
-                {x1: 215, y1: 225, x2: 445, y2: 15, "stroke-width": 30}
+                {x1: 215, y1: 225, x2: 445, y2: 15, "strokeWidth": 30}
             ),
             React.createElement(
                 "line",
-                {x1: 15, y1: 15, x2: 215, y2: 225, "stroke-width": 30}
+                {x1: 15, y1: 15, x2: 215, y2: 225, "strokeWidth": 30}
             ),
         )))), !this.state.isCollapsed ? this.renderLegDetails() : "");
     }

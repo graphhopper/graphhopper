@@ -63,6 +63,12 @@ graphhopper:
   # Hybrid mode:
   # Similar to speed mode, the hybrid mode (Landmarks, LM) also speeds up routing by doing calculating auxiliary data
   # in advance. Its not as fast as speed mode, but more flexible.
+  #
+  # Advanced usage: It is possible to use the same preparation for multiple profiles which saves memory and preparation
+  # time. To do this use e.g. `preparation_profile: my_other_profile` where `my_other_profile` is the name of another
+  # profile for which an LM profile exists. Important: This only will give correct routing results if the weights
+  # calculated for the profile are equal or larger (for every edge) than those calculated for the profile that was used
+  # for the preparation (`my_other_profile`)
   profiles_lm: []
 
   ##### Elevation #####

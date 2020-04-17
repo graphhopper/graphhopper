@@ -173,6 +173,7 @@ public class RouteResource {
                     :
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
+                            type(MediaType.APPLICATION_JSON).
                             build();
         }
     }
@@ -227,6 +228,7 @@ public class RouteResource {
                     :
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
+                            type(MediaType.APPLICATION_JSON).
                             build();
         }
     }
@@ -243,10 +245,9 @@ public class RouteResource {
 
     private void removeLegacyParameters(GHRequest request) {
         // these parameters should only be used to resolve the profile, but should not be passed to GraphHopper
-        // todo: #1980, these parameters should be removed as well?!
-//        request.getHints().setWeighting("");
+        request.getHints().setWeighting("");
         request.getHints().setVehicle("");
-//        request.getHints().remove("edge_based");
+        request.getHints().remove("edge_based");
         request.getHints().remove("turn_costs");
     }
 

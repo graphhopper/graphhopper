@@ -21,29 +21,32 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.File;
 import java.util.Collections;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author svantulden
  */
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class NearestResourceWithEleTest {
     private static final String dir = "./target/monaco-gh/";
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
-
-    static {
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cachedir", "../core/files/").
@@ -52,46 +55,44 @@ public class NearestResourceWithEleTest {
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.location", dir).
                 setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
+        return config;
     }
 
-    @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
-            GraphHopperApplication.class, config);
-
-    @AfterClass
+    @BeforeAll
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(dir));
     }
 
     @Test
-    public void testWithEleQuery() throws Exception {
+    public void testWithEleQuery() {
         JsonNode json = clientTarget(app, "/nearest?point=43.730864,7.420771&elevation=true").request().buildGet().invoke().readEntity(JsonNode.class);
         assertFalse(json.has("error"));
         ArrayNode point = (ArrayNode) json.get("coordinates");
-        assertTrue("returned point is not 3D: " + point, point.size() == 3);
+        assertEquals(3, point.size(), "returned point is not 3D: " + point);
         double lon = point.get(0).asDouble();
         double lat = point.get(1).asDouble();
         double ele = point.get(2).asDouble();
-        assertTrue("nearest point wasn't correct: lat=" + lat + ", lon=" + lon + ", ele=" + ele, lat == 43.73070006215647 && lon == 7.421392181993846 && ele == 66.0);
+        assertTrue(lat == 43.73070006215647 && lon == 7.421392181993846 && ele == 66.0, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon + ", ele=" + ele);
     }
 
     @Test
-    public void testWithoutEleQuery() throws Exception {
+    public void testWithoutEleQuery() {
         JsonNode json = clientTarget(app, "/nearest?point=43.730864,7.420771&elevation=false").request().buildGet().invoke().readEntity(JsonNode.class);
         assertFalse(json.has("error"));
         ArrayNode point = (ArrayNode) json.get("coordinates");
-        assertTrue("returned point is not 2D: " + point, point.size() == 2);
+        assertEquals(2, point.size(), "returned point is not 2D: " + point);
         double lon = point.get(0).asDouble();
         double lat = point.get(1).asDouble();
-        assertTrue("nearest point wasn't correct: lat=" + lat + ", lon=" + lon, lat == 43.73070006215647 && lon == 7.421392181993846);
+        assertTrue(lat == 43.73070006215647 && lon == 7.421392181993846, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon);
 
         // Default elevation is false        
         json = clientTarget(app, "/nearest?point=43.730864,7.420771").request().buildGet().invoke().readEntity(JsonNode.class);
         assertFalse(json.has("error"));
         point = (ArrayNode) json.get("coordinates");
-        assertTrue("returned point is not 2D: " + point, point.size() == 2);
+        assertEquals(2, point.size(), "returned point is not 2D: " + point);
         lon = point.get(0).asDouble();
         lat = point.get(1).asDouble();
-        assertTrue("nearest point wasn't correct: lat=" + lat + ", lon=" + lon, lat == 43.73070006215647 && lon == 7.421392181993846);
+        assertTrue(lat == 43.73070006215647 && lon == 7.421392181993846, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon);
     }
 }

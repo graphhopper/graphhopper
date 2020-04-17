@@ -26,6 +26,7 @@ import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
@@ -36,13 +37,15 @@ import com.graphhopper.util.Parameters;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
@@ -52,17 +55,18 @@ import java.util.Map;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static com.graphhopper.http.util.TestUtils.clientUrl;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
  */
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceTest {
     private static final String DIR = "./target/andorra-gh/";
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
-
-    static {
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
                 putObject("routing.ch.disabling_allowed", true).
@@ -73,13 +77,11 @@ public class RouteResourceTest {
                 putObject("graph.location", DIR)
                 .setProfiles(Collections.singletonList(new ProfileConfig("my_car").setVehicle("car").setWeighting("fastest")))
                 .setCHProfiles(Collections.singletonList(new CHProfileConfig("my_car")));
+        return config;
     }
 
-    @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(GraphHopperApplication.class, config);
-
-    @BeforeClass
-    @AfterClass
+    @BeforeAll
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
     }
@@ -93,8 +95,8 @@ public class RouteResourceTest {
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 9000);
-        assertTrue("distance wasn't correct:" + distance, distance < 9500);
+        assertTrue(distance > 9000, "distance wasn't correct:" + distance);
+        assertTrue(distance < 9500, "distance wasn't correct:" + distance);
     }
 
     @Test
@@ -107,8 +109,8 @@ public class RouteResourceTest {
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 9000);
-        assertTrue("distance wasn't correct:" + distance, distance < 9500);
+        assertTrue(distance > 9000, "distance wasn't correct:" + distance);
+        assertTrue(distance < 9500, "distance wasn't correct:" + distance);
     }
 
     @Test
@@ -116,7 +118,28 @@ public class RouteResourceTest {
         final Response response = clientTarget(app, "/route?point=1234&point=42.510071,1.548128").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-        assertTrue("There should be an error " + json.get("message"), json.get("message").asText().contains("Cannot parse point '1234'"));
+        assertTrue(json.get("message").asText().contains("Cannot parse point '1234'"), "There should be an error " + json.get("message"));
+    }
+
+    @Test
+    public void testAcceptOnlyXmlButNoTypeParam() {
+        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&point=42.510071,1.548128")
+                .request(MediaType.APPLICATION_XML).buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+    }
+
+    @Test
+    public void testAcceptOnlyXmlButNoTypeParamPost() {
+        String jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        final Response response = clientTarget(app, "/route")
+                .request(MediaType.APPLICATION_XML).buildPost(Entity.json(jsonStr)).invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
     }
 
     @Test
@@ -128,8 +151,8 @@ public class RouteResourceTest {
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 9000);
-        assertTrue("distance wasn't correct:" + distance, distance < 9500);
+        assertTrue(distance > 9000, "distance wasn't correct:" + distance);
+        assertTrue(distance < 9500, "distance wasn't correct:" + distance);
     }
 
     @Test
@@ -138,9 +161,9 @@ public class RouteResourceTest {
         final Response response = clientTarget(app, "/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-        assertTrue("There should have been an error response", json.has("message"));
+        assertTrue(json.has("message"), "There should have been an error response");
         String expected = "The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483";
-        assertTrue("There should be an error containing " + expected + ", but got: " + json.get("message"), json.get("message").asText().contains(expected));
+        assertTrue(json.get("message").asText().contains(expected), "There should be an error containing " + expected + ", but got: " + json.get("message"));
     }
 
     @Test
@@ -149,9 +172,9 @@ public class RouteResourceTest {
         final Response response = clientTarget(app, "/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-        assertTrue("There should have been an error response", json.has("message"));
+        assertTrue(json.has("message"), "There should have been an error response");
         String expected = "The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765";
-        assertTrue("There should be an error containing " + expected + ", but got: " + json.get("message"), json.get("message").asText().contains(expected));
+        assertTrue(json.get("message").asText().contains(expected), "There should be an error containing " + expected + ", but got: " + json.get("message"));
     }
 
     @Test
@@ -160,7 +183,7 @@ public class RouteResourceTest {
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode cson = json.get("paths").get(0).get("points");
-        assertTrue("unexpected precision!", cson.toString().contains("[1.536374,42.554839]"));
+        assertTrue(cson.toString().contains("[1.536374,42.554839]"), "unexpected precision!");
     }
 
     @Test
@@ -177,21 +200,21 @@ public class RouteResourceTest {
         GraphHopperWeb hopper = new GraphHopperWeb();
         assertTrue(hopper.load(clientUrl(app, "/route")));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertTrue(rsp.getErrors().isEmpty(), rsp.getErrors().toString());
 
         PathWrapper arsp = rsp.getBest();
-        assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() > 9000);
-        assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() < 9500);
+        assertTrue(arsp.getDistance() > 9000, "distance wasn't correct:" + arsp.getDistance());
+        assertTrue(arsp.getDistance() < 9500, "distance wasn't correct:" + arsp.getDistance());
 
         rsp = hopper.route(new GHRequest().
                 addPoint(new GHPoint(42.554851, 1.536198)).
                 addPoint(new GHPoint(42.531896, 1.553278)).
                 addPoint(new GHPoint(42.510071, 1.548128)));
-        assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
+        assertTrue(rsp.getErrors().isEmpty(), rsp.getErrors().toString());
         arsp = rsp.getBest();
-        assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() > 20000);
-        assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() < 21000);
+        assertTrue(arsp.getDistance() > 20000, "distance wasn't correct:" + arsp.getDistance());
+        assertTrue(arsp.getDistance() < 21000, "distance wasn't correct:" + arsp.getDistance());
 
         InstructionList instructions = arsp.getInstructions();
         assertEquals(24, instructions.size());
@@ -208,7 +231,7 @@ public class RouteResourceTest {
         GHRequest request = new GHRequest(42.546757, 1.528645, 42.520573, 1.557999);
         request.setPathDetails(Arrays.asList(RoadClass.KEY, Surface.KEY, RoadEnvironment.KEY, "average_speed"));
         GHResponse rsp = hopper.route(request);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(4, rsp.getBest().getPathDetails().get(RoadClass.KEY).size());
         assertEquals(RoadClass.PRIMARY.toString(), rsp.getBest().getPathDetails().get(RoadClass.KEY).get(3).getValue());
 
@@ -225,8 +248,8 @@ public class RouteResourceTest {
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
         GHResponse rsp = hopper.route(request);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertTrue(rsp.getErrors().isEmpty(), rsp.getErrors().toString());
         Map<String, List<PathDetail>> pathDetails = rsp.getBest().getPathDetails();
         assertFalse(pathDetails.isEmpty());
         assertTrue(pathDetails.containsKey("average_speed"));
@@ -263,8 +286,8 @@ public class RouteResourceTest {
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.554851, 1.536198);
         request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
         GHResponse rsp = hopper.route(request);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertTrue(rsp.getErrors().isEmpty(), rsp.getErrors().toString());
     }
 
     @Test
@@ -274,7 +297,7 @@ public class RouteResourceTest {
         GHRequest request = new GHRequest(42.542078, 1.45586, 42.537841, 1.439981);
         request.setPathDetails(Collections.singletonList("average_speed"));
         GHResponse rsp = hopper.route(request);
-        assertTrue(rsp.getErrors().toString(), rsp.hasErrors());
+        assertTrue(rsp.hasErrors(), rsp.getErrors().toString());
     }
 
     @Test
@@ -325,7 +348,7 @@ public class RouteResourceTest {
         assertTrue(hopper.load(clientUrl(app, "route")));
         GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
         GHResponse rsp = hopper.route(request);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(490, rsp.getBest().getDistance(), 2);
 
         request.setSnapPreventions(Collections.singletonList("tunnel"));
@@ -375,15 +398,16 @@ public class RouteResourceTest {
 
         // IllegalArgumentException (Wrong Request)
         GHResponse rsp = hopper.route(new GHRequest());
-        assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
+        assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
 
         Throwable ex = rsp.getErrors().get(0);
-        assertTrue("Wrong exception found: " + ex.getClass().getName()
-                + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
+        boolean exp1 = ex instanceof IllegalArgumentException;
+        assertTrue(exp1, "Wrong exception found: " + ex.getClass().getName()
+                + ", IllegalArgumentException expected.");
 
         // IllegalArgumentException (Wrong Points)
         rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0));
-        assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
+        assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
 
         List<Throwable> errs = rsp.getErrors();
         for (int i = 0; i < errs.size(); i++) {
@@ -392,17 +416,18 @@ public class RouteResourceTest {
 
         // IllegalArgumentException (Vehicle not supported)
         rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setVehicle("SPACE-SHUTTLE"));
-        assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
+        assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
 
         ex = rsp.getErrors().get(0);
-        assertTrue("Wrong exception found: " + ex.getClass().getName()
-                + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
+        boolean exp = ex instanceof IllegalArgumentException;
+        assertTrue(exp, "Wrong exception found: " + ex.getClass().getName()
+                + ", IllegalArgumentException expected.");
 
         // an IllegalArgumentException from inside the core is written as JSON
         final Response response = clientTarget(app, "/route?vehicle=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         String msg = (String) response.readEntity(Map.class).get("message");
-        assertTrue(msg, msg.contains("Vehicle not supported:"));
+        assertTrue(msg.contains("Vehicle not supported:"), msg);
     }
 
     @Test
@@ -441,10 +466,10 @@ public class RouteResourceTest {
         final Response response = clientTarget(app, "/route?point=42.554851,1.536198&type=gpx").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         String str = response.readEntity(String.class);
-        assertFalse(str, str.contains("<html>"));
-        assertFalse(str, str.contains("{"));
-        assertTrue("Expected error but was: " + str, str.contains("<message>At least 2 points have to be specified, but was:1</message>"));
-        assertTrue("Expected error but was: " + str, str.contains("<hints><error details=\"java"));
+        assertFalse(str.contains("<html>"), str);
+        assertFalse(str.contains("{"), str);
+        assertTrue(str.contains("<message>At least 2 points have to be specified, but was:1</message>"), "Expected error but was: " + str);
+        assertTrue(str.contains("<hints><error details=\"java"), "Expected error but was: " + str);
     }
 
     @Test
