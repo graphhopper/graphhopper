@@ -112,7 +112,7 @@ public class RouteResourceTurnCostsTest {
     @ValueSource(strings = {"flex", "LM", "CH"})
     public void curbsides(String mode) {
         assertDistance(mode, "my_car_turn_costs", null, null, Arrays.asList("left", "left"), 1459);
-        assertError(mode, "my_car_no_turn_costs", null, null, Arrays.asList("left", "left"), "nonon");
+        assertError(mode, "my_car_no_turn_costs", null, null, Arrays.asList("left", "left"), "To make use of the curbside parameter you need to use a profile that supports turn costs");
     }
 
     @ParameterizedTest
