@@ -10,7 +10,10 @@ import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -18,6 +21,8 @@ import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
@@ -35,8 +40,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 
+import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
 import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
 import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
 
@@ -61,6 +70,7 @@ public class IsochroneResource {
     @Produces({MediaType.APPLICATION_JSON})
     public Response doGet(
             @Context UriInfo uriInfo,
+            @QueryParam("profile") String profileName,
             @QueryParam("buckets") @DefaultValue("1") int nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") @DefaultValue("") String pointStr,
@@ -80,7 +90,7 @@ public class IsochroneResource {
         if (respType != null && !respType.equalsIgnoreCase("json") && !respType.equalsIgnoreCase("geojson"))
             throw new IllegalArgumentException("Format not supported:" + respType);
 
-        HintsMap hintsMap = new HintsMap();
+        PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         if (!hintsMap.getBool(Parameters.CH.DISABLE, true))
             throw new IllegalArgumentException("Currently you cannot use speed mode for /isochrone, Do not use `ch.disable=false`");
@@ -96,8 +106,16 @@ public class IsochroneResource {
         // ignore these parameters for profile selection, because we fall back to node-based without turn costs so far
         hintsMap.remove(TURN_COSTS);
         hintsMap.remove(EDGE_BASED);
-        // todo: #1934, only try to resolve the profile if no profile is given!
-        ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
+        if (Helper.isEmpty(profileName)) {
+            profileName = profileResolver.resolveProfile(hintsMap).getName();
+            hintsMap.remove("weighting");
+            hintsMap.remove("vehicle");
+        }
+        errorIfLegacyParameters(hintsMap);
+        ProfileConfig profile = graphHopper.getProfile(profileName);
+        if (profile == null) {
+            throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
+        }
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();

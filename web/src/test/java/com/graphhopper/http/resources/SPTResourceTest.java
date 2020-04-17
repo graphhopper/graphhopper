@@ -65,7 +65,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPT() {
-        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?profile=car&point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -77,7 +77,7 @@ public class SPTResourceTest {
         assertEquals(118, Integer.parseInt(row[2]) / 1000, 1);
         assertEquals(2263, Integer.parseInt(row[3]), 1);
 
-        rsp = clientTarget(app, "/spt?point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
+        rsp = clientTarget(app, "/spt?profile=car&point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
         rspCsvString = rsp.readEntity(String.class);
         lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -91,7 +91,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestDetails() {
-        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?profile=car&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -113,5 +113,18 @@ public class SPTResourceTest {
         assertEquals(400, rsp.getStatus());
         JsonNode json = rsp.readEntity(JsonNode.class);
         assertTrue(json.get("message").toString().contains("You need to specify a point at which the shortest path tree is centered"), json.toString());
+    }
+
+    @Test
+    public void profileWithLegacyParametersNotAllowed() {
+        assertNotAllowed("&profile=fast_car&weighting=fastest", "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
+        assertNotAllowed("&profile=fast_car&vehicle=car", "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=car'");
+    }
+
+    private void assertNotAllowed(String hint, String error) {
+        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed" + hint).request().buildGet().invoke();
+        assertEquals(400, rsp.getStatus());
+        JsonNode json = rsp.readEntity(JsonNode.class);
+        assertTrue(json.get("message").toString().contains(error), json.toString());
     }
 }

@@ -22,7 +22,11 @@ import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.ProfileResolver;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.BikeFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -159,7 +163,7 @@ public class LMProfileSelectorTest {
     }
 
     private void assertProfileFound(ProfileConfig expectedProfile, List<ProfileConfig> profiles, List<LMProfileConfig> lmProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
-        HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
+        PMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
             ProfileConfig selectedProfile = new ProfileResolver(encodingManager, profiles, Collections.<CHProfileConfig>emptyList(), lmProfiles).selectProfileLM(hintsMap);
             assertEquals(expectedProfile, selectedProfile);
@@ -169,7 +173,7 @@ public class LMProfileSelectorTest {
     }
 
     private String assertLMProfileSelectionError(String expectedError, List<ProfileConfig> profiles, List<LMProfileConfig> lmProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
-        HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
+        PMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
             new ProfileResolver(encodingManager, profiles, Collections.<CHProfileConfig>emptyList(), lmProfiles).selectProfileLM(hintsMap);
             fail("There should have been an error");
@@ -181,14 +185,16 @@ public class LMProfileSelectorTest {
         }
     }
 
-    private HintsMap createHintsMap(String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
-        HintsMap hintsMap = new HintsMap().setWeighting(weighting).setVehicle(vehicle);
-        if (edgeBased != null) {
+    private PMap createHintsMap(String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
+        PMap hintsMap = new PMap();
+        if (weighting != null)
+            hintsMap.putObject("weighting", weighting);
+        if (vehicle != null)
+            hintsMap.putObject("vehicle", vehicle);
+        if (edgeBased != null)
             hintsMap.putObject(Parameters.Routing.EDGE_BASED, edgeBased);
-        }
-        if (uTurnCosts != null) {
+        if (uTurnCosts != null)
             hintsMap.putObject(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
-        }
         return hintsMap;
     }
 }

@@ -1034,16 +1034,16 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Location index not initialized");
 
         try {
-            if (!request.getVehicle().isEmpty())
+            if (request.getHints().has("vehicle"))
                 throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
-            if (!request.getWeighting().isEmpty())
+            if (request.getHints().has("weighting"))
                 throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
             if (request.getHints().has(Routing.TURN_COSTS))
                 throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
             if (request.getHints().has(Routing.EDGE_BASED))
                 throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
 
-            // todo later: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
+            // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
 
             PMap hints = request.getHints();
             boolean disableCH = hints.getBool(CH.DISABLE, false);

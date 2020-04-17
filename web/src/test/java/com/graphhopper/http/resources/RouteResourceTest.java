@@ -88,7 +88,8 @@ public class RouteResourceTest {
 
     @Test
     public void testBasicQuery() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -101,7 +102,7 @@ public class RouteResourceTest {
 
     @Test
     public void testBasicPostQuery() {
-        String jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        String jsonStr = "{ \"profile\": \"my_car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
         final Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -115,7 +116,7 @@ public class RouteResourceTest {
 
     @Test
     public void testWrongPointFormat() {
-        final Response response = clientTarget(app, "/route?point=1234&point=42.510071,1.548128").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&point=1234&point=42.510071,1.548128").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.get("message").asText().contains("Cannot parse point '1234'"), "There should be an error " + json.get("message"));
@@ -123,7 +124,7 @@ public class RouteResourceTest {
 
     @Test
     public void testAcceptOnlyXmlButNoTypeParam() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&point=42.510071,1.548128")
+        final Response response = clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128")
                 .request(MediaType.APPLICATION_XML).buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -133,7 +134,7 @@ public class RouteResourceTest {
 
     @Test
     public void testAcceptOnlyXmlButNoTypeParamPost() {
-        String jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        String jsonStr = "{ \"profile\": \"my_car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
         final Response response = clientTarget(app, "/route")
                 .request(MediaType.APPLICATION_XML).buildPost(Entity.json(jsonStr)).invoke();
         assertEquals(200, response.getStatus());
@@ -144,7 +145,7 @@ public class RouteResourceTest {
 
     @Test
     public void testQueryWithoutInstructions() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&point=42.510071,1.548128&instructions=false").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128&instructions=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -158,7 +159,8 @@ public class RouteResourceTest {
     @Test
     public void testCHWithHeading_error() {
         // There are special cases where heading works with node-based CH, but generally it leads to wrong results -> we expect an error
-        final Response response = clientTarget(app, "/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&"
+                + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("message"), "There should have been an error response");
@@ -169,7 +171,8 @@ public class RouteResourceTest {
     @Test
     public void testCHWithPassThrough_error() {
         // There are special cases where pass_through works with node-based CH, but generally it leads to wrong results -> we expect an error
-        final Response response = clientTarget(app, "/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("message"), "There should have been an error response");
@@ -179,7 +182,8 @@ public class RouteResourceTest {
 
     @Test
     public void testJsonRounding() {
-        final Response response = clientTarget(app, "/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode cson = json.get("paths").get(0).get("points");
@@ -188,7 +192,8 @@ public class RouteResourceTest {
 
     @Test
     public void testFailIfElevationRequestedButNotIncluded() {
-        final Response response = clientTarget(app, "/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("message"));
@@ -199,7 +204,7 @@ public class RouteResourceTest {
     public void testGraphHopperWeb() {
         GraphHopperWeb hopper = new GraphHopperWeb();
         assertTrue(hopper.load(clientUrl(app, "/route")));
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile("my_car"));
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertTrue(rsp.getErrors().isEmpty(), rsp.getErrors().toString());
 
@@ -208,6 +213,7 @@ public class RouteResourceTest {
         assertTrue(arsp.getDistance() < 9500, "distance wasn't correct:" + arsp.getDistance());
 
         rsp = hopper.route(new GHRequest().
+                setProfile("my_car").
                 addPoint(new GHPoint(42.554851, 1.536198)).
                 addPoint(new GHPoint(42.531896, 1.553278)).
                 addPoint(new GHPoint(42.510071, 1.548128)));
@@ -228,7 +234,7 @@ public class RouteResourceTest {
     public void testPathDetailsRoadClass() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(clientUrl(app, "/route")));
-        GHRequest request = new GHRequest(42.546757, 1.528645, 42.520573, 1.557999);
+        GHRequest request = new GHRequest(42.546757, 1.528645, 42.520573, 1.557999).setProfile("my_car");
         request.setPathDetails(Arrays.asList(RoadClass.KEY, Surface.KEY, RoadEnvironment.KEY, "average_speed"));
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
@@ -245,7 +251,7 @@ public class RouteResourceTest {
     public void testPathDetails() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(clientUrl(app, "/route")));
-        GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile("my_car");
         request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
@@ -283,8 +289,9 @@ public class RouteResourceTest {
     public void testPathDetailsSamePoint() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(clientUrl(app, "/route")));
-        GHRequest request = new GHRequest(42.554851, 1.536198, 42.554851, 1.536198);
-        request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
+        GHRequest request = new GHRequest(42.554851, 1.536198, 42.554851, 1.536198)
+                .setPathDetails(Arrays.asList("average_speed", "edge_id", "time"))
+                .setProfile("my_car");
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertTrue(rsp.getErrors().isEmpty(), rsp.getErrors().toString());
@@ -296,13 +303,15 @@ public class RouteResourceTest {
         assertTrue(hopper.load(clientUrl(app, "/route")));
         GHRequest request = new GHRequest(42.542078, 1.45586, 42.537841, 1.439981);
         request.setPathDetails(Collections.singletonList("average_speed"));
+        request.setProfile("my_car");
         GHResponse rsp = hopper.route(request);
         assertTrue(rsp.hasErrors(), rsp.getErrors().toString());
     }
 
     @Test
     public void testPathDetailsWithoutGraphHopperWeb() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -333,7 +342,9 @@ public class RouteResourceTest {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(clientUrl(app, "/route")));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        request.setProfile("my_car");
         GHResponse rsp = hopper.route(request);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals("Continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());
 
         request.getHints().putObject("turn_description", false);
@@ -347,6 +358,7 @@ public class RouteResourceTest {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(clientUrl(app, "route")));
         GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
+        request.setProfile("my_car");
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(490, rsp.getBest().getDistance(), 2);
@@ -361,9 +373,11 @@ public class RouteResourceTest {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(clientUrl(app, "/route")));
         GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
+        request.setProfile("my_car");
         request.setSnapPreventions(Collections.singletonList("tunnel"));
         request.setPointHints(Arrays.asList("Avinguda Fiter i Rossell", ""));
         GHResponse rsp = hopper.route(request);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(1590, rsp.getBest().getDistance(), 2);
 
         // contradicting hints should still allow routing
@@ -376,6 +390,7 @@ public class RouteResourceTest {
     @Test
     public void testPostWithPointHintsAndSnapPrevention() {
         String jsonStr = "{ \"points\": [[1.53285,42.511139], [1.532271,42.508165]], " +
+                "\"profile\": \"my_car\", " +
                 "\"point_hints\":[\"Avinguda Fiter i Rossell\",\"\"] }";
         Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
@@ -383,6 +398,7 @@ public class RouteResourceTest {
         assertEquals(1590, path.get("distance").asDouble(), 2);
 
         jsonStr = "{ \"points\": [[1.53285,42.511139], [1.532271,42.508165]], " +
+                "\"profile\": \"my_car\", " +
                 "\"point_hints\":[\"Tunèl del Pont Pla\",\"\"], " +
                 "\"snap_preventions\": [\"tunnel\"] }";
         response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
@@ -396,43 +412,54 @@ public class RouteResourceTest {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(clientUrl(app, "/route")));
 
-        // IllegalArgumentException (Wrong Request)
-        GHResponse rsp = hopper.route(new GHRequest());
-        assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
+        // unknown profile
+        GHResponse rsp = hopper.route(new GHRequest(42.511139, 1.53285, 42.508165, 1.532271).setProfile("space_shuttle"));
+        assertTrue(rsp.hasErrors(), rsp.getErrors().toString());
+        assertTrue(rsp.getErrors().get(0).getMessage().contains(
+                "The requested profile 'space_shuttle' does not exist"), rsp.getErrors().toString());
 
+        // unknown profile via web api
+        Response response = clientTarget(app, "/route?profile=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        String msg = (String) response.readEntity(Map.class).get("message");
+        assertTrue(msg.contains("The requested profile 'SPACE-SHUTTLE' does not exist"), msg);
+
+        // no points
+        rsp = hopper.route(new GHRequest().setProfile("my_car"));
+        assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
         Throwable ex = rsp.getErrors().get(0);
-        boolean exp1 = ex instanceof IllegalArgumentException;
-        assertTrue(exp1, "Wrong exception found: " + ex.getClass().getName()
+        assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.");
+        assertTrue(ex.getMessage().contains("At least 2 points have to be specified, but was:0"), ex.getMessage());
 
-        // IllegalArgumentException (Wrong Points)
-        rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0));
+        // points out of bounds
+        rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0).setProfile("my_car"));
         assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
-
         List<Throwable> errs = rsp.getErrors();
         for (int i = 0; i < errs.size(); i++) {
             assertEquals(((PointOutOfBoundsException) errs.get(i)).getPointIndex(), i);
+            assertTrue(errs.get(i).getMessage().contains("Point 0 is out of bounds: 0.0,0.0"), errs.get(i).getMessage());
         }
 
-        // IllegalArgumentException (Vehicle not supported)
-        rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setVehicle("SPACE-SHUTTLE"));
+        // unknown vehicle
+        rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).putHint("vehicle", "SPACE-SHUTTLE"));
         assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
-
         ex = rsp.getErrors().get(0);
-        boolean exp = ex instanceof IllegalArgumentException;
-        assertTrue(exp, "Wrong exception found: " + ex.getClass().getName()
+        assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.");
+        assertTrue(ex.getMessage().contains("Vehicle not supported: `space-shuttle`. Supported are: `car`\nYou should consider using the profile parameter instead of specifying a vehicle, see #1958"), ex.getMessage());
 
-        // an IllegalArgumentException from inside the core is written as JSON
-        final Response response = clientTarget(app, "/route?vehicle=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        // an IllegalArgumentException from inside the core is written as JSON, unknown profile
+        response = clientTarget(app, "/route?profile=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
-        String msg = (String) response.readEntity(Map.class).get("message");
-        assertTrue(msg.contains("Vehicle not supported:"), msg);
+        msg = (String) response.readEntity(Map.class).get("message");
+        assertTrue(msg.contains("The requested profile 'SPACE-SHUTTLE' does not exist"), msg);
     }
 
     @Test
     public void testGPX() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128&type=gpx").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         // For backward compatibility we currently export route and track.
@@ -443,7 +470,8 @@ public class RouteResourceTest {
 
     @Test
     public void testGPXWithExcludedRouteSelection() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
@@ -453,7 +481,8 @@ public class RouteResourceTest {
 
     @Test
     public void testGPXWithTrackAndWaypointsSelection() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
@@ -463,7 +492,8 @@ public class RouteResourceTest {
 
     @Test
     public void testGPXWithError() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&type=gpx").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&type=gpx").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         String str = response.readEntity(String.class);
         assertFalse(str.contains("<html>"), str);
@@ -474,19 +504,24 @@ public class RouteResourceTest {
 
     @Test
     public void testWithError() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
+        String rsp = response.readEntity(String.class);
+        assertTrue(rsp.contains("At least 2 points have to be specified, but was:1"), rsp);
+
     }
 
     @Test
     public void testNoPoint() {
-        JsonNode json = clientTarget(app, "/route?heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=my_car&heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
         assertEquals("You have to pass at least one point", json.get("message").asText());
     }
 
     @Test
     public void testTooManyHeadings() {
-        final Response response = clientTarget(app, "/route?point=42.554851,1.536198&heading=0&heading=0").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&heading=0&heading=0").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
