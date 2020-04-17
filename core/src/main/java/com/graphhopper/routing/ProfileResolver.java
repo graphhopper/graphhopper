@@ -22,7 +22,6 @@ import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
@@ -75,12 +74,12 @@ public class ProfileResolver {
         }
     }
 
-    public ProfileConfig resolveProfile(HintsMap hints) {
+    public ProfileConfig resolveProfile(PMap hints) {
         boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
 
-        String vehicle = hints.getVehicle();
-        if (!vehicle.isEmpty() && !encodingManager.hasEncoder(hints.getVehicle()))
+        String vehicle = hints.getString("vehicle", "").toLowerCase();
+        if (!vehicle.isEmpty() && !encodingManager.hasEncoder(vehicle))
             throw new IllegalArgumentException("Vehicle not supported: `" + vehicle + "`. Supported are: `" + encodingManager.toString() +
                     "`\nYou should consider using the profile parameter instead of specifying a vehicle, see #1958");
 
@@ -98,7 +97,7 @@ public class ProfileResolver {
      * @param hintsMap a map used to describe the profile that shall be selected
      * @throws IllegalArgumentException if no profile supporting CH could be selected for the given parameters
      */
-    public ProfileConfig selectProfileCH(HintsMap hintsMap) {
+    public ProfileConfig selectProfileCH(PMap hintsMap) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
         for (ProfileConfig p : chProfiles) {
             if (!chProfileMatchesHints(p, hintsMap))
@@ -133,16 +132,16 @@ public class ProfileResolver {
         }
     }
 
-    protected boolean chProfileMatchesHints(ProfileConfig p, HintsMap hintsMap) {
+    protected boolean chProfileMatchesHints(ProfileConfig p, PMap hintsMap) {
         Boolean edgeBased = getEdgeBased(hintsMap);
         Integer uTurnCosts = getUTurnCosts(hintsMap);
         return (edgeBased == null || p.isTurnCosts() == edgeBased) &&
                 (uTurnCosts == null || uTurnCosts.equals(getUTurnCosts(p.getHints()))) &&
-                (hintsMap.getWeighting().isEmpty() || p.getWeighting().equals(hintsMap.getWeighting())) &&
-                (hintsMap.getVehicle().isEmpty() || p.getVehicle().equals(hintsMap.getVehicle()));
+                (!hintsMap.has("weighting") || p.getWeighting().equalsIgnoreCase(hintsMap.getString("weighting", ""))) &&
+                (!hintsMap.has("vehicle") || p.getVehicle().equalsIgnoreCase(hintsMap.getString("vehicle", "")));
     }
 
-    public ProfileConfig selectProfileLM(HintsMap hintsMap) {
+    public ProfileConfig selectProfileLM(PMap hintsMap) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
         for (ProfileConfig p : lmProfiles) {
             if (!lmProfileMatchesHints(p, hintsMap))
@@ -179,11 +178,11 @@ public class ProfileResolver {
         }
     }
 
-    protected boolean lmProfileMatchesHints(ProfileConfig p, HintsMap hints) {
+    protected boolean lmProfileMatchesHints(ProfileConfig p, PMap hints) {
         return profileMatchesHints(p, hints);
     }
 
-    private ProfileConfig selectProfileUnprepared(HintsMap hints) {
+    private ProfileConfig selectProfileUnprepared(PMap hints) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
         for (ProfileConfig p : profiles) {
             if (!profileMatchesHints(p, hints))
@@ -213,26 +212,26 @@ public class ProfileResolver {
         }
     }
 
-    protected boolean profileMatchesHints(ProfileConfig p, HintsMap hints) {
+    protected boolean profileMatchesHints(ProfileConfig p, PMap hints) {
         Boolean edgeBased = getEdgeBased(hints);
         return (edgeBased == null || p.isTurnCosts() == edgeBased) &&
-                (hints.getWeighting().isEmpty() || p.getWeighting().equals(hints.getWeighting())) &&
-                (hints.getVehicle().isEmpty() || p.getVehicle().equals(hints.getVehicle()));
+                (!hints.has("weighting") || p.getWeighting().equalsIgnoreCase(hints.getString("weighting", ""))) &&
+                (!hints.has("vehicle") || p.getVehicle().equalsIgnoreCase(hints.getString("vehicle", "")));
     }
 
-    private String getRequestAsString(HintsMap map) {
+    private String getRequestAsString(PMap map) {
         Boolean edgeBased = getEdgeBased(map);
-        return (map.getWeighting().isEmpty() ? "*" : map.getWeighting()) +
+        return (!map.has("weighting") ? "*" : map.getString("weighting", "")) +
                 "|" +
-                (map.getVehicle().isEmpty() ? "*" : map.getVehicle()) +
+                (!map.has("vehicle") ? "*" : map.getString("vehicle", "")) +
                 "|" +
                 "turn_costs=" + (edgeBased != null ? edgeBased : "*");
     }
 
-    private String getCHRequestAsString(HintsMap hintsMap, Boolean edgeBased, Integer uTurnCosts) {
-        return (hintsMap.getWeighting().isEmpty() ? "*" : hintsMap.getWeighting()) +
+    private String getCHRequestAsString(PMap hintsMap, Boolean edgeBased, Integer uTurnCosts) {
+        return (!hintsMap.has("weighting") ? "*" : hintsMap.getString("weighting", "")) +
                 "|" +
-                (hintsMap.getVehicle().isEmpty() ? "*" : hintsMap.getVehicle()) +
+                (!hintsMap.has("vehicle") ? "*" : hintsMap.getString("vehicle", "")) +
                 "|" +
                 "turn_costs=" + (edgeBased != null ? edgeBased : "*") +
                 "|" +

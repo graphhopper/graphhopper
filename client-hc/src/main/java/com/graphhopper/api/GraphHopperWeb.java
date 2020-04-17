@@ -312,8 +312,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 + "&elevation=" + tmpElevation
                 + "&optimize=" + tmpOptimize;
 
-        if (!ghRequest.getVehicle().isEmpty()) {
-            url += "&vehicle=" + ghRequest.getVehicle();
+        if (ghRequest.getHints().has("vehicle")) {
+            url += "&vehicle=" + ghRequest.getHints().getString("vehicle", "");
         }
 
         for (String details : ghRequest.getPathDetails()) {

@@ -22,7 +22,6 @@ import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.reader.PrincetonReader;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -90,7 +89,7 @@ public class RoutingAlgorithmIT {
         }
 
         if (hopper.getCHPreparationHandler().isEnabled()) {
-            final HintsMap chHints = new HintsMap(defaultHints);
+            final PMap chHints = new PMap(defaultHints);
             chHints.putObject(Parameters.CH.DISABLE, false);
             chHints.putObject(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             ProfileConfig pickedProfile = new ProfileResolver(hopper.getEncodingManager(), hopper.getProfiles(), hopper.getCHPreparationHandler().getCHProfileConfigs(), Collections.<LMProfileConfig>emptyList()).selectProfileCH(chHints);

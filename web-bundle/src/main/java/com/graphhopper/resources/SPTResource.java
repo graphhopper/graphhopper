@@ -8,7 +8,10 @@ import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -89,7 +92,7 @@ public class SPTResource {
         GHPoint point = GHPoint.fromString(pointStr);
 
         StopWatch sw = new StopWatch().start();
-        HintsMap hintsMap = new HintsMap();
+        PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         if (!hintsMap.getBool(Parameters.CH.DISABLE, true))
             throw new IllegalArgumentException("Currently you cannot use speed mode for /spt, Do not use `ch.disable=false`");

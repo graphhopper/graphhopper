@@ -17,8 +17,8 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class GHRequest {
     // todonow #1934: keep this here or put it into hints, and even more important: remove vehicle+weighting from
     // hints?
     private String profile = "";
-    private final HintsMap hints = new HintsMap();
+    private final PMap hints = new PMap();
     // List of favored start (1st element) and arrival heading (all other).
     // Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
     private List<Double> favoredHeadings;
@@ -235,33 +235,7 @@ public class GHRequest {
         return this;
     }
 
-    public String getWeighting() {
-        return hints.getWeighting();
-    }
-
-    /**
-     * By default it supports fastest and shortest. Or specify empty to use default.
-     */
-    public GHRequest setWeighting(String w) {
-        // todonow: setting weighting/vehicle only works on the client side, but no longer with GHRequest in GraphHopper
-        // should we remove it?
-        hints.setWeighting(w);
-        return this;
-    }
-
-    public String getVehicle() {
-        return hints.getVehicle();
-    }
-
-    /**
-     * Specify car, bike or foot. Or specify empty to use default.
-     */
-    public GHRequest setVehicle(String vehicle) {
-        hints.setVehicle(vehicle);
-        return this;
-    }
-
-    public HintsMap getHints() {
+    public PMap getHints() {
         return hints;
     }
 

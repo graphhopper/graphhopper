@@ -22,7 +22,11 @@ import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.routing.ProfileResolver;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.BikeFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -145,9 +149,9 @@ public class CHProfileSelectorTest {
         List<ProfileConfig> profiles = Collections.singletonList(fastCar);
         List<CHProfileConfig> chProfiles = Collections.singletonList(new CHProfileConfig("fast_car"));
         assertProfileFound(profiles.get(0), profiles, chProfiles, "car", "fastest", null, null);
-        assertProfileFound(profiles.get(0), profiles, chProfiles, "car", "", null, null);
-        assertProfileFound(profiles.get(0), profiles, chProfiles, "", "fastest", null, null);
-        assertProfileFound(profiles.get(0), profiles, chProfiles, "", "", null, null);
+        assertProfileFound(profiles.get(0), profiles, chProfiles, "car", null, null, null);
+        assertProfileFound(profiles.get(0), profiles, chProfiles, null, "fastest", null, null);
+        assertProfileFound(profiles.get(0), profiles, chProfiles, null, null, null, null);
     }
 
     @Test
@@ -155,9 +159,9 @@ public class CHProfileSelectorTest {
         List<ProfileConfig> profiles = Collections.singletonList(shortBike);
         List<CHProfileConfig> chProfiles = Collections.singletonList(new CHProfileConfig("short_bike"));
         assertProfileFound(profiles.get(0), profiles, chProfiles, "bike", "shortest", null, null);
-        assertProfileFound(profiles.get(0), profiles, chProfiles, "bike", "", null, null);
-        assertProfileFound(profiles.get(0), profiles, chProfiles, "", "shortest", null, null);
-        assertProfileFound(profiles.get(0), profiles, chProfiles, "", "", null, null);
+        assertProfileFound(profiles.get(0), profiles, chProfiles, "bike", null, null, null);
+        assertProfileFound(profiles.get(0), profiles, chProfiles, null, "shortest", null, null);
+        assertProfileFound(profiles.get(0), profiles, chProfiles, null, null, null, null);
     }
 
 
@@ -174,13 +178,13 @@ public class CHProfileSelectorTest {
                 new CHProfileConfig("fast_bike_edge40")
         );
         // the vehicle is not given but only bike is used so its fine. note that we prefer edge-based because no edge_based parameter is specified
-        assertProfileFound(profiles.get(2), profiles, chProfiles, "", "fastest", null, null);
+        assertProfileFound(profiles.get(2), profiles, chProfiles, null, "fastest", null, null);
         // if we do not specify the weighting its not clear what to return -> there is an error
-        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, "", "", null, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, null, null, null, null);
         // if we do not specify the weighting but edge_based=true its clear what to return because for edge-based there is only one weighting
-        assertProfileFound(profiles.get(2), profiles, chProfiles, "", "", true, null);
+        assertProfileFound(profiles.get(2), profiles, chProfiles, null, null, true, null);
         // ... for edge_based=false this is an error because there are two node-based profiles
-        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, "", "", false, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, null, null, false, null);
     }
 
     @Test
@@ -196,15 +200,15 @@ public class CHProfileSelectorTest {
                 new CHProfileConfig("fast_bike_edge40")
         );
         // the weighting is not given but only fastest is used so its fine. note that we prefer edge-based because no edge_based parameter is specified
-        assertProfileFound(profiles.get(2), profiles, chProfiles, "bike", "", null, null);
+        assertProfileFound(profiles.get(2), profiles, chProfiles, "bike", null, null, null);
         // if we do not specify the vehicle its not clear what to return -> there is an error
-        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, "", "", null, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, null, null, null, null);
         // if we do not specify the vehicle but edge_based=false its clear what to return because for node-based there is only one weighting
-        assertProfileFound(profiles.get(0), profiles, chProfiles, "", "", false, null);
+        assertProfileFound(profiles.get(0), profiles, chProfiles, null, null, false, null);
         // ... for edge_based=true this is an error, because there are two edge_based profiles
-        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, "", "", true, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, null, null, true, null);
         // ... we can however get a clear match if we specify the u-turn costs
-        assertProfileFound(profiles.get(1), profiles, chProfiles, "", "", true, 10);
+        assertProfileFound(profiles.get(1), profiles, chProfiles, null, null, true, 10);
     }
 
     @Test
@@ -218,7 +222,7 @@ public class CHProfileSelectorTest {
             chProfiles.add(new CHProfileConfig(encoder.toString()));
         }
         // we do not specify the weighting but this is ok, because there is only one in use
-        String weighting = "";
+        String weighting = null;
         assertProfileFound(profiles.get(0), profiles, chProfiles, "car", weighting, null, null);
         assertProfileFound(profiles.get(1), profiles, chProfiles, "bike", weighting, null, null);
         assertProfileFound(profiles.get(2), profiles, chProfiles, "motorcycle", weighting, null, null);
@@ -237,7 +241,7 @@ public class CHProfileSelectorTest {
                 new CHProfileConfig("fast_bike"),
                 new CHProfileConfig("fast_car")
         );
-        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, "", "fastest", null, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, null, "fastest", null, null);
     }
 
     @Test
@@ -250,7 +254,7 @@ public class CHProfileSelectorTest {
                 new CHProfileConfig("fast_bike"),
                 new CHProfileConfig("short_bike")
         );
-        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, "bike", "", null, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, profiles, chProfiles, "bike", null, null, null);
     }
 
     private void assertProfileFound(ProfileConfig expectedProfile, List<ProfileConfig> profiles, List<CHProfileConfig> chProfiles, Boolean edgeBased, Integer uTurnCosts) {
@@ -258,7 +262,7 @@ public class CHProfileSelectorTest {
     }
 
     private void assertProfileFound(ProfileConfig expectedProfile, List<ProfileConfig> profiles, List<CHProfileConfig> chProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
-        HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
+        PMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
             ProfileConfig selectedProfile = new ProfileResolver(encodingManager, profiles, chProfiles, Collections.<LMProfileConfig>emptyList()).selectProfileCH(hintsMap);
             assertEquals(expectedProfile, selectedProfile);
@@ -272,7 +276,7 @@ public class CHProfileSelectorTest {
     }
 
     private String assertCHProfileSelectionError(String expectedError, List<ProfileConfig> profiles, List<CHProfileConfig> chProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
-        HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
+        PMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
             new ProfileResolver(encodingManager, profiles, chProfiles, Collections.<LMProfileConfig>emptyList()).selectProfileCH(hintsMap);
             fail("There should have been an error");
@@ -284,14 +288,16 @@ public class CHProfileSelectorTest {
         }
     }
 
-    private HintsMap createHintsMap(String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
-        HintsMap hintsMap = new HintsMap().setWeighting(weighting).setVehicle(vehicle);
-        if (edgeBased != null) {
+    private PMap createHintsMap(String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
+        PMap hintsMap = new PMap();
+        if (weighting != null)
+            hintsMap.putObject("weighting", weighting);
+        if (vehicle != null)
+            hintsMap.putObject("vehicle", vehicle);
+        if (edgeBased != null)
             hintsMap.putObject(Parameters.Routing.EDGE_BASED, edgeBased);
-        }
-        if (uTurnCosts != null) {
+        if (uTurnCosts != null)
             hintsMap.putObject(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
-        }
         return hintsMap;
     }
 }

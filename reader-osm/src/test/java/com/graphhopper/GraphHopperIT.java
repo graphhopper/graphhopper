@@ -27,7 +27,6 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
@@ -1416,13 +1415,11 @@ public class GraphHopperIT {
         hopper.importOrLoad();
 
         // if we do not pass u_turn_costs with the request hints we get those from the profile
-        HintsMap hints = new HintsMap().setVehicle(vehicle).setWeighting(weighting);
-        Weighting w = hopper.createWeighting(hopper.getProfiles().get(0), hints);
+        Weighting w = hopper.createWeighting(hopper.getProfiles().get(0), new PMap());
         assertEquals("shortest|mtb|u_turn_costs=123", w.toString());
 
         // we can overwrite the u_turn_costs given in the profile
-        hints = new HintsMap().setVehicle(vehicle).setWeighting(weighting).putObject(U_TURN_COSTS, 46);
-        w = hopper.createWeighting(hopper.getProfiles().get(0), hints);
+        w = hopper.createWeighting(hopper.getProfiles().get(0), new PMap().putObject(U_TURN_COSTS, 46));
         assertEquals("shortest|mtb|u_turn_costs=46", w.toString());
     }
 

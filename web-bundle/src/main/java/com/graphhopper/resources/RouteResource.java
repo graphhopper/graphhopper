@@ -23,7 +23,6 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.ProfileResolver;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
@@ -208,7 +207,7 @@ public class RouteResource {
         long took = sw.stop().getNanos() / 1000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + request.getPoints().size() + ", took:"
-                + took + "micros, " + request.getAlgorithm() + ", " + request.getWeighting() + ", " + request.getVehicle();
+                + took + "micros, " + request.getAlgorithm() + ", " + request.getProfile();
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
@@ -242,13 +241,13 @@ public class RouteResource {
         }
     }
 
-    public static void errorIfLegacyParameters(HintsMap hints) {
+    public static void errorIfLegacyParameters(PMap hints) {
         if (hints.has("weighting"))
             throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'weighting' parameter." +
-                    " You used 'weighting=" + hints.getWeighting() + "'");
+                    " You used 'weighting=" + hints.getString("weighting", "") + "'");
         if (hints.has("vehicle"))
             throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'vehicle' parameter." +
-                    " You used 'vehicle=" + hints.getVehicle() + "'");
+                    " You used 'vehicle=" + hints.getString("vehicle", "") + "'");
         if (hints.has("edge_based"))
             throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'edge_based' parameter." +
                     " You used 'edge_based=" + hints.getBool("edge_based", false) + "'");

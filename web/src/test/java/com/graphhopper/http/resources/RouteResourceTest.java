@@ -442,7 +442,7 @@ public class RouteResourceTest {
         }
 
         // unknown vehicle
-        rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setVehicle("SPACE-SHUTTLE"));
+        rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).putHint("vehicle", "SPACE-SHUTTLE"));
         assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
         ex = rsp.getErrors().get(0);
         assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
