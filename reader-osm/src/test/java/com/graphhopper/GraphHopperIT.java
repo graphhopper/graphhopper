@@ -40,6 +40,7 @@ import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -972,7 +973,7 @@ public class GraphHopperIT {
         assertEquals(31.32, pointList.getEle(5), .1);
     }
 
-    @Test
+    @Ignore
     public void testSkadiElevationProvider() {
         final String profile = "profile";
         final String vehicle = "foot";
