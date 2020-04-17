@@ -83,15 +83,11 @@ public class CustomWeightingRouteResource {
         if (Helper.isEmpty(request.getProfile()))
             throw new IllegalArgumentException("The 'profile' parameter for CustomRequest is required");
 
-        ProfileConfig profile = null;
-        for (ProfileConfig profileConfig : graphHopper.getProfiles()) {
-            if (profileConfig.getName().equals(request.getProfile())) {
-                profile = profileConfig;
-                break;
-            }
-        }
+        ProfileConfig profile = graphHopper.getProfile(request.getProfile());
+        if (profile == null)
+            throw new IllegalArgumentException("profile '" + request.getProfile() + "' not found");
         if (!(profile instanceof CustomProfileConfig))
-            throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request");
+            throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request because it has weighting=" + profile.getWeighting());
 
         request.putHint(Parameters.CH.DISABLE, true);
         request.putHint(CustomModel.KEY, model);

@@ -32,6 +32,7 @@ import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.lifecycle.Managed;
@@ -96,9 +97,13 @@ public class GraphHopperManaged implements Managed {
         ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
         List<ProfileConfig> newProfiles = new ArrayList<>();
         for (ProfileConfig profileConfig : configuration.getProfiles()) {
+            if (!CustomWeighting.NAME.equals(profileConfig.getWeighting())) {
+                newProfiles.add(profileConfig);
+                continue;
+            }
             String customModelLocation = profileConfig.getHints().getString("custom_model_file", "");
             if (customModelLocation.isEmpty())
-                newProfiles.add(profileConfig);
+                newProfiles.add(new CustomProfileConfig(profileConfig).setCustomModel(new CustomModel()));
             else
                 try {
                     CustomModel customModel = yamlOM.readValue(new File(customModelLocation), CustomModel.class);
