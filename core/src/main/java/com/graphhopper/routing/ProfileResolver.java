@@ -71,10 +71,6 @@ public class ProfileResolver {
     }
 
     public ProfileConfig resolveProfile(PMap hints) {
-        ProfileConfig profile = profilesByName.get(hints.getString("profile", ""));
-        if (profile != null)
-            return profile;
-
         boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
 
