@@ -35,6 +35,9 @@ graphhopper:
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
   #   in seconds, so for example it does not work with shortest weighting.
+  # - custom_model_file: when you specified "weighting: custom" you can set a yaml file to define the custom_model
+  #   For more information about it have a look into the documentation docs/core/profiles.md
+  #   or the examples under web/src/test/resources/com/graphhopper/http/resources/ or the CustomWeighting class for the raw details.
   #
   # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
   # profiles (see below). Otherwise you should at least limit the number of `routing.max_visited_nodes`.
@@ -49,24 +52,6 @@ graphhopper:
   #    distance_factor: 0.1
   #    turn_costs: true
   #    u_turn_costs: 60
-
-  # Custom Profiles:
-  # You can define your own customized vehicles via a yaml file for example
-  #
-  #  base: car               # use one of the previously defined flag_encoders
-  #  max_speed_fallback: 100
-  #  priority: { road_class: { primary: 0.5 } }
-  #
-  # Other entries than 'max_speed_fallback' are also supported 'vehicle_weight', 'vehicle_width', 'vehicle_height', 'vehicle_length' and 'distance_influence'.
-  # Other entries than 'priority' are 'speed_factor' and 'max_speed' where the encoded values defined above like 'surface' can be used:
-  # country, get_off_bike (boolean, see cargo_bike.yml), hazmat, hazmat_tunnel, hazmat_water, road_access, road_class,
-  # road_class_link, road_environment, roundabout, bike_network, foot_network, surface, toll, track_type
-  # The values like primary or secondary for 'road_class' can be easily determined in the web UI (click flex and hover cursor under 'road_class')
-  # For more details see: https://github.com/graphhopper/graphhopper/blob/master/core/src/main/java/com/graphhopper/routing/profiles
-  # You can also define GeoJSON areas to avoid or block certain roads.
-  # See the example under web/src/test/resources/com/graphhopper/http/resources/ or the CustomWeighting class for the raw details.
-  #
-  # custom_profiles.directory: ./profiles/
 
   # Speed mode:
   # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
