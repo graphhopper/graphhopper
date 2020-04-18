@@ -79,10 +79,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         throw new RuntimeException("This method must be overridden in derived classes");
     }
 
-    public AbstractFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
     /**
      * @param speedBits    specify the number of bits used for speed
      * @param speedFactor  specify the factor to multiple the stored value (can be used to increase

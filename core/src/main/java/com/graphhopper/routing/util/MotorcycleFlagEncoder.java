@@ -61,7 +61,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
 
     public MotorcycleFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
-        speedTwoDirections = true;
+        setSpeedTwoDirections(true);
         restrictions.remove("motorcar");
         //  moped, mofa
         restrictions.add("motorcycle");

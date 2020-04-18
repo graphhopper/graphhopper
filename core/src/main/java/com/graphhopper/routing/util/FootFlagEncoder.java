@@ -62,10 +62,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         this(4, 1);
     }
 
-    public FootFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
     public FootFlagEncoder(PMap properties) {
         this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1));
 

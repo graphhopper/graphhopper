@@ -22,11 +22,14 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Test;
@@ -48,7 +51,7 @@ import static org.junit.Assert.assertFalse;
 @RunWith(Parameterized.class)
 public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
-    private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
+    private final FlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost).setSpeedTwoDirections(true);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting;
     private final GraphHopperStorage graph;
@@ -63,7 +66,7 @@ public class CHQueryWithTurnCostsTest {
     public CHQueryWithTurnCostsTest(String algoString) {
         this.algoString = algoString;
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("motorcycle|shortest|edge")
+                .setCHProfileStrings("car|shortest|edge")
                 .create();
         weighting = graph.getCHProfiles().get(0).getWeighting();
         chGraph = graph.getCHGraph();

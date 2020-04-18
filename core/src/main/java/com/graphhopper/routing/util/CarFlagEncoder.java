@@ -36,11 +36,10 @@ import java.util.*;
 public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
-
+    private boolean speedTwoDirections;
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
 
-    protected boolean speedTwoDirections;
     /**
      * A map which associates string to speed. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen
@@ -60,7 +59,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
         blockBarriersByDefault(properties.getBool("block_barriers", true));
-        speedTwoDirections = properties.getBool("speed_two_directions", false);
+        setSpeedTwoDirections(properties.getBool("speed_two_directions", false));
     }
 
     public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
@@ -140,6 +139,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         badSurfaceSpeed = 30;
         maxPossibleSpeed = 140;
         speedDefault = defaultSpeedMap.get("secondary");
+    }
+
+    public CarFlagEncoder setSpeedTwoDirections(boolean value) {
+        speedTwoDirections = value;
+        return this;
     }
 
     public TransportationMode getTransportationMode() {
