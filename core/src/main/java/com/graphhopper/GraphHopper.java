@@ -600,7 +600,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
         ElevationProvider elevationProvider = ElevationProvider.NOOP;
-        if (eleProviderStr.equalsIgnoreCase("srtm")) {
+      /*  if (eleProviderStr.equalsIgnoreCase("srtm")) {
             elevationProvider = new SRTMProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("cgiar")) {
             elevationProvider = new CGIARProvider(cacheDirStr);
@@ -618,7 +618,7 @@ public class GraphHopper implements GraphHopperAPI {
         elevationProvider.setInterpolate(interpolate);
         if (!baseURL.isEmpty())
             elevationProvider.setBaseURL(baseURL);
-        elevationProvider.setDAType(elevationDAType);
+        elevationProvider.setDAType(elevationDAType); */
         return elevationProvider;
     }
 
