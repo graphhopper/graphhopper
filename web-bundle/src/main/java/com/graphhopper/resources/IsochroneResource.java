@@ -43,8 +43,8 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
-import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
-import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
+import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
+import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 
 @Path("isochrone")
 public class IsochroneResource {
@@ -89,26 +89,15 @@ public class IsochroneResource {
 
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
-        if (!hintsMap.getBool(Parameters.CH.DISABLE, true))
-            throw new IllegalArgumentException("Currently you cannot use speed mode for /isochrone, Do not use `ch.disable=false`");
-        if (!hintsMap.getBool(Parameters.Landmark.DISABLE, true))
-            throw new IllegalArgumentException("Currently you cannot use hybrid mode for /isochrone, Do not use `lm.disable=false`");
-        if (hintsMap.getBool(Parameters.Routing.EDGE_BASED, false))
-            throw new IllegalArgumentException("Currently you cannot use edge-based for /isochrone. Do not use `edge_based=true`");
-        if (hintsMap.getBool(TURN_COSTS, false))
-            throw new IllegalArgumentException("Currently you cannot use turn costs for /isochrone, Do not use `turn_costs=true`");
-
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
-        // ignore these parameters for profile selection, because we fall back to node-based without turn costs so far
-        hintsMap.remove(TURN_COSTS);
-        hintsMap.remove(EDGE_BASED);
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(hintsMap).getName();
             hintsMap.remove("weighting");
             hintsMap.remove("vehicle");
         }
         errorIfLegacyParameters(hintsMap);
+
         ProfileConfig profile = graphHopper.getProfile(profileName);
         if (profile == null) {
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
@@ -123,12 +112,12 @@ public class IsochroneResource {
         Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
 
-        // have to disable turn costs, as isochrones are running node-based
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap, true);
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
-        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, TraversalMode.NODE_BASED);
+        TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
         double limit;
         if (distanceInMeter > 0) {
@@ -170,6 +159,11 @@ public class IsochroneResource {
         if (shortestPathTree.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
             throw new IllegalArgumentException("Too many nodes would have to explored (" + shortestPathTree.getVisitedNodes() + "). Let us know if you need this increased.");
         }
+
+        // Sites may contain repeated coordinates. Especially for edge-based traversal, that's expected -- we visit
+        // each node multiple times.
+        // But that's okay, the triangulator de-dupes by itself, and it keeps the first z-value it sees, which is
+        // what we want.
 
         ArrayList<JsonFeature> features = new ArrayList<>();
         ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
