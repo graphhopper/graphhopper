@@ -43,6 +43,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -500,6 +502,54 @@ public class RouteResourceTest {
         assertFalse(str.contains("{"), str);
         assertTrue(str.contains("<message>At least 2 points have to be specified, but was:1</message>"), "Expected error but was: " + str);
         assertTrue(str.contains("<hints><error details=\"java"), "Expected error but was: " + str);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "false, -1",
+            "true,0",
+            "true,1000",
+    })
+    public void testGPXExport(boolean usePost, int maxUnzippedLength) {
+        GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("gpx.millis", "300000000");
+        req.putHint("type", "gpx");
+        GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
+                .setPostRequest(usePost)
+                ._setMaxUnzippedLength(maxUnzippedLength);
+        String res = gh.export(req);
+        assertTrue(res.contains("<gpx"));
+        assertTrue(res.contains("<rtept lat="));
+        assertTrue(res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
+        assertTrue(res.endsWith("</gpx>"));
+        // this is due to `gpx.millis` we set (dates are shifted by the given (ms!) value from 1970-01-01
+        assertTrue(res.contains("1970-01-04"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "false, -1",
+            "true,0",
+            "true,1000",
+    })
+    public void testExportWithoutTrack(boolean usePost, int maxUnzippedLength) {
+        GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("type", "gpx");
+        req.putHint("gpx.track", false);
+        GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
+                .setPostRequest(usePost)
+                ._setMaxUnzippedLength(maxUnzippedLength);
+        String res = gh.export(req);
+        assertTrue(res.contains("<gpx"));
+        assertTrue(res.contains("<rtept lat="));
+        assertFalse(res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
+        assertTrue(res.endsWith("</gpx>"));
     }
 
     @Test
