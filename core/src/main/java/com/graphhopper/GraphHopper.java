@@ -1106,7 +1106,6 @@ public class GraphHopper implements GraphHopperAPI {
                 CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
                 weighting = chProfile.getWeighting();
                 graph = ghStorage.getCHGraph(chProfile);
-
             } else {
                 checkNonChMaxWaypointDistance(points);
                 final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
