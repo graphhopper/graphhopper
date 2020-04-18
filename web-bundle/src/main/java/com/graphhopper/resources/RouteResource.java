@@ -17,7 +17,6 @@
  */
 package com.graphhopper.resources;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;

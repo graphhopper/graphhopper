@@ -20,16 +20,11 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Every EncodedValue like road_environment can influence one or more aspects of this Weighting: the

@@ -26,8 +26,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import static com.graphhopper.util.Helper.toLowerCase;
-
 /**
  * GraphHopper request wrapper to simplify requesting GraphHopper.
  *

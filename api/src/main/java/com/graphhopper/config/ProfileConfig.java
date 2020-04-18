@@ -18,7 +18,6 @@
 
 package com.graphhopper.config;
 
-import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.PMap;
 
 /**
