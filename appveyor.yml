@@ -1,21 +1,37 @@
 version: '{build}'
-skip_tags: true
 clone_depth: 10
 image: Visual Studio 2019
 environment:
+  DOCKER_USER:
+    secure: iC/lO9cyDWqfFa3YZzgkQg==
+  DOCKER_PASS:
+    secure: 9kYreBg7+ayysVSKa8QZrg==
   MAVEN_OPTS: -Xmx1g
   JAVA_OPTS: -Xmx1g
   JAVA_HOME: C:\Program Files\Java\jdk1.8.0
 install:
   - java -version
   - mvn --version
+  - ps: >-
+        & $env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchLinuxEngine
+        
 branches:
   only:
     - master      
 build_script:
   - mvn clean install -DskipTests=true -B
+  - docker build ./ -t graphhopper/graphhopper:latest
 test_script:
   - mvn test verify -B && mvn checkstyle:check forbiddenapis:check -B
+after_test:
+  - ps: |
+        docker login -u="$env:DOCKER_USER" -p="$env:DOCKER_PASS"
+        docker push graphhopper/graphhopper:latest
+        if ($env:APPVEYOR_REPO_TAG -eq "true")
+        {
+          docker tag graphhopper/graphhopper:latest graphhopper/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
+          docker push graphhopper/graphhopper:"$env:APPVEYOR_REPO_TAG_NAME"
+        }
 cache:
   - C:\maven\
   - C:\Users\appveyor\.m2
