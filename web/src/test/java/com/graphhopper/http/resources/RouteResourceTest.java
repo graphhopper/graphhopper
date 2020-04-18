@@ -520,7 +520,7 @@ public class RouteResourceTest {
         assertTrue(res.contains("<rtept lat="));
         assertTrue(res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
         assertTrue(res.endsWith("</gpx>"));
-        // this is due to `gpx.millis` we set (dates are shifted by the given (ms!) value from 1970-01-01
+        // this is due to `gpx.millis` we set (dates are shifted by the given (ms!) value from 1970-01-01)
         assertTrue(res.contains("1970-01-04"));
     }
 
