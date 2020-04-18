@@ -505,12 +505,8 @@ public class RouteResourceTest {
     }
 
     @ParameterizedTest
-    @CsvSource({
-            "false, -1",
-            "true,0",
-            "true,1000",
-    })
-    public void testGPXExport(boolean usePost, int maxUnzippedLength) {
+    @CsvSource({"false, true"})
+    public void testGPXExport(boolean usePost) {
         GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         req.putHint("elevation", false);
         req.putHint("instructions", true);
@@ -518,8 +514,7 @@ public class RouteResourceTest {
         req.putHint("gpx.millis", "300000000");
         req.putHint("type", "gpx");
         GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
-                .setPostRequest(usePost)
-                ._setMaxUnzippedLength(maxUnzippedLength);
+                .setPostRequest(usePost);
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));
         assertTrue(res.contains("<rtept lat="));
@@ -530,12 +525,8 @@ public class RouteResourceTest {
     }
 
     @ParameterizedTest
-    @CsvSource({
-            "false, -1",
-            "true,0",
-            "true,1000",
-    })
-    public void testExportWithoutTrack(boolean usePost, int maxUnzippedLength) {
+    @CsvSource({"false", "true"})
+    public void testExportWithoutTrack(boolean usePost) {
         GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         req.putHint("elevation", false);
         req.putHint("instructions", true);
@@ -543,8 +534,7 @@ public class RouteResourceTest {
         req.putHint("type", "gpx");
         req.putHint("gpx.track", false);
         GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
-                .setPostRequest(usePost)
-                ._setMaxUnzippedLength(maxUnzippedLength);
+                .setPostRequest(usePost);
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));
         assertTrue(res.contains("<rtept lat="));
