@@ -25,7 +25,10 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
@@ -39,13 +42,14 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
  */
 public class ProfileResolver {
     private final EncodingManager encodingManager;
-    private final Map<String, ProfileConfig> profilesByName;
+    private final List<ProfileConfig> profiles;
     private final List<ProfileConfig> chProfiles;
     private final List<ProfileConfig> lmProfiles;
 
     public ProfileResolver(EncodingManager encodingManager, List<ProfileConfig> profiles, List<CHProfileConfig> chProfiles, List<LMProfileConfig> lmProfiles) {
         this.encodingManager = encodingManager;
-        profilesByName = new HashMap<>(profiles.size());
+        this.profiles = profiles;
+        Map<String, ProfileConfig> profilesByName = new HashMap<>(profiles.size());
         for (ProfileConfig p : profiles) {
             profilesByName.put(p.getName(), p);
         }
@@ -180,14 +184,14 @@ public class ProfileResolver {
 
     private ProfileConfig selectProfileUnprepared(PMap hints) {
         List<ProfileConfig> matchingProfiles = new ArrayList<>();
-        for (ProfileConfig p : profilesByName.values()) {
+        for (ProfileConfig p : profiles) {
             if (!profileMatchesHints(p, hints))
                 continue;
             matchingProfiles.add(p);
         }
         if (matchingProfiles.isEmpty()) {
             throw new IllegalArgumentException("Cannot find matching profile for your request. Please check your parameters." +
-                    "\nrequested: " + getRequestAsString(hints) + "\navailable: " + profilesAsString(profilesByName.values()));
+                    "\nrequested: " + getRequestAsString(hints) + "\navailable: " + profilesAsString(profiles));
         } else if (matchingProfiles.size() == 1) {
             return matchingProfiles.get(0);
         } else {
@@ -204,7 +208,7 @@ public class ProfileResolver {
             }
             throw new IllegalArgumentException("There are multiple profiles matching your request. Use the `weighting`," +
                     " `vehicle and `turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
-                    "\nrequested:  " + getRequestAsString(hints) + "\nmatched:   " + profilesAsString(matchingProfiles) + "\navailable: " + profilesAsString(profilesByName.values()));
+                    "\nrequested:  " + getRequestAsString(hints) + "\nmatched:   " + profilesAsString(matchingProfiles) + "\navailable: " + profilesAsString(profiles));
         }
     }
 
@@ -234,7 +238,7 @@ public class ProfileResolver {
                 "u_turn_costs=" + (uTurnCosts != null ? uTurnCosts : "*");
     }
 
-    private List<String> profilesAsString(Collection<ProfileConfig> profiles) {
+    private List<String> profilesAsString(List<ProfileConfig> profiles) {
         List<String> result = new ArrayList<>(profiles.size());
         for (ProfileConfig p : profiles) {
             result.add(p.getWeighting() + "|" + p.getVehicle() + "|turn_costs=" + p.isTurnCosts());
