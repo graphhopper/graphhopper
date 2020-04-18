@@ -20,13 +20,16 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Test;
