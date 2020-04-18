@@ -18,7 +18,6 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
 
 import java.util.Arrays;
 

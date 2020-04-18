@@ -94,11 +94,6 @@ public class EncodingManagerTest {
             }
 
             @Override
-            public String toString() {
-                return "new_encoder";
-            }
-
-            @Override
             protected String getPropertiesString() {
                 return "my_properties";
             }
@@ -111,6 +106,11 @@ public class EncodingManagerTest {
             @Override
             public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access accept) {
                 return edgeFlags;
+            }
+
+            @Override
+            public String toString() {
+                return "new_encoder";
             }
         };
 

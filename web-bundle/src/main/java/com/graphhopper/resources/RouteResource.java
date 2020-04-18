@@ -183,7 +183,8 @@ public class RouteResource {
             throw new IllegalArgumentException("Empty request");
 
         StopWatch sw = new StopWatch().start();
-        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "") + ", vehicle: " + request.getHints().getString("vehicle", "");
+        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
+                + ", vehicle: " + request.getHints().getString("vehicle", "");
         if (Helper.isEmpty(request.getProfile())) {
             enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
             request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
@@ -191,7 +192,6 @@ public class RouteResource {
         }
         errorIfLegacyParameters(request.getHints());
         GHResponse ghResponse = graphHopper.route(request);
-
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
         boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().getString("type", "json"));
         instructions = writeGPX || instructions;
@@ -199,7 +199,7 @@ public class RouteResource {
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
 
-        /* default to false for the route part in next API version, see #437 */
+        // default to false for the route part in next API version, see #437
         boolean withRoute = request.getHints().getBool("gpx.route", true);
         boolean withTrack = request.getHints().getBool("gpx.track", true);
         boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);

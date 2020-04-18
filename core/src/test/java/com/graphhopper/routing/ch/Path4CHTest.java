@@ -20,14 +20,13 @@ import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
 public class Path4CHTest {
-    private final int maxTurnCosts = 10;
     private GraphHopperStorage graph;
     private CHGraph chGraph;
     private FlagEncoder encoder;
 
     @Before
     public void init() {
-        encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
+        encoder = new MotorcycleFlagEncoder(5, 5, 10);
         EncodingManager em = EncodingManager.create(encoder);
         graph = new GraphBuilder(em)
                 .setCHProfileStrings("motorcycle|fastest|edge")

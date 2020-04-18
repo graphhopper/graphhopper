@@ -92,7 +92,7 @@ public class LMApproximatorTest {
             balancedWeightApproximator.setFromTo(0, t);
             int nOverApproximatedWeights = 0;
             int nInconsistentWeights = 0;
-            for (int v = 0; v< graph.getNodes(); v++) {
+            for (int v = 0; v < graph.getNodes(); v++) {
                 Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
                 Path path = dijkstra.calcPath(v, t);
                 if (path.isFound()) {
@@ -126,7 +126,7 @@ public class LMApproximatorTest {
                         double vw = weighting.calcEdgeWeight(neighbors, false);
                         double vwApprox = lmApproximator.approximate(v) - lmApproximator.approximate(w);
                         if (vwApprox - lm.getLandmarkStorage().getFactor() > vw) {
-                            System.out.printf("%f\t%f\n", vwApprox - lm.getLandmarkStorage().getFactor(),vw);
+                            System.out.printf("%f\t%f\n", vwApprox - lm.getLandmarkStorage().getFactor(), vw);
                             nInconsistentWeights++;
                         }
                     }
@@ -137,7 +137,7 @@ public class LMApproximatorTest {
                         double vw = weighting.calcEdgeWeight(neighbors, false);
                         double vwApprox = balancedWeightApproximator.approximate(v, false) - balancedWeightApproximator.approximate(w, false);
                         if (vwApprox - lm.getLandmarkStorage().getFactor() > vw) {
-                            System.out.printf("%f\t%f\n", vwApprox - lm.getLandmarkStorage().getFactor(),vw);
+                            System.out.printf("%f\t%f\n", vwApprox - lm.getLandmarkStorage().getFactor(), vw);
                             nInconsistentWeights++;
                         }
                     }
