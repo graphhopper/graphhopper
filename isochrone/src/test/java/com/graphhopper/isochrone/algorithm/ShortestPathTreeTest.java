@@ -141,9 +141,6 @@ public class ShortestPathTreeTest {
         instance.search(0, result::add);
         // The origin, and every end of every directed edge, are traversed.
         assertEquals(countDirectedEdges(graph) + 1, result.size());
-        for (ShortestPathTree.IsoLabel isoLabel : result) {
-            System.out.println(isoLabel);
-        }
         assertAll(
                 () -> assertEquals(0, result.get(0).time),
                 () -> assertEquals(9000, result.get(1).time),
