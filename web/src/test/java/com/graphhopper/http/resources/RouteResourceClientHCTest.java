@@ -147,10 +147,10 @@ public class RouteResourceClientHCTest {
     @Test
     public void testAlternativeRoute() {
         GHRequest req = new GHRequest().
-                addPoint(new GHPoint(42.509225, 1.534728)).
-                addPoint(new GHPoint(42.512602, 1.551558)).
-                setAlgorithm("alternative_route").
+                addPoint(new GHPoint(42.505041, 1.521864)).
+                addPoint(new GHPoint(42.509074,1.537936)).
                 putHint("vehicle", "car").
+                setAlgorithm("alternative_route").
                 putHint("instructions", true).
                 putHint("calc_points", true).
                 putHint("ch.disable", true);
@@ -160,14 +160,14 @@ public class RouteResourceClientHCTest {
         assertEquals(2, paths.size());
 
         PathWrapper path = paths.get(0);
-        isBetween(20, 30, path.getPoints().size());
-        isBetween(1750, 1800, path.getDistance());
-        assertTrue("Vial de la Uniò".contains(path.getDescription().get(0)), "expected: " + path.getDescription().get(0));
+        isBetween(31, 37, path.getPoints().size());
+        isBetween(1670, 1710, path.getDistance());
+        assertTrue("Avinguda Carlemany".contains(path.getDescription().get(0)), "expected: " + path.getDescription().get(0));
 
         path = paths.get(1);
-        isBetween(50, 55, path.getPoints().size());
-        isBetween(2200, 2220, path.getDistance());
-        assertTrue("Vial de la Uniò".contains(path.getDescription().get(0)), "expected: " + path.getDescription().get(0));
+        isBetween(26, 31, path.getPoints().size());
+        isBetween(1740, 1790, path.getDistance());
+        assertTrue("Carrer Doctor Vilanova".contains(path.getDescription().get(0)), "expected: " + path.getDescription().get(0));
     }
 
     @Test
@@ -347,7 +347,6 @@ public class RouteResourceClientHCTest {
 
     @Test
     public void testUnknownInstructionSign() throws IOException {
-        // Actual path for the request: point=48.354413%2C8.676335&point=48.35442%2C8.676345
         // Modified the sign though
         ObjectMapper objectMapper = Jackson.newObjectMapper();
         JsonNode json = objectMapper.readTree("{\"instructions\":[{\"distance\":1.073,\"sign\":741,\"interval\":[0,1],\"text\":\"Continue onto A 81\",\"time\":32,\"street_name\":\"A 81\"},{\"distance\":0,\"sign\":4,\"interval\":[1,1],\"text\":\"Finish!\",\"time\":0,\"street_name\":\"\"}],\"descend\":0,\"ascend\":0,\"distance\":1.073,\"bbox\":[8.676286,48.354446,8.676297,48.354453],\"weight\":0.032179,\"time\":32,\"points_encoded\":true,\"points\":\"gfcfHwq}s@}c~AAA?\",\"snapped_waypoints\":\"gfcfHwq}s@}c~AAA?\"}");
