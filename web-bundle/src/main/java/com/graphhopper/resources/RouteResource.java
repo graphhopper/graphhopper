@@ -149,10 +149,10 @@ public class RouteResource {
 
         GHResponse ghResponse = graphHopper.route(request);
 
-        long took = sw.stop().getNanos() / 1000;
+        long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
-                + took + "micros, algo: " + algoStr + ", profile: " + profileName + ", " + weightingVehicleLogStr;
+        String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took: "
+                + String.format("%.1f", (double) took) + "ms, algo: " + algoStr + ", profile: " + profileName + ", " + weightingVehicleLogStr;
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
@@ -206,11 +206,11 @@ public class RouteResource {
         boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
         String trackName = request.getHints().getString("gpx.trackname", "GraphHopper Track");
         String timeString = request.getHints().getString("gpx.millis", "");
-        long took = sw.stop().getNanos() / 1000;
+        long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
         String logStr = queryString + infoStr + " " + request.getPoints().size() + ", took: "
-                + took + " micros, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
+                + String.format("%.1f", (double) took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
                 + ", " + weightingVehicleLogStr;
 
         if (ghResponse.hasErrors()) {

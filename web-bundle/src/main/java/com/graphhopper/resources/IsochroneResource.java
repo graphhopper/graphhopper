@@ -10,10 +10,7 @@ import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -132,7 +129,7 @@ public class IsochroneResource {
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
 
-        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow);
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, TraversalMode.NODE_BASED);
         double limit;
         if (distanceInMeter > 0) {
             limit = distanceInMeter;
@@ -155,16 +152,16 @@ public class IsochroneResource {
             } else {
                 exploreValue = label.time;
             }
-            double lat = na.getLatitude(label.adjNode);
-            double lon = na.getLongitude(label.adjNode);
+            double lat = na.getLatitude(label.node);
+            double lon = na.getLongitude(label.node);
             ConstraintVertex site = new ConstraintVertex(new Coordinate(lon, lat));
             site.setZ(exploreValue);
             sites.add(site);
 
             // guess center of road to increase precision a bit for longer roads
             if (label.parent != null) {
-                double lat2 = na.getLatitude(label.parent.adjNode);
-                double lon2 = na.getLongitude(label.parent.adjNode);
+                double lat2 = na.getLatitude(label.parent.node);
+                double lon2 = na.getLongitude(label.parent.node);
                 ConstraintVertex site2 = new ConstraintVertex(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
                 site2.setZ(exploreValue);
                 sites.add(site2);

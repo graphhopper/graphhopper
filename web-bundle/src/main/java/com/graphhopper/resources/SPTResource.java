@@ -8,10 +8,7 @@ import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -135,7 +132,7 @@ public class SPTResource {
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
 
-        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow);
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, TraversalMode.NODE_BASED);
 
         if (distanceInMeter > 0) {
             shortestPathTree.setDistanceLimit(distanceInMeter + Math.max(distanceInMeter * 0.14, 2_000));
@@ -270,16 +267,16 @@ public class SPTResource {
     }
 
     private IsoLabelWithCoordinates isoLabelWithCoordinates(NodeAccess na, ShortestPathTree.IsoLabel label) {
-        double lat = na.getLatitude(label.adjNode);
-        double lon = na.getLongitude(label.adjNode);
-        IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(label.adjNode);
+        double lat = na.getLatitude(label.node);
+        double lon = na.getLongitude(label.node);
+        IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(label.node);
         isoLabelWC.coordinate = new GHPoint(lat, lon);
         isoLabelWC.timeMillis = Math.round(label.time);
         isoLabelWC.distance = (int) Math.round(label.distance);
         isoLabelWC.edgeId = label.edge;
         if (label.parent != null) {
-            ShortestPathTree.IsoLabel prevLabel = (ShortestPathTree.IsoLabel) label.parent;
-            int prevNodeId = prevLabel.adjNode;
+            ShortestPathTree.IsoLabel prevLabel = label.parent;
+            int prevNodeId = prevLabel.node;
             double prevLat = na.getLatitude(prevNodeId);
             double prevLon = na.getLongitude(prevNodeId);
             isoLabelWC.prevNodeId = prevNodeId;

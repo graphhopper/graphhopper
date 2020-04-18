@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
@@ -50,20 +49,33 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
 
     enum ExploreType {TIME, DISTANCE}
 
-    public static class IsoLabel extends SPTEntry {
+    public static class IsoLabel {
 
-        IsoLabel(int edgeId, int adjNode, double weight, long time, double distance) {
-            super(edgeId, adjNode, weight);
+        IsoLabel(int node, int edge, double weight, long time, double distance, IsoLabel parent) {
+            this.node = node;
+            this.edge = edge;
+            this.weight = weight;
             this.time = time;
             this.distance = distance;
+            this.parent = parent;
         }
 
+        public int node;
+        public int edge;
+        public double weight;
         public long time;
         public double distance;
+        public IsoLabel parent;
 
         @Override
         public String toString() {
-            return super.toString() + ", time:" + time + ", distance:" + distance;
+            return "IsoLabel{" +
+                    "node=" + node +
+                    ", edge=" + edge +
+                    ", weight=" + weight +
+                    ", time=" + time +
+                    ", distance=" + distance +
+                    '}';
         }
     }
 
@@ -75,9 +87,9 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     private ExploreType exploreType = TIME;
     private final boolean reverseFlow;
 
-    public ShortestPathTree(Graph g, Weighting weighting, boolean reverseFlow) {
-        super(g, weighting, TraversalMode.NODE_BASED);
-        queueByWeighting = new PriorityQueue<>(1000);
+    public ShortestPathTree(Graph g, Weighting weighting, boolean reverseFlow, TraversalMode traversalMode) {
+        super(g, weighting, traversalMode);
+        queueByWeighting = new PriorityQueue<>(1000, comparingDouble(l -> l.weight));
         queueByZ = new PriorityQueue<>(1000);
         fromMap = new GHIntObjectHashMap<>(1000);
         this.reverseFlow = reverseFlow;
@@ -108,51 +120,51 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
 
     public void search(int from, final Consumer<IsoLabel> consumer) {
         checkAlreadyRun();
-        IsoLabel currEdge = new IsoLabel(-1, from, 0, 0, 0);
-        queueByWeighting.add(currEdge);
-        queueByZ.add(currEdge);
-        fromMap.put(from, currEdge);
+        IsoLabel currentLabel = new IsoLabel(from, -1, 0, 0, 0, null);
+        queueByWeighting.add(currentLabel);
+        queueByZ.add(currentLabel);
+        if (traversalMode == TraversalMode.NODE_BASED) {
+            fromMap.put(from, currentLabel);
+        }
         EdgeFilter filter = reverseFlow ? inEdgeFilter : outEdgeFilter;
         while (!finished()) {
-            currEdge = queueByWeighting.poll();
-            queueByZ.remove(currEdge);
-            consumer.accept(currEdge);
+            currentLabel = queueByWeighting.poll();
+            queueByZ.remove(currentLabel);
+            consumer.accept(currentLabel);
             visitedNodes++;
 
-            int neighborNode = currEdge.adjNode;
-            EdgeIterator iter = edgeExplorer.setBaseNode(neighborNode);
+            EdgeIterator iter = edgeExplorer.setBaseNode(currentLabel.node);
             while (iter.next()) {
-                if (!accept(iter, currEdge.edge)) {
+                if (!accept(iter, currentLabel.edge)) {
                     continue;
                 }
 
                 // todo: for #1776/#1835 move the access check into weighting
-                double tmpWeight = !filter.accept(iter)
+                double nextWeight = !filter.accept(iter)
                         ? Double.POSITIVE_INFINITY
-                        : (GHUtility.calcWeightWithTurnWeight(weighting, iter, reverseFlow, currEdge.edge) + currEdge.weight);
-                if (Double.isInfinite(tmpWeight))
+                        : (GHUtility.calcWeightWithTurnWeight(weighting, iter, reverseFlow, currentLabel.edge) + currentLabel.weight);
+                if (Double.isInfinite(nextWeight))
                     continue;
 
-                double tmpDistance = iter.getDistance() + currEdge.distance;
-                long tmpTime = GHUtility.calcMillisWithTurnMillis(weighting, iter, reverseFlow, currEdge.edge) + currEdge.time;
-                int tmpNode = iter.getAdjNode();
-                IsoLabel nEdge = fromMap.get(tmpNode);
-                if (nEdge == null) {
-                    nEdge = new IsoLabel(iter.getEdge(), tmpNode, tmpWeight, tmpTime, tmpDistance);
-                    nEdge.parent = currEdge;
-                    fromMap.put(tmpNode, nEdge);
-                    queueByWeighting.add(nEdge);
-                    queueByZ.add(nEdge);
-                } else if (nEdge.weight > tmpWeight) {
-                    queueByWeighting.remove(nEdge);
-                    queueByZ.remove(nEdge);
-                    nEdge.edge = iter.getEdge();
-                    nEdge.weight = tmpWeight;
-                    nEdge.distance = tmpDistance;
-                    nEdge.time = tmpTime;
-                    nEdge.parent = currEdge;
-                    queueByWeighting.add(nEdge);
-                    queueByZ.add(nEdge);
+                double nextDistance = iter.getDistance() + currentLabel.distance;
+                long nextTime = GHUtility.calcMillisWithTurnMillis(weighting, iter, reverseFlow, currentLabel.edge) + currentLabel.time;
+                int nextTraversalId = traversalMode.createTraversalId(iter, reverseFlow);
+                IsoLabel nextLabel = fromMap.get(nextTraversalId);
+                if (nextLabel == null) {
+                    nextLabel = new IsoLabel(iter.getAdjNode(), iter.getEdge(), nextWeight, nextTime, nextDistance, currentLabel);
+                    fromMap.put(nextTraversalId, nextLabel);
+                    queueByWeighting.add(nextLabel);
+                    queueByZ.add(nextLabel);
+                } else if (nextLabel.weight > nextWeight) {
+                    queueByWeighting.remove(nextLabel);
+                    queueByZ.remove(nextLabel);
+                    nextLabel.edge = iter.getEdge();
+                    nextLabel.weight = nextWeight;
+                    nextLabel.distance = nextDistance;
+                    nextLabel.time = nextTime;
+                    nextLabel.parent = currentLabel;
+                    queueByWeighting.add(nextLabel);
+                    queueByZ.add(nextLabel);
                 }
             }
         }
