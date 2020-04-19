@@ -215,7 +215,7 @@ public class IsochroneResourceTest {
     }
 
     @Test
-    public void requestJsonBadType() {
+    public void requestBadType() {
         Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=130&type=xml")
                 .request().buildGet().invoke();
 
@@ -223,6 +223,13 @@ public class IsochroneResourceTest {
         String message = json.path("message").asText();
 
         assertEquals("query param type must be one of [json, geojson]", message);
+    }
+
+    @Test
+    public void testTypeIsCaseInsensitive() {
+        Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=130&type=GEOJSON")
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
     }
 
     @Test

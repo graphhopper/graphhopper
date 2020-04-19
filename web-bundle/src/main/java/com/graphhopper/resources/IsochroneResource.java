@@ -25,7 +25,6 @@ import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.jersey.params.LongParam;
-import io.dropwizard.validation.OneOf;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
@@ -44,6 +43,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
+import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
@@ -65,6 +65,8 @@ public class IsochroneResource {
         this.encodingManager = encodingManager;
     }
 
+    enum ResponseType {json, geojson}
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response doGet(
@@ -75,7 +77,7 @@ public class IsochroneResource {
             @QueryParam("point") @NotNull GHPoint point,
             @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceInMeter,
-            @QueryParam("type") @OneOf({"json","geojson"}) @DefaultValue("json") String respType) {
+            @QueryParam("type") @DefaultValue("json") ResponseType respType) {
         StopWatch sw = new StopWatch().start();
 
         PMap hintsMap = new PMap();
@@ -196,7 +198,7 @@ public class IsochroneResource {
             JsonFeature feature = new JsonFeature();
             HashMap<String, Object> properties = new HashMap<>();
             properties.put("bucket", features.size());
-            if (respType.equalsIgnoreCase("geojson")) {
+            if (respType == geojson) {
                 properties.put("copyrights", WebHelper.COPYRIGHTS);
             }
             feature.setProperties(properties);
@@ -206,7 +208,7 @@ public class IsochroneResource {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         ObjectNode finalJson = null;
-        if (respType.equalsIgnoreCase("geojson")) {
+        if (respType == geojson) {
             json.put("type", "FeatureCollection");
             json.putPOJO("features", features);
             finalJson = json;
