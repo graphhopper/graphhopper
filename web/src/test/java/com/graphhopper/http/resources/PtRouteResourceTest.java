@@ -39,11 +39,11 @@ import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Similar to PtRouteResourceTest, but tests the entire app, not the resource, so that the plugging-together
+ * Tests the entire app, not the resource, so that the plugging-together
  * of stuff (which is different for PT than for the rest) is under test, too.
  */
 @ExtendWith(DropwizardExtensionsSupport.class)
-public class GtfsTest {
+public class PtRouteResourceTest {
     private static final String DIR = "./target/gtfs-app-gh/";
     public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
@@ -54,7 +54,7 @@ public class GtfsTest {
                 putObject("datareader.file", "../reader-gtfs/files/beatty.osm").
                 putObject("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new ProfileConfig("profile").setVehicle("foot").setWeighting("fastest")));
+                setProfiles(Collections.singletonList(new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")));
         return config;
     }
 
@@ -93,13 +93,29 @@ public class GtfsTest {
     @Test
     public void testWalkQuery() {
         final Response response = clientTarget(app, "/route")
-                .queryParam("profile", "profile")
                 .queryParam("point", "36.914893,-116.76821")
                 .queryParam("point", "36.914944,-116.761472")
+                .queryParam("profile", "foot")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         GHResponse ghResponse = response.readEntity(GHResponse.class);
         assertFalse(ghResponse.hasErrors());
+    }
+
+    @Test
+    public void testNoPoints() {
+        final Response response = clientTarget(app, "/route")
+                .request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void testBadPoints() {
+        final Response response = clientTarget(app, "/route")
+                .queryParam("point", "pups")
+                .queryParam("vehicle", "pt")
+                .request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
     }
 
     @Test
