@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -70,16 +71,13 @@ public class IsochroneResource {
             @QueryParam("profile") String profileName,
             @QueryParam("buckets") @DefaultValue("1") int nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("point") GHPoint point,
+            @QueryParam("point") @NotNull(message = "You need to specify a point at which the isochrone is centered") GHPoint point,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter,
             @QueryParam("type") @DefaultValue("json") String respType) {
 
         if (nBuckets > 20 || nBuckets < 1)
             throw new IllegalArgumentException("Number of buckets has to be in the range [1, 20]");
-
-        if (point == null)
-            throw new IllegalArgumentException("You need to specify a point at which the isochrone is centered");
 
         StopWatch sw = new StopWatch().start();
 

@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.BufferedWriter;
@@ -67,7 +68,7 @@ public class SPTResource {
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("point") GHPoint point,
+            @QueryParam("point") @NotNull(message = "You need to specify a point at which the shortest path tree is centered") GHPoint point,
             @QueryParam("columns") String columnsParam,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
@@ -79,9 +80,6 @@ public class SPTResource {
     }
 
     private Response executeGet(UriInfo uriInfo, String profileName, boolean reverseFlow, GHPoint point, String columnsParam, long timeLimitInSeconds, double distanceInMeter) {
-        if (point == null)
-            throw new IllegalArgumentException("You need to specify a point at which the shortest path tree is centered");
-
         StopWatch sw = new StopWatch().start();
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
