@@ -24,6 +24,7 @@ import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.validation.OneOf;
+import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
@@ -70,16 +71,12 @@ public class IsochroneResource {
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
-            @QueryParam("buckets") @DefaultValue("1") int nBuckets,
+            @QueryParam("buckets") @Range(min=1,max=20) @DefaultValue("1") int nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") @NotNull GHPoint point,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter,
             @QueryParam("type") @OneOf({"json","geojson"}) @DefaultValue("json") String respType) {
-
-        if (nBuckets > 20 || nBuckets < 1)
-            throw new IllegalArgumentException("Number of buckets has to be in the range [1, 20]");
-
         StopWatch sw = new StopWatch().start();
 
         PMap hintsMap = new PMap();
