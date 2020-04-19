@@ -23,6 +23,8 @@ import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
+import io.dropwizard.jersey.params.IntParam;
+import io.dropwizard.jersey.params.LongParam;
 import io.dropwizard.validation.OneOf;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
@@ -40,10 +42,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
@@ -67,15 +66,15 @@ public class IsochroneResource {
     }
 
     @GET
-    @Produces({MediaType.APPLICATION_JSON})
+    @Produces(MediaType.APPLICATION_JSON)
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
-            @QueryParam("buckets") @Range(min=1,max=20) @DefaultValue("1") int nBuckets,
+            @QueryParam("buckets") @Range(min=1,max=20) @DefaultValue("1") IntParam nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") @NotNull GHPoint point,
-            @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
-            @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter,
+            @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
+            @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceInMeter,
             @QueryParam("type") @OneOf({"json","geojson"}) @DefaultValue("json") String respType) {
         StopWatch sw = new StopWatch().start();
 
@@ -112,23 +111,23 @@ public class IsochroneResource {
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
         double limit;
-        if (distanceInMeter > 0) {
-            limit = distanceInMeter;
+        if (distanceInMeter.get() > 0) {
+            limit = distanceInMeter.get();
             shortestPathTree.setDistanceLimit(limit + Math.max(limit * 0.14, 2_000));
         } else {
-            limit = timeLimitInSeconds * 1000;
+            limit = timeLimitInSeconds.get() * 1000;
             shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
         }
         ArrayList<Double> zs = new ArrayList<>();
-        for (int i = 0; i < nBuckets; i++) {
-            zs.add(limit / (nBuckets - i));
+        for (int i = 0; i < nBuckets.get(); i++) {
+            zs.add(limit / (nBuckets.get() - i));
         }
 
         final NodeAccess na = queryGraph.getNodeAccess();
         Collection<ConstraintVertex> sites = new ArrayList<>();
         shortestPathTree.search(qr.getClosestNode(), label -> {
             double exploreValue;
-            if (distanceInMeter > 0) {
+            if (distanceInMeter.get() > 0) {
                 exploreValue = label.distance;
             } else {
                 exploreValue = label.time;

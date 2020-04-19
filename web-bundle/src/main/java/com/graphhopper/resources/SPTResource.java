@@ -18,6 +18,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import io.dropwizard.jersey.params.LongParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,8 +71,8 @@ public class SPTResource {
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") @NotNull GHPoint point,
             @QueryParam("columns") String columnsParam,
-            @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
-            @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
+            @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
+            @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceInMeter) {
         try {
             return executeGet(uriInfo, profileName, reverseFlow, point, columnsParam, timeLimitInSeconds, distanceInMeter);
         } catch (IllegalArgumentException e) {
@@ -79,7 +80,7 @@ public class SPTResource {
         }
     }
 
-    private Response executeGet(UriInfo uriInfo, String profileName, boolean reverseFlow, GHPoint point, String columnsParam, long timeLimitInSeconds, double distanceInMeter) {
+    private Response executeGet(UriInfo uriInfo, String profileName, boolean reverseFlow, GHPoint point, String columnsParam, LongParam timeLimitInSeconds, LongParam distanceInMeter) {
         StopWatch sw = new StopWatch().start();
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
@@ -113,10 +114,10 @@ public class SPTResource {
         TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
-        if (distanceInMeter > 0) {
-            shortestPathTree.setDistanceLimit(distanceInMeter + Math.max(distanceInMeter * 0.14, 2_000));
+        if (distanceInMeter.get() > 0) {
+            shortestPathTree.setDistanceLimit(distanceInMeter.get() + Math.max(distanceInMeter.get() * 0.14, 2_000));
         } else {
-            double limit = timeLimitInSeconds * 1000;
+            double limit = timeLimitInSeconds.get() * 1000;
             shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
         }
 

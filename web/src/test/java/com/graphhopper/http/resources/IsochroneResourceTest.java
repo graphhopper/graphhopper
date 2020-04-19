@@ -226,6 +226,17 @@ public class IsochroneResourceTest {
     }
 
     @Test
+    public void requestNotANumber() {
+        Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=wurst")
+                .request().buildGet().invoke();
+
+        JsonNode json = response.readEntity(JsonNode.class);
+        String message = json.path("message").asText();
+
+        assertEquals("query param time_limit is not a number.", message);
+    }
+
+    @Test
     public void requestWithBlockArea() {
         Response rsp = clientTarget(app, "/isochrone")
                 .queryParam("profile", "fast_car")
