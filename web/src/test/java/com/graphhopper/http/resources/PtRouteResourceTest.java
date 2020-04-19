@@ -129,7 +129,20 @@ public class PtRouteResourceTest {
                 .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-        assertEquals("query param pt.earliest_departure_time must not be null", json.get("message").asText());
+        assertTrue(json.get("message").asText().startsWith("query param pt.earliest_departure_time must"));
+    }
+
+    @Test
+    public void testBadTime() {
+        final Response response = clientTarget(app, "/route")
+                .queryParam("point", "36.914893,-116.76821") // NADAV stop
+                .queryParam("point", "36.914944,-116.761472") //NANAA stop
+                .queryParam("vehicle", "pt")
+                .queryParam("pt.earliest_departure_time", "wurst")
+                .request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals("query param pt.earliest_departure_time must be in a ISO-8601 format.", json.get("message").asText());
     }
 
     @Test
