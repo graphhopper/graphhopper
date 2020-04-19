@@ -43,6 +43,7 @@ import io.dropwizard.jersey.params.InstantParam;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.time.Duration;
@@ -83,7 +84,7 @@ public final class PtRouteResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public ObjectNode route(@QueryParam("point") List<GHLocationParam> requestPoints,
+    public ObjectNode route(@QueryParam("point") @Size(min=2,max=2) List<GHLocationParam> requestPoints,
                             @QueryParam("pt.earliest_departure_time") @NotNull InstantParam departureTimeParam,
                             @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
                             @QueryParam("locale") String localeStr,
@@ -168,9 +169,6 @@ public final class PtRouteResource {
             walkSpeedKmH = request.getWalkSpeedKmH();
             blockedRouteTypes = request.getBlockedRouteTypes();
             translation = translationMap.getWithFallBack(request.getLocale());
-            if (request.getPoints().size() != 2) {
-                throw new IllegalArgumentException("Exactly 2 points have to be specified, but was:" + request.getPoints().size());
-            }
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
         }

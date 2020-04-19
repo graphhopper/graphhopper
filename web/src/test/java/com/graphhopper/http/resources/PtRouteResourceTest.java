@@ -112,10 +112,23 @@ public class PtRouteResourceTest {
     }
 
     @Test
+    public void testOnePoint() {
+        final Response response = clientTarget(app, "/route")
+                .queryParam("point", "36.914893,-116.76821")
+                .queryParam("vehicle", "pt")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
+                .request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals("query param point size must be between 2 and 2", json.get("message").asText());
+    }
+
+    @Test
     public void testBadPoints() {
         final Response response = clientTarget(app, "/route")
                 .queryParam("point", "pups")
                 .queryParam("vehicle", "pt")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
                 .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
@@ -129,6 +142,8 @@ public class PtRouteResourceTest {
                 .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
+        // Would prefer a "must not be null" message here, but is currently the same as for a bad time (see below).
+        // I DO NOT want to manually catch this, I want to figure out how to fix this upstream, or live with it.
         assertTrue(json.get("message").asText().startsWith("query param pt.earliest_departure_time must"));
     }
 
