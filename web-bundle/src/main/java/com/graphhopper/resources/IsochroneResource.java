@@ -23,6 +23,7 @@ import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
+import io.dropwizard.validation.OneOf;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
@@ -74,15 +75,12 @@ public class IsochroneResource {
             @QueryParam("point") @NotNull(message = "You need to specify a point at which the isochrone is centered") GHPoint point,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter,
-            @QueryParam("type") @DefaultValue("json") String respType) {
+            @QueryParam("type") @OneOf({"json", "geojson"}) @DefaultValue("json") String respType) {
 
         if (nBuckets > 20 || nBuckets < 1)
             throw new IllegalArgumentException("Number of buckets has to be in the range [1, 20]");
 
         StopWatch sw = new StopWatch().start();
-
-        if (respType != null && !respType.equalsIgnoreCase("json") && !respType.equalsIgnoreCase("geojson"))
-            throw new IllegalArgumentException("Format not supported:" + respType);
 
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());

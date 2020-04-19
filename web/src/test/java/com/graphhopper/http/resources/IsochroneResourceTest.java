@@ -222,7 +222,7 @@ public class IsochroneResourceTest {
         JsonNode json = response.readEntity(JsonNode.class);
         String message = json.path("message").asText();
 
-        assertEquals(message, "Format not supported:xml");
+        assertEquals("must be one of [json, geojson]", message);
     }
 
     @Test
