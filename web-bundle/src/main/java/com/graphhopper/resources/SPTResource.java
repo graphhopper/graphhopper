@@ -1,5 +1,7 @@
 package com.graphhopper.resources;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
@@ -16,23 +18,23 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import io.dropwizard.jersey.params.LongParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.*;
 
-import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
-import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
+import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
+import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
+import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 
 /**
  * This resource provides the entire shortest path tree as response. In a simple CSV format discussed at #1577.
@@ -43,15 +45,11 @@ public class SPTResource {
     private static final Logger logger = LoggerFactory.getLogger(SPTResource.class);
 
     public static class IsoLabelWithCoordinates {
-        public final int nodeId;
-        public int edgeId, prevEdgeId, prevNodeId;
+        public int nodeId = -1;
+        public int edgeId, prevEdgeId, prevNodeId = -1;
         public int timeMillis, prevTimeMillis;
         public int distance, prevDistance;
         public GHPoint coordinate, prevCoordinate;
-
-        public IsoLabelWithCoordinates(int nodeId) {
-            this.nodeId = nodeId;
-        }
     }
 
     private final GraphHopper graphHopper;
@@ -69,34 +67,35 @@ public class SPTResource {
     @Produces("text/csv")
     public Response doGet(
             @Context UriInfo uriInfo,
+            @QueryParam("profile") String profileName,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("point") GHPoint point,
+            @QueryParam("point") @NotNull GHPoint point,
             @QueryParam("columns") String columnsParam,
-            @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
-            @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
+            @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
+            @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceInMeter) {
+        try {
+            return executeGet(uriInfo, profileName, reverseFlow, point, columnsParam, timeLimitInSeconds, distanceInMeter);
+        } catch (IllegalArgumentException e) {
+            return returnBadRequest(e.getMessage());
+        }
+    }
 
-        if (point == null)
-            throw new IllegalArgumentException("point parameter cannot be null");
-
+    private Response executeGet(UriInfo uriInfo, String profileName, boolean reverseFlow, GHPoint point, String columnsParam, LongParam timeLimitInSeconds, LongParam distanceInMeter) {
         StopWatch sw = new StopWatch().start();
-        HintsMap hintsMap = new HintsMap();
+        PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
-        if (!hintsMap.getBool(Parameters.CH.DISABLE, true))
-            throw new IllegalArgumentException("Currently you cannot use speed mode for /spt, Do not use `ch.disable=false`");
-        if (!hintsMap.getBool(Parameters.Landmark.DISABLE, true))
-            throw new IllegalArgumentException("Currently you cannot use hybrid mode for /spt, Do not use `lm.disable=false`");
-        if (hintsMap.getBool(Parameters.Routing.EDGE_BASED, false))
-            throw new IllegalArgumentException("Currently you cannot use edge-based for /spt. Do not use `edge_based=true`");
-        if (hintsMap.getBool(Parameters.Routing.TURN_COSTS, false))
-            throw new IllegalArgumentException("Currently you cannot use turn costs for /spt, Do not use `turn_costs=true`");
-
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
-        // ignore these parameters for profile selection, because we fall back to node-based without turn costs so far
-        hintsMap.remove(TURN_COSTS);
-        hintsMap.remove(EDGE_BASED);
-        // todo: #1934, only try to resolve the profile if no profile is given!
-        ProfileConfig profile = profileResolver.resolveProfile(hintsMap);
+        if (Helper.isEmpty(profileName)) {
+            profileName = profileResolver.resolveProfile(hintsMap).getName();
+            hintsMap.remove("weighting");
+            hintsMap.remove("vehicle");
+        }
+        errorIfLegacyParameters(hintsMap);
+        ProfileConfig profile = graphHopper.getProfile(profileName);
+        if (profile == null) {
+            throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
+        }
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
@@ -108,18 +107,17 @@ public class SPTResource {
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
 
-        // have to disable turn costs, as isochrones are running node-based
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap, true);
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
+        TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
-        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow);
-
-        if (distanceInMeter > 0) {
-            shortestPathTree.setDistanceLimit(distanceInMeter + Math.max(distanceInMeter * 0.14, 2_000));
+        if (distanceInMeter.get() > 0) {
+            shortestPathTree.setDistanceLimit(distanceInMeter.get() + Math.max(distanceInMeter.get() * 0.14, 2_000));
         } else {
-            double limit = timeLimitInSeconds * 1000;
+            double limit = timeLimitInSeconds.get() * 1000;
             shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
         }
 
@@ -242,17 +240,24 @@ public class SPTResource {
         return Response.ok(out).build();
     }
 
+    private Response returnBadRequest(String message) {
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        json.put("message", message);
+        return Response.status(Response.Status.BAD_REQUEST).entity(json).type(MediaType.APPLICATION_JSON).build();
+    }
+
     private IsoLabelWithCoordinates isoLabelWithCoordinates(NodeAccess na, ShortestPathTree.IsoLabel label) {
-        double lat = na.getLatitude(label.adjNode);
-        double lon = na.getLongitude(label.adjNode);
-        IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(label.adjNode);
+        double lat = na.getLatitude(label.node);
+        double lon = na.getLongitude(label.node);
+        IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates();
+        isoLabelWC.nodeId = label.node;
         isoLabelWC.coordinate = new GHPoint(lat, lon);
         isoLabelWC.timeMillis = Math.round(label.time);
         isoLabelWC.distance = (int) Math.round(label.distance);
         isoLabelWC.edgeId = label.edge;
         if (label.parent != null) {
-            ShortestPathTree.IsoLabel prevLabel = (ShortestPathTree.IsoLabel) label.parent;
-            int prevNodeId = prevLabel.adjNode;
+            ShortestPathTree.IsoLabel prevLabel = label.parent;
+            int prevNodeId = prevLabel.node;
             double prevLat = na.getLatitude(prevNodeId);
             double prevLon = na.getLongitude(prevNodeId);
             isoLabelWC.prevNodeId = prevNodeId;

@@ -36,6 +36,8 @@ public class GHPointConverterProvider implements ParamConverterProvider {
             return new ParamConverter<T>() {
                 @Override
                 public T fromString(String value) {
+                    if (value == null)
+                        return null;
                     try {
                         return (T) GHPoint.fromString(value);
                     } catch (IllegalArgumentException ex) {

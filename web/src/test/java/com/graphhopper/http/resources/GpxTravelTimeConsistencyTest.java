@@ -28,13 +28,14 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.gpx.GPXEntry;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 public class GpxTravelTimeConsistencyTest {
 
@@ -43,7 +44,7 @@ public class GpxTravelTimeConsistencyTest {
     private static final String osmFile = DIR + "/monaco.osm.gz";
     private static GraphHopper hopper;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         Helper.removeDir(new File(graphFileFoot));
         hopper = new GraphHopperOSM().
@@ -68,7 +69,7 @@ public class GpxTravelTimeConsistencyTest {
                 GHRequest requestForWaypoint = new GHRequest(routeStart, entry.getPoint());
                 requestForWaypoint.setProfile("profile");
                 PathWrapper partialPath = hopper.route(requestForWaypoint).getBest();
-                assertEquals("GPXListEntry timeStamp is expected to be the same as route duration.", partialPath.getTime(), entry.getTime().longValue());
+                assertEquals(partialPath.getTime(), entry.getTime().longValue(), "GPXListEntry timeStamp is expected to be the same as route duration.");
             }
         }
     }

@@ -23,6 +23,7 @@ import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -44,10 +45,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceProfileSelectionTest {
     private static final String DIR = "./target/route-resource-profile-selection-gh/";
-    private DropwizardAppExtension<GraphHopperServerTestConfiguration> app = new DropwizardAppExtension(GraphHopperApplication.class, createConfig());
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static GraphHopperServerTestConfiguration createConfig() {
-        GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "bike,car,foot").
                 putObject("routing.ch.disabling_allowed", true).
@@ -82,35 +83,55 @@ public class RouteResourceProfileSelectionTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"CH", "LM", "flex"})
-    public void missingVehicleOrWeighting(String mode) {
-        assertDistance("car", "fastest", mode, 3563);
-        assertDistance("foot", "shortest", mode, 2935);
-        assertDistance("bike", "short_fastest", mode, 3085);
+    public void selectUsingProfile(String mode) {
+        assertDistance("my_car", null, null, mode, 3563);
+        assertDistance("my_bike", null, null, mode, 3085);
+        assertDistance("my_feet", null, null, mode, 2935);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"CH", "LM", "flex"})
+    public void withoutProfile(String mode) {
+        // for legacy reasons we can skip the profile parameter and use the vehicle/weighting parameters instead,
+        // see ProfileResolver
+        assertDistance(null, "car", "fastest", mode, 3563);
+        assertDistance(null, "foot", "shortest", mode, 2935);
+        assertDistance(null, "bike", "short_fastest", mode, 3085);
         // we can also skip the vehicles, because the weighting is enough to distinguish a single profile
-        assertDistance(null, "fastest", mode, 3563);
-        assertDistance(null, "shortest", mode, 2935);
-        assertDistance(null, "short_fastest", mode, 3085);
+        assertDistance(null, null, "fastest", mode, 3563);
+        assertDistance(null, null, "shortest", mode, 2935);
+        assertDistance(null, null, "short_fastest", mode, 3085);
         // the same goes for the weighting
-        assertDistance("car", null, mode, 3563);
-        assertDistance("foot", null, mode, 2935);
-        assertDistance("bike", null, mode, 3085);
+        assertDistance(null, "car", null, mode, 3563);
+        assertDistance(null, "foot", null, mode, 2935);
+        assertDistance(null, "bike", null, mode, 3085);
         // not giving any information does not work however, because all three profiles match
-        assertError((String) null, null, mode, "multiple", "profiles matching your request");
-
+        assertError((String) null, null, null, mode, "multiple", "profiles matching your request");
     }
 
-    private void assertDistance(String vehicle, String weighting, String mode, double expectedDistance) {
-        assertDistance(doGet(vehicle, weighting, mode), expectedDistance);
-        assertDistance(doPost(vehicle, weighting, mode), expectedDistance);
+    @ParameterizedTest
+    @ValueSource(strings = {"CH", "LM", "flex"})
+    public void profileWithLegacyParameters_error(String mode) {
+        assertError("my_car", null, "fastest", mode, "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
+        assertError("my_car", "car", null, mode, "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=car'");
+        assertError("my_bike", null, "short_fastest", mode, "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=short_fastest'");
+        assertError("my_bike", "bike", null, mode, "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=bike'");
     }
 
-    private void assertError(String vehicle, String weighting, String mode, String... expectedErrors) {
-        assertError(doGet(vehicle, weighting, mode), expectedErrors);
-        assertError(doPost(vehicle, weighting, mode), expectedErrors);
+    private void assertDistance(String profile, String vehicle, String weighting, String mode, double expectedDistance) {
+        assertDistance(doGet(profile, vehicle, weighting, mode), expectedDistance);
+        assertDistance(doPost(profile, vehicle, weighting, mode), expectedDistance);
     }
 
-    private Response doGet(String vehicle, String weighting, String mode) {
+    private void assertError(String profile, String vehicle, String weighting, String mode, String... expectedErrors) {
+        assertError(doGet(profile, vehicle, weighting, mode), expectedErrors);
+        assertError(doPost(profile, vehicle, weighting, mode), expectedErrors);
+    }
+
+    private Response doGet(String profile, String vehicle, String weighting, String mode) {
         String urlParams = "point=43.727879,7.409678&point=43.745987,7.429848";
+        if (profile != null)
+            urlParams += "&profile=" + profile;
         if (vehicle != null)
             urlParams += "&vehicle=" + vehicle;
         if (weighting != null)
@@ -122,8 +143,10 @@ public class RouteResourceProfileSelectionTest {
         return clientTarget(app, "/route?" + urlParams).request().buildGet().invoke();
     }
 
-    private Response doPost(String vehicle, String weighting, String mode) {
+    private Response doPost(String profile, String vehicle, String weighting, String mode) {
         String jsonStr = "{\"points\": [[7.409678,43.727879], [7.429848, 43.745987]]";
+        if (profile != null)
+            jsonStr += ",\"profile\": \"" + profile + "\"";
         if (vehicle != null)
             jsonStr += ",\"vehicle\": \"" + vehicle + "\"";
         if (weighting != null)

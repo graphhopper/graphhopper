@@ -291,9 +291,8 @@ public class Measurement {
         boolean useLM = args.getBool("measurement.lm", true);
         List<ProfileConfig> profiles = new ArrayList<>();
         profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
-        if (turnCosts) {
+        if (turnCosts)
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
-        }
         ghConfig.setProfiles(profiles);
 
         List<CHProfileConfig> chProfiles = new ArrayList<>();
@@ -304,11 +303,10 @@ public class Measurement {
         ghConfig.setCHProfiles(chProfiles);
         List<LMProfileConfig> lmProfiles = new ArrayList<>();
         if (useLM) {
-            // as currently we do not allow cross-querying LM with turn costs=true/false we have to add both
-            // profiles and this currently leads to two identical LM preparations
             lmProfiles.add(new LMProfileConfig("profile_no_tc"));
             if (turnCosts)
-                lmProfiles.add(new LMProfileConfig("profile_tc"));
+                // no need for a second LM preparation, we can do cross queries here
+                lmProfiles.add(new LMProfileConfig("profile_tc").setPreparationProfile("profile_no_tc"));
         }
         ghConfig.setLMProfiles(lmProfiles);
         return ghConfig;
@@ -526,7 +524,8 @@ public class Measurement {
         MiniPerfTest lookupPerfTest = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
-                return spatialRuleLookup.lookupRule(randomPoints.get(run)).hashCode();
+                GHPoint point = randomPoints.get(run);
+                return spatialRuleLookup.lookupRules(point.lat, point.lon).getRules().size();
             }
         }.setIterations(count).start();
 

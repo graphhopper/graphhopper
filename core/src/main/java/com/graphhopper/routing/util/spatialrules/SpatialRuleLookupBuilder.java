@@ -60,7 +60,7 @@ public class SpatialRuleLookupBuilder {
                 }
 
                 SpatialRule spatialRule = spatialRuleFactory.createSpatialRule(Helper.toLowerCase(id), borders);
-                if (spatialRule != SpatialRule.EMPTY) {
+                if (spatialRule != null) {
                     spatialRules.add(spatialRule);
                     for (Polygon polygon : spatialRule.getBorders()) {
                         envelope.expandToInclude(polygon.getEnvelopeInternal());

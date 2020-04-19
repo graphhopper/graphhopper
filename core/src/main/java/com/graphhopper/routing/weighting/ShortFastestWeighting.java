@@ -30,19 +30,14 @@ import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PR
  * @author Peter Karich
  */
 public class ShortFastestWeighting extends FastestWeighting {
-    // For now keep parameters local within class
     private static final String NAME = "short_fastest";
     private static final String TIME_FACTOR = "short_fastest.time_factor";
     private static final String DISTANCE_FACTOR = "short_fastest.distance_factor";
     private final double distanceFactor;
     private final double timeFactor;
 
-    public ShortFastestWeighting(FlagEncoder encoder, PMap map) {
-        this(encoder, map, NO_TURN_COST_PROVIDER);
-    }
-
     public ShortFastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
-        super(encoder, turnCostProvider);
+        super(encoder, map, turnCostProvider);
         timeFactor = checkBounds(TIME_FACTOR, map.getDouble(TIME_FACTOR, 1), 0, 10);
 
         // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km
@@ -57,7 +52,7 @@ public class ShortFastestWeighting extends FastestWeighting {
     }
 
     public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor, TurnCostProvider turnCostProvider) {
-        super(encoder, turnCostProvider);
+        super(encoder, new PMap(), turnCostProvider);
         this.distanceFactor = checkBounds(DISTANCE_FACTOR, distanceFactor, 0, 10);
         this.timeFactor = 1;
     }

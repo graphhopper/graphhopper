@@ -22,7 +22,6 @@ import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.DefaultServerFactory;
 
 /**
- *
  * @author thomas aulinger
  */
 public class GraphHopperServerTestConfiguration extends GraphHopperServerConfiguration {
@@ -32,7 +31,6 @@ public class GraphHopperServerTestConfiguration extends GraphHopperServerConfigu
     }
 
     private void init() {
-
         // The following is to make sure it runs with a random port
         ((HttpConnectorFactory) ((DefaultServerFactory) getServerFactory()).getApplicationConnectors().get(0)).setPort(0);
         // this is for admin port

@@ -295,7 +295,7 @@ public class GraphHopper implements GraphHopperAPI {
      *     new LMProfileConfig("your_bike")
      *   );
      * }
-     * </pre>>
+     * </pre>
      * <p>
      * See also https://github.com/graphhopper/graphhopper/pull/1922.
      *
@@ -307,12 +307,11 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public GraphHopper setProfiles(List<ProfileConfig> profiles) {
-        this.profilesByName.clear();
+        profilesByName.clear();
         for (ProfileConfig profile : profiles) {
             ProfileConfig previous = this.profilesByName.put(profile.getName(), profile);
-            if (previous != null) {
+            if (previous != null)
                 throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
-            }
         }
         return this;
     }
@@ -862,14 +861,25 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("CH profile references unknown profile '" + chConfig.getProfile() + "'");
             }
         }
-        Set<String> lmProfileSet = new LinkedHashSet<>(lmPreparationHandler.getLMProfileConfigs().size());
+        Map<String, LMProfileConfig> lmProfileMap = new LinkedHashMap<>(lmPreparationHandler.getLMProfileConfigs().size());
         for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
-            boolean added = lmProfileSet.add(lmConfig.getProfile());
-            if (!added) {
-                throw new IllegalArgumentException("Duplicate LM reference to profile '" + lmConfig.getProfile() + "'");
+            LMProfileConfig previous = lmProfileMap.put(lmConfig.getProfile(), lmConfig);
+            if (previous != null) {
+                throw new IllegalArgumentException("Multiple LM profiles are using the same profile '" + lmConfig.getProfile() + "'");
             }
             if (!profilesByName.containsKey(lmConfig.getProfile())) {
                 throw new IllegalArgumentException("LM profile references unknown profile '" + lmConfig.getProfile() + "'");
+            }
+            if (lmConfig.usesOtherPreparation() && !profilesByName.containsKey(lmConfig.getPreparationProfile())) {
+                throw new IllegalArgumentException("LM profile references unknown preparation profile '" + lmConfig.getPreparationProfile() + "'");
+            }
+        }
+        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
+            if (lmConfig.usesOtherPreparation() && !lmProfileMap.containsKey(lmConfig.getPreparationProfile())) {
+                throw new IllegalArgumentException("Unknown LM preparation profile '" + lmConfig.getPreparationProfile() + "' in LM profile '" + lmConfig.getProfile() + "' cannot be used as preparation_profile");
+            }
+            if (lmConfig.usesOtherPreparation() && lmProfileMap.get(lmConfig.getPreparationProfile()).usesOtherPreparation()) {
+                throw new IllegalArgumentException("Cannot use '" + lmConfig.getPreparationProfile() + "' as preparation_profile for LM profile '" + lmConfig.getProfile() + "', because it uses another profile for preparation itself.");
             }
         }
     }
@@ -886,7 +896,15 @@ public class GraphHopper implements GraphHopperAPI {
         if (chPreparationHandler.isEnabled() && !disableCH) {
             return chPreparationHandler.getAlgorithmFactory(profile);
         } else if (lmPreparationHandler.isEnabled() && !disableLM) {
-            return lmPreparationHandler.getAlgorithmFactory(profile);
+            for (LMProfileConfig lmp : lmPreparationHandler.getLMProfileConfigs()) {
+                if (lmp.getProfile().equals(profile)) {
+                    return lmp.usesOtherPreparation()
+                            // cross-querying
+                            ? lmPreparationHandler.getAlgorithmFactory(lmp.getPreparationProfile())
+                            : lmPreparationHandler.getAlgorithmFactory(lmp.getProfile());
+                }
+            }
+            throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'");
         } else {
             return new RoutingAlgorithmFactorySimple();
         }
@@ -920,11 +938,13 @@ public class GraphHopper implements GraphHopperAPI {
             return;
 
         for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
+            if (lmConfig.usesOtherPreparation())
+                continue;
             ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
             // Note that we have to make sure the weighting used for LM preparation does not include turn costs, because
             // the LM preparation is running node-based and the landmark weights will be wrong if there are non-zero
             // turn costs, see discussion in #1960
-            // Running the preparation without turn costs can also be useful to allow e.g. changing the u_turn_costs per
+            // Running the preparation without turn costs is also useful to allow e.g. changing the u_turn_costs per
             // request (we have to use the minimum weight settings (= no turn costs) for the preparation)
             Weighting weighting = createWeighting(profile, new PMap(), true);
             lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
@@ -976,11 +996,9 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
-
     }
 
     protected void importPublicTransit() {
-
     }
 
     private static final String INTERPOLATION_KEY = "prepare.elevation_interpolation.done";
@@ -1038,18 +1056,16 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Location index not initialized");
 
         try {
-            if (!request.getVehicle().isEmpty())
+            if (request.getHints().has("vehicle"))
                 throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
-            // todo: #1980, weighting should be also forbidden
-//            if (!request.getWeighting().isEmpty())
-//                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
+            if (request.getHints().has("weighting"))
+                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
             if (request.getHints().has(Routing.TURN_COSTS))
                 throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
-            // todo: #1980, edge based should also be forbidden
-//            if (request.getHints().has(Routing.EDGE_BASED))
-//                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
+            if (request.getHints().has(Routing.EDGE_BASED))
+                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
 
-            // todo later: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
+            // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
 
             PMap hints = request.getHints();
             boolean disableCH = hints.getBool(CH.DISABLE, false);
@@ -1094,16 +1110,15 @@ public class GraphHopper implements GraphHopperAPI {
             Weighting weighting;
             Graph graph = ghStorage;
             if (chPreparationHandler.isEnabled() && !disableCH) {
-                if (algorithmFactory instanceof CHRoutingAlgorithmFactory) {
-                    if (hints.has(Routing.BLOCK_AREA))
-                        throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
-
-                    CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
-                    weighting = chProfile.getWeighting();
-                    graph = ghStorage.getCHGraph(chProfile);
-                } else {
+                if (!(algorithmFactory instanceof CHRoutingAlgorithmFactory))
                     throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algorithmFactory);
-                }
+
+                if (hints.has(Routing.BLOCK_AREA))
+                    throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
+
+                CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
+                weighting = chProfile.getWeighting();
+                graph = ghStorage.getCHGraph(chProfile);
             } else {
                 checkNonChMaxWaypointDistance(points);
                 final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
@@ -1127,7 +1142,6 @@ public class GraphHopper implements GraphHopperAPI {
                 return Collections.emptyList();
 
             QueryGraph queryGraph = QueryGraph.lookup(graph, qResults);
-
             int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
             if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
@@ -1345,12 +1359,12 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private static class DefaultWeightingFactory {
-        private final EncodingManager encodingManager;
         private final GraphHopperStorage ghStorage;
+        private final EncodingManager encodingManager;
 
         public DefaultWeightingFactory(EncodingManager encodingManager, GraphHopperStorage ghStorage) {
-            this.encodingManager = encodingManager;
             this.ghStorage = ghStorage;
+            this.encodingManager = encodingManager;
         }
 
         public Weighting createWeighting(ProfileConfig profile, PMap requestHints, boolean disableTurnCosts) {

@@ -23,30 +23,33 @@ import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests the creation of Landmarks and parsing the map.geo.json file
  *
  * @author Robin Boldt
  */
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class GraphHopperLandmarksTest {
     private static final String DIR = "./target/landmark-test-gh/";
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
-
-    static {
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
                 putObject("datareader.file", "../core/files/belarus-east.osm.gz").
@@ -66,46 +69,48 @@ public class GraphHopperLandmarksTest {
                 .setLMProfiles(Collections.singletonList(
                         new LMProfileConfig("car_profile")
                 ));
+        return config;
     }
 
-    @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
-            GraphHopperApplication.class, config);
-
-    @AfterClass
+    @BeforeAll
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
     }
 
     @Test
     public void testQueries() {
-        Response response = clientTarget(app, "/route?point=55.99022,29.129734&point=56.001069,29.150848").request().buildGet().invoke();
+        Response response = clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.001069,29.150848").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
-        assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
+        assertEquals(1870, distance, 100, "distance wasn't correct:" + distance);
 
-        response = clientTarget(app, "route?point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true").request().buildGet().invoke();
+        response = clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true").request().buildGet().invoke();
         json = response.readEntity(JsonNode.class);
         distance = json.get("paths").get(0).get("distance").asDouble();
-        assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
+        assertEquals(1870, distance, 100, "distance wasn't correct:" + distance);
     }
 
     @Test
     public void testLandmarkDisconnect() {
         // if one algorithm is disabled then the following chain is executed: CH -> LM -> flexible
         // disconnected for landmarks
-        Response response = clientTarget(app, "route?point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true").request().buildGet().invoke();
+        Response response = clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.get("message").toString().contains("Different subnetworks"));
 
         // without landmarks it should work
-        response = clientTarget(app, "route?point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true").request().buildGet().invoke();
+        response = clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
         double distance = json.get("paths").get(0).get("distance").asDouble();
-        assertEquals("distance wasn't correct:" + distance, 5790, distance, 100);
+        assertEquals(5790, distance, 100, "distance wasn't correct:" + distance);
     }
 }

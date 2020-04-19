@@ -28,7 +28,6 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
@@ -42,6 +41,7 @@ import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -917,7 +917,7 @@ public class GraphHopperIT {
                 .setEncodingManager(EncodingManager.start().add(new OSMRoadEnvironmentParser() {
                     @Override
                     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-                        // do not change RoadEnvironment to avoid triggering tunnel interpolation - is this a valid use case after #TODONOW?
+                        // do not change RoadEnvironment to avoid triggering tunnel interpolation
                         return edgeFlags;
                     }
                 }).addAll(new DefaultFlagEncoderFactory(), vehicle).build());
@@ -974,6 +974,7 @@ public class GraphHopperIT {
         assertEquals(31.32, pointList.getEle(5), .1);
     }
 
+<<<<<<< HEAD
     @Test
     public void testSRTMWithLongEdgeSampling() {
         final String profile = "profile";
@@ -1018,7 +1019,7 @@ public class GraphHopperIT {
         assertEquals(52.43, arsp.getPoints().get(10).getElevation(), 1e-2);
     }
 
-    @Test
+    @Ignore
     public void testSkadiElevationProvider() {
         final String profile = "profile";
         final String vehicle = "foot";
@@ -1402,6 +1403,54 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testCrossQuery() {
+        final String profile1 = "p1";
+        final String profile2 = "p2";
+        final String profile3 = "p3";
+        final String vehicle = "car";
+        GraphHopper hopper = createGraphHopper(vehicle).
+                setOSMFile(MONACO).
+                setProfiles(
+                        new ProfileConfig(profile1).setVehicle("car").setWeighting("short_fastest").putHint("short_fastest.distance_factor", 0.07),
+                        new ProfileConfig(profile2).setVehicle("car").setWeighting("short_fastest").putHint("short_fastest.distance_factor", 0.10),
+                        new ProfileConfig(profile3).setVehicle("car").setWeighting("short_fastest").putHint("short_fastest.distance_factor", 0.15)
+                ).
+                setStoreOnFlush(true);
+
+        hopper.getLMPreparationHandler().
+                setLMProfileConfigs(
+                        // we have an LM setup for each profile, but only one LM preparation that we use for all of them!
+                        // this works because profile1's weight is the lowest for every edge
+                        new LMProfileConfig(profile1),
+                        new LMProfileConfig(profile2).setPreparationProfile(profile1),
+                        new LMProfileConfig(profile3).setPreparationProfile(profile1)
+                ).
+                setDisablingAllowed(true);
+        hopper.importOrLoad();
+
+        // flex
+        testCrossQueryAssert(profile1, hopper, 528.3, 152, true);
+        testCrossQueryAssert(profile2, hopper, 636.0, 150, true);
+        testCrossQueryAssert(profile3, hopper, 815.4, 146, true);
+
+        // LM (should be the same as flex, but with less visited nodes!)
+        testCrossQueryAssert(profile1, hopper, 528.3, 106, false);
+        testCrossQueryAssert(profile2, hopper, 636.0, 78, false);
+        // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
+        // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
+        // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
+        // instead of 124 visited nodes (not shown here)
+        testCrossQueryAssert(profile3, hopper, 815.4, 124, false);
+    }
+
+    private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
+        GHResponse response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).setProfile(profile).putHint("lm.disable", disableLM));
+        assertEquals(expectedWeight, response.getBest().getRouteWeight(), 0.1);
+        int visitedNodes = response.getHints().getInt("visited_nodes.sum", 0);
+        assertEquals(expectedVisitedNodes, visitedNodes);
+    }
+
+    @Test
     public void testCreateWeightingHintsMerging() {
         final String profile = "profile";
         final String vehicle = "mtb";
@@ -1413,13 +1462,11 @@ public class GraphHopperIT {
         hopper.importOrLoad();
 
         // if we do not pass u_turn_costs with the request hints we get those from the profile
-        HintsMap hints = new HintsMap().setVehicle(vehicle).setWeighting(weighting);
-        Weighting w = hopper.createWeighting(hopper.getProfiles().get(0), hints);
+        Weighting w = hopper.createWeighting(hopper.getProfiles().get(0), new PMap());
         assertEquals("shortest|mtb|u_turn_costs=123", w.toString());
 
         // we can overwrite the u_turn_costs given in the profile
-        hints = new HintsMap().setVehicle(vehicle).setWeighting(weighting).putObject(U_TURN_COSTS, 46);
-        w = hopper.createWeighting(hopper.getProfiles().get(0), hints);
+        w = hopper.createWeighting(hopper.getProfiles().get(0), new PMap().putObject(U_TURN_COSTS, 46));
         assertEquals("shortest|mtb|u_turn_costs=46", w.toString());
     }
 

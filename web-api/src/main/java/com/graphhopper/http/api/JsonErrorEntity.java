@@ -28,33 +28,21 @@ import java.util.List;
 
 public class JsonErrorEntity {
 
-    private final List<Throwable> errors;
+    private final List<String> errors;
 
-    public JsonErrorEntity(List<Throwable> t) {
+    public JsonErrorEntity(List<String> t) {
         this.errors = t;
     }
 
     @JsonValue
     ObjectNode jsonErrorResponse() {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
-        json.put("message", getMessage(errors.get(0)));
+        json.put("message", errors.get(0));
         ArrayNode errorHintList = json.putArray("hints");
-        for (Throwable t : errors) {
+        for (String t : errors) {
             ObjectNode error = errorHintList.addObject();
-            error.put("message", getMessage(t));
-            error.put("details", t.getClass().getName());
-            if (t instanceof GHException) {
-                ((GHException) t).getDetails().forEach(error::putPOJO);
-            }
+            error.put("message", t);
         }
         return json;
     }
-
-    private String getMessage(Throwable t) {
-        if (t.getMessage() == null)
-            return t.getClass().getSimpleName();
-        else
-            return t.getMessage();
-    }
-
 }

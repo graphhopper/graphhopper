@@ -23,6 +23,7 @@ import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -45,12 +46,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceTurnCostsTest {
-
     private static final String DIR = "./target/route-resource-turn-costs-gh/";
-    private DropwizardAppExtension<GraphHopperServerTestConfiguration> app = new DropwizardAppExtension(GraphHopperApplication.class, createConfig());
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static GraphHopperServerTestConfiguration createConfig() {
-        GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car|turn_costs=true").
                 putObject("routing.ch.disabling_allowed", true).
@@ -68,8 +68,9 @@ public class RouteResourceTurnCostsTest {
                         new CHProfileConfig("my_car_no_turn_costs")
                 ))
                 .setLMProfiles(Arrays.asList(
-                        new LMProfileConfig("my_car_turn_costs"),
-                        new LMProfileConfig("my_car_no_turn_costs")
+                        new LMProfileConfig("my_car_no_turn_costs"),
+                        // no need for a second LM preparation: we can just cross query here
+                        new LMProfileConfig("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs")
                 ));
         return config;
     }
@@ -83,31 +84,55 @@ public class RouteResourceTurnCostsTest {
     @ParameterizedTest
     @ValueSource(strings = {"flex", "LM", "CH"})
     public void canToggleTurnCostsOnOff(String mode) {
-        assertDistance(mode, null, null, emptyList(), 1044);
-        assertDistance(mode, true, null, emptyList(), 1044);
-        assertDistance(mode, null, true, emptyList(), 1044);
-        assertDistance(mode, false, null, emptyList(), 400);
-        assertDistance(mode, null, false, emptyList(), 400);
+        assertDistance(mode, "my_car_turn_costs", null, null, emptyList(), 1044);
+        assertDistance(mode, "my_car_no_turn_costs", null, null, emptyList(), 400);
+
+        // profile+legacy is not allowed
+        assertError(mode, "my_car_turn_costs", true, null, emptyList(),
+                "Since you are using the 'profile' parameter, do not use the 'edge_based' parameter. You used 'edge_based=true'");
+        assertError(mode, "my_car_turn_costs", false, null, emptyList(),
+                "Since you are using the 'profile' parameter, do not use the 'edge_based' parameter. You used 'edge_based=false'");
+        assertError(mode, "my_car_turn_costs", null, true, emptyList(),
+                "Since you are using the 'profile' parameter, do not use the 'turn_costs' parameter. You used 'turn_costs=true'");
+        assertError(mode, "my_car_turn_costs", null, false, emptyList(),
+                "Since you are using the 'profile' parameter, do not use the 'turn_costs' parameter. You used 'turn_costs=false");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"flex", "LM", "CH"})
+    public void canToggleTurnCostsOnOff_legacy(String mode) {
+        assertDistance(mode, null, null, null, emptyList(), 1044);
+        assertDistance(mode, null, true, null, emptyList(), 1044);
+        assertDistance(mode, null, null, true, emptyList(), 1044);
+        assertDistance(mode, null, false, null, emptyList(), 400);
+        assertDistance(mode, null, null, false, emptyList(), 400);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"flex", "LM", "CH"})
     public void curbsides(String mode) {
-        assertDistance(mode, null, null, Arrays.asList("left", "left"), 1459);
-        assertDistance(mode, true, null, Arrays.asList("left", "left"), 1459);
-        assertDistance(mode, null, true, Arrays.asList("left", "left"), 1459);
-        assertError(mode, false, null, Arrays.asList("left", "left"), "Disabling 'edge_based' when using 'curbside' is not allowed");
-        assertError(mode, null, false, Arrays.asList("left", "left"), "Disabling 'turn_costs' when using 'curbside' is not allowed");
+        assertDistance(mode, "my_car_turn_costs", null, null, Arrays.asList("left", "left"), 1459);
+        assertError(mode, "my_car_no_turn_costs", null, null, Arrays.asList("left", "left"), "To make use of the curbside parameter you need to use a profile that supports turn costs");
     }
 
-    private void assertDistance(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides, double expectedDistance) {
-        assertDistance(doGet(mode, edgeBased, turnCosts, curbsides), expectedDistance);
-        assertDistance(doPost(mode, edgeBased, turnCosts, curbsides), expectedDistance);
+    @ParameterizedTest
+    @ValueSource(strings = {"flex", "LM", "CH"})
+    public void curbsides_legacy(String mode) {
+        assertDistance(mode, null, null, null, Arrays.asList("left", "left"), 1459);
+        assertDistance(mode, null, true, null, Arrays.asList("left", "left"), 1459);
+        assertDistance(mode, null, null, true, Arrays.asList("left", "left"), 1459);
+        assertError(mode, null, false, null, Arrays.asList("left", "left"), "Disabling 'edge_based' when using 'curbside' is not allowed");
+        assertError(mode, null, null, false, Arrays.asList("left", "left"), "Disabling 'turn_costs' when using 'curbside' is not allowed");
     }
 
-    private void assertError(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides, String... expectedErrors) {
-        assertError(doGet(mode, edgeBased, turnCosts, curbsides), expectedErrors);
-        assertError(doPost(mode, edgeBased, turnCosts, curbsides), expectedErrors);
+    private void assertDistance(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides, double expectedDistance) {
+        assertDistance(doGet(mode, profile, edgeBased, turnCosts, curbsides), expectedDistance);
+        assertDistance(doPost(mode, profile, edgeBased, turnCosts, curbsides), expectedDistance);
+    }
+
+    private void assertError(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides, String... expectedErrors) {
+        assertError(doGet(mode, profile, edgeBased, turnCosts, curbsides), expectedErrors);
+        assertError(doPost(mode, profile, edgeBased, turnCosts, curbsides), expectedErrors);
     }
 
     private void assertDistance(Response response, double expectedDistance) {
@@ -129,7 +154,7 @@ public class RouteResourceTurnCostsTest {
         }
     }
 
-    private String getUrlParams(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
+    private String getUrlParams(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
         String urlParams = "point=55.813357,37.5958585&point=55.811042,37.594689";
         for (String curbside : curbsides)
             urlParams += "&curbside=" + curbside;
@@ -141,10 +166,12 @@ public class RouteResourceTurnCostsTest {
             urlParams += "&edge_based=" + edgeBased;
         if (turnCosts != null)
             urlParams += "&turn_costs=" + turnCosts;
+        if (profile != null)
+            urlParams += "&profile=" + profile;
         return urlParams;
     }
 
-    private String getJsonStr(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
+    private String getJsonStr(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
         String jsonStr = "{";
         jsonStr += "\"points\": [[37.5958585,55.813357],[37.594689,55.811042]]";
         if (!curbsides.isEmpty()) {
@@ -159,15 +186,17 @@ public class RouteResourceTurnCostsTest {
             jsonStr += ", \"edge_based\": " + edgeBased;
         if (turnCosts != null)
             jsonStr += ", \"turn_costs\": " + turnCosts;
+        if (profile != null)
+            jsonStr += ", \"profile\": \"" + profile + "\"";
         jsonStr += "}";
         return jsonStr;
     }
 
-    private Response doGet(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
-        return clientTarget(app, "/route?" + getUrlParams(mode, edgeBased, turnCosts, curbsides)).request().buildGet().invoke();
+    private Response doGet(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
+        return clientTarget(app, "/route?" + getUrlParams(mode, profile, edgeBased, turnCosts, curbsides)).request().buildGet().invoke();
     }
 
-    private Response doPost(String mode, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
-        return clientTarget(app, "/route?").request().post(Entity.json(getJsonStr(mode, edgeBased, turnCosts, curbsides)));
+    private Response doPost(String mode, String profile, Boolean edgeBased, Boolean turnCosts, List<String> curbsides) {
+        return clientTarget(app, "/route?").request().post(Entity.json(getJsonStr(mode, profile, edgeBased, turnCosts, curbsides)));
     }
 }
