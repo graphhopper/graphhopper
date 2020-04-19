@@ -31,8 +31,8 @@ import java.io.Writer;
 import java.util.*;
 
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
-import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
-import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
+import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
+import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 
 /**
  * This resource provides the entire shortest path tree as response. In a simple CSV format discussed at #1577.
@@ -43,15 +43,11 @@ public class SPTResource {
     private static final Logger logger = LoggerFactory.getLogger(SPTResource.class);
 
     public static class IsoLabelWithCoordinates {
-        public final int nodeId;
-        public int edgeId, prevEdgeId, prevNodeId;
+        public int nodeId = -1;
+        public int edgeId, prevEdgeId, prevNodeId = -1;
         public int timeMillis, prevTimeMillis;
         public int distance, prevDistance;
         public GHPoint coordinate, prevCoordinate;
-
-        public IsoLabelWithCoordinates(int nodeId) {
-            this.nodeId = nodeId;
-        }
     }
 
     private final GraphHopper graphHopper;
@@ -66,7 +62,7 @@ public class SPTResource {
     }
 
     @GET
-    @Produces("text/csv")
+    @Produces({"text/csv", MediaType.APPLICATION_JSON})
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
@@ -91,20 +87,8 @@ public class SPTResource {
         StopWatch sw = new StopWatch().start();
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
-        if (!hintsMap.getBool(Parameters.CH.DISABLE, true))
-            throw new IllegalArgumentException("Currently you cannot use speed mode for /spt, Do not use `ch.disable=false`");
-        if (!hintsMap.getBool(Parameters.Landmark.DISABLE, true))
-            throw new IllegalArgumentException("Currently you cannot use hybrid mode for /spt, Do not use `lm.disable=false`");
-        if (hintsMap.getBool(Parameters.Routing.EDGE_BASED, false))
-            throw new IllegalArgumentException("Currently you cannot use edge-based for /spt. Do not use `edge_based=true`");
-        if (hintsMap.getBool(Parameters.Routing.TURN_COSTS, false))
-            throw new IllegalArgumentException("Currently you cannot use turn costs for /spt, Do not use `turn_costs=true`");
-
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
-        // ignore these parameters for profile selection, because we fall back to node-based without turn costs so far
-        hintsMap.remove(TURN_COSTS);
-        hintsMap.remove(EDGE_BASED);
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(hintsMap).getName();
             hintsMap.remove("weighting");
@@ -126,13 +110,12 @@ public class SPTResource {
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
 
-        // have to disable turn costs, as isochrones are running node-based
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap, true);
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
                     Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
-
-        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, TraversalMode.NODE_BASED);
+        TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
         if (distanceInMeter > 0) {
             shortestPathTree.setDistanceLimit(distanceInMeter + Math.max(distanceInMeter * 0.14, 2_000));
@@ -269,7 +252,8 @@ public class SPTResource {
     private IsoLabelWithCoordinates isoLabelWithCoordinates(NodeAccess na, ShortestPathTree.IsoLabel label) {
         double lat = na.getLatitude(label.node);
         double lon = na.getLongitude(label.node);
-        IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(label.node);
+        IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates();
+        isoLabelWC.nodeId = label.node;
         isoLabelWC.coordinate = new GHPoint(lat, lon);
         isoLabelWC.timeMillis = Math.round(label.time);
         isoLabelWC.distance = (int) Math.round(label.distance);
