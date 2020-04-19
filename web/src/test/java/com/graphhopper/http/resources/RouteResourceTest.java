@@ -114,8 +114,8 @@ public class RouteResourceTest {
         assertTrue(distance > 9000, "distance wasn't correct:" + distance);
         assertTrue(distance < 9500, "distance wasn't correct:" + distance);
 
-        // we currently just ignore URL parameters
-        jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        // we currently just ignore URL parameters (not sure if this is a good or bad thing)
+        jsonStr = "{\"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
         response = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         assertFalse(response.readEntity(JsonNode.class).get("info").has("errors"));
