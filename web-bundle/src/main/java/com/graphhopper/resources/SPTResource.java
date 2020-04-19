@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.http.GHPointParam;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.profiles.*;
@@ -69,7 +70,7 @@ public class SPTResource {
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("point") @NotNull GHPoint point,
+            @QueryParam("point") @NotNull GHPointParam point,
             @QueryParam("columns") String columnsParam,
             @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceInMeter) {
@@ -80,7 +81,7 @@ public class SPTResource {
         }
     }
 
-    private Response executeGet(UriInfo uriInfo, String profileName, boolean reverseFlow, GHPoint point, String columnsParam, LongParam timeLimitInSeconds, LongParam distanceInMeter) {
+    private Response executeGet(UriInfo uriInfo, String profileName, boolean reverseFlow, GHPointParam point, String columnsParam, LongParam timeLimitInSeconds, LongParam distanceInMeter) {
         StopWatch sw = new StopWatch().start();
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
@@ -99,7 +100,7 @@ public class SPTResource {
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        QueryResult qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+        QueryResult qr = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
         if (!qr.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
 
@@ -110,7 +111,7 @@ public class SPTResource {
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
-                    Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
+                    Collections.singletonList(point.get()), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
         TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
