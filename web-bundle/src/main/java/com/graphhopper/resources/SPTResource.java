@@ -62,7 +62,7 @@ public class SPTResource {
     }
 
     @GET
-    @Produces({"text/csv", MediaType.APPLICATION_JSON})
+    @Produces("text/csv")
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
