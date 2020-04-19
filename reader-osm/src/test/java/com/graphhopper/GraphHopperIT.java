@@ -974,7 +974,6 @@ public class GraphHopperIT {
         assertEquals(31.32, pointList.getEle(5), .1);
     }
 
-<<<<<<< HEAD
     @Test
     public void testSRTMWithLongEdgeSampling() {
         final String profile = "profile";
