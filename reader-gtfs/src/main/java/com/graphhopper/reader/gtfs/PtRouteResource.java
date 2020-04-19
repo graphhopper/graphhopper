@@ -41,6 +41,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.time.Duration;
@@ -83,17 +84,13 @@ public final class PtRouteResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectNode route(@QueryParam("point") List<GHLocationParam> requestPoints,
-                            @QueryParam("pt.earliest_departure_time") String departureTimeString,
+                            @QueryParam("pt.earliest_departure_time") @NotNull String departureTimeString,
                             @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
                             @QueryParam("locale") String localeStr,
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
                             @QueryParam("pt.limit_solutions") Integer limitSolutions) {
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
-
-        if (departureTimeString == null) {
-            throw new BadRequestException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
-        }
         Instant departureTime;
         try {
             departureTime = Instant.parse(departureTimeString);
