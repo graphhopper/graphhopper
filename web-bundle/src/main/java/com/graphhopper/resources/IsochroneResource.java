@@ -70,7 +70,7 @@ public class IsochroneResource {
             @QueryParam("profile") String profileName,
             @QueryParam("buckets") @DefaultValue("1") int nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("point") @DefaultValue("") String pointStr,
+            @QueryParam("point") GHPoint point,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter,
             @QueryParam("type") @DefaultValue("json") String respType) {
@@ -78,9 +78,8 @@ public class IsochroneResource {
         if (nBuckets > 20 || nBuckets < 1)
             throw new IllegalArgumentException("Number of buckets has to be in the range [1, 20]");
 
-        if (pointStr.isEmpty())
+        if (point == null)
             throw new IllegalArgumentException("You need to specify a point at which the isochrone is centered");
-        GHPoint point = GHPoint.fromString(pointStr);
 
         StopWatch sw = new StopWatch().start();
 

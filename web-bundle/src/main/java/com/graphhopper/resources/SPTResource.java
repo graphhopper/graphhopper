@@ -67,22 +67,20 @@ public class SPTResource {
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("point") @DefaultValue("") String pointStr,
+            @QueryParam("point") GHPoint point,
             @QueryParam("columns") String columnsParam,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
         try {
-            return executeGet(uriInfo, profileName, reverseFlow, pointStr, columnsParam, timeLimitInSeconds, distanceInMeter);
+            return executeGet(uriInfo, profileName, reverseFlow, point, columnsParam, timeLimitInSeconds, distanceInMeter);
         } catch (IllegalArgumentException e) {
             return returnBadRequest(e.getMessage());
         }
     }
 
-    private Response executeGet(UriInfo uriInfo, String profileName, boolean reverseFlow, String pointStr, String columnsParam, long timeLimitInSeconds, double distanceInMeter) {
-        if (pointStr.isEmpty())
+    private Response executeGet(UriInfo uriInfo, String profileName, boolean reverseFlow, GHPoint point, String columnsParam, long timeLimitInSeconds, double distanceInMeter) {
+        if (point == null)
             throw new IllegalArgumentException("You need to specify a point at which the shortest path tree is centered");
-
-        GHPoint point = GHPoint.fromString(pointStr);
 
         StopWatch sw = new StopWatch().start();
         PMap hintsMap = new PMap();
