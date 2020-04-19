@@ -22,13 +22,17 @@ import com.graphhopper.http.api.JsonErrorEntity;
 import com.graphhopper.util.Helper;
 import io.dropwizard.jersey.validation.ConstraintMessage;
 import io.dropwizard.jersey.validation.JerseyViolationException;
+import org.glassfish.jersey.server.model.Invocable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.ConstraintViolation;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Provider
@@ -36,12 +40,18 @@ public class GHJerseyViolationExceptionMapper implements ExceptionMapper<JerseyV
     private static final Logger logger = LoggerFactory.getLogger(GHJerseyViolationExceptionMapper.class);
 
     @Override
-    public Response toResponse(final JerseyViolationException e) {
-        logger.info("jersey violation exception: " + (Helper.isEmpty(e.getMessage()) ? "unknown reason" : e.getMessage()));
-        return Response
-                .status(ConstraintMessage.determineStatus(e.getConstraintViolations(), e.getInvocable()))
+    public Response toResponse(final JerseyViolationException exception) {
+        logger.debug("jersey violation exception: " + (Helper.isEmpty(exception.getMessage()) ? "unknown reason" : exception.getMessage()));
+        final Set<ConstraintViolation<?>> violations = exception.getConstraintViolations();
+        final Invocable invocable = exception.getInvocable();
+        final List<String> errors = exception.getConstraintViolations().stream()
+                .map(violation -> ConstraintMessage.getMessage(violation, invocable))
+                .collect(Collectors.toList());
+
+        final int status = ConstraintMessage.determineStatus(violations, invocable);
+        return Response.status(status)
                 .type(MediaType.APPLICATION_JSON)
-                .entity(new JsonErrorEntity(e.getConstraintViolations().stream().map(v -> new IllegalArgumentException(v.getMessage())).collect(Collectors.toList())))
+                .entity(new JsonErrorEntity(errors))
                 .build();
     }
 }

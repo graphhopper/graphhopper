@@ -181,7 +181,7 @@ public class IsochroneResourceTest {
         Response rsp = clientTarget(app, "/isochrone").request().buildGet().invoke();
         assertEquals(400, rsp.getStatus());
         JsonNode json = rsp.readEntity(JsonNode.class);
-        assertTrue(json.get("message").toString().contains("You need to specify a point at which the isochrone is centered"), json.toString());
+        assertTrue(json.get("message").toString().contains("query param point must not be null"), json.toString());
     }
 
     private void assertNotAllowed(String hint, String error) {
@@ -222,7 +222,7 @@ public class IsochroneResourceTest {
         JsonNode json = response.readEntity(JsonNode.class);
         String message = json.path("message").asText();
 
-        assertEquals("must be one of [json, geojson]", message);
+        assertEquals("query param type must be one of [json, geojson]", message);
     }
 
     @Test

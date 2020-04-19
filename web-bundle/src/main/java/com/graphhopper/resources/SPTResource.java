@@ -68,7 +68,7 @@ public class SPTResource {
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("point") @NotNull(message = "You need to specify a point at which the shortest path tree is centered") GHPoint point,
+            @QueryParam("point") @NotNull GHPoint point,
             @QueryParam("columns") String columnsParam,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {

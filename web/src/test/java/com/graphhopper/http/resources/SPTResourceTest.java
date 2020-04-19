@@ -126,7 +126,7 @@ public class SPTResourceTest {
         Response rsp = clientTarget(app, "/spt").request().buildGet().invoke();
         assertEquals(400, rsp.getStatus());
         JsonNode json = rsp.readEntity(JsonNode.class);
-        assertTrue(json.get("message").toString().contains("You need to specify a point at which the shortest path tree is centered"), json.toString());
+        assertTrue(json.get("message").toString().contains("query param point must not be null"), json.toString());
     }
 
     @Test
