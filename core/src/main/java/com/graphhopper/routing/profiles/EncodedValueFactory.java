@@ -23,6 +23,4 @@ public interface EncodedValueFactory {
      * of it.
      */
     EncodedValue create(String encodedValueString);
-
-    Class<? extends Enum> findValues(String name);
 }

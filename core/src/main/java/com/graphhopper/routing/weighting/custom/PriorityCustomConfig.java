@@ -31,7 +31,7 @@ import java.util.Map;
 final class PriorityCustomConfig {
     private List<EdgeToValueEntry> priorityList = new ArrayList<>();
 
-    public PriorityCustomConfig(CustomModel customModel, EncodedValueLookup lookup, EncodedValueFactory factory) {
+    public PriorityCustomConfig(CustomModel customModel, EncodedValueLookup lookup) {
         add(lookup, customModel.getVehicleWeight(), "vehicle_weight", MaxWeight.KEY);
         add(lookup, customModel.getVehicleWidth(), "vehicle_width", MaxWidth.KEY);
         add(lookup, customModel.getVehicleHeight(), "vehicle_height", MaxHeight.KEY);
@@ -53,9 +53,9 @@ final class PriorityCustomConfig {
                 }
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "priority", key, EnumEncodedValue.class);
-                Class<? extends Enum> enumClass = factory.findValues(key);
+                Enum[] enumValues = enumEncodedValue.getValues();
                 double[] values = Helper.createEnumToDoubleArray("priority." + key, 1, 0, 100,
-                        enumClass, (Map<String, Object>) value);
+                        enumValues, (Map<String, Object>) value);
                 normalizeFactor(values, 1);
                 priorityList.add(new EnumToValueEntry(enumEncodedValue, values));
             } else {

@@ -1019,7 +1019,7 @@ public class GraphHopper implements GraphHopperAPI {
      *                         LM preparation or Isochrones
      */
     public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, boolean disableTurnCosts) {
-        return new DefaultWeightingFactory(ghStorage, encodingManager, encodedValueFactory).createWeighting(profileConfig, hints, disableTurnCosts);
+        return new DefaultWeightingFactory(ghStorage, encodingManager).createWeighting(profileConfig, hints, disableTurnCosts);
     }
 
     @Override
@@ -1346,12 +1346,10 @@ public class GraphHopper implements GraphHopperAPI {
     private static class DefaultWeightingFactory {
         private final GraphHopperStorage ghStorage;
         private final EncodingManager encodingManager;
-        private final EncodedValueFactory encodedValueFactory;
 
-        public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager, EncodedValueFactory encodedValueFactory) {
+        public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager) {
             this.ghStorage = ghStorage;
             this.encodingManager = encodingManager;
-            this.encodedValueFactory = encodedValueFactory;
         }
 
         public Weighting createWeighting(ProfileConfig profile, PMap requestHints, boolean disableTurnCosts) {
@@ -1387,7 +1385,7 @@ public class GraphHopper implements GraphHopperAPI {
                 CustomProfileConfig customProfileConfig = (CustomProfileConfig) profile;
                 queryCustomModel = queryCustomModel == null ?
                         customProfileConfig.getCustomModel() : CustomModel.merge(customProfileConfig.getCustomModel(), queryCustomModel);
-                weighting = new CustomWeighting(encoder, encodingManager, encodedValueFactory, turnCostProvider, queryCustomModel);
+                weighting = new CustomWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);
             } else if ("shortest".equalsIgnoreCase(weightingStr)) {
                 weighting = new ShortestWeighting(encoder, turnCostProvider);
             } else if ("fastest".equalsIgnoreCase(weightingStr)) {

@@ -17,7 +17,10 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -38,7 +41,7 @@ final class SpeedCustomConfig {
     private final double maxSpeedFallback;
 
     public SpeedCustomConfig(final double maxSpeed, CustomModel customModel, DecimalEncodedValue avgSpeedEnc,
-                             EncodedValueLookup lookup, EncodedValueFactory factory) {
+                             EncodedValueLookup lookup) {
         this.maxSpeed = maxSpeed;
         this.maxSpeedFallback = customModel.getMaxSpeedFallback() == null ? maxSpeed : customModel.getMaxSpeedFallback();
         this.avgSpeedEnc = avgSpeedEnc;
@@ -60,9 +63,9 @@ final class SpeedCustomConfig {
                 }
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "max_speed", key, EnumEncodedValue.class);
-                Class<? extends Enum> enumClass = factory.findValues(key);
+                Enum[] enumValues = enumEncodedValue.getValues();
                 double[] values = Helper.createEnumToDoubleArray("max_speed." + key, maxSpeed, 0, maxSpeed,
-                        enumClass, (Map<String, Object>) value);
+                        enumValues, (Map<String, Object>) value);
                 maxSpeedList.add(new EnumToValueEntry(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'max_speed'");
@@ -84,9 +87,9 @@ final class SpeedCustomConfig {
                 }
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "speed_factor", key, EnumEncodedValue.class);
-                Class<? extends Enum> enumClass = factory.findValues(key);
+                Enum[] enumValues = enumEncodedValue.getValues();
                 double[] values = Helper.createEnumToDoubleArray("speed_factor." + key, 1, 0, 1,
-                        enumClass, (Map<String, Object>) value);
+                        enumValues, (Map<String, Object>) value);
                 speedFactorList.add(new EnumToValueEntry(enumEncodedValue, values));
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'speed_factor'");

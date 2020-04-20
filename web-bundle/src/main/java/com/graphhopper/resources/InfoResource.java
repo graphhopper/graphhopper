@@ -19,7 +19,8 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.routing.profiles.EncodedValueFactory;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.shapes.BBox;
@@ -41,13 +42,11 @@ public class InfoResource {
 
     private final GraphHopperConfig config;
     private final GraphHopperStorage storage;
-    private final EncodedValueFactory evFactory;
     private final boolean hasElevation;
 
     @Inject
     public InfoResource(GraphHopperConfig config, GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.config = config;
-        this.evFactory = graphHopper.getEncodedValueFactory();
         this.storage = graphHopper.getGraphHopperStorage();
         this.hasElevation = hasElevation;
     }
@@ -104,16 +103,19 @@ public class InfoResource {
 
             List<Object> possibleValueList = new ArrayList<>();
             try {
-                Class<? extends Enum> enumClass = evFactory.findValues(encodedValue);
-                for (Object o : enumClass.getEnumConstants()) {
+                EnumEncodedValue eev = storage.getEncodingManager().getEncodedValue(encodedValue, EnumEncodedValue.class);
+                for (Object o : eev.getValues()) {
                     possibleValueList.add(o.toString());
                 }
-            } catch (IllegalArgumentException ex) {
-                // we expect BooleanEncodedValue here
-                possibleValueList.add(true);
-                possibleValueList.add(false);
+            } catch (ClassCastException e) {
+                try {
+                    BooleanEncodedValue bev = storage.getEncodingManager().getEncodedValue(encodedValue, BooleanEncodedValue.class);
+                    possibleValueList.add(true);
+                    possibleValueList.add(false);
+                } catch (ClassCastException ex) {
+                    continue;
+                }
             }
-
             info.encoded_values.put(encodedValue, possibleValueList);
         }
         return info;

@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -55,7 +54,7 @@ public final class CustomWeighting extends AbstractWeighting {
     private final SpeedCustomConfig speedConfig;
     private final PriorityCustomConfig priorityConfig;
 
-    public CustomWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, EncodedValueFactory factory,
+    public CustomWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
                            TurnCostProvider turnCostProvider, CustomModel customModel) {
         super(baseFlagEncoder, turnCostProvider);
         if (customModel == null)
@@ -63,10 +62,10 @@ public final class CustomWeighting extends AbstractWeighting {
 
         headingPenaltySeconds = customModel.getHeadingPenalty();
         baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
-        speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), lookup, factory);
+        speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), lookup);
         maxSpeed = speedConfig.getMaxSpeed() / SPEED_CONV;
 
-        priorityConfig = new PriorityCustomConfig(customModel, lookup, factory);
+        priorityConfig = new PriorityCustomConfig(customModel, lookup);
 
         // unit is "seconds per 1km"
         distanceInfluence = customModel.getDistanceInfluence() / 1000;
