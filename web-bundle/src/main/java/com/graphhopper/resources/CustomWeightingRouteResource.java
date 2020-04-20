@@ -28,13 +28,15 @@ import com.graphhopper.jackson.CustomRequest;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
-import com.graphhopper.util.*;
-import com.graphhopper.util.gpx.GpxFromInstructions;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -68,12 +70,11 @@ public class CustomWeightingRouteResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
-    public Response doPost(CustomRequest request, @Context HttpServletRequest httpReq) {
-        if (request == null)
-            throw new IllegalArgumentException("Empty request");
-
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response doPost(@NotNull CustomRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
+        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
+                + ", vehicle: " + request.getHints().getString("vehicle", "");
         GHResponse ghResponse = new GHResponse();
         CustomModel model = request.getModel();
         if (model == null)
@@ -94,25 +95,15 @@ public class CustomWeightingRouteResource {
         graphHopper.calcPaths(request, ghResponse);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
-        boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().getString("type", "json"));
-        instructions = writeGPX || instructions;
         boolean enableElevation = request.getHints().getBool("elevation", false);
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
 
-        // default to false for the route part in next API version, see #437
-        boolean withRoute = request.getHints().getBool("gpx.route", true);
-        boolean withTrack = request.getHints().getBool("gpx.track", true);
-        boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
-        String trackName = request.getHints().getString("gpx.trackname", "GraphHopper Track");
-        String timeString = request.getHints().getString("gpx.millis", "");
-        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
-                + ", vehicle: " + request.getHints().getString("vehicle", "");
-        long took = sw.stop().getNanos() / 1000;
+        long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
         String logStr = queryString + infoStr + " " + request.getPoints().size() + ", took: "
-                + took + " micros, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
+                + String.format("%.1f", (double) took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
                 + ", " + weightingVehicleLogStr;
 
         if (ghResponse.hasErrors()) {
@@ -125,20 +116,15 @@ public class CustomWeightingRouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            return writeGPX ?
-                    gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
-                            header("X-GH-Took", "" + Math.round(took * 1000)).
-                            build()
-                    :
-                    Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
-                            header("X-GH-Took", "" + Math.round(took * 1000)).
-                            build();
+            return Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    build();
         }
     }
 
     @POST
     @Consumes({"text/x-yaml", "text/yaml", "application/x-yaml", "application/yaml"})
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
+    @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(String yaml, @Context HttpServletRequest httpReq) {
         CustomRequest customRequest;
         try {
@@ -148,17 +134,5 @@ public class CustomWeightingRouteResource {
             throw new IllegalArgumentException("Incorrect YAML: " + ex.getMessage(), ex);
         }
         return doPost(customRequest, httpReq);
-    }
-
-    private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String
-            trackName, boolean enableElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version) {
-        if (ghRsp.getAll().size() > 1) {
-            throw new IllegalArgumentException("Alternatives are currently not yet supported for GPX");
-        }
-
-        long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
-        InstructionList instructions = ghRsp.getBest().getInstructions();
-        return Response.ok(GpxFromInstructions.createGPX(instructions, trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version, instructions.getTr()), "application/gpx+xml").
-                header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
     }
 }
