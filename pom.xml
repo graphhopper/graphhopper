@@ -173,10 +173,10 @@
                         <compilerArgument>-Xlint:deprecation</compilerArgument>
                         -->
                         <fork>true</fork>
-                        <source>8</source>
-                        <target>8</target>
-                        <testSource>8</testSource>
-                        <testTarget>8</testTarget>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                        <testSource>1.8</testSource>
+                        <testTarget>1.8</testTarget>
                     </configuration>
                 </plugin>
 
@@ -186,7 +186,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.22.2</version>
                     <configuration>
-                        <argLine>-Xmx110m -Xms110m</argLine>
+                        <argLine>-Xmx100m -Xms100m</argLine>
                     </configuration>
                 </plugin>
 
