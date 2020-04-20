@@ -504,8 +504,8 @@ public class RouteResourceTest {
         assertTrue(str.contains("<hints><error details=\"java"), "Expected error but was: " + str);
     }
 
-    @ParameterizedTest
-    @CsvSource({"false, true"})
+    @ParameterizedTest(name = "POST={0}")
+    @CsvSource({"false", "true"})
     public void testGPXExport(boolean usePost) {
         GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         req.putHint("elevation", false);
@@ -524,7 +524,7 @@ public class RouteResourceTest {
         assertTrue(res.contains("1970-01-04"));
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "POST={0}")
     @CsvSource({"false", "true"})
     public void testExportWithoutTrack(boolean usePost) {
         GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
