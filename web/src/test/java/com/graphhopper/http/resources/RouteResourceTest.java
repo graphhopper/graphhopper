@@ -528,6 +528,14 @@ public class RouteResourceTest {
     }
 
     @Test
+    public void testBadPoint() {
+        Response response = clientTarget(app, "/route?profile=my_car&heading=0&point=pups").request().buildGet().invoke();
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(400, response.getStatus());
+        assertEquals("query param point is invalid: Cannot parse point 'pups'", json.get("message").asText());
+    }
+
+    @Test
     public void testTooManyHeadings() {
         final Response response = clientTarget(app, "/route?profile=my_car&" +
                 "point=42.554851,1.536198&heading=0&heading=0").request().buildGet().invoke();
