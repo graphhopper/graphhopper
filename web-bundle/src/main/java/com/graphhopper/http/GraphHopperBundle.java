@@ -197,6 +197,11 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         // So for the moment we have to assume that both mechanisms
         // a) always return JSON error messages, and
         // b) there's no need to annotate the method with media type JSON for that.
+        //
+        // However, for places that throw IllegalArgumentException or MultiException,
+        // we DO need to use the media type JSON annotation, because
+        // those are agnostic to the media type (could be GPX!), so the server needs to know
+        // that a JSON error response is supported. (See below.)
         environment.jersey().register(new GHJerseyViolationExceptionMapper());
 
         // If the "?type=gpx" parameter is present, sets a corresponding media type header
@@ -207,6 +212,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(new MultiExceptionMapper());
         environment.jersey().register(new MultiExceptionGPXMessageBodyWriter());
 
+        // This makes an IllegalArgumentException come out as a MultiException with
+        // a single entry.
         environment.jersey().register(new IllegalArgumentExceptionMapper());
 
         final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), environment.getObjectMapper());
