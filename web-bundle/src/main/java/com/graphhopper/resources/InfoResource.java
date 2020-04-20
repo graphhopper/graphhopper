@@ -20,6 +20,7 @@ package com.graphhopper.resources;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
@@ -102,19 +103,17 @@ public class InfoResource {
                 continue;
 
             List<Object> possibleValueList = new ArrayList<>();
-            try {
-                EnumEncodedValue eev = storage.getEncodingManager().getEncodedValue(encodedValue, EnumEncodedValue.class);
-                for (Object o : eev.getValues()) {
+            EncodedValue eev = storage.getEncodingManager().getEncodedValue(encodedValue, EncodedValue.class);
+            if (eev instanceof EnumEncodedValue) {
+                for (Object o : ((EnumEncodedValue) eev).getValues()) {
                     possibleValueList.add(o.toString());
                 }
-            } catch (ClassCastException e) {
-                try {
-                    BooleanEncodedValue bev = storage.getEncodingManager().getEncodedValue(encodedValue, BooleanEncodedValue.class);
-                    possibleValueList.add(true);
-                    possibleValueList.add(false);
-                } catch (ClassCastException ex) {
-                    continue;
-                }
+            } else if (eev instanceof BooleanEncodedValue) {
+                possibleValueList.add(true);
+                possibleValueList.add(false);
+            } else {
+                // we only add enum encoded values and boolean encoded values to the list of possible values
+                continue;
             }
             info.encoded_values.put(encodedValue, possibleValueList);
         }
