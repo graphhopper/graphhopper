@@ -34,8 +34,8 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,7 +74,6 @@ public class RouteResource {
     public Response doGet(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
-            @Context ContainerRequestContext rc,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
             @QueryParam("point") List<GHPointParam> pointParams,
             @QueryParam("type") @DefaultValue("json") String type,
@@ -181,11 +180,8 @@ public class RouteResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
-    public Response doPost(GHRequest request, @Context HttpServletRequest httpReq) {
-        if (request == null)
-            throw new IllegalArgumentException("Empty request");
-
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
         String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
                 + ", vehicle: " + request.getHints().getString("vehicle", "");
@@ -197,18 +193,10 @@ public class RouteResource {
         errorIfLegacyParameters(request.getHints());
         GHResponse ghResponse = graphHopper.route(request);
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
-        boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().getString("type", "json"));
-        instructions = writeGPX || instructions;
         boolean enableElevation = request.getHints().getBool("elevation", false);
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
 
-        // default to false for the route part in next API version, see #437
-        boolean withRoute = request.getHints().getBool("gpx.route", true);
-        boolean withTrack = request.getHints().getBool("gpx.track", true);
-        boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
-        String trackName = request.getHints().getString("gpx.trackname", "GraphHopper Track");
-        String timeString = request.getHints().getString("gpx.millis", "");
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
@@ -226,12 +214,7 @@ public class RouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            return writeGPX ?
-                    gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
-                            header("X-GH-Took", "" + Math.round(took * 1000)).
-                            build()
-                    :
-                    Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+            return Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
                             type(MediaType.APPLICATION_JSON).
                             build();

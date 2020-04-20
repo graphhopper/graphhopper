@@ -7,7 +7,10 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -388,7 +391,6 @@ public class DirectedBidirectionalDijkstraTest {
         // start/target edges.
         final long seed = System.nanoTime();
         final int numQueries = 1000;
-        System.out.println("compare_standard_dijkstra seed: " + seed);
 
         Random rnd = new Random(seed);
         int numNodes = 100;
@@ -401,8 +403,8 @@ public class DirectedBidirectionalDijkstraTest {
             int target = rnd.nextInt(numNodes);
             Path dijkstraPath = new Dijkstra(graph, w, TraversalMode.EDGE_BASED).calcPath(source, target);
             Path path = calcPath(source, target, ANY_EDGE, ANY_EDGE, w);
-            assertEquals("dijkstra found/did not find a path, from: " + source + ", to: " + target, dijkstraPath.isFound(), path.isFound());
-            assertEquals("weight does not match dijkstra, from: " + source + ", to: " + target, dijkstraPath.getWeight(), path.getWeight(), 1.e-6);
+            assertEquals("dijkstra found/did not find a path, from: " + source + ", to: " + target + ", seed: " + seed, dijkstraPath.isFound(), path.isFound());
+            assertEquals("weight does not match dijkstra, from: " + source + ", to: " + target + ", seed: " + seed, dijkstraPath.getWeight(), path.getWeight(), 1.e-6);
             // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
             // however, when there are too many deviations we fail
             if (
@@ -413,7 +415,7 @@ public class DirectedBidirectionalDijkstraTest {
             }
         }
         if (numStrictViolations > Math.max(1, 0.05 * numQueries)) {
-            fail("Too many strict violations: " + numStrictViolations + " / " + numQueries);
+            fail("Too many strict violations, seed: " + seed + " - " + numStrictViolations + " / " + numQueries);
         }
     }
 
