@@ -291,9 +291,8 @@ public class Measurement {
         boolean useLM = args.getBool("measurement.lm", true);
         List<ProfileConfig> profiles = new ArrayList<>();
         profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
-        if (turnCosts) {
+        if (turnCosts)
             profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
-        }
         ghConfig.setProfiles(profiles);
 
         List<CHProfileConfig> chProfiles = new ArrayList<>();

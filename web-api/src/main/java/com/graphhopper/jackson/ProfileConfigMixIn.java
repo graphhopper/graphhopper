@@ -31,6 +31,4 @@ public interface ProfileConfigMixIn {
 
     @JsonIgnore
     PMap getHints();
-
-
 }

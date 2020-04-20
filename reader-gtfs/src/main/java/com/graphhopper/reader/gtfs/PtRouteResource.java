@@ -38,17 +38,21 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
+import io.dropwizard.jersey.params.AbstractParam;
+import io.dropwizard.jersey.params.InstantParam;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingLong;
+import static java.util.stream.Collectors.toList;
 
 @Path("route-pt")
 public final class PtRouteResource {
@@ -80,25 +84,17 @@ public final class PtRouteResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public ObjectNode route(@QueryParam("point") List<GHLocation> requestPoints,
-                            @QueryParam("pt.earliest_departure_time") String departureTimeString,
+    public ObjectNode route(@QueryParam("point") @Size(min=2,max=2) List<GHLocationParam> requestPoints,
+                            @QueryParam("pt.earliest_departure_time") @NotNull InstantParam departureTimeParam,
                             @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
                             @QueryParam("locale") String localeStr,
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
                             @QueryParam("pt.limit_solutions") Integer limitSolutions) {
+        List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
+        Instant departureTime = departureTimeParam.get();
 
-        if (departureTimeString == null) {
-            throw new BadRequestException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
-        }
-        Instant departureTime;
-        try {
-            departureTime = Instant.parse(departureTimeString);
-        } catch (DateTimeParseException e) {
-            throw new BadRequestException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
-        }
-
-        Request request = new Request(requestPoints, departureTime);
+        Request request = new Request(points, departureTime);
         request.setArriveBy(arriveBy);
         Optional.ofNullable(profileQuery).ifPresent(request::setProfileQuery);
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
@@ -173,9 +169,6 @@ public final class PtRouteResource {
             walkSpeedKmH = request.getWalkSpeedKmH();
             blockedRouteTypes = request.getBlockedRouteTypes();
             translation = translationMap.getWithFallBack(request.getLocale());
-            if (request.getPoints().size() != 2) {
-                throw new IllegalArgumentException("Exactly 2 points have to be specified, but was:" + request.getPoints().size());
-            }
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
         }

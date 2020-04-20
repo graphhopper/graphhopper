@@ -6,9 +6,9 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -45,11 +45,10 @@ public class ShortcutUnpackerTest {
 
     @Before
     public void init() {
-        // use motorcycle to be able to set different fwd/bwd speeds
-        encoder = new MotorcycleFlagEncoder(5, 5, 10);
+        encoder = new CarFlagEncoder(5, 5, 10).setSpeedTwoDirections(true);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("motorcycle|fastest|" + (edgeBased ? "edge" : "node"))
+                .setCHProfileStrings("car|fastest|" + (edgeBased ? "edge" : "node"))
                 .create();
         chGraph = graph.getCHGraph();
         routingCHGraph = new RoutingCHGraphImpl(chGraph, chGraph.getCHProfile().getWeighting());

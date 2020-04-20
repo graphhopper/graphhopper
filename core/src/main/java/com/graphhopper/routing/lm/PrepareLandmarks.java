@@ -42,6 +42,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     private final Graph graph;
     private final LandmarkStorage lms;
     private final LMProfile lmProfile;
+    private long totalPrepareTime;
 
     public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMProfile lmProfile, int landmarks) {
         this.graph = graph;
@@ -122,6 +123,11 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         LOGGER.info("Calculated landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks, took:" + sw.stop().getSeconds() + " => "
                 + lms.getLandmarksAsGeoJSON() + ", stored weights:" + lms.getLandmarkCount()
                 + ", nodes:" + graph.getNodes() + ", " + Helper.getMemInfo());
+        totalPrepareTime = sw.getMillis();
+    }
+
+    public long getTotalPrepareTime() {
+        return totalPrepareTime;
     }
 
     /**

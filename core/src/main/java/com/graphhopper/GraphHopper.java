@@ -293,7 +293,7 @@ public class GraphHopper implements GraphHopperAPI {
      *     new LMProfileConfig("your_bike")
      *   );
      * }
-     * </pre>>
+     * </pre>
      * <p>
      * See also https://github.com/graphhopper/graphhopper/pull/1922.
      *
@@ -305,12 +305,11 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     public GraphHopper setProfiles(List<ProfileConfig> profiles) {
-        this.profilesByName.clear();
+        profilesByName.clear();
         for (ProfileConfig profile : profiles) {
             ProfileConfig previous = this.profilesByName.put(profile.getName(), profile);
-            if (previous != null) {
+            if (previous != null)
                 throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
-            }
         }
         return this;
     }
@@ -972,11 +971,9 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
-
     }
 
     protected void importPublicTransit() {
-
     }
 
     private static final String INTERPOLATION_KEY = "prepare.elevation_interpolation.done";
@@ -1088,16 +1085,15 @@ public class GraphHopper implements GraphHopperAPI {
             Weighting weighting;
             Graph graph = ghStorage;
             if (chPreparationHandler.isEnabled() && !disableCH) {
-                if (algorithmFactory instanceof CHRoutingAlgorithmFactory) {
-                    if (hints.has(Routing.BLOCK_AREA))
-                        throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
-
-                    CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
-                    weighting = chProfile.getWeighting();
-                    graph = ghStorage.getCHGraph(chProfile);
-                } else {
+                if (!(algorithmFactory instanceof CHRoutingAlgorithmFactory))
                     throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algorithmFactory);
-                }
+
+                if (hints.has(Routing.BLOCK_AREA))
+                    throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
+
+                CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
+                weighting = chProfile.getWeighting();
+                graph = ghStorage.getCHGraph(chProfile);
             } else {
                 checkNonChMaxWaypointDistance(points);
                 final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
@@ -1121,7 +1117,6 @@ public class GraphHopper implements GraphHopperAPI {
                 return Collections.emptyList();
 
             QueryGraph queryGraph = QueryGraph.lookup(graph, qResults);
-
             int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
             if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
@@ -1337,12 +1332,12 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private static class DefaultWeightingFactory {
-        private final EncodingManager encodingManager;
         private final GraphHopperStorage ghStorage;
+        private final EncodingManager encodingManager;
 
         public DefaultWeightingFactory(EncodingManager encodingManager, GraphHopperStorage ghStorage) {
-            this.encodingManager = encodingManager;
             this.ghStorage = ghStorage;
+            this.encodingManager = encodingManager;
         }
 
         public Weighting createWeighting(ProfileConfig profile, PMap requestHints, boolean disableTurnCosts) {

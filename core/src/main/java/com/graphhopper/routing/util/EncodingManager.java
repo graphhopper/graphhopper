@@ -796,7 +796,7 @@ public class EncodingManager implements EncodedValueLookup {
     /**
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as
      * "none-shared" across the other FlagEncoders. E.g. average_speed for the CarFlagEncoder will
-     * be named car-average_speed
+     * be named car.average_speed
      */
     public static String getKey(FlagEncoder encoder, String str) {
         return getKey(encoder.toString(), str);

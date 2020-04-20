@@ -916,7 +916,7 @@ public class GraphHopperIT {
                 .setEncodingManager(EncodingManager.start().add(new OSMRoadEnvironmentParser() {
                     @Override
                     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-                        // do not change RoadEnvironment to avoid triggering tunnel interpolation - is this a valid use case after #TODONOW?
+                        // do not change RoadEnvironment to avoid triggering tunnel interpolation
                         return edgeFlags;
                     }
                 }).addAll(new DefaultFlagEncoderFactory(), vehicle).build());

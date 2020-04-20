@@ -1030,8 +1030,18 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testGetWeightingForCH() {
-        TestEncoder truck = new TestEncoder("truck");
-        TestEncoder simpleTruck = new TestEncoder("simple_truck");
+        FlagEncoder truck = new CarFlagEncoder() {
+            @Override
+            public String toString() {
+                return "truck";
+            }
+        };
+        FlagEncoder simpleTruck = new CarFlagEncoder() {
+            @Override
+            public String toString() {
+                return "simple_truck";
+            }
+        };
 
         // use simple truck first
         EncodingManager em = EncodingManager.create(simpleTruck, truck);
@@ -1090,18 +1100,5 @@ public class GraphHopperOSMTest {
         return new GraphHopperOSM().
                 setEncodingManager(em).
                 setProfiles(profiles);
-    }
-
-    private static class TestEncoder extends CarFlagEncoder {
-        private final String name;
-
-        public TestEncoder(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
     }
 }

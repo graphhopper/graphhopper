@@ -15,30 +15,27 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
 
-import com.graphhopper.util.PMap;
+package com.graphhopper.reader.gtfs;
 
-/**
- * Defines bit layout for cars with four wheel drive
- *
- * @author zstadler
- */
-public class Car4WDFlagEncoder extends CarFlagEncoder {
+import io.dropwizard.jersey.params.AbstractParam;
 
-    public Car4WDFlagEncoder(PMap properties) {
-        super(properties);
-        trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
-        trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
+import javax.annotation.Nullable;
+
+public class GHLocationParam extends AbstractParam<GHLocation> {
+
+    public GHLocationParam(@Nullable String input) {
+        super(input);
+    }
+
+    public GHLocationParam(@Nullable String input, String parameterName) {
+        super(input, parameterName);
     }
 
     @Override
-    public int getVersion() {
-        return 2;
-    }
-
-    @Override
-    public String toString() {
-        return "car4wd";
+    protected GHLocation parse(@Nullable String input) throws Exception {
+        if (input == null)
+            return null;
+        return GHLocation.fromString(input);
     }
 }

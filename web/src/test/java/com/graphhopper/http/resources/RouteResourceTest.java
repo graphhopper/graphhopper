@@ -105,15 +105,22 @@ public class RouteResourceTest {
     @Test
     public void testBasicPostQuery() {
         String jsonStr = "{ \"profile\": \"my_car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
-        final Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
+        Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
+
         assertTrue(distance > 9000, "distance wasn't correct:" + distance);
         assertTrue(distance < 9500, "distance wasn't correct:" + distance);
+
+        // we currently just ignore URL parameters (not sure if this is a good or bad thing)
+        jsonStr = "{\"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        response = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
+        assertEquals(200, response.getStatus());
+        assertFalse(response.readEntity(JsonNode.class).get("info").has("errors"));
     }
 
     @Test
@@ -566,5 +573,4 @@ public class RouteResourceTest {
         JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
     }
-
 }

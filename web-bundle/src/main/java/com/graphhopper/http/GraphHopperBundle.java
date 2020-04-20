@@ -196,7 +196,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(new MultiExceptionGPXMessageBodyWriter());
 
         environment.jersey().register(new IllegalArgumentExceptionMapper());
-        environment.jersey().register(new GHPointConverterProvider());
 
         final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), environment.getObjectMapper());
         environment.lifecycle().manage(graphHopperManaged);
