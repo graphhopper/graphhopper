@@ -21,11 +21,13 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
+import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
+import io.dropwizard.jersey.params.AbstractParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +44,7 @@ import java.util.Map;
 
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Resource to use GraphHopper in a remote client application like mobile or browser. Note: If type
@@ -73,7 +76,7 @@ public class RouteResource {
             @Context UriInfo uriInfo,
             @Context ContainerRequestContext rc,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
-            @QueryParam("point") List<GHPoint> requestPoints,
+            @QueryParam("point") List<GHPointParam> pointParams,
             @QueryParam("type") @DefaultValue("json") String type,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
@@ -92,38 +95,39 @@ public class RouteResource {
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("gpx.millis") String timeString) {
+        List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
         instructions = writeGPX || instructions;
 
         StopWatch sw = new StopWatch().start();
 
-        if (requestPoints.isEmpty())
+        if (points.isEmpty())
             throw new IllegalArgumentException("You have to pass at least one point");
         if (enableElevation && !hasElevation)
             throw new IllegalArgumentException("Elevation not supported!");
-        if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size())
+        if (favoredHeadings.size() > 1 && favoredHeadings.size() != points.size())
             throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
-                    + "or equal to the number of points (" + requestPoints.size() + ")");
+                    + "or equal to the number of points (" + points.size() + ")");
 
         // TODO these checks should be only necessary once in the core, e.g. pointHints problems are currently ignored for POST requests
         // -> #1996
-        if (pointHints.size() > 0 && pointHints.size() != requestPoints.size())
+        if (pointHints.size() > 0 && pointHints.size() != points.size())
             throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
-        if (curbsides.size() > 0 && curbsides.size() != requestPoints.size())
+        if (curbsides.size() > 0 && curbsides.size() != points.size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
         GHRequest request;
         if (favoredHeadings.size() > 0) {
             // if only one favored heading is specified take as start heading
             if (favoredHeadings.size() == 1) {
-                List<Double> paddedHeadings = new ArrayList<>(Collections.nCopies(requestPoints.size(), Double.NaN));
+                List<Double> paddedHeadings = new ArrayList<>(Collections.nCopies(points.size(), Double.NaN));
                 paddedHeadings.set(0, favoredHeadings.get(0));
-                request = new GHRequest(requestPoints, paddedHeadings);
+                request = new GHRequest(points, paddedHeadings);
             } else {
-                request = new GHRequest(requestPoints, favoredHeadings);
+                request = new GHRequest(points, favoredHeadings);
             }
         } else {
-            request = new GHRequest(requestPoints);
+            request = new GHRequest(points);
         }
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
@@ -150,7 +154,7 @@ public class RouteResource {
 
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took: "
+        String logStr = httpReq.getQueryString() + " " + infoStr + " " + points + ", took: "
                 + String.format("%.1f", (double) took) + "ms, algo: " + algoStr + ", profile: " + profileName + ", " + weightingVehicleLogStr;
 
         if (ghResponse.hasErrors()) {

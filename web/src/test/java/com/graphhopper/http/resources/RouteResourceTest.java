@@ -521,8 +521,18 @@ public class RouteResourceTest {
 
     @Test
     public void testNoPoint() {
-        JsonNode json = clientTarget(app, "/route?profile=my_car&heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
+        Response response = clientTarget(app, "/route?profile=my_car&heading=0").request().buildGet().invoke();
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(400, response.getStatus());
         assertEquals("You have to pass at least one point", json.get("message").asText());
+    }
+
+    @Test
+    public void testBadPoint() {
+        Response response = clientTarget(app, "/route?profile=my_car&heading=0&point=pups").request().buildGet().invoke();
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(400, response.getStatus());
+        assertEquals("query param point is invalid: Cannot parse point 'pups'", json.get("message").asText());
     }
 
     @Test

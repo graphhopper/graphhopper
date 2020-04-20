@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
@@ -22,7 +23,9 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.GHPoint;
+import io.dropwizard.jersey.params.IntParam;
+import io.dropwizard.jersey.params.LongParam;
+import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
@@ -32,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -42,9 +46,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
+import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
-import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
-import static com.graphhopper.util.Parameters.Routing.TURN_COSTS;
+import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
+import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 
 @Path("isochrone")
 public class IsochroneResource {
@@ -63,52 +68,32 @@ public class IsochroneResource {
         this.encodingManager = encodingManager;
     }
 
+    enum ResponseType {json, geojson}
+
     @GET
-    @Produces({MediaType.APPLICATION_JSON})
+    @Produces(MediaType.APPLICATION_JSON)
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
-            @QueryParam("buckets") @DefaultValue("1") int nBuckets,
+            @QueryParam("buckets") @Range(min=1,max=20) @DefaultValue("1") IntParam nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("point") @DefaultValue("") String pointStr,
-            @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
-            @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter,
-            @QueryParam("type") @DefaultValue("json") String respType) {
-
-        if (nBuckets > 20 || nBuckets < 1)
-            throw new IllegalArgumentException("Number of buckets has to be in the range [1, 20]");
-
-        if (pointStr.isEmpty())
-            throw new IllegalArgumentException("You need to specify a point at which the isochrone is centered");
-        GHPoint point = GHPoint.fromString(pointStr);
-
+            @QueryParam("point") @NotNull GHPointParam point,
+            @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
+            @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceInMeter,
+            @QueryParam("type") @DefaultValue("json") ResponseType respType) {
         StopWatch sw = new StopWatch().start();
-
-        if (respType != null && !respType.equalsIgnoreCase("json") && !respType.equalsIgnoreCase("geojson"))
-            throw new IllegalArgumentException("Format not supported:" + respType);
 
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
-        if (!hintsMap.getBool(Parameters.CH.DISABLE, true))
-            throw new IllegalArgumentException("Currently you cannot use speed mode for /isochrone, Do not use `ch.disable=false`");
-        if (!hintsMap.getBool(Parameters.Landmark.DISABLE, true))
-            throw new IllegalArgumentException("Currently you cannot use hybrid mode for /isochrone, Do not use `lm.disable=false`");
-        if (hintsMap.getBool(Parameters.Routing.EDGE_BASED, false))
-            throw new IllegalArgumentException("Currently you cannot use edge-based for /isochrone. Do not use `edge_based=true`");
-        if (hintsMap.getBool(TURN_COSTS, false))
-            throw new IllegalArgumentException("Currently you cannot use turn costs for /isochrone, Do not use `turn_costs=true`");
-
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
-        // ignore these parameters for profile selection, because we fall back to node-based without turn costs so far
-        hintsMap.remove(TURN_COSTS);
-        hintsMap.remove(EDGE_BASED);
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(hintsMap).getName();
             hintsMap.remove("weighting");
             hintsMap.remove("vehicle");
         }
         errorIfLegacyParameters(hintsMap);
+
         ProfileConfig profile = graphHopper.getProfile(profileName);
         if (profile == null) {
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
@@ -116,38 +101,38 @@ public class IsochroneResource {
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        QueryResult qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+        QueryResult qr = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
         if (!qr.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
 
-        // have to disable turn costs, as isochrones are running node-based
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap, true);
+        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
-                    Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
-        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, TraversalMode.NODE_BASED);
+                    Collections.singletonList(point.get()), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
+        TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
+        ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
         double limit;
-        if (distanceInMeter > 0) {
-            limit = distanceInMeter;
+        if (distanceInMeter.get() > 0) {
+            limit = distanceInMeter.get();
             shortestPathTree.setDistanceLimit(limit + Math.max(limit * 0.14, 2_000));
         } else {
-            limit = timeLimitInSeconds * 1000;
+            limit = timeLimitInSeconds.get() * 1000;
             shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
         }
         ArrayList<Double> zs = new ArrayList<>();
-        for (int i = 0; i < nBuckets; i++) {
-            zs.add(limit / (nBuckets - i));
+        for (int i = 0; i < nBuckets.get(); i++) {
+            zs.add(limit / (nBuckets.get() - i));
         }
 
         final NodeAccess na = queryGraph.getNodeAccess();
         Collection<ConstraintVertex> sites = new ArrayList<>();
         shortestPathTree.search(qr.getClosestNode(), label -> {
             double exploreValue;
-            if (distanceInMeter > 0) {
+            if (distanceInMeter.get() > 0) {
                 exploreValue = label.distance;
             } else {
                 exploreValue = label.time;
@@ -170,6 +155,11 @@ public class IsochroneResource {
         if (shortestPathTree.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
             throw new IllegalArgumentException("Too many nodes would have to explored (" + shortestPathTree.getVisitedNodes() + "). Let us know if you need this increased.");
         }
+
+        // Sites may contain repeated coordinates. Especially for edge-based traversal, that's expected -- we visit
+        // each node multiple times.
+        // But that's okay, the triangulator de-dupes by itself, and it keeps the first z-value it sees, which is
+        // what we want.
 
         ArrayList<JsonFeature> features = new ArrayList<>();
         ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
@@ -204,14 +194,14 @@ public class IsochroneResource {
 
         for (Double z : zs) {
             MultiPolygon multiPolygon = contourBuilder.computeIsoline(z);
-            Polygon maxPolygon = heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.lon, point.lat)));
+            Polygon maxPolygon = heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.get().lon, point.get().lat)));
             polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
         }
         for (Coordinate[] polygonShell : polygonShells) {
             JsonFeature feature = new JsonFeature();
             HashMap<String, Object> properties = new HashMap<>();
             properties.put("bucket", features.size());
-            if (respType.equalsIgnoreCase("geojson")) {
+            if (respType == geojson) {
                 properties.put("copyrights", WebHelper.COPYRIGHTS);
             }
             feature.setProperties(properties);
@@ -221,7 +211,7 @@ public class IsochroneResource {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         ObjectNode finalJson = null;
-        if (respType.equalsIgnoreCase("geojson")) {
+        if (respType == geojson) {
             json.put("type", "FeatureCollection");
             json.putPOJO("features", features);
             finalJson = json;
