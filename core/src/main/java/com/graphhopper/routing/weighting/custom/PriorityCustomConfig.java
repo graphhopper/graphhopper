@@ -67,8 +67,13 @@ final class PriorityCustomConfig {
     static <T extends EncodedValue> T getEV(EncodedValueLookup lookup, String name, String key, Class<T> encodedValueType) {
         if (!lookup.hasEncodedValue(key))
             throw new IllegalArgumentException("Cannot find '" + key + "' specified in '" + name + "'");
-        return lookup.getEncodedValue(key, encodedValueType);
+        T ev = lookup.getEncodedValue(key, encodedValueType);
+        if (!encodedValueType.isAssignableFrom(ev.getClass()))
+            throw new IllegalArgumentException("Expected class '" + encodedValueType.getSimpleName() + "' for '" + key
+                    + "' specified in '" + name + "'. But was " + ev.getClass().getSimpleName());
+        return ev;
     }
+
 
     /**
      * Pick the maximum value and if it is greater than the specified max we divide all values with it - i.e. normalize it.
