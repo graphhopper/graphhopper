@@ -521,7 +521,9 @@ public class RouteResourceTest {
 
     @Test
     public void testNoPoint() {
-        JsonNode json = clientTarget(app, "/route?profile=my_car&heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
+        Response response = clientTarget(app, "/route?profile=my_car&heading=0").request().buildGet().invoke();
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(400, response.getStatus());
         assertEquals("You have to pass at least one point", json.get("message").asText());
     }
 
