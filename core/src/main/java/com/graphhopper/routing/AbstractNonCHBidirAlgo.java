@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.coll.GHPriorityQueue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -25,12 +26,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-
-import java.util.PriorityQueue;
+import com.graphhopper.util.*;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
@@ -61,8 +57,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         edgeExplorer = graph.createEdgeExplorer();
         outEdgeFilter = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
         inEdgeFilter = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
-        initCollections(size);
+        int mapSize = Math.min(graph.getNodes() / 10, 250_000);
+        initCollections(mapSize / 50, mapSize);
     }
 
     /**
@@ -128,12 +124,35 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     }
 
     @Override
+    protected void runAlgo() {
+        super.runAlgo();
+//        counter++;
+//        fromMapSizeSum += bestWeightMapFrom.size();
+//        toMapSizeSum += bestWeightMapTo.size();
+//        fromQueueSizeSum += pqOpenSetFrom.size();
+//        toQueueSizeSum += pqOpenSetTo.size();
+//        System.out.println("add: " + add + ", update: " + update + ", poll: " + poll);
+//        System.out.println("addW: " + addWatch.getSeconds() + ", updateW: " + updateWatch.getSeconds() + ", pollW: " + pollWatch.getSeconds());
+//        System.out.println("prio size from:" + fromQueueSizeSum / (float) counter + ", to:" + toQueueSizeSum / (float) counter);
+//        System.out.println("map  size from:" + fromMapSizeSum / (float) counter + ", to:" + toMapSizeSum / (float) counter);
+
+        // prio size 4k to 5k
+        // mapp size from:140k bis 224k
+        // count add: 70mio, update: 5mio, poll: 70mio
+        // time  add: 1.0s,   update: 1.3s, poll: 5.4s
+        // why is polling so slow!?
+    }
+
+    @Override
     boolean fillEdgesFrom() {
         if (pqOpenSetFrom.isEmpty()) {
             return false;
         }
+//        pollWatch.start();
         currFrom = pqOpenSetFrom.poll();
+//        pollWatch.stop();
         visitedCountFrom++;
+//        poll++;
         if (fromEntryCanBeSkipped()) {
             return true;
         }
@@ -150,8 +169,11 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (pqOpenSetTo.isEmpty()) {
             return false;
         }
+//        pollWatch.start();
         currTo = pqOpenSetTo.poll();
+//        pollWatch.stop();
         visitedCountTo++;
+//        poll++;
         if (toEntryCanBeSkipped()) {
             return true;
         }
@@ -163,7 +185,10 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         return true;
     }
 
-    private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
+//    static StopWatch pollWatch = new StopWatch(), addWatch = new StopWatch(), updateWatch = new StopWatch();
+//    static int counter = 0, poll = 0, update = 0, add = 0, fromMapSizeSum, toMapSizeSum, fromQueueSizeSum, toQueueSizeSum;
+
+    private void fillEdges(SPTEntry currEdge, GHPriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge, reverse))
@@ -179,11 +204,19 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             if (entry == null) {
                 entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
-                prioQueue.add(entry);
+//                addWatch.start();
+                prioQueue.add(entry, entry.weight);
+//                addWatch.stop();
+//                add++;
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
+//                updateWatch.start();
+                prioQueue.remove(entry, entry.weight);
+//                updateWatch.stop();
+//                update++;
                 updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
-                prioQueue.add(entry);
+//                updateWatch.start();
+                prioQueue.add(entry, entry.weight);
+//                updateWatch.stop();
             } else
                 continue;
 

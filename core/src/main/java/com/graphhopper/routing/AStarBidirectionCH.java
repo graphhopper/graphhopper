@@ -89,11 +89,6 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo implements Recalcula
     }
 
     @Override
-    public void afterHeuristicChange(boolean forward, boolean backward) {
-        AStarBidirection.updatePriorityQueues(pqOpenSetFrom, pqOpenSetTo, weightApprox, forward, backward);
-    }
-
-    @Override
     public String getName() {
         return "astarbi|ch";
     }

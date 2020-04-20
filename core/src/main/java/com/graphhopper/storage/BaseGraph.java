@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Locale;
+import java.util.PriorityQueue;
 
 import static com.graphhopper.util.Helper.nf;
 

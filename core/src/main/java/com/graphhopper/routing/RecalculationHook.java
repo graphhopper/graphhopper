@@ -5,12 +5,5 @@ package com.graphhopper.routing;
  */
 public interface RecalculationHook {
 
-    /**
-     * Call this method after the heuristic has changed and graph exploration should continue.
-     *
-     * @throws UnsupportedOperationException if change of heuristic is not supported from the underlying algorithm.
-     */
-    void afterHeuristicChange(boolean forward, boolean backward);
-
     int getVisitedNodes();
 }

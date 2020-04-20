@@ -19,13 +19,13 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
+import com.graphhopper.coll.GHPriorityQueue;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.PriorityQueue;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
@@ -45,8 +45,8 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected double bestWeight = Double.MAX_VALUE;
     protected NodeAccess nodeAccess;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
-    PriorityQueue<SPTEntry> pqOpenSetFrom;
-    PriorityQueue<SPTEntry> pqOpenSetTo;
+    GHPriorityQueue<SPTEntry> pqOpenSetFrom;
+    GHPriorityQueue<SPTEntry> pqOpenSetTo;
     protected boolean updateBestPath = true;
     protected boolean finishedFrom;
     protected boolean finishedTo;
@@ -60,12 +60,14 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         toInEdge = ANY_EDGE;
     }
 
-    protected void initCollections(int size) {
-        pqOpenSetFrom = new PriorityQueue<>(size);
-        bestWeightMapFrom = new GHIntObjectHashMap<>(size);
+    protected void initCollections(int queueSize, int mapSize) {
+        mapSize = Math.max(mapSize, 50);
+        queueSize = Math.max(queueSize, 10);
+        pqOpenSetFrom = new GHPriorityQueue<>(queueSize);
+        bestWeightMapFrom = new GHIntObjectHashMap<>(mapSize);
 
-        pqOpenSetTo = new PriorityQueue<>(size);
-        bestWeightMapTo = new GHIntObjectHashMap<>(size);
+        pqOpenSetTo = new GHPriorityQueue<>(queueSize);
+        bestWeightMapTo = new GHIntObjectHashMap<>(mapSize);
     }
 
     /**
@@ -100,7 +102,7 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected void initFrom(int from, double weight) {
         this.from = from;
         currFrom = createStartEntry(from, weight, false);
-        pqOpenSetFrom.add(currFrom);
+        pqOpenSetFrom.add(currFrom, currFrom.weight);
         if (!traversalMode.isEdgeBased()) {
             bestWeightMapFrom.put(from, currFrom);
         }
@@ -109,7 +111,7 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected void initTo(int to, double weight) {
         this.to = to;
         currTo = createStartEntry(to, weight, true);
-        pqOpenSetTo.add(currTo);
+        pqOpenSetTo.add(currTo, currTo.weight);
         if (!traversalMode.isEdgeBased()) {
             bestWeightMapTo.put(to, currTo);
         }
