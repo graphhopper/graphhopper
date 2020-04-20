@@ -66,8 +66,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <compilerArgument>-XDignore.symbol.file</compilerArgument>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>7</source>
+                    <target>7</target>
                 </configuration>
             </plugin>
             
