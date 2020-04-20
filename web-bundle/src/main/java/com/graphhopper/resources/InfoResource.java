@@ -103,12 +103,12 @@ public class InfoResource {
                 continue;
 
             List<Object> possibleValueList = new ArrayList<>();
-            EncodedValue eev = storage.getEncodingManager().getEncodedValue(encodedValue, EncodedValue.class);
-            if (eev instanceof EnumEncodedValue) {
-                for (Object o : ((EnumEncodedValue) eev).getValues()) {
+            EncodedValue encVal = storage.getEncodingManager().getEncodedValue(encodedValue, EncodedValue.class);
+            if (encVal instanceof EnumEncodedValue) {
+                for (Object o : ((EnumEncodedValue) encVal).getValues()) {
                     possibleValueList.add(o.toString());
                 }
-            } else if (eev instanceof BooleanEncodedValue) {
+            } else if (encVal instanceof BooleanEncodedValue) {
                 possibleValueList.add(true);
                 possibleValueList.add(false);
             } else {
