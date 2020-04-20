@@ -17,12 +17,12 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * This internal interface calculates a double value from the specified EdgeIteratorState. Used for CustomWeighting.
- *
- * @see {{@link GeoToValueEntry}} or {@link EnumToValueEntry}
+ * Implementations of this internal interface represent the conversion rules we use to map {@link EncodedValue}s to
+ * numerical values when determining the different parameters for {@link CustomWeighting}.
  */
 interface EdgeToValueEntry {
     /**
