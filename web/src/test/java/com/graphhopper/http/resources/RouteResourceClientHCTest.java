@@ -339,7 +339,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.507065, 1.529846)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                putHint("profile", "my_car");
+                setProfile( "my_car");
         req.getPathDetails().add("average_speed");
         GHResponse res = gh.route(req);
         assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
@@ -358,7 +358,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.50856, 1.528451)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                putHint("profile", "my_car");
+                setProfile( "my_car");
 
         GHResponse response = gh.route(req);
         isBetween(890, 900, response.getBest().getDistance());
