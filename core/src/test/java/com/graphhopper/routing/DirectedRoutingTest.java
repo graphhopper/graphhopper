@@ -169,7 +169,6 @@ public class DirectedRoutingTest {
     @Repeat(times = 10)
     public void randomGraph() {
         final long seed = System.nanoTime();
-        System.out.println("random Graph seed: " + seed);
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
@@ -188,7 +187,7 @@ public class DirectedRoutingTest {
             Path path = createAlgo()
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             // do not check nodes, because there can be ambiguity when there are zero weight loops
-            strictViolations.addAll(comparePaths(refPath, path, source, target, false));
+            strictViolations.addAll(comparePaths(refPath, path, source, target, false, seed));
         }
         // sometimes there are multiple best paths with different distance/time, if this happens too often something
         // is wrong and we fail
@@ -196,7 +195,7 @@ public class DirectedRoutingTest {
             for (String strictViolation : strictViolations) {
                 System.out.println("strict violation: " + strictViolation);
             }
-            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
+            fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
         }
     }
 
@@ -207,7 +206,6 @@ public class DirectedRoutingTest {
     @Repeat(times = 10)
     public void randomGraph_withQueryGraph() {
         final long seed = System.nanoTime();
-        System.out.println("randomGraph_withQueryGraph seed: " + seed);
         final int numQueries = 50;
 
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
@@ -245,12 +243,12 @@ public class DirectedRoutingTest {
                     .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
 
             // do not check nodes, because there can be ambiguity when there are zero weight loops
-            strictViolations.addAll(comparePaths(refPath, path, source, target, false));
+            strictViolations.addAll(comparePaths(refPath, path, source, target, false, seed));
         }
         // sometimes there are multiple best paths with different distance/time, if this happens too often something
         // is wrong and we fail
         if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
-            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
+            fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
         }
     }
 
@@ -262,14 +260,14 @@ public class DirectedRoutingTest {
         return result;
     }
 
-    private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes) {
+    private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes, long seed) {
         List<String> strictViolations = new ArrayList<>();
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
         if (Math.abs(refWeight - weight) > 1.e-2) {
             System.out.println("expected: " + refPath.calcNodes());
             System.out.println("given:    " + path.calcNodes());
-            fail("wrong weight: " + source + "->" + target + ", expected: " + refWeight + ", given: " + weight);
+            fail("wrong weight: " + source + "->" + target + ", expected: " + refWeight + ", given: " + weight + ", seed: " + seed);
         }
         if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
             strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());

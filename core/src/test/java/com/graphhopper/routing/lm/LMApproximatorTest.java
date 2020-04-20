@@ -54,7 +54,6 @@ public class LMApproximatorTest {
     @Repeat(times = 5)
     public void randomGraph() {
         final long seed = System.nanoTime();
-        System.out.println("random Graph seed: " + seed);
         run(seed);
     }
 
@@ -168,8 +167,8 @@ public class LMApproximatorTest {
 
             }
 
-            assertEquals(0, nOverApproximatedWeights);
-            assertEquals(0, nInconsistentWeights);
+            assertEquals("too many over approximated weights, seed: " + seed, 0, nOverApproximatedWeights);
+            assertEquals("too many inconsistent weights, seed: " + seed, 0, nInconsistentWeights);
         }
     }
 
