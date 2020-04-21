@@ -65,7 +65,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean elevation = false;
     private String optimize = "false";
     private boolean postRequest = true;
-    int maxUnzippedLength = 1000;
+    private int maxUnzippedLength = 1000;
     private final Set<String> ignoreSet;
     private final Set<String> ignoreSetForPost;
 
@@ -112,6 +112,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
         ignoreSet.add("pointsencoded");
         ignoreSet.add("type");
         objectMapper = Jackson.newObjectMapper();
+    }
+
+    public GraphHopperWeb setMaxUnzippedLength(int maxUnzippedLength) {
+        this.maxUnzippedLength = maxUnzippedLength;
+        return this;
     }
 
     public GraphHopperWeb setDownloader(OkHttpClient downloader) {

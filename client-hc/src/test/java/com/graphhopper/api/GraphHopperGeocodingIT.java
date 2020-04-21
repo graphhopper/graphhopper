@@ -10,7 +10,6 @@ import org.junit.Test;
 
 import java.net.SocketTimeoutException;
 
-import static com.graphhopper.api.GraphHopperWebIT.KEY;
 import static org.junit.Assert.*;
 
 /**
@@ -18,6 +17,7 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperGeocodingIT {
 
+    static final String KEY = System.getProperty("key", "78da6e9a-273e-43d1-bdda-8f24e007a1fa");
     GraphHopperGeocoding geocoding = new GraphHopperGeocoding();
 
     @Before
