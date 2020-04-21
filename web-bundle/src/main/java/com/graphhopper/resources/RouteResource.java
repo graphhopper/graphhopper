@@ -21,19 +21,21 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
+import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
+import io.dropwizard.jersey.params.AbstractParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +44,7 @@ import java.util.Map;
 
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Resource to use GraphHopper in a remote client application like mobile or browser. Note: If type
@@ -71,9 +74,8 @@ public class RouteResource {
     public Response doGet(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
-            @Context ContainerRequestContext rc,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
-            @QueryParam("point") List<GHPoint> requestPoints,
+            @QueryParam("point") List<GHPointParam> pointParams,
             @QueryParam("type") @DefaultValue("json") String type,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
@@ -92,38 +94,39 @@ public class RouteResource {
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("gpx.millis") String timeString) {
+        List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
         instructions = writeGPX || instructions;
 
         StopWatch sw = new StopWatch().start();
 
-        if (requestPoints.isEmpty())
+        if (points.isEmpty())
             throw new IllegalArgumentException("You have to pass at least one point");
         if (enableElevation && !hasElevation)
             throw new IllegalArgumentException("Elevation not supported!");
-        if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size())
+        if (favoredHeadings.size() > 1 && favoredHeadings.size() != points.size())
             throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
-                    + "or equal to the number of points (" + requestPoints.size() + ")");
+                    + "or equal to the number of points (" + points.size() + ")");
 
         // TODO these checks should be only necessary once in the core, e.g. pointHints problems are currently ignored for POST requests
         // -> #1996
-        if (pointHints.size() > 0 && pointHints.size() != requestPoints.size())
+        if (pointHints.size() > 0 && pointHints.size() != points.size())
             throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
-        if (curbsides.size() > 0 && curbsides.size() != requestPoints.size())
+        if (curbsides.size() > 0 && curbsides.size() != points.size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
         GHRequest request;
         if (favoredHeadings.size() > 0) {
             // if only one favored heading is specified take as start heading
             if (favoredHeadings.size() == 1) {
-                List<Double> paddedHeadings = new ArrayList<>(Collections.nCopies(requestPoints.size(), Double.NaN));
+                List<Double> paddedHeadings = new ArrayList<>(Collections.nCopies(points.size(), Double.NaN));
                 paddedHeadings.set(0, favoredHeadings.get(0));
-                request = new GHRequest(requestPoints, paddedHeadings);
+                request = new GHRequest(points, paddedHeadings);
             } else {
-                request = new GHRequest(requestPoints, favoredHeadings);
+                request = new GHRequest(points, favoredHeadings);
             }
         } else {
-            request = new GHRequest(requestPoints);
+            request = new GHRequest(points);
         }
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
@@ -150,7 +153,7 @@ public class RouteResource {
 
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took: "
+        String logStr = httpReq.getQueryString() + " " + infoStr + " " + points + ", took: "
                 + String.format("%.1f", (double) took) + "ms, algo: " + algoStr + ", profile: " + profileName + ", " + weightingVehicleLogStr;
 
         if (ghResponse.hasErrors()) {
@@ -177,11 +180,8 @@ public class RouteResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
-    public Response doPost(GHRequest request, @Context HttpServletRequest httpReq) {
-        if (request == null)
-            throw new IllegalArgumentException("Empty request");
-
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
         String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
                 + ", vehicle: " + request.getHints().getString("vehicle", "");
@@ -193,18 +193,10 @@ public class RouteResource {
         errorIfLegacyParameters(request.getHints());
         GHResponse ghResponse = graphHopper.route(request);
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
-        boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().getString("type", "json"));
-        instructions = writeGPX || instructions;
         boolean enableElevation = request.getHints().getBool("elevation", false);
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
 
-        // default to false for the route part in next API version, see #437
-        boolean withRoute = request.getHints().getBool("gpx.route", true);
-        boolean withTrack = request.getHints().getBool("gpx.track", true);
-        boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
-        String trackName = request.getHints().getString("gpx.trackname", "GraphHopper Track");
-        String timeString = request.getHints().getString("gpx.millis", "");
         long took = sw.stop().getNanos() / 1_000_000;
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
@@ -222,12 +214,7 @@ public class RouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            return writeGPX ?
-                    gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
-                            header("X-GH-Took", "" + Math.round(took * 1000)).
-                            build()
-                    :
-                    Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+            return Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
                             type(MediaType.APPLICATION_JSON).
                             build();

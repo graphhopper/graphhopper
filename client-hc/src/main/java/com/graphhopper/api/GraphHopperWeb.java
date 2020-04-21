@@ -64,7 +64,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean calcPoints = true;
     private boolean elevation = false;
     private String optimize = "false";
-    boolean postRequest = true;
+    private boolean postRequest = true;
     private int maxUnzippedLength = 1000;
     private final Set<String> ignoreSet;
     private final Set<String> ignoreSetForPost;
@@ -373,6 +373,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
     public String export(GHRequest ghRequest) {
         String str = "Creating request failed";
         try {
+            if (postRequest)
+                throw new IllegalArgumentException("GPX export only works for GET requests, make sure to use `setPostRequest(false)`");
             Request okRequest = createGetRequest(ghRequest);
             str = getClientForRequest(ghRequest).newCall(okRequest).execute().body().string();
 

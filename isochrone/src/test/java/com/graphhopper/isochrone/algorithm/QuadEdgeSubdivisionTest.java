@@ -3,6 +3,7 @@ package com.graphhopper.isochrone.algorithm;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.triangulate.IncrementalDelaunayTriangulator;
 import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
@@ -10,6 +11,23 @@ import org.locationtech.jts.triangulate.quadedge.Vertex;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class QuadEdgeSubdivisionTest {
+
+    @Test
+    public void testJtsDelaunayTriangulator() {
+        Vertex v1 = new Vertex(0.0, 0.0, 0.0);
+        Vertex v2 = new Vertex(1.0, -1.0, 1.0);
+        Vertex v3 = new Vertex(1.0, 1.0, 0.0);
+        Vertex v4 = new Vertex(2.0, 0.0, 0.0);
+        Vertex v5 = new Vertex(1.0, -3.0, 0.0);
+        QuadEdgeSubdivision quadEdgeSubdivision = new QuadEdgeSubdivision(new Envelope(0.0, 2.0, -1.0, 1.0), 0.001);
+        IncrementalDelaunayTriangulator triangulator = new IncrementalDelaunayTriangulator(quadEdgeSubdivision);
+        triangulator.insertSite(v1);
+        triangulator.insertSite(v2);
+        triangulator.insertSite(v3);
+        triangulator.insertSite(v4);
+        triangulator.insertSite(v5);
+        assertEquals(5, quadEdgeSubdivision.getVertices(false).size());
+    }
 
     @Test
     public void createQuadEdgeSubdivisionFromScratch() {

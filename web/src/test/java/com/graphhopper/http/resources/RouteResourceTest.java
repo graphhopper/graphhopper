@@ -103,15 +103,22 @@ public class RouteResourceTest {
     @Test
     public void testBasicPostQuery() {
         String jsonStr = "{ \"profile\": \"my_car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
-        final Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
+        Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
+
         assertTrue(distance > 9000, "distance wasn't correct:" + distance);
         assertTrue(distance < 9500, "distance wasn't correct:" + distance);
+
+        // we currently just ignore URL parameters (not sure if this is a good or bad thing)
+        jsonStr = "{\"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        response = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
+        assertEquals(200, response.getStatus());
+        assertFalse(response.readEntity(JsonNode.class).get("info").has("errors"));
     }
 
     @Test
@@ -126,17 +133,6 @@ public class RouteResourceTest {
     public void testAcceptOnlyXmlButNoTypeParam() {
         final Response response = clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128")
                 .request(MediaType.APPLICATION_XML).buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-    }
-
-    @Test
-    public void testAcceptOnlyXmlButNoTypeParamPost() {
-        String jsonStr = "{ \"profile\": \"my_car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
-        final Response response = clientTarget(app, "/route")
-                .request(MediaType.APPLICATION_XML).buildPost(Entity.json(jsonStr)).invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -503,6 +499,44 @@ public class RouteResourceTest {
     }
 
     @Test
+    public void testGPXExport() {
+        GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("gpx.millis", "300000000");
+        req.putHint("type", "gpx");
+        GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
+                // gpx not supported for POST
+                .setPostRequest(false);
+        String res = gh.export(req);
+        assertTrue(res.contains("<gpx"));
+        assertTrue(res.contains("<rtept lat="));
+        assertTrue(res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
+        assertTrue(res.endsWith("</gpx>"));
+        // this is due to `gpx.millis` we set (dates are shifted by the given (ms!) value from 1970-01-01)
+        assertTrue(res.contains("1970-01-04"));
+    }
+
+    @Test
+    public void testExportWithoutTrack() {
+        GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("type", "gpx");
+        req.putHint("gpx.track", false);
+        GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
+                // gpx not supported for POST
+                .setPostRequest(false);
+        String res = gh.export(req);
+        assertTrue(res.contains("<gpx"));
+        assertTrue(res.contains("<rtept lat="));
+        assertFalse(res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
+        assertTrue(res.endsWith("</gpx>"));
+    }
+
+    @Test
     public void testWithError() {
         final Response response = clientTarget(app, "/route?profile=my_car&" +
                 "point=42.554851,1.536198").request().buildGet().invoke();
@@ -514,8 +548,18 @@ public class RouteResourceTest {
 
     @Test
     public void testNoPoint() {
-        JsonNode json = clientTarget(app, "/route?profile=my_car&heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
+        Response response = clientTarget(app, "/route?profile=my_car&heading=0").request().buildGet().invoke();
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(400, response.getStatus());
         assertEquals("You have to pass at least one point", json.get("message").asText());
+    }
+
+    @Test
+    public void testBadPoint() {
+        Response response = clientTarget(app, "/route?profile=my_car&heading=0&point=pups").request().buildGet().invoke();
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(400, response.getStatus());
+        assertEquals("query param point is invalid: Cannot parse point 'pups'", json.get("message").asText());
     }
 
     @Test
@@ -526,5 +570,4 @@ public class RouteResourceTest {
         JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
     }
-
 }
