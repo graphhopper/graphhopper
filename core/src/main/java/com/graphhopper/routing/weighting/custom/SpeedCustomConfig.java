@@ -113,8 +113,7 @@ final class SpeedCustomConfig {
             EdgeToValueEntry entry = speedFactorList.get(i);
             double factorValue = entry.getValue(edge, reverse);
             speed *= factorValue;
-            if (speed <= 0)
-                break;
+            if (speed == 0) break;
         }
 
         boolean applied = false;

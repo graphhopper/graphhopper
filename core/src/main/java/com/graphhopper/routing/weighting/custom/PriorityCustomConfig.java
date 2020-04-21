@@ -109,8 +109,7 @@ final class PriorityCustomConfig {
             EdgeToValueEntry entry = priorityList.get(i);
             double value = entry.getValue(edge, reverse);
             priority *= value;
-            if (priority <= 0)
-                return priority;
+            if (priority == 0) return 0;
         }
         return priority;
     }
