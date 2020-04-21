@@ -260,14 +260,7 @@ public class RouteResource {
             throw new IllegalArgumentException("Alternatives are currently not yet supported for GPX");
         }
 
-        long time = System.currentTimeMillis();
-        if (!Helper.isEmpty(timeString)) {
-            try {
-                time = Long.parseLong(timeString);
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid value for 'gpx.millis': " + timeString);
-            }
-        }
+        long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
         InstructionList instructions = ghRsp.getBest().getInstructions();
         return Response.ok(GpxFromInstructions.createGPX(instructions, trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version, instructions.getTr()), "application/gpx+xml").
                 header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");

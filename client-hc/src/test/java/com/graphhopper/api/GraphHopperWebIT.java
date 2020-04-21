@@ -40,8 +40,8 @@ public class GraphHopperWebIT {
     public GraphHopperWebIT(boolean postRequest, int maxUnzippedLength) {
         gh = new GraphHopperWeb()
                 .setPostRequest(postRequest)
-                .setKey(KEY)
-                ._setMaxUnzippedLength(maxUnzippedLength);
+                .setKey(KEY);
+        gh.maxUnzippedLength = maxUnzippedLength;
     }
 
     @Parameterized.Parameters(name = "POST = {0}, maxUnzippedLength = {1}")

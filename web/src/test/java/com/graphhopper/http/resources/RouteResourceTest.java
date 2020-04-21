@@ -43,8 +43,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -500,9 +498,8 @@ public class RouteResourceTest {
         assertTrue(str.contains("<hints><error details=\"java"), "Expected error but was: " + str);
     }
 
-    @ParameterizedTest(name = "POST={0}")
-    @CsvSource({"false", "true"})
-    public void testGPXExport(boolean usePost) {
+    @Test
+    public void testGPXExport() {
         GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         req.putHint("elevation", false);
         req.putHint("instructions", true);
@@ -510,7 +507,8 @@ public class RouteResourceTest {
         req.putHint("gpx.millis", "300000000");
         req.putHint("type", "gpx");
         GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
-                .setPostRequest(usePost);
+                // gpx not supported for POST
+                .setPostRequest(false);
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));
         assertTrue(res.contains("<rtept lat="));
@@ -520,9 +518,8 @@ public class RouteResourceTest {
         assertTrue(res.contains("1970-01-04"));
     }
 
-    @ParameterizedTest(name = "POST={0}")
-    @CsvSource({"false", "true"})
-    public void testExportWithoutTrack(boolean usePost) {
+    @Test
+    public void testExportWithoutTrack() {
         GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         req.putHint("elevation", false);
         req.putHint("instructions", true);
@@ -530,7 +527,8 @@ public class RouteResourceTest {
         req.putHint("type", "gpx");
         req.putHint("gpx.track", false);
         GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
-                .setPostRequest(usePost);
+                // gpx not supported for POST
+                .setPostRequest(false);
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));
         assertTrue(res.contains("<rtept lat="));

@@ -65,7 +65,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean elevation = false;
     private String optimize = "false";
     private boolean postRequest = true;
-    private int maxUnzippedLength = 1000;
+    int maxUnzippedLength = 1000;
     private final Set<String> ignoreSet;
     private final Set<String> ignoreSetForPost;
 
@@ -135,14 +135,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
         }
 
         this.key = key;
-        return this;
-    }
-
-    /**
-     * Only use this if you know what you are doing
-     */
-    public GraphHopperWeb _setMaxUnzippedLength(int maxUnzippedLength) {
-        this.maxUnzippedLength = maxUnzippedLength;
         return this;
     }
 
@@ -376,7 +368,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
     public String export(GHRequest ghRequest) {
         String str = "Creating request failed";
         try {
-            Request okRequest = postRequest ? createPostRequest(ghRequest) : createGetRequest(ghRequest);
+            // todonow: should there be an error if usePost=true (because it is not supported)
+            Request okRequest = createGetRequest(ghRequest);
             str = getClientForRequest(ghRequest).newCall(okRequest).execute().body().string();
 
             return str;
