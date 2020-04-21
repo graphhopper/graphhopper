@@ -121,13 +121,13 @@ final class SpeedCustomConfig {
         for (int i = 0; i < maxSpeedList.size(); i++) {
             EdgeToValueEntry entry = maxSpeedList.get(i);
             double maxValue = entry.getValue(edge, reverse);
-            if (maxValue < speed) {
+            if (speed > maxValue) {
                 applied = true;
                 speed = maxValue;
             }
         }
 
-        if (!applied && maxSpeedFallback < speed)
+        if (!applied && speed > maxSpeedFallback)
             return maxSpeedFallback;
 
         return Math.min(speed, maxSpeed);

@@ -26,7 +26,7 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 interface EdgeToValueEntry {
     /**
-     * @return a double value or null if this entry should be skipped
+     * @return the numeric value that shall be associated with the given (directed) edge
      */
     double getValue(EdgeIteratorState iter, boolean reverse);
 }
