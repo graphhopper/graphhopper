@@ -486,39 +486,4 @@ public class Helper {
         }
         return sb.toString();
     }
-
-    /**
-     * This method finds the enum in the enumClass via enum.toString
-     */
-    public static <T extends Enum<T>> T getValueOf(T[] enumValues, String enumToString) {
-        if (enumToString == null)
-            return enumValues[0];
-
-        for (T e : enumValues) {
-            if (e.toString().equals(enumToString)) {
-                return e;
-            }
-        }
-        return enumValues[0];
-    }
-
-    public static double[] createEnumToDoubleArray(String name, double defaultValue, double minValue, double maxValue,
-                                                   Enum[] enumValues, Map<String, Object> map) {
-        double[] tmp = new double[enumValues.length];
-        Arrays.fill(tmp, defaultValue);
-        for (Map.Entry<String, Object> encValEntry : map.entrySet()) {
-            if (encValEntry.getKey() == null)
-                throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
-            if (encValEntry.getValue() == null)
-                throw new IllegalArgumentException("value for " + name + " cannot be null, key: " + encValEntry.getKey());
-
-            Enum enumValue = Helper.getValueOf(enumValues, encValEntry.getKey());
-            tmp[enumValue.ordinal()] = ((Number) encValEntry.getValue()).doubleValue();
-            if (tmp[enumValue.ordinal()] < minValue)
-                throw new IllegalArgumentException(name + " cannot be smaller than " + minValue + ", was " + tmp[enumValue.ordinal()]);
-            if (tmp[enumValue.ordinal()] > maxValue)
-                throw new IllegalArgumentException(name + " cannot be bigger than " + maxValue + ", was " + tmp[enumValue.ordinal()]);
-        }
-        return tmp;
-    }
 }

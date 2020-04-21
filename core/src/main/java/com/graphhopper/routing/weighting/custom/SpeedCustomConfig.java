@@ -23,7 +23,6 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
@@ -31,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.createEnumToDoubleArray;
 import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.getEV;
 
 final class SpeedCustomConfig {
@@ -64,7 +64,7 @@ final class SpeedCustomConfig {
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "max_speed", key, EnumEncodedValue.class);
                 Enum[] enumValues = enumEncodedValue.getValues();
-                double[] values = Helper.createEnumToDoubleArray("max_speed." + key, maxSpeed, 0, maxSpeed,
+                double[] values = createEnumToDoubleArray("max_speed." + key, maxSpeed, 0, maxSpeed,
                         enumValues, (Map<String, Object>) value);
                 maxSpeedList.add(new EnumToValueEntry(enumEncodedValue, values));
             } else {
@@ -88,7 +88,7 @@ final class SpeedCustomConfig {
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "speed_factor", key, EnumEncodedValue.class);
                 Enum[] enumValues = enumEncodedValue.getValues();
-                double[] values = Helper.createEnumToDoubleArray("speed_factor." + key, 1, 0, 1,
+                double[] values = createEnumToDoubleArray("speed_factor." + key, 1, 0, 1,
                         enumValues, (Map<String, Object>) value);
                 speedFactorList.add(new EnumToValueEntry(enumEncodedValue, values));
             } else {

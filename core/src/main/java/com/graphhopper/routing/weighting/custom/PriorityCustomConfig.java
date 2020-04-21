@@ -20,11 +20,11 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +54,7 @@ final class PriorityCustomConfig {
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "priority", key, EnumEncodedValue.class);
                 Enum[] enumValues = enumEncodedValue.getValues();
-                double[] values = Helper.createEnumToDoubleArray("priority." + key, 1, 0, 100,
+                double[] values = createEnumToDoubleArray("priority." + key, 1, 0, 100,
                         enumValues, (Map<String, Object>) value);
                 normalizeFactor(values, 1);
                 priorityList.add(new EnumToValueEntry(enumEncodedValue, values));
@@ -74,6 +74,38 @@ final class PriorityCustomConfig {
         return ev;
     }
 
+
+    /**
+     * This method finds the enum in the enumClass via enum.toString
+     */
+    private static Enum getValueOf(Enum[] enumValues, String enumToString) {
+        for (Enum e : enumValues) {
+            if (e.toString().equals(enumToString)) {
+                return e;
+            }
+        }
+        throw new IllegalArgumentException("Cannot find enum " + enumToString + " in " + Arrays.toString(enumValues));
+    }
+
+    static double[] createEnumToDoubleArray(String name, double defaultValue, double minValue, double maxValue,
+                                            Enum[] enumValues, Map<String, Object> map) {
+        double[] tmp = new double[enumValues.length];
+        Arrays.fill(tmp, defaultValue);
+        for (Map.Entry<String, Object> encValEntry : map.entrySet()) {
+            if (encValEntry.getKey() == null)
+                throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
+            if (encValEntry.getValue() == null)
+                throw new IllegalArgumentException("value for " + name + " cannot be null, key: " + encValEntry.getKey());
+
+            Enum enumValue = getValueOf(enumValues, encValEntry.getKey());
+            tmp[enumValue.ordinal()] = ((Number) encValEntry.getValue()).doubleValue();
+            if (tmp[enumValue.ordinal()] < minValue)
+                throw new IllegalArgumentException(name + " cannot be smaller than " + minValue + ", was " + tmp[enumValue.ordinal()]);
+            if (tmp[enumValue.ordinal()] > maxValue)
+                throw new IllegalArgumentException(name + " cannot be bigger than " + maxValue + ", was " + tmp[enumValue.ordinal()]);
+        }
+        return tmp;
+    }
 
     /**
      * Pick the maximum value and if it is greater than the specified max we divide all values with it - i.e. normalize it.
