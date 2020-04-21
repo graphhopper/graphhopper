@@ -29,9 +29,9 @@ import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
@@ -43,7 +43,6 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +67,10 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 
 /**
+ * Used to run performance benchmarks for routing and other functionalities of GraphHopper
+ *
  * @author Peter Karich
+ * @author easbar
  */
 public class Measurement {
     private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
@@ -76,7 +78,6 @@ public class Measurement {
     private long seed;
     private int maxNode;
     private String vehicle;
-    private String weighting = "fastest";
 
     public static void main(String[] strs) throws IOException {
         PMap args = PMap.read(strs);
@@ -113,6 +114,7 @@ public class Measurement {
         seed = args.getLong("measurement.seed", 123);
         put("measurement.gitinfo", args.getString("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
+        put("measurement.name", args.getString("measurement.name", "no_name"));
         put("measurement.map", args.getString("datareader.file", "unknown"));
         String blockAreaStr = args.getString("measurement.block_area", "");
         final boolean useMeasurementTimeAsRefTime = args.getBool("measurement.use_measurement_time_as_ref_time", false);
@@ -144,9 +146,10 @@ public class Measurement {
 
             @Override
             protected void loadOrPrepareLM(boolean closeEarly) {
-                StopWatch sw = new StopWatch().start();
                 super.loadOrPrepareLM(closeEarly);
-                put(Landmark.PREPARE + "time", sw.stop().getMillis());
+                for (PrepareLandmarks plm : getLMPreparationHandler().getPreparations()) {
+                    put(Landmark.PREPARE + "time", plm.getTotalPrepareTime());
+                }
             }
 
             @Override
@@ -180,14 +183,15 @@ public class Measurement {
         StopWatch sw = new StopWatch().start();
         try {
             maxNode = g.getNodes();
-            boolean isCH = false;
-            boolean isLM = false;
+
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
-            printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
+            printMiscUnitPerfTests(g, false, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
             if (runSlow) {
+                boolean isCH = false;
+                boolean isLM = false;
                 printTimeOfRouteQuery(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
                         withInstructions());
                 if (encoder.supportsTurnCosts())
@@ -200,7 +204,8 @@ public class Measurement {
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
                 System.gc();
-                isLM = true;
+                boolean isCH = false;
+                boolean isLM = true;
                 for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
@@ -210,16 +215,16 @@ public class Measurement {
                     }
                 }
 
-                final int blockAreaActiveLMCount = 8;
+                final int activeLMCount = 8;
                 if (!blockAreaStr.isEmpty())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + blockAreaActiveLMCount + "_block_area", count / 4, isCH, isLM).
-                            withInstructions().activeLandmarks(blockAreaActiveLMCount).blockArea(blockAreaStr));
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", count / 4, isCH, isLM).
+                            withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
                 // compareRouting(hopper, count / 5);
             }
 
             if (hopper.getCHPreparationHandler().isEnabled()) {
-                isCH = true;
-                isLM = false;
+                boolean isCH = true;
+                boolean isLM = false;
 //                compareCHWithAndWithoutSOD(hopper, count/5);
                 System.gc();
                 if (!hopper.getCHPreparationHandler().getNodeBasedCHProfiles().isEmpty()) {
@@ -285,7 +290,7 @@ public class Measurement {
         }
         vehicle = tmpEncoders.get(0).toString();
         boolean turnCosts = tmpEncoders.get(0).supportsTurnCosts();
-        weighting = args.getString("measurement.weighting", weighting);
+        String weighting = args.getString("measurement.weighting", "fastest");
         boolean useCHEdge = args.getBool("measurement.ch.edge", true);
         boolean useCHNode = args.getBool("measurement.ch.node", true);
         boolean useLM = args.getBool("measurement.lm", true);
@@ -498,16 +503,10 @@ public class Measurement {
             return;
         }
 
-        SpatialRuleFactory rulePerCountryFactory = new SpatialRuleFactory() {
-
+        SpatialRuleFactory rulePerCountryFactory = (id, borders) -> new AbstractSpatialRule(borders) {
             @Override
-            public SpatialRule createSpatialRule(final String id, final List<Polygon> borders) {
-                return new AbstractSpatialRule(borders) {
-                    @Override
-                    public String getId() {
-                        return id;
-                    }
-                };
+            public String getId() {
+                return id;
             }
         };
 
