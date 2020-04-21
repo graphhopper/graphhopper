@@ -47,7 +47,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,11 +84,24 @@ public class RouteResourceClientHCTest {
         return config;
     }
 
-    // dropwizard extension does not work with @RunWith(Parameterized.class), see https://github.com/graphhopper/graphhopper/pull/2003
-    private static final String DISPLAY_NAME = "POST={0},maxUnzippedLength={1}";
+    // dropwizard extension does not work with @RunWith(Parameterized.class), but we can use an @EnumSource or similar
+    // and on each test method. see https://github.com/graphhopper/graphhopper/pull/2003
+    private enum TestParam {
+        GET(false, -1),
+        POST_MAX_UNZIPPED_0(true, 0),
+        POST_MAX_UNZIPPED_1000(true, 1000);
 
-    GraphHopperWeb createGH(boolean usePost, int maxUnzippedLength) {
-        return new GraphHopperWeb(TestUtils.clientUrl(app, "/route")).setPostRequest(usePost).setMaxUnzippedLength(maxUnzippedLength);
+        public boolean usePost;
+        public int maxUnzippedLength;
+
+        TestParam(boolean usePost, int maxUnzippedLength) {
+            this.usePost = usePost;
+            this.maxUnzippedLength = maxUnzippedLength;
+        }
+    }
+
+    private GraphHopperWeb createGH(TestParam p) {
+        return new GraphHopperWeb(TestUtils.clientUrl(app, "/route")).setPostRequest(p.usePost).setMaxUnzippedLength(p.maxUnzippedLength);
     }
 
     @BeforeAll
@@ -97,10 +110,10 @@ public class RouteResourceClientHCTest {
         Helper.removeDir(new File(DIR));
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void testSimpleRoute(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testSimpleRoute(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.5093, 1.5274)).
                 addPoint(new GHPoint(42.5126, 1.5410)).
@@ -137,10 +150,10 @@ public class RouteResourceClientHCTest {
         assertEquals("{\"double\":1.0,\"int\":1,\"boolean\":true}", requestJson.toString());
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void testAlternativeRoute(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testAlternativeRoute(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.505041, 1.521864)).
                 addPoint(new GHPoint(42.509074, 1.537936)).
@@ -165,10 +178,10 @@ public class RouteResourceClientHCTest {
         assertTrue("Carrer Doctor Vilanova".contains(path.getDescription().get(0)), "expected: " + path.getDescription().get(0));
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void testTimeout(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testTimeout(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509225, 1.534728)).
                 addPoint(new GHPoint(42.512602, 1.551558)).
@@ -185,10 +198,10 @@ public class RouteResourceClientHCTest {
         }
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void testNoPoints(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testNoPoints(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509225, 1.534728)).
                 addPoint(new GHPoint(42.512602, 1.551558)).
@@ -203,10 +216,10 @@ public class RouteResourceClientHCTest {
         isBetween(1750, 1800, alt.getDistance());
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void readRoundabout(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void readRoundabout(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509644, 1.532958)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
@@ -226,10 +239,10 @@ public class RouteResourceClientHCTest {
         assertTrue(counter > 0, "no roundabout in route?");
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void testRetrieveOnlyStreetname(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testRetrieveOnlyStreetname(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.507065, 1.529846)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
@@ -258,10 +271,10 @@ public class RouteResourceClientHCTest {
         return result;
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void testCannotFindPointException(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testCannotFindPointException(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.49058, 1.602974)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
@@ -272,10 +285,10 @@ public class RouteResourceClientHCTest {
         assertTrue(res.getErrors().get(0) instanceof PointNotFoundException);
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void testOutOfBoundsException(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testOutOfBoundsException(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(-400.214943, -130.078125)).
                 addPoint(new GHPoint(39.909736, -91.054687)).
@@ -286,10 +299,10 @@ public class RouteResourceClientHCTest {
         assertTrue(res.getErrors().get(0) instanceof PointOutOfBoundsException);
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void readFinishInstruction(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void readFinishInstruction(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.507065, 1.529846)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
@@ -301,10 +314,10 @@ public class RouteResourceClientHCTest {
         assertEquals("Arrive at destination", finishInstructionName);
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void doNotReadFinishInstruction(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void doNotReadFinishInstruction(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.507065, 1.529846)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
@@ -332,14 +345,14 @@ public class RouteResourceClientHCTest {
         assertEquals("Continue onto A 81", wrapper.getInstructions().get(0).getName());
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void testPathDetails(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testPathDetails(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.507065, 1.529846)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                setProfile( "my_car");
+                setProfile("my_car");
         req.getPathDetails().add("average_speed");
         GHResponse res = gh.route(req);
         assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
@@ -351,14 +364,14 @@ public class RouteResourceClientHCTest {
         assertTrue((Double) details.get(0).getValue() < 70);
     }
 
-    @ParameterizedTest(name = DISPLAY_NAME)
-    @CsvSource({"true,0", "true,1000", "false,-1"})
-    public void testPointHints(boolean usePost, int maxUnzippedLength) {
-        GraphHopperWeb gh = createGH(usePost, maxUnzippedLength);
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testPointHints(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.50856, 1.528451)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                setProfile( "my_car");
+                setProfile("my_car");
 
         GHResponse response = gh.route(req);
         isBetween(890, 900, response.getBest().getDistance());
