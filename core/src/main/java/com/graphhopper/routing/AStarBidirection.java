@@ -58,7 +58,7 @@ import java.util.PriorityQueue;
  * @author Peter Karich
  * @author jansoe
  */
-public class AStarBidirection extends AbstractNonCHBidirAlgo implements RecalculationHook {
+public class AStarBidirection extends AbstractNonCHBidirAlgo {
     private BalancedWeightApproximator weightApprox;
     double stoppingCriterionOffset;
 
@@ -129,43 +129,7 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
     }
 
     @Override
-    public void afterHeuristicChange(boolean forward, boolean backward) {
-        updatePriorityQueues(pqOpenSetFrom, pqOpenSetTo, weightApprox, forward, backward);
-    }
-
-    @Override
     public String getName() {
         return Parameters.Algorithms.ASTAR_BI + "|" + weightApprox;
-    }
-
-    public static void updatePriorityQueues(PriorityQueue<SPTEntry> pqOpenSetFrom, PriorityQueue<SPTEntry> pqOpenSetTo, BalancedWeightApproximator weightApprox, boolean forward, boolean backward) {
-        if (forward) {
-            // update PQ due to heuristic change (i.e. weight changed)
-            if (!pqOpenSetFrom.isEmpty()) {
-                // copy into temporary array to avoid pointer change of PQ
-                AStarEntry[] entries = pqOpenSetFrom.toArray(new AStarEntry[pqOpenSetFrom.size()]);
-                pqOpenSetFrom.clear();
-                for (AStarEntry value : entries) {
-                    value.weight = value.weightOfVisitedPath + weightApprox.approximate(value.adjNode, false);
-                    // does not work for edge based
-                    // ignoreExplorationFrom.add(value.adjNode);
-
-                    pqOpenSetFrom.add(value);
-                }
-            }
-        }
-
-        if (backward) {
-            if (!pqOpenSetTo.isEmpty()) {
-                AStarEntry[] entries = pqOpenSetTo.toArray(new AStarEntry[pqOpenSetTo.size()]);
-                pqOpenSetTo.clear();
-                for (AStarEntry value : entries) {
-                    value.weight = value.weightOfVisitedPath + weightApprox.approximate(value.adjNode, true);
-                    // ignoreExplorationTo.add(value.adjNode);
-
-                    pqOpenSetTo.add(value);
-                }
-            }
-        }
     }
 }

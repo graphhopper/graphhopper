@@ -152,7 +152,7 @@ public class Measurement {
             protected void loadOrPrepareLM(boolean closeEarly) {
                 super.loadOrPrepareLM(closeEarly);
                 for (PrepareLandmarks plm : getLMPreparationHandler().getPreparations()) {
-                    put(Landmark.PREPARE + plm.getLMProfile().getName() + ".time", plm.getTotalPrepareTime());
+                    put(Landmark.PREPARE + "time", plm.getTotalPrepareTime());
                 }
             }
 
