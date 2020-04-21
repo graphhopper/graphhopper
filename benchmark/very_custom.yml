@@ -1,0 +1,22 @@
+# this is a heavily customized model used to benchmark routing with a custom weighting
+vehicle_height: 3.8
+vehicle_width: 2.5
+
+speed_factor:
+  road_class:
+    motorway: 0.85
+    primary: 0.9
+
+priority:
+  road_class:
+    motorway: 1.1
+    primary: 0.5
+  toll:
+    no: 1.5
+  hazmat:
+    no: 0
+
+max_speed_fallback: 110
+# todonow: ?
+# we have the other custom profile for speed comparison to "fastest" so no need to avoid distance influence here
+# distance_influence: 0
