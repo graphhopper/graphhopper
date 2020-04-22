@@ -31,8 +31,7 @@ import com.graphhopper.util.GHUtility;
 import java.util.PriorityQueue;
 import java.util.function.Consumer;
 
-import static com.graphhopper.isochrone.algorithm.ShortestPathTree.ExploreType.DISTANCE;
-import static com.graphhopper.isochrone.algorithm.ShortestPathTree.ExploreType.TIME;
+import static com.graphhopper.isochrone.algorithm.ShortestPathTree.ExploreType.*;
 import static java.util.Comparator.comparingDouble;
 import static java.util.Comparator.comparingLong;
 
@@ -47,7 +46,7 @@ import static java.util.Comparator.comparingLong;
  */
 public class ShortestPathTree extends AbstractRoutingAlgorithm {
 
-    enum ExploreType {TIME, DISTANCE}
+    enum ExploreType {TIME, DISTANCE, WEIGHT}
 
     public static class IsoLabel {
 
@@ -118,6 +117,12 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         this.queueByZ = new PriorityQueue<>(1000, comparingDouble(l -> l.distance));
     }
 
+    public void setWeightLimit(double limit) {
+        exploreType = WEIGHT;
+        this.limit = limit;
+        this.queueByZ = new PriorityQueue<>(1000, comparingDouble(l -> l.weight));
+    }
+
     public void search(int from, final Consumer<IsoLabel> consumer) {
         checkAlreadyRun();
         IsoLabel currentLabel = new IsoLabel(from, -1, 0, 0, 0, null);
@@ -173,7 +178,8 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     private double getExploreValue(IsoLabel label) {
         if (exploreType == TIME)
             return label.time;
-        // if(exploreType == DISTANCE)
+        if (exploreType == WEIGHT)
+            return label.weight;
         return label.distance;
     }
 
