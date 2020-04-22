@@ -103,6 +103,8 @@ public class GraphHopperManaged implements Managed {
             }
             String customModelLocation = profileConfig.getHints().getString("custom_model_file", "");
             if (customModelLocation.isEmpty())
+                throw new IllegalArgumentException("Missing 'custom_model_file' field in profile '" + profileConfig.getName() + "' if you want an empty custom model set it to 'empty'");
+            if ("empty".equals(customModelLocation))
                 newProfiles.add(new CustomProfileConfig(profileConfig).setCustomModel(new CustomModel()));
             else
                 try {
