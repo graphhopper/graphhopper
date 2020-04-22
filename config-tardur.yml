@@ -1,9 +1,9 @@
 graphhopper:
-#  datareader.file: germany-latest.osm.pbf
-#  graph.location: graphs/germany/graph
+  datareader.file: germany-latest.osm.pbf
+  graph.location: graphs/germany/graph
 
-  datareader.file: sachsen-latest.osm.pbf
-  graph.location: graphs/sachsen/graph
+#  datareader.file: sachsen-latest.osm.pbf
+#  graph.location: graphs/sachsen/graph
 
   profiles:
     - name: car
