@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.coll.GHPriorityQueue;
+import com.graphhopper.coll.PairingHeap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
@@ -45,8 +46,8 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected double bestWeight = Double.MAX_VALUE;
     protected NodeAccess nodeAccess;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
-    GHPriorityQueue<SPTEntry> pqOpenSetFrom;
-    GHPriorityQueue<SPTEntry> pqOpenSetTo;
+    PairingHeap pqOpenSetFrom;
+    PairingHeap pqOpenSetTo;
     protected boolean updateBestPath = true;
     protected boolean finishedFrom;
     protected boolean finishedTo;
@@ -63,10 +64,10 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected void initCollections(int queueSize, int mapSize) {
         mapSize = Math.max(mapSize, 50);
         queueSize = Math.max(queueSize, 10);
-        pqOpenSetFrom = new GHPriorityQueue<>(queueSize);
+        pqOpenSetFrom = new PairingHeap();
         bestWeightMapFrom = new GHIntObjectHashMap<>(mapSize);
 
-        pqOpenSetTo = new GHPriorityQueue<>(queueSize);
+        pqOpenSetTo = new PairingHeap();
         bestWeightMapTo = new GHIntObjectHashMap<>(mapSize);
     }
 
@@ -102,7 +103,7 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected void initFrom(int from, double weight) {
         this.from = from;
         currFrom = createStartEntry(from, weight, false);
-        pqOpenSetFrom.add(currFrom, currFrom.weight);
+        pqOpenSetFrom.add(currFrom);
         if (!traversalMode.isEdgeBased()) {
             bestWeightMapFrom.put(from, currFrom);
         }
@@ -111,7 +112,7 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected void initTo(int to, double weight) {
         this.to = to;
         currTo = createStartEntry(to, weight, true);
-        pqOpenSetTo.add(currTo, currTo.weight);
+        pqOpenSetTo.add(currTo);
         if (!traversalMode.isEdgeBased()) {
             bestWeightMapTo.put(to, currTo);
         }
