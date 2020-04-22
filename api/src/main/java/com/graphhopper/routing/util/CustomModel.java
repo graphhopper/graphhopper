@@ -167,7 +167,7 @@ public class CustomModel {
     @Override
     public String toString() {
         return "CustomModel{" +
-                ", maxSpeedFallback=" + maxSpeedFallback +
+                "maxSpeedFallback=" + maxSpeedFallback +
                 ", vehicleWeight=" + vehicleWeight +
                 ", vehicleWidth=" + vehicleWidth +
                 ", vehicleHeight=" + vehicleHeight +
