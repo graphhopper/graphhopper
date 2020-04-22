@@ -88,6 +88,7 @@ measurement.count=5000 \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
 "measurement.block_area=49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512"
 
+# todonow: what about slow routing and spatial rules for custom measurements
 echo "3 - big map with a custom model that is 'a little customized', i.e. similar to the standard fastest-car profile"
 echo "node-based CH + landmarks (edge- & node-based for LM)"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
@@ -98,7 +99,6 @@ measurement.folder=${SINGLE_RESULTS_DIR} \
 measurement.clean=true \
 measurement.summaryfile=${RESULTS_DIR}summary_big_little_custom.dat \
 measurement.repeats=1 \
-# todonow: do we need this? probably takes way too long on the big map?
 measurement.run_slow_routing=false \
 measurement.weighting=custom \
 measurement.custom_model_file=benchmark/little_custom.yml \
@@ -110,7 +110,6 @@ measurement.lm=true \
 graph.location=${TMP_DIR}measurement-big-little-custom-gh \
 prepare.min_network_size=10000 \
 prepare.min_oneway_network_size=10000 \
-# todonow: do we need this here?
 spatial_rules.borders_directory=${BORDERS_DIRECTORY} \
 measurement.json=true \
 measurement.count=5000 \
@@ -127,7 +126,6 @@ measurement.folder=${SINGLE_RESULTS_DIR} \
 measurement.clean=true \
 measurement.summaryfile=${RESULTS_DIR}summary_big_very_custom.dat \
 measurement.repeats=1 \
-# todonow: do we need this? probably takes way too long on the big map?
 measurement.run_slow_routing=false \
 measurement.weighting=custom \
 measurement.custom_model_file=benchmark/very_custom.yml \
@@ -139,7 +137,6 @@ measurement.lm=true \
 graph.location=${TMP_DIR}measurement-big-very-custom-gh \
 prepare.min_network_size=10000 \
 prepare.min_oneway_network_size=10000 \
-# todonow: do we need this here?
 spatial_rules.borders_directory=${BORDERS_DIRECTORY} \
 measurement.json=true \
 measurement.count=5000 \
