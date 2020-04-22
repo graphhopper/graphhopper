@@ -106,8 +106,8 @@ todonow: should we try to list them all here?
 - road_access: (destination,delivery,private,no,...)
 - surface: (paved,dirt,sand,gravel,...)
 
-To find out about all the possible values of a categories you can take a look at the corresponding Java files, query the
-`/info` endpoint of the server or use the auto complete feature of the text boxt that opens when clicking 'flex' in the
+To find out about all the possible values of a category you can take a look at the corresponding Java files, query the
+`/info` endpoint of the server or use the auto-complete feature of the text box that opens when clicking 'flex' in the
 web UI.
 
 Besides these kind of categories which can take multiple different values there are also some that represent a boolean
