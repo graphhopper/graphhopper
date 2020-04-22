@@ -28,9 +28,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 
 final class GeoToValueEntry implements EdgeToValueEntry {
-    public static String key(String postfix) {
-        return "area_" + postfix;
-    }
+    public static final String AREA_PREFIX = "area_";
 
     private final Polygon ghPolygon;
     private final double value, elseValue;
@@ -42,7 +40,7 @@ final class GeoToValueEntry implements EdgeToValueEntry {
     }
 
     static Geometry pickGeometry(CustomModel customModel, String key) {
-        String id = key.substring(GeoToValueEntry.key("").length());
+        String id = key.substring(AREA_PREFIX.length());
         JsonFeature feature = customModel.getAreas().get(id);
         if (feature == null)
             throw new IllegalArgumentException("Cannot find area " + id);

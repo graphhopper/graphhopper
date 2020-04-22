@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.routing.weighting.custom.GeoToValueEntry.AREA_PREFIX;
 import static com.graphhopper.routing.weighting.custom.PriorityCalculator.createEnumToDoubleArray;
 import static com.graphhopper.routing.weighting.custom.PriorityCalculator.getEV;
 
@@ -54,7 +55,7 @@ final class SpeedCalculator {
             Object value = entry.getValue();
 
             if (value instanceof Number) {
-                if (key.startsWith(GeoToValueEntry.key(""))) {
+                if (key.startsWith(AREA_PREFIX)) {
                     Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
                     maxSpeedList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), maxSpeed));
                 } else {
@@ -78,7 +79,7 @@ final class SpeedCalculator {
             Object value = entry.getValue();
 
             if (value instanceof Number) {
-                if (key.startsWith(GeoToValueEntry.key(""))) {
+                if (key.startsWith(AREA_PREFIX)) {
                     Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
                     speedFactorList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
                 } else {

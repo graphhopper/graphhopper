@@ -44,7 +44,7 @@ final class PriorityCalculator {
             if (value == null) {
                 throw new IllegalArgumentException("Missing value for " + key + " in 'priority'");
             } else if (value instanceof Number) {
-                if (key.startsWith(GeoToValueEntry.key(""))) {
+                if (key.startsWith(GeoToValueEntry.AREA_PREFIX)) {
                     Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
                     priorityList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
                 } else {
