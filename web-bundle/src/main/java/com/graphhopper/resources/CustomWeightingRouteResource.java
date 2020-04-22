@@ -48,8 +48,10 @@ import javax.ws.rs.core.Response;
 import static com.graphhopper.util.Parameters.Routing.*;
 
 /**
- * Resource to use GraphHopper in a remote client application like mobile or browser. Note: If type
- * is json it returns the points in GeoJson array format [longitude,latitude] unlike the format "lat,lon"
+ * Routing resource to use GraphHopper in a remote client application like mobile or browser. This endpoint allows
+ * specifying a custom model on a per-request basis (and thus only works for hybrid and flex mode).
+ * <p>
+ * Note: This endpoint returns the points in GeoJson array format [longitude,latitude] unlike the format "lat,lon"
  * used for the request. See the full API response format in docs/web/api-doc.md
  *
  * @author Peter Karich
@@ -73,14 +75,13 @@ public class CustomWeightingRouteResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull CustomRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
-        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
-                + ", vehicle: " + request.getHints().getString("vehicle", "");
-        GHResponse ghResponse = new GHResponse();
         CustomModel model = request.getModel();
         if (model == null)
             throw new IllegalArgumentException("No custom model properties found");
         if (request.getHints().has(BLOCK_AREA))
             throw new IllegalArgumentException("Instead of block_area define the geometry under 'areas' as GeoJSON and use 'area_<id>: 0' in e.g. priority");
+        if (!request.getHints().getBool(Parameters.CH.DISABLE, true))
+            throw new IllegalArgumentException("Custom requests are not available for speed mode, do not use ch.disable=false");
         if (Helper.isEmpty(request.getProfile()))
             throw new IllegalArgumentException("The 'profile' parameter for CustomRequest is required");
 
@@ -90,6 +91,7 @@ public class CustomWeightingRouteResource {
         if (!(profile instanceof CustomProfileConfig))
             throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request because it has weighting=" + profile.getWeighting());
 
+        GHResponse ghResponse = new GHResponse();
         request.putHint(Parameters.CH.DISABLE, true);
         request.putHint(CustomModel.KEY, model);
         graphHopper.calcPaths(request, ghResponse);
@@ -104,7 +106,7 @@ public class CustomWeightingRouteResource {
         String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
         String logStr = queryString + infoStr + " " + request.getPoints().size() + ", took: "
                 + String.format("%.1f", (double) took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
-                + ", " + weightingVehicleLogStr;
+                + ", custom_model=" + model;
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());

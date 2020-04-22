@@ -67,7 +67,7 @@ profiles_lm:
   - profile: some_other_profile 
 ```
 
-# todonow: maybe rename to speed_mode_profiles and hybrid_mode_profiles?
+todonow: maybe rename to speed_mode_profiles and hybrid_mode_profiles?
 Note that 'CH' is short for 'Contraction Hierarchies', the underlying technique used to realize speed mode and
 'LM' is short for 'Landmarks', which is the algorithm used to by hybrid mode.
 
@@ -100,7 +100,7 @@ way tags. The available categories are specified by using the `graph.encoded_val
 you do further customization of GraphHopper) the possible categories are defined in `DefaultEncodedValueFactory.java`.
 For example there are these categories (some of their possible values are given in brackets).
 
-# todonow: should we try to list them all here?
+todonow: should we try to list them all here?
 - road_class: (other,motorway,trunk,primary,secondary,track,steps,cycleway,footway,...)
 - road_environment: (road,ferry,bridge,tunnel,...)
 - road_access: (destination,delivery,private,no,...)
@@ -126,7 +126,7 @@ distance_influence. These parameters are derived from rules that determine the p
 A set of such rules is called a 'custom model' and it is written a dedicated YAML format. We will now see how 
 the cost function parameters can be influenced by the different sections of such a custom model file.
   
-*speed*
+#### Customizing `speed`
 
 For every edge a default speed is inherited from the base vehicle, but you have multiple options to adjust it.
 The first thing you can do is rescaling the default speeds using the `speed_factor` section. For example this is how you
@@ -150,10 +150,18 @@ speed_factor:
   road_environment: {tunnel: 1.2}
 ```
 
-If an edge matches multiple of the rules the speed factor values will be multiplied. For example the speed factor of 
+If an edge matches multiple rules the speed factor values will be multiplied. For example the speed factor of 
 a road segment that has `road_class=motorway` will be `2`, the speed factor of a road segment that additionally has 
 `road_environment=tunnel` will be `2.4` and the speed factor of a road segment that has `road_class=secondary` and 
 `road_environment=tunnel` will be `1.2`.
+
+For encoded values with boolean values, like `get_off_bike` mentioned above you only specify the value that shall be used
+if the corresponding property is `true`, so
+```yaml
+speed_factor:
+  get_off_bike: 1.1
+```
+means that the speed factor for edges with `get_off_bike=true` will be `1.1`.
 
 Another way to change the speed is using the `max_speed` section, for example:
 ```yaml
@@ -174,7 +182,7 @@ max_speed_fallback: 50
 
 means that the speed is at most `50km/h` for any edge regardless of its properties. 
 
-*priority*
+#### Customizing `priority`
 
 Looking at the custom cost function formula above might make you wonder what the difference between speed and priority is
 because it enters the formula in the same way. When calculating the edge weights (which determine the optimal route) changing
@@ -213,7 +221,7 @@ vehicle_width: 2.3 # in meters
 By default non of these restrictions will be applied and you can enable them separately by adding these definitions to
 your custom model file.
 
-*distance_influence*
+#### Customizing `distance_influence`
 
 `distance_influence` allows you to control the trade-off between a fast route (minimum time) and a short route
 (minimum distance). Setting it to `0` means that GraphHopper will return the fastest possible route (while still 
@@ -235,10 +243,10 @@ custom model needs to be written in a separate YAML file and the `weighting` has
 
 ```yaml
 profiles:
-  name: my_custom_profile
-  vehicle: car
-  weighting: custom
-  custom_model_file: path/to/my_custom_profile.yaml
+  - name: my_custom_profile
+    vehicle: car
+    weighting: custom
+    custom_model_file: path/to/my_custom_profile.yaml
   
 ```
 
@@ -246,12 +254,47 @@ Selecting a custom profile works the same way as selecting a standard profile, i
 to your routing request. Also setting up hybrid- or speed-mode works the same way, simply use the `profiles_ch/lm` section
 (see above) and add the name of your custom profile.
 
-# todonow: check md formatting
-# todonow: distance_influence details
-# todonow: mention separate custom route endpoint
-# todonow: using another profile as base profile
-# todonow: sending different custom models per request (and merging with existing ones)
-# todonow: cross-querying with LM profiles
-# todonow: areas feature
-# todonow: GeoToValue entries?
-# todonow: mention priority normalization?
+## Inheritance between Custom Profiles
+
+When specifying a custom profile it is possible to use another custom profile as base 'vehicle', something like:
+```yaml
+profiles:
+  - name: my_custom_profile
+    vehicle: car
+    weighting: custom
+    custom_model_file: path/to/my_custom_profile.yaml
+  - name: my_other_profile
+    vehicle: my_custom_profile
+    weighting: custom
+    custom_model_file: path/to/my_other_custom_profile.yml
+```
+
+In this case the custom model of `my_other_profile` will be determined by merging the two custom models.
+todonow: explain merging rules
+
+## Changing the Custom Profile for a single routing request
+
+With flex- and hybrid mode its even possible to define the custom model to be used on a per-request basis. To do this
+you still need to setup a custom profile in your server configuration, but you do not necessarily need to define a 
+custom model for this. For example:
+
+```yaml
+profiles:
+  - name: my_flexible_car_profile
+    vehicle: car
+    weighting: custom
+    custom_model_file: empty
+``` 
+
+The special value `empty` means that the custom model will not contain any rules, but you could just as well use some
+custom model here. To change the profile for a single routing request you use the `/route-custom` endpoint and send your
+custom model (using the same YAML format explained above) with the request body. The model you send will then be merged
+(also see above for an explanation how this works) with the profile you select using the `profile` paramater (this has
+to be a custom profile).
+
+todonow: check md formatting
+todonow: distance_influence details
+todonow: cross-querying with LM profiles
+todonow: areas feature
+todonow: GeoToValue entries?
+todonow: mention priority normalization?
