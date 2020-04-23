@@ -33,6 +33,8 @@ public class CustomModel {
     public static final String KEY = "custom_model";
 
     static double DEFAULT_D_I = 70;
+    // optional:
+    private Double maxSpeedFallback;
     private Double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceInfluence = DEFAULT_D_I;
@@ -45,6 +47,7 @@ public class CustomModel {
     }
 
     public CustomModel(CustomModel toCopy) {
+        this.maxSpeedFallback = toCopy.maxSpeedFallback;
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
 
@@ -82,6 +85,15 @@ public class CustomModel {
         return maxSpeed;
     }
 
+    public CustomModel setMaxSpeedFallback(Double maxSpeedFallback) {
+        this.maxSpeedFallback = maxSpeedFallback;
+        return this;
+    }
+
+    public Double getMaxSpeedFallback() {
+        return maxSpeedFallback;
+    }
+
     public Map<String, Object> getPriority() {
         return priorityMap;
     }
@@ -115,9 +127,10 @@ public class CustomModel {
     @Override
     public String toString() {
         return "CustomModel{" +
-                ", distanceInfluence=" + distanceInfluence +
+                "distanceInfluence=" + distanceInfluence +
                 ", speedFactor=" + speedFactor +
                 ", maxSpeed=" + maxSpeed +
+                ", maxSpeedFallback=" + maxSpeedFallback +
                 ", priorityMap=" + priorityMap +
                 ", #areas=" + areas.size() +
                 '}';
@@ -130,6 +143,11 @@ public class CustomModel {
     public static CustomModel merge(CustomModel baseModel, CustomModel queryModel) {
         // avoid changing the specified CustomModel via deep copy otherwise query-CustomModel would be modified
         CustomModel mergedCM = new CustomModel(baseModel);
+        if (queryModel.maxSpeedFallback != null) {
+            if (mergedCM.maxSpeedFallback != null && mergedCM.maxSpeedFallback > queryModel.maxSpeedFallback)
+                throw new IllegalArgumentException("CustomModel in query can only use max_speed_fallback bigger or equal to " + mergedCM.maxSpeedFallback);
+            mergedCM.maxSpeedFallback = queryModel.maxSpeedFallback;
+        }
         if (Math.abs(queryModel.distanceInfluence - CustomModel.DEFAULT_D_I) > 0.01) {
             if (mergedCM.distanceInfluence > queryModel.distanceInfluence)
                 throw new IllegalArgumentException("CustomModel in query can only use distance_influence bigger or equal to " + mergedCM.distanceInfluence);

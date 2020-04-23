@@ -20,18 +20,59 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
+import java.util.Map;
+
+import static com.graphhopper.routing.weighting.custom.EnumToValueEntry.getReturnValue;
+
 final class BooleanToValueEntry implements EdgeToValueEntry {
     private final BooleanEncodedValue bev;
     private final double value, elseValue;
 
-    public BooleanToValueEntry(BooleanEncodedValue bev, double value, double elseValue) {
+    private BooleanToValueEntry(BooleanEncodedValue bev, double value, double elseValue) {
         this.bev = bev;
         this.value = value;
         this.elseValue = elseValue;
     }
 
+    /**
+     * Example map:
+     * <pre>
+     * get_off_bike:
+     *   true: 0.4
+     *   false: 0.9 // optional and default is 1, equivalent to "*": 0.9
+     * </pre>
+     */
+    static EdgeToValueEntry create(String name, BooleanEncodedValue encodedValue, Map<Object, Object> map,
+                                   double defaultValue, double minValue, double maxValue) {
+        if (map.isEmpty())
+            throw new IllegalArgumentException("Empty map for " + name);
+
+        if (map.containsKey(CATCH_ALL_KEY) && (map.containsKey("false") || map.containsKey(false)))
+            throw new IllegalArgumentException(name + ": cannot contain false and catch-all key at the same time");
+
+        double trueValue = Double.NaN;
+        double falseValue = defaultValue;
+        for (Map.Entry<Object, Object> encValEntry : map.entrySet()) {
+            if (encValEntry.getKey() == null)
+                throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
+            String key = encValEntry.getKey().toString(); // ugly: could be e.g. true or "true"
+
+            double returnValue = getReturnValue(name, key, encValEntry.getValue(), minValue, maxValue);
+            if ("true".equals(key)) {
+                trueValue = returnValue;
+            } else if ("false".equals(key) || EdgeToValueEntry.CATCH_ALL_KEY.equals(key)) {
+                falseValue = returnValue;
+            } else {
+                throw new IllegalArgumentException("key for " + name + " cannot be " + key + ", value: " + encValEntry.getValue());
+            }
+        }
+
+        return new BooleanToValueEntry(encodedValue, trueValue, falseValue);
+    }
+
     @Override
     public double getValue(EdgeIteratorState iter, boolean reverse) {
+        if (Double.isNaN(value)) return elseValue; // special case if only catch-all key is present
         return iter.get(bev) ? value : elseValue;
     }
 

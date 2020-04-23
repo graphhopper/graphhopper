@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.routing.weighting.custom.GeoToValueEntry.AREA_PREFIX;
-import static com.graphhopper.routing.weighting.custom.PriorityCalculator.createEnumToDoubleArray;
 import static com.graphhopper.routing.weighting.custom.PriorityCalculator.getEV;
 
 final class SpeedCalculator {
@@ -49,82 +48,72 @@ final class SpeedCalculator {
         // use max_speed to lower speed for the specified conditions
         for (Map.Entry<String, Object> entry : customModel.getMaxSpeed().entrySet()) {
             String key = entry.getKey();
+            String maxSpeedKey = "max_speed." + key;
             Object value = entry.getValue();
+            if (value == null)
+                throw new IllegalArgumentException("Missing value for " + key + " in 'priority'");
 
-            if (value instanceof Number) {
-                double number = ((Number) value).doubleValue();
-                if (number > maxSpeed)
-                    throw new IllegalArgumentException(key + " cannot be bigger than " + maxSpeed + ", was " + number);
-
-                if (key.startsWith(AREA_PREFIX)) {
-                    Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
-                    maxSpeedList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), number, maxSpeed));
-                } else {
-                    throw new IllegalArgumentException("encoded value in 'max_speed' requires a value or range not a number: " + value);
-                }
-            } else if (value instanceof Map) {
-                // TODO NOW check values of number like we do for area!
-                double number = 0;
+            if (key.startsWith(AREA_PREFIX)) {
+                if (!(value instanceof Number))
+                    throw new IllegalArgumentException(maxSpeedKey + ": area entry requires number value but was: " + value.getClass().getSimpleName());
+                Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
+                maxSpeedList.add(GeoToValueEntry.create(maxSpeedKey, new PreparedGeometryFactory().create(geometry),
+                        (Number) value, maxSpeed, 0, maxSpeed));
+            } else {
+                if (!(value instanceof Map))
+                    throw new IllegalArgumentException(maxSpeedKey + ": non-root entries requires a map but was: " + value.getClass().getSimpleName());
                 EncodedValue encodedValue = getEV(lookup, "max_speed", key);
                 if (encodedValue instanceof EnumEncodedValue) {
-                    EnumEncodedValue enumEncodedValue = (EnumEncodedValue) encodedValue;
-                    double[] values = createEnumToDoubleArray("max_speed." + key, maxSpeed, 0, maxSpeed,
-                            enumEncodedValue.getValues(), (Map<String, Object>) value);
-                    maxSpeedList.add(new EnumToValueEntry(enumEncodedValue, values));
+                    maxSpeedList.add(EnumToValueEntry.create(maxSpeedKey, (EnumEncodedValue) encodedValue,
+                            (Map) value, maxSpeed, 0, maxSpeed));
                 } else if (encodedValue instanceof DecimalEncodedValue) {
-                    maxSpeedList.add(DecimalToValueEntry.create((DecimalEncodedValue) encodedValue,
-                            "max_speed." + key, 1, 0, 1, (Map<String, Object>) value));
+                    maxSpeedList.add(DecimalToValueEntry.create(maxSpeedKey, (DecimalEncodedValue) encodedValue,
+                            (Map) value, maxSpeed, 0, maxSpeed));
                 } else if (encodedValue instanceof BooleanEncodedValue) {
-                    maxSpeedList.add(new BooleanToValueEntry((BooleanEncodedValue) encodedValue, number, maxSpeed));
+                    maxSpeedList.add(BooleanToValueEntry.create(maxSpeedKey, (BooleanEncodedValue) encodedValue,
+                            (Map) value, maxSpeed, 0, maxSpeed));
                 } else if (encodedValue instanceof IntEncodedValue) {
-                    // TODO NOW
+                    // TODO
                 } else {
                     throw new IllegalArgumentException("encoded value class '" + encodedValue.getClass().getSimpleName()
                             + "' not supported. For '" + key + "' specified in 'max_speed'.");
                 }
-            } else {
-                throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'max_speed'");
             }
         }
 
         // use speed_factor to reduce the estimated speed value under the specified conditions
         for (Map.Entry<String, Object> entry : customModel.getSpeedFactor().entrySet()) {
             String key = entry.getKey();
+            String speedFactorKey = "speed_factor." + key;
             Object value = entry.getValue();
+            if (value == null)
+                throw new IllegalArgumentException("Missing value for " + key + " in 'priority'");
 
-            if (value instanceof Number) {
-                double number = ((Number) value).doubleValue();
-                if (number > 1)
-                    throw new IllegalArgumentException(key + " cannot be bigger than 1, was " + number);
-
-                if (key.startsWith(AREA_PREFIX)) {
-                    Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
-                    speedFactorList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
-                } else {
-                    throw new IllegalArgumentException("encoded value in 'speed_factor' requires a value or range not a number: " + value);
-                }
-            } else if (value instanceof Map) {
-                // TODO NOW check values of number like we do for area!
-                double number = 0;
+            if (key.startsWith(AREA_PREFIX)) {
+                if (!(value instanceof Number))
+                    throw new IllegalArgumentException(speedFactorKey + ": area entry requires number value but was: " + value.getClass().getSimpleName());
+                Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
+                speedFactorList.add(GeoToValueEntry.create(speedFactorKey, new PreparedGeometryFactory().create(geometry),
+                        (Number) value, 1, 0, 1));
+            } else {
+                if (!(value instanceof Map))
+                    throw new IllegalArgumentException(speedFactorKey + ": non-root entries requires a map but was: " + value.getClass().getSimpleName());
                 EncodedValue encodedValue = getEV(lookup, "speed_factor", key);
                 if (encodedValue instanceof EnumEncodedValue) {
-                    EnumEncodedValue enumEncodedValue = (EnumEncodedValue) encodedValue;
-                    double[] values = createEnumToDoubleArray("speed_factor." + key, 1, 0, 1,
-                            enumEncodedValue.getValues(), (Map<String, Object>) value);
-                    speedFactorList.add(new EnumToValueEntry(enumEncodedValue, values));
+                    speedFactorList.add(EnumToValueEntry.create(speedFactorKey, (EnumEncodedValue) encodedValue,
+                            (Map) value, 1, 0, 1));
                 } else if (encodedValue instanceof DecimalEncodedValue) {
-                    speedFactorList.add(DecimalToValueEntry.create((DecimalEncodedValue) encodedValue,
-                            "speed_factor." + key, 1, 0, 1, (Map<String, Object>) value));
+                    speedFactorList.add(DecimalToValueEntry.create(speedFactorKey, (DecimalEncodedValue) encodedValue,
+                            (Map) value, 1, 0, 1));
                 } else if (encodedValue instanceof BooleanEncodedValue) {
-                    speedFactorList.add(new BooleanToValueEntry((BooleanEncodedValue) encodedValue, number, 1));
+                    speedFactorList.add(BooleanToValueEntry.create(speedFactorKey, (BooleanEncodedValue) encodedValue,
+                            (Map) value, 1, 0, 1));
                 } else if (encodedValue instanceof IntEncodedValue) {
-                    // TODO NOW
+                    // TODO
                 } else {
                     throw new IllegalArgumentException("encoded value class '" + encodedValue.getClass().getSimpleName()
                             + "' not supported. For '" + key + "' specified in 'speed_factor'.");
                 }
-            } else {
-                throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for 'speed_factor'");
             }
         }
     }

@@ -20,26 +20,30 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static com.graphhopper.routing.weighting.custom.EnumToValueEntry.getReturnValue;
 
 final class DecimalToValueEntry implements EdgeToValueEntry {
     private final DecimalEncodedValue dev;
-    private final double[] ranges;
-    private final double[] values;
+    private final double minExclusive, maxExclusive;
+    private final double rangeValue;
     private final double fallback;
 
-    /**
-     * The ranges array defines intervals where the different values should be picked. The first range implicitly starts with 0.
-     * E.g. ranges = [0.5, 1.0] and values = [0.3, 0.6] mean that for values smaller 0.5 the value 0.3 should be picked and
-     * for [0.5, 1) it should be 0.6. For everything else it should be the parameter fallback.
-     */
-    public DecimalToValueEntry(DecimalEncodedValue dev, double[] ranges, double[] values, double fallback) {
+    private DecimalToValueEntry(DecimalEncodedValue dev, Range range, double fallback) {
         this.dev = dev;
-        this.ranges = ranges;
-        this.values = values;
+        this.minExclusive = range.min;
+        this.maxExclusive = range.max;
+        this.rangeValue = range.value;
         this.fallback = fallback;
-        if (ranges.length != values.length)
-            throw new IllegalStateException("Ranges count " + ranges.length + " must be equal to values count " + values.length);
+    }
+
+    @Override
+    public double getValue(EdgeIteratorState iter, boolean reverse) {
+        double edgeValue = iter.get(dev);
+        return edgeValue < maxExclusive && edgeValue > minExclusive ? rangeValue : fallback;
     }
 
     static class Range {
@@ -59,100 +63,53 @@ final class DecimalToValueEntry implements EdgeToValueEntry {
         }
     }
 
-    static double[][] createArrays(DecimalEncodedValue dev, String name, double defaultValue, double minValue, double maxValue,
-                                   Map<String, Object> map) {
+    static EdgeToValueEntry create(String name, DecimalEncodedValue dev, Map<Object, Object> map,
+                                   double defaultValue, double minValue, double maxValue) {
+        if (map.isEmpty())
+            throw new IllegalArgumentException("Empty map for " + name);
+
+        Object evEntryValue = map.get(CATCH_ALL_KEY);
+        if (evEntryValue != null)
+            defaultValue = getReturnValue(name, CATCH_ALL_KEY, evEntryValue, minValue, maxValue);
+
         List<Range> ranges = new ArrayList<>();
-        // create ranges
-        for (Map.Entry<String, Object> encValEntry : map.entrySet()) {
+        for (Map.Entry<Object, Object> encValEntry : map.entrySet()) {
             if (encValEntry.getKey() == null)
                 throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
-            if (encValEntry.getValue() == null)
-                throw new IllegalArgumentException("value for " + name + " cannot be null, key: " + encValEntry.getKey());
+            String key = encValEntry.getKey().toString();
+            if (CATCH_ALL_KEY.equals(key))
+                continue;
 
-            Range range = parseRange(name, encValEntry.getKey(), encValEntry.getValue());
-            if (range.min < minValue)
-                throw new IllegalArgumentException(name + " cannot be smaller than " + minValue + ", minimum of range was " + range.min);
-            if (range.max > maxValue)
-                throw new IllegalArgumentException(name + " cannot be bigger than " + maxValue + ", maximum of range was " + range.max);
+            double returnValue = getReturnValue(name, key, encValEntry.getValue(), minValue, maxValue);
+            Range range = parseRange(name, key, returnValue);
             ranges.add(range);
         }
-        // do sort and check separate as we do not want to rely on the order returned from JSON/Yaml/Map
-        Collections.sort(ranges, new Comparator<Range>() {
-            @Override
-            public int compare(Range range, Range range2) {
-                return Double.compare(range.min, range2.min);
-            }
-        });
-        Range previousRange = new Range(0, 0, defaultValue);
-        List<Double> rangesArray = new ArrayList<>();
-        List<Double> valuesArray = new ArrayList<>();
-        for (Range range : ranges) {
-            if (range.min < previousRange.max)
-                throw new IllegalArgumentException("ranges overlap '" + previousRange + "' vs. '" + range + "'");
-            if (range.min > previousRange.max && range.value != previousRange.value) {
-                rangesArray.add(range.min);
-                valuesArray.add(defaultValue);
-            }
-
-            rangesArray.add(range.max);
-            valuesArray.add(range.value);
-        }
-
-        return new double[][]{toDoubleArray(rangesArray), toDoubleArray(valuesArray)};
-    }
-
-    static EdgeToValueEntry create(DecimalEncodedValue dev, String name, double defaultValue, double minValue, double maxValue,
-                                   Map<String, Object> map) {
-        double[][] arrays = createArrays(dev, name, defaultValue, minValue, maxValue, map);
-        return new DecimalToValueEntry(dev, arrays[0], arrays[1], defaultValue);
-    }
-
-    static double[] toDoubleArray(List<Double> list) {
-        double[] arr = new double[list.size()];
-        for (int i = 0; i < arr.length; i++) {
-            arr[i] = list.get(i);
-        }
-        return arr;
+        if (ranges.size() != 1)
+            throw new IllegalArgumentException("Currently only one range can be specified but was " + ranges.size());
+        return new DecimalToValueEntry(dev, ranges.get(0), defaultValue);
     }
 
     static Range parseRange(String name, String rangeAsString, Object value) {
         if (!(value instanceof Number))
             throw new IllegalArgumentException(name + " value has to be a number but was " + value);
 
-        String[] strs = rangeAsString.split(",");
-        if (strs.length != 2)
-            throw new IllegalArgumentException("Range is invalid. It must have exactly two numbers (comma separated). E.g. 1,2.5 but was: " + rangeAsString);
+        double num = ((Number) value).doubleValue();
         try {
-            return new Range(Double.parseDouble(strs[0].trim()), Double.parseDouble(strs[1].trim()), ((Number) value).doubleValue());
-        } catch (Exception ex) {
-            throw new IllegalArgumentException("Illegal range " + rangeAsString);
-        }
-//        int commaIndex = rangeAsString.indexOf(",");
-//        int endBracketIndex = rangeAsString.indexOf("]");
-//        if (!rangeAsString.startsWith("[") || endBracketIndex != rangeAsString.length() - 1 || commaIndex < 0 || commaIndex > endBracketIndex)
-//            throw new IllegalArgumentException("Range is invalid. It must begin with [ and end with ] and have exactly two comma separated numbers. E.g. [1,2.5]");
-//        try {
-//            String minStr = rangeAsString.substring(1, commaIndex).trim();
-//            String maxStr = rangeAsString.substring(commaIndex + 1, endBracketIndex).trim();
-//            return new Range(Double.parseDouble(minStr), Double.parseDouble(maxStr), ((Number) value).doubleValue());
-//        } catch (Exception ex) {
-//            throw new IllegalArgumentException("Illegal range " + rangeAsString);
-//        }
-    }
+            int gtIndex = rangeAsString.indexOf(">");
+            if (gtIndex >= 0)
+                return new Range(Double.parseDouble(rangeAsString.substring(gtIndex + 1)), Double.POSITIVE_INFINITY, num);
 
-    @Override
-    public double getValue(EdgeIteratorState iter, boolean reverse) {
-        double value = iter.get(dev);
-        // TODO PERFORMANCE could we make this faster via a binary search? probably only for many ranges
-        for (int i = 0; i < ranges.length; i++) {
-            if (value < ranges[i])
-                return values[i];
+            int ltIndex = rangeAsString.indexOf("<");
+            if (ltIndex >= 0)
+                // unsigned => 0 is currently the minimum
+                return new Range(0, Double.parseDouble(rangeAsString.substring(ltIndex + 1)), num);
+        } catch (Exception ex) {
         }
-        return fallback;
+        throw new IllegalArgumentException("Range is invalid. It must be e.g. \">3\" or \"<5\" but was: " + rangeAsString);
     }
 
     @Override
     public String toString() {
-        return dev.getName() + ", ranges: " + Arrays.toString(ranges);
+        return dev.getName() + ", range: min:" + minExclusive + ", max:" + maxExclusive + ", value:" + rangeValue;
     }
 }

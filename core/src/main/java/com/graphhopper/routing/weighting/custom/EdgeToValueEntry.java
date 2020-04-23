@@ -25,6 +25,8 @@ import com.graphhopper.util.EdgeIteratorState;
  * numerical values when determining the different parameters for {@link CustomWeighting}.
  */
 interface EdgeToValueEntry {
+    String CATCH_ALL_KEY = "*";
+
     /**
      * @return the numeric value that shall be associated with the given (directed) edge
      */

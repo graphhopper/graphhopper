@@ -29,11 +29,10 @@ import org.locationtech.jts.geom.prep.PreparedGeometry;
 
 final class GeoToValueEntry implements EdgeToValueEntry {
     static final String AREA_PREFIX = "area_";
-
     private final Polygon ghPolygon;
     private final double value, elseValue;
 
-    public GeoToValueEntry(PreparedGeometry geometry, double value, double elseValue) {
+    private GeoToValueEntry(PreparedGeometry geometry, double value, double elseValue) {
         this.ghPolygon = new Polygon(geometry);
         this.value = value;
         this.elseValue = elseValue;
@@ -45,6 +44,17 @@ final class GeoToValueEntry implements EdgeToValueEntry {
         if (feature == null)
             throw new IllegalArgumentException("Cannot find area " + id);
         return feature.getGeometry();
+    }
+
+    public static EdgeToValueEntry create(String name, PreparedGeometry preparedGeometry, Number value, double defaultValue,
+                                          double minValue, double maxValue) {
+        double number = value.doubleValue();
+        if (number < minValue)
+            throw new IllegalArgumentException(name + " cannot be smaller than " + minValue + ", was " + number);
+        if (number > maxValue)
+            throw new IllegalArgumentException(name + " cannot be bigger than " + maxValue + ", was " + number);
+
+        return new GeoToValueEntry(preparedGeometry, number, defaultValue);
     }
 
     @Override

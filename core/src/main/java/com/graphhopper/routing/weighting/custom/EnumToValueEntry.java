@@ -22,12 +22,13 @@ import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Arrays;
+import java.util.Map;
 
 final class EnumToValueEntry implements EdgeToValueEntry {
     private final IntEncodedValue eev;
     private final double[] values;
 
-    EnumToValueEntry(EnumEncodedValue eev, double[] values) {
+    private EnumToValueEntry(EnumEncodedValue eev, double[] values) {
         this.eev = eev;
         this.values = values;
     }
@@ -36,6 +37,66 @@ final class EnumToValueEntry implements EdgeToValueEntry {
     public double getValue(EdgeIteratorState iter, boolean reverse) {
         int enumOrdinal = iter.get(eev);
         return values[enumOrdinal];
+    }
+
+    /**
+     * Example map:
+     * <pre>
+     * road_class:
+     *   motorway: 0.4
+     *   "*": 0.9      # optional and default is 1
+     * </pre>
+     */
+    static EnumToValueEntry create(String name, EnumEncodedValue enumEncodedValue, Map<Object, Object> map,
+                                   double defaultValue, double minValue, double maxValue) {
+        Enum[] enumValues = enumEncodedValue.getValues();
+        if (map.isEmpty())
+            throw new IllegalArgumentException("Empty map for " + name);
+
+        Object evEntryValue = map.get(CATCH_ALL_KEY);
+        if (evEntryValue != null)
+            defaultValue = getReturnValue(name, CATCH_ALL_KEY, evEntryValue, minValue, maxValue);
+
+        double[] tmp = new double[enumValues.length];
+        Arrays.fill(tmp, defaultValue);
+        for (Map.Entry<Object, Object> encValEntry : map.entrySet()) {
+            if (encValEntry.getKey() == null)
+                throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
+            String key = encValEntry.getKey().toString();
+            if (CATCH_ALL_KEY.equals(key))
+                continue;
+
+            Enum enumValue = getValueOf(enumValues, key);
+            double returnValue = getReturnValue(name, key, encValEntry.getValue(), minValue, maxValue);
+            tmp[enumValue.ordinal()] = returnValue;
+        }
+
+        return new EnumToValueEntry(enumEncodedValue, tmp);
+    }
+
+    static double getReturnValue(String name, String key, Object valueObject, double minValue, double maxValue) {
+        if (valueObject == null)
+            throw new IllegalArgumentException("value for " + name + " cannot be null, key: " + key);
+        if (!(valueObject instanceof Number))
+            throw new IllegalArgumentException("value for " + name + " has to be a number but was: " + valueObject.getClass().getSimpleName());
+        double value = ((Number) valueObject).doubleValue();
+        if (value < minValue)
+            throw new IllegalArgumentException(name + " cannot be smaller than " + minValue + ", was " + value);
+        if (value > maxValue)
+            throw new IllegalArgumentException(name + " cannot be bigger than " + maxValue + ", was " + value);
+        return value;
+    }
+
+    /**
+     * This method finds the enum in the enumClass via enum.toString
+     */
+    private static Enum getValueOf(Enum[] enumValues, String enumToString) {
+        for (Enum e : enumValues) {
+            if (e.toString().equals(enumToString)) {
+                return e;
+            }
+        }
+        throw new IllegalArgumentException("Cannot find enum " + enumToString + " in " + Arrays.toString(enumValues));
     }
 
     @Override
