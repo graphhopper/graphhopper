@@ -71,6 +71,7 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
+import static com.graphhopper.util.Parameters.Routing.POINT_HINT;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -1031,46 +1032,14 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Location index not initialized");
 
         try {
-            if (request.getHints().has("vehicle"))
-                throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
-            if (request.getHints().has("weighting"))
-                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
-            if (request.getHints().has(Routing.TURN_COSTS))
-                throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
-            if (request.getHints().has(Routing.EDGE_BASED))
-                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
-
-            // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
-
+            validateRequest(request);
             PMap hints = request.getHints();
-            boolean disableCH = hints.getBool(CH.DISABLE, false);
-            if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
-                throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
-
-            boolean disableLM = hints.getBool(Landmark.DISABLE, false);
-            if (lmPreparationHandler.isEnabled() && !lmPreparationHandler.isDisablingAllowed() && disableLM)
-                throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
-
-            if (chPreparationHandler.isEnabled() && !disableCH) {
-                if (request.hasFavoredHeading(0))
-                    throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
-
-                if (hints.getBool(Routing.PASS_THROUGH, false))
-                    throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
-            }
-
+            final boolean disableCH = getDisableCH(request.getHints());
+            final boolean disableLM = getDisableLM(request.getHints());
             String algoStr = request.getAlgorithm();
             if (algoStr.isEmpty())
                 algoStr = chPreparationHandler.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
 
-            List<GHPoint> points = request.getPoints();
-            // TODO Maybe we should think about a isRequestValid method that checks all that stuff that we could do to fail fast
-            // For example see #734
-            checkIfPointsAreInBounds(points);
-
-            if (Helper.isEmpty(request.getProfile())) {
-                throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see #1958");
-            }
             ProfileConfig profile = profilesByName.get(request.getProfile());
             if (profile == null) {
                 throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
@@ -1080,7 +1049,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             // todo later: should we be able to control this using the edge_based parameter?
             TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
-
+            List<GHPoint> points = request.getPoints();
             RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile.getName(), disableCH, disableLM);
             Weighting weighting;
             Graph graph = ghStorage;
@@ -1144,8 +1113,8 @@ public class GraphHopper implements GraphHopperAPI {
                     setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
                     setSimplifyResponse(routingConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
 
-            if (request.hasFavoredHeading(0))
-                pathMerger.setFavoredHeading(request.getFavoredHeading(0));
+            if (!request.getHeadings().isEmpty())
+                pathMerger.setFavoredHeading(request.getHeadings().get(0));
 
             routingTemplate.finish(pathMerger, trMap.getWithFallBack(request.getLocale()));
             return altPaths;
@@ -1153,6 +1122,61 @@ public class GraphHopper implements GraphHopperAPI {
             ghRsp.addError(ex);
             return Collections.emptyList();
         }
+    }
+
+    protected void validateRequest(GHRequest request) {
+        if (Helper.isEmpty(request.getProfile()))
+            throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see #1958");
+
+        if (request.getHints().has("vehicle"))
+            throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
+        if (request.getHints().has("weighting"))
+            throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
+        if (request.getHints().has(Routing.TURN_COSTS))
+            throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
+        if (request.getHints().has(Routing.EDGE_BASED))
+            throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
+
+        if (request.getPoints().isEmpty())
+            throw new IllegalArgumentException("You have to pass at least one point");
+        checkIfPointsAreInBounds(request.getPoints());
+
+        if (request.getHeadings().size() > 1 && request.getHeadings().size() != request.getPoints().size())
+            throw new IllegalArgumentException("The number of 'heading' parameters must be zero, one "
+                    + "or equal to the number of points (" + request.getPoints().size() + ")");
+        for (int i = 0; i < request.getHeadings().size(); i++)
+            if (!GHRequest.isAzimuthValue(request.getHeadings().get(i)))
+                throw new IllegalArgumentException("Heading for point " + i + " must be in range [0,360) or NaN, but was: " + request.getHeadings().get(i));
+
+        if (request.getPointHints().size() > 0 && request.getPointHints().size() != request.getPoints().size())
+            throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
+        if (request.getCurbsides().size() > 0 && request.getCurbsides().size() != request.getPoints().size())
+            throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
+
+        boolean disableCH = getDisableCH(request.getHints());
+        if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
+            throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
+
+        boolean disableLM = getDisableLM(request.getHints());
+        if (lmPreparationHandler.isEnabled() && !lmPreparationHandler.isDisablingAllowed() && disableLM)
+            throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
+
+        // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
+        if (chPreparationHandler.isEnabled() && !disableCH) {
+            if (!request.getHeadings().isEmpty())
+                throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
+
+            if (request.getHints().getBool(Routing.PASS_THROUGH, false))
+                throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
+        }
+    }
+
+    private boolean getDisableLM(PMap hints) {
+        return hints.getBool(Landmark.DISABLE, false);
+    }
+
+    private boolean getDisableCH(PMap hints) {
+        return hints.getBool(CH.DISABLE, false);
     }
 
     protected RoutingTemplate createRoutingTemplate(GHRequest request, GHResponse ghRsp, String algoStr, Weighting weighting) {

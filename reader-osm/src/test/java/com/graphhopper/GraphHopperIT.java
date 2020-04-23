@@ -207,9 +207,10 @@ public class GraphHopperIT {
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
 
         GHRequest request = new GHRequest();
-        //Force initial U-Turn
-        request.addPoint(new GHPoint(43.743887, 7.431151), 200);
+        request.addPoint(new GHPoint(43.743887, 7.431151));
         request.addPoint(new GHPoint(43.744007, 7.431076));
+        //Force initial U-Turn
+        request.setHeadings(Arrays.asList(200., Double.NaN));
 
         request.setAlgorithm(ASTAR).setProfile(profile);
         GHResponse rsp = hopper.route(request);
@@ -641,9 +642,11 @@ public class GraphHopperIT {
         assertEquals(Instruction.FINISH, arsp.getInstructions().get(0).getSign());
 
         rsp = hopper.route(new GHRequest().
-                addPoint(new GHPoint(43.727687, 7.418737)).
-                addPoint(new GHPoint(43.727687, 7.418737)).
-                addPoint(new GHPoint(43.727687, 7.418737)).
+                setPoints(Arrays.asList(
+                        new GHPoint(43.727687, 7.418737),
+                        new GHPoint(43.727687, 7.418737),
+                        new GHPoint(43.727687, 7.418737)
+                )).
                 setAlgorithm(ASTAR).setProfile(profile));
 
         arsp = rsp.getBest();
@@ -698,8 +701,9 @@ public class GraphHopperIT {
                 importOrLoad();
 
         GHRequest req = new GHRequest().
-                addPoint(new GHPoint(43.741069, 7.426854), 0.).
-                addPoint(new GHPoint(43.744445, 7.429483), 190.).
+                addPoint(new GHPoint(43.741069, 7.426854)).
+                addPoint(new GHPoint(43.744445, 7.429483)).
+                setHeadings(Arrays.asList(0., 190.)).
                 setProfile(profile);
         req.putHint(Routing.HEADING_PENALTY, "300");
         GHResponse rsp = hopper.route(req);
@@ -707,6 +711,29 @@ public class GraphHopperIT {
         PathWrapper arsp = rsp.getBest();
         assertEquals(839., arsp.getDistance(), 10.);
         assertEquals(26, arsp.getPoints().getSize());
+
+        // headings must be in [0, 360)
+        req = new GHRequest().
+                addPoint(new GHPoint(43.741069, 7.426854)).
+                addPoint(new GHPoint(43.744445, 7.429483)).
+                setHeadings(Arrays.asList(10., 370.)).
+                setProfile(profile);
+        rsp = hopper.route(req);
+        assertTrue(rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString().contains("Heading for point 1 must be in range [0,360) or NaN, but was: 370"),
+                rsp.getErrors().toString());
+
+        // the number of headings must match the number of points
+        req = new GHRequest().
+                addPoint(new GHPoint(43.741069, 7.426854)).
+                addPoint(new GHPoint(43.742069, 7.427854)).
+                addPoint(new GHPoint(43.744445, 7.429483)).
+                setHeadings(Arrays.asList(0., 190.)).
+                setProfile(profile);
+        rsp = hopper.route(req);
+        assertTrue(rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString().contains("The number of 'heading' parameters must be zero, one or equal to the number of points"),
+                rsp.getErrors().toString());
     }
 
     @Test
@@ -722,20 +749,14 @@ public class GraphHopperIT {
 
         GHPoint from = new GHPoint(43.741069, 7.426854);
         GHPoint to = new GHPoint(43.744445, 7.429483);
-        GHRequest req = new GHRequest().
-                addPoint(from).
-                addPoint(to).
-                setProfile(profile);
+        GHRequest req = new GHRequest(from, to).setProfile(profile);
         req.putHint(Routing.MAX_VISITED_NODES, 5);
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().toString().contains("maximum nodes exceeded"));
 
-        req = new GHRequest().
-                addPoint(from).
-                addPoint(to).
-                setProfile(profile);
+        req = new GHRequest(from, to).setProfile(profile);
         rsp = hopper.route(req);
 
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -755,10 +776,7 @@ public class GraphHopperIT {
         GHPoint from = new GHPoint(43.741069, 7.426854);
         GHPoint to = new GHPoint(43.727697, 7.419199);
 
-        GHRequest req = new GHRequest().
-                addPoint(from).
-                addPoint(to).
-                setProfile(profile);
+        GHRequest req = new GHRequest(from, to).setProfile(profile);
 
         // Fail since points are too far apart
         hopper.setNonChMaxWaypointDistance(1000);
@@ -791,9 +809,7 @@ public class GraphHopperIT {
         GHPoint to = new GHPoint(43.727697, 7.419199);
 
         GHRequest req = new GHRequest().
-                addPoint(from).
-                addPoint(via).
-                addPoint(to).
+                setPoints(Arrays.asList(from, via, to)).
                 setProfile(profile);
 
         // Fail since points are too far
@@ -1170,8 +1186,9 @@ public class GraphHopperIT {
         assertTrue("only profile1 and profile2 exist, request for profile3 should fail", rsp.hasErrors());
 
         GHRequest req = new GHRequest().
-                addPoint(new GHPoint(43.741069, 7.426854), 0.).
-                addPoint(new GHPoint(43.744445, 7.429483), 190.).
+                addPoint(new GHPoint(43.741069, 7.426854)).
+                addPoint(new GHPoint(43.744445, 7.429483)).
+                setHeadings(Arrays.asList(0., 190.)).
                 setProfile("profile1");
 
         rsp = hopper.route(req);
@@ -1235,7 +1252,8 @@ public class GraphHopperIT {
                 importOrLoad();
 
         GHRequest rq = new GHRequest().
-                addPoint(new GHPoint(43.741069, 7.426854), 50).
+                addPoint(new GHPoint(43.741069, 7.426854)).
+                setHeadings(Collections.singletonList(50.)).
                 setProfile(profile).
                 setAlgorithm(ROUND_TRIP);
         rq.putHint(RoundTrip.DISTANCE, 1000);
@@ -1262,12 +1280,14 @@ public class GraphHopperIT {
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest().
-                addPoint(new GHPoint(49.984352, 11.498802)).
-                // This is exactly between two edges with different speed values
-                        addPoint(new GHPoint(49.984565, 11.499188)).
-                        addPoint(new GHPoint(49.9847, 11.499612)).
-                        setProfile(profile).
-                        setPathDetails(Collections.singletonList(Parameters.Details.AVERAGE_SPEED));
+                setPoints(Arrays.asList(
+                        new GHPoint(49.984352, 11.498802),
+                        // This is exactly between two edges with different speed values
+                        new GHPoint(49.984565, 11.499188),
+                        new GHPoint(49.9847, 11.499612)
+                )).
+                setProfile(profile).
+                setPathDetails(Collections.singletonList(Parameters.Details.AVERAGE_SPEED));
 
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -1301,7 +1321,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle("car").setWeighting("fastest")).
+                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true);
 
         hopper.getCHPreparationHandler().

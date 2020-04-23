@@ -43,6 +43,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -55,6 +57,7 @@ import java.util.Map;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static com.graphhopper.http.util.TestUtils.clientUrl;
+import static com.graphhopper.util.Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -75,6 +78,8 @@ public class RouteResourceTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("graph.location", DIR)
+                // adding this so the corresponding check is not just skipped...
+                .putObject(MAX_NON_CH_POINT_DISTANCE, 10e6)
                 .setProfiles(Collections.singletonList(new ProfileConfig("my_car").setVehicle("car").setWeighting("fastest")))
                 .setCHProfiles(Collections.singletonList(new CHProfileConfig("my_car")));
         return config;
@@ -403,13 +408,19 @@ public class RouteResourceTest {
         assertEquals(490, path.get("distance").asDouble(), 2);
     }
 
-    @Test
-    public void testGraphHopperWebRealExceptions() {
-        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
+    @ParameterizedTest(name = "POST = {0}")
+    @ValueSource(booleans = {false, true})
+    public void testGraphHopperWebRealExceptions(boolean usePost) {
+        GraphHopperAPI hopper = new GraphHopperWeb().setPostRequest(usePost);
         assertTrue(hopper.load(clientUrl(app, "/route")));
 
+        // this one actually works
+        List<GHPoint> points = Arrays.asList(new GHPoint(42.554851, 1.536198), new GHPoint(42.510071, 1.548128));
+        GHResponse rsp = hopper.route(new GHRequest(points).setProfile("my_car"));
+        assertEquals(9204, rsp.getBest().getDistance(), 10);
+
         // unknown profile
-        GHResponse rsp = hopper.route(new GHRequest(42.511139, 1.53285, 42.508165, 1.532271).setProfile("space_shuttle"));
+        rsp = hopper.route(new GHRequest(points).setProfile("space_shuttle"));
         assertTrue(rsp.hasErrors(), rsp.getErrors().toString());
         assertTrue(rsp.getErrors().get(0).getMessage().contains(
                 "The requested profile 'space_shuttle' does not exist"), rsp.getErrors().toString());
@@ -426,7 +437,15 @@ public class RouteResourceTest {
         Throwable ex = rsp.getErrors().get(0);
         assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.");
-        assertTrue(ex.getMessage().contains("At least 2 points have to be specified, but was:0"), ex.getMessage());
+        assertTrue(ex.getMessage().contains("You have to pass at least one point"), ex.getMessage());
+
+        // no points without CH
+        rsp = hopper.route(new GHRequest().setProfile("my_car").putHint(Parameters.CH.DISABLE, true));
+        assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
+        ex = rsp.getErrors().get(0);
+        assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
+                + ", IllegalArgumentException expected.");
+        assertTrue(ex.getMessage().contains("You have to pass at least one point"), ex.getMessage());
 
         // points out of bounds
         rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0).setProfile("my_car"));
@@ -437,8 +456,20 @@ public class RouteResourceTest {
             assertTrue(errs.get(i).getMessage().contains("Point 0 is out of bounds: 0.0,0.0"), errs.get(i).getMessage());
         }
 
+        // todo: add a check with too few headings, but client-hc does not support headings, #2009
+
+        // too many curbsides
+        rsp = hopper.route(new GHRequest(points).setCurbsides(Arrays.asList("right", "left", "right")).setProfile("my_car"));
+        assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
+        assertTrue(rsp.getErrors().toString().contains("If you pass curbside, you need to pass exactly one curbside for every point"), rsp.getErrors().toString());
+
+        // too few point hints
+        rsp = hopper.route(new GHRequest(points).setPointHints(Collections.singletonList("foo")).setProfile("my_car"));
+        assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
+        assertTrue(rsp.getErrors().toString().contains("If you pass point_hint, you need to pass exactly one hint for every point"), rsp.getErrors().toString());
+
         // unknown vehicle
-        rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).putHint("vehicle", "SPACE-SHUTTLE"));
+        rsp = hopper.route(new GHRequest(points).putHint("vehicle", "SPACE-SHUTTLE"));
         assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
         ex = rsp.getErrors().get(0);
         assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
@@ -568,6 +599,6 @@ public class RouteResourceTest {
                 "point=42.554851,1.536198&heading=0&heading=0").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-        assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
+        assertEquals("The number of 'heading' parameters must be zero, one or equal to the number of points (1)", json.get("message").asText());
     }
 }

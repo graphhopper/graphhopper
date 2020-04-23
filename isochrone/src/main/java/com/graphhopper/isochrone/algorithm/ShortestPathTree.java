@@ -135,7 +135,9 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         while (!finished()) {
             currentLabel = queueByWeighting.poll();
             queueByZ.remove(currentLabel);
-            consumer.accept(currentLabel);
+            if (getExploreValue(currentLabel) <= limit) {
+                consumer.accept(currentLabel);
+            }
             visitedNodes++;
 
             EdgeIterator iter = edgeExplorer.setBaseNode(currentLabel.node);

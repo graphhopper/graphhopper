@@ -223,7 +223,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         }
     }
 
-    private OkHttpClient getClientForRequest(GHRequest request) {
+    OkHttpClient getClientForRequest(GHRequest request) {
         OkHttpClient client = this.downloader;
         if (request.getHints().has(TIMEOUT)) {
             long timeout = request.getHints().getLong(TIMEOUT, DEFAULT_TIMEOUT);
