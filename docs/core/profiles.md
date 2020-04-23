@@ -132,44 +132,47 @@ the cost function parameters can be influenced by the different fields of such a
 
 For every edge a default speed is inherited from the base vehicle, but you have multiple options to adjust it.
 The first thing you can do is rescaling the default speeds using the `speed_factor` section. For example this is how you
-can specify that the speed of every edge that has the value 'motorway' for the category 'road_class' should be twice as
-high as the default speed normally used by the base vehicle for this road class:
+can specify that the speed of every edge that has the value 'motorway' for the category 'road_class' should be half the
+default speed that is normally used by the base vehicle for this road class:
 ```yaml
 speed_factor:
-  road_class: {motorway: 2}
+  road_class: {motorway: 0.5}
 ```  
-Note that `road_class: {motorway: 2}` is an alternative YAML notation that is equivalent to:
+Note that `road_class: {motorway: 0.5}` is an alternative YAML notation that is equivalent to:
 ```yaml
 speed_factor:
   road_class:
-    motorway: 2
+    motorway: 0.5
 ```
 
 You can also setup speed factors for multiple road classes like this
 ```yaml
 speed_factor:
-  road_class: {motorway: 2, primary: 1.5, tertiary: 0.5}
+  road_class: {motorway: 0.5, primary: 0.7, tertiary: 0.9}
 ```
 
 and use multiple categories to influence the speed factor
 ```yaml
 speed_factor:
-  road_class: {motorway: 2}
-  road_environment: {tunnel: 1.2}
+  road_class: {motorway: 0.5}
+  road_environment: {tunnel: 0.8}
 ```
 
 If an edge matches multiple rules the speed factor values will be multiplied. For example, here the speed factor of 
-a road segment that has `road_class=motorway` will be `2`, the speed factor of a road segment that additionally has 
-`road_environment=tunnel` will be `2.4` and the speed factor of a road segment that has `road_class=secondary` and 
-`road_environment=tunnel` will be `1.2`.
+a road segment that has `road_class=motorway` will be `0.5`, the speed factor of a road segment that additionally has 
+`road_environment=tunnel` will be `0.04` and the speed factor of a road segment that has `road_class=secondary` and 
+`road_environment=tunnel` will be `0.8`.
 
 For encoded values with boolean values, like `get_off_bike` mentioned above you only specify the value that shall be used
 if the corresponding property is `true`, so
 ```yaml
 speed_factor:
-  get_off_bike: 1.1
+  get_off_bike: 0.6
 ```
-means that the speed factor for edges with `get_off_bike=true` will be `1.1`.
+means that the speed factor for edges with `get_off_bike=true` will be `0.6`.
+
+Note that values of `speed_factor` have to be in the range `[0,1]` and it is not possible to *increase* the speed of
+for edges of certain types. 
 
 Another way to change the speed is using the `max_speed` section, for example:
 ```yaml
@@ -180,14 +183,45 @@ max_speed:
 implies that on all road segments with `surface=gravel` the speed will be at most `60km/h`, regardless of the default 
 speed of this edge or the adjustments made by the `speed_factor` section. Just like with `speed_factor` you can setup
 `max_speed` values for multiple category values and different categories. If multiple rules match for a given edge the
-most restrictive rule will determine the speed (the minimum `max_speed` will be applied).
+most restrictive rule will determine the speed (the minimum `max_speed` will be applied). 
+Values for `max_speed` must be in the range `[0,max_vehicle_speed]` where `max_vehicle_speed` is the maximum speed that
+is set for the base vehicle (which you cannot change).
+
+You can also modify the speed for all edges in a certain area. To do this first add some areas to the `areas` section
+of the custom model and then use this name to set a `speed_factor` or `max_speed` for this area. In the following
+example we set the `speed_factor` an area called `my_area` to `0.7`. For `max_speed` it works the same way. 
+Note that the area names need to be prefixed with `area_` when used in the one of the speed sections.  
+
+```yaml
+speed_factor:
+  area_my_area: 0.7
+
+max_speed:
+  area_my_area: 50
+
+areas:
+  my_area:
+    type: "Feature"
+    geometry:
+      type: "Polygon"
+      coordinates: [
+        [10.75, 46.65],
+        [9.54, 45.65],
+        [10.75, 44.65],
+        [8.75, 44.65],
+        [8.75, 45.65],
+        [8.75, 46.65]
+      ]
+```
+
+Using the `areas` feature you can also block entire areas completely, but you should rather use the `priority` section 
+for this (see below).
 
 The last thing you can do to customize the speed is using the `max_speed_fallback` of your custom model. By default this 
 is set to the maximum speed of the base vehicle. It allows to set a global maximum for the speeds, so for example
 ```yaml
 max_speed_fallback: 50
 ```
-
 means that the speed is at most `50km/h` for any edge regardless of its properties. 
 
 #### Customizing `priority`
@@ -212,7 +246,7 @@ with `road_class=secondary` get priority `1.5` and so on.
 
 Edges with lower priority values will be less likely part of the optimal route calculated by GraphHopper, higher values 
 mean that these kind of road segments shall be preferred (for example you might want to increase `road_class=cycleway` 
-when going by bike).   
+when going by bike). `priority` values need to be in the range `[0, 100]`.
 
 The priority can also be used to restrict access to certain roads depending on your vehicle dimensions. To do this
 you need to add `max_width`,`max_height`,`max_length` and/or `max_weight` to `graph.encoded_values` (see above).
@@ -229,31 +263,15 @@ vehicle_width: 2.3 # in meters
 By default non of these restrictions will be applied and you can enable them separately by adding these definitions to
 your custom model file.
 
-You can also adjust the priority for all edges in a certain area. To do this first add some areas to the `areas` section
-of the custom model and then set a priority using its name, like in the following example where we set priority of an
-area called `my_area` to `0.7`. Note that the area names need to be prefixed with `area_` when used in the `priority`
-section.  
+Just like we saw for `speed_factor` and `max_speed` you can also adjust the priority for all edges in a certain area.
+It works the same way:
 
 ```yaml
 priority:
   area_my_area: 0.7 
-
-areas:
-  my_area:
-    type: "Feature"
-    geometry:
-      type: "Polygon"
-      coordinates: [
-        [10.75, 46.65],
-        [9.54, 45.65],
-        [10.75, 44.65],
-        [8.75, 44.65],
-        [8.75, 45.65],
-        [8.75, 46.65]
-      ]
 ```
 
-Note that this feature also allows blocking entire areas by setting the priority to zero.
+To block an entire area completely set the priority value to `0`.
 
 #### Customizing `distance_influence`
 
