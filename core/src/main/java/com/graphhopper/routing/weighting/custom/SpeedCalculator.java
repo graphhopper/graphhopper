@@ -55,12 +55,16 @@ final class SpeedCalculator {
             Object value = entry.getValue();
 
             if (value instanceof Number) {
+                double number = ((Number) value).doubleValue();
+                if (number > maxSpeed)
+                    throw new IllegalArgumentException(key + " cannot be bigger than " + maxSpeed + ", was " + number);
+
                 if (key.startsWith(AREA_PREFIX)) {
                     Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
-                    maxSpeedList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), maxSpeed));
+                    maxSpeedList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), number, maxSpeed));
                 } else {
                     BooleanEncodedValue encodedValue = getEV(lookup, "max_speed", key, BooleanEncodedValue.class);
-                    maxSpeedList.add(new BooleanToValueEntry(encodedValue, ((Number) value).doubleValue(), maxSpeed));
+                    maxSpeedList.add(new BooleanToValueEntry(encodedValue, number, maxSpeed));
                 }
             } else if (value instanceof Map) {
                 EnumEncodedValue enumEncodedValue = getEV(lookup, "max_speed", key, EnumEncodedValue.class);
