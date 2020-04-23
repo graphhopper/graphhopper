@@ -33,8 +33,6 @@ public class CustomModel {
     public static final String KEY = "custom_model";
 
     static double DEFAULT_D_I = 70;
-    // optional:
-    private Double maxSpeedFallback, vehicleWeight, vehicleWidth, vehicleHeight, vehicleLength;
     private Double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceInfluence = DEFAULT_D_I;
@@ -47,11 +45,6 @@ public class CustomModel {
     }
 
     public CustomModel(CustomModel toCopy) {
-        this.maxSpeedFallback = toCopy.maxSpeedFallback;
-        this.vehicleWeight = toCopy.vehicleWeight;
-        this.vehicleWidth = toCopy.vehicleWidth;
-        this.vehicleLength = toCopy.vehicleLength;
-        this.vehicleHeight = toCopy.vehicleHeight;
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
 
@@ -81,57 +74,12 @@ public class CustomModel {
         }
     }
 
-    public CustomModel setVehicleWeight(Double vehicleWeight) {
-        this.vehicleWeight = vehicleWeight;
-        return this;
-    }
-
-    public Double getVehicleWeight() {
-        return vehicleWeight;
-    }
-
-    public CustomModel setVehicleHeight(Double vehicleHeight) {
-        this.vehicleHeight = vehicleHeight;
-        return this;
-    }
-
-    public Double getVehicleHeight() {
-        return vehicleHeight;
-    }
-
-    public CustomModel setVehicleLength(Double vehicleLength) {
-        this.vehicleLength = vehicleLength;
-        return this;
-    }
-
-    public Double getVehicleLength() {
-        return vehicleLength;
-    }
-
-    public CustomModel setVehicleWidth(Double vehicleWidth) {
-        this.vehicleWidth = vehicleWidth;
-        return this;
-    }
-
-    public Double getVehicleWidth() {
-        return vehicleWidth;
-    }
-
     public Map<String, Object> getSpeedFactor() {
         return speedFactor;
     }
 
     public Map<String, Object> getMaxSpeed() {
         return maxSpeed;
-    }
-
-    public CustomModel setMaxSpeedFallback(Double maxSpeedFallback) {
-        this.maxSpeedFallback = maxSpeedFallback;
-        return this;
-    }
-
-    public Double getMaxSpeedFallback() {
-        return maxSpeedFallback;
     }
 
     public Map<String, Object> getPriority() {
@@ -167,11 +115,6 @@ public class CustomModel {
     @Override
     public String toString() {
         return "CustomModel{" +
-                "maxSpeedFallback=" + maxSpeedFallback +
-                ", vehicleWeight=" + vehicleWeight +
-                ", vehicleWidth=" + vehicleWidth +
-                ", vehicleHeight=" + vehicleHeight +
-                ", vehicleLength=" + vehicleLength +
                 ", distanceInfluence=" + distanceInfluence +
                 ", speedFactor=" + speedFactor +
                 ", maxSpeed=" + maxSpeed +
@@ -187,31 +130,6 @@ public class CustomModel {
     public static CustomModel merge(CustomModel baseModel, CustomModel queryModel) {
         // avoid changing the specified CustomModel via deep copy otherwise query-CustomModel would be modified
         CustomModel mergedCM = new CustomModel(baseModel);
-        if (queryModel.vehicleWeight != null) {
-            if (mergedCM.vehicleWeight != null && mergedCM.vehicleWeight > queryModel.vehicleWeight)
-                throw new IllegalArgumentException("CustomModel in query can only use vehicle_weight bigger or equal to " + mergedCM.vehicleWeight);
-            mergedCM.vehicleWeight = queryModel.vehicleWeight;
-        }
-        if (queryModel.vehicleHeight != null) {
-            if (mergedCM.vehicleHeight != null && mergedCM.vehicleHeight > queryModel.vehicleHeight)
-                throw new IllegalArgumentException("CustomModel in query can only use vehicle_height bigger or equal to " + mergedCM.vehicleHeight);
-            mergedCM.vehicleHeight = queryModel.vehicleHeight;
-        }
-        if (queryModel.vehicleLength != null) {
-            if (mergedCM.vehicleLength != null && mergedCM.vehicleLength > queryModel.vehicleLength)
-                throw new IllegalArgumentException("CustomModel in query can only use vehicle_length bigger or equal to " + mergedCM.vehicleLength);
-            mergedCM.vehicleLength = queryModel.vehicleLength;
-        }
-        if (queryModel.vehicleWidth != null) {
-            if (mergedCM.vehicleWidth != null && mergedCM.vehicleWidth > queryModel.vehicleWidth)
-                throw new IllegalArgumentException("CustomModel in query can only use vehicle_width bigger or equal to " + mergedCM.vehicleWidth);
-            mergedCM.vehicleWidth = queryModel.vehicleWidth;
-        }
-        if (queryModel.maxSpeedFallback != null) {
-            if (mergedCM.maxSpeedFallback != null && mergedCM.maxSpeedFallback > queryModel.maxSpeedFallback)
-                throw new IllegalArgumentException("CustomModel in query can only use max_speed_fallback bigger or equal to " + mergedCM.maxSpeedFallback);
-            mergedCM.maxSpeedFallback = queryModel.maxSpeedFallback;
-        }
         if (Math.abs(queryModel.distanceInfluence - CustomModel.DEFAULT_D_I) > 0.01) {
             if (mergedCM.distanceInfluence > queryModel.distanceInfluence)
                 throw new IllegalArgumentException("CustomModel in query can only use distance_influence bigger or equal to " + mergedCM.distanceInfluence);
@@ -219,7 +137,9 @@ public class CustomModel {
         }
 
         // example
-        // max_speed: { road_class: { secondary : 10 } }
+        // max_speed: { road_class: { secondary : 0.4 } }
+        // or
+        // priority:  { max_weight: { "<3.501": 0.7 } }
         for (Map.Entry<String, Object> queryEntry : queryModel.getMaxSpeed().entrySet()) {
             Object value = mergedCM.maxSpeed.get(queryEntry.getKey());
             applyChange(mergedCM.maxSpeed, value, queryEntry);
@@ -253,6 +173,8 @@ public class CustomModel {
         Object queryObj = querySuperEntry.getValue();
         if (!(queryObj instanceof Map))
             throw new IllegalArgumentException("query entry is not a map: " + queryObj);
+
+        // TODO NOW how to merge different ranges of DecimalEncodedValue => if range size is decreased => it is fine
         Map<Object, Object> mergedMap = (Map) mergedObj;
         Map<Object, Object> queryMap = (Map) queryObj;
         for (Map.Entry queryEntry : queryMap.entrySet()) {

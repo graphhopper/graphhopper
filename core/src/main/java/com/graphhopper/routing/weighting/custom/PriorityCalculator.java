@@ -48,32 +48,43 @@ final class PriorityCalculator {
                     Geometry geometry = GeoToValueEntry.pickGeometry(customModel, key);
                     priorityList.add(new GeoToValueEntry(new PreparedGeometryFactory().create(geometry), ((Number) value).doubleValue(), 1));
                 } else {
-                    BooleanEncodedValue encodedValue = getEV(lookup, "priority", key, BooleanEncodedValue.class);
-                    priorityList.add(new BooleanToValueEntry(encodedValue, ((Number) value).doubleValue(), 1));
+                    throw new IllegalArgumentException("encoded value requires a value or range not a number: " + value);
                 }
             } else if (value instanceof Map) {
-                EnumEncodedValue enumEncodedValue = getEV(lookup, "priority", key, EnumEncodedValue.class);
-                Enum[] enumValues = enumEncodedValue.getValues();
-                double[] values = createEnumToDoubleArray("priority." + key, 1, 0, 100,
-                        enumValues, (Map<String, Object>) value);
-                normalizeFactor(values, 1);
-                priorityList.add(new EnumToValueEntry(enumEncodedValue, values));
+                // TODO NOW check values of number like we do for area!
+                EncodedValue encodedValue = getEV(lookup, "priority", key);
+                if (encodedValue instanceof EnumEncodedValue) {
+                    EnumEncodedValue enumEncodedValue = (EnumEncodedValue) encodedValue;
+                    Enum[] enumValues = enumEncodedValue.getValues();
+                    // TODO NOW: move this method to EnumToValueEntry
+                    double[] values = createEnumToDoubleArray("priority." + key, 1, 0, 100,
+                            enumValues, (Map<String, Object>) value);
+                    // TODO NOW remove normalize
+                    normalizeFactor(values, 1);
+                    priorityList.add(new EnumToValueEntry(enumEncodedValue, values));
+                } else if (encodedValue instanceof DecimalEncodedValue) {
+                    priorityList.add(DecimalToValueEntry.create((DecimalEncodedValue) encodedValue,
+                            "priority." + key, 1, 0, 1, (Map<String, Object>) value));
+                } else if (encodedValue instanceof BooleanEncodedValue) {
+                    BooleanEncodedValue bev = (BooleanEncodedValue) encodedValue;
+                    priorityList.add(new BooleanToValueEntry(bev, ((Number) value).doubleValue(), 1));
+                } else if (encodedValue instanceof IntEncodedValue) {
+                    // TODO NOW
+                } else {
+                    throw new IllegalArgumentException("encoded value class '" + encodedValue.getClass().getSimpleName()
+                            + "' not supported. For '" + key + "' specified in 'priority'.");
+                }
             } else {
                 throw new IllegalArgumentException("Type " + value.getClass() + " is not supported for " + key + " in 'priority'");
             }
         }
     }
 
-    static <T extends EncodedValue> T getEV(EncodedValueLookup lookup, String name, String key, Class<T> encodedValueType) {
+    static EncodedValue getEV(EncodedValueLookup lookup, String name, String key) {
         if (!lookup.hasEncodedValue(key))
             throw new IllegalArgumentException("Cannot find encoded value '" + key + "' specified in '" + name + "'. Available: " + lookup.getAllShared());
-        T ev = lookup.getEncodedValue(key, encodedValueType);
-        if (!encodedValueType.isAssignableFrom(ev.getClass()))
-            throw new IllegalArgumentException("Expected class '" + encodedValueType.getSimpleName() + "' for '" + key
-                    + "' specified in '" + name + "'. But was " + ev.getClass().getSimpleName());
-        return ev;
+        return lookup.getEncodedValue(key, EncodedValue.class);
     }
-
 
     /**
      * This method finds the enum in the enumClass via enum.toString
