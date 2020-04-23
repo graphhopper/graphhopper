@@ -28,7 +28,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 
 final class GeoToValueEntry implements EdgeToValueEntry {
-    public static final String AREA_PREFIX = "area_";
+    static final String AREA_PREFIX = "area_";
 
     private final Polygon ghPolygon;
     private final double value, elseValue;
