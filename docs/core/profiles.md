@@ -160,7 +160,7 @@ speed_factor:
 
 If an edge matches multiple rules the speed factor values will be multiplied. For example, here the speed factor of 
 a road segment that has `road_class=motorway` will be `0.5`, the speed factor of a road segment that additionally has 
-`road_environment=tunnel` will be `0.04` and the speed factor of a road segment that has `road_class=secondary` and 
+`road_environment=tunnel` will be `0.4` and the speed factor of a road segment that has `road_class=secondary` and 
 `road_environment=tunnel` will be `0.8`.
 
 For encoded values with boolean values, like `get_off_bike` mentioned above you only specify the value that shall be used
