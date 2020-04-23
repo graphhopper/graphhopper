@@ -121,7 +121,7 @@ echo "node-based CH + landmarks (edge- & node-based for LM)"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
-measurement_name=big_map_very_custom \
+measurement.name=big_map_very_custom \
 measurement.folder=${SINGLE_RESULTS_DIR} \
 measurement.clean=true \
 measurement.summaryfile=${RESULTS_DIR}summary_big_very_custom.dat \
