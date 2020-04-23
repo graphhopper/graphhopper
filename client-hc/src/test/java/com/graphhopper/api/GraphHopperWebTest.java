@@ -8,8 +8,6 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.PathWrapperDeserializer;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -20,25 +18,24 @@ import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * This class unit tests the class. For integration tests against a real server see RouteResourceClientHCTest.
+ */
 @RunWith(Parameterized.class)
 public class GraphHopperWebTest {
 
     private final GraphHopperWeb gh;
 
-    public GraphHopperWebTest(boolean usePost, int maxUnzippedLength) {
-        gh = new GraphHopperWeb(null).setPostRequest(usePost).setMaxUnzippedLength(maxUnzippedLength);
+    public GraphHopperWebTest(boolean usePost) {
+        gh = new GraphHopperWeb(null).setPostRequest(usePost);
     }
 
     /**
      * Runs the same test with each of the supported traversal modes
      */
-    @Parameterized.Parameters(name = "POST: {0}, maxUnzippedLength: {1}")
+    @Parameterized.Parameters(name = "POST: {0}")
     public static Collection<Object[]> configs() {
-        return Arrays.asList(new Object[][]{
-                {false, -1},
-                {true, 0},
-                {true, 1000}
-        });
+        return Arrays.asList(new Object[][]{{false}, {true}, {true}});
     }
 
     @Test
