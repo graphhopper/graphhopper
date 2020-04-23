@@ -64,8 +64,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean calcPoints = true;
     private boolean elevation = false;
     private String optimize = "false";
-    boolean postRequest = true;
-    int maxUnzippedLength = 1000;
+    private boolean postRequest = true;
+    private int maxUnzippedLength = 1000;
     private final Set<String> ignoreSet;
     private final Set<String> ignoreSetForPost;
 
@@ -112,6 +112,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
         ignoreSet.add("pointsencoded");
         ignoreSet.add("type");
         objectMapper = Jackson.newObjectMapper();
+    }
+
+    public GraphHopperWeb setMaxUnzippedLength(int maxUnzippedLength) {
+        this.maxUnzippedLength = maxUnzippedLength;
+        return this;
     }
 
     public GraphHopperWeb setDownloader(OkHttpClient downloader) {
@@ -218,7 +223,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         }
     }
 
-    private OkHttpClient getClientForRequest(GHRequest request) {
+    OkHttpClient getClientForRequest(GHRequest request) {
         OkHttpClient client = this.downloader;
         if (request.getHints().has(TIMEOUT)) {
             long timeout = request.getHints().getLong(TIMEOUT, DEFAULT_TIMEOUT);
@@ -368,6 +373,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
     public String export(GHRequest ghRequest) {
         String str = "Creating request failed";
         try {
+            if (postRequest)
+                throw new IllegalArgumentException("GPX export only works for GET requests, make sure to use `setPostRequest(false)`");
             Request okRequest = createGetRequest(ghRequest);
             str = getClientForRequest(ghRequest).newCall(okRequest).execute().body().string();
 

@@ -1,9 +1,8 @@
 package com.graphhopper.resources;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.http.GHPointParam;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.profiles.*;
@@ -25,7 +24,10 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -63,24 +65,18 @@ public class SPTResource {
         this.encodingManager = encodingManager;
     }
 
+    // Annotating this as application/json because errors come out as json, and
+    // IllegalArgumentExceptions are not mapped to a fixed mediatype, because in RouteRessource, it could be GPX.
     @GET
-    @Produces("text/csv")
+    @Produces({"text/csv", "application/json"})
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam("point") @NotNull GHPoint point,
+            @QueryParam("point") @NotNull GHPointParam point,
             @QueryParam("columns") String columnsParam,
             @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceInMeter) {
-        try {
-            return executeGet(uriInfo, profileName, reverseFlow, point, columnsParam, timeLimitInSeconds, distanceInMeter);
-        } catch (IllegalArgumentException e) {
-            return returnBadRequest(e.getMessage());
-        }
-    }
-
-    private Response executeGet(UriInfo uriInfo, String profileName, boolean reverseFlow, GHPoint point, String columnsParam, LongParam timeLimitInSeconds, LongParam distanceInMeter) {
         StopWatch sw = new StopWatch().start();
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
@@ -99,7 +95,7 @@ public class SPTResource {
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        QueryResult qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+        QueryResult qr = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
         if (!qr.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
 
@@ -110,7 +106,7 @@ public class SPTResource {
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
             weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
-                    Collections.singletonList(point), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
+                    Collections.singletonList(point.get()), hintsMap, DefaultEdgeFilter.allEdges(encoder)));
         TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
@@ -236,14 +232,8 @@ public class SPTResource {
                 throw new RuntimeException(e);
             }
         };
-        // took header does not make sense as we stream
-        return Response.ok(out).build();
-    }
-
-    private Response returnBadRequest(String message) {
-        ObjectNode json = JsonNodeFactory.instance.objectNode();
-        json.put("message", message);
-        return Response.status(Response.Status.BAD_REQUEST).entity(json).type(MediaType.APPLICATION_JSON).build();
+        // Give media type explicitly since we are annotating CSV and JSON, because error messages are JSON.
+        return Response.ok(out).type("text/csv").build();
     }
 
     private IsoLabelWithCoordinates isoLabelWithCoordinates(NodeAccess na, ShortestPathTree.IsoLabel label) {
