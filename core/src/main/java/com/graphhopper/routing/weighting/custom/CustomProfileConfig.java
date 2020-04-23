@@ -18,6 +18,7 @@ public class CustomProfileConfig extends ProfileConfig {
 
     public CustomProfileConfig setCustomModel(CustomModel customModel) {
         getHints().putObject(CustomModel.KEY, customModel);
+        getHints().putObject("custom_model_file", "empty");
         return this;
     }
 
