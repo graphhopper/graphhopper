@@ -9,37 +9,24 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.PathWrapperDeserializer;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * This class unit tests the class. For integration tests against a real server see RouteResourceClientHCTest.
  */
-@RunWith(Parameterized.class)
 public class GraphHopperWebTest {
 
-    private final GraphHopperWeb gh;
-
-    public GraphHopperWebTest(boolean usePost) {
-        gh = new GraphHopperWeb(null).setPostRequest(usePost);
-    }
-
-    /**
-     * Runs the same test with each of the supported traversal modes
-     */
-    @Parameterized.Parameters(name = "POST: {0}")
-    public static Collection<Object[]> configs() {
-        return Arrays.asList(new Object[][]{{false}, {true}, {true}});
-    }
-
-    @Test
-    public void getClientForRequest() {
+    @ParameterizedTest(name = "POST={0}")
+    @ValueSource(booleans = {true, false})
+    public void testGetClientForRequest(boolean usePost) {
+        GraphHopperWeb gh = new GraphHopperWeb(null).setPostRequest(usePost);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509225, 1.534728)).
                 addPoint(new GHPoint(42.512602, 1.551558)).
