@@ -288,9 +288,9 @@ distance_influence: 100
 The default is `70`. More precisely, by specifying the `distance_influence` you tell the routing engine how much time
 a detour (a longer distance route) must save you such that you prefer it compared to a shorter distance route. 
 A value of zero means that no matter how little time you can save when doing a detour you will take it, i.e. you always
-prefer the fastest route. A value of `30` means that one extra kilometer must save you `30s` of travelling time. Or to
-put it another way if a reference route takes `600s` and is `10km` long, `distance_influence=30` means that you are
-willing to take an alternative route that is `11km` long only if it takes no longer than `570s` (saves `30s`).      
+prefer the fastest route. Assuming that default `priorities` (=1) a value of `30` means that one extra kilometer must save you `30s`
+of travelling time. Or to put it another way if a reference route takes `600s` and is `10km` long, `distance_influence=30`
+means that you are willing to take an alternative route that is `11km` long only if it takes no longer than `570s` (saves `30s`).      
 
 ## Setting up a Custom Profile
 
