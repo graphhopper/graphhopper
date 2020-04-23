@@ -81,7 +81,6 @@ public class IsochroneResource {
             @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceLimitInMeter,
             @QueryParam("weight_limit") @DefaultValue("-1") LongParam weightLimit,
-            @QueryParam("weight_limit_offset") @DefaultValue("0") LongParam weightLimitOffset,
             @QueryParam("type") @DefaultValue("json") ResponseType respType) {
         StopWatch sw = new StopWatch().start();
 
@@ -120,12 +119,7 @@ public class IsochroneResource {
         double limit;
         if (weightLimit.get() > 0){
             limit = weightLimit.get();
-            // Since weight can be generic, we should make the offset configurable
-            long offset = 0;
-            if(weightLimitOffset.get() > 0){
-                offset = weightLimitOffset.get();
-            }
-            shortestPathTree.setWeightLimit(limit+ Math.max(limit * 0.14, offset));
+            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
         } else if (distanceLimitInMeter.get() > 0) {
             limit = distanceLimitInMeter.get();
             shortestPathTree.setDistanceLimit(limit + Math.max(limit * 0.14, 2_000));

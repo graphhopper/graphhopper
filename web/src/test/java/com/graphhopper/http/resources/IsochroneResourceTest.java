@@ -139,7 +139,6 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestByWeightLimit() {
-        // We use the fastest profile, so the time limit should be equal to the weight limit
         WebTarget commonTarget = clientTarget(app, "/isochrone")
                 .queryParam("profile", "short_car")
                 .queryParam("point", "42.531073,1.573792")
@@ -155,7 +154,6 @@ public class IsochroneResourceTest {
 
         Response weightLimitRsp = commonTarget
                 .queryParam("weight_limit", limit)
-                .queryParam("weight_limit_offset", 2000)
                 .request().buildGet().invoke();
         JsonFeatureCollection weightLimitFeatureCollection = weightLimitRsp.readEntity(JsonFeatureCollection.class);
         Geometry weightLimitPolygon = weightLimitFeatureCollection.getFeatures().get(0).getGeometry();
