@@ -12,6 +12,8 @@
 
 # make this script exit if a command fails, a variable is missing etc.
 set -euo pipefail
+# print all commands
+set -o xtrace
 
 defaultDataDir=measurements/
 defaultSingleResultsDir=measurements/results/$(date '+%d-%m-%Y-%s%N')/
@@ -37,10 +39,11 @@ mkdir -p ${TMP_DIR}
 mkdir -p ${SINGLE_RESULTS_DIR}
 
 # actually run the benchmarks:
-# 1 - small map: node- and edge-based CH + slow routing
+echo "1 - small map: node- and edge-based CH + slow routing"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
 datareader.file=${SMALL_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
+measurement.name=small_map \
 measurement.folder=${SINGLE_RESULTS_DIR} \
 measurement.clean=true \
 measurement.summaryfile=${RESULTS_DIR}summary_small.dat \
@@ -60,10 +63,11 @@ measurement.count=5000 \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
 "measurement.block_area=49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512"
 
-# 2 - big map: node-based CH + landmarks (edge- & node-based for LM)
+echo "2 - big map: node-based CH + landmarks (edge- & node-based for LM)"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
+measurement.name=big_map \
 measurement.folder=${SINGLE_RESULTS_DIR} \
 measurement.clean=true \
 measurement.summaryfile=${RESULTS_DIR}summary_big.dat \

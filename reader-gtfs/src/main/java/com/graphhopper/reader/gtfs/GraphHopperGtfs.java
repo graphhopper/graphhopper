@@ -131,9 +131,17 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                     throw new RuntimeException(e);
                 }
             }
+
+            //When set a transfer edge will be created between stops connected to same OSM node. This is to keep previous behavior before
+            //this commit https://github.com/graphhopper/graphhopper/commit/31ae1e1534849099f24e45d53c96340a7c6a5197.
+            boolean createTransferStopsConnectSameOsmNode = ghConfig.has("gtfs.create_transfers_stops_same_osm_node") &&
+                                                            ghConfig.getBool("gtfs.create_transfers_stops_same_osm_node", false);
+
+
             LocationIndex streetNetworkIndex = getLocationIndex();
             getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
                 GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), getGtfsStorage(), streetNetworkIndex);
+                gtfsReader.setCreateTransferStopsConnectSameOsmNode(createTransferStopsConnectSameOsmNode);
                 gtfsReader.connectStopsToStreetNetwork();
                 getType0TransferWithTimes(gtfsFeed)
                         .forEach(t -> {

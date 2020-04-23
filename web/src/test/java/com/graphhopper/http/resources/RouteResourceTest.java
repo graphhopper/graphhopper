@@ -530,6 +530,44 @@ public class RouteResourceTest {
     }
 
     @Test
+    public void testGPXExport() {
+        GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("gpx.millis", "300000000");
+        req.putHint("type", "gpx");
+        GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
+                // gpx not supported for POST
+                .setPostRequest(false);
+        String res = gh.export(req);
+        assertTrue(res.contains("<gpx"));
+        assertTrue(res.contains("<rtept lat="));
+        assertTrue(res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
+        assertTrue(res.endsWith("</gpx>"));
+        // this is due to `gpx.millis` we set (dates are shifted by the given (ms!) value from 1970-01-01)
+        assertTrue(res.contains("1970-01-04"));
+    }
+
+    @Test
+    public void testExportWithoutTrack() {
+        GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        req.putHint("elevation", false);
+        req.putHint("instructions", true);
+        req.putHint("calc_points", true);
+        req.putHint("type", "gpx");
+        req.putHint("gpx.track", false);
+        GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
+                // gpx not supported for POST
+                .setPostRequest(false);
+        String res = gh.export(req);
+        assertTrue(res.contains("<gpx"));
+        assertTrue(res.contains("<rtept lat="));
+        assertFalse(res.contains("<trk><name>GraphHopper Track</name><trkseg>"));
+        assertTrue(res.endsWith("</gpx>"));
+    }
+
+    @Test
     public void testWithError() {
         final Response response = clientTarget(app, "/route?profile=my_car&" +
                 "point=42.554851,1.536198").request().buildGet().invoke();
