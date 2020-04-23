@@ -17,7 +17,11 @@
  */
 package com.graphhopper.routing.profiles;
 
+import java.util.List;
+
 public interface EncodedValueLookup {
+
+    List<EncodedValue> getAllShared();
 
     <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType);
 

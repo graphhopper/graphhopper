@@ -93,29 +93,23 @@ public class InfoResource {
         info.prepare_ch_date = storage.getProperties().get("prepare.ch.date");
         info.prepare_date = storage.getProperties().get("prepare.ch.date");
 
-        // do not list all supported encoded values like the none-shared ones or *.turn_costs or max_speed (not possible within the value map)
-        List<String> ev = Arrays.asList("country", "get_off_bike", "hazmat", "hazmat_tunnel", "hazmat_water",
-                "road_access", "road_class", "road_class_link", "road_environment", "roundabout",
-                "bike_network", "foot_network", "surface", "toll", "track_type");
+        // do not list all supported encoded values like the none-shared ones or *.turn_costs
+        List<EncodedValue> evList = storage.getEncodingManager().getAllShared();
         info.encoded_values = new LinkedHashMap<>();
-        for (String encodedValue : ev) {
-            if (!storage.getEncodingManager().hasEncodedValue(encodedValue))
-                continue;
-
+        for (EncodedValue encodedValue : evList) {
             List<Object> possibleValueList = new ArrayList<>();
-            EncodedValue encVal = storage.getEncodingManager().getEncodedValue(encodedValue, EncodedValue.class);
-            if (encVal instanceof EnumEncodedValue) {
-                for (Object o : ((EnumEncodedValue) encVal).getValues()) {
+            if (encodedValue instanceof EnumEncodedValue) {
+                for (Object o : ((EnumEncodedValue) encodedValue).getValues()) {
                     possibleValueList.add(o.toString());
                 }
-            } else if (encVal instanceof BooleanEncodedValue) {
+            } else if (encodedValue instanceof BooleanEncodedValue) {
                 possibleValueList.add(true);
                 possibleValueList.add(false);
             } else {
                 // we only add enum encoded values and boolean encoded values to the list of possible values
                 continue;
             }
-            info.encoded_values.put(encodedValue, possibleValueList);
+            info.encoded_values.put(encodedValue.getName(), possibleValueList);
         }
         return info;
     }

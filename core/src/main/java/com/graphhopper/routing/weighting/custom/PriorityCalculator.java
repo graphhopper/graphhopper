@@ -66,7 +66,7 @@ final class PriorityCalculator {
 
     static <T extends EncodedValue> T getEV(EncodedValueLookup lookup, String name, String key, Class<T> encodedValueType) {
         if (!lookup.hasEncodedValue(key))
-            throw new IllegalArgumentException("Cannot find '" + key + "' specified in '" + name + "'");
+            throw new IllegalArgumentException("Cannot find encoded value '" + key + "' specified in '" + name + "'. Available: " + lookup.getAllShared());
         T ev = lookup.getEncodedValue(key, encodedValueType);
         if (!encodedValueType.isAssignableFrom(ev.getClass()))
             throw new IllegalArgumentException("Expected class '" + encodedValueType.getSimpleName() + "' for '" + key
