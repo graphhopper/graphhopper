@@ -24,6 +24,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.Arrays;
 import java.util.Map;
 
+import static com.graphhopper.routing.weighting.custom.CustomWeighting.CATCH_ALL;
+
 final class EnumToValueEntry implements EdgeToValueEntry {
     private final IntEncodedValue eev;
     private final double[] values;
@@ -53,9 +55,9 @@ final class EnumToValueEntry implements EdgeToValueEntry {
         if (map.isEmpty())
             throw new IllegalArgumentException("Empty map for " + name);
 
-        Object evEntryValue = map.get(CATCH_ALL_KEY);
+        Object evEntryValue = map.get(CATCH_ALL);
         if (evEntryValue != null)
-            defaultValue = getReturnValue(name, CATCH_ALL_KEY, evEntryValue, minValue, maxValue);
+            defaultValue = getReturnValue(name, CATCH_ALL, evEntryValue, minValue, maxValue);
 
         double[] tmp = new double[enumValues.length];
         Arrays.fill(tmp, defaultValue);
@@ -63,7 +65,7 @@ final class EnumToValueEntry implements EdgeToValueEntry {
             if (encValEntry.getKey() == null)
                 throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
             String key = encValEntry.getKey().toString();
-            if (CATCH_ALL_KEY.equals(key))
+            if (CATCH_ALL.equals(key))
                 continue;
 
             Enum enumValue = getValueOf(enumValues, key);

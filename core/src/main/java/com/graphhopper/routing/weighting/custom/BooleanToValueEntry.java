@@ -22,6 +22,7 @@ import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Map;
 
+import static com.graphhopper.routing.weighting.custom.CustomWeighting.CATCH_ALL;
 import static com.graphhopper.routing.weighting.custom.EnumToValueEntry.getReturnValue;
 
 final class BooleanToValueEntry implements EdgeToValueEntry {
@@ -47,7 +48,7 @@ final class BooleanToValueEntry implements EdgeToValueEntry {
         if (map.isEmpty())
             throw new IllegalArgumentException("Empty map for " + name);
 
-        if (map.containsKey(CATCH_ALL_KEY) && (map.containsKey("false") || map.containsKey(false)))
+        if (map.containsKey(CATCH_ALL) && (map.containsKey("false") || map.containsKey(false)))
             throw new IllegalArgumentException(name + ": cannot contain false and catch-all key at the same time");
 
         double trueValue = Double.NaN;
@@ -60,7 +61,7 @@ final class BooleanToValueEntry implements EdgeToValueEntry {
             double returnValue = getReturnValue(name, key, encValEntry.getValue(), minValue, maxValue);
             if ("true".equals(key)) {
                 trueValue = returnValue;
-            } else if ("false".equals(key) || EdgeToValueEntry.CATCH_ALL_KEY.equals(key)) {
+            } else if ("false".equals(key) || CATCH_ALL.equals(key)) {
                 falseValue = returnValue;
             } else {
                 throw new IllegalArgumentException("key for " + name + " cannot be " + key + ", value: " + encValEntry.getValue());

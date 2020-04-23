@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.routing.weighting.custom.CustomWeighting.CATCH_ALL;
 import static com.graphhopper.routing.weighting.custom.EnumToValueEntry.getReturnValue;
 
 final class DecimalToValueEntry implements EdgeToValueEntry {
@@ -68,16 +69,16 @@ final class DecimalToValueEntry implements EdgeToValueEntry {
         if (map.isEmpty())
             throw new IllegalArgumentException("Empty map for " + name);
 
-        Object evEntryValue = map.get(CATCH_ALL_KEY);
+        Object evEntryValue = map.get(CATCH_ALL);
         if (evEntryValue != null)
-            defaultValue = getReturnValue(name, CATCH_ALL_KEY, evEntryValue, minValue, maxValue);
+            defaultValue = getReturnValue(name, CATCH_ALL, evEntryValue, minValue, maxValue);
 
         List<Range> ranges = new ArrayList<>();
         for (Map.Entry<Object, Object> encValEntry : map.entrySet()) {
             if (encValEntry.getKey() == null)
                 throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
             String key = encValEntry.getKey().toString();
-            if (CATCH_ALL_KEY.equals(key))
+            if (CATCH_ALL.equals(key))
                 continue;
 
             double returnValue = getReturnValue(name, key, encValEntry.getValue(), minValue, maxValue);
