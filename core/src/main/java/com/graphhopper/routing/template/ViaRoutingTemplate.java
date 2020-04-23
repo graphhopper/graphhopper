@@ -30,7 +30,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -120,7 +119,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         for (int placeIndex = 1; placeIndex < pointsCount; placeIndex++) {
             if (placeIndex == 1) {
                 // enforce start direction
-                queryGraph.enforceHeading(fromQResult.getClosestNode(), ghRequest.getFavoredHeading(0), false);
+                double initialHeading = ghRequest.getHeadings().isEmpty() ? Double.NaN : ghRequest.getHeadings().get(0);
+                queryGraph.enforceHeading(fromQResult.getClosestNode(), initialHeading, false);
             } else if (viaTurnPenalty) {
                 // enforce straight start after via stop
                 Path prevRoute = pathList.get(placeIndex - 2);
@@ -133,7 +133,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             QueryResult toQResult = queryResults.get(placeIndex);
 
             // enforce end direction
-            queryGraph.enforceHeading(toQResult.getClosestNode(), ghRequest.getFavoredHeading(placeIndex), true);
+            double heading = ghRequest.getPoints().size() == ghRequest.getHeadings().size() ? ghRequest.getHeadings().get(placeIndex) : Double.NaN;
+            queryGraph.enforceHeading(toQResult.getClosestNode(), heading, true);
 
             sw = new StopWatch().start();
             RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);
