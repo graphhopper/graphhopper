@@ -37,8 +37,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -75,7 +73,7 @@ public class RouteResource {
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
-            @QueryParam("point") List<GHPointParam> pointParams,
+            @QueryParam("point") @NotNull List<GHPointParam> pointParams,
             @QueryParam("type") @DefaultValue("json") String type,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
@@ -88,7 +86,7 @@ public class RouteResource {
             @QueryParam(CURBSIDE) List<String> curbsides,
             @QueryParam(SNAP_PREVENTION) List<String> snapPreventions,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
-            @QueryParam("heading") List<Double> favoredHeadings,
+            @QueryParam("heading") @NotNull List<Double> headings,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
@@ -97,38 +95,11 @@ public class RouteResource {
         List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
         instructions = writeGPX || instructions;
-
-        StopWatch sw = new StopWatch().start();
-
-        if (points.isEmpty())
-            throw new IllegalArgumentException("You have to pass at least one point");
         if (enableElevation && !hasElevation)
             throw new IllegalArgumentException("Elevation not supported!");
-        if (favoredHeadings.size() > 1 && favoredHeadings.size() != points.size())
-            throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
-                    + "or equal to the number of points (" + points.size() + ")");
 
-        // TODO these checks should be only necessary once in the core, e.g. pointHints problems are currently ignored for POST requests
-        // -> #1996
-        if (pointHints.size() > 0 && pointHints.size() != points.size())
-            throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
-        if (curbsides.size() > 0 && curbsides.size() != points.size())
-            throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
-
-        GHRequest request;
-        if (favoredHeadings.size() > 0) {
-            // if only one favored heading is specified take as start heading
-            if (favoredHeadings.size() == 1) {
-                List<Double> paddedHeadings = new ArrayList<>(Collections.nCopies(points.size(), Double.NaN));
-                paddedHeadings.set(0, favoredHeadings.get(0));
-                request = new GHRequest(points, paddedHeadings);
-            } else {
-                request = new GHRequest(points, favoredHeadings);
-            }
-        } else {
-            request = new GHRequest(points);
-        }
-
+        StopWatch sw = new StopWatch().start();
+        GHRequest request = new GHRequest();
         initHints(request.getHints(), uriInfo.getQueryParameters());
         String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "") + ", vehicle: " + request.getHints().getString("vehicle", "");
         if (Helper.isEmpty(profileName)) {
@@ -137,9 +108,11 @@ public class RouteResource {
             removeLegacyParameters(request);
         }
         errorIfLegacyParameters(request.getHints());
-        request.setProfile(profileName).
+        request.setPoints(points).
+                setProfile(profileName).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
+                setHeadings(headings).
                 setPointHints(pointHints).
                 setCurbsides(curbsides).
                 setSnapPreventions(snapPreventions).
@@ -215,9 +188,9 @@ public class RouteResource {
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
             return Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
-                            header("X-GH-Took", "" + Math.round(took * 1000)).
-                            type(MediaType.APPLICATION_JSON).
-                            build();
+                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    type(MediaType.APPLICATION_JSON).
+                    build();
         }
     }
 
