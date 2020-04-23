@@ -215,14 +215,15 @@ public class Measurement {
                 boolean isCH = false;
                 boolean isLM = true;
                 // TODO maybe for node-based do only LM=8 and compare different LM only for edge-based?
-                for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
+                Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
+                        .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
-                    if (encoder.supportsTurnCosts()) {
+                    if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
                         printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 4, isCH, isLM).
                                 withInstructions().activeLandmarks(activeLMCount).edgeBased());
                     }
-                }
+                });
 
                 final int activeLMCount = 8;
                 if (!blockAreaStr.isEmpty())
