@@ -30,18 +30,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.createEnumToDoubleArray;
-import static com.graphhopper.routing.weighting.custom.PriorityCustomConfig.getEV;
+import static com.graphhopper.routing.weighting.custom.PriorityCalculator.createEnumToDoubleArray;
+import static com.graphhopper.routing.weighting.custom.PriorityCalculator.getEV;
 
-final class SpeedCustomConfig {
-    private List<EdgeToValueEntry> speedFactorList = new ArrayList<>();
-    private List<EdgeToValueEntry> maxSpeedList = new ArrayList<>();
-    private DecimalEncodedValue avgSpeedEnc;
+final class SpeedCalculator {
+    private final List<EdgeToValueEntry> speedFactorList = new ArrayList<>();
+    private final List<EdgeToValueEntry> maxSpeedList = new ArrayList<>();
+    private final DecimalEncodedValue avgSpeedEnc;
     private final double maxSpeed;
     private final double maxSpeedFallback;
 
-    public SpeedCustomConfig(final double maxSpeed, CustomModel customModel, DecimalEncodedValue avgSpeedEnc,
-                             EncodedValueLookup lookup) {
+    public SpeedCalculator(final double maxSpeed, CustomModel customModel, DecimalEncodedValue avgSpeedEnc,
+                           EncodedValueLookup lookup) {
         this.maxSpeed = maxSpeed;
         this.maxSpeedFallback = customModel.getMaxSpeedFallback() == null ? maxSpeed : customModel.getMaxSpeedFallback();
         this.avgSpeedEnc = avgSpeedEnc;

@@ -51,8 +51,8 @@ public final class CustomWeighting extends AbstractWeighting {
     private final double maxSpeed;
     private final double distanceInfluence;
     private final double headingPenaltySeconds;
-    private final SpeedCustomConfig speedConfig;
-    private final PriorityCustomConfig priorityConfig;
+    private final SpeedCalculator speedCalculator;
+    private final PriorityCalculator priorityCalculator;
 
     public CustomWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
                            TurnCostProvider turnCostProvider, CustomModel customModel) {
@@ -62,10 +62,10 @@ public final class CustomWeighting extends AbstractWeighting {
 
         headingPenaltySeconds = customModel.getHeadingPenalty();
         baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
-        speedConfig = new SpeedCustomConfig(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), lookup);
-        maxSpeed = speedConfig.getMaxSpeed() / SPEED_CONV;
+        speedCalculator = new SpeedCalculator(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), lookup);
+        maxSpeed = speedCalculator.getMaxSpeed() / SPEED_CONV;
 
-        priorityConfig = new PriorityCustomConfig(customModel, lookup);
+        priorityCalculator = new PriorityCalculator(customModel, lookup);
 
         // unit is "seconds per 1km"
         distanceInfluence = customModel.getDistanceInfluence() / 1000;
@@ -87,7 +87,7 @@ public final class CustomWeighting extends AbstractWeighting {
         double distanceInfluence = distance * this.distanceInfluence;
         if (Double.isInfinite(distanceInfluence))
             return Double.POSITIVE_INFINITY;
-        return seconds / priorityConfig.calcPriority(edgeState, reverse) + distanceInfluence;
+        return seconds / priorityCalculator.calcPriority(edgeState, reverse) + distanceInfluence;
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
@@ -99,7 +99,7 @@ public final class CustomWeighting extends AbstractWeighting {
         if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
             return Double.POSITIVE_INFINITY;
 
-        double speed = speedConfig.calcSpeed(edgeState, reverse);
+        double speed = speedCalculator.calcSpeed(edgeState, reverse);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)

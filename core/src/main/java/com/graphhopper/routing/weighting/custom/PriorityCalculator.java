@@ -28,10 +28,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-final class PriorityCustomConfig {
-    private List<EdgeToValueEntry> priorityList = new ArrayList<>();
+final class PriorityCalculator {
+    private final List<EdgeToValueEntry> priorityList = new ArrayList<>();
 
-    public PriorityCustomConfig(CustomModel customModel, EncodedValueLookup lookup) {
+    public PriorityCalculator(CustomModel customModel, EncodedValueLookup lookup) {
         add(lookup, customModel.getVehicleWeight(), "vehicle_weight", MaxWeight.KEY);
         add(lookup, customModel.getVehicleWidth(), "vehicle_width", MaxWidth.KEY);
         add(lookup, customModel.getVehicleHeight(), "vehicle_height", MaxHeight.KEY);
