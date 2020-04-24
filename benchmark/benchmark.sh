@@ -78,7 +78,7 @@ measurement.weighting=fastest \
 measurement.ch.node=true \
 measurement.ch.edge=false \
 measurement.lm=true \
-measurement.lm.active_counts=[4,8,12,16] \
+"measurement.lm.active_counts=[4,8,12,16]" \
 measurement.lm.edge_based=true \
 "graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-big-gh \
@@ -108,7 +108,7 @@ graph.encoded_values=max_width,max_height,toll,hazmat \
 measurement.ch.node=true \
 measurement.ch.edge=false \
 measurement.lm=true \
-measurement.lm.active_counts=[8] \
+"measurement.lm.active_counts=[8]" \
 measurement.lm.edge_based=false \
 graph.flag_encoders=car|turn_costs=true \
 graph.location=${TMP_DIR}measurement-big-little-custom-gh \
@@ -137,7 +137,7 @@ graph.encoded_values=max_width,max_height,toll,hazmat \
 measurement.ch.node=true \
 measurement.ch.edge=false \
 measurement.lm=true \
-measurement.lm.active_counts=[8] \
+"measurement.lm.active_counts=[8]" \
 measurement.lm.edge_based=false \
 graph.flag_encoders=car \
 graph.location=${TMP_DIR}measurement-big-very-custom-gh \
