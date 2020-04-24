@@ -26,18 +26,55 @@ import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Every EncodedValue like road_environment can influence one or more aspects of this Weighting: the
- * speed_factor, the max_speed and the priority. The formula is as follows:
- * <pre>
- * if the edge is not accessible for the base vehicle then return 'infinity'
- * speed = reduce_to_max_speed(estimated_average_speed * multiply_all(speed_factor_map))
- * weight = toSeconds(distance / speed) / multiply_all(priority_map) + distance * distance_influence;
- * return weight
- * </pre>
- * Please note that the max_speed map is capped to the maximum allowed speed. Also values in the speed_factor and
- * priority maps are normalized via the maximum value to 1 if one of the values is bigger than 1
- * to avoid problems with the landmark algorithm, i.e. the edge weight is always increased so that the heuristic always
- * underestimates the weight.
+ * The CustomWeighting allows adjusting the edge weights relative to those we'd obtain for a given base flag encoder.
+ * For example a car flag encoder already provides speeds and access flags for every edge depending on certain edge
+ * properties. By default the CustomWeighting simply makes use of these values, but it is possible to adjust them by
+ * setting up rules that apply changes depending on the edges' encoded values.
+ * <p>
+ * The formula for the edge weights is as follows:
+ * <p>
+ * weight = distance/speed + distance_costs + stress_costs
+ * <p>
+ * The first term simply corresponds to the time it takes to travel along the edge.
+ * The second term adds a fixed per-distance cost that is proportional to the distance but *independent* of the edge
+ * properties, i.e. it reads
+ * <p>
+ * distance_costs = distance * distance_influence
+ * <p>
+ * The third term is also proportional to the distance and compared the second it describes additional costs that *do*
+ * depend on the edge properties. It can represent any kind of costs that depend on the edge (like inconvenience or
+ * dangers encountered on 'high-stress' roads for bikes, toll roads (because they cost money), stairs (because they are
+ * awkward when going by bike) etc.). This 'stress' term reads
+ * <p>
+ * stress_costs = distance * stress_per_meter
+ * <p>
+ * and like the distance term it also describes costs measured in seconds. When modelling it one always has to 'convert'
+ * the costs into some time equivalent (e.g. for toll roads one has to think about how much money can be spent to save
+ * a certain amount of time). Note that the distance_costs described by the second term in general cannot be properly
+ * described by the stress costs, because the distance term allows increasing the per-distance costs per-se (regardless
+ * of the type of the road). Also note that both the second and third term are different to the first in that they can
+ * increase the edge costs but do *not* modify the travel *time*.
+ * <p>
+ * The next thing you need to understand is that the `CustomWeighting` does not allow setting the speed or stress_per_meter
+ * directly, but instead it allows changing them relative to some base values. For speed the base value is the speed
+ * we get from the base flag encoder and for the stress costs we assume a fixed per-distance cost that depends on the
+ * vehicles maximum speed.
+ * <p>
+ * Therefore the full edge weight formula reads:
+ * <p>
+ * weight = distance / (base_speed * speed_factor)
+ * + distance / (base_stress * priority
+ * + distance * distance_influence
+ * <p>
+ * where base_stress = {@link #prioOffset} * base_speed_max
+ * <p>
+ * The open parameters that we can adjust are therefore: speed_factor, priority and distance_influence and they are
+ * specified via the `{@link CustomModel}`. The speed can also be restricted to a maximum value, in which case the value
+ * calculated via the speed_factor is simply overwritten. Edges that are not accessible according to the access flags of
+ * the base vehicle always get assigned an infinite weight and this cannot be changed using this weighting.
+ *
+ * @see SpeedCalculator for details how speed_factor and max_speed are derived from some given edge properties
+ * @see PriorityCalculator for details how priority is derived for some given edge properties
  */
 public final class CustomWeighting extends AbstractWeighting {
     public static final String NAME = "custom";
