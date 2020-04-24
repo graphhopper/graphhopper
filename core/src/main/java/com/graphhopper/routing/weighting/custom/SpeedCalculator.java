@@ -62,21 +62,22 @@ final class SpeedCalculator {
             } else {
                 if (!(value instanceof Map))
                     throw new IllegalArgumentException(maxSpeedKey + ": non-root entries requires a map but was: " + value.getClass().getSimpleName());
+                final double defaultMaxSpeed = maxSpeed, minMaxSpeed = 0, maxMaxSpeed = maxSpeed;
                 EncodedValue encodedValue = getEV(lookup, "max_speed", key);
                 if (encodedValue instanceof EnumEncodedValue) {
                     maxSpeedList.add(EnumToValueEntry.create(maxSpeedKey, (EnumEncodedValue) encodedValue,
-                            (Map) value, maxSpeed, 0, maxSpeed));
+                            (Map) value, defaultMaxSpeed, minMaxSpeed, maxMaxSpeed));
                 } else if (encodedValue instanceof DecimalEncodedValue) {
                     maxSpeedList.add(DecimalToValueEntry.create(maxSpeedKey, (DecimalEncodedValue) encodedValue,
-                            (Map) value, maxSpeed, 0, maxSpeed));
+                            (Map) value, defaultMaxSpeed, minMaxSpeed, maxMaxSpeed));
                 } else if (encodedValue instanceof BooleanEncodedValue) {
                     maxSpeedList.add(BooleanToValueEntry.create(maxSpeedKey, (BooleanEncodedValue) encodedValue,
-                            (Map) value, maxSpeed, 0, maxSpeed));
+                            (Map) value, defaultMaxSpeed, minMaxSpeed, maxMaxSpeed));
                 } else if (encodedValue instanceof IntEncodedValue) {
                     // TODO
                 } else {
-                    throw new IllegalArgumentException("encoded value class '" + encodedValue.getClass().getSimpleName()
-                            + "' not supported. For '" + key + "' specified in 'max_speed'.");
+                    throw new IllegalArgumentException("The encoded value '" + key + "' used in 'max_speed' is of type "
+                            + encodedValue.getClass().getSimpleName() + ", but only types enum, decimal and boolean are supported.");
                 }
             }
         }
@@ -98,21 +99,22 @@ final class SpeedCalculator {
             } else {
                 if (!(value instanceof Map))
                     throw new IllegalArgumentException(speedFactorKey + ": non-root entries requires a map but was: " + value.getClass().getSimpleName());
+                final double defaultSpeedFactor = 1, minSpeedFactor = 0, maxSpeedFactor = 1;
                 EncodedValue encodedValue = getEV(lookup, "speed_factor", key);
                 if (encodedValue instanceof EnumEncodedValue) {
                     speedFactorList.add(EnumToValueEntry.create(speedFactorKey, (EnumEncodedValue) encodedValue,
-                            (Map) value, 1, 0, 1));
+                            (Map) value, defaultSpeedFactor, minSpeedFactor, maxSpeedFactor));
                 } else if (encodedValue instanceof DecimalEncodedValue) {
                     speedFactorList.add(DecimalToValueEntry.create(speedFactorKey, (DecimalEncodedValue) encodedValue,
-                            (Map) value, 1, 0, 1));
+                            (Map) value, defaultSpeedFactor, minSpeedFactor, maxSpeedFactor));
                 } else if (encodedValue instanceof BooleanEncodedValue) {
                     speedFactorList.add(BooleanToValueEntry.create(speedFactorKey, (BooleanEncodedValue) encodedValue,
-                            (Map) value, 1, 0, 1));
+                            (Map) value, defaultSpeedFactor, minSpeedFactor, maxSpeedFactor));
                 } else if (encodedValue instanceof IntEncodedValue) {
                     // TODO
                 } else {
-                    throw new IllegalArgumentException("encoded value class '" + encodedValue.getClass().getSimpleName()
-                            + "' not supported. For '" + key + "' specified in 'speed_factor'.");
+                    throw new IllegalArgumentException("The encoded value '" + key + "' used in 'speed_factor' is of type "
+                            + encodedValue.getClass().getSimpleName() + ", but only types enum, decimal and boolean are supported.");
                 }
             }
         }

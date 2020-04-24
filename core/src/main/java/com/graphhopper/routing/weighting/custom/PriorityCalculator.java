@@ -47,21 +47,22 @@ final class PriorityCalculator {
             } else {
                 if (!(value instanceof Map))
                     throw new IllegalArgumentException(priorityKey + ": non-root entries requires a map but was: " + value.getClass().getSimpleName());
+                final double defaultPriority = 1, minPriority = 0, maxPriority = 1;
                 EncodedValue encodedValue = getEV(lookup, "priority", key);
                 if (encodedValue instanceof EnumEncodedValue) {
                     priorityList.add(EnumToValueEntry.create(priorityKey, (EnumEncodedValue) encodedValue,
-                            (Map) value, 1, 0, 1));
+                            (Map) value, defaultPriority, minPriority, maxPriority));
                 } else if (encodedValue instanceof DecimalEncodedValue) {
                     priorityList.add(DecimalToValueEntry.create(priorityKey, (DecimalEncodedValue) encodedValue,
-                            (Map) value, 1, 0, 1));
+                            (Map) value, defaultPriority, minPriority, maxPriority));
                 } else if (encodedValue instanceof BooleanEncodedValue) {
                     priorityList.add(BooleanToValueEntry.create(priorityKey, (BooleanEncodedValue) encodedValue,
-                            (Map) value, 1, 0, 1));
+                            (Map) value, defaultPriority, minPriority, maxPriority));
                 } else if (encodedValue instanceof IntEncodedValue) {
                     // TODO NOW
                 } else {
-                    throw new IllegalArgumentException("encoded value class '" + encodedValue.getClass().getSimpleName()
-                            + "' not supported. For '" + key + "' specified in 'priority'.");
+                    throw new IllegalArgumentException("The encoded value '" + key + "' used in 'priority' is of type "
+                            + encodedValue.getClass().getSimpleName() + ", but only types enum, decimal and boolean are supported.");
                 }
             }
         }

@@ -40,7 +40,7 @@ final class BooleanToValueEntry implements EdgeToValueEntry {
      * <pre>
      * get_off_bike:
      *   true: 0.4
-     *   false: 0.9 // optional and default is 1, equivalent to "*": 0.9
+     *   false: 0.9 # optional and default is 1, equivalent to "*": 0.9
      * </pre>
      */
     static EdgeToValueEntry create(String name, BooleanEncodedValue encodedValue, Map<Object, Object> map,

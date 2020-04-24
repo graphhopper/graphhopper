@@ -32,8 +32,9 @@ max_speed_fallback: 100
 distance_influence: 90
 
 # Now we want to set a preference without changing the taken time. The default priority is 1 and does not change something.
-# Higher than 1 is not possible directly, only via the catch-all key "*", see road_class where motorways are preferred. Lower than 1 will avoid it.
-# If two conditions are met the values will be multiplied. The minimum value is 0 (block access) the maximum value is 100.
+# The minimum value is 0 (block access). A value lower than 1 will avoid it. Values higher than 1 are not allowed.
+# To prefer a certain case you lower the priority of all other entries via the catch-all key "*",
+# see the road_class entry where motorways are preferred. If two conditions are met the values will be multiplied.
 priority:
   road_class:
     motorway: 1.0
