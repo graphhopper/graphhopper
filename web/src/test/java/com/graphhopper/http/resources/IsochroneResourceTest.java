@@ -244,7 +244,7 @@ public class IsochroneResourceTest {
     public void requestBadType() {
         Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=130&type=xml")
                 .request().buildGet().invoke();
-
+        assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         String message = json.path("message").asText();
 
