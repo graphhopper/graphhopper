@@ -25,9 +25,9 @@ import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,7 +64,7 @@ public class MapMatching2Test {
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        MapMatching mapMatching = new MapMatching(hopper, new HintsMap().putObject("profile", "my_profile"));
+        MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-13.gpx"), Gpx.class);
         MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
@@ -96,7 +96,7 @@ public class MapMatching2Test {
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        MapMatching mapMatching = new MapMatching(hopper, new HintsMap().putObject("profile", "my_profile"));
+        MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-70.gpx"), Gpx.class);
         MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
@@ -123,7 +123,7 @@ public class MapMatching2Test {
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        MapMatching mapMatching = new MapMatching(hopper, new HintsMap().putObject("profile", "my_profile"));
+        MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
 
         // query with two identical points
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-127.gpx"), Gpx.class);

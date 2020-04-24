@@ -24,12 +24,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.matching.*;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.routing.ProfileResolver;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import org.slf4j.Logger;
@@ -99,9 +97,9 @@ public class MapMatchingResource {
 
         StopWatch sw = new StopWatch().start();
 
-        HintsMap hints = createHintsMap(uriInfo.getQueryParameters());
+        PMap hints = createHintsMap(uriInfo.getQueryParameters());
         // add values that are not in hints because they were explicitly listed in query params
-        hints.setVehicle(vehicleStr);
+        hints.putObject("vehicle", vehicleStr);
         hints.putObject(MAX_VISITED_NODES, maxVisitedNodes);
         // resolve profile and remove legacy vehicle/weighting parameters
         String profile = profileResolver.resolveProfile(hints).getName();
@@ -174,8 +172,8 @@ public class MapMatchingResource {
         }
     }
 
-    private HintsMap createHintsMap(MultivaluedMap<String, String> queryParameters) {
-        HintsMap m = new HintsMap();
+    private PMap createHintsMap(MultivaluedMap<String, String> queryParameters) {
+        PMap m = new PMap();
         for (Map.Entry<String, List<String>> e : queryParameters.entrySet()) {
             if (e.getValue().size() == 1) {
                 m.putObject(Helper.camelCaseToUnderScore(e.getKey()), Helper.toObject(e.getValue().get(0)));

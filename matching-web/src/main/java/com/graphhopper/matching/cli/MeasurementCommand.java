@@ -97,7 +97,7 @@ public class MeasurementCommand extends Command {
         GraphHopperStorage graph = graphHopper.getGraphHopperStorage();
         bbox = graph.getBounds();
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
-        MapMatching mapMatching = new MapMatching(graphHopper, new HintsMap().putObject("profile", "fast_car"));
+        MapMatching mapMatching = new MapMatching(graphHopper, new PMap().putObject("profile", "fast_car"));
         
         // start tests:
         StopWatch sw = new StopWatch().start();
