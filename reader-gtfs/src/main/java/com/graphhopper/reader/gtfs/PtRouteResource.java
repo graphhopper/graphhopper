@@ -91,6 +91,7 @@ public final class PtRouteResource {
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
                             @QueryParam("pt.limit_solutions") Integer limitSolutions) {
+        StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get();
 
@@ -102,7 +103,7 @@ public final class PtRouteResource {
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
 
         GHResponse route = new RequestHandler(request).route();
-        return WebHelper.jsonObject(route, true, true, false, false, 0.0f);
+        return WebHelper.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
     }
 
     public GHResponse route(Request request) {
