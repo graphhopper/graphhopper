@@ -64,7 +64,7 @@ final class DecimalToValueEntry implements EdgeToValueEntry {
         }
     }
 
-    static EdgeToValueEntry create(String name, DecimalEncodedValue dev, Map<Object, Object> map,
+    static EdgeToValueEntry create(String name, DecimalEncodedValue dev, Map<String, Object> map,
                                    double defaultValue, double minValue, double maxValue) {
         if (map.isEmpty())
             throw new IllegalArgumentException("Empty map for " + name);
@@ -74,10 +74,10 @@ final class DecimalToValueEntry implements EdgeToValueEntry {
             defaultValue = getReturnValue(name, CATCH_ALL, evEntryValue, minValue, maxValue);
 
         List<Range> ranges = new ArrayList<>();
-        for (Map.Entry<Object, Object> encValEntry : map.entrySet()) {
+        for (Map.Entry<String, Object> encValEntry : map.entrySet()) {
             if (encValEntry.getKey() == null)
                 throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
-            String key = encValEntry.getKey().toString();
+            String key = encValEntry.getKey();
             if (CATCH_ALL.equals(key))
                 continue;
 

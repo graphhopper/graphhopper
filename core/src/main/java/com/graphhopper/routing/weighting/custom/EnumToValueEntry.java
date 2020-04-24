@@ -49,7 +49,7 @@ final class EnumToValueEntry implements EdgeToValueEntry {
      *   "*": 0.9      # optional and default is 1
      * </pre>
      */
-    static EnumToValueEntry create(String name, EnumEncodedValue enumEncodedValue, Map<Object, Object> map,
+    static EnumToValueEntry create(String name, EnumEncodedValue enumEncodedValue, Map<String, Object> map,
                                    double defaultValue, double minValue, double maxValue) {
         Enum[] enumValues = enumEncodedValue.getValues();
         if (map.isEmpty())
@@ -61,10 +61,10 @@ final class EnumToValueEntry implements EdgeToValueEntry {
 
         double[] tmp = new double[enumValues.length];
         Arrays.fill(tmp, defaultValue);
-        for (Map.Entry<Object, Object> encValEntry : map.entrySet()) {
+        for (Map.Entry<String, Object> encValEntry : map.entrySet()) {
             if (encValEntry.getKey() == null)
                 throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
-            String key = encValEntry.getKey().toString();
+            String key = encValEntry.getKey();
             if (CATCH_ALL.equals(key))
                 continue;
 

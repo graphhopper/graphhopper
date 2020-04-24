@@ -43,20 +43,21 @@ final class BooleanToValueEntry implements EdgeToValueEntry {
      *   false: 0.9 # optional and default is 1, equivalent to "*": 0.9
      * </pre>
      */
-    static EdgeToValueEntry create(String name, BooleanEncodedValue encodedValue, Map<Object, Object> map,
+    static EdgeToValueEntry create(String name, BooleanEncodedValue encodedValue, Map<String, Object> map,
                                    double defaultValue, double minValue, double maxValue) {
         if (map.isEmpty())
             throw new IllegalArgumentException("Empty map for " + name);
 
-        if (map.containsKey(CATCH_ALL) && (map.containsKey("false") || map.containsKey(false)))
+        // the key can only be a String, i.e. "false" and not a boolean false -> this is properly done from jackson
+        if (map.containsKey(CATCH_ALL) && map.containsKey("false"))
             throw new IllegalArgumentException(name + ": cannot contain false and catch-all key at the same time");
 
         double trueValue = Double.NaN;
         double falseValue = defaultValue;
-        for (Map.Entry<Object, Object> encValEntry : map.entrySet()) {
+        for (Map.Entry<String, Object> encValEntry : map.entrySet()) {
             if (encValEntry.getKey() == null)
                 throw new IllegalArgumentException("key for " + name + " cannot be null, value: " + encValEntry.getValue());
-            String key = encValEntry.getKey().toString(); // ugly: could be e.g. true or "true"
+            String key = encValEntry.getKey();
 
             double returnValue = getReturnValue(name, key, encValEntry.getValue(), minValue, maxValue);
             if ("true".equals(key)) {

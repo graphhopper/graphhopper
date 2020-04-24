@@ -21,7 +21,7 @@ class DecimalToValueEntryTest {
         decimalEncodedValue.init(config);
 
         double defaultValue = 33;
-        Map<Object, Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         map.put(">8", 24);
         EdgeToValueEntry entry = DecimalToValueEntry.create("priority.my_speed", decimalEncodedValue, map, defaultValue, 1, 100);
         IntsRef flags = new IntsRef(1);
