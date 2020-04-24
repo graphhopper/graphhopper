@@ -34,7 +34,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
@@ -53,8 +52,8 @@ public class SPTResourceTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig("car-without-turncosts").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("car-with-turncosts").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                        new ProfileConfig("car_without_turncosts").setVehicle("car").setWeighting("fastest"),
+                        new ProfileConfig("car_with_turncosts").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
                 ));
         return config;
     }
@@ -67,7 +66,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPT() {
-        Response rsp = clientTarget(app, "/spt?profile=car-without-turncosts&point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -79,7 +78,7 @@ public class SPTResourceTest {
         assertEquals(118, Integer.parseInt(row[2]) / 1000, 1);
         assertEquals(2263, Integer.parseInt(row[3]), 1);
 
-        rsp = clientTarget(app, "/spt?profile=car-without-turncosts&point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
+        rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
         rspCsvString = rsp.readEntity(String.class);
         lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -93,7 +92,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPTEdgeBased() {
-        Response rsp = clientTarget(app, "/spt?profile=car-with-turncosts&point=42.531073,1.573792&time_limit=300&columns=prev_node_id,edge_id,node_id,time,distance").request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?profile=car_with_turncosts&point=42.531073,1.573792&time_limit=300&columns=prev_node_id,edge_id,node_id,time,distance").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
@@ -105,7 +104,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestDetails() {
-        Response rsp = clientTarget(app, "/spt?profile=car-without-turncosts&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
+        Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);

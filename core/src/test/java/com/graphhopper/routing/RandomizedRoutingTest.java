@@ -127,13 +127,13 @@ public class RandomizedRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("car|fastest|node", "car|fastest|edge")
+                .setCHProfileStrings("p1|car|fastest|node", "p2|car|fastest|edge")
                 .setDir(dir)
                 .create();
         turnCostStorage = graph.getTurnCostStorage();
         chProfiles = graph.getCHProfiles();
         // important: for LM preparation we need to use a weighting without turn costs #1960
-        lmProfile = new LMProfile(chProfiles.get(0).getWeighting());
+        lmProfile = new LMProfile("profile", chProfiles.get(0).getWeighting());
         weighting = traversalMode.isEdgeBased() ? chProfiles.get(1).getWeighting() : chProfiles.get(0).getWeighting();
     }
 

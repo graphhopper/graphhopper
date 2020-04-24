@@ -35,6 +35,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
@@ -134,6 +135,31 @@ public class IsochroneResourceTest {
 
         assertTrue(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.591644, 42.543216))));
         assertFalse(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.589756, 42.558012))));
+    }
+
+    @Test
+    public void requestByWeightLimit() {
+        WebTarget commonTarget = clientTarget(app, "/isochrone")
+                .queryParam("profile", "short_car")
+                .queryParam("point", "42.531073,1.573792")
+                .queryParam("type", "geojson");
+
+        long limit = 3000;
+
+        Response distanceLimitRsp = commonTarget
+                .queryParam("distance_limit", limit)
+                .request().buildGet().invoke();
+        JsonFeatureCollection distanceLimitFeatureCollection = distanceLimitRsp.readEntity(JsonFeatureCollection.class);
+        Geometry distanceLimitPolygon = distanceLimitFeatureCollection.getFeatures().get(0).getGeometry();
+
+        Response weightLimitRsp = commonTarget
+                .queryParam("weight_limit", limit)
+                .request().buildGet().invoke();
+        JsonFeatureCollection weightLimitFeatureCollection = weightLimitRsp.readEntity(JsonFeatureCollection.class);
+        Geometry weightLimitPolygon = weightLimitFeatureCollection.getFeatures().get(0).getGeometry();
+
+        assertEquals(distanceLimitPolygon.getNumPoints(), weightLimitPolygon.getNumPoints());
+        assertTrue(weightLimitPolygon.equalsTopo(distanceLimitPolygon));
     }
 
     @Test

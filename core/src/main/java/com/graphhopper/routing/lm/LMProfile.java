@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.Objects;
@@ -28,10 +27,6 @@ import static com.graphhopper.config.ProfileConfig.validateProfileName;
 public class LMProfile {
     private final String profileName;
     private final Weighting weighting;
-
-    public LMProfile(Weighting weighting) {
-        this(AbstractWeighting.weightingToFileName(weighting), weighting);
-    }
 
     public LMProfile(String profileName, Weighting weighting) {
         validateProfileName(profileName);

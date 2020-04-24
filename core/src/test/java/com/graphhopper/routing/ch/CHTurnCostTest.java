@@ -94,15 +94,15 @@ public class CHTurnCostTest {
     private List<CHProfile> createCHProfiles() {
         Set<CHProfile> profileSet = new LinkedHashSet<>(5);
         // the first one is always the one with infinite u-turn costs
-        profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, INFINITE_U_TURN_COSTS))));
+        profileSet.add(CHProfile.edgeBased("p0", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, INFINITE_U_TURN_COSTS))));
         // this one we also always add
-        profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 50))));
+        profileSet.add(CHProfile.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 50))));
         // add more (distinct) profiles
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         while (profileSet.size() < 5) {
             int uTurnCosts = 10 + rnd.nextInt(90);
-            profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts))));
+            profileSet.add(CHProfile.edgeBased("p" + profileSet.size(), new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts))));
         }
         return new ArrayList<>(profileSet);
     }

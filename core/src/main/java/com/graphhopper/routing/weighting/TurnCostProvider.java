@@ -34,8 +34,6 @@ public interface TurnCostProvider {
      */
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 
-    String getName();
-
     TurnCostProvider NO_TURN_COST_PROVIDER = new TurnCostProvider() {
         @Override
         public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
@@ -47,9 +45,5 @@ public interface TurnCostProvider {
             return 0;
         }
 
-        @Override
-        public String getName() {
-            return "";
-        }
     };
 }

@@ -19,13 +19,15 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
@@ -41,7 +43,7 @@ public class AlternativeRouteCHTest {
 
     public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
         final GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false);
-        CHProfile chProfile = CHProfile.nodeBased(new FastestWeighting(carFE));
+        CHProfile chProfile = CHProfile.nodeBased("p", new FastestWeighting(carFE));
         graph.addCHGraph(chProfile);
         graph.create(1000);
 

@@ -26,7 +26,10 @@ import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -65,8 +68,8 @@ public class EdgeBasedNodeContractorTest {
         EncodingManager encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
                 .setCHProfileStrings(
-                        "car|shortest|edge",
-                        "car|shortest|edge|60"
+                        "p1|car|shortest|edge",
+                        "p2|car|shortest|edge|60"
                 )
                 .create();
         chProfiles = graph.getCHProfiles();

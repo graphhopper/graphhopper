@@ -206,8 +206,8 @@ public class CHPreparationHandler {
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : preparations) {
             LOGGER.info((++counter) + "/" + preparations.size() + " calling " +
-                    "CH prepare.doWork for " + prepare.getCHProfile() + " ... (" + getMemInfo() + ")");
-            final String name = prepare.getCHProfile().toFileName();
+                    "CH prepare.doWork for profile '" + prepare.getCHProfile().getName() + "' " + prepare.getCHProfile().getTraversalMode() + " ... (" + getMemInfo() + ")");
+            final String name = prepare.getCHProfile().getName();
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {

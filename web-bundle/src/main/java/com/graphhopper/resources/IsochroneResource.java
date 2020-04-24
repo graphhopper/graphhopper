@@ -79,7 +79,8 @@ public class IsochroneResource {
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") @NotNull GHPointParam point,
             @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
-            @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceInMeter,
+            @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceLimitInMeter,
+            @QueryParam("weight_limit") @DefaultValue("-1") LongParam weightLimit,
             @QueryParam("type") @DefaultValue("json") ResponseType respType) {
         StopWatch sw = new StopWatch().start();
 
@@ -116,8 +117,11 @@ public class IsochroneResource {
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
         double limit;
-        if (distanceInMeter.get() > 0) {
-            limit = distanceInMeter.get();
+        if (weightLimit.get() > 0){
+            limit = weightLimit.get();
+            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
+        } else if (distanceLimitInMeter.get() > 0) {
+            limit = distanceLimitInMeter.get();
             shortestPathTree.setDistanceLimit(limit + Math.max(limit * 0.14, 2_000));
         } else {
             limit = timeLimitInSeconds.get() * 1000;
@@ -132,7 +136,9 @@ public class IsochroneResource {
         Collection<ConstraintVertex> sites = new ArrayList<>();
         shortestPathTree.search(qr.getClosestNode(), label -> {
             double exploreValue;
-            if (distanceInMeter.get() > 0) {
+            if (weightLimit.get() > 0){
+                exploreValue = label.weight;
+            } else if (distanceLimitInMeter.get() > 0) {
                 exploreValue = label.distance;
             } else {
                 exploreValue = label.time;

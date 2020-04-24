@@ -139,15 +139,17 @@ public class GraphBuilder {
     private void addCHProfilesFromStrings(TurnCostStorage turnCostStorage) {
         for (String profileString : chProfileStrings) {
             String[] split = profileString.split("\\|");
-            if (split.length < 3) {
-                throw new IllegalArgumentException("Invalid CH profile string: " + profileString + ". Expected something like: car|fastest|node or bike|shortest|edge|40");
+            if (split.length < 4) {
+                throw new IllegalArgumentException("Invalid CH profile string: " + profileString + ". " +
+                        "Expected something like: 'my_profile|car|fastest|node' or 'your_profile|bike|shortest|edge|40'");
             }
-            FlagEncoder encoder = encodingManager.getEncoder(split[0]);
-            String weightingStr = split[1];
-            String edgeOrNode = split[2];
+            String profileName = split[0];
+            FlagEncoder encoder = encodingManager.getEncoder(split[1]);
+            String weightingStr = split[2];
+            String edgeOrNode = split[3];
             int uTurnCostsInt = INFINITE_U_TURN_COSTS;
-            if (split.length == 4) {
-                uTurnCostsInt = Integer.parseInt(split[3]);
+            if (split.length == 5) {
+                uTurnCostsInt = Integer.parseInt(split[4]);
             }
             TurnCostProvider turnCostProvider;
             boolean edgeBased = false;
@@ -172,7 +174,7 @@ public class GraphBuilder {
             } else {
                 throw new IllegalArgumentException("Weighting not supported using this method, maybe you can use setCHProfile instead: " + weightingStr);
             }
-            chProfiles.add(new CHProfile(weighting, edgeBased));
+            chProfiles.add(new CHProfile(profileName, weighting, edgeBased));
         }
 
     }

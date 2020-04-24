@@ -1437,11 +1437,11 @@ public class GraphHopperIT {
 
         // if we do not pass u_turn_costs with the request hints we get those from the profile
         Weighting w = hopper.createWeighting(hopper.getProfiles().get(0), new PMap());
-        assertEquals("shortest|mtb|u_turn_costs=123", w.toString());
+        assertEquals(123.0, w.calcTurnWeight(5, 6, 5));
 
         // we can overwrite the u_turn_costs given in the profile
         w = hopper.createWeighting(hopper.getProfiles().get(0), new PMap().putObject(U_TURN_COSTS, 46));
-        assertEquals("shortest|mtb|u_turn_costs=46", w.toString());
+        assertEquals(46.0, w.calcTurnWeight(5, 6, 5));
     }
 
     @Test

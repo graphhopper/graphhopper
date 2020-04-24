@@ -77,12 +77,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     }
 
     @Override
-    public String getName() {
-        return toString();
-    }
-
-    @Override
     public String toString() {
-        return "" + uTurnCostsInt;
+        return "default_tcp_" + uTurnCostsInt;
     }
 }

@@ -44,7 +44,7 @@ public class AlternativeRouteEdgeCHTest {
     public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
         final GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, true);
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage());
-        CHProfile chProfile = CHProfile.edgeBased(new FastestWeighting(carFE, turnCostProvider));
+        CHProfile chProfile = CHProfile.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
         graph.addCHGraph(chProfile);
         graph.create(1000);
 
