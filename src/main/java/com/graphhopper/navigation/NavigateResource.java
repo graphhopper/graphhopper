@@ -169,8 +169,8 @@ public class NavigateResource {
             request = new GHRequest(requestPoints);
         }
 
-        request.setVehicle(vehicleStr).
-                setWeighting(weighting).
+        request.putHint("vehicle", vehicleStr).
+                putHint("weighting", weighting).
                 setLocale(localeStr).
                 putHint(CALC_POINTS, true).
                 putHint(INSTRUCTIONS, enableInstructions).
