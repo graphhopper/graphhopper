@@ -48,7 +48,7 @@ public class ShortcutUnpackerTest {
         encoder = new CarFlagEncoder(5, 5, 10).setSpeedTwoDirections(true);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("car|fastest|" + (edgeBased ? "edge" : "node"))
+                .setCHProfileStrings("profile|car|fastest|" + (edgeBased ? "edge" : "node"))
                 .create();
         chGraph = graph.getCHGraph();
         routingCHGraph = new RoutingCHGraphImpl(chGraph, chGraph.getCHProfile().getWeighting());

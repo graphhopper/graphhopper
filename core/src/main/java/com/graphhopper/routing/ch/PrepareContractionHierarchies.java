@@ -345,7 +345,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
     private void logHeuristicStats(int updateCounter) {
         logger.info(String.format(Locale.ROOT,
-                "nodes: %10s, shortcuts: %10s, updates: %2d, checked-nodes: %10s, %s, %s, %s",
+                "%s, nodes: %10s, shortcuts: %10s, updates: %2d, checked-nodes: %10s, %s, %s, %s",
+                (isEdgeBased() ? "edge" : "node"),
                 nf(sortedNodes.getSize()),
                 nf(nodeContractor.getAddedShortcutsCount()),
                 updateCounter,

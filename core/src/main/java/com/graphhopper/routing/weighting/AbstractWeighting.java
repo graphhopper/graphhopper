@@ -24,8 +24,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static com.graphhopper.util.Helper.isEmpty;
-import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * @author Peter Karich
@@ -125,22 +123,8 @@ public abstract class AbstractWeighting implements Weighting {
         return name.matches("[\\|_a-z]+");
     }
 
-    /**
-     * Replaces all characters which are not numbers, characters or underscores with underscores
-     */
-    public static String weightingToFileName(Weighting w) {
-        String name = w.toString();
-        name = name.replaceAll("u_turn_costs=", "");
-        return toLowerCase(name).replaceAll("\\|", "_");
-    }
-
     @Override
     public String toString() {
-        String turnCostProviderName = turnCostProvider.getName();
-        String result = getName() + "|" + flagEncoder;
-        if (!isEmpty(turnCostProviderName)) {
-            result += "|u_turn_costs=" + turnCostProviderName;
-        }
-        return result;
+        return getName() + "|" + flagEncoder;
     }
 }

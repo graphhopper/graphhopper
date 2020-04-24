@@ -50,12 +50,12 @@ public class CHPreparationHandlerTest {
         EncodingManager encodingManager = EncodingManager.create(encoder);
         ghStorage = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true)
                 .setCHProfileStrings(
-                        "car|fastest|node",
-                        "car|shortest|node",
-                        "car|short_fastest|node",
-                        "car|fastest|edge|30",
-                        "car|shortest|edge|30",
-                        "car|short_fastest|edge|30"
+                        "p1|car|fastest|node",
+                        "p2|car|shortest|node",
+                        "p3|car|short_fastest|node",
+                        "p4|car|fastest|edge|30",
+                        "p5|car|shortest|edge|30",
+                        "p6|car|short_fastest|edge|30"
                 )
                 .create();
         List<CHProfile> chProfiles = ghStorage.getCHProfiles();

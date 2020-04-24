@@ -39,10 +39,6 @@ public class ShortestPathTreeTest {
             return 0;
         }
 
-        @Override
-        public String getName() {
-            return "ulrich";
-        }
     };
 
     private final EncodingManager encodingManager = EncodingManager.create("car");

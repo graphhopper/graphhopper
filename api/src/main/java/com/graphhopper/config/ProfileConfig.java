@@ -35,10 +35,8 @@ public class ProfileConfig {
     private PMap hints = new PMap();
 
     public static void validateProfileName(String profileName) {
-        // currently allowing dash/minus, maybe remove later
-        // https://github.com/graphhopper/graphhopper/pull/1922#discussion_r383033522
-        if (!profileName.matches("^[a-z0-9_\\-]*$")) {
-            throw new IllegalArgumentException("Profile names may only contain lower case letters, numbers, underscores and dashs, given: " + profileName);
+        if (!profileName.matches("^[a-z0-9_]*$")) {
+            throw new IllegalArgumentException("Profile names may only contain lower case letters, numbers and underscores, given: " + profileName);
         }
     }
 

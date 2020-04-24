@@ -34,7 +34,7 @@ public class DefaultEdgeFilterTest {
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager)
             .withTurnCosts(true)
-            .setCHProfileStrings("car|shortest|edge")
+            .setCHProfileStrings("profile|car|shortest|edge")
             .create();
     private final CHGraph chGraph = graph.getCHGraph();
 

@@ -103,7 +103,7 @@ public class PrepareLandmarksTest {
 
         int lm = 5, activeLM = 2;
         Weighting weighting = new FastestWeighting(encoder);
-        LMProfile lmProfile = new LMProfile(weighting);
+        LMProfile lmProfile = new LMProfile("p", weighting);
         LandmarkStorage store = new LandmarkStorage(graph, dir, lmProfile, lm);
         store.setMinimumNodes(2);
         store.createLandmarks();
@@ -192,7 +192,7 @@ public class PrepareLandmarksTest {
 
         Directory dir = new RAMDirectory(fileStr, true).create();
         Weighting weighting = new FastestWeighting(encoder);
-        LMProfile lmProfile = new LMProfile(weighting);
+        LMProfile lmProfile = new LMProfile("p", weighting);
         PrepareLandmarks plm = new PrepareLandmarks(dir, graph, lmProfile, 2);
         plm.setMinimumNodes(2);
         plm.doWork();

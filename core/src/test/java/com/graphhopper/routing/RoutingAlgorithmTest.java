@@ -1006,7 +1006,7 @@ public class RoutingAlgorithmTest {
     private GraphHopperStorage createGHStorage(boolean is3D, Weighting... weightings) {
         CHProfile[] chProfiles = new CHProfile[weightings.length];
         for (int i = 0; i < weightings.length; i++) {
-            chProfiles[i] = new CHProfile(weightings[i], traversalMode.isEdgeBased());
+            chProfiles[i] = new CHProfile(getProfileName(weightings[i]), weightings[i], traversalMode.isEdgeBased());
         }
         return new GraphBuilder(encodingManager).set3D(is3D)
                 .setCHProfiles(chProfiles)
@@ -1014,6 +1014,10 @@ public class RoutingAlgorithmTest {
                 // run edge-based algorithms
                 .withTurnCosts(traversalMode.isEdgeBased())
                 .create();
+    }
+
+    private static String getProfileName(Weighting weighting) {
+        return weighting.getName() + "_" + weighting.getFlagEncoder().toString();
     }
 
     private Path calcPath(GraphHopperStorage ghStorage, int from, int to) {
@@ -1159,7 +1163,7 @@ public class RoutingAlgorithmTest {
     private static abstract class CHCalculator implements PathCalculator {
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, int from, int to) {
-            CHProfile chProfile = new CHProfile(weighting, traversalMode.isEdgeBased());
+            CHProfile chProfile = new CHProfile(getProfileName(weighting), weighting, traversalMode.isEdgeBased());
             PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
             CHGraph chGraph = graph.getCHGraph(chProfile);
             if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
@@ -1185,7 +1189,7 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
-            CHProfile chProfile = new CHProfile(weighting, traversalMode.isEdgeBased());
+            CHProfile chProfile = new CHProfile(getProfileName(weighting), weighting, traversalMode.isEdgeBased());
             PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
             CHGraph chGraph = graph.getCHGraph(chProfile);
             if (chGraph.getEdges() == chGraph.getOriginalEdges()) {

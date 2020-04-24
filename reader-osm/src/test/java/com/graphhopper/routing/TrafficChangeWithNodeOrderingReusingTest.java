@@ -44,7 +44,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     private static final String OSM_FILE = "../local/maps/berlin-latest.osm.pbf";
 
     private final GraphHopperStorage ghStorage;
-    private int maxDeviationPercentage;
+    private final int maxDeviationPercentage;
     private final CHProfile baseProfile;
     private final CHProfile trafficProfile;
 
@@ -57,8 +57,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         this.maxDeviationPercentage = maxDeviationPercentage;
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        baseProfile = CHProfile.nodeBased(new FastestWeighting(encoder));
-        trafficProfile = CHProfile.nodeBased(new RandomDeviationWeighting(baseProfile.getWeighting(), maxDeviationPercentage));
+        baseProfile = CHProfile.nodeBased("base", new FastestWeighting(encoder));
+        trafficProfile = CHProfile.nodeBased("traffic", new RandomDeviationWeighting(baseProfile.getWeighting(), maxDeviationPercentage));
         ghStorage = new GraphBuilder(em).setCHProfiles(baseProfile, trafficProfile).build();
     }
 

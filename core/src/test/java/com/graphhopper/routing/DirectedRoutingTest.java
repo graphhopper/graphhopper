@@ -122,9 +122,9 @@ public class DirectedRoutingTest {
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
-        chProfile = CHProfile.edgeBased(weighting);
+        chProfile = CHProfile.edgeBased("p1", weighting);
         // important: for LM preparation we need to use a weighting without turn costs #1960
-        lmProfile = new LMProfile(new FastestWeighting(encoder));
+        lmProfile = new LMProfile("p2", new FastestWeighting(encoder));
         graph.addCHGraph(chProfile);
         graph.create(1000);
     }
