@@ -103,10 +103,19 @@ public class GraphHopperGtfs extends GraphHopperOSM {
 
     @Override
     protected LocationIndex createLocationIndex(Directory dir) {
-        if (getGraphHopperStorage().getNodes() > 0) {
-            return new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory()).prepareIndex();
+        LocationIndexTree tmpIndex = new LocationIndexTree(getGraphHopperStorage(), dir);
+        if (tmpIndex.loadExisting()) {
+            return tmpIndex;
         } else {
-            return new EmptyLocationIndex();
+            if (getGraphHopperStorage().getNodes() > 0) {
+                LocationIndexTree locationIndexTree = new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory());
+                if (!locationIndexTree.loadExisting()) {
+                    locationIndexTree.prepareIndex();
+                }
+                return locationIndexTree;
+            } else {
+                return new EmptyLocationIndex();
+            }
         }
     }
 
@@ -156,7 +165,8 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 }
             });
             streetNetworkIndex.close();
-            LocationIndex locationIndex = createLocationIndex(graphHopperStorage.getDirectory());
+            LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory());
+            locationIndex.prepareIndex();
             setLocationIndex(locationIndex);
         }
     }
