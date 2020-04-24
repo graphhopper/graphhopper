@@ -41,14 +41,14 @@ import com.graphhopper.util.EdgeIteratorState;
  * <p>
  * distance_costs = distance * distance_influence
  * <p>
- * The third term is also proportional to the distance and compared the second it describes additional costs that *do*
+ * The third term is also proportional to the distance but compared to the second it describes additional costs that *do*
  * depend on the edge properties. It can represent any kind of costs that depend on the edge (like inconvenience or
  * dangers encountered on 'high-stress' roads for bikes, toll roads (because they cost money), stairs (because they are
  * awkward when going by bike) etc.). This 'stress' term reads
  * <p>
  * stress_costs = distance * stress_per_meter
  * <p>
- * and like the distance term it also describes costs measured in seconds. When modelling it one always has to 'convert'
+ * and just like the distance term it describes costs measured in seconds. When modelling it, one always has to 'convert'
  * the costs into some time equivalent (e.g. for toll roads one has to think about how much money can be spent to save
  * a certain amount of time). Note that the distance_costs described by the second term in general cannot be properly
  * described by the stress costs, because the distance term allows increasing the per-distance costs per-se (regardless
@@ -61,11 +61,11 @@ import com.graphhopper.util.EdgeIteratorState;
  * vehicles maximum speed.
  * <p>
  * Therefore the full edge weight formula reads:
- * <p>
+ * <pre>
  * weight = distance / (base_speed * speed_factor)
- * + distance / (base_stress * priority
- * + distance * distance_influence
- * <p>
+ *        + distance / (base_stress * priority
+ *        + distance * distance_influence
+ * </pre>
  * where base_stress = {@link #prioOffset} * base_speed_max
  * <p>
  * The open parameters that we can adjust are therefore: speed_factor, priority and distance_influence and they are
