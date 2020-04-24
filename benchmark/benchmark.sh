@@ -92,7 +92,7 @@ measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 # todonow: what about slow routing and spatial rules for custom measurements
 echo "3 - big map with a custom model that is 'a little customized', i.e. similar to the standard fastest-car profile"
-echo "node-based CH + landmarks (edge- & node-based for LM)"
+echo "node-based CH + LM"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
@@ -110,7 +110,7 @@ measurement.ch.edge=false \
 measurement.lm=true \
 "measurement.lm.active_counts=[8]" \
 measurement.lm.edge_based=false \
-graph.flag_encoders=car|turn_costs=true \
+"graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-big-little-custom-gh \
 prepare.min_network_size=10000 \
 prepare.min_oneway_network_size=10000 \
@@ -121,7 +121,7 @@ measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 "measurement.block_area=49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512"
 
 echo "4 - big map with a custom model that is 'very customized', i.e. has many custom weighting rules"
-echo "node-based CH + landmarks (edge- & node-based for LM)"
+echo "node-based CH + LM"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
@@ -139,7 +139,7 @@ measurement.ch.edge=false \
 measurement.lm=true \
 "measurement.lm.active_counts=[8]" \
 measurement.lm.edge_based=false \
-graph.flag_encoders=car \
+"graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-big-very-custom-gh \
 prepare.min_network_size=10000 \
 prepare.min_oneway_network_size=10000 \
