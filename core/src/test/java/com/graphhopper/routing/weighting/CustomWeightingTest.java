@@ -72,14 +72,16 @@ public class CustomWeightingTest {
 
         CustomModel vehicleModel = new CustomModel();
         Map map = new HashMap();
-        map.put(PRIMARY.toString(), 2.0);
+        map.put(PRIMARY.toString(), 1.0);
+        map.put(CustomWeighting.CATCH_ALL, 0.5);
         vehicleModel.getPriority().put(KEY, map);
 
         Weighting weighting = new CustomWeighting(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.73, weighting.calcEdgeWeight(edge2, false), 0.01);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
 
-        map.put(PRIMARY.toString(), 1.1);
+        map.put(PRIMARY.toString(), 1.0);
+        map.put(CustomWeighting.CATCH_ALL, 0.9);
         weighting = new CustomWeighting(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(1.15, weighting.calcEdgeWeight(edge1, false), 0.01);
 
@@ -121,7 +123,9 @@ public class CustomWeightingTest {
         CustomModel vehicleModel = new CustomModel();
 
         BooleanEncodedValue rcLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
-        vehicleModel.getPriority().put(RoadClassLink.KEY, 0.5);
+        Map map = new HashMap<>();
+        map.put("true", 0.5);
+        vehicleModel.getPriority().put(RoadClassLink.KEY, map);
         CustomWeighting weighting = new CustomWeighting(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
 
         assertEquals(3.1, weighting.calcEdgeWeight(graphHopperStorage.edge(0, 1).setDistance(10).

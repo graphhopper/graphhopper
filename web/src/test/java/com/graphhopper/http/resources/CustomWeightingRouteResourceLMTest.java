@@ -97,7 +97,8 @@ public class CustomWeightingRouteResourceLMTest {
                 "profile: car_custom\n" +
                 "priority:\n" +
                 "  road_class:\n" +
-                "    secondary: 2\n";
+                "    secondary: 1\n" +
+                "    '*': 0.5\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1300, 1400);
@@ -106,7 +107,7 @@ public class CustomWeightingRouteResourceLMTest {
         yamlQuery = "points: [[1.5274,42.506211], [1.54006,42.511178]]\n" +
                 "profile: car_custom\n" +
                 "priority:\n" +
-                "  road_class: { residential: 1.2, primary: 1.5 }";
+                "  road_class: { residential: 0.8, primary: 1, '*': 0.66 }";
         yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1650, 1750);

@@ -41,6 +41,7 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public final class CustomWeighting extends AbstractWeighting {
     public static final String NAME = "custom";
+    public static final String CATCH_ALL = "*";
 
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
