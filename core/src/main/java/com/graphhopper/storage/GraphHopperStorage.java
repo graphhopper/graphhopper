@@ -23,11 +23,11 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -285,7 +285,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     private void checkIfConfiguredAndLoadedWeightingsCompatible() {
         String loadedStr = properties.get("graph.ch.profiles");
-        List<String> loaded = parseList(loadedStr);
+        List<String> loaded = Helper.parseList(loadedStr);
         List<CHProfile> configured = getCHProfiles();
         List<String> configuredNames = new ArrayList<>(configured.size());
         for (CHProfile p : configured) {
@@ -297,24 +297,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                         "You configured: " + configuredNames);
             }
         }
-    }
-
-    /**
-     * parses a string like [a,b,c]
-     */
-    private List<String> parseList(String listStr) {
-        String trimmed = listStr.trim();
-        if (trimmed.length() < 2)
-            return Collections.emptyList();
-        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
-        List<String> result = new ArrayList<>();
-        for (String item : items) {
-            String s = item.trim();
-            if (!s.isEmpty()) {
-                result.add(s);
-            }
-        }
-        return result;
     }
 
     @Override

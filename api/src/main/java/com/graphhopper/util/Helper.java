@@ -486,4 +486,22 @@ public class Helper {
         }
         return sb.toString();
     }
+
+    /**
+     * parses a string like [a,b,c]
+     */
+    public static List<String> parseList(String listStr) {
+        String trimmed = listStr.trim();
+        if (trimmed.length() < 2)
+            return Collections.emptyList();
+        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
+        List<String> result = new ArrayList<>();
+        for (String item : items) {
+            String s = item.trim();
+            if (!s.isEmpty()) {
+                result.add(s);
+            }
+        }
+        return result;
+    }
 }
