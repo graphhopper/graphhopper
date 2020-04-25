@@ -8,8 +8,9 @@ priority:
   max_height: {"<3.8": 0}
   max_width: {"<2.5": 0}
   road_class:
-    motorway: 1.1
+    motorway: 1
     primary: 0.5
+    "*": 0.9
   toll:
     no: 1.5
   hazmat:
