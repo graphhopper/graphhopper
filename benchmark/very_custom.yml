@@ -1,13 +1,12 @@
 # this is a heavily customized model used to benchmark routing with a custom weighting
-vehicle_height: 3.8
-vehicle_width: 2.5
-
 speed_factor:
   road_class:
     motorway: 0.85
     primary: 0.9
 
 priority:
+  max_height: {"<3.8": 0}
+  max_width: {"<2.5": 0}
   road_class:
     motorway: 1.1
     primary: 0.5
