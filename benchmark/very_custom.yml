@@ -12,7 +12,8 @@ priority:
     primary: 0.5
     "*": 0.9
   toll:
-    no: 1.5
+    no: 1
+    "*": 0.5
   hazmat:
     no: 0
 
