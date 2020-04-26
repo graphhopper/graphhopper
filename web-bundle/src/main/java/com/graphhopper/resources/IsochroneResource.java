@@ -48,6 +48,7 @@ import java.util.HashMap;
 
 import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
+import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 
@@ -75,7 +76,7 @@ public class IsochroneResource {
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
-            @QueryParam("buckets") @Range(min=1,max=20) @DefaultValue("1") IntParam nBuckets,
+            @QueryParam("buckets") @Range(min = 1, max = 20) @DefaultValue("1") IntParam nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") @NotNull GHPointParam point,
             @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
@@ -90,8 +91,7 @@ public class IsochroneResource {
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
         if (Helper.isEmpty(profileName)) {
             profileName = profileResolver.resolveProfile(hintsMap).getName();
-            hintsMap.remove("weighting");
-            hintsMap.remove("vehicle");
+            removeLegacyParameters(hintsMap);
         }
         errorIfLegacyParameters(hintsMap);
 
@@ -117,7 +117,7 @@ public class IsochroneResource {
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
         double limit;
-        if (weightLimit.get() > 0){
+        if (weightLimit.get() > 0) {
             limit = weightLimit.get();
             shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
         } else if (distanceLimitInMeter.get() > 0) {
@@ -136,7 +136,7 @@ public class IsochroneResource {
         Collection<ConstraintVertex> sites = new ArrayList<>();
         shortestPathTree.search(qr.getClosestNode(), label -> {
             double exploreValue;
-            if (weightLimit.get() > 0){
+            if (weightLimit.get() > 0) {
                 exploreValue = label.weight;
             } else if (distanceLimitInMeter.get() > 0) {
                 exploreValue = label.distance;
