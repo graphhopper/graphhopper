@@ -158,9 +158,9 @@ public class IsochroneResource {
                 sites.add(site2);
             }
         });
-        if (shortestPathTree.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
-            throw new IllegalArgumentException("Too many nodes would have to explored (" + shortestPathTree.getVisitedNodes() + "). Let us know if you need this increased.");
-        }
+        int consumedNodes = sites.size();
+        if (consumedNodes > graphHopper.getMaxVisitedNodes() / 3)
+            throw new IllegalArgumentException("Too many nodes would be included in post processing (" + consumedNodes + "). Let us know if you need this increased.");
 
         // Sites may contain repeated coordinates. Especially for edge-based traversal, that's expected -- we visit
         // each node multiple times.
@@ -227,7 +227,8 @@ public class IsochroneResource {
         }
 
         sw.stop();
-        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
+        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes()
+                + ", consumed nodes:" + consumedNodes + ", " + uriInfo.getQueryParameters());
         return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
                 build();
     }
