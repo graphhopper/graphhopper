@@ -105,7 +105,7 @@ public class RouteResource {
         if (Helper.isEmpty(profileName)) {
             enableEdgeBasedIfThereAreCurbsides(curbsides, request);
             profileName = profileResolver.resolveProfile(request.getHints()).getName();
-            removeLegacyParameters(request);
+            removeLegacyParameters(request.getHints());
         }
         errorIfLegacyParameters(request.getHints());
         request.setPoints(points).
@@ -161,7 +161,7 @@ public class RouteResource {
         if (Helper.isEmpty(request.getProfile())) {
             enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
             request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
-            removeLegacyParameters(request);
+            removeLegacyParameters(request.getHints());
         }
         errorIfLegacyParameters(request.getHints());
         GHResponse ghResponse = graphHopper.route(request);
@@ -219,12 +219,12 @@ public class RouteResource {
                     " You used 'turn_costs=" + hints.getBool("turn_costs", false) + "'");
     }
 
-    private void removeLegacyParameters(GHRequest request) {
+    public static void removeLegacyParameters(PMap hints) {
         // these parameters should only be used to resolve the profile, but should not be passed to GraphHopper
-        request.getHints().remove("weighting");
-        request.getHints().remove("vehicle");
-        request.getHints().remove("edge_based");
-        request.getHints().remove("turn_costs");
+        hints.remove("weighting");
+        hints.remove("vehicle");
+        hints.remove("edge_based");
+        hints.remove("turn_costs");
     }
 
     private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String
