@@ -60,6 +60,7 @@ public class MultiCriteriaLabelSetting {
     private final GraphExplorer explorer;
     private double betaTransfers;
     private double betaWalkTime = 1.0;
+    private long limitStreetTime = Long.MAX_VALUE;
 
     public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
         this.flagEncoder = flagEncoder;
@@ -153,6 +154,8 @@ public class MultiCriteriaLabelSetting {
                     }
                     double walkDistanceOnCurrentLeg = (!reverse && edgeType == GtfsStorage.EdgeType.BOARD || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT) ? 0 : (label.walkDistanceOnCurrentLeg + edge.getDistance());
                     long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
+                    if (walkTime > limitStreetTime)
+                        return;
                     List<Label> sptEntries = fromMap.get(edge.getAdjNode());
                     if (sptEntries == null) {
                         sptEntries = new ArrayList<>(1);
@@ -280,6 +283,10 @@ public class MultiCriteriaLabelSetting {
         } else {
             return (reverse ? -1 : 1) * (label.currentTime - label.departureTime);
         }
+    }
+
+    public void setLimitStreetTime(long limitStreetTime) {
+        this.limitStreetTime = limitStreetTime;
     }
 
     int getVisitedNodes() {

@@ -39,6 +39,7 @@ public class Request {
     private double walkSpeedKmH = 5.0;
     private int blockedRouteTypes;
     private Locale locale = Helper.getLocale("en");
+    private Integer limitStreetTime;
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;
@@ -141,4 +142,11 @@ public class Request {
         return points;
     }
 
+    public Integer getLimitStreetTime() {
+        return this.limitStreetTime;
+    }
+
+    public void setLimitStreetTime(Integer streetTime) {
+        this.limitStreetTime = streetTime;
+    }
 }

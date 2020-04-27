@@ -90,7 +90,8 @@ public final class PtRouteResource {
                             @QueryParam("locale") String localeStr,
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
-                            @QueryParam("pt.limit_solutions") Integer limitSolutions) {
+                            @QueryParam("pt.limit_solutions") Integer limitSolutions,
+                            @QueryParam("pt.limit_street_time") Integer limitStreetTime) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get();
@@ -101,6 +102,7 @@ public final class PtRouteResource {
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
+        Optional.ofNullable(limitStreetTime).ifPresent(request::setLimitStreetTime);
 
         GHResponse route = new RequestHandler(request).route();
         return WebHelper.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
@@ -155,6 +157,7 @@ public final class PtRouteResource {
 
         private final GHResponse response = new GHResponse();
         private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
+        private final long limitStreetTime;
         private QueryGraph queryGraph;
         private int visitedNodes;
 
@@ -172,6 +175,7 @@ public final class PtRouteResource {
             translation = translationMap.getWithFallBack(request.getLocale());
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
+            limitStreetTime = request.getLimitStreetTime() != null ? request.getLimitStreetTime() * 60 * 1_000 : Long.MAX_VALUE;
         }
 
         GHResponse route() {
@@ -254,6 +258,7 @@ public final class PtRouteResource {
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, false, maxVisitedNodesForRequest, new ArrayList<>());
             stationRouter.setBetaWalkTime(betaWalkTime);
+            stationRouter.setLimitStreetTime(limitStreetTime);
             Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime, blockedRouteTypes).iterator();
             List<Label> stationLabels = new ArrayList<>();
             while (stationIterator.hasNext()) {
@@ -274,10 +279,14 @@ public final class PtRouteResource {
 
             GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, walkSpeedKmH, false);
             List<Label> discoveredSolutions = new ArrayList<>();
-            final long smallestStationLabelWeight;
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, true, !ignoreTransfers, profileQuery, maxVisitedNodesForRequest, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
             router.setBetaWalkTime(betaWalkTime);
+            final long smallestStationLabelWalkTime = stationLabels.stream()
+                    .mapToLong(l -> l.walkTime).min()
+                    .orElse(Long.MAX_VALUE);
+            router.setLimitStreetTime(Math.max(0, limitStreetTime - smallestStationLabelWalkTime));
+            final long smallestStationLabelWeight;
             if (!stationLabels.isEmpty()) {
                 smallestStationLabelWeight = stationRouter.weight(stationLabels.get(0));
             } else {
