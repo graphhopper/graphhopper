@@ -46,7 +46,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -86,6 +85,7 @@ public final class PtRouteResource {
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectNode route(@QueryParam("point") @Size(min=2,max=2) List<GHLocationParam> requestPoints,
                             @QueryParam("pt.earliest_departure_time") @NotNull InstantParam departureTimeParam,
+                            @QueryParam("pt.profile_duration") @NotNull DurationParam profileDuration,
                             @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
                             @QueryParam("locale") String localeStr,
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
@@ -99,6 +99,7 @@ public final class PtRouteResource {
         Request request = new Request(points, departureTime);
         request.setArriveBy(arriveBy);
         Optional.ofNullable(profileQuery).ifPresent(request::setProfileQuery);
+        Optional.ofNullable(profileDuration.get()).ifPresent(request::setMaxProfileDuration);
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
@@ -141,7 +142,7 @@ public final class PtRouteResource {
     private class RequestHandler {
         private final int maxVisitedNodesForRequest;
         private final int limitSolutions;
-        private final long maxProfileDuration = Duration.ofHours(4).toMillis();
+        private final long maxProfileDuration;
         private final Instant initialTime;
         private final boolean profileQuery;
         private final boolean arriveBy;
@@ -167,8 +168,9 @@ public final class PtRouteResource {
             ignoreTransfers = Optional.ofNullable(request.getIgnoreTransfers()).orElse(request.isProfileQuery());
             betaTransfers = request.getBetaTransfers();
             betaWalkTime = request.getBetaWalkTime();
-            limitSolutions = Optional.ofNullable(request.getLimitSolutions()).orElse(profileQuery ? 5 : ignoreTransfers ? 1 : Integer.MAX_VALUE);
+            limitSolutions = Optional.ofNullable(request.getLimitSolutions()).orElse(profileQuery ? 50 : ignoreTransfers ? 1 : Integer.MAX_VALUE);
             initialTime = request.getEarliestDepartureTime();
+            maxProfileDuration = request.getMaxProfileDuration().toMillis();
             arriveBy = request.isArriveBy();
             walkSpeedKmH = request.getWalkSpeedKmH();
             blockedRouteTypes = request.getBlockedRouteTypes();
