@@ -85,9 +85,8 @@ The weight or 'cost' of travelling along an 'edge' (a road segment of the routin
 of the road segment (the distance), the travelling speed, the 'priority' and the 'distance_influence' factor (see below).
 To be more precise, the cost function has the following form:
 
-todonow: how to call 'x', maybe priority sensitivity?
 ```
-edge_weight = edge_distance / speed + edge_distance / (x * priority) + edge_distance * (distance_influence-1/x)
+edge_weight = edge_distance / speed + edge_distance * priority_sensitivity * (1 - priority) / priority + edge_distance * distance_influence
 ```
 
 The `edge_distance` is calculated during the initial import of the road network and you cannot change it here.
@@ -380,3 +379,5 @@ as used by custom profile inheritance. Instead of specifying a custom model file
 in which case the models you send with the requests will be merged with an 'empty' custom model (containing no rules).
 
 todonow: cross-querying with LM profiles
+todonow: do we mention here (or at least in custom weighting java docs that whenever we set priority < 1 we have some 
+kind of short_fastest weighting?)

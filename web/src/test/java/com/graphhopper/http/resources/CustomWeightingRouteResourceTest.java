@@ -85,10 +85,14 @@ public class CustomWeightingRouteResourceTest {
         JsonNode yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
+        // todonow: why use assertBetweeen?
         assertBetween("distance wasn't correct", path.get("distance").asDouble(), 500, 900);
+        //assertEquals(path.get("distance").asDouble(), 661, 10);
 
         yamlQuery += "priority:\n" +
-                "  area_custom1: 0.5\n" +
+                // todonow: the polygon used here is a bit weird and we really have to use a low priority to force the
+                // large detour
+                "  area_custom1: 0.05\n" +
                 "areas:\n" +
                 "  custom1:\n" +
                 "    type: \"Feature\"\n" +
@@ -96,7 +100,7 @@ public class CustomWeightingRouteResourceTest {
         yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1400, 1600);
+        assertEquals(3073, path.get("distance").asDouble(), 10);
     }
 
     @Test

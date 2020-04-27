@@ -55,18 +55,20 @@ import com.graphhopper.util.EdgeIteratorState;
  * of the type of the road). Also note that both the second and third term are different to the first in that they can
  * increase the edge costs but do *not* modify the travel *time*.
  * <p>
- * The next thing you need to understand is that the `CustomWeighting` does not allow setting the speed or stress_per_meter
- * directly, but instead it allows changing them relative to some base values. For speed the base value is the speed
- * we get from the base flag encoder and for the stress costs we assume a fixed per-distance cost that depends on the
- * vehicles maximum speed.
+ * Instead of letting you set the speed directly, `CustomWeighting` allows changing the speed relative to the speed we
+ * get from the base flag encoder. The stress costs can be specified by using a factor between 0 and 1 that is called
+ * 'priority'.
  * <p>
  * Therefore the full edge weight formula reads:
  * <pre>
  * weight = distance / (base_speed * speed_factor)
- *        + distance / (base_stress * priority
+ *        + distance * priority_sensitivity * (1-priority) / priority
  *        + distance * distance_influence
  * </pre>
- * where base_stress = {@link #prioOffset} * base_speed_max
+ * The second term is infinite for priority=0 and zero for priority=1. The priority_sensitivity determines how much
+ * the stress costs change when changing the priority factor. More precisely it is the value of stress_per_meter for
+ * priority=0.5. The exact value of priority_sensitivity is not important, but we choose it to be in the same order
+ * as typical speeds for the given vehicle, such that changing the priority has a similar effect to changing the speed.
  * <p>
  * The open parameters that we can adjust are therefore: speed_factor, priority and distance_influence and they are
  * specified via the `{@link CustomModel}`. The speed can also be restricted to a maximum value, in which case the value
@@ -79,6 +81,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public final class CustomWeighting extends AbstractWeighting {
     public static final String NAME = "custom";
     public static final String CATCH_ALL = "*";
+    private static final double PRIORITY_SENSITIVITY_FACTOR = 0.3;
 
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
@@ -88,6 +91,7 @@ public final class CustomWeighting extends AbstractWeighting {
     private final BooleanEncodedValue baseVehicleAccessEnc;
     private final double maxSpeed;
     private final double distanceInfluence;
+    private final double prioritySensitivity;
     private final double headingPenaltySeconds;
     private final SpeedCalculator speedCalculator;
     private final PriorityCalculator priorityCalculator;
@@ -102,10 +106,11 @@ public final class CustomWeighting extends AbstractWeighting {
         baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
         speedCalculator = new SpeedCalculator(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), lookup);
         maxSpeed = speedCalculator.getMaxSpeed() / SPEED_CONV;
+        prioritySensitivity = 1 / (PRIORITY_SENSITIVITY_FACTOR * maxSpeed);
 
         priorityCalculator = new PriorityCalculator(customModel, lookup);
 
-        // unit is "seconds per 1km"
+        // given unit is s/km -> convert to s/m
         distanceInfluence = customModel.getDistanceInfluence() / 1000;
         if (distanceInfluence < 0)
             throw new IllegalArgumentException("maximum distance_influence cannot be negative " + distanceInfluence);
@@ -113,22 +118,25 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / maxSpeed + distance * distanceInfluence;
+        return distance / maxSpeed + calcDistanceCosts(distance);
     }
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        double distance = edgeState.getDistance();
-        double seconds = calcSeconds(distance, edgeState, reverse);
+        double seconds = calcSeconds(edgeState, reverse);
         if (Double.isInfinite(seconds))
             return Double.POSITIVE_INFINITY;
-        double distanceInfluence = distance * this.distanceInfluence;
-        if (Double.isInfinite(distanceInfluence))
+        double distanceCosts = calcDistanceCosts(edgeState.getDistance());
+        if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
-        return seconds / priorityCalculator.calcPriority(edgeState, reverse) + distanceInfluence;
+        double stressCosts = calcStressCosts(edgeState, reverse);
+        if (Double.isInfinite(stressCosts))
+            return Double.POSITIVE_INFINITY;
+        // todonow: do we need to check for infinity? do we really need this for distance+seconds+stress?
+        return seconds + distanceCosts + stressCosts;
     }
 
-    double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
+    double calcSeconds(EdgeIteratorState edgeState, boolean reverse) {
         // special case for loop edges: since they do not have a meaningful direction we always need to read them in forward direction
         if (edgeState.getBaseNode() == edgeState.getAdjNode())
             reverse = false;
@@ -143,14 +151,27 @@ public final class CustomWeighting extends AbstractWeighting {
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
 
-        double seconds = distance / speed * SPEED_CONV;
+        double seconds = edgeState.getDistance() / speed * SPEED_CONV;
         // add penalty at start/stop/via points
         return edgeState.get(EdgeIteratorState.UNFAVORED_EDGE) ? seconds + headingPenaltySeconds : seconds;
     }
 
+    private double calcDistanceCosts(double distance) {
+        return distance * distanceInfluence;
+    }
+
+    private double calcStressCosts(EdgeIteratorState edgeState, boolean reverse) {
+        double priority = priorityCalculator.calcPriority(edgeState, reverse);
+        if (priority == 0)
+            return Double.POSITIVE_INFINITY;
+        if (priority < 0)
+            throw new IllegalArgumentException("Priority cannot be negative");
+        return edgeState.getDistance() * prioritySensitivity * (1 - priority) / priority;
+    }
+
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        return Math.round(calcSeconds(edgeState.getDistance(), edgeState, reverse) * 1000);
+        return Math.round(calcSeconds(edgeState, reverse) * 1000);
     }
 
     @Override
