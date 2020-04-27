@@ -3,9 +3,9 @@
 ## Standard Profiles
 
 When calculating routes with GraphHopper you can customize how different kinds of roads shall be prioritized. For example
-when travelling long distances with a car you typically want to use the highway, because this way you will reduce your
-travelling time. However, if you are going by bike you certainly do not want to use the highway and rather take some
-shorter route, use designated bike lanes and so on.
+when travelling long distances with a car you typically want to use the highway to minimize your travelling time.
+However, if you are going by bike you certainly do not want to use the highway and rather take some shorter route,
+use designated bike lanes and so on.
  
 GraphHopper includes the following pre-configured 'vehicles', that you can choose from depending on the type of vehicle
 you want to calculate routes for: 
@@ -21,12 +21,12 @@ you want to calculate routes for:
 - car4wd
 - motorcycle
 
-By choosing a vehicle GraphHopper determines the accessibilty and an average travel speed for the different road types.
-If you are in the low-level Java API note that these pre-configured vehicles correspond to implementations of the 
-`FlagEncoder` Java interface. 
+By choosing a vehicle GraphHopper determines the accessibility and an average travel speed for the different road types.
+If you are interested in the low-level Java API note that these pre-configured vehicles correspond to implementations of
+the `FlagEncoder` interface. 
  
-Besides the vehicle it is also possible to choose between different weightings (=cost functions) for the route calculation
-and GraphHopper includes the following weightings:
+Besides the vehicle it is also possible to use different weightings (=cost functions) for the route calculation. 
+GraphHopper includes the following weightings:
 
 - fastest
 - shortest
@@ -48,7 +48,7 @@ profiles:
 ```
 
 Every profile has to include a unique name that is used to select the profile when executing routing queries. The vehicle
-and weighting fields are also required and need to match one of the values listed above. To use one of the profiles you
+and weighting fields are also required and need to match one of the values listed above. To choose one of the profiles you
 need to use the `profile` parameter for your request, like `/route?point=49.5,11.1&profile=car` or 
 `/route?point=49.5,11.1&profile=some_other_profile` in this example.
 
@@ -69,15 +69,14 @@ profiles_lm:
   - profile: some_other_profile 
 ```
 
-todonow: maybe rename to speed_mode_profiles and hybrid_mode_profiles?
 Note that 'CH' is short for 'Contraction Hierarchies', the underlying technique used to realize speed mode and
 'LM' is short for 'Landmarks', which is the algorithm used for the hybrid mode.
 
 ## Custom Profiles
 
 You can take the customization of the routing profiles much further than just selecting one of the default vehicles and
-weightings by using 'custom' profiles that let you adjust the cost function on a much more fine-grained level.
-A custom profile is based on a 'base' vehicle that you like to adjust. By choosing the base vehicle you inherit the road
+weightings, by using 'custom' profiles that let you adjust the cost function on a much more fine-grained level.
+Using a custom profile you can make adjustments to a 'base' vehicle. By choosing the base vehicle you inherit the road
 accessibilty rules and default speeds of this vehicle, but the custom weighting gives you the freedom to overwrite 
 certain parts of the cost function depending on the different road properties. 
 
@@ -86,21 +85,21 @@ The weight or 'cost' of travelling along an 'edge' (a road segment of the routin
 of the road segment (the distance), the travelling speed, the 'priority' and the 'distance_influence' factor (see below).
 To be more precise, the cost function has the following form:
 
+todonow: how to call 'x', maybe priority sensitivity?
 ```
-edge_weight = edge_distance / (speed * priority) + edge_distance * distance_influence
+edge_weight = edge_distance / speed + edge_distance / (x * priority) + edge_distance * (distance_influence-1/x)
 ```
 
 The `edge_distance` is calculated during the initial import of the road network and you cannot change it here.
-Note that the edge weights are proportional to this distance. What can be customized is the `speed`, the
-`priority` and the `distance_influence`, which we will be looking at in a moment. But first we need to have a look
-at the 'properties' of an edge:
+Note that the edge weights are proportional to this distance. What can be customized is the `speed`, the `priority` and
+the `distance_influence`, which we will discuss in a moment. First we need to have a look at the 'properties' of an edge:
 
 ### Edge properties: Encoded Values
 
-GraphHopper assigns values of different categories to each road segment. For example for OSM data they are derived from
-the OSM way tags. The available categories are specified by using the `graph.encoded_values` field in `config.yml` and 
-(unless you do further customization of GraphHopper) the possible categories are defined in [`DefaultEncodedValueFactory.java`](../../core/src/main/java/com/graphhopper/routing/profiles/DefaultEncodedValueFactory.java).
-For example there exist the following categories (some of their possible values are given in brackets).
+GraphHopper assigns values of different categories ('encoded values') to each road segment. For example for OSM data 
+they are derived from the OSM way tags. The available categories are specified by using the `graph.encoded_values` field
+in `config.yml` and (unless you do further customization of GraphHopper) the possible categories are defined in [`DefaultEncodedValueFactory.java`](../../core/src/main/java/com/graphhopper/routing/profiles/DefaultEncodedValueFactory.java).
+For example there are the following categories (some of their possible values are given in brackets).
 
 - road_class: (other,motorway,trunk,primary,secondary,track,steps,cycleway,footway,...)
 - road_environment: (road,ferry,bridge,tunnel,...)
@@ -112,28 +111,33 @@ To find out about all the possible values of a category you can take a look at t
 `/info` endpoint of the server or use the auto-complete feature of the text box that opens when clicking the 'flex' icon
 in the web UI.
 
-Besides these kind of categories, which can take multiple different values, there are also some that represent a boolean
-value (they are either true or false for a given edge), like:
+Besides these kind of categories, which can take multiple different string values, there are also some that represent a
+boolean value (they are either true or false for a given edge), like:
 
 - get_off_bike
 - road_class_link
+
+And there are others that take on a numeric value, like: 
+
+- max_weight
+- max_width
 
 *Important note: Whenever you want to use any of these categories for a custom profile you need to add them to 
 `graph.encoded_values` in `config.yml`.*
 
 ### Setting up a Custom Model
 
-As mentioned above the custom weighting function has three parameters that you can adjust: speed, priority and
-distance_influence. These parameters are derived from rules that determine the parameters from the edge's properties.
-A set of such rules is called a 'custom model' and it is written in a dedicated YAML format. We will now see how 
-the cost function parameters can be influenced by the different fields of such a custom model.
+As mentioned above, the custom weighting function has three parameters that you can adjust: speed, priority and
+distance_influence. You can set up rules that determine these parameters from the edge's properties. A set of such rules
+is called a 'custom model' and it is written in a dedicated YAML format. We will now see how the cost function parameters
+can be influenced by the different fields of such a custom model.
   
 #### Customizing `speed`
 
 For every edge a default speed is inherited from the base vehicle, but you have multiple options to adjust it.
 The first thing you can do is rescaling the default speeds using the `speed_factor` section. For example this is how you
-can specify that the speed of every edge that has the value 'motorway' for the category 'road_class' should be half the
-default speed that is normally used by the base vehicle for this road class:
+can reduce the the speed of every edge that has the value 'motorway' for the category 'road_class' to fifty percent of 
+the default speed that is normally used by the base vehicle for this road class:
 ```yaml
 speed_factor:
   road_class: {motorway: 0.5}
@@ -163,16 +167,35 @@ a road segment that has `road_class=motorway` will be `0.5`, the speed factor of
 `road_environment=tunnel` will be `0.4` and the speed factor of a road segment that has `road_class=secondary` and 
 `road_environment=tunnel` will be `0.8`.
 
-For encoded values with boolean values, like `get_off_bike` mentioned above you only specify the value that shall be used
-if the corresponding property is `true`, so
+Instead of setting the speed factors for certain values you can instead set the speed factors for all *other* values using
+as special key (`"*"`), like this:
+```yaml
+speed_factor: 
+  road_class: {"*": 0.5}
+  road_environment: {tunnel: 0.8, "*": 0.6}
+```
+
+So in this example we set a speed factor of `0.5` regardless of the `road_class` and all `road_environment` values yield
+a speed factor of `0.6` *except* `tunnel` which gets a speed factor of `0.8`. And as mentioned above for edges that match
+multiple of these rules the different factors get multiplied.
+
+For encoded values with boolean values, like `get_off_bike` you set the speed factor like this:
 ```yaml
 speed_factor:
-  get_off_bike: 0.6
+  get_off_bike: {true: 0.6, false: 1.0}
 ```
-means that the speed factor for edges with `get_off_bike=true` will be `0.6`.
+which means that for edges with `get_off_bike=true` the speed factor will be `0.6` and otherwise it will be `1.0`.
+You can skip any of these values to retain the default.
 
-Note that values of `speed_factor` have to be in the range `[0,1]` and it is not possible to *increase* the speed of
-for edges of certain types. 
+For encoded values with numeric values, like `max_width` you use the `<` and `>` operators, like this:
+```yaml
+speed_factor:
+  max_width: {"<2.5": 0.8}
+``` 
+which means that for all edges with `max_width` smaller than `2.5m` the speed factor is `0.8`.
+
+In any case values of `speed_factor` have to be in the range `[0,1]` and it is not possible to *increase* the speed for
+edges of certain types. 
 
 Another way to change the speed is using the `max_speed` section, for example:
 ```yaml
@@ -189,8 +212,8 @@ is set for the base vehicle (which you cannot change).
 
 You can also modify the speed for all edges in a certain area. To do this first add some areas to the `areas` section
 of the custom model and then use this name to set a `speed_factor` or `max_speed` for this area. In the following
-example we set the `speed_factor` an area called `my_area` to `0.7`. For `max_speed` it works the same way. 
-Note that the area names need to be prefixed with `area_` when used in the one of the speed sections.  
+example we set the `speed_factor` of an area called `my_area` to `0.7`. For `max_speed` it works the same way. All area
+names need to be prefixed with `area_`.  
 
 ```yaml
 speed_factor:
@@ -214,11 +237,11 @@ areas:
       ]
 ```
 
-Using the `areas` feature you can also block entire areas completely, but you should rather use the `priority` section 
-for this (see below).
+The areas are given in GeoJson format. Using the `areas` feature you can also block entire areas completely, but you 
+should rather use the `priority` section for this (see below).
 
-The last thing you can do to customize the speed is using the `max_speed_fallback` of your custom model. By default this 
-is set to the maximum speed of the base vehicle. It allows to set a global maximum for the speeds, so for example
+The last custom model field you can to customize the speed is the `max_speed_fallback`. By default this is set to the
+maximum speed of the base vehicle. It allows setting a global maximum for the speeds, so for example
 ```yaml
 max_speed_fallback: 50
 ```
@@ -227,42 +250,37 @@ means that the speed is at most `50km/h` for any edge regardless of its properti
 #### Customizing `priority`
 
 Looking at the custom cost function formula above might make you wonder what the difference between speed and priority is,
-because it enters the formula in the same way. When calculating the edge weights (which determine the optimal route) changing
-the speed in fact has the same effect as changing the priority. But do not forget that GraphHopper not only calculates the
-optimal route, but also the time (and distance) it takes to drive (or walk) this route. Changing the speeds also means
-changing the resulting travelling times, but `priority` allows you to alter the route calculation *without* changing the 
-travelling time of a given route.  
+because it enters the formula in a very similar way. When calculating the edge weights (which determine the optimal route)
+changing the speed in fact has almost the same effect as changing the priority. But do not forget that GraphHopper not 
+only calculates the optimal route, but also the time (and distance) it takes to drive (or walk) this route. Changing the
+speeds also means changing the resulting travelling times, but `priority` allows you to alter the route calculation 
+*without* changing the travelling time of a given route.  
 
-By default the priority is `1` for every edge, so without doing anything it does not affect the route calculation. You 
-can change the `priority` very much like you can change the `speed_factor`, so
+By default the priority is `1` for every edge, which means the edge weight formula reduces to:
+```
+edge_weight = edge_distance / speed + edge_distance * distance_influence
+```
+so without doing anything it does not affect the weight. However, changing the priority for certain kinds of roads yields
+a relative weight difference depending on the edges' properties. 
+
+You change the `priority` very much like you change the `speed_factor`, so
 ```yaml
 priority:
-  road_class: {motorway: 0.5, secondary: 1.5}
+  road_class: {motorway: 0.5, secondary: 0.9}
   road_environment: {tunnel: 0.1}
 ```
 
 means that road segments with `road_class=motorway` and `road_environment=tunnel` get priority `0.5*0.1=0.05` and those 
-with `road_class=secondary` get priority `1.5` and so on.
+with `road_class=secondary` get priority `0.9` and so on.
 
 Edges with lower priority values will be less likely part of the optimal route calculated by GraphHopper, higher values 
-mean that these kind of road segments shall be preferred (for example you might want to increase `road_class=cycleway` 
-when going by bike). `priority` values need to be in the range `[0, 100]`.
-
-The priority can also be used to restrict access to certain roads depending on your vehicle dimensions. To do this
-you need to add `max_width`,`max_height`,`max_length` and/or `max_weight` to `graph.encoded_values` (see above).
-
-In your custom model you can setup your vehicle dimensions like this:
-
+mean that these kind of road segments shall be preferred. To prefer certain roads you need to `decrease` the priority of
+others, which you can do using the special key `"*"`, i.e. 
 ```yaml
-vehicle_weight: 1.5 # in tons
-vehicle_height: 2.1 # in meters
-vehicle_length: 7.6 # in meters
-vehicle_width: 2.3 # in meters
+priority: 
+  road_class: {cycleway: 1.0, "*": 0.8}
 ```
-
-By default non of these restrictions will be applied and you can enable them separately by adding these definitions to
-your custom model file.
-
+means decreasing the priority for all road_classes *except* cycleways. `priority` values need to be in the range `[0, 1]`.
 Just like we saw for `speed_factor` and `max_speed` you can also adjust the priority for all edges in a certain area.
 It works the same way:
 
@@ -271,14 +289,24 @@ priority:
   area_my_area: 0.7 
 ```
 
-To block an entire area completely set the priority value to `0`.
+To block an entire area completely set the priority value to `0`. Some other useful encoded values to restrict access
+to certain roads depending on your vehicle dimensions are the following:
+```yaml
+priority: 
+  max_width: {"<2.5": 0}
+  max_length: {"<10.0": 0}
+  max_weight: {"<3.5": 0}
+```
+which means that the priority for all edges that allow a maximum vehicle width of `2.5m`, a maximum vehicle length of 
+`10m` or a maximum vehicle weight of `3.5tons` is zero (these edges are blocked).
 
 #### Customizing `distance_influence`
 
 `distance_influence` allows you to control the trade-off between a fast route (minimum time) and a short route
-(minimum distance). Setting it to `0` means that GraphHopper will return the fastest possible route (while still 
-taking into account the priorities), and for higher values it will prioritize routes that are fast (but maybe not fastest)
-but at the same time are short in distance.
+(minimum distance). Setting it to `0` means that GraphHopper will return the fastest possible route, *unless* you set 
+the priority of any edges to something different than `1.0`. Using the priority factors will always to some part favor
+some routes because they are shorter as well. Higher values of `distance_influence` will prioritize routes that are fast
+(but maybe not fastest), but at the same time are short in distance.
 
 You use it like this:
 ```yaml
@@ -286,11 +314,12 @@ distance_influence: 100
 ``` 
 
 The default is `70`. More precisely, by specifying the `distance_influence` you tell the routing engine how much time
-a detour (a longer distance route) must save you such that you prefer it compared to a shorter distance route. 
-A value of zero means that no matter how little time you can save when doing a detour you will take it, i.e. you always
-prefer the fastest route. Assuming that default `priorities` (=1) a value of `30` means that one extra kilometer must save you `30s`
-of travelling time. Or to put it another way if a reference route takes `600s` and is `10km` long, `distance_influence=30`
-means that you are willing to take an alternative route that is `11km` long only if it takes no longer than `570s` (saves `30s`).      
+you need to save on a detour (a longer distance route) such that you prefer taking the detour compared to a shorter 
+distance route. Assuming that all priorities are `1` a value of zero means that no matter how little time you can save 
+when doing a detour you will take it, i.e. you always prefer the fastest route. A value of `30` means that one extra
+kilometer must save you `30s` of travelling time. Or to put it another way if a reference route takes `600s` and is 
+`10km` long, `distance_influence=30` means that you are willing to take an alternative route that is `11km` long only if
+it takes no longer than `570s` (saves `30s`).      
 
 ## Setting up a Custom Profile
 
@@ -307,9 +336,9 @@ profiles:
   
 ```
 
-Selecting a custom profile also works the same way as selecting a standard profile. In our example just add `profile=my_custom_profile`
-to your routing request. Also setting up hybrid- or speed-mode works the same way, simply use the `profiles_ch/lm` sections
-and add the name of your custom profile.
+Selecting a custom profile also works like selecting a standard profile. In our example just add `profile=my_custom_profile`
+to your routing request. To set up hybrid- or speed-mode, simply use the `profiles_ch/lm` sections and add the name of
+your custom profile (just like you do for standard profiles).
 
 ## Inheritance between Custom Profiles
 
@@ -341,14 +370,13 @@ profiles:
   - name: my_flexible_car_profile
     vehicle: car
     weighting: custom
-    custom_model_file: empty
+    custom_model_file: my_custom_model.yml
 ``` 
 
-The special value `empty` means that the custom model will not contain any rules, but you could just as well use some
-custom model here. To change the profile for a single routing request you use the `/route-custom` endpoint and send your
-custom model (using the same YAML format explained above) with the request body. The model you send will then be merged
-with the profile you select using the `profile` parameter (which has to be a custom profile) using the same merging rules
-as used by custom profile inheritance.
+To change the profile for a single routing request you use the `/route-custom` endpoint and send your custom model 
+(using the same YAML format explained above) with the request body. The model you send will then be merged with the 
+profile you select using the `profile` parameter (which has to be a custom profile) using the same merging rules
+as used by custom profile inheritance. Instead of specifying a custom model file you can set `custom_model_file: empty`
+in which case the models you send with the requests will be merged with an 'empty' custom model (containing no rules).
 
 todonow: cross-querying with LM profiles
-todonow: mention priority normalization?
