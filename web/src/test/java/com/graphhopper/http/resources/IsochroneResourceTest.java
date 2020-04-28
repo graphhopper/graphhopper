@@ -203,6 +203,18 @@ public class IsochroneResourceTest {
     }
 
     @Test
+    public void queryWithLegacyParameter() {
+        Response rsp = clientTarget(app, "/isochrone")
+                .queryParam("point", "42.508932,1.528516")
+                .queryParam("turn_costs", "false")
+                .queryParam("type", "geojson")
+                .request().buildGet().invoke();
+        JsonFeatureCollection featureCollection = rsp.readEntity(JsonFeatureCollection.class);
+        Geometry polygon0 = featureCollection.getFeatures().get(0).getGeometry();
+        assertEquals(330, polygon0.getCoordinates().length, 20);
+    }
+
+    @Test
     public void missingPoint() {
         Response rsp = clientTarget(app, "/isochrone").request().buildGet().invoke();
         assertEquals(400, rsp.getStatus());
@@ -244,7 +256,7 @@ public class IsochroneResourceTest {
     public void requestBadType() {
         Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=130&type=xml")
                 .request().buildGet().invoke();
-
+        assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         String message = json.path("message").asText();
 

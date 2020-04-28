@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -186,12 +187,13 @@ public class GraphHopperGtfsIT {
         ghRequest.setProfileQuery(true);
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setLimitSolutions(Integer.MAX_VALUE);
+        ghRequest.setMaxProfileDuration(Duration.ofHours(4));
 
         GHResponse response = ptRouteResource.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
                 .map(path -> LocalTime.from(path.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
-        // If profile time window is 4 hours (default), then we should get these answers, not more and not less:
+        // If profile time window is 4 hours, then we should get these answers, not more and not less:
         // At 10:00 (end of profile time window), the departure at 10:04 is optimal.
         // This is hairy, it's easy to confuse this and 09:54 becomes the last option.
         List<LocalTime> expectedDepartureTimes = Stream.of(

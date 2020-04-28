@@ -61,7 +61,7 @@ final class SpeedCalculator {
                         (Number) value, maxSpeed, 0, maxSpeed));
             } else {
                 if (!(value instanceof Map))
-                    throw new IllegalArgumentException(maxSpeedKey + ": non-root entries requires a map but was: " + value.getClass().getSimpleName());
+                    throw new IllegalArgumentException(maxSpeedKey + ": non-root entries require a map but was: " + value.getClass().getSimpleName());
                 final double defaultMaxSpeed = maxSpeed, minMaxSpeed = 0, maxMaxSpeed = maxSpeed;
                 EncodedValue encodedValue = getEV(lookup, "max_speed", key);
                 if (encodedValue instanceof EnumEncodedValue) {
@@ -98,7 +98,7 @@ final class SpeedCalculator {
                         (Number) value, 1, 0, 1));
             } else {
                 if (!(value instanceof Map))
-                    throw new IllegalArgumentException(speedFactorKey + ": non-root entries requires a map but was: " + value.getClass().getSimpleName());
+                    throw new IllegalArgumentException(speedFactorKey + ": non-root entries require a map but was: " + value.getClass().getSimpleName());
                 final double defaultSpeedFactor = 1, minSpeedFactor = 0, maxSpeedFactor = 1;
                 EncodedValue encodedValue = getEV(lookup, "speed_factor", key);
                 if (encodedValue instanceof EnumEncodedValue) {
