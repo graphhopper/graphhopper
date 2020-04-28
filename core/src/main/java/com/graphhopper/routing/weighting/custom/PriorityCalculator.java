@@ -46,7 +46,7 @@ final class PriorityCalculator {
                         (Number) value, 1, 0, 1));
             } else {
                 if (!(value instanceof Map))
-                    throw new IllegalArgumentException(priorityKey + ": non-root entries requires a map but was: " + value.getClass().getSimpleName());
+                    throw new IllegalArgumentException(priorityKey + ": non-root entries require a map but was: " + value.getClass().getSimpleName());
                 final double defaultPriority = 1, minPriority = 0, maxPriority = 1;
                 EncodedValue encodedValue = getEV(lookup, "priority", key);
                 if (encodedValue instanceof EnumEncodedValue) {
