@@ -85,7 +85,7 @@ public final class PtRouteResource {
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectNode route(@QueryParam("point") @Size(min=2,max=2) List<GHLocationParam> requestPoints,
                             @QueryParam("pt.earliest_departure_time") @NotNull InstantParam departureTimeParam,
-                            @QueryParam("pt.profile_duration") @NotNull DurationParam profileDuration,
+                            @QueryParam("pt.profile_duration") DurationParam profileDuration,
                             @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
                             @QueryParam("locale") String localeStr,
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
