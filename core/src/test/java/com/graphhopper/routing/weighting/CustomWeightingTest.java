@@ -71,20 +71,31 @@ public class CustomWeightingTest {
 
     @Test
     public void withPriority() {
-        // 50km/h -> 72s per km, 100km/h -> 36s per km
-        EdgeIteratorState edge = graphHopperStorage.edge(0, 1, 1000, true)
-                .set(avSpeedEnc, 50).setReverse(avSpeedEnc, 100)
-                .set(roadClassEnc, SECONDARY);
-        // if we reduce the priority we get higher edge weights
+        // 25km/h -> 144s per km, 50km/h -> 72s per km, 100km/h -> 36s per km
+        EdgeIteratorState slow = graphHopperStorage.edge(0, 1, 1000, true).set(avSpeedEnc, 25).set(roadClassEnc, SECONDARY);
+        EdgeIteratorState medium = graphHopperStorage.edge(0, 1, 1000, true).set(avSpeedEnc, 50).set(roadClassEnc, SECONDARY);
+        EdgeIteratorState fast = graphHopperStorage.edge(0, 1, 1000, true).set(avSpeedEnc, 100).set(roadClassEnc, SECONDARY);
+
+        // without priority costs fastest weighting is the same as custom weighting
+        assertEquals(144, new FastestWeighting(carFE, NO_TURN_COST_PROVIDER).calcEdgeWeight(slow, false), .1);
+        assertEquals(72, new FastestWeighting(carFE, NO_TURN_COST_PROVIDER).calcEdgeWeight(medium, false), .1);
+        assertEquals(36, new FastestWeighting(carFE, NO_TURN_COST_PROVIDER).calcEdgeWeight(fast, false), .1);
+
         Map<String, Object> map = new HashMap<>();
-        map.put(SECONDARY.toString(), 0.5);
         CustomModel model = new CustomModel().setDistanceInfluence(0);
+        assertEquals(144, createWeighting(model).calcEdgeWeight(slow, false), .1);
+        assertEquals(72, createWeighting(model).calcEdgeWeight(medium, false), .1);
+        assertEquals(36, createWeighting(model).calcEdgeWeight(fast, false), .1);
+
+        // if we reduce the priority we get higher edge weights
+        map.put(SECONDARY.toString(), 0.5);
         model.getPriority().put(KEY, map);
-        // regardless of the speed we get the same priority costs and they are roughly of the same order as the speed
-        // costs we get if the speed is 50km/h
+        // the absolute priority costs do not depend on the speed, so setting priority=0.5 means a lower relative
+        // weight increase for slow edges and a higher relative increase for faster edges
         double expectedPriorityCosts = 85.7;
-        assertEquals(expectedPriorityCosts + 72, createWeighting(model).calcEdgeWeight(edge, false), .1);
-        assertEquals(expectedPriorityCosts + 36, createWeighting(model).calcEdgeWeight(edge, true), .1);
+        assertEquals(expectedPriorityCosts + 144, createWeighting(model).calcEdgeWeight(slow, false), .1);
+        assertEquals(expectedPriorityCosts + 72, createWeighting(model).calcEdgeWeight(medium, false), .1);
+        assertEquals(expectedPriorityCosts + 36, createWeighting(model).calcEdgeWeight(fast, false), .1);
     }
 
     @Test
