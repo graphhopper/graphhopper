@@ -55,18 +55,15 @@ import com.graphhopper.util.EdgeIteratorState;
  * of the type of the road). Also note that both the second and third term are different to the first in that they can
  * increase the edge costs but do *not* modify the travel *time*.
  * <p>
- * The next thing you need to understand is that the `CustomWeighting` does not allow setting the speed or stress_per_meter
- * directly, but instead it allows changing them relative to some base values. For speed the base value is the speed
- * we get from the base flag encoder and for the stress costs we assume a fixed per-distance cost that depends on the
- * vehicles maximum speed.
+ * Instead of letting you set the speed directly, `CustomWeighting` allows changing the speed relative to the speed we
+ * get from the base flag encoder. The stress costs can be specified by using a factor between 0 and 1 that is called
+ * 'priority'.
  * <p>
  * Therefore the full edge weight formula reads:
  * <pre>
- * weight = distance / (base_speed * speed_factor)
- *        + distance / (base_stress * priority
+ * weight = distance / (base_speed * speed_factor * priority)
  *        + distance * distance_influence
  * </pre>
- * where base_stress = {@link #prioOffset} * base_speed_max
  * <p>
  * The open parameters that we can adjust are therefore: speed_factor, priority and distance_influence and they are
  * specified via the `{@link CustomModel}`. The speed can also be restricted to a maximum value, in which case the value
@@ -105,7 +102,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
         priorityCalculator = new PriorityCalculator(customModel, lookup);
 
-        // unit is "seconds per 1km"
+        // given unit is s/km -> convert to s/m
         distanceInfluence = customModel.getDistanceInfluence() / 1000;
         if (distanceInfluence < 0)
             throw new IllegalArgumentException("maximum distance_influence cannot be negative " + distanceInfluence);
@@ -118,14 +115,15 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        // todonow: is it really faster to store distance in a local variable here?
         double distance = edgeState.getDistance();
         double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds))
             return Double.POSITIVE_INFINITY;
-        double distanceInfluence = distance * this.distanceInfluence;
-        if (Double.isInfinite(distanceInfluence))
+        double distanceCosts = distance * distanceInfluence;
+        if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
-        return seconds / priorityCalculator.calcPriority(edgeState, reverse) + distanceInfluence;
+        return seconds / priorityCalculator.calcPriority(edgeState, reverse) + distanceCosts;
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {

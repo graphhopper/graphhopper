@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static com.graphhopper.http.resources.CustomWeightingRouteResourceLMTest.assertBetween;
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -73,8 +72,8 @@ public class CustomWeightingRouteResourceTest {
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1400, 1600);
-        assertBetween("time wasn't correct", path.get("time").asLong() / 1000.0, 120, 180);
+        assertEquals(path.get("distance").asDouble(), 1500, 10);
+        assertEquals(path.get("time").asLong(), 151_000, 1_000);
     }
 
     @Test
@@ -85,10 +84,12 @@ public class CustomWeightingRouteResourceTest {
         JsonNode yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 500, 900);
+        assertEquals(path.get("distance").asDouble(), 661, 10);
 
         yamlQuery += "priority:\n" +
-                "  area_custom1: 0.5\n" +
+                // todonow: shall we increase the priority here to get the route that crosses the polygon, but uses
+                // a faster road (see #2021)? or maybe do both?
+                "  area_custom1: 0.05\n" +
                 "areas:\n" +
                 "  custom1:\n" +
                 "    type: \"Feature\"\n" +
@@ -96,7 +97,7 @@ public class CustomWeightingRouteResourceTest {
         yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1400, 1600);
+        assertEquals(3073, path.get("distance").asDouble(), 10);
     }
 
     @Test
@@ -106,7 +107,7 @@ public class CustomWeightingRouteResourceTest {
         JsonNode yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 600, 700);
+        assertEquals(path.get("distance").asDouble(), 661, 5);
 
         String queryYamlFromFile = Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml"));
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
@@ -115,7 +116,7 @@ public class CustomWeightingRouteResourceTest {
         yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
                 new MediaType("application", "yaml"))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1000, 2000);
+        assertEquals(path.get("distance").asDouble(), 1007, 5);
 
         // results should be identical be it via server-side profile or query profile:
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
