@@ -70,8 +70,17 @@ final class PriorityCalculator {
 
     static EncodedValue getEV(EncodedValueLookup lookup, String name, String key) {
         if (!lookup.hasEncodedValue(key))
-            throw new IllegalArgumentException("Cannot find encoded value '" + key + "' specified in '" + name + "'. Available: " + lookup.getAllShared());
+            throw new IllegalArgumentException("Cannot find encoded value '" + key + "' specified in '" + name
+                    + "'. Available: " + names(lookup.getAllShared()));
         return lookup.getEncodedValue(key, EncodedValue.class);
+    }
+
+    private static String names(List<EncodedValue> allShared) {
+        String nameStr = "";
+        for (EncodedValue ev : allShared) {
+            nameStr += ev.getName() + ",";
+        }
+        return nameStr;
     }
 
     /**

@@ -765,7 +765,7 @@ public class EncodingManager implements EncodedValueLookup {
     public List<EncodedValue> getAllShared() {
         List<EncodedValue> list = new ArrayList<>(encodedValueMap.size());
         for (EncodedValue ev : encodedValueMap.values()) {
-            if (!isSharedEV(ev)) list.add(ev);
+            if (isSharedEV(ev)) list.add(ev);
         }
         return list;
     }

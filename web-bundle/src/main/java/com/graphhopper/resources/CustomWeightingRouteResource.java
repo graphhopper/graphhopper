@@ -56,18 +56,16 @@ import static com.graphhopper.util.Parameters.Routing.*;
  *
  * @author Peter Karich
  */
-@Path("custom")
+@Path("route-custom")
 public class CustomWeightingRouteResource {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomWeightingRouteResource.class);
 
     private final GraphHopper graphHopper;
-    private final ObjectMapper yamlOM;
 
     @Inject
     public CustomWeightingRouteResource(GraphHopper graphHopper) {
         this.graphHopper = graphHopper;
-        this.yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
     }
 
     @POST
@@ -122,19 +120,5 @@ public class CustomWeightingRouteResource {
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
-    }
-
-    @POST
-    @Consumes({"text/x-yaml", "text/yaml", "application/x-yaml", "application/yaml"})
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response doPost(String yaml, @Context HttpServletRequest httpReq) {
-        CustomRequest customRequest;
-        try {
-            customRequest = yamlOM.readValue(yaml, CustomRequest.class);
-        } catch (Exception ex) {
-            // TODO should we really provide this much details to API users?
-            throw new IllegalArgumentException("Incorrect YAML: " + ex.getMessage(), ex);
-        }
-        return doPost(customRequest, httpReq);
     }
 }

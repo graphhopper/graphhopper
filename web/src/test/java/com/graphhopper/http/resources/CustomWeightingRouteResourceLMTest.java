@@ -34,11 +34,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
+import static com.graphhopper.http.resources.CustomWeightingRouteResourceTest.yamlToJson;
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.*;
 
@@ -81,7 +81,7 @@ public class CustomWeightingRouteResourceLMTest {
                 " \"points\": [[1.518946,42.531453],[1.54006,42.511178]]," +
                 " \"profile\": \"car_custom\"" +
                 "}";
-        final Response response = clientTarget(app, "/custom").request().post(Entity.json(jsonQuery));
+        final Response response = clientTarget(app, "/route-custom").request().post(Entity.json(jsonQuery));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -154,8 +154,7 @@ public class CustomWeightingRouteResourceLMTest {
     }
 
     Response queryYaml(String yamlStr, int code) {
-        Response response = clientTarget(app, "/custom").request().post(Entity.entity(yamlStr,
-                new MediaType("application", "yaml")));
+        Response response = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlStr)));
         assertEquals(code, response.getStatus());
         return response;
     }

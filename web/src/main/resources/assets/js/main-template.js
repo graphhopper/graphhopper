@@ -1,4 +1,5 @@
 global.d3 = require('d3');
+var YAML = require('js-yaml');
 var Flatpickr = require('flatpickr');
 require('flatpickr/dist/l10n');
 
@@ -99,7 +100,7 @@ $(document).ready(function (e) {
        routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
        var inputText = $("#flex-input-text").val();
        if(inputText.length < 5) {
-           routeResultsDiv.html("JSON/YAML too short");
+           routeResultsDiv.html("Routing configuration too short");
            return;
        }
 
@@ -114,43 +115,23 @@ $(document).ready(function (e) {
            }
        }
 
-       var request, contentType;
-       if(inputText.indexOf("{") == 0) {
-           try {
-             contentType = 'application/json; charset=utf-8';
-             var jsonModel = JSON.parse(inputText);
-             jsonModel.points = points;
-             jsonModel.points_encoded = "false";
-             jsonModel.elevation = ghRequest.api_params.elevation;
-             request = JSON.stringify(jsonRequest);
-           } catch(ex) {
-             routeResultsDiv.html("Cannot parse JSON " + ex);
-             return;
-           }
-       } else {
-           contentType = "text/yaml";
-           var lines = inputText.split('\n');
-           var modelText = "";
-           for(var i = 0; i < lines.length; i++) {
-             modelText += lines[i] + "\n";
-           }
-           var pointsStr = "";
-           for(var i = 0; i < points.length; i++) {
-             if(i > 0) pointsStr += ",";
-             pointsStr += "[" + points[i] + "]";
-           }
-
-           request = "points: [" + pointsStr + "]\n"
-                   + "points_encoded: false\n"
-                   + "elevation: " + ghRequest.api_params.elevation +"\n"
-                   + modelText;
-           console.log(request)
+       var jsonModel;
+       try {
+         jsonModel = inputText.indexOf("{") == 0? JSON.parse(inputText) : YAML.safeLoad(inputText);
+       } catch(ex) {
+         routeResultsDiv.html("Cannot parse " + contentType + " " + ex);
+         return;
        }
 
+       jsonModel.points = points;
+       jsonModel.points_encoded = false;
+       jsonModel.elevation = ghRequest.api_params.elevation;
+       var request = JSON.stringify(jsonModel);
+
        $.ajax({
-           url: "/custom",
+           url: "/route-custom",
            type: "POST",
-           contentType: contentType,
+           contentType: 'application/json; charset=utf-8',
            dataType: "json",
            data: request,
            success: createRouteCallback(ghRequest, routeResultsDiv, "", true),
@@ -274,7 +255,7 @@ $(document).ready(function (e) {
                         endIndex = endIndex < 0 ? cleanedText.length : endIndex;
                         var wordUnderCursor = cleanedText.substring(startIndex, endIndex);
                         if(this.selectionStart == 0 || this.value.substr(this.selectionStart - 1, 1) === "\n") {
-                           document.getElementById("ev_value").innerHTML = "<b>root:</b> profile, vehicle_weight, vehicle_width, vehicle_height, priority, speed_factor, max_speed, max_speed_fallback, distance_influence, areas";
+                           document.getElementById("ev_value").innerHTML = "<b>root:</b> profile, speed_factor, priority, max_speed, max_speed_fallback, distance_influence, areas";
                         } else if(wordUnderCursor === "priority" || wordUnderCursor === "speed_factor" || wordUnderCursor === "max_speed") {
                            document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + Object.keys(json.encoded_values).join(", ");
                         } else if(json.encoded_values[wordUnderCursor]) {

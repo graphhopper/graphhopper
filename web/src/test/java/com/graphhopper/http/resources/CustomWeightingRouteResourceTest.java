@@ -1,6 +1,8 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
@@ -81,8 +83,7 @@ public class CustomWeightingRouteResourceTest {
         String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: car\n";
 
-        JsonNode yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
-                new MediaType("application", "yaml"))).readEntity(JsonNode.class);
+        JsonNode yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 661, 10);
 
@@ -94,8 +95,7 @@ public class CustomWeightingRouteResourceTest {
                 "  custom1:\n" +
                 "    type: \"Feature\"\n" +
                 "    geometry: { type: \"Polygon\", coordinates: [[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }";
-        yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
-                new MediaType("application", "yaml"))).readEntity(JsonNode.class);
+        yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertEquals(3073, path.get("distance").asDouble(), 10);
     }
@@ -104,8 +104,7 @@ public class CustomWeightingRouteResourceTest {
     public void testCargoBike() throws IOException {
         String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: bike\n";
-        JsonNode yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
-                new MediaType("application", "yaml"))).readEntity(JsonNode.class);
+        JsonNode yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
@@ -113,17 +112,27 @@ public class CustomWeightingRouteResourceTest {
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: bike\n" +
                 queryYamlFromFile;
-        yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
-                new MediaType("application", "yaml"))).readEntity(JsonNode.class);
+        yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1007, 5);
 
         // results should be identical be it via server-side profile or query profile:
         yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: cargo_bike";
-        yamlNode = clientTarget(app, "/custom").request().post(Entity.entity(yamlQuery,
-                new MediaType("application", "yaml"))).readEntity(JsonNode.class);
+        yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
         JsonNode path2 = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), path2.get("distance").asDouble(), 1);
+    }
+
+    static String yamlToJson(String yaml) {
+        try {
+            ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
+            Object obj = yamlReader.readValue(yaml, Object.class);
+
+            ObjectMapper jsonWriter = new ObjectMapper();
+            return jsonWriter.writeValueAsString(obj);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }
