@@ -62,6 +62,13 @@ VM options: -Xms1g -Xmx1g -server -Ddw.graphhopper.datareader.file=[your-area].o
 Program arguments: server config.yml
 ```
 
+If IntelliJ shows an error like: 
+```
+Error:(46, 56) java: package sun.misc does not exist
+```
+go to `Settings -> Build,Execution,Deployment -> Compiler -> Java Compiler` and disable: 
+`Use '--release' option for cross compilation (java 9 and later)`. c.f. #1854
+
 ### Contribute
 
 See this [guide](../../CONTRIBUTING.md) on how to contribute.
