@@ -18,6 +18,7 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.shapes.BBox;
@@ -28,7 +29,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Peter Karich
@@ -49,16 +52,18 @@ public class InfoResource {
     }
 
     public static class Info {
-        public static class PerVehicle {
-            public boolean elevation;
-            public boolean turn_costs;
+        public static class ProfileData {
+            public String profileName;
+            public String vehicle;
+            public String weighting;
         }
 
         public BBox bbox;
+        public final List<ProfileData> profiles = new ArrayList<>();
         public List<String> supported_vehicles;
-        public final Map<String, PerVehicle> features = new HashMap<>();
         public String version = Constants.VERSION;
         public String build_date = Constants.BUILD_DATE;
+        public boolean elevation;
         public String import_date;
         public String data_date;
         public String prepare_ch_date;
@@ -70,19 +75,18 @@ public class InfoResource {
         final Info info = new Info();
         // use bbox always without elevation (for backward compatibility)
         info.bbox = new BBox(storage.getBounds().minLon, storage.getBounds().maxLon, storage.getBounds().minLat, storage.getBounds().maxLat);
+        for (ProfileConfig p : config.getProfiles()) {
+            Info.ProfileData profileData = new Info.ProfileData();
+            profileData.profileName = p.getName();
+            profileData.vehicle = p.getVehicle();
+            profileData.weighting = p.getWeighting();
+            info.profiles.add(profileData);
+        }
+        info.elevation = hasElevation;
         List<String> encoderNames = Arrays.asList(storage.getEncodingManager().toString().split(","));
         info.supported_vehicles = new ArrayList<>(encoderNames);
         if (config.has("gtfs.file")) {
             info.supported_vehicles.add("pt");
-        }
-        for (String encoderName : encoderNames) {
-            Info.PerVehicle perVehicleJson = new Info.PerVehicle();
-            perVehicleJson.elevation = hasElevation;
-            perVehicleJson.turn_costs = storage.getEncodingManager().getEncoder(encoderName).supportsTurnCosts();
-            info.features.put(encoderName, perVehicleJson);
-        }
-        if (config.has("gtfs.file")) {
-            info.features.put("pt", new InfoResource.Info.PerVehicle());
         }
         info.import_date = storage.getProperties().get("datareader.import.date");
         info.data_date = storage.getProperties().get("datareader.data.date");

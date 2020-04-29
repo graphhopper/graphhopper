@@ -34,11 +34,6 @@ if (ghenv.environment === 'development') {
     var autocomplete = AutoComplete.prototype.createStub();
 } else {
     var autocomplete = new AutoComplete(ghenv.geocoding.host, ghenv.geocoding.api_key);
-    // overwrite default for production
-    GHRequest.prototype.hasTCSupport = function() {
-       if(this.api_params.turn_costs !== false)
-          this.api_params.turn_costs = new Set(["car", "truck", "small_truck", "scooter"]).has(this.api_params.vehicle);
-    };
 }
 
 var mapLayer = require('./map.js');
@@ -50,7 +45,6 @@ var translate = require('./translate.js');
 
 var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
-var vehicleTools = require('./tools/vehicle.js');
 var tileLayers = require('./config/tileLayers.js');
 if(ghenv.with_tiles)
    tileLayers.enableVectorTiles();
@@ -120,15 +114,23 @@ $(document).ready(function (e) {
                 nominatim.setBounds(bounds);
                 var vehiclesDiv = $("#vehicles");
 
-                function createButton(vehicle, hide) {
-                    var button = $("<button class='vehicle-btn' title='" + translate.tr(vehicle) + "'/>");
+                function createButton(profile, hide) {
+                    var vehicle = profile.vehicle;
+                    var profileName = profile.profile_name;
+                    // todonow: the profile name could be anything so we cannot translate it. Then again for things like
+                    // 'car','foot' etc. it would be nice to get the translation. maybe we need to be a bit more clever
+                    // here and show the (translated) vehicle name *and* the profile name (and maybe show the profile
+                    // name in brackets and only if there are multiple profiles with the same vehicle?)
+                    var button = $("<button class='vehicle-btn' title='" + profileName + "'/>");
                     if (hide)
                         button.hide();
 
-                    button.attr('id', vehicle);
-                    button.html("<img src='img/" + vehicle + ".png' alt='" + translate.tr(vehicle) + "'></img>");
+                    button.attr('id', profileName);
+                    // todonow: see comment regarding translation above. it also applies to the 'alt' attribute here
+                    button.html("<img src='img/" + vehicle.toLowerCase() + ".png' alt='" + profileName + "'></img>");
                     button.click(function () {
-                        ghRequest.initVehicle(vehicle);
+                        ghRequest.setProfile(profileName);
+                        ghRequest.removeLegacyParameters();
                         resolveAll();
                         if (ghRequest.route.isResolved())
                           routeLatLng(ghRequest);
@@ -136,26 +138,42 @@ $(document).ready(function (e) {
                     return button;
                 }
 
-                if (json.features) {
-                    ghRequest.features = json.features;
+                if (json.profiles) {
+                    var profiles = json.profiles;
+                    // first sort alphabetically to maintain a consistent order, then move certain elements to front/back
+                    profiles.sort(function (a, b) {
+                         return a.vehicle < b.vehicle ? -1 : a.vehicle > b.vehicle ? 1 : 0;
+                    });
+                    // the desired order is car,foot,bike,<others>,motorcycle
+                    var firstVehicles = ["car", "foot", "bike"];
+                    for (var i=firstVehicles.length-1; i>=0; --i) {
+                        profiles = moveToFront(profiles, function(p) { return p.vehicle === firstVehicles[i]; });
+                    }
+                    var lastVehicles = ["mtb", "motorcycle"];
+                    for (var i=0; i<lastVehicles.length; ++i) {
+                        profiles = moveToFront(profiles, function(p) { return p.vehicle !== lastVehicles[i]; });
+                    }
+                    ghRequest.profiles = profiles;
+                    ghRequest.setElevation(json.elevation);
 
-                    // car, foot and bike should come first. mc comes last
-                    var prefer = {"car": 1, "foot": 2, "bike": 3, "motorcycle": 10000};
-                    var showAllVehicles = urlParams.vehicle && (!prefer[urlParams.vehicle] || prefer[urlParams.vehicle] > 3);
-                    var vehicles = vehicleTools.getSortedVehicleKeys(json.features, prefer);
-                    if (vehicles.length > 0)
-                        ghRequest.initVehicle(vehicles[0]);
+                    // only show all profiles if the url already specifies an existing profile that is not amongst the 'firstVehicles'
+                    var urlProfile = profiles.find(function (p) { return urlParams.profile && p.profile_name === urlParams.profile; });
+                    var showAllProfiles = urlProfile && firstVehicles.indexOf(urlProfile.vehicle)>=0;
+                    if (profiles.length > 0)
+                        ghRequest.setProfile(profiles[0].profile_name);
 
+                    var numVehiclesWhenCollapsed = 3;
                     var hiddenVehicles = [];
-                    for (var i in vehicles) {
-                        var btn = createButton(vehicles[i].toLowerCase(), !showAllVehicles && i > 2);
+                    for (var i = 0; i < profiles.length; ++i) {
+                        var btn = createButton(profiles[i], !showAllProfiles && i >= numVehiclesWhenCollapsed);
                         vehiclesDiv.append(btn);
-
-                        if (i > 2)
+                        if (i >= numVehiclesWhenCollapsed)
                             hiddenVehicles.push(btn);
                     }
 
-                    if (!showAllVehicles && vehicles.length > 3) {
+                    // todonow: it seems a bit weird that first some icons are hidden and when we uncollapse them
+                    // we cannot hide them anymore... why do we hide anything in the first place?
+                    if (!showAllProfiles && profiles.length > numVehiclesWhenCollapsed) {
                         var moreBtn = $("<a id='more-vehicle-btn'> ...</a>").click(function () {
                             moreBtn.hide();
                             for (var i in hiddenVehicles) {
@@ -166,6 +184,8 @@ $(document).ready(function (e) {
                         vehiclesDiv.append(moreBtn);
                     }
                 }
+                $("button#" + profiles[0].profile_name).addClass("selectvehicle");
+
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
 
                 mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
@@ -176,7 +196,7 @@ $(document).ready(function (e) {
                 checkInput();
             }, function (err) {
                 console.log(err);
-                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
+                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps/">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
 
                 bounds = {
                     "minLon": -180,
@@ -239,6 +259,13 @@ $(document).ready(function (e) {
     checkInput();
 });
 
+/**
+ * Takes an array and returns another array with the same elements but sorted such that all elements matching the given
+ * condition come first.
+ */
+function moveToFront(arr, condition) {
+    return arr.filter(condition).concat(arr.filter(function (e) { return !condition(e); }))
+}
 
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
@@ -508,11 +535,10 @@ function flagAll() {
 }
 
 function routeLatLng(request, doQuery) {
-    var i;
-
     // do_zoom should not show up in the URL but in the request object to avoid zooming for history change
     var doZoom = request.do_zoom;
     request.do_zoom = true;
+    request.removeProfileParameterIfLegacyRequest();
 
     var urlForHistory = request.createHistoryURL() + "&layer=" + tileLayers.activeLayerName;
 
@@ -525,6 +551,7 @@ function routeLatLng(request, doQuery) {
         params.do_zoom = doZoom;
         // force a new request even if we have the same parameters
         params.mathRandom = Math.random();
+        console.log('setting params: ', params)
         History.pushState(params, messages.browserTitle, urlForHistory);
         return;
     }
@@ -541,7 +568,7 @@ function routeLatLng(request, doQuery) {
     mapLayer.setDisabledForMapsContextMenu('intermediate', false);
 
     $("#vehicles button").removeClass("selectvehicle");
-    $("button#" + request.getVehicle().toLowerCase()).addClass("selectvehicle");
+    $("button#" + request.getProfile().toLowerCase()).addClass("selectvehicle");
 
     var urlForAPI = request.createURL();
     routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
@@ -617,7 +644,7 @@ function routeLatLng(request, doQuery) {
         if(json.paths.length > 0 && json.paths[0].points_order) {
             mapLayer.clearLayers();
             var po = json.paths[0].points_order;
-            for (i = 0; i < po.length; i++) {
+            for (var i = 0; i < po.length; i++) {
                 setFlag(ghRequest.route.getIndex(po[i]), i);
             }
         }
@@ -702,7 +729,7 @@ function routeLatLng(request, doQuery) {
                 // detailKey, would be for example average_speed
                 for (var detailKey in detailObj) {
                     var pathDetailsArr = detailObj[detailKey];
-                    for (i = 0; i < pathDetailsArr.length; i++) {
+                    for (var i = 0; i < pathDetailsArr.length; i++) {
                         var pathDetailObj = pathDetailsArr[i];
                         var firstIndex = pathDetailObj[0];
                         var value = pathDetailObj[2];

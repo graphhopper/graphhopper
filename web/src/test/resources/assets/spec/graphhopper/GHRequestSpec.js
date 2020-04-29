@@ -15,6 +15,7 @@ describe("GHRequest", function () {
     });
 
     it("features should work", function () {
+        // todonow update all these tests
         var ghRequest = new GHRequest("http://test.de?vehicle=car");
         var params = {};
         params.elevation = true;
