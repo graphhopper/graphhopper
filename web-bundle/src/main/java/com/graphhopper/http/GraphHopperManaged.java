@@ -95,6 +95,7 @@ public class GraphHopperManaged implements Managed {
         }
 
         ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
+        ObjectMapper jsonOM = Jackson.newObjectMapper();
         List<ProfileConfig> newProfiles = new ArrayList<>();
         for (ProfileConfig profileConfig : configuration.getProfiles()) {
             if (!CustomWeighting.NAME.equals(profileConfig.getWeighting())) {
@@ -108,7 +109,7 @@ public class GraphHopperManaged implements Managed {
                 newProfiles.add(new CustomProfileConfig(profileConfig).setCustomModel(new CustomModel()));
             else
                 try {
-                    CustomModel customModel = yamlOM.readValue(new File(customModelLocation), CustomModel.class);
+                    CustomModel customModel = (customModelLocation.endsWith(".json") ? jsonOM : yamlOM).readValue(new File(customModelLocation), CustomModel.class);
                     newProfiles.add(new CustomProfileConfig(profileConfig).setCustomModel(customModel));
                 } catch (Exception ex) {
                     throw new RuntimeException("Cannot load custom_model from " + customModelLocation + " for profile " + profileConfig.getName(), ex);

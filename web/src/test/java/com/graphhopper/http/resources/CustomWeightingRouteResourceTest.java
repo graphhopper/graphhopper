@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +50,9 @@ public class CustomWeightingRouteResourceTest {
                         new CustomProfileConfig("truck").setVehicle("car").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/truck.yml"),
                         new CustomProfileConfig("cargo_bike").setVehicle("bike").
-                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/cargo_bike.yml"))).
+                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/cargo_bike.yml"),
+                        new CustomProfileConfig("json_bike").setVehicle("bike").
+                                putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"))).
                 setCHProfiles(Collections.singletonList(new CHProfileConfig("truck")));
         return config;
     }
@@ -122,6 +123,21 @@ public class CustomWeightingRouteResourceTest {
         yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
         JsonNode path2 = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), path2.get("distance").asDouble(), 1);
+    }
+
+    @Test
+    public void testJsonBike() {
+        String jsonQuery = "{" +
+                " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
+                " \"profile\": \"json_bike\"" +
+                "}";
+        final Response response = clientTarget(app, "/route-custom").request().post(Entity.json(jsonQuery));
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        assertEquals(path.get("distance").asDouble(), 660, 10);
     }
 
     static String yamlToJson(String yaml) {
