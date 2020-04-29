@@ -87,8 +87,8 @@ public class CustomWeightingRouteResourceLMTest {
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 3100, 3300);
-        assertBetween("time wasn't correct", path.get("time").asLong() / 1000.0, 170, 200);
+        assertEquals(path.get("distance").asDouble(), 3180, 10);
+        assertEquals(path.get("time").asLong(), 182_000, 1_000);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class CustomWeightingRouteResourceLMTest {
                 "    '*': 0.5\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1300, 1400);
+        assertEquals(path.get("distance").asDouble(), 1317, 5);
 
         // now prefer primary roads via special yaml-map notation
         yamlQuery = "points: [[1.5274,42.506211], [1.54006,42.511178]]\n" +
@@ -110,7 +110,7 @@ public class CustomWeightingRouteResourceLMTest {
                 "  road_class: { residential: 0.8, primary: 1, '*': 0.66 }";
         yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 1650, 1750);
+        assertEquals(path.get("distance").asDouble(), 1707, 5);
     }
 
     @Test
@@ -122,7 +122,7 @@ public class CustomWeightingRouteResourceLMTest {
                 "    tunnel: 0.1\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 2350, 2500);
+        assertEquals(path.get("distance").asDouble(), 2437, 5);
     }
 
     @Test
@@ -150,12 +150,7 @@ public class CustomWeightingRouteResourceLMTest {
                 "    steps: 0\n";
         JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         JsonNode path = yamlNode.get("paths").get(0);
-        assertBetween("distance wasn't correct", path.get("distance").asDouble(), 300, 600);
-    }
-
-    static void assertBetween(String msg, double val, double from, double to) {
-        assertTrue(msg + ": " + val, val > from);
-        assertTrue(msg + ": " + val, val < to);
+        assertEquals(path.get("distance").asDouble(), 328, 5);
     }
 
     Response queryYaml(String yamlStr, int code) {

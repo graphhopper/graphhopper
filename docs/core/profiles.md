@@ -72,8 +72,26 @@ profiles_lm:
 Note that 'CH' is short for 'Contraction Hierarchies', the underlying technique used to realize speed mode and
 'LM' is short for 'Landmarks', which is the algorithm used for the hybrid mode.
 
+For hybrid mode there is a special feature that allows 're-using' the prepared data for different profiles. You can
+do this like this:
+```yaml
+profiles_lm:
+  - profile: car
+  - profile: some_other_profile
+    preparation_profile: car
+```
+
+which means that for `some_other_profile` the preparation of the `car` profile will be used. However, this will only
+give correct routing results if `some_other_profile` yields larger or equal weights for all edges than the `car` profile.
+Better do not use this feature unless you know what you are doing.  
+
 ## Custom Profiles
 
+*Disclaimer*: Custom profiles should still be considered a beta feature. Using them should be working, but details about
+the weight formula and the meaning of the different parameters is still subject to change. Also this feature will strongly
+benefit from community feedback, so do not hesitate with sharing your experience, custom models or problems you are 
+running into!
+ 
 You can take the customization of the routing profiles much further than just selecting one of the default vehicles and
 weightings, by using 'custom' profiles that let you adjust the cost function on a much more fine-grained level.
 Using a custom profile you can make adjustments to a 'base' vehicle. By choosing the base vehicle you inherit the road
@@ -260,7 +278,7 @@ By default the priority is `1` for every edge, which means the edge weight formu
 edge_weight = edge_distance / speed + edge_distance * distance_influence
 ```
 so without doing anything it does not affect the weight. However, changing the priority for certain kinds of roads yields
-a relative weight difference depending on the edges' properties. 
+a relative weight difference depending on the edges' properties.
 
 You change the `priority` very much like you change the `speed_factor`, so
 ```yaml
@@ -377,7 +395,3 @@ To change the profile for a single routing request you use the `/route-custom` e
 profile you select using the `profile` parameter (which has to be a custom profile) using the same merging rules
 as used by custom profile inheritance. Instead of specifying a custom model file you can set `custom_model_file: empty`
 in which case the models you send with the requests will be merged with an 'empty' custom model (containing no rules).
-
-todonow: cross-querying with LM profiles
-todonow: do we mention here (or at least in custom weighting java docs that whenever we set priority < 1 we have some 
-kind of short_fastest weighting?)
