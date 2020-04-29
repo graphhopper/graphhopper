@@ -17,15 +17,12 @@
  */
 package com.graphhopper.resources;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.MultiException;
 import com.graphhopper.config.ProfileConfig;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.CustomRequest;
-import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
 import com.graphhopper.util.Helper;

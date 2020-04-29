@@ -210,7 +210,6 @@ public class Measurement {
                 System.gc();
                 boolean isCH = false;
                 boolean isLM = true;
-                // TODO maybe for node-based do only LM=8 and compare different LM only for edge-based?
                 Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).

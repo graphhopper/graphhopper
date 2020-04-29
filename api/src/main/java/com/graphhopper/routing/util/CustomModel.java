@@ -38,8 +38,8 @@ public class CustomModel {
     private Double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceInfluence = DEFAULT_D_I;
-    private Map<String, Object> speedFactor = new HashMap<>();
-    private Map<String, Object> maxSpeed = new HashMap<>();
+    private Map<String, Object> speedFactorMap = new HashMap<>();
+    private Map<String, Object> maxSpeedMap = new HashMap<>();
     private Map<String, Object> priorityMap = new HashMap<>();
     private Map<String, JsonFeature> areas = new HashMap<>();
 
@@ -51,8 +51,8 @@ public class CustomModel {
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
 
-        speedFactor = deepCopy(toCopy.getSpeedFactor());
-        maxSpeed = deepCopy(toCopy.getMaxSpeed());
+        speedFactorMap = deepCopy(toCopy.getSpeedFactor());
+        maxSpeedMap = deepCopy(toCopy.getMaxSpeed());
         priorityMap = deepCopy(toCopy.getPriority());
 
         areas.putAll(toCopy.getAreas());
@@ -78,11 +78,11 @@ public class CustomModel {
     }
 
     public Map<String, Object> getSpeedFactor() {
-        return speedFactor;
+        return speedFactorMap;
     }
 
     public Map<String, Object> getMaxSpeed() {
-        return maxSpeed;
+        return maxSpeedMap;
     }
 
     public CustomModel setMaxSpeedFallback(Double maxSpeedFallback) {
@@ -128,8 +128,8 @@ public class CustomModel {
     public String toString() {
         return "CustomModel{" +
                 "distanceInfluence=" + distanceInfluence +
-                ", speedFactor=" + speedFactor +
-                ", maxSpeed=" + maxSpeed +
+                ", speedFactor=" + speedFactorMap +
+                ", maxSpeed=" + maxSpeedMap +
                 ", maxSpeedFallback=" + maxSpeedFallback +
                 ", priorityMap=" + priorityMap +
                 ", #areas=" + areas.size() +
@@ -159,12 +159,12 @@ public class CustomModel {
         // or
         // priority:  { max_weight: { "<3.501": 0.7 } }
         for (Map.Entry<String, Object> queryEntry : queryModel.getMaxSpeed().entrySet()) {
-            Object value = mergedCM.maxSpeed.get(queryEntry.getKey());
-            applyChange(mergedCM.maxSpeed, value, queryEntry);
+            Object value = mergedCM.maxSpeedMap.get(queryEntry.getKey());
+            applyChange(mergedCM.maxSpeedMap, value, queryEntry);
         }
         for (Map.Entry<String, Object> queryEntry : queryModel.getSpeedFactor().entrySet()) {
-            Object value = mergedCM.speedFactor.get(queryEntry.getKey());
-            applyChange(mergedCM.speedFactor, value, queryEntry);
+            Object value = mergedCM.speedFactorMap.get(queryEntry.getKey());
+            applyChange(mergedCM.speedFactorMap, value, queryEntry);
         }
         for (Map.Entry<String, Object> queryEntry : queryModel.getPriority().entrySet()) {
             Object value = mergedCM.priorityMap.get(queryEntry.getKey());
