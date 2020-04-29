@@ -338,7 +338,7 @@ it takes no longer than `570s` (saves `30s`).
 ## Setting up a Custom Profile
 
 Custom profiles work very much the same way as the 'standard' profiles described at the beginning of this document. The
-custom model needs to be written in a separate YAML file and the `weighting` has to be set to `custom`. Use the 
+custom model needs to be written in a separate YAML (or JSON) file and the `weighting` has to be set to `custom`. Use the 
 `custom_model_file` field to point to the custom model file like this:
 
 ```yaml
@@ -354,29 +354,10 @@ Selecting a custom profile also works like selecting a standard profile. In our 
 to your routing request. To set up hybrid- or speed-mode, simply use the `profiles_ch/lm` sections and add the name of
 your custom profile (just like you do for standard profiles).
 
-## Inheritance between Custom Profiles
-
-When specifying a custom profile it is possible to use another custom profile as base 'vehicle', something like:
-```yaml
-profiles:
-  - name: my_custom_profile
-    vehicle: car
-    weighting: custom
-    custom_model_file: path/to/my_custom_profile.yaml
-  - name: my_other_profile
-    vehicle: my_custom_profile
-    weighting: custom
-    custom_model_file: path/to/my_other_custom_profile.yml
-```
-
-In this case the custom model of `my_other_profile` will be determined by merging the two custom models.
-
-todonow: explain merging rules
-
 ## Changing the Custom Profile for a single routing request
 
 With flex- and hybrid mode its even possible to define the custom model to be used on a per-request basis. To do this
-you still need to setup a custom profile in your server configuration, but you do not necessarily need to define a 
+you still need to set up a custom profile in your server configuration, but you do not necessarily need to define a 
 custom model for this.
 
 ```yaml
@@ -388,7 +369,25 @@ profiles:
 ``` 
 
 To change the profile for a single routing request you use the `/route-custom` endpoint and send your custom model 
-(using the same YAML format explained above) with the request body. The model you send will then be merged with the 
-profile you select using the `profile` parameter (which has to be a custom profile) using the same merging rules
-as used by custom profile inheritance. Instead of specifying a custom model file you can set `custom_model_file: empty`
+(using the format explained above as JSON) with the request body. The model you send will then be merged with the 
+profile you select using the `profile` parameter (which has to be a custom profile) using the some merging rules
+explained below. Instead of specifying a custom model file you can set `custom_model_file: empty`
 in which case the models you send with the requests will be merged with an 'empty' custom model (containing no rules).
+
+### Inheritance of Custom Profiles
+
+When a custom model is used on a per-request basis the profile in the request has to be a custom profile available
+on the server. Before the request continues both models are merged. To support the Hybrid mode 
+(not only "pure" Dijkstra or A*) this merge process has to follow certain rules. This ensures that the edge weight can
+only increase to maintain the optimality of the underlying routing algorithm. It works as follows:
+
+ * for priority: an existing factor is multiplied with the factor specified in the request
+ * for speed_factor: an existing factor is multiplied with the factor specified in the request
+ * for max_speed: an existing speed value is replaced if it is higher than the speed value specified in the request. 
+   If it is smaller an exception is thrown.
+ * Comparisons like `max_weight: { "<3.5": 0 }` are special cases. The merge will be only accepted if the factor in the
+   query is 0. And the range can be only "expanded", which means:
+    * The 'smaller than' comparison key (like in this example the `<3.5`) can only be replaced by bigger comparison keys like `<4.5`.
+    * The 'greater than' comparison key (e.g. `>2`) can only be replaced by smaller comparison keys like `>1.9`.
+
+Currently this inheritance feature is not available for server side profiles.

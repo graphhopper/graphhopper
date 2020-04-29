@@ -187,23 +187,83 @@ public class CustomModel {
             return;
         }
         if (!(mergedObj instanceof Map))
-            throw new IllegalArgumentException("entry is not a map: " + mergedObj);
+            throw new IllegalArgumentException(querySuperEntry.getKey() + ": entry is not a map: " + mergedObj);
         Object queryObj = querySuperEntry.getValue();
         if (!(queryObj instanceof Map))
-            throw new IllegalArgumentException("query entry is not a map: " + queryObj);
+            throw new IllegalArgumentException(querySuperEntry.getKey() + ": query entry is not a map: " + queryObj);
 
-        // TODO NOW how to merge different ranges of DecimalEncodedValue => if range size is decreased => it is fine
         Map<Object, Object> mergedMap = (Map) mergedObj;
         Map<Object, Object> queryMap = (Map) queryObj;
         for (Map.Entry queryEntry : queryMap.entrySet()) {
-            Object mergedValue = mergedMap.get(queryEntry.getKey());
+            if (queryEntry.getKey() == null || queryEntry.getKey().toString().isEmpty())
+                throw new IllegalArgumentException(querySuperEntry.getKey() + ": key cannot be null or empty");
+            String key = queryEntry.getKey().toString();
+            if (isComparison(key))
+                continue;
+
+            Object mergedValue = mergedMap.get(key);
             if (mergedValue == null) {
-                mergedMap.put(queryEntry.getKey(), queryEntry.getValue());
-            } else if (queryEntry.getValue() instanceof Number && mergedValue instanceof Number) {
-                mergedMap.put(queryEntry.getKey(), ((Number) queryEntry.getValue()).doubleValue() * ((Number) mergedValue).doubleValue());
+                mergedMap.put(key, queryEntry.getValue());
+            } else if (multiply(queryEntry.getValue(), mergedValue) != null) {
+                // existing value needs to be multiplied
+                mergedMap.put(key, multiply(queryEntry.getValue(), mergedValue));
             } else {
-                throw new IllegalArgumentException("Cannot merge value " + queryEntry.getValue() + " for key " + queryEntry.getKey() + ", merged value: " + mergedValue);
+                throw new IllegalArgumentException(querySuperEntry.getKey() + ": cannot merge value " + queryEntry.getValue() + " for key " + key + ", merged value: " + mergedValue);
             }
         }
+
+        // now special handling for comparison keys start e.g. <2 or >3.0, see testMergeComparisonKeys
+        List<String> queryComparisonKeys = getComparisonKeys(queryMap);
+        if (queryComparisonKeys.isEmpty())
+            return;
+        if (queryComparisonKeys.size() > 1)
+            throw new IllegalArgumentException(querySuperEntry.getKey() + ": entry in " + querySuperEntry.getValue() + " must not contain more than one key comparison but contained " + queryComparisonKeys);
+        char opChar = queryComparisonKeys.get(0).charAt(0);
+        List<String> mergedComparisonKeys = getComparisonKeys(mergedMap);
+        if (mergedComparisonKeys.isEmpty()) {
+            mergedMap.put(queryComparisonKeys.get(0), queryMap.get(queryComparisonKeys.get(0)));
+        } else if (mergedComparisonKeys.get(0).charAt(0) == opChar) {
+            if (multiply(queryMap.get(queryComparisonKeys.get(0)), mergedMap.get(mergedComparisonKeys.get(0))) != 0)
+                throw new IllegalArgumentException(querySuperEntry.getKey() + ": currently only blocking comparisons are allowed, but query was " + queryMap.get(queryComparisonKeys.get(0)) + " and server side: " + mergedMap.get(mergedComparisonKeys.get(0)));
+
+            try {
+                double comparisonMergedValue = Double.parseDouble(mergedComparisonKeys.get(0).substring(1));
+                double comparisonQueryValue = Double.parseDouble(queryComparisonKeys.get(0).substring(1));
+                if (opChar == '<') {
+                    if (comparisonMergedValue > comparisonQueryValue)
+                        throw new IllegalArgumentException(querySuperEntry.getKey() + ": only use a comparison key with a bigger value than " + comparisonMergedValue + " but was " + comparisonQueryValue);
+                } else if (opChar == '>') {
+                    if (comparisonMergedValue < comparisonQueryValue)
+                        throw new IllegalArgumentException(querySuperEntry.getKey() + ": only use a comparison key with a smaller value than " + comparisonMergedValue + " but was " + comparisonQueryValue);
+                } else {
+                    throw new IllegalArgumentException(querySuperEntry.getKey() + ": only use a comparison key with < or > as operator but was " + opChar);
+                }
+                mergedMap.remove(mergedComparisonKeys.get(0));
+                mergedMap.put(queryComparisonKeys.get(0), queryMap.get(queryComparisonKeys.get(0)));
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException(querySuperEntry.getKey() + ": number in one of the 'comparison' keys for " + querySuperEntry.getKey() + " wasn't parsable: " + queryComparisonKeys + " (" + mergedComparisonKeys + ")");
+            }
+        } else {
+            throw new IllegalArgumentException(querySuperEntry.getKey() + ": comparison keys must match but did not: " + queryComparisonKeys.get(0) + " vs " + mergedComparisonKeys.get(0));
+        }
+    }
+
+    static Double multiply(Object queryValue, Object mergedValue) {
+        if (queryValue instanceof Number && mergedValue instanceof Number)
+            return ((Number) queryValue).doubleValue() * ((Number) mergedValue).doubleValue();
+        return null;
+    }
+
+    static boolean isComparison(String key) {
+        return key.startsWith("<") || key.startsWith(">");
+    }
+
+    private static List<String> getComparisonKeys(Map<Object, Object> map) {
+        List<String> list = new ArrayList<>();
+        for (Map.Entry queryEntry : map.entrySet()) {
+            String key = queryEntry.getKey().toString();
+            if (isComparison(key)) list.add(key);
+        }
+        return list;
     }
 }

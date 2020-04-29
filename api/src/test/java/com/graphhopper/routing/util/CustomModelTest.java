@@ -9,24 +9,57 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CustomModelTest {
 
-    // TODO NOW
-//    @Test
-//    public void testMergeLimits() {
-//        CustomModel truck = new CustomModel().setVehicleWidth(3.);
-//        CustomModel car = new CustomModel().setVehicleWidth(2.);
-//        CustomModel bike = new CustomModel().setVehicleWeight(0.02);
-//
-//        assertEquals(2, CustomModel.merge(bike, car).getVehicleWidth(), .1);
-//        assertNull(bike.getVehicleWidth());
-//        assertNull(car.getVehicleWeight());
-//
-//        assertEquals(3, CustomModel.merge(car, truck).getVehicleWidth(), .1);
-//        try {
-//            CustomModel.merge(truck, car);
-//            fail("car is incompatible with truck as base");
-//        } catch (Exception ex) {
-//        }
-//    }
+    static CustomModel setValue(CustomModel model, String op, String encodedValue, double value) {
+        Map<String, Object> map = new HashMap<>();
+        map.put(op + value, 0);
+        model.getPriority().put(encodedValue, map);
+        return model;
+    }
+
+    Object getValue(CustomModel model, String encodedValue) {
+        Map map = (Map) model.getPriority().get(encodedValue);
+        if (map == null || map.isEmpty())
+            return null;
+        return map.keySet().iterator().next();
+    }
+
+    @Test
+    public void testMergeComparisonKeys() {
+        CustomModel truck = setValue(new CustomModel(), "<", "max_width", 3);
+        CustomModel car = setValue(new CustomModel(), "<", "max_width", 2);
+        CustomModel bike = setValue(new CustomModel(), "<", "max_weight", 0.02);
+
+        assertEquals("<2.0", getValue(CustomModel.merge(bike, car), "max_width"));
+        assertNull(getValue(bike, "max_width"));
+        assertNull(getValue(car, "max_weight"));
+
+        assertEquals("<3.0", getValue(CustomModel.merge(car, truck), "max_width"));
+        try {
+            CustomModel.merge(truck, car);
+            fail("car is incompatible to truck (base)");
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage().contains("max_width: only use a comparison key with a bigger value than 3.0 but was 2.0"), ex.getMessage());
+        }
+
+        CustomModel car2 = setValue(new CustomModel(), ">", "max_width", 2);
+        try {
+            CustomModel.merge(truck, car2);
+            fail("car is incompatible to car2 (base)");
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage().contains("max_width: comparison keys must match but did not: "), ex.getMessage());
+        }
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("<2.0", 0.5);
+        CustomModel customModel = new CustomModel();
+        customModel.getPriority().put("max_width", map);
+        try {
+            CustomModel.merge(customModel, customModel);
+            fail("models are incompatible");
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage().contains("only blocking comparisons are allowed, but query was 0.5 and server side: 0.5"), ex.getMessage());
+        }
+    }
 
     @Test
     public void testMergeEmptyModel() {
