@@ -91,7 +91,7 @@ public final class PtRouteResource {
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
                             @QueryParam("pt.limit_solutions") Integer limitSolutions,
-                            @QueryParam("pt.limit_street_time") Integer limitStreetTime) {
+                            @QueryParam("pt.limit_street_time") DurationParam limitStreetTime) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get();
@@ -103,7 +103,7 @@ public final class PtRouteResource {
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
-        Optional.ofNullable(limitStreetTime).ifPresent(request::setLimitStreetTime);
+        Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
 
         GHResponse route = new RequestHandler(request).route();
         return WebHelper.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
@@ -177,7 +177,7 @@ public final class PtRouteResource {
             translation = translationMap.getWithFallBack(request.getLocale());
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
-            limitStreetTime = request.getLimitStreetTime() != null ? request.getLimitStreetTime() * 60 * 1_000 : Long.MAX_VALUE;
+            limitStreetTime = request.getLimitStreetTime() != null ? request.getLimitStreetTime().toMillis() : Long.MAX_VALUE;
         }
 
         GHResponse route() {
