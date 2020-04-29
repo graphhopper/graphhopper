@@ -171,8 +171,6 @@ $(document).ready(function (e) {
                             hiddenVehicles.push(btn);
                     }
 
-                    // todonow: it seems a bit weird that first some icons are hidden and when we uncollapse them
-                    // we cannot hide them anymore... why do we hide anything in the first place?
                     if (!showAllProfiles && profiles.length > numVehiclesWhenCollapsed) {
                         var moreBtn = $("<a id='more-vehicle-btn'> ...</a>").click(function () {
                             moreBtn.hide();
@@ -551,7 +549,6 @@ function routeLatLng(request, doQuery) {
         params.do_zoom = doZoom;
         // force a new request even if we have the same parameters
         params.mathRandom = Math.random();
-        console.log('setting params: ', params)
         History.pushState(params, messages.browserTitle, urlForHistory);
         return;
     }
@@ -568,7 +565,10 @@ function routeLatLng(request, doQuery) {
     mapLayer.setDisabledForMapsContextMenu('intermediate', false);
 
     $("#vehicles button").removeClass("selectvehicle");
-    $("button#" + request.getProfile().toLowerCase()).addClass("selectvehicle");
+    var buttonToSelectId = request.getProfile();
+    // for legacy requests this might be undefined then we just do not select anything
+    if (buttonToSelectId)
+        $("button#" + buttonToSelectId.toLowerCase()).addClass("selectvehicle");
 
     var urlForAPI = request.createURL();
     routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');

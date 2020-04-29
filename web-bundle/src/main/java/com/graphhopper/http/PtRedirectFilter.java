@@ -40,6 +40,13 @@ public class PtRedirectFilter implements ContainerRequestFilter {
 
     private boolean shouldRedirect(ContainerRequestContext requestContext) {
         String maybeVehicle = requestContext.getUriInfo().getQueryParameters().getFirst("vehicle");
-        return maybeVehicle != null && maybeVehicle.equals("pt");
+        if (maybeVehicle != null && maybeVehicle.equals("pt")) {
+            return true;
+        }
+        String maybeProfile = requestContext.getUriInfo().getQueryParameters().getFirst("profile");
+        if (maybeProfile != null && maybeProfile.equals("pt")) {
+            return true;
+        }
+        return false;
     }
 }

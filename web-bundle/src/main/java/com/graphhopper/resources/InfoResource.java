@@ -53,9 +53,13 @@ public class InfoResource {
 
     public static class Info {
         public static class ProfileData {
+            public ProfileData(String profileName, String vehicle) {
+                this.profileName = profileName;
+                this.vehicle = vehicle;
+            }
+
             public String profileName;
             public String vehicle;
-            public String weighting;
         }
 
         public BBox bbox;
@@ -76,12 +80,12 @@ public class InfoResource {
         // use bbox always without elevation (for backward compatibility)
         info.bbox = new BBox(storage.getBounds().minLon, storage.getBounds().maxLon, storage.getBounds().minLat, storage.getBounds().maxLat);
         for (ProfileConfig p : config.getProfiles()) {
-            Info.ProfileData profileData = new Info.ProfileData();
-            profileData.profileName = p.getName();
-            profileData.vehicle = p.getVehicle();
-            profileData.weighting = p.getWeighting();
+            Info.ProfileData profileData = new Info.ProfileData(p.getName(), p.getVehicle());
             info.profiles.add(profileData);
         }
+        if (config.has("gtfs.file"))
+            info.profiles.add(new Info.ProfileData("pt", "pt"));
+
         info.elevation = hasElevation;
         List<String> encoderNames = Arrays.asList(storage.getEncodingManager().toString().split(","));
         info.supported_vehicles = new ArrayList<>(encoderNames);
