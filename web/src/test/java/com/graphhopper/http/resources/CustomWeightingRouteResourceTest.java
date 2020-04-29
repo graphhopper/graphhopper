@@ -16,6 +16,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -79,8 +81,9 @@ public class CustomWeightingRouteResourceTest {
         assertEquals(path.get("time").asLong(), 151_000, 1_000);
     }
 
-    @Test
-    public void testAvoidArea() {
+    @ParameterizedTest
+    @CsvSource(value = {"0.05,3073", "0.5,1498"})
+    public void testAvoidArea(double priority, double expectedDistance) {
         String yamlQuery = "points: [[11.58199, 50.0141], [11.5865, 50.0095]]\n" +
                 "profile: car\n";
 
@@ -88,17 +91,18 @@ public class CustomWeightingRouteResourceTest {
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 661, 10);
 
+        // 'blocking' the area either leads to a route that still crosses it (but on a faster road) or to a road
+        // going all the way around it depending on the priority, see #2021
         yamlQuery += "priority:\n" +
-                // todonow: shall we increase the priority here to get the route that crosses the polygon, but uses
                 // a faster road (see #2021)? or maybe do both?
-                "  area_custom1: 0.05\n" +
+                "  area_custom1: " + priority + "\n" +
                 "areas:\n" +
                 "  custom1:\n" +
                 "    type: \"Feature\"\n" +
                 "    geometry: { type: \"Polygon\", coordinates: [[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }";
         yamlNode = clientTarget(app, "/route-custom").request().post(Entity.json(yamlToJson(yamlQuery))).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
-        assertEquals(3073, path.get("distance").asDouble(), 10);
+        assertEquals(expectedDistance, path.get("distance").asDouble(), 10);
     }
 
     @Test

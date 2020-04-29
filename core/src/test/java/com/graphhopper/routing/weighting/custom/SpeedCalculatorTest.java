@@ -87,8 +87,6 @@ class SpeedCalculatorTest {
             assertEquals(60, calcSpeed(edge, model));
             fail();
         } catch (IllegalArgumentException e) {
-            // todonow: why do we not allow this, setting max speed to 300 simply has no effect and the user cannot really
-            // know that the max speed is 140
             assertTrue(e.getMessage().contains("max_speed.road_class cannot be bigger than 140.0, was 300.0"), e.getMessage());
         }
         // negative values are not allowed
@@ -154,7 +152,6 @@ class SpeedCalculatorTest {
     @Test
     public void speedFactorMultiple() {
         // use speed_factor to adjust speed
-        // todonow: what if we use "car.average_speed" as key?
         EnumEncodedValue<RoadClass> roadClass = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         // todonow: this gives us the wrong encoded value without getting an error
 //        EnumEncodedValue<RoadEnvironment> roadEnvironment = em.getEnumEncodedValue(RoadClass.KEY, RoadEnvironment.class);

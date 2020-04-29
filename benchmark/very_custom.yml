@@ -18,6 +18,3 @@ priority:
     no: 0
 
 max_speed_fallback: 110
-# todonow: ?
-# we have the other custom profile for speed comparison to "fastest" so no need to avoid distance influence here
-# distance_influence: 0

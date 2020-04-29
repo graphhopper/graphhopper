@@ -204,10 +204,6 @@ public class Measurement {
                 if (!blockAreaStr.isEmpty())
                     printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
                             withInstructions().blockArea(blockAreaStr));
-                // todonow: use custom model as query custom model (if given)
-                // todonow: do we really need to test this here?
-//                printTimeOfRouteQuery(hopper, new QuerySettings("routing_custom_truck", count / 20, isCH, isLM).
-//                        profile("custom_truck").withInstructions().queryCustomModel(createCustomProfile().getCustomModel()));
             }
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
