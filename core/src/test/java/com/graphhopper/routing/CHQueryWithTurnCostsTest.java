@@ -66,7 +66,7 @@ public class CHQueryWithTurnCostsTest {
     public CHQueryWithTurnCostsTest(String algoString) {
         this.algoString = algoString;
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("car|shortest|edge")
+                .setCHProfileStrings("profile|car|shortest|edge")
                 .create();
         weighting = graph.getCHProfiles().get(0).getWeighting();
         chGraph = graph.getCHGraph();

@@ -39,10 +39,6 @@ public class ShortestPathTreeTest {
             return 0;
         }
 
-        @Override
-        public String getName() {
-            return "ulrich";
-        }
     };
 
     private final EncodingManager encodingManager = EncodingManager.create("car");
@@ -54,6 +50,8 @@ public class ShortestPathTreeTest {
         graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
         graph.create(1000);
 
+        //         8
+        //        /
         // 0-1-2-3
         // |/|/ /|
         // 4-5-- |
@@ -79,6 +77,7 @@ public class ShortestPathTreeTest {
         GHUtility.setProperties(((Graph) graph).edge(7, 5).setDistance(50), carEncoder, 20, true, false);
 
         GHUtility.setProperties(((Graph) graph).edge(6, 7).setDistance(50), carEncoder, 20, true, true);
+        GHUtility.setProperties(((Graph) graph).edge(3, 8).setDistance(25), carEncoder, 20, true, true);
     }
 
     private int countDirectedEdges(GraphHopperStorage graph) {
@@ -120,7 +119,7 @@ public class ShortestPathTreeTest {
         ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false, TraversalMode.NODE_BASED);
         instance.setTimeLimit(Double.MAX_VALUE);
         instance.search(0, result::add);
-        assertEquals(8, result.size());
+        assertEquals(9, result.size());
         assertAll(
                 () -> assertEquals(0, result.get(0).time),
                 () -> assertEquals(9000, result.get(1).time),
@@ -154,13 +153,15 @@ public class ShortestPathTreeTest {
                 () -> assertEquals(50400, result.get(9).time),
                 () -> assertEquals(54000, result.get(10).time),
                 () -> assertEquals(55800, result.get(11).time),
-                () -> assertEquals(61200, result.get(12).time),
+                () -> assertEquals(60300, result.get(12).time),
                 () -> assertEquals(61200, result.get(13).time),
                 () -> assertEquals(61200, result.get(14).time),
-                () -> assertEquals(72000, result.get(15).time),
-                () -> assertEquals(81000, result.get(16).time),
-                () -> assertEquals(97200, result.get(17).time),
-                () -> assertEquals(126000, result.get(18).time)
+                () -> assertEquals(61200, result.get(15).time),
+                () -> assertEquals(64800, result.get(16).time),
+                () -> assertEquals(72000, result.get(17).time),
+                () -> assertEquals(81000, result.get(18).time),
+                () -> assertEquals(97200, result.get(19).time),
+                () -> assertEquals(126000, result.get(20).time)
         );
     }
 
@@ -171,8 +172,8 @@ public class ShortestPathTreeTest {
         ShortestPathTree instance = new ShortestPathTree(graph, fastestWeighting, false, TraversalMode.EDGE_BASED);
         instance.setTimeLimit(Double.MAX_VALUE);
         instance.search(0, result::add);
-        // There are no dead ends, so still the origin, and every end of every directed edge, are traversed.
-        assertEquals(countDirectedEdges(graph) + 1, result.size());
+        // Every directed edge of the graph, plus the origin, minus one edge for the dead end, are traversed.
+        assertEquals(countDirectedEdges(graph) + 1 - 1, result.size());
         assertAll(
                 () -> assertEquals(0, result.get(0).time),
                 () -> assertEquals(9000, result.get(1).time),
@@ -185,14 +186,15 @@ public class ShortestPathTreeTest {
                 () -> assertEquals(50400, result.get(8).time),
                 () -> assertEquals(54000, result.get(9).time),
                 () -> assertEquals(55800, result.get(10).time),
-                () -> assertEquals(61200, result.get(11).time),
+                () -> assertEquals(60300, result.get(11).time),
                 () -> assertEquals(61200, result.get(12).time),
                 () -> assertEquals(61200, result.get(13).time),
-                () -> assertEquals(72000, result.get(14).time),
-                () -> assertEquals(81000, result.get(15).time),
-                () -> assertEquals(90000, result.get(16).time),
-                () -> assertEquals(97200, result.get(17).time),
-                () -> assertEquals(126000, result.get(18).time)
+                () -> assertEquals(61200, result.get(14).time),
+                () -> assertEquals(72000, result.get(15).time),
+                () -> assertEquals(81000, result.get(16).time),
+                () -> assertEquals(90000, result.get(17).time),
+                () -> assertEquals(97200, result.get(18).time),
+                () -> assertEquals(126000, result.get(19).time)
         );
     }
 
@@ -206,6 +208,7 @@ public class ShortestPathTreeTest {
         // We are searching by time, but terminating by distance.
         // Expected distance values are out of search order,
         // and we cannot terminate at 110 because we still need the 70's.
+        // And we do not want the node at 120, even though it is within the space of the search.
         assertAll(
                 () -> assertEquals(0.0, result.get(0).distance),
                 () -> assertEquals(50.0, result.get(1).distance),

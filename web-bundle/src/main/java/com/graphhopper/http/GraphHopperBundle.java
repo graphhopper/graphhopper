@@ -187,6 +187,23 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 throw new IllegalArgumentException("You need to prefix system parameters with '-Ddw.graphhopper.' instead of '-Dgraphhopper.' see #1879 and #1897");
         }
 
+        // When Dropwizard's Hibernate Validation misvalidates a query parameter,
+        // a JerseyViolationException is thrown.
+        // With this mapper, we use our custom format for that (backwards compatibility),
+        // and also coerce the media type of the response to JSON, so we can return JSON error
+        // messages from methods that normally have a different return type.
+        // That's questionable, but on the other hand, Dropwizard itself does the same thing,
+        // not here, but in a different place (the custom parameter parsers).
+        // So for the moment we have to assume that both mechanisms
+        // a) always return JSON error messages, and
+        // b) there's no need to annotate the method with media type JSON for that.
+        //
+        // However, for places that throw IllegalArgumentException or MultiException,
+        // we DO need to use the media type JSON annotation, because
+        // those are agnostic to the media type (could be GPX!), so the server needs to know
+        // that a JSON error response is supported. (See below.)
+        environment.jersey().register(new GHJerseyViolationExceptionMapper());
+
         // If the "?type=gpx" parameter is present, sets a corresponding media type header
         environment.jersey().register(new TypeGPXFilter());
 
@@ -195,8 +212,9 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(new MultiExceptionMapper());
         environment.jersey().register(new MultiExceptionGPXMessageBodyWriter());
 
+        // This makes an IllegalArgumentException come out as a MultiException with
+        // a single entry.
         environment.jersey().register(new IllegalArgumentExceptionMapper());
-        environment.jersey().register(new GHPointConverterProvider());
 
         final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), environment.getObjectMapper());
         environment.lifecycle().manage(graphHopperManaged);

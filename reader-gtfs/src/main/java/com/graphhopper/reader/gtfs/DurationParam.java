@@ -15,36 +15,27 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.profiles;
 
-import com.graphhopper.util.Helper;
+package com.graphhopper.reader.gtfs;
 
-/**
- * This enum defines the toll value like NO (default), ALL (all vehicles) and HGV (toll for heavy goods vehicles)
- */
-public enum Toll {
-    NO("no"), ALL("all"), HGV("hgv");
+import io.dropwizard.jersey.params.AbstractParam;
 
-    public static final String KEY = "toll";
+import javax.annotation.Nullable;
+import java.time.Duration;
 
-    private final String name;
-
-    Toll(String name) {
-        this.name = name;
+public class DurationParam extends AbstractParam<Duration> {
+    public DurationParam(@Nullable String input) {
+        super(input);
     }
 
-    public static Toll find(String name) {
-        if (name == null)
-            return NO;
-        try {
-            return Toll.valueOf(Helper.toUpperCase(name));
-        } catch (IllegalArgumentException ex) {
-            return NO;
-        }
+    public DurationParam(@Nullable String input, String parameterName) {
+        super(input, parameterName);
     }
 
     @Override
-    public String toString() {
-        return name;
+    protected Duration parse(@Nullable String input) throws Exception {
+        if (input == null)
+            return null;
+        return Duration.parse(input);
     }
 }

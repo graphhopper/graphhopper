@@ -111,7 +111,7 @@ public class DijkstraBidirectionCHTest {
         RoutingAlgorithmTest.initDirectedAndDiffSpeed(ghStorage, carEncoder);
 
         // do CH preparation for car        
-        prepareCH(ghStorage, CHProfile.nodeBased(weighting));
+        prepareCH(ghStorage, CHProfile.nodeBased(weighting.getName(), weighting));
 
         // use base graph for solving normal Dijkstra
         Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, AlgorithmOptions.start().weighting(weighting).build()).calcPath(0, 3);
@@ -130,8 +130,8 @@ public class DijkstraBidirectionCHTest {
         AlgorithmOptions carOptions = AlgorithmOptions.start().
                 weighting(new FastestWeighting(carEncoder)).build();
 
-        CHProfile footProfile = CHProfile.nodeBased(footOptions.getWeighting());
-        CHProfile carProfile = CHProfile.nodeBased(carOptions.getWeighting());
+        CHProfile footProfile = CHProfile.nodeBased("p_foot", footOptions.getWeighting());
+        CHProfile carProfile = CHProfile.nodeBased("p_car", carOptions.getWeighting());
         GraphHopperStorage g = new GraphBuilder(em).setCHProfiles(footProfile, carProfile).create();
         RoutingAlgorithmTest.initFootVsCar(carEncoder, footEncoder, g);
 
@@ -247,7 +247,7 @@ public class DijkstraBidirectionCHTest {
     }
 
     private GraphHopperStorage createGHStorage(Weighting weighting) {
-        return new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
+        return new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting.getName(), weighting)).create();
     }
 
     private RoutingAlgorithmFactory prepareCH(GraphHopperStorage graphHopperStorage, CHProfile chProfile) {

@@ -23,11 +23,11 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -91,7 +91,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public GraphHopperStorage addCHGraph(CHProfile chProfile) {
         baseGraph.checkNotInitialized();
         if (getCHProfiles().contains(chProfile)) {
-            throw new IllegalArgumentException("For the given CH profile a CHGraph already exists: " + chProfile);
+            throw new IllegalArgumentException("For the given CH profile a CHGraph already exists: '" + chProfile.getName() + "'");
         }
         chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph, segmentSize));
         return this;
@@ -195,7 +195,12 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             cg.create(byteCount);
         }
 
-        properties.put("graph.ch.profiles", getCHProfiles().toString());
+        List<CHProfile> chProfiles = getCHProfiles();
+        List<String> chProfileNames = new ArrayList<>(chProfiles.size());
+        for (CHProfile chProfile : chProfiles) {
+            chProfileNames.add(chProfile.getName());
+        }
+        properties.put("graph.ch.profiles", chProfileNames.toString());
         return this;
     }
 
@@ -280,32 +285,18 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     private void checkIfConfiguredAndLoadedWeightingsCompatible() {
         String loadedStr = properties.get("graph.ch.profiles");
-        List<String> loaded = parseList(loadedStr);
+        List<String> loaded = Helper.parseList(loadedStr);
         List<CHProfile> configured = getCHProfiles();
-        for (CHProfile chProfile : configured) {
-            if (!loaded.contains(chProfile.toString())) {
-                throw new IllegalStateException("Configured CH profile: " + chProfile.toString() + " is not contained in loaded CH profiles: " + loadedStr + ".\n" +
-                        "You configured: " + configured);
+        List<String> configuredNames = new ArrayList<>(configured.size());
+        for (CHProfile p : configured) {
+            configuredNames.add(p.getName());
+        }
+        for (String configuredName : configuredNames) {
+            if (!loaded.contains(configuredName)) {
+                throw new IllegalStateException("Configured CH profile: '" + configuredName + "' is not contained in loaded CH profiles: '" + loadedStr + "'.\n" +
+                        "You configured: " + configuredNames);
             }
         }
-    }
-
-    /**
-     * parses a string like [a,b,c]
-     */
-    private List<String> parseList(String listStr) {
-        String trimmed = listStr.trim();
-        if (trimmed.length() < 2)
-            return Collections.emptyList();
-        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
-        List<String> result = new ArrayList<>();
-        for (String item : items) {
-            String s = item.trim();
-            if (!s.isEmpty()) {
-                result.add(s);
-            }
-        }
-        return result;
     }
 
     @Override

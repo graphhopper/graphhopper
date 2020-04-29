@@ -72,7 +72,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             throw new IllegalStateException("Weighting for CHGraph cannot be null");
         this.chProfile = chProfile;
         this.baseGraph = baseGraph;
-        final String name = chProfile.toFileName();
+        final String name = chProfile.getName();
         this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.chEdgeAccess = new CHEdgeAccess(name);
@@ -385,7 +385,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public String toString() {
-        return "CHGraph|" + chProfile.getName() + "|" + chProfile.toString();
+        return "CHGraph|" + chProfile.getName() + "|" + chProfile.getTraversalMode();
     }
 
     public void debugPrint() {

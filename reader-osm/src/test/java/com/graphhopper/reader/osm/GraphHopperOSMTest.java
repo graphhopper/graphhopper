@@ -730,14 +730,14 @@ public class GraphHopperOSMTest {
         GHPoint first = new GHPoint(11.1, 50);
         GHPoint second = new GHPoint(12, 51);
         GHPoint third = new GHPoint(11.2, 51.9);
-        GHResponse rsp12 = instance.route(new GHRequest().addPoint(first).addPoint(second).setProfile(profile));
+        GHResponse rsp12 = instance.route(new GHRequest(first, second).setProfile(profile));
         assertFalse("should find 1->2", rsp12.hasErrors());
         assertEquals(147930.5, rsp12.getBest().getDistance(), .1);
-        GHResponse rsp23 = instance.route(new GHRequest().addPoint(second).addPoint(third).setProfile(profile));
+        GHResponse rsp23 = instance.route(new GHRequest(second, third).setProfile(profile));
         assertFalse("should find 2->3", rsp23.hasErrors());
         assertEquals(176608.9, rsp23.getBest().getDistance(), .1);
 
-        GHResponse grsp = instance.route(new GHRequest().addPoint(first).addPoint(second).addPoint(third).setProfile(profile));
+        GHResponse grsp = instance.route(new GHRequest(Arrays.asList(first, second, third)).setProfile(profile));
         assertFalse("should find 1->2->3", grsp.hasErrors());
         PathWrapper rsp = grsp.getBest();
         assertEquals(rsp12.getBest().getDistance() + rsp23.getBest().getDistance(), rsp.getDistance(), 1e-6);
@@ -757,7 +757,10 @@ public class GraphHopperOSMTest {
         // End at middle of edge 2-3
         GHPoint end = new GHPoint(0.002, 0.0005);
 
-        GHRequest req = new GHRequest().addPoint(start, 180.).addPoint(end).setProfile("profile");
+        GHRequest req = new GHRequest().
+                setPoints(Arrays.asList(start, end)).
+                setHeadings(Arrays.asList(180., Double.NaN)).
+                setProfile("profile");
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -774,7 +777,9 @@ public class GraphHopperOSMTest {
         // End at middle of edge 2-3
         GHPoint end = new GHPoint(0.002, 0.0005);
 
-        GHRequest req = new GHRequest().addPoint(start, 180.).addPoint(end, 90.).setProfile("profile");
+        GHRequest req = new GHRequest(start, end).
+                setHeadings(Arrays.asList(180.0, 90.0)).
+                setProfile("profile");
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -799,7 +804,10 @@ public class GraphHopperOSMTest {
         // Via Point betweeen 8-7
         GHPoint via = new GHPoint(0.0005, 0.001);
 
-        GHRequest req = new GHRequest().addPoint(start).addPoint(via, 0.).addPoint(end).setProfile("profile");
+        GHRequest req = new GHRequest().
+                setPoints(Arrays.asList(start, via, end)).
+                setHeadings(Arrays.asList(Double.NaN, 0., Double.NaN)).
+                setProfile("profile");
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -817,7 +825,9 @@ public class GraphHopperOSMTest {
         GHPoint end = new GHPoint(0.002, 0.0005);
         // Via Point betweeen 8-3
         GHPoint via = new GHPoint(0.0015, 0.001);
-        GHRequest req = new GHRequest().addPoint(start).addPoint(via).addPoint(end).setProfile("profile");
+        GHRequest req = new GHRequest().
+                setPoints(Arrays.asList(start, via, end)).
+                setProfile("profile");
         req.putHint(Routing.PASS_THROUGH, true);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
@@ -838,7 +848,10 @@ public class GraphHopperOSMTest {
         GHPoint end = new GHPoint(0.002, 0.0005);
         // First go south and than come from west to via-point at 7-6. Then go back over previously punished (11)-4 edge
         GHPoint via = new GHPoint(0.000, 0.0015);
-        GHRequest req = new GHRequest().addPoint(start, 0.).addPoint(via, 3.14 / 2).addPoint(end).setProfile("profile");
+        GHRequest req = new GHRequest().
+                setPoints(Arrays.asList(start, via, end)).
+                setHeadings(Arrays.asList(0., 3.14 / 2, Double.NaN)).
+                setProfile("profile");
         req.putHint(Routing.PASS_THROUGH, true);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
@@ -857,7 +870,10 @@ public class GraphHopperOSMTest {
         GHPoint via = new GHPoint(0.002, 0.000);
         GHPoint end = new GHPoint(0.002, 0.002);
 
-        GHRequest req = new GHRequest().addPoint(start, 90.).addPoint(via, 270.).addPoint(end, 270.).setProfile("profile");
+        GHRequest req = new GHRequest().
+                setPoints(Arrays.asList(start, via, end)).
+                setHeadings(Arrays.asList(90., 270., 270.)).
+                setProfile("profile");
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -869,7 +885,7 @@ public class GraphHopperOSMTest {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(carEncoder);
         Weighting weighting = new FastestWeighting(carEncoder);
-        GraphHopperStorage g = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).setBytes(20).create();
+        GraphHopperStorage g = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased("p", weighting)).setBytes(20).create();
 
         //   2---3---4
         //  /    |    \

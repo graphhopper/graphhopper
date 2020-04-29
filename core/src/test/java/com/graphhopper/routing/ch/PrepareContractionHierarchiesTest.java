@@ -47,7 +47,7 @@ public class PrepareContractionHierarchiesTest {
     private final CarFlagEncoder carEncoder = new CarFlagEncoder().setSpeedTwoDirections(true);
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
-    private final CHProfile chProfile = CHProfile.nodeBased(weighting);
+    private final CHProfile chProfile = CHProfile.nodeBased("p", weighting);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private GraphHopperStorage g;
     private CHGraph lg;
@@ -402,7 +402,7 @@ public class PrepareContractionHierarchiesTest {
 
         // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
         Weighting fastestWeighting = new FastestWeighting(carEncoder);
-        CHProfile chProfile = CHProfile.nodeBased(fastestWeighting);
+        CHProfile chProfile = CHProfile.nodeBased("p", fastestWeighting);
         g = createGHStorage(chProfile);
         lg = g.getCHGraph();
         // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
@@ -582,8 +582,8 @@ public class PrepareContractionHierarchiesTest {
         EncodingManager tmpEncodingManager = EncodingManager.create(tmpCarEncoder, tmpBikeEncoder);
 
         // FastestWeighting would lead to different shortcuts due to different default speeds for bike and car
-        CHProfile carProfile = CHProfile.nodeBased(new ShortestWeighting(tmpCarEncoder));
-        CHProfile bikeProfile = CHProfile.nodeBased(new ShortestWeighting(tmpBikeEncoder));
+        CHProfile carProfile = CHProfile.nodeBased("p1", new ShortestWeighting(tmpCarEncoder));
+        CHProfile bikeProfile = CHProfile.nodeBased("p2", new ShortestWeighting(tmpBikeEncoder));
 
         List<CHProfile> profiles = Arrays.asList(carProfile, bikeProfile);
         GraphHopperStorage ghStorage = new GraphBuilder(tmpEncodingManager).setCHProfiles(profiles).create();
@@ -602,8 +602,8 @@ public class PrepareContractionHierarchiesTest {
         BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
         EncodingManager tmpEncodingManager = EncodingManager.create(tmpCarEncoder, tmpBikeEncoder);
 
-        CHProfile carProfile = CHProfile.nodeBased(new FastestWeighting(tmpCarEncoder));
-        CHProfile bikeProfile = CHProfile.nodeBased(new FastestWeighting(tmpBikeEncoder));
+        CHProfile carProfile = CHProfile.nodeBased("p1", new FastestWeighting(tmpCarEncoder));
+        CHProfile bikeProfile = CHProfile.nodeBased("p2", new FastestWeighting(tmpBikeEncoder));
 
         GraphHopperStorage ghStorage = new GraphBuilder(tmpEncodingManager).setCHProfiles(carProfile, bikeProfile).create();
         initShortcutsGraph(ghStorage);
@@ -623,8 +623,8 @@ public class PrepareContractionHierarchiesTest {
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
         MotorcycleFlagEncoder motorCycleEncoder = new MotorcycleFlagEncoder();
         EncodingManager em = EncodingManager.create(carFlagEncoder, motorCycleEncoder);
-        CHProfile carProfile = CHProfile.nodeBased(new FastestWeighting(carFlagEncoder));
-        CHProfile motorCycleProfile = CHProfile.nodeBased(new FastestWeighting(motorCycleEncoder));
+        CHProfile carProfile = CHProfile.nodeBased("p1", new FastestWeighting(carFlagEncoder));
+        CHProfile motorCycleProfile = CHProfile.nodeBased("p2", new FastestWeighting(motorCycleEncoder));
         GraphHopperStorage ghStorage = new GraphBuilder(em).setCHProfiles(carProfile, motorCycleProfile).create();
 
         int numNodes = 5_000;

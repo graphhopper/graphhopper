@@ -30,7 +30,7 @@ import com.graphhopper.util.Helper;
 /**
  * @see AStarBidirection
  */
-public class AStarBidirectionCH extends AbstractBidirCHAlgo implements RecalculationHook {
+public class AStarBidirectionCH extends AbstractBidirCHAlgo {
     private BalancedWeightApproximator weightApprox;
 
     public AStarBidirectionCH(RoutingCHGraph graph) {
@@ -86,11 +86,6 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo implements Recalcula
     public AStarBidirectionCH setApproximation(WeightApproximator approx) {
         weightApprox = new BalancedWeightApproximator(approx);
         return this;
-    }
-
-    @Override
-    public void afterHeuristicChange(boolean forward, boolean backward) {
-        AStarBidirection.updatePriorityQueues(pqOpenSetFrom, pqOpenSetTo, weightApprox, forward, backward);
     }
 
     @Override

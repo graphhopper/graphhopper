@@ -35,6 +35,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
@@ -137,6 +138,31 @@ public class IsochroneResourceTest {
     }
 
     @Test
+    public void requestByWeightLimit() {
+        WebTarget commonTarget = clientTarget(app, "/isochrone")
+                .queryParam("profile", "short_car")
+                .queryParam("point", "42.531073,1.573792")
+                .queryParam("type", "geojson");
+
+        long limit = 3000;
+
+        Response distanceLimitRsp = commonTarget
+                .queryParam("distance_limit", limit)
+                .request().buildGet().invoke();
+        JsonFeatureCollection distanceLimitFeatureCollection = distanceLimitRsp.readEntity(JsonFeatureCollection.class);
+        Geometry distanceLimitPolygon = distanceLimitFeatureCollection.getFeatures().get(0).getGeometry();
+
+        Response weightLimitRsp = commonTarget
+                .queryParam("weight_limit", limit)
+                .request().buildGet().invoke();
+        JsonFeatureCollection weightLimitFeatureCollection = weightLimitRsp.readEntity(JsonFeatureCollection.class);
+        Geometry weightLimitPolygon = weightLimitFeatureCollection.getFeatures().get(0).getGeometry();
+
+        assertEquals(distanceLimitPolygon.getNumPoints(), weightLimitPolygon.getNumPoints());
+        assertTrue(weightLimitPolygon.equalsTopo(distanceLimitPolygon));
+    }
+
+    @Test
     public void requestReverseFlow() {
         Response rsp = clientTarget(app, "/isochrone")
                 .queryParam("profile", "fast_car")
@@ -174,6 +200,18 @@ public class IsochroneResourceTest {
     public void profileWithLegacyParametersNotAllowed() {
         assertNotAllowed("&profile=fast_car&weighting=fastest", "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
         assertNotAllowed("&profile=fast_car&vehicle=car", "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=car'");
+    }
+
+    @Test
+    public void queryWithLegacyParameter() {
+        Response rsp = clientTarget(app, "/isochrone")
+                .queryParam("point", "42.508932,1.528516")
+                .queryParam("turn_costs", "false")
+                .queryParam("type", "geojson")
+                .request().buildGet().invoke();
+        JsonFeatureCollection featureCollection = rsp.readEntity(JsonFeatureCollection.class);
+        Geometry polygon0 = featureCollection.getFeatures().get(0).getGeometry();
+        assertEquals(330, polygon0.getCoordinates().length, 20);
     }
 
     @Test
@@ -218,7 +256,7 @@ public class IsochroneResourceTest {
     public void requestBadType() {
         Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=130&type=xml")
                 .request().buildGet().invoke();
-
+        assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         String message = json.path("message").asText();
 

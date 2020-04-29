@@ -89,6 +89,7 @@ class GtfsReader {
     private final BooleanEncodedValue accessEnc;
     private final IntEncodedValue timeEnc;
     private final IntEncodedValue validityIdEnc;
+    private boolean createTransferStopsConnectSameOsmNode = false;
 
     GtfsReader(String id, Graph graph, EncodingManager encodingManager, GtfsStorageI gtfsStorage, LocationIndex walkNetworkIndex) {
         this.id = id;
@@ -105,6 +106,10 @@ class GtfsReader {
         this.i = graph.getNodes();
         this.startDate = feed.getStartDate();
         this.endDate = feed.getEndDate();
+    }
+
+    void setCreateTransferStopsConnectSameOsmNode(boolean createTransfer) {
+        this.createTransferStopsConnectSameOsmNode = createTransfer;
     }
 
     void connectStopsToStreetNetwork() {
@@ -212,7 +217,7 @@ class GtfsReader {
             while (i.next()) {
                 if (i.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
                     GtfsStorageI.PlatformDescriptor fromPlatformDescriptor = gtfsStorage.getPlatformDescriptorByEdge().get(i.getEdge());
-                    if (fromPlatformDescriptor.stop_id.equals(transfer.from_stop_id) &&
+                    if ((createTransferStopsConnectSameOsmNode || fromPlatformDescriptor.stop_id.equals(transfer.from_stop_id)) &&
                             (transfer.from_route_id == null && fromPlatformDescriptor instanceof GtfsStorageI.RouteTypePlatform || transfer.from_route_id != null && GtfsStorageI.PlatformDescriptor.route(transfer.from_stop_id, transfer.from_route_id).equals(fromPlatformDescriptor))) {
                         LOGGER.debug("  Creating transfers from stop {}, platform {}", transfer.from_stop_id, fromPlatformDescriptor);
                         EdgeIterator j = graph.createEdgeExplorer().setBaseNode(i.getAdjNode());

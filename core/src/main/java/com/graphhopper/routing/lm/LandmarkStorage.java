@@ -30,6 +30,7 @@ import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -464,10 +465,12 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         IntHashSet inaccessible = new IntHashSet();
         while (allEdgesIterator.next()) {
             int adjNode = allEdgesIterator.getAdjNode();
-            SpatialRule ruleAdj = ruleLookup.lookupRules(nodeAccess.getLatitude(adjNode), nodeAccess.getLongitude(adjNode)).getRules().get(0);
+            SpatialRuleSet set = ruleLookup.lookupRules(nodeAccess.getLatitude(adjNode), nodeAccess.getLongitude(adjNode));
+            SpatialRule ruleAdj = set.getRules().isEmpty() ? null : set.getRules().get(0);
 
             int baseNode = allEdgesIterator.getBaseNode();
-            SpatialRule ruleBase = ruleLookup.lookupRules(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode)).getRules().get(0);
+            set = ruleLookup.lookupRules(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode));
+            SpatialRule ruleBase = set.getRules().isEmpty() ? null : set.getRules().get(0);
             if (ruleAdj != ruleBase) {
                 inaccessible.add(allEdgesIterator.getEdge());
             }

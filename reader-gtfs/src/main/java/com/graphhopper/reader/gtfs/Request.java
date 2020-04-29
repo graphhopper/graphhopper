@@ -21,6 +21,7 @@ package com.graphhopper.reader.gtfs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +40,8 @@ public class Request {
     private double walkSpeedKmH = 5.0;
     private int blockedRouteTypes;
     private Locale locale = Helper.getLocale("en");
+    private Integer limitStreetTime;
+    private Duration maxProfileDuration = Duration.ofHours(1);
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;
@@ -141,4 +144,19 @@ public class Request {
         return points;
     }
 
+    public Integer getLimitStreetTime() {
+        return this.limitStreetTime;
+    }
+
+    public void setLimitStreetTime(Integer streetTime) {
+        this.limitStreetTime = streetTime;
+    }
+
+    public Duration getMaxProfileDuration() {
+        return maxProfileDuration;
+    }
+
+    public void setMaxProfileDuration(Duration maxProfileDuration) {
+        this.maxProfileDuration = maxProfileDuration;
+    }
 }
