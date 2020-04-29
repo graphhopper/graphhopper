@@ -53,6 +53,9 @@ public class InfoResource {
 
     public static class Info {
         public static class ProfileData {
+            public ProfileData() {
+            }
+
             public ProfileData(String profileName, String vehicle) {
                 this.profileName = profileName;
                 this.vehicle = vehicle;

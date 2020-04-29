@@ -112,22 +112,17 @@ $(document).ready(function (e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 nominatim.setBounds(bounds);
-                var vehiclesDiv = $("#vehicles");
+                var profilesDiv = $("#profiles");
 
                 function createButton(profile, hide) {
                     var vehicle = profile.vehicle;
                     var profileName = profile.profile_name;
-                    // todonow: the profile name could be anything so we cannot translate it. Then again for things like
-                    // 'car','foot' etc. it would be nice to get the translation. maybe we need to be a bit more clever
-                    // here and show the (translated) vehicle name *and* the profile name (and maybe show the profile
-                    // name in brackets and only if there are multiple profiles with the same vehicle?)
-                    var button = $("<button class='vehicle-btn' title='" + profileName + "'/>");
+                    var button = $("<button class='vehicle-btn' title='" + profileDisplayName(profileName) + "'/>");
                     if (hide)
                         button.hide();
 
                     button.attr('id', profileName);
-                    // todonow: see comment regarding translation above. it also applies to the 'alt' attribute here
-                    button.html("<img src='img/" + vehicle.toLowerCase() + ".png' alt='" + profileName + "'></img>");
+                    button.html("<img src='img/" + vehicle.toLowerCase() + ".png' alt='" + profileDisplayName(profileName) + "'></img>");
                     button.click(function () {
                         ghRequest.setProfile(profileName);
                         ghRequest.removeLegacyParameters();
@@ -166,7 +161,7 @@ $(document).ready(function (e) {
                     var hiddenVehicles = [];
                     for (var i = 0; i < profiles.length; ++i) {
                         var btn = createButton(profiles[i], !showAllProfiles && i >= numVehiclesWhenCollapsed);
-                        vehiclesDiv.append(btn);
+                        profilesDiv.append(btn);
                         if (i >= numVehiclesWhenCollapsed)
                             hiddenVehicles.push(btn);
                     }
@@ -178,11 +173,11 @@ $(document).ready(function (e) {
                                 hiddenVehicles[i].show();
                             }
                         });
-                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://docs.graphhopper.com/#section/Map-Data-and-Routing-Profiles/OpenStreetMap'>?</a>"));
-                        vehiclesDiv.append(moreBtn);
+                        profilesDiv.append($("<a class='vehicle-info-link' href='https://docs.graphhopper.com/#section/Map-Data-and-Routing-Profiles/OpenStreetMap'>?</a>"));
+                        profilesDiv.append(moreBtn);
                     }
                 }
-                $("button#" + profiles[0].profile_name).addClass("selectvehicle");
+                $("button#" + profiles[0].profile_name).addClass("selectprofile");
 
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
 
@@ -256,6 +251,10 @@ $(document).ready(function (e) {
 
     checkInput();
 });
+
+function profileDisplayName(profileName) {
+   return translate.tr(profileName) + ' (' + profileName + ')'
+}
 
 /**
  * Takes an array and returns another array with the same elements but sorted such that all elements matching the given
@@ -564,11 +563,11 @@ function routeLatLng(request, doQuery) {
 
     mapLayer.setDisabledForMapsContextMenu('intermediate', false);
 
-    $("#vehicles button").removeClass("selectvehicle");
+    $("#profiles button").removeClass("selectprofile");
     var buttonToSelectId = request.getProfile();
     // for legacy requests this might be undefined then we just do not select anything
     if (buttonToSelectId)
-        $("button#" + buttonToSelectId.toLowerCase()).addClass("selectvehicle");
+        $("button#" + buttonToSelectId.toLowerCase()).addClass("selectprofile");
 
     var urlForAPI = request.createURL();
     routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
