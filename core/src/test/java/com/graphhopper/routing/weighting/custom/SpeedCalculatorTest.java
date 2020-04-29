@@ -65,10 +65,8 @@ class SpeedCalculatorTest {
         map.put("*", 70);
         assertEquals(60, calcSpeed(edge, model));
         // also our edge might or might not be affected
-        // todonow: why has encoding manager a road class encoded value by default?
         EnumEncodedValue<RoadClass> roadClass = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         edge.set(roadClass, RoadClass.PRIMARY);
-        // todonow: why do we not allow an empty map as value?
         model.getMaxSpeed().clear();
         assertEquals(60, calcSpeed(edge, new CustomModel()));
         map.clear();
@@ -153,8 +151,6 @@ class SpeedCalculatorTest {
     public void speedFactorMultiple() {
         // use speed_factor to adjust speed
         EnumEncodedValue<RoadClass> roadClass = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-        // todonow: this gives us the wrong encoded value without getting an error
-//        EnumEncodedValue<RoadEnvironment> roadEnvironment = em.getEnumEncodedValue(RoadClass.KEY, RoadEnvironment.class);
         EnumEncodedValue<RoadEnvironment> roadEnvironment = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edge.set(roadClass, RoadClass.PRIMARY);
         edge.set(roadEnvironment, RoadEnvironment.BRIDGE);
