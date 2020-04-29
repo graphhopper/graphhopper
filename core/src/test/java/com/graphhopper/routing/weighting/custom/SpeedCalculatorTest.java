@@ -154,7 +154,6 @@ class SpeedCalculatorTest {
     @Test
     public void speedFactorMultiple() {
         // use speed_factor to adjust speed
-        // todonow: check invalid values
         // todonow: what if we use "car.average_speed" as key?
         EnumEncodedValue<RoadClass> roadClass = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         // todonow: this gives us the wrong encoded value without getting an error
