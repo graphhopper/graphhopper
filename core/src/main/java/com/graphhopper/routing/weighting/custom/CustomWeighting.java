@@ -126,6 +126,7 @@ public final class CustomWeighting extends AbstractWeighting {
         double seconds = calcSeconds(edgeState, reverse);
         if (Double.isInfinite(seconds))
             return Double.POSITIVE_INFINITY;
+        // todonow: is it worth storing the distance in a local variable for better performance?
         double distanceCosts = calcDistanceCosts(edgeState.getDistance());
         if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
