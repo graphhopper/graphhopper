@@ -33,7 +33,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  */
 public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     public RacingBikeFlagEncoder() {
-        this(new PMap());
+        this(4, 2, 0);
     }
 
     public RacingBikeFlagEncoder(PMap properties) {

@@ -35,7 +35,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class HikeFlagEncoder extends FootFlagEncoder {
 
     public HikeFlagEncoder() {
-        this(new PMap());
+        this(4, 1);
     }
 
     public HikeFlagEncoder(PMap properties) {

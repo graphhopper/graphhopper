@@ -56,7 +56,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootFlagEncoder() {
-        this(new PMap());
+        this(4, 1);
     }
 
     public FootFlagEncoder(PMap properties) {

@@ -27,7 +27,7 @@ import com.graphhopper.util.PMap;
  */
 public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     public BikeFlagEncoder() {
-        this(new PMap());
+        this(4, 2, 0);
     }
 
     public BikeFlagEncoder(PMap properties) {

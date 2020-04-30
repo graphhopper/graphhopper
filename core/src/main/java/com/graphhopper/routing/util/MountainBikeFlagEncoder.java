@@ -34,7 +34,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  */
 public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
     public MountainBikeFlagEncoder() {
-        this(new PMap());
+        this(4, 2, 0);
     }
 
     public MountainBikeFlagEncoder(PMap properties) {

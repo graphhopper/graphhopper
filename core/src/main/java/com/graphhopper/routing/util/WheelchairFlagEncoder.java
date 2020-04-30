@@ -46,7 +46,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
      * Should be only instantiated via EncodingManager
      */
     public WheelchairFlagEncoder() {
-        this(new PMap());
+        this(4, 1);
     }
 
     public WheelchairFlagEncoder(PMap properties) {

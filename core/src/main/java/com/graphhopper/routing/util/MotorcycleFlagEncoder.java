@@ -46,7 +46,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     private DecimalEncodedValue curvatureEncoder;
 
     public MotorcycleFlagEncoder() {
-        this(new PMap());
+        this(5, 5, 0);
     }
 
     public MotorcycleFlagEncoder(PMap properties) {
