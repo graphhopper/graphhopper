@@ -357,8 +357,7 @@ your custom profile (just like you do for standard profiles).
 ## Changing the Custom Profile for a single routing request
 
 With flex- and hybrid mode its even possible to define the custom model to be used on a per-request basis. To do this
-you still need to set up a custom profile in your server configuration, but you do not necessarily need to define a 
-custom model for this.
+you still need to set up a custom profile in your server configuration, for example:
 
 ```yaml
 profiles:
@@ -368,11 +367,12 @@ profiles:
     custom_model_file: my_custom_model.yml
 ``` 
 
+You do not necessarily need to define a custom model for this and instead you can also set `custom_model_file: empty`
+(which means an empty custom model containing no rules will be used on the server-side). 
 To change the profile for a single routing request you use the `/route-custom` endpoint and send your custom model 
-(using the format explained above as JSON) with the request body. The model you send will then be merged with the 
-profile you select using the `profile` parameter (which has to be a custom profile) using the some merging rules
-explained below. Instead of specifying a custom model file you can set `custom_model_file: empty`
-in which case the models you send with the requests will be merged with an 'empty' custom model (containing no rules).
+(using the format explained above but as JSON) with the request body. The model you send will then be merged with the 
+profile you select using the `profile` parameter (which has to be a custom profile) using the merging rules
+explained below. 
 
 ### Inheritance of Custom Profiles
 
