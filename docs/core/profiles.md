@@ -356,8 +356,9 @@ your custom profile (just like you do for standard profiles).
 
 ## Changing the Custom Profile for a single routing request
 
-With flex- and hybrid mode its even possible to define the custom model to be used on a per-request basis. To do this
-you still need to set up a custom profile in your server configuration, for example:
+With flex- and hybrid mode its even possible to define the custom model on a per-request basis and doing this you can 
+even adjust a custom model configured on the server side for a single request. To do this you first set up a 'base' 
+custom profile in your server configuration, like:
 
 ```yaml
 profiles:
@@ -367,19 +368,14 @@ profiles:
     custom_model_file: my_custom_model.yml
 ``` 
 
-You do not necessarily need to define a custom model for this and instead you can also set `custom_model_file: empty`
-(which means an empty custom model containing no rules will be used on the server-side). 
-To change the profile for a single routing request you use the `/route-custom` endpoint and send your custom model 
-(using the format explained above but as JSON) with the request body. The model you send will then be merged with the 
-profile you select using the `profile` parameter (which has to be a custom profile) using the merging rules
-explained below. 
-
-### Inheritance of Custom Profiles
-
-When a custom model is used on a per-request basis the profile in the request has to be a custom profile available
-on the server. Before the request continues both models are merged. To support the Hybrid mode 
-(not only "pure" Dijkstra or A*) this merge process has to follow certain rules. This ensures that the edge weight can
-only increase to maintain the optimality of the underlying routing algorithm. It works as follows:
+You do not necessarily need to define a proper custom model here and instead you can also set `custom_model_file: empty`
+(which means an empty custom model containing no rules will be used on the server-side). You then use the `/route-custom`
+(*not* `/route`) endpoint and send your custom model (using the format explained above, but as JSON) with the request 
+body. The model you send will be merged with the profile you select using the `profile` parameter (which has to be 
+a custom profile). For the Hybrid mode (not only "pure" Dijkstra or A*) the merge process has to ensure that all weights
+resulting from the merged custom model are equal or larger than those of the base profile that was used during the 
+preparation process. This is necessary to maintain the optimality of the underlying routing algorithm. 
+Therefore we use the following rules to merge the two models:
 
  * for priority: an existing factor is multiplied with the factor specified in the request
  * for speed_factor: an existing factor is multiplied with the factor specified in the request
@@ -389,5 +385,3 @@ only increase to maintain the optimality of the underlying routing algorithm. It
    query is 0. And the range can be only "expanded", which means:
     * The 'smaller than' comparison key (like in this example the `<3.5`) can only be replaced by bigger comparison keys like `<4.5`.
     * The 'greater than' comparison key (e.g. `>2`) can only be replaced by smaller comparison keys like `>1.9`.
-
-Currently this inheritance feature is not available for server side profiles.
