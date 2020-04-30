@@ -137,11 +137,10 @@ public class CustomModel {
     }
 
     /**
-     * This method assumes that this object is a per-request object so we can apply the changes and keep baseCustomModel
-     * unchanged.
+     * A new CustomModel is created from the baseModel merged with the specified queryModel.
      */
     public static CustomModel merge(CustomModel baseModel, CustomModel queryModel) {
-        // avoid changing the specified CustomModel via deep copy otherwise query-CustomModel would be modified
+        // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
         if (queryModel.maxSpeedFallback != null) {
             if (mergedCM.maxSpeedFallback != null && mergedCM.maxSpeedFallback > queryModel.maxSpeedFallback)
@@ -182,7 +181,7 @@ public class CustomModel {
     private static void applyChange(Map<String, Object> mergedSuperMap,
                                     Object mergedObj, Map.Entry<String, Object> querySuperEntry) {
         if (mergedObj == null) {
-            // no need for a "merge"
+            // no need for a merge
             mergedSuperMap.put(querySuperEntry.getKey(), querySuperEntry.getValue());
             return;
         }
@@ -213,6 +212,7 @@ public class CustomModel {
         }
 
         // now special handling for comparison keys start e.g. <2 or >3.0, see testMergeComparisonKeys
+        // this could be simplified if CustomModel would be already an abstract syntax tree :)
         List<String> queryComparisonKeys = getComparisonKeys(queryMap);
         if (queryComparisonKeys.isEmpty())
             return;

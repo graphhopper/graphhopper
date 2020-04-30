@@ -47,6 +47,8 @@ public class CustomWeightingTest {
 
     GraphHopperStorage graphHopperStorage;
     DecimalEncodedValue avSpeedEnc;
+    DecimalEncodedValue maxSpeedEnc;
+    IntEncodedValue laneEnc;
     EnumEncodedValue<RoadClass> roadClassEnc;
     EncodingManager encodingManager;
     FlagEncoder carFE;
@@ -54,8 +56,10 @@ public class CustomWeightingTest {
     @BeforeEach
     public void setUp() {
         carFE = new CarFlagEncoder().setSpeedTwoDirections(true);
-        encodingManager = new EncodingManager.Builder().add(carFE).build();
+        laneEnc = new UnsignedIntEncodedValue("lanes", 2, true);
+        encodingManager = new EncodingManager.Builder().add(carFE).add(laneEnc).build();
         avSpeedEnc = carFE.getAverageSpeedEnc();
+        maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
         graphHopperStorage = new GraphBuilder(encodingManager).create();
     }
@@ -193,6 +197,50 @@ public class CustomWeightingTest {
         edge = graphHopperStorage.edge(0, 1, 5 * 10, true).set(avSpeedEnc, 15);
         assertEquals(5 * 3.1, weighting.calcEdgeWeight(edge, false), 0.01);
         assertEquals(5 * 24.70, weighting.calcEdgeWeight(edge.set(roadClassEnc, MOTORWAY), false), 0.01);
+    }
+
+    @Test
+    public void testAvoidHighSpeed() {
+        CustomWeighting weighting = createWeighting(new CustomModel());
+        EdgeIteratorState slowEdge = graphHopperStorage.edge(0, 1, 10, true).set(avSpeedEnc, 15).set(maxSpeedEnc, 50);
+        EdgeIteratorState fastEdge = graphHopperStorage.edge(1, 2, 10, true).set(avSpeedEnc, 60).set(maxSpeedEnc, 70);
+        assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
+        assertEquals(1.30, weighting.calcEdgeWeight(fastEdge, false), 0.01);
+
+        Map map = new HashMap();
+        map.put(">69", 0.2);
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.getPriority().put("max_speed", map);
+        weighting = createWeighting(vehicleModel);
+        assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
+        assertEquals(3.70, weighting.calcEdgeWeight(fastEdge, false), 0.01);
+
+        // this is currently a bit hidden feature as only the shared encoded values are suggested in the UI
+        map = new HashMap();
+        map.put(">50", 0.2);
+        vehicleModel = new CustomModel();
+        vehicleModel.getPriority().put(EncodingManager.getKey("car", "average_speed"), map);
+        weighting = createWeighting(vehicleModel);
+        assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
+        assertEquals(3.70, weighting.calcEdgeWeight(fastEdge, false), 0.01);
+    }
+
+    @Test
+    public void testIntEncodedValue() {
+        // currently we have no inbuilt encoded value that requires int but it is not bad to have for e.g. lanes
+        CustomWeighting weighting = createWeighting(new CustomModel());
+        EdgeIteratorState slowEdge = graphHopperStorage.edge(0, 1, 10, true).set(avSpeedEnc, 15).set(laneEnc, 0);
+        EdgeIteratorState fastEdge = graphHopperStorage.edge(1, 2, 10, true).set(avSpeedEnc, 60).set(laneEnc, 2);
+        assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
+        assertEquals(1.30, weighting.calcEdgeWeight(fastEdge, false), 0.01);
+
+        Map map = new HashMap();
+        map.put(" > 1.5", 0.2); // allow decimal values in range even for int encoded value
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.getPriority().put("lanes", map);
+        weighting = createWeighting(vehicleModel);
+        assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
+        assertEquals(3.70, weighting.calcEdgeWeight(fastEdge, false), 0.01);
     }
 
     @Test

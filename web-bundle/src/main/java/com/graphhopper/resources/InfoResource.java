@@ -19,9 +19,7 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.shapes.BBox;
@@ -103,8 +101,11 @@ public class InfoResource {
                     possibleValueList.add(o.toString());
                 }
             } else if (encodedValue instanceof BooleanEncodedValue) {
-                possibleValueList.add(true);
-                possibleValueList.add(false);
+                possibleValueList.add("true");
+                possibleValueList.add("false");
+            } else if (encodedValue instanceof DecimalEncodedValue || encodedValue instanceof IntEncodedValue) {
+                possibleValueList.add(">number");
+                possibleValueList.add("<number");
             } else {
                 // we only add enum encoded values and boolean encoded values to the list of possible values
                 continue;

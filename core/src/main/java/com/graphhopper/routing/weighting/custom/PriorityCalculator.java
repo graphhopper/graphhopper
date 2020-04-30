@@ -59,7 +59,8 @@ final class PriorityCalculator {
                     priorityList.add(BooleanToValueEntry.create(priorityKey, (BooleanEncodedValue) encodedValue,
                             (Map) value, defaultPriority, minPriority, maxPriority));
                 } else if (encodedValue instanceof IntEncodedValue) {
-                    // TODO NOW
+                    priorityList.add(IntToValueEntry.create(priorityKey, (IntEncodedValue) encodedValue,
+                            (Map) value, defaultPriority, minPriority, maxPriority));
                 } else {
                     throw new IllegalArgumentException("The encoded value '" + key + "' used in 'priority' is of type "
                             + encodedValue.getClass().getSimpleName() + ", but only types enum, decimal and boolean are supported.");

@@ -74,7 +74,8 @@ final class SpeedCalculator {
                     maxSpeedList.add(BooleanToValueEntry.create(maxSpeedKey, (BooleanEncodedValue) encodedValue,
                             (Map) value, defaultMaxSpeed, minMaxSpeed, maxMaxSpeed));
                 } else if (encodedValue instanceof IntEncodedValue) {
-                    // TODO
+                    maxSpeedList.add(IntToValueEntry.create(maxSpeedKey, (IntEncodedValue) encodedValue,
+                            (Map) value, defaultMaxSpeed, minMaxSpeed, maxMaxSpeed));
                 } else {
                     throw new IllegalArgumentException("The encoded value '" + key + "' used in 'max_speed' is of type "
                             + encodedValue.getClass().getSimpleName() + ", but only types enum, decimal and boolean are supported.");
@@ -111,7 +112,8 @@ final class SpeedCalculator {
                     speedFactorList.add(BooleanToValueEntry.create(speedFactorKey, (BooleanEncodedValue) encodedValue,
                             (Map) value, defaultSpeedFactor, minSpeedFactor, maxSpeedFactor));
                 } else if (encodedValue instanceof IntEncodedValue) {
-                    // TODO
+                    speedFactorList.add(IntToValueEntry.create(speedFactorKey, (IntEncodedValue) encodedValue,
+                            (Map) value, defaultSpeedFactor, minSpeedFactor, maxSpeedFactor));
                 } else {
                     throw new IllegalArgumentException("The encoded value '" + key + "' used in 'speed_factor' is of type "
                             + encodedValue.getClass().getSimpleName() + ", but only types enum, decimal and boolean are supported.");
