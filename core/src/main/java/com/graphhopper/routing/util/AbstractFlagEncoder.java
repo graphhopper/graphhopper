@@ -468,6 +468,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
+    public List<EncodedValue> getAllShared() {
+        return encodedValueLookup.getAllShared();
+    }
+
+    @Override
     public <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType) {
         return encodedValueLookup.getEncodedValue(key, encodedValueType);
     }

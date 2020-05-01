@@ -12,7 +12,7 @@
     GraphHopper class no longer enables CH by default, #1914
     replaced command line arguments -Dgraphhopper.. with -Ddw.graphhopper.. due to #1879, see also #1897
     GraphHopper.init(CmdArgs)->GraphHopper.init(GraphHopperConfig), see #1879
-    removed GenericWeighting and DataFlagEncoder as a normal CarFlagEncoder does the job too
+    removed GenericWeighting and DataFlagEncoder as a normal CarFlagEncoder does the job too. Or use the new CustomWeighting see #1841
     remove TurnWeighting, see #1863
     speed up path simplification with path details/instructions, see #1802
     revert compression of landmark preparation data, see #1749 and #1376

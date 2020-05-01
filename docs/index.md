@@ -32,7 +32,7 @@ The web module provides a web API for other programming languages as well as sta
 #### Configuration
 
 You can configure several aspects either programmatically or just via a [configuration](../config-example.yml).
-
+The configuration of routing profiles is documented [here](./core/profiles.md).
 The elevation configuration is separately documented [here](./core/elevation.md).
 
 ---

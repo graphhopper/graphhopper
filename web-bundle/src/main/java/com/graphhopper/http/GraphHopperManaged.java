@@ -20,13 +20,19 @@ package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
+import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.lifecycle.Managed;
@@ -87,6 +93,30 @@ public class GraphHopperManaged implements Managed {
             SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper,
                     new Envelope(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat), jsonFeatureCollections);
         }
+
+        ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
+        ObjectMapper jsonOM = Jackson.newObjectMapper();
+        List<ProfileConfig> newProfiles = new ArrayList<>();
+        for (ProfileConfig profileConfig : configuration.getProfiles()) {
+            if (!CustomWeighting.NAME.equals(profileConfig.getWeighting())) {
+                newProfiles.add(profileConfig);
+                continue;
+            }
+            String customModelLocation = profileConfig.getHints().getString("custom_model_file", "");
+            if (customModelLocation.isEmpty())
+                throw new IllegalArgumentException("Missing 'custom_model_file' field in profile '" + profileConfig.getName() + "' if you want an empty custom model set it to 'empty'");
+            if ("empty".equals(customModelLocation))
+                newProfiles.add(new CustomProfileConfig(profileConfig).setCustomModel(new CustomModel()));
+            else
+                try {
+                    CustomModel customModel = (customModelLocation.endsWith(".json") ? jsonOM : yamlOM).readValue(new File(customModelLocation), CustomModel.class);
+                    newProfiles.add(new CustomProfileConfig(profileConfig).setCustomModel(customModel));
+                } catch (Exception ex) {
+                    throw new RuntimeException("Cannot load custom_model from " + customModelLocation + " for profile " + profileConfig.getName(), ex);
+                }
+        }
+        configuration.setProfiles(newProfiles);
+
         graphHopper.init(configuration);
     }
 

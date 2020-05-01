@@ -55,9 +55,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     private EnumEncodedValue<RouteNetwork> footRouteEnc;
     Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
-    /**
-     * Should be only instantiated via EncodingManager
-     */
     public FootFlagEncoder() {
         this(4, 1);
     }

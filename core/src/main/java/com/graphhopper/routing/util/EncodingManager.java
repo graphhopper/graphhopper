@@ -476,9 +476,9 @@ public class EncodingManager implements EncodedValueLookup {
     private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
         if (hasEncodedValue(ev.getName()))
             throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
-        if (!withNamespace && ev.getName().contains(SPECIAL_SEPARATOR))
+        if (!withNamespace && !isSharedEV(ev))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain namespace character '" + SPECIAL_SEPARATOR + "'");
-        if (withNamespace && !ev.getName().contains(SPECIAL_SEPARATOR))
+        if (withNamespace && isSharedEV(ev))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must contain namespace character '" + SPECIAL_SEPARATOR + "'");
         ev.init(edgeConfig);
         encodedValueMap.put(ev.getName(), ev);
@@ -652,7 +652,7 @@ public class EncodingManager implements EncodedValueLookup {
     public String toEncodedValuesAsString() {
         StringBuilder str = new StringBuilder();
         for (EncodedValue ev : encodedValueMap.values()) {
-            if (ev.getName().contains(SPECIAL_SEPARATOR))
+            if (!isSharedEV(ev))
                 continue;
 
             if (str.length() > 0)
@@ -761,6 +761,14 @@ public class EncodingManager implements EncodedValueLookup {
         return list;
     }
 
+    @Override
+    public List<EncodedValue> getAllShared() {
+        List<EncodedValue> list = new ArrayList<>(encodedValueMap.size());
+        for (EncodedValue ev : encodedValueMap.values()) {
+            if (isSharedEV(ev)) list.add(ev);
+        }
+        return list;
+    }
 
     @Override
     public BooleanEncodedValue getBooleanEncodedValue(String key) {
@@ -791,7 +799,11 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static String SPECIAL_SEPARATOR = ".";
+    private static final String SPECIAL_SEPARATOR = ".";
+
+    private boolean isSharedEV(EncodedValue ev) {
+        return !ev.getName().contains(SPECIAL_SEPARATOR);
+    }
 
     /**
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as

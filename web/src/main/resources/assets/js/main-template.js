@@ -1,4 +1,5 @@
 global.d3 = require('d3');
+var YAML = require('js-yaml');
 var Flatpickr = require('flatpickr');
 require('flatpickr/dist/l10n');
 
@@ -78,6 +79,76 @@ $(document).ready(function (e) {
 
     gpxExport.addGpxExport(ghRequest);
 
+    $("#flex-input-link").click(function() {
+        $("#regular-input").toggle();
+        $("#flex-input").toggle();
+        // avoid default action, so use a different search button
+        $("#searchButton").toggle();
+        mapLayer.adjustMapSize();
+    });
+
+    var sendCustomData = function() {
+       mapLayer.clearElevation();
+       mapLayer.clearLayers();
+       flagAll();
+
+       var infoDiv = $("#info");
+       infoDiv.empty();
+       infoDiv.show();
+       var routeResultsDiv = $("<div class='route_results'/>");
+       infoDiv.append(routeResultsDiv);
+       routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
+       var inputText = $("#flex-input-text").val();
+       if(inputText.length < 5) {
+           routeResultsDiv.html("Routing configuration too short");
+           return;
+       }
+
+       var points = [];
+       for(var idx = 0; idx < ghRequest.route.size(); idx++) {
+           var point = ghRequest.route.getIndex(idx);
+           if (point.isResolved()) {
+               points.push([point.lng, point.lat]);
+           } else {
+               routeResultsDiv.html("Unresolved points");
+               return;
+           }
+       }
+
+       var jsonModel;
+       try {
+         jsonModel = inputText.indexOf("{") == 0? JSON.parse(inputText) : YAML.safeLoad(inputText);
+       } catch(ex) {
+         routeResultsDiv.html("Cannot parse " + contentType + " " + ex);
+         return;
+       }
+
+       jsonModel.points = points;
+       jsonModel.points_encoded = false;
+       jsonModel.elevation = ghRequest.api_params.elevation;
+       var request = JSON.stringify(jsonModel);
+
+       $.ajax({
+           url: "/route-custom",
+           type: "POST",
+           contentType: 'application/json; charset=utf-8',
+           dataType: "json",
+           data: request,
+           success: createRouteCallback(ghRequest, routeResultsDiv, "", true),
+           error: function(err) {
+               routeResultsDiv.html("Error response: cannot process input");
+               var json = JSON.parse(err.responseText);
+               createRouteCallback(ghRequest, routeResultsDiv, "", true)(json);
+           }
+        });
+    };
+
+    $("#flex-input-text").keydown(function (e) {
+        // CTRL+Enter
+        if (e.ctrlKey && e.keyCode == 13) sendCustomData();
+    });
+    $("#flex-search-button").click(sendCustomData);
+
     if (isProduction())
         $('#hosting').show();
 
@@ -101,6 +172,13 @@ $(document).ready(function (e) {
     });
 
     var urlParams = urlTools.parseUrlWithHisto();
+
+    var customURL = urlParams.load_custom;
+    if(customURL && ghenv.environment === 'development')
+        $.ajax(customURL).
+            done(function(data) { $("#flex-input-text").val(data); $("#flex-input-link").click(); }).
+            fail(function(err)  { console.log("Cannot load custom URL " + customURL); });
+
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
             .then(function (arg1, arg2) {
                 // init translation retrieved from first call (fetchTranslationMap)
@@ -167,6 +245,24 @@ $(document).ready(function (e) {
                     }
                 }
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
+                // a very simplistic helper system that shows the possible entries and encoded values
+                if(json.encoded_values) {
+                    $('#flex-input-text').bind('keyup click', function() {
+                        var cleanedText = this.value.replace(/(\n|:)/gm, ' ');
+                        var startIndex = cleanedText.substring(0, this.selectionStart).lastIndexOf(" ");
+                        startIndex = startIndex < 0 ? 0 : startIndex + 1;
+                        var endIndex = cleanedText.indexOf(" ", this.selectionStart);
+                        endIndex = endIndex < 0 ? cleanedText.length : endIndex;
+                        var wordUnderCursor = cleanedText.substring(startIndex, endIndex);
+                        if(this.selectionStart == 0 || this.value.substr(this.selectionStart - 1, 1) === "\n") {
+                           document.getElementById("ev_value").innerHTML = "<b>root:</b> profile, speed_factor, priority, max_speed, max_speed_fallback, distance_influence, areas";
+                        } else if(wordUnderCursor === "priority" || wordUnderCursor === "speed_factor" || wordUnderCursor === "max_speed") {
+                           document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + Object.keys(json.encoded_values).join(", ");
+                        } else if(json.encoded_values[wordUnderCursor]) {
+                           document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + json.encoded_values[wordUnderCursor].join(", ");
+                        }
+                    });
+                }
 
                 mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
 
@@ -507,7 +603,7 @@ function flagAll() {
     }
 }
 
-function createRouteCallBack(request, routeResultsDiv, urlForHistory, doZoom) {
+function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
     return function (json) {
        routeResultsDiv.html("");
        if (json.message) {
@@ -741,7 +837,7 @@ function routeLatLng(request, doQuery) {
 
     var urlForAPI = request.createURL();
     routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
-    request.doRequest(urlForAPI, createRouteCallBack(request, routeResultsDiv, urlForHistory, doZoom));
+    request.doRequest(urlForAPI, createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom));
 }
 
 function mySubmit() {
