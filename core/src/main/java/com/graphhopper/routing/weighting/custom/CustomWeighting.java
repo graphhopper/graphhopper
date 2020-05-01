@@ -115,16 +115,17 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        double seconds = calcSeconds(edgeState, reverse);
+        final double distance = edgeState.getDistance();
+        double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds))
             return Double.POSITIVE_INFINITY;
-        double distanceCosts = edgeState.getDistance() * distanceInfluence;
+        double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
         return seconds / priorityCalculator.calcPriority(edgeState, reverse) + distanceCosts;
     }
 
-    double calcSeconds(EdgeIteratorState edgeState, boolean reverse) {
+    double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
         // special case for loop edges: since they do not have a meaningful direction we always need to read them in forward direction
         if (edgeState.getBaseNode() == edgeState.getAdjNode())
             reverse = false;
@@ -139,14 +140,14 @@ public final class CustomWeighting extends AbstractWeighting {
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
 
-        double seconds = edgeState.getDistance() / speed * SPEED_CONV;
+        double seconds = distance / speed * SPEED_CONV;
         // add penalty at start/stop/via points
         return edgeState.get(EdgeIteratorState.UNFAVORED_EDGE) ? seconds + headingPenaltySeconds : seconds;
     }
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        return Math.round(calcSeconds(edgeState, reverse) * 1000);
+        return Math.round(calcSeconds(edgeState.getDistance(), edgeState, reverse) * 1000);
     }
 
     @Override
