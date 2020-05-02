@@ -20,10 +20,9 @@ package com.graphhopper.navigation;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.routing.ProfileResolver;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,11 +61,13 @@ public class NavigateResource {
 
     private final GraphHopperAPI graphHopper;
     private final TranslationMap translationMap;
+    private final ProfileResolver legacyResolver;
     private static final TranslationMap navigateResponseConverterTranslationMap = new NavigateResponseConverterTranslationMap().doImport();
 
     @Inject
-    public NavigateResource(GraphHopperAPI graphHopper, TranslationMap translationMap) {
+    public NavigateResource(GraphHopperAPI graphHopper, TranslationMap translationMap, ProfileResolver legacyResolver) {
         this.graphHopper = graphHopper;
+        this.legacyResolver = legacyResolver;
         this.translationMap = translationMap;
     }
 
@@ -86,13 +87,7 @@ public class NavigateResource {
             @QueryParam("geometries") @DefaultValue("polyline") String geometries,
             @QueryParam("bearings") @DefaultValue("") String bearings,
             @QueryParam("language") @DefaultValue("en") String localeStr,
-            @PathParam("profile") String profile) {
-
-        /*
-            Mapbox always uses fastest or priority weighting, except for walking then it's shortest
-            https://www.mapbox.com/api-documentation/#directions
-         */
-        final String weighting = "fastest";
+            @PathParam("profile") String mapboxProfile) {
 
         /*
             Currently, the NavigateResponseConverter is pretty limited.
@@ -120,8 +115,8 @@ public class NavigateResource {
             unit = DistanceUtils.Unit.IMPERIAL;
         }
 
-        String vehicleStr = convertProfileToGraphHopperVehicleString(profile);
-        List<GHPoint> requestPoints = getPointsFromRequest(httpReq, profile);
+        String ghProfile = convertProfileToGraphHopperVehicleString(mapboxProfile);
+        List<GHPoint> requestPoints = getPointsFromRequest(httpReq, mapboxProfile);
 
         List<Double> favoredHeadings = getBearing(bearings);
         if (favoredHeadings.size() > 0 && favoredHeadings.size() != requestPoints.size()) {
@@ -130,11 +125,11 @@ public class NavigateResource {
 
         StopWatch sw = new StopWatch().start();
 
-        GHResponse ghResponse = calcRoute(favoredHeadings, requestPoints, vehicleStr, weighting, localeStr, enableInstructions, minPathPrecision);
+        GHResponse ghResponse = calcRoute(favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
 
         // Only do this, when there are more than 2 points, otherwise we use alternative routes
         if (!ghResponse.hasErrors() && favoredHeadings.size() > 0) {
-            GHResponse noHeadingResponse = calcRoute(Collections.EMPTY_LIST, requestPoints, vehicleStr, weighting, localeStr, enableInstructions, minPathPrecision);
+            GHResponse noHeadingResponse = calcRoute(Collections.EMPTY_LIST, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
             if (ghResponse.getBest().getDistance() != noHeadingResponse.getBest().getDistance()) {
                 ghResponse.getAll().add(noHeadingResponse.getBest());
             }
@@ -143,7 +138,7 @@ public class NavigateResource {
         float took = sw.stop().getSeconds();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
-                + took + ", " + weighting + ", " + vehicleStr;
+                + took + ", " + ghProfile;
         Locale locale = Helper.getLocale(localeStr);
         DistanceConfig config = new DistanceConfig(unit, translationMap, navigateResponseConverterTranslationMap, locale);
 
@@ -160,8 +155,8 @@ public class NavigateResource {
         }
     }
 
-    private GHResponse calcRoute(List<Double> favoredHeadings, List<GHPoint> requestPoints, String vehicleStr,
-                                 String weighting, String localeStr, boolean enableInstructions, double minPathPrecision) {
+    private GHResponse calcRoute(List<Double> favoredHeadings, List<GHPoint> requestPoints, String profileStr,
+                                 String localeStr, boolean enableInstructions, double minPathPrecision) {
         GHRequest request;
         if (favoredHeadings.size() > 0) {
             request = new GHRequest(requestPoints, favoredHeadings);
@@ -169,8 +164,10 @@ public class NavigateResource {
             request = new GHRequest(requestPoints);
         }
 
-        request.putHint("vehicle", vehicleStr).
-                putHint("weighting", weighting).
+        ProfileConfig profileConfig = legacyResolver.resolveProfile(new PMap().
+                putObject("vehicle", profileStr).
+                putObject("weighting", "fastest"));
+        request.setProfile(profileConfig.getName()).
                 setLocale(localeStr).
                 putHint(CALC_POINTS, true).
                 putHint(INSTRUCTIONS, enableInstructions).
