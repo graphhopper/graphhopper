@@ -149,6 +149,7 @@ public class NavigateResource {
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         } else {
+            logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, navigateResponseConverterTranslationMap, locale, config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
