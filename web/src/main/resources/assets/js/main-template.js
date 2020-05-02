@@ -120,6 +120,7 @@ $(document).ready(function (e) {
        jsonModel.points = points;
        jsonModel.points_encoded = false;
        jsonModel.elevation = ghRequest.api_params.elevation;
+       jsonModel.profile = ghRequest.api_params.profile;
        var request = JSON.stringify(jsonModel);
 
        $.ajax({
@@ -268,7 +269,7 @@ $(document).ready(function (e) {
                         endIndex = endIndex < 0 ? cleanedText.length : endIndex;
                         var wordUnderCursor = cleanedText.substring(startIndex, endIndex);
                         if(this.selectionStart == 0 || this.value.substr(this.selectionStart - 1, 1) === "\n") {
-                           document.getElementById("ev_value").innerHTML = "<b>root:</b> profile, speed_factor, priority, max_speed, max_speed_fallback, distance_influence, areas";
+                           document.getElementById("ev_value").innerHTML = "<b>root:</b> speed_factor, priority, max_speed, max_speed_fallback, distance_influence, areas";
                         } else if(wordUnderCursor === "priority" || wordUnderCursor === "speed_factor" || wordUnderCursor === "max_speed") {
                            document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + Object.keys(json.encoded_values).join(", ");
                         } else if(json.encoded_values[wordUnderCursor]) {
