@@ -15,23 +15,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.profiles;
+package com.graphhopper.routing.weighting.custom;
 
-import java.util.List;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.util.EdgeIteratorState;
 
-public interface EncodedValueLookup {
+/**
+ * Implementations of this internal interface represent the conversion rules we use to map {@link EncodedValue}s to
+ * numerical values when determining the different parameters for {@link CustomWeighting}.
+ */
+interface EdgeToValueEntry {
 
-    List<EncodedValue> getAllShared();
-
-    <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType);
-
-    BooleanEncodedValue getBooleanEncodedValue(String key);
-
-    IntEncodedValue getIntEncodedValue(String key);
-
-    DecimalEncodedValue getDecimalEncodedValue(String key);
-
-    <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType);
-
-    boolean hasEncodedValue(String key);
+    /**
+     * @return the numeric value that shall be associated with the given (directed) edge
+     */
+    double getValue(EdgeIteratorState iter, boolean reverse);
 }

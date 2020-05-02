@@ -17,8 +17,10 @@
  */
 package com.graphhopper.resources;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.shapes.BBox;
@@ -29,9 +31,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Peter Karich
@@ -45,9 +45,9 @@ public class InfoResource {
     private final boolean hasElevation;
 
     @Inject
-    public InfoResource(GraphHopperConfig config, GraphHopperStorage storage, @Named("hasElevation") Boolean hasElevation) {
+    public InfoResource(GraphHopperConfig config, GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.config = config;
-        this.storage = storage;
+        this.storage = graphHopper.getGraphHopperStorage();
         this.hasElevation = hasElevation;
     }
 
@@ -69,8 +69,8 @@ public class InfoResource {
         public final List<ProfileData> profiles = new ArrayList<>();
         public List<String> supported_vehicles;
         public String version = Constants.VERSION;
-        public String build_date = Constants.BUILD_DATE;
         public boolean elevation;
+        public Map<String, List<Object>> encoded_values;
         public String import_date;
         public String data_date;
         public String prepare_ch_date;
@@ -99,6 +99,28 @@ public class InfoResource {
         info.data_date = storage.getProperties().get("datareader.data.date");
         info.prepare_ch_date = storage.getProperties().get("prepare.ch.date");
         info.prepare_date = storage.getProperties().get("prepare.ch.date");
+
+        // do not list all supported encoded values like the none-shared ones or *.turn_costs
+        List<EncodedValue> evList = storage.getEncodingManager().getAllShared();
+        info.encoded_values = new LinkedHashMap<>();
+        for (EncodedValue encodedValue : evList) {
+            List<Object> possibleValueList = new ArrayList<>();
+            if (encodedValue instanceof EnumEncodedValue) {
+                for (Object o : ((EnumEncodedValue) encodedValue).getValues()) {
+                    possibleValueList.add(o.toString());
+                }
+            } else if (encodedValue instanceof BooleanEncodedValue) {
+                possibleValueList.add("true");
+                possibleValueList.add("false");
+            } else if (encodedValue instanceof DecimalEncodedValue || encodedValue instanceof IntEncodedValue) {
+                possibleValueList.add(">number");
+                possibleValueList.add("<number");
+            } else {
+                // we only add enum encoded values and boolean encoded values to the list of possible values
+                continue;
+            }
+            info.encoded_values.put(encodedValue.getName(), possibleValueList);
+        }
         return info;
     }
 }

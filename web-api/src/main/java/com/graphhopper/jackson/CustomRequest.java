@@ -15,23 +15,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.profiles;
+package com.graphhopper.jackson;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.graphhopper.GHRequest;
+import com.graphhopper.routing.util.CustomModel;
 
-public interface EncodedValueLookup {
+public class CustomRequest extends GHRequest {
+    private CustomModel model;
 
-    List<EncodedValue> getAllShared();
+    @JsonUnwrapped
+    public void setModel(CustomModel model) {
+        this.model = model;
+    }
 
-    <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType);
-
-    BooleanEncodedValue getBooleanEncodedValue(String key);
-
-    IntEncodedValue getIntEncodedValue(String key);
-
-    DecimalEncodedValue getDecimalEncodedValue(String key);
-
-    <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType);
-
-    boolean hasEncodedValue(String key);
+    public CustomModel getModel() {
+        return model;
+    }
 }

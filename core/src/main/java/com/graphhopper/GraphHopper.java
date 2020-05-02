@@ -45,6 +45,8 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -826,7 +828,17 @@ public class GraphHopper implements GraphHopperAPI {
                         "Profile: " + profile + "\n" +
                         "Error: " + e.getMessage());
             }
+
+            if (profile instanceof CustomProfileConfig) {
+                CustomModel customModel = ((CustomProfileConfig) profile).getCustomModel();
+                if (customModel == null)
+                    throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
+                if (!CustomWeighting.NAME.equals(profile.getWeighting()))
+                    throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
+                            "weighting=" + profile.getWeighting() + " was defined");
+            }
         }
+
         Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             boolean added = chProfileSet.add(chConfig.getProfile());
@@ -1008,7 +1020,7 @@ public class GraphHopper implements GraphHopperAPI {
      *                         LM preparation or Isochrones
      */
     public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, boolean disableTurnCosts) {
-        return new DefaultWeightingFactory(encodingManager, ghStorage).createWeighting(profileConfig, hints, disableTurnCosts);
+        return new DefaultWeightingFactory(ghStorage, encodingManager).createWeighting(profileConfig, hints, disableTurnCosts);
     }
 
     @Override
@@ -1359,7 +1371,7 @@ public class GraphHopper implements GraphHopperAPI {
         private final GraphHopperStorage ghStorage;
         private final EncodingManager encodingManager;
 
-        public DefaultWeightingFactory(EncodingManager encodingManager, GraphHopperStorage ghStorage) {
+        public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager) {
             this.ghStorage = ghStorage;
             this.encodingManager = encodingManager;
         }
@@ -1390,8 +1402,15 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("You have to specify a weighting");
 
             Weighting weighting = null;
-
-            if ("shortest".equalsIgnoreCase(weightingStr)) {
+            if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
+                if (!(profile instanceof CustomProfileConfig))
+                    throw new IllegalArgumentException("custom weighting requires a CustomProfileConfig but was profile=" + profile.getName());
+                CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
+                CustomProfileConfig customProfileConfig = (CustomProfileConfig) profile;
+                queryCustomModel = queryCustomModel == null ?
+                        customProfileConfig.getCustomModel() : CustomModel.merge(customProfileConfig.getCustomModel(), queryCustomModel);
+                weighting = new CustomWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);
+            } else if ("shortest".equalsIgnoreCase(weightingStr)) {
                 weighting = new ShortestWeighting(encoder, turnCostProvider);
             } else if ("fastest".equalsIgnoreCase(weightingStr)) {
                 if (encoder.supports(PriorityWeighting.class))

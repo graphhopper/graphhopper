@@ -20,12 +20,14 @@ package com.graphhopper.tools;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -35,6 +37,8 @@ import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
+import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
@@ -206,20 +210,20 @@ public class Measurement {
                 System.gc();
                 boolean isCH = false;
                 boolean isLM = true;
-                for (int activeLMCount : Arrays.asList(4, 8, 12, 16)) {
+                Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
+                        .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
-                    if (encoder.supportsTurnCosts()) {
+                    if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
                         printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 4, isCH, isLM).
                                 withInstructions().activeLandmarks(activeLMCount).edgeBased());
                     }
-                }
+                });
 
                 final int activeLMCount = 8;
                 if (!blockAreaStr.isEmpty())
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_block_area", count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount).blockArea(blockAreaStr));
-                // compareRouting(hopper, count / 5);
             }
 
             if (hopper.getCHPreparationHandler().isEnabled()) {
@@ -294,10 +298,22 @@ public class Measurement {
         boolean useCHEdge = args.getBool("measurement.ch.edge", true);
         boolean useCHNode = args.getBool("measurement.ch.node", true);
         boolean useLM = args.getBool("measurement.lm", true);
+        String customModelFile = args.getString("measurement.custom_model_file", "");
         List<ProfileConfig> profiles = new ArrayList<>();
-        profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
-        if (turnCosts)
-            profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
+        if (!customModelFile.isEmpty()) {
+            if (!weighting.equals(CustomWeighting.NAME))
+                throw new IllegalArgumentException("To make use of a custom model you need to set measurement.weighting to 'custom'");
+            // use custom profile(s) as specified in the given custom model file
+            CustomModel customModel = loadCustomModel(customModelFile);
+            profiles.add(new CustomProfileConfig("profile_no_tc").setCustomModel(customModel).setVehicle(vehicle).setTurnCosts(false));
+            if (turnCosts)
+                profiles.add(new CustomProfileConfig("profile_tc").setCustomModel(customModel).setVehicle(vehicle).setTurnCosts(true));
+        } else {
+            // use standard profiles
+            profiles.add(new ProfileConfig("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
+            if (turnCosts)
+                profiles.add(new ProfileConfig("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true));
+        }
         ghConfig.setProfiles(profiles);
 
         List<CHProfileConfig> chProfiles = new ArrayList<>();
@@ -814,6 +830,15 @@ public class Measurement {
                     .writeValue(file, result);
         } catch (IOException e) {
             logger.error("Problem while storing json in: " + jsonLocation, e);
+        }
+    }
+
+    private CustomModel loadCustomModel(String customModelLocation) {
+        ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
+        try {
+            return yamlOM.readValue(new File(customModelLocation), CustomModel.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot load custom_model from " + customModelLocation, e);
         }
     }
 
