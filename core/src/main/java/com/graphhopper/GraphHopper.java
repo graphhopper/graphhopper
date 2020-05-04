@@ -17,7 +17,7 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
@@ -288,9 +288,9 @@ public class GraphHopper implements GraphHopperAPI {
      *     new Profile("my_car").setVehicle("car").setWeighting("shortest"),
      *     new Profile("your_bike").setVehicle("bike").setWeighting("fastest")
      *   );
-     *   hopper.getCHPreparationHandler().setCHProfileConfigs(
-     *     new CHProfileConfig("my_car"),
-     *     new CHProfileConfig("your_bike")
+     *   hopper.getCHPreparationHandler().setCHProfiles(
+     *     new CHProfile("my_car"),
+     *     new CHProfile("your_bike")
      *   );
      *   hopper.getLMPreparationHandler().setLMProfileConfigs(
      *     new LMProfileConfig("your_bike")
@@ -300,7 +300,7 @@ public class GraphHopper implements GraphHopperAPI {
      * <p>
      * See also https://github.com/graphhopper/graphhopper/pull/1922.
      *
-     * @see CHPreparationHandler#setCHProfileConfigs
+     * @see CHPreparationHandler#setCHProfiles
      * @see LMPreparationHandler#setLMProfileConfigs
      */
     public GraphHopper setProfiles(Profile... profiles) {
@@ -839,8 +839,8 @@ public class GraphHopper implements GraphHopperAPI {
             }
         }
 
-        Set<String> chConfigSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
-        for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
+        Set<String> chConfigSet = new LinkedHashSet<>(chPreparationHandler.getCHProfiles().size());
+        for (CHProfile chConfig : chPreparationHandler.getCHProfiles()) {
             boolean added = chConfigSet.add(chConfig.getProfile());
             if (!added) {
                 throw new IllegalArgumentException("Duplicate CH reference to profile '" + chConfig.getProfile() + "'");
@@ -907,7 +907,7 @@ public class GraphHopper implements GraphHopperAPI {
             return;
         }
 
-        for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
+        for (CHProfile chConfig : chPreparationHandler.getCHProfiles()) {
             Profile profile = profilesByName.get(chConfig.getProfile());
             if (profile.isTurnCosts()) {
                 chPreparationHandler.addCHConfig(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));

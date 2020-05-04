@@ -19,7 +19,7 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
@@ -63,9 +63,9 @@ public class RouteResourceProfileSelectionTest {
                         new Profile("my_feet").setVehicle("foot").setWeighting("shortest")
                 ))
                 .setCHProfiles(Arrays.asList(
-                        new CHProfileConfig("my_car"),
-                        new CHProfileConfig("my_bike"),
-                        new CHProfileConfig("my_feet")
+                        new CHProfile("my_car"),
+                        new CHProfile("my_bike"),
+                        new CHProfile("my_feet")
                 ))
                 .setLMProfiles(Arrays.asList(
                         new LMProfileConfig("my_car"),

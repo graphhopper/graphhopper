@@ -18,7 +18,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -46,7 +46,7 @@ public class CHPreparationHandler {
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we first add the profile configs and later read them to create the actual profile objects (because they require
     // the actual Weightings)
-    private final List<CHProfileConfig> chProfileConfigs = new ArrayList<>();
+    private final List<CHProfile> chProfiles = new ArrayList<>();
     private final List<CHConfig> chConfigs = new ArrayList<>();
     private boolean disablingAllowed = false;
     private int preparationThreads;
@@ -68,12 +68,12 @@ public class CHPreparationHandler {
 
         setPreparationThreads(ghConfig.getInt(CH.PREPARE + "threads", getPreparationThreads()));
         setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
-        setCHProfileConfigs(ghConfig.getCHProfiles());
+        setCHProfiles(ghConfig.getCHProfiles());
         pMap = ghConfig.asPMap();
     }
 
     public final boolean isEnabled() {
-        return !chProfileConfigs.isEmpty() || !chConfigs.isEmpty() || !preparations.isEmpty();
+        return !chProfiles.isEmpty() || !chConfigs.isEmpty() || !preparations.isEmpty();
     }
 
     public final boolean isDisablingAllowed() {
@@ -138,8 +138,8 @@ public class CHPreparationHandler {
         return result;
     }
 
-    public CHPreparationHandler setCHProfileConfigs(CHProfileConfig... chProfileConfigs) {
-        setCHProfileConfigs(Arrays.asList(chProfileConfigs));
+    public CHPreparationHandler setCHProfiles(CHProfile... chProfiles) {
+        setCHProfiles(Arrays.asList(chProfiles));
         return this;
     }
 
@@ -147,14 +147,14 @@ public class CHPreparationHandler {
      * Enables the use of contraction hierarchies to reduce query times.
      * "fastest|u_turn_costs=30 or your own weight-calculation type.
      */
-    public CHPreparationHandler setCHProfileConfigs(Collection<CHProfileConfig> chProfileConfigs) {
-        this.chProfileConfigs.clear();
-        this.chProfileConfigs.addAll(chProfileConfigs);
+    public CHPreparationHandler setCHProfiles(Collection<CHProfile> chProfiles) {
+        this.chProfiles.clear();
+        this.chProfiles.addAll(chProfiles);
         return this;
     }
 
-    public List<CHProfileConfig> getCHProfileConfigs() {
-        return chProfileConfigs;
+    public List<CHProfile> getCHProfiles() {
+        return chProfiles;
     }
 
     public List<PrepareContractionHierarchies> getPreparations() {

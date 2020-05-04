@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -577,7 +577,7 @@ public class RoutingAlgorithmWithOSMIT {
             if (withCH) {
                 assert !Helper.isEmpty(weightStr);
                 hopper.getCHPreparationHandler().
-                        setCHProfileConfigs(new CHProfileConfig(vehicle + "_profile")).
+                        setCHProfiles(new CHProfile(vehicle + "_profile")).
                         setDisablingAllowed(true);
             }
 

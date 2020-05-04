@@ -17,7 +17,7 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
@@ -98,7 +98,7 @@ public class GraphHopperIT {
                 setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
-                .setCHProfileConfigs(new CHProfileConfig("profile"))
+                .setCHProfiles(new CHProfile("profile"))
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566)
@@ -237,7 +237,7 @@ public class GraphHopperIT {
                 setSortGraph(sort);
         if (ch) {
             hopper.getCHPreparationHandler()
-                    .setCHProfileConfigs(new CHProfileConfig(profile))
+                    .setCHProfiles(new CHProfile(profile))
                     .setDisablingAllowed(true);
         }
         if (lm) {
@@ -252,7 +252,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true);
         if (ch) {
             hopper.getCHPreparationHandler()
-                    .setCHProfileConfigs(new CHProfileConfig(profile))
+                    .setCHProfiles(new CHProfile(profile))
                     .setDisablingAllowed(true);
         }
         if (lm) {
@@ -1086,9 +1086,9 @@ public class GraphHopperIT {
                         new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting))
                 ).
                 setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(
-                new CHProfileConfig(profile1),
-                new CHProfileConfig(profile2)
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(profile1),
+                new CHProfile(profile2)
         );
         hopper.importOrLoad();
 
@@ -1130,9 +1130,9 @@ public class GraphHopperIT {
                         new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting)
                 ).
                 setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(
-                new CHProfileConfig(profile1),
-                new CHProfileConfig(profile2)
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(profile1),
+                new CHProfile(profile2)
         );
         hopper.importOrLoad();
 
@@ -1161,9 +1161,9 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setProfiles(profiles).
                 setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(
-                new CHProfileConfig(profile1),
-                new CHProfileConfig(profile2)
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(profile1),
+                new CHProfile(profile2)
         );
         hopper.importOrLoad();
         String str = hopper.getEncodingManager().toString();
@@ -1213,7 +1213,7 @@ public class GraphHopperIT {
                 setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                 setStoreOnFlush(true).
                 setSortGraph(sort);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.importOrLoad();
 
         // same query as in testMonacoWithInstructions
@@ -1325,7 +1325,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true);
 
         hopper.getCHPreparationHandler().
-                setCHProfileConfigs(new CHProfileConfig(profile)).
+                setCHProfiles(new CHProfile(profile)).
                 setDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().
@@ -1461,7 +1461,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true);
 
         hopper.getCHPreparationHandler().
-                setCHProfileConfigs(new CHProfileConfig(profile1)).
+                setCHProfiles(new CHProfile(profile1)).
                 setDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().
@@ -1536,7 +1536,7 @@ public class GraphHopperIT {
                 setProfiles(Collections.singletonList(
                         new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(turnCosts)
                 ));
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile)).setDisablingAllowed(true);
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile)).setDisablingAllowed(true);
         hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig(profile)).setDisablingAllowed(true);
         hopper.importOrLoad();
 
@@ -1581,7 +1581,7 @@ public class GraphHopperIT {
                 setProfiles(Collections.singletonList(
                         new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true)
                 ));
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile)).setDisablingAllowed(true);
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile)).setDisablingAllowed(true);
         hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig(profile)).setDisablingAllowed(true);
 
         hopper.importOrLoad();
@@ -1639,9 +1639,9 @@ public class GraphHopperIT {
                         new Profile(profile2).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false)
                 )).
                 setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(
-                new CHProfileConfig(profile1),
-                new CHProfileConfig(profile2)
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(profile1),
+                new CHProfile(profile2)
         );
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
@@ -1665,7 +1665,7 @@ public class GraphHopperIT {
                 ).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
-                .setCHProfileConfigs(new CHProfileConfig(profile))
+                .setCHProfiles(new CHProfile(profile))
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
 
@@ -1697,7 +1697,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 // we only do the CH preparation for the profile without turn costs
-                .setCHProfileConfigs(new CHProfileConfig(profile2))
+                .setCHProfiles(new CHProfile(profile2))
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
 
@@ -1749,7 +1749,7 @@ public class GraphHopperIT {
                 setProfiles(Collections.singletonList(
                         new Profile("my_profile").setVehicle("car").setWeighting("fastest").setTurnCosts(true)));
         h.getCHPreparationHandler()
-                .setCHProfileConfigs(new CHProfileConfig("my_profile"));
+                .setCHProfiles(new CHProfile("my_profile"));
         h.importOrLoad();
 
         // depending on the curbside parameters we take very different routes
@@ -1800,7 +1800,7 @@ public class GraphHopperIT {
                         new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true))
                 );
         h.getCHPreparationHandler()
-                .setCHProfileConfigs(new CHProfileConfig(profile));
+                .setCHProfiles(new CHProfile(profile));
         h.importOrLoad();
 
         // depending on the curbside parameters we take very different routes
@@ -1868,7 +1868,7 @@ public class GraphHopperIT {
                                 .putHint(U_TURN_COSTS, 40))
                 );
         h.getCHPreparationHandler()
-                .setCHProfileConfigs(new CHProfileConfig("my_profile"));
+                .setCHProfiles(new CHProfile("my_profile"));
         h.importOrLoad();
 
         GHPoint p = new GHPoint(43.73397, 7.414173);

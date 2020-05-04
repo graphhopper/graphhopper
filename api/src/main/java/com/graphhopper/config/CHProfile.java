@@ -28,14 +28,14 @@ import static com.graphhopper.config.Profile.validateProfileName;
  *
  * @see Profile
  */
-public class CHProfileConfig {
+public class CHProfile {
     private String profile = "";
 
-    private CHProfileConfig() {
+    private CHProfile() {
         // default constructor needed for jackson
     }
 
-    public CHProfileConfig(String profile) {
+    public CHProfile(String profile) {
         setProfile(profile);
     }
 
@@ -43,7 +43,7 @@ public class CHProfileConfig {
         return profile;
     }
 
-    CHProfileConfig setProfile(String profile) {
+    CHProfile setProfile(String profile) {
         validateProfileName(profile);
         this.profile = profile;
         return this;
@@ -58,7 +58,7 @@ public class CHProfileConfig {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CHProfileConfig that = (CHProfileConfig) o;
+        CHProfile that = (CHProfile) o;
         return Objects.equals(profile, that.profile);
     }
 

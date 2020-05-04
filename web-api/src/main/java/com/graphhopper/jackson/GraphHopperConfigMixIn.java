@@ -21,7 +21,7 @@ package com.graphhopper.jackson;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 
 import java.util.List;
@@ -29,7 +29,7 @@ import java.util.List;
 public interface GraphHopperConfigMixIn {
 
     @JsonProperty("profiles_ch")
-    GraphHopperConfig setCHProfiles(List<CHProfileConfig> chProfiles);
+    GraphHopperConfig setCHProfiles(List<CHProfile> chProfiles);
 
     @JsonProperty("profiles_lm")
     GraphHopperConfig setLMProfiles(List<LMProfileConfig> lmProfiles);

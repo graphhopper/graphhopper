@@ -18,7 +18,7 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
@@ -60,7 +60,7 @@ public class RouteResourceIssue1574Test {
                         new Profile("car_profile").setVehicle("car").setWeighting("fastest")
                 ))
                 .setCHProfiles(Collections.singletonList(
-                        new CHProfileConfig("car_profile")
+                        new CHProfile("car_profile")
                 ));
         return config;
     }

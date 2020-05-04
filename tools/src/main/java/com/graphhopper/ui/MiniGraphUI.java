@@ -22,7 +22,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -394,7 +394,7 @@ public class MiniGraphUI {
                         .setWeighting("fastest")
         ));
         ghConfig.setCHProfiles(Arrays.asList(
-                new CHProfileConfig("profile")
+                new CHProfile("profile")
         ));
         ghConfig.setLMProfiles(Arrays.asList(
                 new LMProfileConfig("profile")

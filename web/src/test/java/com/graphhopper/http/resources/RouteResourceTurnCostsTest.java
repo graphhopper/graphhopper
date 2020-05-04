@@ -19,7 +19,7 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
@@ -64,8 +64,8 @@ public class RouteResourceTurnCostsTest {
                         new Profile("my_car_no_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(false)
                 ))
                 .setCHProfiles(Arrays.asList(
-                        new CHProfileConfig("my_car_turn_costs"),
-                        new CHProfileConfig("my_car_no_turn_costs")
+                        new CHProfile("my_car_turn_costs"),
+                        new CHProfile("my_car_no_turn_costs")
                 ))
                 .setLMProfiles(Arrays.asList(
                         new LMProfileConfig("my_car_no_turn_costs"),

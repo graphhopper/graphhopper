@@ -21,7 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.api.GraphHopperWeb;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
@@ -72,7 +72,7 @@ public class RouteResourceClientHCTest {
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(new Profile("my_car").setVehicle("car").setWeighting("fastest"),
                         new Profile("my_bike").setVehicle("bike").setWeighting("fastest")))
-                .setCHProfiles(Arrays.asList(new CHProfileConfig("my_car"), new CHProfileConfig("my_bike")));
+                .setCHProfiles(Arrays.asList(new CHProfile("my_car"), new CHProfile("my_bike")));
         return config;
     }
 

@@ -18,7 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -312,7 +312,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         GraphHopper hopper = new GraphHopper();
         hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         if (ch) {
-            hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("p_car"));
+            hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
         }
         assertTrue(hopper.load(defaultGraphLoc));
         graph = hopper.getGraphHopperStorage();
@@ -325,7 +325,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
                 .setEncodingManager(encodingManager)
                 .setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         if (ch) {
-            hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("p_car"));
+            hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
         }
         assertTrue(hopper.load(defaultGraphLoc));
         graph = hopper.getGraphHopperStorage();

@@ -3,7 +3,7 @@ package com.graphhopper.http.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -55,7 +55,7 @@ public class CustomWeightingRouteResourceTest {
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/cargo_bike.yml"),
                         new CustomProfile("json_bike").setVehicle("bike").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"))).
-                setCHProfiles(Collections.singletonList(new CHProfileConfig("truck")));
+                setCHProfiles(Collections.singletonList(new CHProfile("truck")));
         return config;
     }
 

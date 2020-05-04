@@ -92,7 +92,7 @@ public class RoutingAlgorithmIT {
             final PMap chHints = new PMap(defaultHints);
             chHints.putObject(Parameters.CH.DISABLE, false);
             chHints.putObject(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
-            Profile pickedProfile = new ProfileResolver(hopper.getEncodingManager(), hopper.getProfiles(), hopper.getCHPreparationHandler().getCHProfileConfigs(), Collections.<LMProfileConfig>emptyList()).selectProfileCH(chHints);
+            Profile pickedProfile = new ProfileResolver(hopper.getEncodingManager(), hopper.getProfiles(), hopper.getCHPreparationHandler().getCHProfiles(), Collections.<LMProfileConfig>emptyList()).selectProfileCH(chHints);
             algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + weightingStr) {
                 @Override

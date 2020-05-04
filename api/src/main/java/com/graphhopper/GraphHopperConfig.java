@@ -18,7 +18,7 @@
 
 package com.graphhopper;
 
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.util.PMap;
@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class GraphHopperConfig {
     private List<Profile> profiles = new ArrayList<>();
-    private List<CHProfileConfig> chProfiles = new ArrayList<>();
+    private List<CHProfile> chProfiles = new ArrayList<>();
     private List<LMProfileConfig> lmProfiles = new ArrayList<>();
     private final PMap map;
 
@@ -63,11 +63,11 @@ public class GraphHopperConfig {
         return this;
     }
 
-    public List<CHProfileConfig> getCHProfiles() {
+    public List<CHProfile> getCHProfiles() {
         return chProfiles;
     }
 
-    public GraphHopperConfig setCHProfiles(List<CHProfileConfig> chProfiles) {
+    public GraphHopperConfig setCHProfiles(List<CHProfile> chProfiles) {
         this.chProfiles = chProfiles;
         return this;
     }
@@ -127,7 +127,7 @@ public class GraphHopperConfig {
             sb.append("\n");
         }
         sb.append("profiles_ch:\n");
-        for (CHProfileConfig profile : chProfiles) {
+        for (CHProfile profile : chProfiles) {
             sb.append(profile);
             sb.append("\n");
         }

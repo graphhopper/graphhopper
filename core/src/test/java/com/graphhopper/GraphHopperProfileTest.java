@@ -19,7 +19,7 @@
 package com.graphhopper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
@@ -109,7 +109,7 @@ public class GraphHopperProfileTest {
     public void chProfileDoesNotExist_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
         hopper.setProfiles(new Profile("profile1").setVehicle("car"));
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("other_profile"));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("other_profile"));
         assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
@@ -122,9 +122,9 @@ public class GraphHopperProfileTest {
     public void duplicateCHProfile_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
         hopper.setProfiles(new Profile("profile").setVehicle("car"));
-        hopper.getCHPreparationHandler().setCHProfileConfigs(
-                new CHProfileConfig("profile"),
-                new CHProfileConfig("profile")
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile("profile"),
+                new CHProfile("profile")
         );
         assertIllegalArgument(new Runnable() {
             @Override

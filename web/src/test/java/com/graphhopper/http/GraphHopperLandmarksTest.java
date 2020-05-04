@@ -18,7 +18,7 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -64,7 +64,7 @@ public class GraphHopperLandmarksTest {
                         new Profile("car_profile").setVehicle("car").setWeighting("fastest")
                 ))
                 .setCHProfiles(Collections.singletonList(
-                        new CHProfileConfig("car_profile")
+                        new CHProfile("car_profile")
                 ))
                 .setLMProfiles(Collections.singletonList(
                         new LMProfileConfig("car_profile")

@@ -21,7 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -96,7 +96,7 @@ public class CHMeasurement {
                     new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true)
             ));
             ghConfig.setCHProfiles(Collections.singletonList(
-                    new CHProfileConfig(profile)
+                    new CHProfile(profile)
             ));
             if (landmarks > 0) {
                 ghConfig.setLMProfiles(Collections.singletonList(

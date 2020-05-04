@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing;
 
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EncodingManager;
@@ -46,7 +46,7 @@ public class ProfileResolver {
     private final List<Profile> chProfiles;
     private final List<Profile> lmProfiles;
 
-    public ProfileResolver(EncodingManager encodingManager, List<Profile> profiles, List<CHProfileConfig> chProfiles, List<LMProfileConfig> lmProfiles) {
+    public ProfileResolver(EncodingManager encodingManager, List<Profile> profiles, List<CHProfile> chProfiles, List<LMProfileConfig> lmProfiles) {
         this.encodingManager = encodingManager;
         this.profiles = profiles;
         Map<String, Profile> profilesByName = new HashMap<>(profiles.size());
@@ -57,7 +57,7 @@ public class ProfileResolver {
             throw new IllegalStateException("Profiles must have distinct names");
         }
         this.chProfiles = new ArrayList<>();
-        for (CHProfileConfig p : chProfiles) {
+        for (CHProfile p : chProfiles) {
             Profile profile = profilesByName.get(p.getProfile());
             if (profile == null) {
                 throw new IllegalStateException("There is no profile for CH preparation '" + p.getProfile() + "'");

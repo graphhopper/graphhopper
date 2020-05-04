@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ProfileResolver;
@@ -165,7 +165,7 @@ public class LMProfileSelectorTest {
     private void assertProfileFound(Profile expectedProfile, List<Profile> profiles, List<LMProfileConfig> lmProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         PMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            Profile selectedProfile = new ProfileResolver(encodingManager, profiles, Collections.<CHProfileConfig>emptyList(), lmProfiles).selectProfileLM(hintsMap);
+            Profile selectedProfile = new ProfileResolver(encodingManager, profiles, Collections.<CHProfile>emptyList(), lmProfiles).selectProfileLM(hintsMap);
             assertEquals(expectedProfile, selectedProfile);
         } catch (IllegalArgumentException e) {
             fail("no profile found\nexpected: " + expectedProfile + "\nerror: " + e.getMessage());
@@ -175,7 +175,7 @@ public class LMProfileSelectorTest {
     private String assertLMProfileSelectionError(String expectedError, List<Profile> profiles, List<LMProfileConfig> lmProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         PMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            new ProfileResolver(encodingManager, profiles, Collections.<CHProfileConfig>emptyList(), lmProfiles).selectProfileLM(hintsMap);
+            new ProfileResolver(encodingManager, profiles, Collections.<CHProfile>emptyList(), lmProfiles).selectProfileLM(hintsMap);
             fail("There should have been an error");
             return "";
         } catch (IllegalArgumentException e) {

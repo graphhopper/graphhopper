@@ -23,7 +23,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.api.GraphHopperWeb;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
@@ -81,7 +81,7 @@ public class RouteResourceTest {
                 // adding this so the corresponding check is not just skipped...
                 .putObject(MAX_NON_CH_POINT_DISTANCE, 10e6)
                 .setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest")))
-                .setCHProfiles(Collections.singletonList(new CHProfileConfig("my_car")));
+                .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }
 

@@ -24,7 +24,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.config.CHProfileConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
@@ -316,11 +316,11 @@ public class Measurement {
         }
         ghConfig.setProfiles(profiles);
 
-        List<CHProfileConfig> chProfiles = new ArrayList<>();
+        List<CHProfile> chProfiles = new ArrayList<>();
         if (useCHNode)
-            chProfiles.add(new CHProfileConfig("profile_no_tc"));
+            chProfiles.add(new CHProfile("profile_no_tc"));
         if (useCHEdge)
-            chProfiles.add(new CHProfileConfig("profile_tc"));
+            chProfiles.add(new CHProfile("profile_tc"));
         ghConfig.setCHProfiles(chProfiles);
         List<LMProfileConfig> lmProfiles = new ArrayList<>();
         if (useLM) {
