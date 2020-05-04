@@ -20,9 +20,11 @@ package com.graphhopper.navigation;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.config.ProfileConfig;
-import com.graphhopper.routing.ProfileResolver;
-import com.graphhopper.util.*;
+import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,10 +37,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import static com.graphhopper.util.Parameters.Routing.*;
 
@@ -61,13 +60,20 @@ public class NavigateResource {
 
     private final GraphHopperAPI graphHopper;
     private final TranslationMap translationMap;
-    private final ProfileResolver legacyResolver;
+    private final Map<String, String> resolverMap;
     private static final TranslationMap navigateResponseConverterTranslationMap = new NavigateResponseConverterTranslationMap().doImport();
 
     @Inject
-    public NavigateResource(GraphHopperAPI graphHopper, TranslationMap translationMap, ProfileResolver legacyResolver) {
+    public NavigateResource(GraphHopperAPI graphHopper, TranslationMap translationMap, GraphHopperConfig config) {
         this.graphHopper = graphHopper;
-        this.legacyResolver = legacyResolver;
+        resolverMap = config.asPMap().getObject("profiles_mapbox", new HashMap<>());
+        if (resolverMap.isEmpty()) {
+            resolverMap.put("driving", "car");
+            // driving-traffic is mapped to regular car as well
+            resolverMap.put("driving-traffic", "car");
+            resolverMap.put("walking", "foot");
+            resolverMap.put("cycling", "bike");
+        }
         this.translationMap = translationMap;
     }
 
@@ -115,7 +121,7 @@ public class NavigateResource {
             unit = DistanceUtils.Unit.IMPERIAL;
         }
 
-        String ghProfile = convertProfileToGraphHopperVehicleString(mapboxProfile);
+        String ghProfile = resolverMap.getOrDefault(mapboxProfile, mapboxProfile);
         List<GHPoint> requestPoints = getPointsFromRequest(httpReq, mapboxProfile);
 
         List<Double> favoredHeadings = getBearing(bearings);
@@ -165,10 +171,7 @@ public class NavigateResource {
             request = new GHRequest(requestPoints);
         }
 
-        ProfileConfig profileConfig = legacyResolver.resolveProfile(new PMap().
-                putObject("vehicle", profileStr).
-                putObject("weighting", "fastest"));
-        request.setProfile(profileConfig.getName()).
+        request.setProfile(profileStr).
                 setLocale(localeStr).
                 putHint(CALC_POINTS, true).
                 putHint(INSTRUCTIONS, enableInstructions).
@@ -199,21 +202,6 @@ public class NavigateResource {
         }
 
         return points;
-    }
-
-    private String convertProfileToGraphHopperVehicleString(String profile) {
-        switch (profile) {
-            case "driving":
-                // driving-traffic is mapped to regular car as well
-            case "driving-traffic":
-                return "car";
-            case "walking":
-                return "foot";
-            case "cycling":
-                return "bike";
-            default:
-                return profile;
-        }
     }
 
     static List<Double> getBearing(String bearingString) {
