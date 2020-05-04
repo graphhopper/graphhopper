@@ -8,8 +8,17 @@ An example for an Android app that uses the Navigation SDK is provided in [this 
 
 # Integration with your Dropwizard application
 
- 1. Create your Application class that adds the [GraphHopperBundle](https://github.com/graphhopper/graphhopper/blob/1.0-pre38/web-bundle/src/main/java/com/graphhopper/http/GraphHopperBundle.java). See this [MapMatchingApplication](https://github.com/graphhopper/map-matching/blob/1.0-pre38/matching-web/src/main/java/com/graphhopper/matching/http/MapMatchingApplication.java) class as an example.
- 2. In the run method of this class call `environment.jersey().register(NavigateResource.class);` 
+ 1. Create your dropwizard application
+ 2. Add this dependency to your project via e.g.:
+ ```xml
+ <dependency>
+   <groupId>com.graphhopper</groupId>
+   <artifactId>graphhopper-navigation</artifactId>
+   <version>SOME_VERSION</version>
+ </dependency>
+ ```
+ 3. Create your Application class that adds the [GraphHopperBundle](https://github.com/graphhopper/graphhopper/blob/1.0-pre38/web-bundle/src/main/java/com/graphhopper/http/GraphHopperBundle.java). See this [MapMatchingApplication](https://github.com/graphhopper/map-matching/blob/1.0-pre38/matching-web/src/main/java/com/graphhopper/matching/http/MapMatchingApplication.java) class as an example.
+ 4. In the run method of this class call `environment.jersey().register(NavigateResource.class);` 
 
 Or create your own bundle similar to the mentioned GraphHopperBundle and add the NavigateResource there.
 
