@@ -49,7 +49,7 @@ public class LMPreparationHandler {
     private int activeLandmarkCount = 8;
 
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
-    // we first add the profile configs and later read them to create the actual profile objects (because they require
+    // we first add the profiles and later read them to create the config objects (because they require
     // the actual Weightings)
     private final List<LMProfile> lmProfiles = new ArrayList<>();
     private final List<LMConfig> lmConfigs = new ArrayList<>();

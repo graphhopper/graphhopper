@@ -21,8 +21,9 @@ package com.graphhopper.config;
 import com.graphhopper.util.PMap;
 
 /**
- * Corresponds to the `profiles` section in `config.yml` and specifies the properties of a routing profile. The name
- * used here needs to be used when setting up CH/LM preparations. See also the documentation in `config-example.yml'
+ * Corresponds to an entry of the `profiles` section in `config.yml` and specifies the properties of a routing profile.
+ * The name used here needs to be used when setting up CH/LM preparations. See also the documentation in
+ * `config-example.yml'
  *
  * @see CHProfile
  * @see LMProfile

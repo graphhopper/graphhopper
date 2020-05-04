@@ -44,7 +44,7 @@ import static com.graphhopper.util.Helper.getMemInfo;
 public class CHPreparationHandler {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
-    // we first add the profile configs and later read them to create the actual profile objects (because they require
+    // we first add the profiles and later read them to create the config objects (because they require
     // the actual Weightings)
     private final List<CHProfile> chProfiles = new ArrayList<>();
     private final List<CHConfig> chConfigs = new ArrayList<>();
