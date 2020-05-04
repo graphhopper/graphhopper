@@ -47,7 +47,7 @@ public class PrepareContractionHierarchiesTest {
     private final CarFlagEncoder carEncoder = new CarFlagEncoder().setSpeedTwoDirections(true);
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
-    private final CHProfile chProfile = CHProfile.nodeBased("p", weighting);
+    private final CHConfig chConfig = CHConfig.nodeBased("c", weighting);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private GraphHopperStorage g;
     private CHGraph lg;
@@ -127,11 +127,11 @@ public class PrepareContractionHierarchiesTest {
     }
 
     private GraphHopperStorage createGHStorage() {
-        return createGHStorage(chProfile);
+        return createGHStorage(chConfig);
     }
 
-    private GraphHopperStorage createGHStorage(CHProfile p) {
-        return new GraphBuilder(encodingManager).setCHProfiles(p).create();
+    private GraphHopperStorage createGHStorage(CHConfig c) {
+        return new GraphBuilder(encodingManager).setCHConfigs(c).create();
     }
 
     @Test
@@ -402,8 +402,8 @@ public class PrepareContractionHierarchiesTest {
 
         // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
         Weighting fastestWeighting = new FastestWeighting(carEncoder);
-        CHProfile chProfile = CHProfile.nodeBased("p", fastestWeighting);
-        g = createGHStorage(chProfile);
+        CHConfig chConfig = CHConfig.nodeBased("c", fastestWeighting);
+        g = createGHStorage(chConfig);
         lg = g.getCHGraph();
         // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
         // be a shortcut 3->2 visible at node 2 and another one 3->4 visible at node 3.
@@ -448,7 +448,7 @@ public class PrepareContractionHierarchiesTest {
         edge24.setReverse(carEncoder.getAverageSpeedEnc(), 27.5);
 
         // prepare ch, use node ids as levels
-        PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, chProfile);
+        PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, chConfig);
         pch.useFixedNodeOrdering(new NodeOrderingProvider() {
             @Override
             public int getNodeIdForLevel(int level) {
@@ -582,17 +582,17 @@ public class PrepareContractionHierarchiesTest {
         EncodingManager tmpEncodingManager = EncodingManager.create(tmpCarEncoder, tmpBikeEncoder);
 
         // FastestWeighting would lead to different shortcuts due to different default speeds for bike and car
-        CHProfile carProfile = CHProfile.nodeBased("p1", new ShortestWeighting(tmpCarEncoder));
-        CHProfile bikeProfile = CHProfile.nodeBased("p2", new ShortestWeighting(tmpBikeEncoder));
+        CHConfig carProfile = CHConfig.nodeBased("c1", new ShortestWeighting(tmpCarEncoder));
+        CHConfig bikeProfile = CHConfig.nodeBased("c2", new ShortestWeighting(tmpBikeEncoder));
 
-        List<CHProfile> profiles = Arrays.asList(carProfile, bikeProfile);
-        GraphHopperStorage ghStorage = new GraphBuilder(tmpEncodingManager).setCHProfiles(profiles).create();
+        List<CHConfig> configs = Arrays.asList(carProfile, bikeProfile);
+        GraphHopperStorage ghStorage = new GraphBuilder(tmpEncodingManager).setCHConfigs(configs).create();
         initShortcutsGraph(ghStorage);
 
         ghStorage.freeze();
 
-        for (CHProfile p : profiles) {
-            checkPath(ghStorage, p, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12));
+        for (CHConfig c : configs) {
+            checkPath(ghStorage, c, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12));
         }
     }
 
@@ -602,10 +602,10 @@ public class PrepareContractionHierarchiesTest {
         BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
         EncodingManager tmpEncodingManager = EncodingManager.create(tmpCarEncoder, tmpBikeEncoder);
 
-        CHProfile carProfile = CHProfile.nodeBased("p1", new FastestWeighting(tmpCarEncoder));
-        CHProfile bikeProfile = CHProfile.nodeBased("p2", new FastestWeighting(tmpBikeEncoder));
+        CHConfig carConfig = CHConfig.nodeBased("c1", new FastestWeighting(tmpCarEncoder));
+        CHConfig bikeConfig = CHConfig.nodeBased("c2", new FastestWeighting(tmpBikeEncoder));
 
-        GraphHopperStorage ghStorage = new GraphBuilder(tmpEncodingManager).setCHProfiles(carProfile, bikeProfile).create();
+        GraphHopperStorage ghStorage = new GraphBuilder(tmpEncodingManager).setCHConfigs(carConfig, bikeConfig).create();
         initShortcutsGraph(ghStorage);
         GHUtility.getEdge(ghStorage, 9, 14).
                 set(tmpBikeEncoder.getAccessEnc(), false).
@@ -613,9 +613,9 @@ public class PrepareContractionHierarchiesTest {
 
         ghStorage.freeze();
 
-        checkPath(ghStorage, carProfile, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12));
+        checkPath(ghStorage, carConfig, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12));
         // detour around blocked 9,14
-        checkPath(ghStorage, bikeProfile, 9, 5, IntArrayList.from(3, 10, 14, 16, 13, 12));
+        checkPath(ghStorage, bikeConfig, 9, 5, IntArrayList.from(3, 10, 14, 16, 13, 12));
     }
 
     @Test
@@ -623,9 +623,9 @@ public class PrepareContractionHierarchiesTest {
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
         MotorcycleFlagEncoder motorCycleEncoder = new MotorcycleFlagEncoder();
         EncodingManager em = EncodingManager.create(carFlagEncoder, motorCycleEncoder);
-        CHProfile carProfile = CHProfile.nodeBased("p1", new FastestWeighting(carFlagEncoder));
-        CHProfile motorCycleProfile = CHProfile.nodeBased("p2", new FastestWeighting(motorCycleEncoder));
-        GraphHopperStorage ghStorage = new GraphBuilder(em).setCHProfiles(carProfile, motorCycleProfile).create();
+        CHConfig carConfig = CHConfig.nodeBased("c1", new FastestWeighting(carFlagEncoder));
+        CHConfig motorCycleConfig = CHConfig.nodeBased("c2", new FastestWeighting(motorCycleEncoder));
+        GraphHopperStorage ghStorage = new GraphBuilder(em).setCHConfigs(carConfig, motorCycleConfig).create();
 
         int numNodes = 5_000;
         int numQueries = 100;
@@ -636,24 +636,24 @@ public class PrepareContractionHierarchiesTest {
 
         // create CH for cars
         StopWatch sw = new StopWatch().start();
-        PrepareContractionHierarchies carPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, carProfile);
+        PrepareContractionHierarchies carPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, carConfig);
         carPch.doWork();
-        CHGraph carCH = ghStorage.getCHGraph(carProfile);
+        CHGraph carCH = ghStorage.getCHGraph(carConfig);
         long timeCar = sw.stop().getMillis();
 
         // create CH for motorcycles, re-use car contraction order
         // this speeds up contraction significantly, but can lead to slower queries
         sw = new StopWatch().start();
         NodeOrderingProvider nodeOrderingProvider = carCH.getNodeOrderingProvider();
-        PrepareContractionHierarchies motorCyclePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, motorCycleProfile)
+        PrepareContractionHierarchies motorCyclePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, motorCycleConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         motorCyclePch.doWork();
-        CHGraph motorCycleCH = ghStorage.getCHGraph(motorCycleProfile);
+        CHGraph motorCycleCH = ghStorage.getCHGraph(motorCycleConfig);
 
         // run a few sample queries to check correctness
         for (int i = 0; i < numQueries; ++i) {
-            Dijkstra dijkstra = new Dijkstra(ghStorage, motorCycleProfile.getWeighting(), TraversalMode.NODE_BASED);
-            RoutingAlgorithm chAlgo = motorCyclePch.getRoutingAlgorithmFactory().createAlgo(motorCycleCH, AlgorithmOptions.start().weighting(motorCycleProfile.getWeighting()).build());
+            Dijkstra dijkstra = new Dijkstra(ghStorage, motorCycleConfig.getWeighting(), TraversalMode.NODE_BASED);
+            RoutingAlgorithm chAlgo = motorCyclePch.getRoutingAlgorithmFactory().createAlgo(motorCycleCH, AlgorithmOptions.start().weighting(motorCycleConfig.getWeighting()).build());
 
             int from = rnd.nextInt(numNodes);
             int to = rnd.nextInt(numNodes);
@@ -666,22 +666,22 @@ public class PrepareContractionHierarchiesTest {
         assertTrue("reusing node ordering should speed up ch contraction", timeMotorCycle < 0.5 * timeCar);
     }
 
-    private void checkPath(GraphHopperStorage g, CHProfile p, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
-        CHGraph lg = g.getCHGraph(p);
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, p);
+    private void checkPath(GraphHopperStorage g, CHConfig c, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
+        CHGraph lg = g.getCHGraph(c);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, c);
         prepare.doWork();
-        assertEquals(p.toString(), expShortcuts, prepare.getShortcuts());
-        RoutingAlgorithm algo = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, p.getWeighting(), tMode));
+        assertEquals(c.toString(), expShortcuts, prepare.getShortcuts());
+        RoutingAlgorithm algo = prepare.getRoutingAlgorithmFactory().createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, c.getWeighting(), tMode));
         Path path = algo.calcPath(3, 12);
         assertEquals(path.toString(), expDistance, path.getDistance(), 1e-5);
         assertEquals(path.toString(), expNodes, path.calcNodes());
     }
 
     private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g) {
-        return createPrepareContractionHierarchies(g, chProfile);
+        return createPrepareContractionHierarchies(g, chConfig);
     }
 
-    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHProfile p) {
+    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHConfig p) {
         g.freeze();
         return PrepareContractionHierarchies.fromGraphHopperStorage(g, p);
     }

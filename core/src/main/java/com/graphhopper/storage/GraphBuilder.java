@@ -41,8 +41,8 @@ public class GraphBuilder {
     private boolean turnCosts;
     private long bytes = 100;
     private int segmentSize = -1;
-    private List<String> chProfileStrings = new ArrayList<>();
-    private List<CHProfile> chProfiles = new ArrayList<>();
+    private List<String> chConfigStrings = new ArrayList<>();
+    private List<CHConfig> chConfigs = new ArrayList<>();
 
     public static GraphBuilder start(EncodingManager encodingManager) {
         return new GraphBuilder(encodingManager);
@@ -55,25 +55,25 @@ public class GraphBuilder {
 
     /**
      * Convenience method to set the CH profiles using a string representation. This is convenient if you want to add
-     * edge-based {@link CHProfile}s, because otherwise when using {@link #setCHProfiles} you first have to
+     * edge-based {@link CHConfig}s, because otherwise when using {@link #setCHConfigs} you first have to
      * {@link #build()} the {@link GraphHopperStorage} to obtain a {@link TurnCostStorage} to be able to create the
-     * {@link Weighting} you need for the {@link CHProfile} to be added...
+     * {@link Weighting} you need for the {@link CHConfig} to be added...
      * todo: Currently this only supports a few weightings with limited extra options. The reason is that here the
      * same should happen as in the 'real' GraphHopper graph, reading the real config, but this is likely to change
      * soon.
      */
-    public GraphBuilder setCHProfileStrings(String... profileStrings) {
-        this.chProfileStrings = Arrays.asList(profileStrings);
+    public GraphBuilder setCHConfigStrings(String... profileStrings) {
+        this.chConfigStrings = Arrays.asList(profileStrings);
         return this;
     }
 
-    public GraphBuilder setCHProfiles(List<CHProfile> chProfiles) {
-        this.chProfiles = chProfiles;
+    public GraphBuilder setCHConfigs(List<CHConfig> chConfigs) {
+        this.chConfigs = chConfigs;
         return this;
     }
 
-    public GraphBuilder setCHProfiles(CHProfile... chProfiles) {
-        return setCHProfiles(new ArrayList<>(Arrays.asList(chProfiles)));
+    public GraphBuilder setCHConfigs(CHConfig... chConfigs) {
+        return setCHConfigs(new ArrayList<>(Arrays.asList(chConfigs)));
     }
 
     public GraphBuilder setDir(Directory dir) {
@@ -125,7 +125,7 @@ public class GraphBuilder {
     public GraphHopperStorage build() {
         GraphHopperStorage ghStorage = new GraphHopperStorage(dir, encodingManager, elevation, turnCosts, segmentSize);
         addCHProfilesFromStrings(ghStorage.getTurnCostStorage());
-        ghStorage.addCHGraphs(chProfiles);
+        ghStorage.addCHGraphs(chConfigs);
         return ghStorage;
     }
 
@@ -137,7 +137,7 @@ public class GraphBuilder {
     }
 
     private void addCHProfilesFromStrings(TurnCostStorage turnCostStorage) {
-        for (String profileString : chProfileStrings) {
+        for (String profileString : chConfigStrings) {
             String[] split = profileString.split("\\|");
             if (split.length < 4) {
                 throw new IllegalArgumentException("Invalid CH profile string: " + profileString + ". " +
@@ -174,7 +174,7 @@ public class GraphBuilder {
             } else {
                 throw new IllegalArgumentException("Weighting not supported using this method, maybe you can use setCHProfile instead: " + weightingStr);
             }
-            chProfiles.add(new CHProfile(profileName, weighting, edgeBased));
+            chConfigs.add(new CHConfig(profileName, weighting, edgeBased));
         }
 
     }

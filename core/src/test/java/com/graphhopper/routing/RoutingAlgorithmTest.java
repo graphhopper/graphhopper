@@ -1004,19 +1004,19 @@ public class RoutingAlgorithmTest {
      * Creates a GH storage supporting the given weightings for CH
      */
     private GraphHopperStorage createGHStorage(boolean is3D, Weighting... weightings) {
-        CHProfile[] chProfiles = new CHProfile[weightings.length];
+        CHConfig[] chConfigs = new CHConfig[weightings.length];
         for (int i = 0; i < weightings.length; i++) {
-            chProfiles[i] = new CHProfile(getProfileName(weightings[i]), weightings[i], traversalMode.isEdgeBased());
+            chConfigs[i] = new CHConfig(getCHGraphName(weightings[i]), weightings[i], traversalMode.isEdgeBased());
         }
         return new GraphBuilder(encodingManager).set3D(is3D)
-                .setCHProfiles(chProfiles)
+                .setCHConfigs(chConfigs)
                 // this test should never include turn costs, but we have to set it to true to be able to
                 // run edge-based algorithms
                 .withTurnCosts(traversalMode.isEdgeBased())
                 .create();
     }
 
-    private static String getProfileName(Weighting weighting) {
+    private static String getCHGraphName(Weighting weighting) {
         return weighting.getName() + "_" + weighting.getFlagEncoder().toString();
     }
 
@@ -1163,9 +1163,9 @@ public class RoutingAlgorithmTest {
     private static abstract class CHCalculator implements PathCalculator {
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, int from, int to) {
-            CHProfile chProfile = new CHProfile(getProfileName(weighting), weighting, traversalMode.isEdgeBased());
-            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
-            CHGraph chGraph = graph.getCHGraph(chProfile);
+            CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
+            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+            CHGraph chGraph = graph.getCHGraph(chConfig);
             if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
                 graph.freeze();
                 pch.doWork();
@@ -1189,9 +1189,9 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
-            CHProfile chProfile = new CHProfile(getProfileName(weighting), weighting, traversalMode.isEdgeBased());
-            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
-            CHGraph chGraph = graph.getCHGraph(chProfile);
+            CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
+            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+            CHGraph chGraph = graph.getCHGraph(chConfig);
             if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
                 graph.freeze();
                 pch.doWork();

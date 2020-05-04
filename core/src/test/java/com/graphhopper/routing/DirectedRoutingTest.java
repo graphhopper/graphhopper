@@ -68,7 +68,7 @@ public class DirectedRoutingTest {
     private final boolean prepareLM;
     private Directory dir;
     private GraphHopperStorage graph;
-    private CHProfile chProfile;
+    private CHConfig chConfig;
     private LMProfile lmProfile;
     private CHGraph chGraph;
     private FlagEncoder encoder;
@@ -122,10 +122,10 @@ public class DirectedRoutingTest {
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
-        chProfile = CHProfile.edgeBased("p1", weighting);
+        chConfig = CHConfig.edgeBased("p1", weighting);
         // important: for LM preparation we need to use a weighting without turn costs #1960
         lmProfile = new LMProfile("p2", new FastestWeighting(encoder));
-        graph.addCHGraph(chProfile);
+        graph.addCHGraph(chConfig);
         graph.create(1000);
     }
 
@@ -135,9 +135,9 @@ public class DirectedRoutingTest {
             return;
         }
         if (prepareCH) {
-            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
             pch.doWork();
-            chGraph = graph.getCHGraph(chProfile);
+            chGraph = graph.getCHGraph(chConfig);
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, lmProfile, 16);

@@ -27,8 +27,8 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
@@ -111,7 +111,7 @@ public class DijkstraBidirectionCHTest {
         RoutingAlgorithmTest.initDirectedAndDiffSpeed(ghStorage, carEncoder);
 
         // do CH preparation for car        
-        prepareCH(ghStorage, CHProfile.nodeBased(weighting.getName(), weighting));
+        prepareCH(ghStorage, CHConfig.nodeBased(weighting.getName(), weighting));
 
         // use base graph for solving normal Dijkstra
         Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, AlgorithmOptions.start().weighting(weighting).build()).calcPath(0, 3);
@@ -130,16 +130,16 @@ public class DijkstraBidirectionCHTest {
         AlgorithmOptions carOptions = AlgorithmOptions.start().
                 weighting(new FastestWeighting(carEncoder)).build();
 
-        CHProfile footProfile = CHProfile.nodeBased("p_foot", footOptions.getWeighting());
-        CHProfile carProfile = CHProfile.nodeBased("p_car", carOptions.getWeighting());
-        GraphHopperStorage g = new GraphBuilder(em).setCHProfiles(footProfile, carProfile).create();
+        CHConfig footConfig = CHConfig.nodeBased("p_foot", footOptions.getWeighting());
+        CHConfig carConfig = CHConfig.nodeBased("p_car", carOptions.getWeighting());
+        GraphHopperStorage g = new GraphBuilder(em).setCHConfigs(footConfig, carConfig).create();
         RoutingAlgorithmTest.initFootVsCar(carEncoder, footEncoder, g);
 
         // do CH preparation for car
-        RoutingAlgorithmFactory contractedFactory = prepareCH(g, carProfile);
+        RoutingAlgorithmFactory contractedFactory = prepareCH(g, carConfig);
 
         // use contracted graph for car
-        Path p1 = contractedFactory.createAlgo(g.getCHGraph(carProfile), carOptions).calcPath(0, 7);
+        Path p1 = contractedFactory.createAlgo(g.getCHGraph(carConfig), carOptions).calcPath(0, 7);
         assertEquals(IntArrayList.from(0, 4, 6, 7), p1.calcNodes());
         assertEquals(p1.toString(), 15000, p1.getDistance(), 1e-6);
 
@@ -247,12 +247,12 @@ public class DijkstraBidirectionCHTest {
     }
 
     private GraphHopperStorage createGHStorage(Weighting weighting) {
-        return new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting.getName(), weighting)).create();
+        return new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased(weighting.getName(), weighting)).create();
     }
 
-    private RoutingAlgorithmFactory prepareCH(GraphHopperStorage graphHopperStorage, CHProfile chProfile) {
+    private RoutingAlgorithmFactory prepareCH(GraphHopperStorage graphHopperStorage, CHConfig chConfig) {
         graphHopperStorage.freeze();
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graphHopperStorage, chProfile);
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graphHopperStorage, chConfig);
         pch.doWork();
         return pch.getRoutingAlgorithmFactory();
     }

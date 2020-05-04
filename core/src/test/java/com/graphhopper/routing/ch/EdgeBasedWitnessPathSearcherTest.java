@@ -43,10 +43,10 @@ public class EdgeBasedWitnessPathSearcherTest {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("p|car|shortest|edge")
+                .setCHConfigStrings("p|car|shortest|edge")
                 .create();
         chGraph = graph.getCHGraph();
-        weighting = chGraph.getCHProfile().getWeighting();
+        weighting = chGraph.getCHConfig().getWeighting();
     }
 
     @Test

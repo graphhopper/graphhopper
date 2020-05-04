@@ -34,12 +34,12 @@ import static org.junit.Assert.*;
  */
 public class CHPreparationHandlerTest {
     private CHPreparationHandler instance;
-    private CHProfile profileNode1;
-    private CHProfile profileNode2;
-    private CHProfile profileNode3;
-    private CHProfile profileEdge1;
-    private CHProfile profileEdge2;
-    private CHProfile profileEdge3;
+    private CHConfig configNode1;
+    private CHConfig configNode2;
+    private CHConfig configNode3;
+    private CHConfig configEdge1;
+    private CHConfig configEdge2;
+    private CHConfig configEdge3;
     private GraphHopperStorage ghStorage;
 
     @Before
@@ -49,7 +49,7 @@ public class CHPreparationHandlerTest {
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         ghStorage = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true)
-                .setCHProfileStrings(
+                .setCHConfigStrings(
                         "p1|car|fastest|node",
                         "p2|car|shortest|node",
                         "p3|car|short_fastest|node",
@@ -58,13 +58,13 @@ public class CHPreparationHandlerTest {
                         "p6|car|short_fastest|edge|30"
                 )
                 .create();
-        List<CHProfile> chProfiles = ghStorage.getCHProfiles();
-        profileNode1 = chProfiles.get(0);
-        profileNode2 = chProfiles.get(1);
-        profileNode3 = chProfiles.get(2);
-        profileEdge1 = chProfiles.get(3);
-        profileEdge2 = chProfiles.get(4);
-        profileEdge3 = chProfiles.get(5);
+        List<CHConfig> chConfigs = ghStorage.getCHConfigs();
+        configNode1 = chConfigs.get(0);
+        configNode2 = chConfigs.get(1);
+        configNode3 = chConfigs.get(2);
+        configEdge1 = chConfigs.get(3);
+        configEdge2 = chConfigs.get(4);
+        configEdge3 = chConfigs.get(5);
     }
 
     @Test
@@ -76,57 +76,57 @@ public class CHPreparationHandlerTest {
 
     @Test(expected = IllegalStateException.class)
     public void testAddingPreparationBeforeProfile_throws() {
-        PrepareContractionHierarchies preparation = createPreparation(profileNode1);
+        PrepareContractionHierarchies preparation = createPreparation(configNode1);
         instance.addPreparation(preparation);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testAddingPreparationWithWrongProfile_throws() {
-        instance.addCHProfile(profileNode1);
-        PrepareContractionHierarchies preparation = createPreparation(profileNode2);
+        instance.addCHConfig(configNode1);
+        PrepareContractionHierarchies preparation = createPreparation(configNode2);
         instance.addPreparation(preparation);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testAddingPreparationsInWrongOrder_throws() {
-        instance.addCHProfile(profileNode1);
-        instance.addCHProfile(profileNode2);
-        instance.addPreparation(createPreparation(profileNode2));
-        instance.addPreparation(createPreparation(profileNode1));
+        instance.addCHConfig(configNode1);
+        instance.addCHConfig(configNode2);
+        instance.addPreparation(createPreparation(configNode2));
+        instance.addPreparation(createPreparation(configNode1));
     }
 
     @Test
     public void testAddingPreparationsWithEdgeAndNodeBasedIntermixed_works() {
-        instance.addCHProfile(profileNode1);
-        instance.addCHProfile(profileEdge1);
-        instance.addCHProfile(profileNode2);
-        instance.addPreparation(createPreparation(profileNode1));
-        instance.addPreparation(createPreparation(profileEdge1));
-        instance.addPreparation(createPreparation(profileNode2));
+        instance.addCHConfig(configNode1);
+        instance.addCHConfig(configEdge1);
+        instance.addCHConfig(configNode2);
+        instance.addPreparation(createPreparation(configNode1));
+        instance.addPreparation(createPreparation(configEdge1));
+        instance.addPreparation(createPreparation(configNode2));
     }
 
     @Test
     public void testAddingEdgeAndNodeBased_works() {
-        instance.addCHProfile(profileNode1);
-        instance.addCHProfile(profileNode2);
-        instance.addCHProfile(profileEdge1);
-        instance.addCHProfile(profileEdge2);
-        instance.addCHProfile(profileNode3);
-        instance.addPreparation(createPreparation(profileNode1));
-        instance.addPreparation(createPreparation(profileNode2));
-        instance.addPreparation(createPreparation(profileEdge1));
-        instance.addPreparation(createPreparation(profileEdge2));
-        instance.addPreparation(createPreparation(profileNode3));
+        instance.addCHConfig(configNode1);
+        instance.addCHConfig(configNode2);
+        instance.addCHConfig(configEdge1);
+        instance.addCHConfig(configEdge2);
+        instance.addCHConfig(configNode3);
+        instance.addPreparation(createPreparation(configNode1));
+        instance.addPreparation(createPreparation(configNode2));
+        instance.addPreparation(createPreparation(configEdge1));
+        instance.addPreparation(createPreparation(configEdge2));
+        instance.addPreparation(createPreparation(configNode3));
 
-        CHProfile[] expectedProfiles = new CHProfile[]{profileNode1, profileNode2, profileEdge1, profileEdge2, profileNode3};
+        CHConfig[] expectedConfigs = new CHConfig[]{configNode1, configNode2, configEdge1, configEdge2, configNode3};
         List<PrepareContractionHierarchies> preparations = instance.getPreparations();
         for (int i = 0; i < preparations.size(); ++i) {
-            assertSame(expectedProfiles[i], preparations.get(i).getCHProfile());
+            assertSame(expectedConfigs[i], preparations.get(i).getCHProfile());
         }
     }
 
-    private PrepareContractionHierarchies createPreparation(CHProfile chProfile) {
-        return PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chProfile);
+    private PrepareContractionHierarchies createPreparation(CHConfig chConfig) {
+        return PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chConfig);
     }
 
 }

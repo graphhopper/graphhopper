@@ -52,7 +52,7 @@ import static com.graphhopper.util.Helper.nf;
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final CHProfile chProfile;
+    private final CHConfig chConfig;
     private final CHGraph chGraph;
     private final PrepareCHGraph prepareGraph;
     private final Random rand = new Random(123);
@@ -74,24 +74,24 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private PMap pMap = new PMap();
     private int checkCounter;
 
-    public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHProfile chProfile) {
-        return new PrepareContractionHierarchies(ghStorage, chProfile);
+    public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHConfig chConfig) {
+        return new PrepareContractionHierarchies(ghStorage, chConfig);
     }
 
-    private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHProfile chProfile) {
-        this.chGraph = ghStorage.getCHGraph(chProfile);
-        this.chProfile = chProfile;
-        params = Params.forTraversalMode(chProfile.getTraversalMode());
+    private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
+        this.chGraph = ghStorage.getCHGraph(chConfig);
+        this.chConfig = chConfig;
+        params = Params.forTraversalMode(chConfig.getTraversalMode());
         updatedNeighbors = new IntHashSet(50);
-        if (chProfile.getTraversalMode().isEdgeBased()) {
+        if (chConfig.getTraversalMode().isEdgeBased()) {
             TurnCostStorage turnCostStorage = chGraph.getTurnCostStorage();
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
             }
-            prepareGraph = PrepareCHGraph.edgeBased(chGraph, chProfile.getWeighting());
+            prepareGraph = PrepareCHGraph.edgeBased(chGraph, chConfig.getWeighting());
             nodeContractor = new EdgeBasedNodeContractor(prepareGraph, pMap);
         } else {
-            prepareGraph = PrepareCHGraph.nodeBased(chGraph, chProfile.getWeighting());
+            prepareGraph = PrepareCHGraph.nodeBased(chGraph, chConfig.getWeighting());
             nodeContractor = new NodeBasedNodeContractor(prepareGraph, pMap);
         }
     }
@@ -154,7 +154,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     public boolean isEdgeBased() {
-        return chProfile.isEdgeBased();
+        return chConfig.isEdgeBased();
     }
 
     private void initFromGraph() {
@@ -291,7 +291,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         logger.info(
                 "new shortcuts: " + nf(nodeContractor.getAddedShortcutsCount())
                         + ", initSize:" + nf(initSize)
-                        + ", " + chProfile.getWeighting()
+                        + ", " + chConfig.getWeighting()
                         + ", periodic:" + params.getPeriodicUpdatesPercentage()
                         + ", lazy:" + params.getLastNodesLazyUpdatePercentage()
                         + ", neighbor:" + params.getNeighborUpdatePercentage()
@@ -390,11 +390,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     public Weighting getWeighting() {
-        return chProfile.getWeighting();
+        return chConfig.getWeighting();
     }
 
-    public CHProfile getCHProfile() {
-        return chProfile;
+    public CHConfig getCHProfile() {
+        return chConfig;
     }
 
     private String getTimesAsString() {
@@ -421,7 +421,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
     @Override
     public String toString() {
-        return chProfile.isEdgeBased() ? "prepare|dijkstrabi|edge|ch" : "prepare|dijkstrabi|ch";
+        return chConfig.isEdgeBased() ? "prepare|dijkstrabi|edge|ch" : "prepare|dijkstrabi|ch";
     }
 
     private void _close() {

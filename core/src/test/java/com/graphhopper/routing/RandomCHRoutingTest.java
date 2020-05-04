@@ -38,7 +38,7 @@ public class RandomCHRoutingTest {
     private EncodingManager encodingManager;
     private Weighting weighting;
     private GraphHopperStorage graph;
-    private CHProfile chProfile;
+    private CHConfig chConfig;
     private LocationIndexTree locationIndex;
 
     @Parameterized.Parameters(name = "{0}, u-turn-costs={1}")
@@ -62,10 +62,10 @@ public class RandomCHRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("p|car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)
+                .setCHConfigStrings("p|car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)
                 .create();
-        chProfile = graph.getCHGraph().getCHProfile();
-        weighting = chProfile.getWeighting();
+        chConfig = graph.getCHGraph().getCHConfig();
+        weighting = chConfig.getWeighting();
     }
 
     /**
@@ -137,8 +137,8 @@ public class RandomCHRoutingTest {
         locationIndex.prepareIndex();
 
         graph.freeze();
-        CHGraph chGraph = graph.getCHGraph(chProfile);
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+        CHGraph chGraph = graph.getCHGraph(chConfig);
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         pch.doWork();
 
         int numQueryGraph = 25;

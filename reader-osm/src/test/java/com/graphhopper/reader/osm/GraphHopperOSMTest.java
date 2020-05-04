@@ -33,7 +33,7 @@ import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -885,7 +885,7 @@ public class GraphHopperOSMTest {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(carEncoder);
         Weighting weighting = new FastestWeighting(carEncoder);
-        GraphHopperStorage g = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased("p", weighting)).setBytes(20).create();
+        GraphHopperStorage g = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p", weighting)).setBytes(20).create();
 
         //   2---3---4
         //  /    |    \
@@ -1064,22 +1064,22 @@ public class GraphHopperOSMTest {
         CHPreparationHandler chHandler = new CHPreparationHandler();
         Weighting fwSimpleTruck = new FastestWeighting(simpleTruck);
         Weighting fwTruck = new FastestWeighting(truck);
-        CHProfile simpleTruckProfile = CHProfile.nodeBased("simple_truck", fwSimpleTruck);
-        CHProfile truckProfile = CHProfile.nodeBased("truck", fwTruck);
-        GraphHopperStorage storage = new GraphBuilder(em).setCHProfiles(Arrays.asList(simpleTruckProfile, truckProfile)).build();
-        chHandler.addCHProfile(simpleTruckProfile);
-        chHandler.addCHProfile(truckProfile);
-        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckProfile));
-        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, truckProfile));
+        CHConfig simpleTruckConfig = CHConfig.nodeBased("simple_truck", fwSimpleTruck);
+        CHConfig truckConfig = CHConfig.nodeBased("truck", fwTruck);
+        GraphHopperStorage storage = new GraphBuilder(em).setCHConfigs(Arrays.asList(simpleTruckConfig, truckConfig)).build();
+        chHandler.addCHConfig(simpleTruckConfig);
+        chHandler.addCHConfig(truckConfig);
+        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckConfig));
+        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, truckConfig));
 
         assertEquals("fastest|truck", ((CHRoutingAlgorithmFactory) chHandler.getAlgorithmFactory("truck")).getWeighting().toString());
         assertEquals("fastest|simple_truck", ((CHRoutingAlgorithmFactory) chHandler.getAlgorithmFactory("simple_truck")).getWeighting().toString());
 
         // make sure weighting cannot be mixed
-        chHandler.addCHProfile(truckProfile);
-        chHandler.addCHProfile(simpleTruckProfile);
+        chHandler.addCHConfig(truckConfig);
+        chHandler.addCHConfig(simpleTruckConfig);
         try {
-            chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckProfile));
+            chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckConfig));
             fail();
         } catch (Exception ex) {
         }

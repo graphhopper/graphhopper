@@ -10,25 +10,25 @@ import static com.graphhopper.config.ProfileConfig.validateProfileName;
  *
  * @author easbar
  */
-public class CHProfile {
+public class CHConfig {
     /**
      * will be used to store and identify the CH graph data on disk
      */
-    private final String profileName;
+    private final String chGraphName;
     private final Weighting weighting;
     private final boolean edgeBased;
 
-    public static CHProfile nodeBased(String profileName, Weighting weighting) {
-        return new CHProfile(profileName, weighting, false);
+    public static CHConfig nodeBased(String chGraphName, Weighting weighting) {
+        return new CHConfig(chGraphName, weighting, false);
     }
 
-    public static CHProfile edgeBased(String profileName, Weighting weighting) {
-        return new CHProfile(profileName, weighting, true);
+    public static CHConfig edgeBased(String chGraphName, Weighting weighting) {
+        return new CHConfig(chGraphName, weighting, true);
     }
 
-    public CHProfile(String profileName, Weighting weighting, boolean edgeBased) {
-        validateProfileName(profileName);
-        this.profileName = profileName;
+    public CHConfig(String chGraphName, Weighting weighting, boolean edgeBased) {
+        validateProfileName(chGraphName);
+        this.chGraphName = chGraphName;
         this.weighting = weighting;
         this.edgeBased = edgeBased;
     }
@@ -46,23 +46,23 @@ public class CHProfile {
     }
 
     public String toFileName() {
-        return profileName;
+        return chGraphName;
     }
 
     public String toString() {
-        return profileName;
+        return chGraphName;
     }
 
     public String getName() {
-        return profileName;
+        return chGraphName;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CHProfile chProfile = (CHProfile) o;
-        return getName().equals(chProfile.getName());
+        CHConfig chConfig = (CHConfig) o;
+        return getName().equals(chConfig.getName());
     }
 
     @Override

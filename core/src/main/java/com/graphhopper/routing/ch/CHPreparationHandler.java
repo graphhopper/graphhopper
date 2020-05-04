@@ -20,7 +20,7 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.PMap;
@@ -47,7 +47,7 @@ public class CHPreparationHandler {
     // we first add the profile configs and later read them to create the actual profile objects (because they require
     // the actual Weightings)
     private final List<CHProfileConfig> chProfileConfigs = new ArrayList<>();
-    private final List<CHProfile> chProfiles = new ArrayList<>();
+    private final List<CHConfig> chConfigs = new ArrayList<>();
     private boolean disablingAllowed = false;
     private int preparationThreads;
     private ExecutorService threadPool;
@@ -73,7 +73,7 @@ public class CHPreparationHandler {
     }
 
     public final boolean isEnabled() {
-        return !chProfileConfigs.isEmpty() || !chProfiles.isEmpty() || !preparations.isEmpty();
+        return !chProfileConfigs.isEmpty() || !chConfigs.isEmpty() || !preparations.isEmpty();
     }
 
     public final boolean isDisablingAllowed() {
@@ -92,47 +92,47 @@ public class CHPreparationHandler {
      * Decouple CH profiles from PrepareContractionHierarchies as we need CH profiles for the
      * graphstorage and the graphstorage for the preparation.
      */
-    public CHPreparationHandler addCHProfile(CHProfile chProfile) {
-        chProfiles.add(chProfile);
+    public CHPreparationHandler addCHConfig(CHConfig chConfig) {
+        chConfigs.add(chConfig);
         return this;
     }
 
     public CHPreparationHandler addPreparation(PrepareContractionHierarchies pch) {
         // we want to make sure that CH preparations are added in the same order as their corresponding profiles
-        if (preparations.size() >= chProfiles.size()) {
-            throw new IllegalStateException("You need to add the corresponding CH profiles before adding preparations.");
+        if (preparations.size() >= chConfigs.size()) {
+            throw new IllegalStateException("You need to add the corresponding CH configs before adding preparations.");
         }
-        CHProfile expectedProfile = chProfiles.get(preparations.size());
-        if (!pch.getCHProfile().equals(expectedProfile)) {
-            throw new IllegalArgumentException("CH profile of preparation: " + pch + " needs to be identical to previously added CH profile: " + expectedProfile);
+        CHConfig expectedConfig = chConfigs.get(preparations.size());
+        if (!pch.getCHProfile().equals(expectedConfig)) {
+            throw new IllegalArgumentException("CH config of preparation: " + pch + " needs to be identical to previously added CH config: " + expectedConfig);
         }
         preparations.add(pch);
         return this;
     }
 
-    public final boolean hasCHProfiles() {
-        return !chProfiles.isEmpty();
+    public final boolean hasCHConfigs() {
+        return !chConfigs.isEmpty();
     }
 
-    public List<CHProfile> getCHProfiles() {
-        return chProfiles;
+    public List<CHConfig> getCHConfigs() {
+        return chConfigs;
     }
 
-    public List<CHProfile> getNodeBasedCHProfiles() {
-        List<CHProfile> result = new ArrayList<>();
-        for (CHProfile chProfile : chProfiles) {
-            if (!chProfile.getTraversalMode().isEdgeBased()) {
-                result.add(chProfile);
+    public List<CHConfig> getNodeBasedCHConfigs() {
+        List<CHConfig> result = new ArrayList<>();
+        for (CHConfig chConfig : chConfigs) {
+            if (!chConfig.getTraversalMode().isEdgeBased()) {
+                result.add(chConfig);
             }
         }
         return result;
     }
 
-    public List<CHProfile> getEdgeBasedCHProfiles() {
-        List<CHProfile> result = new ArrayList<>();
-        for (CHProfile chProfile : chProfiles) {
-            if (chProfile.getTraversalMode().isEdgeBased()) {
-                result.add(chProfile);
+    public List<CHConfig> getEdgeBasedCHConfigs() {
+        List<CHConfig> result = new ArrayList<>();
+        for (CHConfig chConfig : chConfigs) {
+            if (chConfig.getTraversalMode().isEdgeBased()) {
+                result.add(chConfig);
             }
         }
         return result;
@@ -184,8 +184,8 @@ public class CHPreparationHandler {
                 "\navailable CH profiles: " + profileNames);
     }
 
-    public PrepareContractionHierarchies getPreparation(CHProfile chProfile) {
-        return getPreparation(chProfile.getName());
+    public PrepareContractionHierarchies getPreparation(CHConfig chConfig) {
+        return getPreparation(chConfig.getName());
     }
 
     public int getPreparationThreads() {
@@ -237,16 +237,16 @@ public class CHPreparationHandler {
     public void createPreparations(GraphHopperStorage ghStorage) {
         if (!isEnabled() || !preparations.isEmpty())
             return;
-        if (!hasCHProfiles())
+        if (!hasCHConfigs())
             throw new IllegalStateException("No CH profiles found");
 
-        for (CHProfile chProfile : chProfiles) {
-            addPreparation(createCHPreparation(ghStorage, chProfile));
+        for (CHConfig chConfig : chConfigs) {
+            addPreparation(createCHPreparation(ghStorage, chConfig));
         }
     }
 
-    private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHProfile chProfile) {
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chProfile);
+    private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHConfig chConfig) {
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chConfig);
         pch.setParams(pMap);
         return pch;
     }

@@ -134,17 +134,17 @@ public class Measurement {
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getEdges();
-                if (!getCHPreparationHandler().getNodeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
+                if (!getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
+                    CHConfig chConfig = getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chConfig).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chConfig).getTotalPrepareTime());
                 }
-                if (!getCHPreparationHandler().getEdgeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = getCHPreparationHandler().getEdgeBasedCHProfiles().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
+                if (!getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
+                    CHConfig chConfig = getCHPreparationHandler().getEdgeBasedCHConfigs().get(0);
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chConfig).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
-                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chProfile).getTotalPrepareTime());
+                    put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chConfig).getTotalPrepareTime());
                 }
             }
 
@@ -231,9 +231,9 @@ public class Measurement {
                 boolean isLM = false;
 //                compareCHWithAndWithoutSOD(hopper, count/5);
                 System.gc();
-                if (!hopper.getCHPreparationHandler().getNodeBasedCHProfiles().isEmpty()) {
-                    CHProfile chProfile = hopper.getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
-                    CHGraph lg = g.getCHGraph(chProfile);
+                if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
+                    CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
+                    CHGraph lg = g.getCHGraph(chConfig);
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", count, isCH, isLM).
@@ -249,7 +249,7 @@ public class Measurement {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
                             withInstructions().withPointHints().sod().simplify());
                 }
-                if (!hopper.getCHPreparationHandler().getEdgeBasedCHProfiles().isEmpty()) {
+                if (!hopper.getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
                             edgeBased().withInstructions());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).

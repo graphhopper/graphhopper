@@ -774,15 +774,15 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmPreparationHandler.isEnabled())
             initLMPreparationHandler();
 
-        List<CHProfile> chProfiles;
+        List<CHConfig> chConfigs;
         if (chPreparationHandler.isEnabled()) {
             initCHPreparationHandler();
-            chProfiles = chPreparationHandler.getCHProfiles();
+            chConfigs = chPreparationHandler.getCHConfigs();
         } else {
-            chProfiles = Collections.emptyList();
+            chConfigs = Collections.emptyList();
         }
 
-        ghStorage.addCHGraphs(chProfiles);
+        ghStorage.addCHGraphs(chConfigs);
 
         if (!new File(graphHopperFolder).exists())
             return false;
@@ -839,9 +839,9 @@ public class GraphHopper implements GraphHopperAPI {
             }
         }
 
-        Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
+        Set<String> chConfigSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
-            boolean added = chProfileSet.add(chConfig.getProfile());
+            boolean added = chConfigSet.add(chConfig.getProfile());
             if (!added) {
                 throw new IllegalArgumentException("Duplicate CH reference to profile '" + chConfig.getProfile() + "'");
             }
@@ -903,16 +903,16 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void initCHPreparationHandler() {
-        if (chPreparationHandler.hasCHProfiles()) {
+        if (chPreparationHandler.hasCHConfigs()) {
             return;
         }
 
         for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
             ProfileConfig profile = profilesByName.get(chConfig.getProfile());
             if (profile.isTurnCosts()) {
-                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
+                chPreparationHandler.addCHConfig(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
             } else {
-                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
+                chPreparationHandler.addCHConfig(CHConfig.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
             }
         }
     }
@@ -1080,9 +1080,9 @@ public class GraphHopper implements GraphHopperAPI {
                 if (hints.has(Routing.BLOCK_AREA))
                     throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
 
-                CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
-                weighting = chProfile.getWeighting();
-                graph = ghStorage.getCHGraph(chProfile);
+                CHConfig chConfig = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHConfig();
+                weighting = chConfig.getWeighting();
+                graph = ghStorage.getCHGraph(chConfig);
             } else {
                 checkNonChMaxWaypointDistance(points);
                 final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);

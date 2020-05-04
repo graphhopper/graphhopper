@@ -101,9 +101,9 @@ public class MiniGraphUI {
         ProfileConfig profile = hopper.getProfiles().iterator().next();
         boolean ch = true;
         if (ch) {
-            CHProfile chProfile = hopper.getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
-            weighting = chProfile.getWeighting();
-            routingGraph = hopper.getGraphHopperStorage().getCHGraph(chProfile);
+            CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
+            weighting = chConfig.getWeighting();
+            routingGraph = hopper.getGraphHopperStorage().getCHGraph(chConfig);
 
             boolean disableCH = false;
             boolean disableLM = true;

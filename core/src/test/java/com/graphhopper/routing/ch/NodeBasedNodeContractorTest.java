@@ -54,7 +54,7 @@ public class NodeBasedNodeContractorTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased("profile", weighting)).create();
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("profile", weighting)).create();
     private final CHGraph lg = graph.getCHGraph();
     private final PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
 
@@ -340,7 +340,7 @@ public class NodeBasedNodeContractorTest {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased("p1", weighting)).create();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p1", weighting)).create();
         CHGraph lg = graph.getCHGraph();
         PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
         // 0 ------------> 4
@@ -379,7 +379,7 @@ public class NodeBasedNodeContractorTest {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased("p1", weighting)).create();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p1", weighting)).create();
         CHGraph lg = graph.getCHGraph();
         PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
         // 0 - 1 - 2 - 3

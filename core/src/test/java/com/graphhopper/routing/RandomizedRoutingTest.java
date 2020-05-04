@@ -66,7 +66,7 @@ public class RandomizedRoutingTest {
     private final TraversalMode traversalMode;
     private Directory dir;
     private GraphHopperStorage graph;
-    private List<CHProfile> chProfiles;
+    private List<CHConfig> chConfigs;
     private LMProfile lmProfile;
     private CHGraph chGraph;
     private FlagEncoder encoder;
@@ -127,23 +127,23 @@ public class RandomizedRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("p1|car|fastest|node", "p2|car|fastest|edge")
+                .setCHConfigStrings("p1|car|fastest|node", "p2|car|fastest|edge")
                 .setDir(dir)
                 .create();
         turnCostStorage = graph.getTurnCostStorage();
-        chProfiles = graph.getCHProfiles();
+        chConfigs = graph.getCHConfigs();
         // important: for LM preparation we need to use a weighting without turn costs #1960
-        lmProfile = new LMProfile("profile", chProfiles.get(0).getWeighting());
-        weighting = traversalMode.isEdgeBased() ? chProfiles.get(1).getWeighting() : chProfiles.get(0).getWeighting();
+        lmProfile = new LMProfile("profile", chConfigs.get(0).getWeighting());
+        weighting = traversalMode.isEdgeBased() ? chConfigs.get(1).getWeighting() : chConfigs.get(0).getWeighting();
     }
 
     private void preProcessGraph() {
         graph.freeze();
         if (prepareCH) {
-            CHProfile chProfile = !traversalMode.isEdgeBased() ? chProfiles.get(0) : chProfiles.get(1);
-            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+            CHConfig chConfig = !traversalMode.isEdgeBased() ? chConfigs.get(0) : chConfigs.get(1);
+            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
             pch.doWork();
-            chGraph = graph.getCHGraph(chProfile);
+            chGraph = graph.getCHGraph(chConfig);
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
