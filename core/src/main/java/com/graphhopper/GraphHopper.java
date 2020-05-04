@@ -1054,10 +1054,18 @@ public class GraphHopper implements GraphHopperAPI {
 
             ProfileConfig profile = profilesByName.get(request.getProfile());
             if (profile == null) {
-                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
+                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist.\nAvailable profiles: " + profilesByName.keySet());
             }
-            if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
-                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
+            if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty()) {
+                List<String> turnCostProfiles = new ArrayList<>();
+                for (ProfileConfig p : profilesByName.values()) {
+                    if (p.isTurnCosts()) {
+                        turnCostProfiles.add(p.getName());
+                    }
+                }
+                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs" +
+                        "\nThe following profiles do support turn costs: " + turnCostProfiles);
+            }
 
             // todo later: should we be able to control this using the edge_based parameter?
             TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
@@ -1138,16 +1146,16 @@ public class GraphHopper implements GraphHopperAPI {
 
     protected void validateRequest(GHRequest request) {
         if (Helper.isEmpty(request.getProfile()))
-            throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see #1958");
+            throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see core/docs/profiles.md");
 
         if (request.getHints().has("vehicle"))
-            throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
+            throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see core/docs/profiles.md");
         if (request.getHints().has("weighting"))
-            throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
+            throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see core/docs/profiles.md");
         if (request.getHints().has(Routing.TURN_COSTS))
-            throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
+            throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see core/docs/profiles.md");
         if (request.getHints().has(Routing.EDGE_BASED))
-            throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
+            throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see core/docs/profiles.md");
 
         if (request.getPoints().isEmpty())
             throw new IllegalArgumentException("You have to pass at least one point");
