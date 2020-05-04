@@ -262,6 +262,7 @@ GHRequest.prototype.doRequest = function (url, callback) {
         beforeSend: function(request) {
             // todonow: maybe rename
             request.setRequestHeader("gh-client", "web-ui")
+            request.setRequestHeader("gh-client-version", "1.0")
         },
         success: function (json) {
             if (json.paths) {
