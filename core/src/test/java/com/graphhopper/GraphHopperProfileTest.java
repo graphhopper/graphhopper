@@ -21,9 +21,9 @@ package com.graphhopper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.jackson.ProfileConfigMixIn;
+import com.graphhopper.jackson.ProfileMixIn;
 import com.graphhopper.routing.util.EncodingManager;
 import org.junit.jupiter.api.Test;
 
@@ -32,23 +32,23 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class GraphHopperProfileConfigTest {
+public class GraphHopperProfileTest {
 
     private static final String GH_LOCATION = "target/gh-profile-config-gh";
 
     @Test
     public void deserialize() throws IOException {
         ObjectMapper objectMapper = Jackson.newObjectMapper()
-                .addMixIn(ProfileConfig.class, ProfileConfigMixIn.class);
+                .addMixIn(Profile.class, ProfileMixIn.class);
         String json = "{\"name\":\"my_car\",\"vehicle\":\"car\",\"weighting\":\"fastest\",\"turn_costs\":true,\"foo\":\"bar\",\"baz\":\"buzz\"}";
-        ProfileConfig profileConfig = objectMapper.readValue(json, ProfileConfig.class);
-        assertEquals("my_car", profileConfig.getName());
-        assertEquals("car", profileConfig.getVehicle());
-        assertEquals("fastest", profileConfig.getWeighting());
-        assertTrue(profileConfig.isTurnCosts());
-        assertEquals(2, profileConfig.getHints().toMap().size());
-        assertEquals("bar", profileConfig.getHints().getString("foo", ""));
-        assertEquals("buzz", profileConfig.getHints().getString("baz", ""));
+        Profile profile = objectMapper.readValue(json, Profile.class);
+        assertEquals("my_car", profile.getName());
+        assertEquals("car", profile.getVehicle());
+        assertEquals("fastest", profile.getWeighting());
+        assertTrue(profile.isTurnCosts());
+        assertEquals(2, profile.getHints().toMap().size());
+        assertEquals("bar", profile.getHints().getString("foo", ""));
+        assertEquals("buzz", profile.getHints().getString("baz", ""));
     }
 
     @Test
@@ -58,9 +58,9 @@ public class GraphHopperProfileConfigTest {
             @Override
             public void run() {
                 hopper.setProfiles(
-                        new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("your_profile").setVehicle("car").setWeighting("short_fastest"),
-                        new ProfileConfig("my_profile").setVehicle("car").setWeighting("shortest")
+                        new Profile("my_profile").setVehicle("car").setWeighting("fastest"),
+                        new Profile("your_profile").setVehicle("car").setWeighting("short_fastest"),
+                        new Profile("my_profile").setVehicle("car").setWeighting("shortest")
                 );
             }
         }, "Profile names must be unique. Duplicate name: 'my_profile'");
@@ -69,7 +69,7 @@ public class GraphHopperProfileConfigTest {
     @Test
     public void vehicleDoesNotExist_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
-        hopper.setProfiles(new ProfileConfig("profile").setVehicle("your_car"));
+        hopper.setProfiles(new Profile("profile").setVehicle("your_car"));
         assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
@@ -81,7 +81,7 @@ public class GraphHopperProfileConfigTest {
     @Test
     public void vehicleWithoutTurnCostSupport_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
-        hopper.setProfiles(new ProfileConfig("profile").setVehicle("car").setTurnCosts(true));
+        hopper.setProfiles(new Profile("profile").setVehicle("car").setTurnCosts(true));
         assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
@@ -93,7 +93,7 @@ public class GraphHopperProfileConfigTest {
     @Test
     public void profileWithUnknownWeighting_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
-        hopper.setProfiles(new ProfileConfig("profile").setVehicle("car").setWeighting("your_weighting"));
+        hopper.setProfiles(new Profile("profile").setVehicle("car").setWeighting("your_weighting"));
         assertIllegalArgument(new Runnable() {
                                   @Override
                                   public void run() {
@@ -108,7 +108,7 @@ public class GraphHopperProfileConfigTest {
     @Test
     public void chProfileDoesNotExist_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
-        hopper.setProfiles(new ProfileConfig("profile1").setVehicle("car"));
+        hopper.setProfiles(new Profile("profile1").setVehicle("car"));
         hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("other_profile"));
         assertIllegalArgument(new Runnable() {
             @Override
@@ -121,7 +121,7 @@ public class GraphHopperProfileConfigTest {
     @Test
     public void duplicateCHProfile_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
-        hopper.setProfiles(new ProfileConfig("profile").setVehicle("car"));
+        hopper.setProfiles(new Profile("profile").setVehicle("car"));
         hopper.getCHPreparationHandler().setCHProfileConfigs(
                 new CHProfileConfig("profile"),
                 new CHProfileConfig("profile")
@@ -137,7 +137,7 @@ public class GraphHopperProfileConfigTest {
     @Test
     public void lmProfileDoesNotExist_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
-        hopper.setProfiles(new ProfileConfig("profile1").setVehicle("car"));
+        hopper.setProfiles(new Profile("profile1").setVehicle("car"));
         hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig("other_profile"));
         assertIllegalArgument(new Runnable() {
             @Override
@@ -150,7 +150,7 @@ public class GraphHopperProfileConfigTest {
     @Test
     public void duplicateLMProfile_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
-        hopper.setProfiles(new ProfileConfig("profile").setVehicle("car"));
+        hopper.setProfiles(new Profile("profile").setVehicle("car"));
         hopper.getLMPreparationHandler().setLMProfileConfigs(
                 new LMProfileConfig("profile"),
                 new LMProfileConfig("profile")
@@ -166,7 +166,7 @@ public class GraphHopperProfileConfigTest {
     @Test
     public void unknownLMPreparationProfile_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
-        hopper.setProfiles(new ProfileConfig("profile").setVehicle("car"));
+        hopper.setProfiles(new Profile("profile").setVehicle("car"));
         hopper.getLMPreparationHandler().setLMProfileConfigs(
                 new LMProfileConfig("profile").setPreparationProfile("xyz")
         );
@@ -182,9 +182,9 @@ public class GraphHopperProfileConfigTest {
     public void lmPreparationProfileChain_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car,bike,foot"));
         hopper.setProfiles(
-                new ProfileConfig("profile1").setVehicle("car"),
-                new ProfileConfig("profile2").setVehicle("bike"),
-                new ProfileConfig("profile3").setVehicle("foot")
+                new Profile("profile1").setVehicle("car"),
+                new Profile("profile2").setVehicle("bike"),
+                new Profile("profile3").setVehicle("foot")
         );
         hopper.getLMPreparationHandler().setLMProfileConfigs(
                 new LMProfileConfig("profile1"),
@@ -203,9 +203,9 @@ public class GraphHopperProfileConfigTest {
     public void noLMProfileForPreparationProfile_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car,bike,foot"));
         hopper.setProfiles(
-                new ProfileConfig("profile1").setVehicle("car"),
-                new ProfileConfig("profile2").setVehicle("bike"),
-                new ProfileConfig("profile3").setVehicle("foot")
+                new Profile("profile1").setVehicle("car"),
+                new Profile("profile2").setVehicle("bike"),
+                new Profile("profile3").setVehicle("foot")
         );
         hopper.getLMPreparationHandler().setLMProfileConfigs(
                 new LMProfileConfig("profile1").setPreparationProfile("profile2")

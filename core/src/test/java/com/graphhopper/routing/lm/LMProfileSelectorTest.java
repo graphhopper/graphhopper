@@ -20,7 +20,7 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -44,25 +44,25 @@ public class LMProfileSelectorTest {
     private static final String NO_MATCH_ERROR = "Cannot find matching LM profile for your request";
 
     private EncodingManager encodingManager;
-    private ProfileConfig fastCar;
-    private ProfileConfig fastCarEdge;
-    private ProfileConfig fastBike;
-    private ProfileConfig shortBikeEdge;
+    private Profile fastCar;
+    private Profile fastCarEdge;
+    private Profile fastBike;
+    private Profile shortBikeEdge;
 
     @BeforeEach
     public void setup() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         FlagEncoder bikeEncoder = new BikeFlagEncoder();
         encodingManager = EncodingManager.create(carEncoder, bikeEncoder);
-        fastCar = new ProfileConfig("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(false);
-        fastCarEdge = new ProfileConfig("fast_car_edge").setVehicle("car").setWeighting("fastest").setTurnCosts(true);
-        fastBike = new ProfileConfig("fast_bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(false);
-        shortBikeEdge = new ProfileConfig("short_bike_edge").setVehicle("bike").setWeighting("shortest").setTurnCosts(true);
+        fastCar = new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(false);
+        fastCarEdge = new Profile("fast_car_edge").setVehicle("car").setWeighting("fastest").setTurnCosts(true);
+        fastBike = new Profile("fast_bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(false);
+        shortBikeEdge = new Profile("short_bike_edge").setVehicle("bike").setWeighting("shortest").setTurnCosts(true);
     }
 
     @Test
     public void singleProfile() {
-        List<ProfileConfig> profiles = Arrays.asList(
+        List<Profile> profiles = Arrays.asList(
                 fastCar
         );
         List<LMProfileConfig> lmProfiles = Arrays.asList(
@@ -100,7 +100,7 @@ public class LMProfileSelectorTest {
 
     @Test
     public void multipleProfiles() {
-        List<ProfileConfig> profiles = Arrays.asList(
+        List<Profile> profiles = Arrays.asList(
                 fastCar,
                 fastBike
         );
@@ -127,7 +127,7 @@ public class LMProfileSelectorTest {
 
     @Test
     public void withAndWithoutTurnCosts() {
-        List<ProfileConfig> profiles = Arrays.asList(
+        List<Profile> profiles = Arrays.asList(
                 fastCar,
                 fastBike,
                 fastCarEdge,
@@ -162,17 +162,17 @@ public class LMProfileSelectorTest {
         assertProfileFound(profiles.get(3), profiles, lmProfiles, null, "shortest", true, null);
     }
 
-    private void assertProfileFound(ProfileConfig expectedProfile, List<ProfileConfig> profiles, List<LMProfileConfig> lmProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
+    private void assertProfileFound(Profile expectedProfile, List<Profile> profiles, List<LMProfileConfig> lmProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         PMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            ProfileConfig selectedProfile = new ProfileResolver(encodingManager, profiles, Collections.<CHProfileConfig>emptyList(), lmProfiles).selectProfileLM(hintsMap);
+            Profile selectedProfile = new ProfileResolver(encodingManager, profiles, Collections.<CHProfileConfig>emptyList(), lmProfiles).selectProfileLM(hintsMap);
             assertEquals(expectedProfile, selectedProfile);
         } catch (IllegalArgumentException e) {
             fail("no profile found\nexpected: " + expectedProfile + "\nerror: " + e.getMessage());
         }
     }
 
-    private String assertLMProfileSelectionError(String expectedError, List<ProfileConfig> profiles, List<LMProfileConfig> lmProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
+    private String assertLMProfileSelectionError(String expectedError, List<Profile> profiles, List<LMProfileConfig> lmProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         PMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
             new ProfileResolver(encodingManager, profiles, Collections.<CHProfileConfig>emptyList(), lmProfiles).selectProfileLM(hintsMap);

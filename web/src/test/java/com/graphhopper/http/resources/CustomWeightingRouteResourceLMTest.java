@@ -19,12 +19,12 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -62,9 +62,9 @@ public class CustomWeightingRouteResourceLMTest {
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         // give strange profile names to ensure that we do not mix vehicle and profile:
-                        new CustomProfileConfig("car_custom").setCustomModel(new CustomModel()).setVehicle("car"),
-                        new ProfileConfig("foot_profile").setVehicle("foot").setWeighting("fastest"),
-                        new CustomProfileConfig("foot_custom").setCustomModel(new CustomModel()).setVehicle("foot"))).
+                        new CustomProfile("car_custom").setCustomModel(new CustomModel()).setVehicle("car"),
+                        new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
+                        new CustomProfile("foot_custom").setCustomModel(new CustomModel()).setVehicle("foot"))).
                 setLMProfiles(Arrays.asList(new LMProfileConfig("car_custom"), new LMProfileConfig("foot_custom")));
         return config;
     }

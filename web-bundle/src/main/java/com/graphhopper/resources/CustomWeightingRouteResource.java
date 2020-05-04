@@ -20,11 +20,11 @@ package com.graphhopper.resources;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.MultiException;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.CustomRequest;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
@@ -80,10 +80,10 @@ public class CustomWeightingRouteResource {
         if (Helper.isEmpty(request.getProfile()))
             throw new IllegalArgumentException("The 'profile' parameter for CustomRequest is required");
 
-        ProfileConfig profile = graphHopper.getProfile(request.getProfile());
+        Profile profile = graphHopper.getProfile(request.getProfile());
         if (profile == null)
             throw new IllegalArgumentException("profile '" + request.getProfile() + "' not found");
-        if (!(profile instanceof CustomProfileConfig))
+        if (!(profile instanceof CustomProfile))
             throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request because it has weighting=" + profile.getWeighting());
 
         GHResponse ghResponse = new GHResponse();

@@ -8,7 +8,7 @@ import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.routing.weighting.custom.CustomProfileConfig;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -47,13 +47,13 @@ public class CustomWeightingRouteResourceTest {
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
                 setProfiles(Arrays.asList(
-                        new CustomProfileConfig("car").setCustomModel(new CustomModel()).setVehicle("car"),
-                        new CustomProfileConfig("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
-                        new CustomProfileConfig("truck").setVehicle("car").
+                        new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
+                        new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
+                        new CustomProfile("truck").setVehicle("car").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/truck.yml"),
-                        new CustomProfileConfig("cargo_bike").setVehicle("bike").
+                        new CustomProfile("cargo_bike").setVehicle("bike").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/cargo_bike.yml"),
-                        new CustomProfileConfig("json_bike").setVehicle("bike").
+                        new CustomProfile("json_bike").setVehicle("bike").
                                 putHint("custom_model_file", "./src/test/resources/com/graphhopper/http/resources/json_bike.json"))).
                 setCHProfiles(Collections.singletonList(new CHProfileConfig("truck")));
         return config;

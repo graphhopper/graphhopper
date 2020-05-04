@@ -2,7 +2,7 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -36,7 +36,7 @@ public class RouteResourceIssue2020Test {
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new ProfileConfig("my_car").setVehicle("car").setWeighting("fastest"))).
+                setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest"))).
                 setLMProfiles(Collections.singletonList(new LMProfileConfig("my_car")));
         return config;
     }

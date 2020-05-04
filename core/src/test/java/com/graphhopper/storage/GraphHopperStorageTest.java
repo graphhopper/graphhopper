@@ -19,7 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
@@ -310,7 +310,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         // load without configured FlagEncoders
         GraphHopper hopper = new GraphHopper();
-        hopper.setProfiles(Collections.singletonList(new ProfileConfig("p_car").setVehicle("car").setWeighting("fastest")));
+        hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         if (ch) {
             hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("p_car"));
         }
@@ -323,7 +323,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         // load via explicitly configured FlagEncoders
         hopper = new GraphHopper()
                 .setEncodingManager(encodingManager)
-                .setProfiles(Collections.singletonList(new ProfileConfig("p_car").setVehicle("car").setWeighting("fastest")));
+                .setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         if (ch) {
             hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("p_car"));
         }

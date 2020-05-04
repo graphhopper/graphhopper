@@ -19,7 +19,7 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
@@ -82,7 +82,7 @@ public class InfoResource {
         final Info info = new Info();
         // use bbox always without elevation (for backward compatibility)
         info.bbox = new BBox(storage.getBounds().minLon, storage.getBounds().maxLon, storage.getBounds().minLat, storage.getBounds().maxLat);
-        for (ProfileConfig p : config.getProfiles()) {
+        for (Profile p : config.getProfiles()) {
             Info.ProfileData profileData = new Info.ProfileData(p.getName(), p.getVehicle());
             info.profiles.add(profileData);
         }

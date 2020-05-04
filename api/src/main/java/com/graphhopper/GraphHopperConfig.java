@@ -20,7 +20,7 @@ package com.graphhopper;
 
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.util.PMap;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import java.util.Map;
  * the different configuration options as fields of this class including the default values.
  */
 public class GraphHopperConfig {
-    private List<ProfileConfig> profiles = new ArrayList<>();
+    private List<Profile> profiles = new ArrayList<>();
     private List<CHProfileConfig> chProfiles = new ArrayList<>();
     private List<LMProfileConfig> lmProfiles = new ArrayList<>();
     private final PMap map;
@@ -54,11 +54,11 @@ public class GraphHopperConfig {
         this.map = pMap;
     }
 
-    public List<ProfileConfig> getProfiles() {
+    public List<Profile> getProfiles() {
         return profiles;
     }
 
-    public GraphHopperConfig setProfiles(List<ProfileConfig> profiles) {
+    public GraphHopperConfig setProfiles(List<Profile> profiles) {
         this.profiles = profiles;
         return this;
     }
@@ -122,7 +122,7 @@ public class GraphHopperConfig {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("profiles:\n");
-        for (ProfileConfig profile : profiles) {
+        for (Profile profile : profiles) {
             sb.append(profile);
             sb.append("\n");
         }

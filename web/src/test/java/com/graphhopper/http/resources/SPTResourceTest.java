@@ -19,7 +19,7 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -52,8 +52,8 @@ public class SPTResourceTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig("car_without_turncosts").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("car_with_turncosts").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                        new Profile("car_without_turncosts").setVehicle("car").setWeighting("fastest"),
+                        new Profile("car_with_turncosts").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
                 ));
         return config;
     }

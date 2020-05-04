@@ -22,7 +22,7 @@ import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.Objects;
 
-import static com.graphhopper.config.ProfileConfig.validateProfileName;
+import static com.graphhopper.config.Profile.validateProfileName;
 
 public class LMProfile {
     private final String profileName;

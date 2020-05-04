@@ -22,7 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -70,8 +70,8 @@ public class RouteResourceClientHCTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(new ProfileConfig("my_car").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("my_bike").setVehicle("bike").setWeighting("fastest")))
+                .setProfiles(Arrays.asList(new Profile("my_car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("my_bike").setVehicle("bike").setWeighting("fastest")))
                 .setCHProfiles(Arrays.asList(new CHProfileConfig("my_car"), new CHProfileConfig("my_bike")));
         return config;
     }

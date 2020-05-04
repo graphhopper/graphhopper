@@ -1,7 +1,7 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.ProfileResolver;
@@ -88,7 +88,7 @@ public class SPTResource {
             hintsMap.remove("vehicle");
         }
         errorIfLegacyParameters(hintsMap);
-        ProfileConfig profile = graphHopper.getProfile(profileName);
+        Profile profile = graphHopper.getProfile(profileName);
         if (profile == null) {
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
         }

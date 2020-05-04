@@ -1,22 +1,22 @@
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.CustomModel;
 
-public class CustomProfileConfig extends ProfileConfig {
+public class CustomProfile extends Profile {
 
-    public CustomProfileConfig(ProfileConfig profileConfig) {
-        this(profileConfig.getName());
-        setVehicle(profileConfig.getVehicle());
-        getHints().putAll(profileConfig.getHints());
+    public CustomProfile(Profile profile) {
+        this(profile.getName());
+        setVehicle(profile.getVehicle());
+        getHints().putAll(profile.getHints());
     }
 
-    public CustomProfileConfig(String name) {
+    public CustomProfile(String name) {
         super(name);
         setWeighting(CustomWeighting.NAME);
     }
 
-    public CustomProfileConfig setCustomModel(CustomModel customModel) {
+    public CustomProfile setCustomModel(CustomModel customModel) {
         getHints().putObject(CustomModel.KEY, customModel);
         getHints().putObject("custom_model_file", "empty");
         return this;

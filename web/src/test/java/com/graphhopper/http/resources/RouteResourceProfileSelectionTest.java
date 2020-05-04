@@ -21,7 +21,7 @@ package com.graphhopper.http.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -58,9 +58,9 @@ public class RouteResourceProfileSelectionTest {
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new ProfileConfig("my_car").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("my_bike").setVehicle("bike").setWeighting("short_fastest"),
-                        new ProfileConfig("my_feet").setVehicle("foot").setWeighting("shortest")
+                        new Profile("my_car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("my_bike").setVehicle("bike").setWeighting("short_fastest"),
+                        new Profile("my_feet").setVehicle("foot").setWeighting("shortest")
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfileConfig("my_car"),

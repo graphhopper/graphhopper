@@ -24,7 +24,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
@@ -98,7 +98,7 @@ public class MiniGraphUI {
         encoder = hopper.getEncodingManager().getEncoder("car");
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
-        ProfileConfig profile = hopper.getProfiles().iterator().next();
+        Profile profile = hopper.getProfiles().iterator().next();
         boolean ch = true;
         if (ch) {
             CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
@@ -389,7 +389,7 @@ public class MiniGraphUI {
         PMap args = PMap.read(strs);
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         ghConfig.setProfiles(Arrays.asList(
-                new ProfileConfig("profile")
+                new Profile("profile")
                         .setVehicle("car")
                         .setWeighting("fastest")
         ));

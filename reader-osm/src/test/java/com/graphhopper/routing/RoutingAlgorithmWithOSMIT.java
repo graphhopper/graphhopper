@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
@@ -551,10 +551,10 @@ public class RoutingAlgorithmWithOSMIT {
         try {
             Helper.removeDir(new File(graphFile));
             EncodingManager em = EncodingManager.create(importVehicles);
-            List<ProfileConfig> profiles = new ArrayList<>();
+            List<Profile> profiles = new ArrayList<>();
             for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
                 String vehicleName = encoder.toString();
-                profiles.add(new ProfileConfig(vehicleName + "_profile")
+                profiles.add(new Profile(vehicleName + "_profile")
                         .setVehicle(vehicleName).setWeighting(weightStr).setTurnCosts(encoder.supportsTurnCosts()));
             }
             GraphHopper hopper = new GraphHopperOSM().
@@ -629,7 +629,7 @@ public class RoutingAlgorithmWithOSMIT {
                 setWayPointMaxDistance(0).
                 setDataReaderFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
-                setProfiles(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")).
+                setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).
                 importOrLoad();
         final Graph g = hopper.getGraphHopperStorage();
         final LocationIndex idx = hopper.getLocationIndex();

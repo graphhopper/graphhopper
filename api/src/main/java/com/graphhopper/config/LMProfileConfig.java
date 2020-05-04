@@ -18,13 +18,13 @@
 
 package com.graphhopper.config;
 
-import static com.graphhopper.config.ProfileConfig.validateProfileName;
+import static com.graphhopper.config.Profile.validateProfileName;
 
 /**
  * Corresponds to an entry in the `profiles_lm` section in config.yml and specifies a routing profile that shall be
  * prepared using Landmarks (LM)
  *
- * @see ProfileConfig
+ * @see Profile
  */
 public class LMProfileConfig {
     private String profile = "";

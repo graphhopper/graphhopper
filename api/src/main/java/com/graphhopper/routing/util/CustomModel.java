@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class is used in combination with CustomProfileConfig.
+ * This class is used in combination with CustomProfile.
  */
 public class CustomModel {
 

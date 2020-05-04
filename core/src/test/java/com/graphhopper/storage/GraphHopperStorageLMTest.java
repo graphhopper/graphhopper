@@ -2,7 +2,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -51,7 +51,7 @@ public class GraphHopperStorageLMTest {
 
         GraphHopper hopper = new GraphHopper()
                 .setGraphHopperLocation(defaultGraphLoc)
-                .setProfiles(new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest"));
+                .setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig("my_profile"));
         // does lm preparation
         hopper.importOrLoad();
@@ -62,7 +62,7 @@ public class GraphHopperStorageLMTest {
 
         hopper = new GraphHopper()
                 .setGraphHopperLocation(defaultGraphLoc)
-                .setProfiles(new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest"));
+                .setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig("my_profile"));
         // just loads the LM data
         hopper.importOrLoad();

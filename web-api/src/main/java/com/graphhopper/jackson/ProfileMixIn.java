@@ -25,7 +25,7 @@ import com.graphhopper.util.PMap;
 /**
  * @see GHRequestMixIn
  */
-public interface ProfileConfigMixIn {
+public interface ProfileMixIn {
     @JsonAnySetter
     void putHint(String key, Object value);
 

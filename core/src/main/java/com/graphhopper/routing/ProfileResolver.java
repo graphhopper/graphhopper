@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.config.CHProfileConfig;
 import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -42,15 +42,15 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
  */
 public class ProfileResolver {
     private final EncodingManager encodingManager;
-    private final List<ProfileConfig> profiles;
-    private final List<ProfileConfig> chProfiles;
-    private final List<ProfileConfig> lmProfiles;
+    private final List<Profile> profiles;
+    private final List<Profile> chProfiles;
+    private final List<Profile> lmProfiles;
 
-    public ProfileResolver(EncodingManager encodingManager, List<ProfileConfig> profiles, List<CHProfileConfig> chProfiles, List<LMProfileConfig> lmProfiles) {
+    public ProfileResolver(EncodingManager encodingManager, List<Profile> profiles, List<CHProfileConfig> chProfiles, List<LMProfileConfig> lmProfiles) {
         this.encodingManager = encodingManager;
         this.profiles = profiles;
-        Map<String, ProfileConfig> profilesByName = new HashMap<>(profiles.size());
-        for (ProfileConfig p : profiles) {
+        Map<String, Profile> profilesByName = new HashMap<>(profiles.size());
+        for (Profile p : profiles) {
             profilesByName.put(p.getName(), p);
         }
         if (profilesByName.size() != profiles.size()) {
@@ -58,7 +58,7 @@ public class ProfileResolver {
         }
         this.chProfiles = new ArrayList<>();
         for (CHProfileConfig p : chProfiles) {
-            ProfileConfig profile = profilesByName.get(p.getProfile());
+            Profile profile = profilesByName.get(p.getProfile());
             if (profile == null) {
                 throw new IllegalStateException("There is no profile for CH preparation '" + p.getProfile() + "'");
             }
@@ -66,7 +66,7 @@ public class ProfileResolver {
         }
         this.lmProfiles = new ArrayList<>();
         for (LMProfileConfig p : lmProfiles) {
-            ProfileConfig profile = profilesByName.get(p.getProfile());
+            Profile profile = profilesByName.get(p.getProfile());
             if (profile == null) {
                 throw new IllegalStateException("There is no profile for LM preparation '" + p.getProfile() + "'");
             }
@@ -74,7 +74,7 @@ public class ProfileResolver {
         }
     }
 
-    public ProfileConfig resolveProfile(PMap hints) {
+    public Profile resolveProfile(PMap hints) {
         boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
 
@@ -99,9 +99,9 @@ public class ProfileResolver {
      * @param hintsMap a map used to describe the profile that shall be selected
      * @throws IllegalArgumentException if no profile supporting CH could be selected for the given parameters
      */
-    public ProfileConfig selectProfileCH(PMap hintsMap) {
-        List<ProfileConfig> matchingProfiles = new ArrayList<>();
-        for (ProfileConfig p : chProfiles) {
+    public Profile selectProfileCH(PMap hintsMap) {
+        List<Profile> matchingProfiles = new ArrayList<>();
+        for (Profile p : chProfiles) {
             if (!chProfileMatchesHints(p, hintsMap))
                 continue;
             matchingProfiles.add(p);
@@ -120,8 +120,8 @@ public class ProfileResolver {
         } else {
             // special case: prefer profile with turn costs over one without turn costs if both are available and there
             // aren't any other options
-            ProfileConfig match1 = matchingProfiles.get(0);
-            ProfileConfig match2 = matchingProfiles.get(1);
+            Profile match1 = matchingProfiles.get(0);
+            Profile match2 = matchingProfiles.get(1);
             if (edgeBased == null && matchingProfiles.size() == 2 &&
                     match1.getWeighting().equals(match2.getWeighting()) &&
                     match1.getVehicle().equals(match2.getVehicle()) &&
@@ -137,7 +137,7 @@ public class ProfileResolver {
         }
     }
 
-    protected boolean chProfileMatchesHints(ProfileConfig p, PMap hintsMap) {
+    protected boolean chProfileMatchesHints(Profile p, PMap hintsMap) {
         Boolean edgeBased = getEdgeBased(hintsMap);
         Integer uTurnCosts = getUTurnCosts(hintsMap);
         return (edgeBased == null || p.isTurnCosts() == edgeBased) &&
@@ -146,9 +146,9 @@ public class ProfileResolver {
                 (!hintsMap.has("vehicle") || p.getVehicle().equalsIgnoreCase(hintsMap.getString("vehicle", "")));
     }
 
-    public ProfileConfig selectProfileLM(PMap hintsMap) {
-        List<ProfileConfig> matchingProfiles = new ArrayList<>();
-        for (ProfileConfig p : lmProfiles) {
+    public Profile selectProfileLM(PMap hintsMap) {
+        List<Profile> matchingProfiles = new ArrayList<>();
+        for (Profile p : lmProfiles) {
             if (!lmProfileMatchesHints(p, hintsMap))
                 continue;
             matchingProfiles.add(p);
@@ -169,8 +169,8 @@ public class ProfileResolver {
         } else {
             // special case: prefer profile with turn costs over one without turn costs if both are available and there
             // aren't any other options
-            ProfileConfig match1 = matchingProfiles.get(0);
-            ProfileConfig match2 = matchingProfiles.get(1);
+            Profile match1 = matchingProfiles.get(0);
+            Profile match2 = matchingProfiles.get(1);
             Boolean edgeBased = getEdgeBased(hintsMap);
             if (edgeBased == null && matchingProfiles.size() == 2 &&
                     match1.getWeighting().equals(match2.getWeighting()) &&
@@ -187,13 +187,13 @@ public class ProfileResolver {
         }
     }
 
-    protected boolean lmProfileMatchesHints(ProfileConfig p, PMap hints) {
+    protected boolean lmProfileMatchesHints(Profile p, PMap hints) {
         return profileMatchesHints(p, hints);
     }
 
-    private ProfileConfig selectProfileUnprepared(PMap hints) {
-        List<ProfileConfig> matchingProfiles = new ArrayList<>();
-        for (ProfileConfig p : profiles) {
+    private Profile selectProfileUnprepared(PMap hints) {
+        List<Profile> matchingProfiles = new ArrayList<>();
+        for (Profile p : profiles) {
             if (!profileMatchesHints(p, hints))
                 continue;
             matchingProfiles.add(p);
@@ -208,8 +208,8 @@ public class ProfileResolver {
         } else {
             // special case: prefer profile with turn costs over one without turn costs if both are available and there
             // aren't any other options
-            ProfileConfig match1 = matchingProfiles.get(0);
-            ProfileConfig match2 = matchingProfiles.get(1);
+            Profile match1 = matchingProfiles.get(0);
+            Profile match2 = matchingProfiles.get(1);
             Boolean edgeBased = getEdgeBased(hints);
             if (edgeBased == null && matchingProfiles.size() == 2 &&
                     match1.getWeighting().equals(match2.getWeighting()) &&
@@ -225,7 +225,7 @@ public class ProfileResolver {
         }
     }
 
-    protected boolean profileMatchesHints(ProfileConfig p, PMap hints) {
+    protected boolean profileMatchesHints(Profile p, PMap hints) {
         Boolean edgeBased = getEdgeBased(hints);
         return (edgeBased == null || p.isTurnCosts() == edgeBased) &&
                 (!hints.has("weighting") || p.getWeighting().equalsIgnoreCase(hints.getString("weighting", ""))) &&
@@ -251,17 +251,17 @@ public class ProfileResolver {
                 "u_turn_costs=" + (uTurnCosts != null ? uTurnCosts : "*");
     }
 
-    private List<String> profilesAsString(List<ProfileConfig> profiles) {
+    private List<String> profilesAsString(List<Profile> profiles) {
         List<String> result = new ArrayList<>(profiles.size());
-        for (ProfileConfig p : profiles) {
+        for (Profile p : profiles) {
             result.add(p.getWeighting() + "|" + p.getVehicle() + "|turn_costs=" + p.isTurnCosts());
         }
         return result;
     }
 
-    private List<String> chProfilesAsString(List<ProfileConfig> profiles) {
+    private List<String> chProfilesAsString(List<Profile> profiles) {
         List<String> result = new ArrayList<>(profiles.size());
-        for (ProfileConfig p : profiles) {
+        for (Profile p : profiles) {
             String str = p.getWeighting() + "|" + p.getVehicle() + "|turn_costs=" + p.isTurnCosts();
             str += (p.isTurnCosts() ? "|u_turn_costs=" + p.getHints().getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : "");
             result.add(str);
@@ -271,7 +271,7 @@ public class ProfileResolver {
 
     private List<String> getProfileNames() {
         List<String> result = new ArrayList<>(profiles.size());
-        for (ProfileConfig p : profiles) {
+        for (Profile p : profiles) {
             result.add(p.getName());
         }
         return result;

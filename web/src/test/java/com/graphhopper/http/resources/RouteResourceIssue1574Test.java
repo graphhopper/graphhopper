@@ -19,7 +19,7 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -57,7 +57,7 @@ public class RouteResourceIssue1574Test {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR)
                 .setProfiles(Collections.singletonList(
-                        new ProfileConfig("car_profile").setVehicle("car").setWeighting("fastest")
+                        new Profile("car_profile").setVehicle("car").setWeighting("fastest")
                 ))
                 .setCHProfiles(Collections.singletonList(
                         new CHProfileConfig("car_profile")
