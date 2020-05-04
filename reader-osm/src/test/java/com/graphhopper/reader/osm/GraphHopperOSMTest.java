@@ -1025,7 +1025,7 @@ public class GraphHopperOSMTest {
             for (PrepareLandmarks prepLM : hopper.getLMPreparationHandler().getPreparations()) {
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", prepLM.isPrepared());
 
-                String name = prepLM.getLMProfile().getName();
+                String name = prepLM.getLMConfig().getName();
                 Integer singleThreadShortcutCount = landmarkCount.get(name);
                 if (singleThreadShortcutCount == null)
                     landmarkCount.put(name, prepLM.getSubnetworksWithLandmarks());

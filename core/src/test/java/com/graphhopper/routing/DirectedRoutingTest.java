@@ -21,7 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.lm.LMProfile;
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -69,7 +69,7 @@ public class DirectedRoutingTest {
     private Directory dir;
     private GraphHopperStorage graph;
     private CHConfig chConfig;
-    private LMProfile lmProfile;
+    private LMConfig lmConfig;
     private CHGraph chGraph;
     private FlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
@@ -124,7 +124,7 @@ public class DirectedRoutingTest {
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
         chConfig = CHConfig.edgeBased("p1", weighting);
         // important: for LM preparation we need to use a weighting without turn costs #1960
-        lmProfile = new LMProfile("p2", new FastestWeighting(encoder));
+        lmConfig = new LMConfig("c2", new FastestWeighting(encoder));
         graph.addCHGraph(chConfig);
         graph.create(1000);
     }
@@ -140,7 +140,7 @@ public class DirectedRoutingTest {
             chGraph = graph.getCHGraph(chConfig);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
+            lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
             lm.setMaximumWeight(1000);
             lm.doWork();
         }

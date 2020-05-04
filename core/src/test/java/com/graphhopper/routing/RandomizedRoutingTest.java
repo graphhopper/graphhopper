@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.lm.LMProfile;
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PerfectApproximator;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -67,7 +67,7 @@ public class RandomizedRoutingTest {
     private Directory dir;
     private GraphHopperStorage graph;
     private List<CHConfig> chConfigs;
-    private LMProfile lmProfile;
+    private LMConfig lmConfig;
     private CHGraph chGraph;
     private FlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
@@ -133,7 +133,7 @@ public class RandomizedRoutingTest {
         turnCostStorage = graph.getTurnCostStorage();
         chConfigs = graph.getCHConfigs();
         // important: for LM preparation we need to use a weighting without turn costs #1960
-        lmProfile = new LMProfile("profile", chConfigs.get(0).getWeighting());
+        lmConfig = new LMConfig("config", chConfigs.get(0).getWeighting());
         weighting = traversalMode.isEdgeBased() ? chConfigs.get(1).getWeighting() : chConfigs.get(0).getWeighting();
     }
 
@@ -146,7 +146,7 @@ public class RandomizedRoutingTest {
             chGraph = graph.getCHGraph(chConfig);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
+            lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
             lm.setMaximumWeight(10000);
             lm.doWork();
         }

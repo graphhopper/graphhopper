@@ -29,8 +29,8 @@ import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
-import com.graphhopper.routing.lm.LMProfile;
 import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
@@ -935,7 +935,7 @@ public class GraphHopper implements GraphHopperAPI {
             // Running the preparation without turn costs is also useful to allow e.g. changing the u_turn_costs per
             // request (we have to use the minimum weight settings (= no turn costs) for the preparation)
             Weighting weighting = createWeighting(profile, new PMap(), true);
-            lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
+            lmPreparationHandler.addLMConfig(new LMConfig(profile.getName(), weighting));
         }
     }
 

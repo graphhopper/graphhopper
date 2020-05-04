@@ -78,7 +78,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private final GraphHopperStorage graph;
     private final FlagEncoder encoder;
     private final Weighting weighting;
-    private final LMProfile lmProfile;
+    private final LMConfig lmConfig;
     private Weighting lmSelectionWeighting;
     private final TraversalMode traversalMode;
     private boolean initialized;
@@ -92,11 +92,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      */
     static final long PRECISION = 1 << 16;
 
-    public LandmarkStorage(GraphHopperStorage graph, Directory dir, final LMProfile lmProfile, int landmarks) {
+    public LandmarkStorage(GraphHopperStorage graph, Directory dir, final LMConfig lmConfig, int landmarks) {
         this.graph = graph;
         this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
-        this.lmProfile = lmProfile;
-        this.weighting = lmProfile.getWeighting();
+        this.lmConfig = lmConfig;
+        this.weighting = lmConfig.getWeighting();
         if (weighting.hasTurnCosts()) {
             throw new IllegalArgumentException("Landmark preparation cannot be used with weightings returning turn costs, because this can lead to wrong results during the (node-based) landmark calculation, see #1960");
         }
@@ -124,7 +124,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // use the node based traversal as this is a smaller weight approximation and will still produce correct results
         // In this sense its even 'better' to use node-based.
         this.traversalMode = TraversalMode.NODE_BASED;
-        this.landmarkWeightDA = dir.find("landmarks_" + lmProfile.getName());
+        this.landmarkWeightDA = dir.find("landmarks_" + lmConfig.getName());
 
         this.landmarks = landmarks;
         // one short per landmark and two directions => 2*2 byte
@@ -132,7 +132,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.FROM_OFFSET = 0;
         this.TO_OFFSET = 2;
         this.landmarkIDs = new ArrayList<>();
-        this.subnetworkStorage = new SubnetworkStorage(dir, "landmarks_" + lmProfile.getName());
+        this.subnetworkStorage = new SubnetworkStorage(dir, "landmarks_" + lmConfig.getName());
     }
 
     /**
@@ -400,7 +400,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 explorer.runAlgo();
                 tmpLandmarkNodeIds[lmIdx + 1] = explorer.getLastNode();
                 if (logDetails && lmIdx % logOffset == 0)
-                    LOGGER.info("Finding landmarks [" + lmProfile + "] in network [" + explorer.getVisitedNodes() + "]. "
+                    LOGGER.info("Finding landmarks [" + lmConfig + "] in network [" + explorer.getVisitedNodes() + "]. "
                             + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%, " + Helper.getMemInfo());
             }
 

@@ -24,11 +24,11 @@ import java.util.Objects;
 
 import static com.graphhopper.config.Profile.validateProfileName;
 
-public class LMProfile {
+public class LMConfig {
     private final String profileName;
     private final Weighting weighting;
 
-    public LMProfile(String profileName, Weighting weighting) {
+    public LMConfig(String profileName, Weighting weighting) {
         validateProfileName(profileName);
         this.profileName = profileName;
         this.weighting = weighting;
@@ -51,8 +51,8 @@ public class LMProfile {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        LMProfile lmProfile = (LMProfile) o;
-        return Objects.equals(profileName, lmProfile.profileName);
+        LMConfig lmConfig = (LMConfig) o;
+        return Objects.equals(profileName, lmConfig.profileName);
     }
 
     @Override

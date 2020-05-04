@@ -31,14 +31,14 @@ public class LMPreparationHandlerTest {
     public void maximumLMWeight() {
         LMPreparationHandler handler = new LMPreparationHandler();
         handler.setLMProfileConfigs(
-                new LMProfileConfig("prof1").setMaximumLMWeight(65_000),
-                new LMProfileConfig("prof2").setMaximumLMWeight(20_000)
+                new LMProfileConfig("conf1").setMaximumLMWeight(65_000),
+                new LMProfileConfig("conf2").setMaximumLMWeight(20_000)
         );
         FlagEncoder car = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(car);
         handler
-                .addLMProfile(new LMProfile("prof1", new FastestWeighting(car)))
-                .addLMProfile(new LMProfile("prof2", new ShortestWeighting(car)));
+                .addLMConfig(new LMConfig("conf1", new FastestWeighting(car)))
+                .addLMConfig(new LMConfig("conf2", new ShortestWeighting(car)));
         handler.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false), null);
         assertEquals(1, handler.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);
         assertEquals(0.3, handler.getPreparations().get(1).getLandmarkStorage().getFactor(), .1);
