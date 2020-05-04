@@ -18,7 +18,7 @@
 package com.graphhopper;
 
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
@@ -292,8 +292,8 @@ public class GraphHopper implements GraphHopperAPI {
      *     new CHProfile("my_car"),
      *     new CHProfile("your_bike")
      *   );
-     *   hopper.getLMPreparationHandler().setLMProfileConfigs(
-     *     new LMProfileConfig("your_bike")
+     *   hopper.getLMPreparationHandler().setLMProfiles(
+     *     new LMProfile("your_bike")
      *   );
      * }
      * </pre>
@@ -301,7 +301,7 @@ public class GraphHopper implements GraphHopperAPI {
      * See also https://github.com/graphhopper/graphhopper/pull/1922.
      *
      * @see CHPreparationHandler#setCHProfiles
-     * @see LMPreparationHandler#setLMProfileConfigs
+     * @see LMPreparationHandler#setLMProfiles
      */
     public GraphHopper setProfiles(Profile... profiles) {
         return setProfiles(Arrays.asList(profiles));
@@ -849,20 +849,20 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("CH profile references unknown profile '" + chConfig.getProfile() + "'");
             }
         }
-        Map<String, LMProfileConfig> lmProfileMap = new LinkedHashMap<>(lmPreparationHandler.getLMProfileConfigs().size());
-        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
-            LMProfileConfig previous = lmProfileMap.put(lmConfig.getProfile(), lmConfig);
+        Map<String, LMProfile> lmProfileMap = new LinkedHashMap<>(lmPreparationHandler.getLMProfiles().size());
+        for (LMProfile lmProfile : lmPreparationHandler.getLMProfiles()) {
+            LMProfile previous = lmProfileMap.put(lmProfile.getProfile(), lmProfile);
             if (previous != null) {
-                throw new IllegalArgumentException("Multiple LM profiles are using the same profile '" + lmConfig.getProfile() + "'");
+                throw new IllegalArgumentException("Multiple LM profiles are using the same profile '" + lmProfile.getProfile() + "'");
             }
-            if (!profilesByName.containsKey(lmConfig.getProfile())) {
-                throw new IllegalArgumentException("LM profile references unknown profile '" + lmConfig.getProfile() + "'");
+            if (!profilesByName.containsKey(lmProfile.getProfile())) {
+                throw new IllegalArgumentException("LM profile references unknown profile '" + lmProfile.getProfile() + "'");
             }
-            if (lmConfig.usesOtherPreparation() && !profilesByName.containsKey(lmConfig.getPreparationProfile())) {
-                throw new IllegalArgumentException("LM profile references unknown preparation profile '" + lmConfig.getPreparationProfile() + "'");
+            if (lmProfile.usesOtherPreparation() && !profilesByName.containsKey(lmProfile.getPreparationProfile())) {
+                throw new IllegalArgumentException("LM profile references unknown preparation profile '" + lmProfile.getPreparationProfile() + "'");
             }
         }
-        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
+        for (LMProfile lmConfig : lmPreparationHandler.getLMProfiles()) {
             if (lmConfig.usesOtherPreparation() && !lmProfileMap.containsKey(lmConfig.getPreparationProfile())) {
                 throw new IllegalArgumentException("Unknown LM preparation profile '" + lmConfig.getPreparationProfile() + "' in LM profile '" + lmConfig.getProfile() + "' cannot be used as preparation_profile");
             }
@@ -884,7 +884,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (chPreparationHandler.isEnabled() && !disableCH) {
             return chPreparationHandler.getAlgorithmFactory(profile);
         } else if (lmPreparationHandler.isEnabled() && !disableLM) {
-            for (LMProfileConfig lmp : lmPreparationHandler.getLMProfileConfigs()) {
+            for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
                 if (lmp.getProfile().equals(profile)) {
                     return lmp.usesOtherPreparation()
                             // cross-querying
@@ -925,10 +925,10 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmPreparationHandler.hasLMProfiles())
             return;
 
-        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
-            if (lmConfig.usesOtherPreparation())
+        for (LMProfile lmProfile : lmPreparationHandler.getLMProfiles()) {
+            if (lmProfile.usesOtherPreparation())
                 continue;
-            Profile profile = profilesByName.get(lmConfig.getProfile());
+            Profile profile = profilesByName.get(lmProfile.getProfile());
             // Note that we have to make sure the weighting used for LM preparation does not include turn costs, because
             // the LM preparation is running node-based and the landmark weights will be wrong if there are non-zero
             // turn costs, see discussion in #1960

@@ -18,7 +18,7 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
@@ -65,7 +65,7 @@ public class CustomWeightingRouteResourceLMTest {
                         new CustomProfile("car_custom").setCustomModel(new CustomModel()).setVehicle("car"),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("foot_custom").setCustomModel(new CustomModel()).setVehicle("foot"))).
-                setLMProfiles(Arrays.asList(new LMProfileConfig("car_custom"), new LMProfileConfig("foot_custom")));
+                setLMProfiles(Arrays.asList(new LMProfile("car_custom"), new LMProfile("foot_custom")));
         return config;
     }
 

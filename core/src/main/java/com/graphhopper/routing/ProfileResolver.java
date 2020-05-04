@@ -19,7 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.PMap;
@@ -46,7 +46,7 @@ public class ProfileResolver {
     private final List<Profile> chProfiles;
     private final List<Profile> lmProfiles;
 
-    public ProfileResolver(EncodingManager encodingManager, List<Profile> profiles, List<CHProfile> chProfiles, List<LMProfileConfig> lmProfiles) {
+    public ProfileResolver(EncodingManager encodingManager, List<Profile> profiles, List<CHProfile> chProfiles, List<LMProfile> lmProfiles) {
         this.encodingManager = encodingManager;
         this.profiles = profiles;
         Map<String, Profile> profilesByName = new HashMap<>(profiles.size());
@@ -65,7 +65,7 @@ public class ProfileResolver {
             this.chProfiles.add(profile);
         }
         this.lmProfiles = new ArrayList<>();
-        for (LMProfileConfig p : lmProfiles) {
+        for (LMProfile p : lmProfiles) {
             Profile profile = profilesByName.get(p.getProfile());
             if (profile == null) {
                 throw new IllegalStateException("There is no profile for LM preparation '" + p.getProfile() + "'");

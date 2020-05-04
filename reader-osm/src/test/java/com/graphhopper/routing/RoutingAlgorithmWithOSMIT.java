@@ -19,7 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -571,7 +571,7 @@ public class RoutingAlgorithmWithOSMIT {
 
             // always enable landmarks
             hopper.getLMPreparationHandler().
-                    setLMProfileConfigs(new LMProfileConfig(vehicle + "_profile")).
+                    setLMProfiles(new LMProfile(vehicle + "_profile")).
                     setDisablingAllowed(true);
 
             if (withCH) {

@@ -225,7 +225,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(configuration.getGraphHopperConfiguration()).to(GraphHopperConfig.class);
                 bind(graphHopper).to(GraphHopper.class);
                 bind(graphHopper).to(GraphHopperAPI.class);
-                bind(new ProfileResolver(graphHopper.getEncodingManager(), graphHopper.getProfiles(), graphHopper.getCHPreparationHandler().getCHProfiles(), graphHopper.getLMPreparationHandler().getLMProfileConfigs()))
+                bind(new ProfileResolver(graphHopper.getEncodingManager(), graphHopper.getProfiles(), graphHopper.getCHPreparationHandler().getCHProfiles(), graphHopper.getLMPreparationHandler().getLMProfiles()))
                         .to(ProfileResolver.class);
 
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");

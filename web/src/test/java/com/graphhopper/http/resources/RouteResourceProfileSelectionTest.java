@@ -20,7 +20,7 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
@@ -68,9 +68,9 @@ public class RouteResourceProfileSelectionTest {
                         new CHProfile("my_feet")
                 ))
                 .setLMProfiles(Arrays.asList(
-                        new LMProfileConfig("my_car"),
-                        new LMProfileConfig("my_bike"),
-                        new LMProfileConfig("my_feet")
+                        new LMProfile("my_car"),
+                        new LMProfile("my_bike"),
+                        new LMProfile("my_feet")
                 ));
         return config;
     }

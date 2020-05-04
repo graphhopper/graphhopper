@@ -1,7 +1,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -52,7 +52,7 @@ public class GraphHopperStorageLMTest {
         GraphHopper hopper = new GraphHopper()
                 .setGraphHopperLocation(defaultGraphLoc)
                 .setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
-        hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig("my_profile"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         // does lm preparation
         hopper.importOrLoad();
         EncodingManager em = hopper.getEncodingManager();
@@ -63,7 +63,7 @@ public class GraphHopperStorageLMTest {
         hopper = new GraphHopper()
                 .setGraphHopperLocation(defaultGraphLoc)
                 .setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
-        hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig("my_profile"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         // just loads the LM data
         hopper.importOrLoad();
         assertEquals(1, em.fetchEdgeEncoders().size());

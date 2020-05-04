@@ -23,7 +23,7 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
@@ -397,7 +397,7 @@ public class MiniGraphUI {
                 new CHProfile("profile")
         ));
         ghConfig.setLMProfiles(Arrays.asList(
-                new LMProfileConfig("profile")
+                new LMProfile("profile")
         ));
         GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
         boolean debug = args.getBool("minigraphui.debug", false);

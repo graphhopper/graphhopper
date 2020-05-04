@@ -18,7 +18,7 @@
 package com.graphhopper;
 
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -242,7 +242,7 @@ public class GraphHopperIT {
         }
         if (lm) {
             hopper.getLMPreparationHandler()
-                    .setLMProfileConfigs(new LMProfileConfig(profile))
+                    .setLMProfiles(new LMProfile(profile))
                     .setDisablingAllowed(true);
         }
         hopper.importAndClose();
@@ -257,7 +257,7 @@ public class GraphHopperIT {
         }
         if (lm) {
             hopper.getLMPreparationHandler()
-                    .setLMProfileConfigs(new LMProfileConfig(profile))
+                    .setLMProfiles(new LMProfile(profile))
                     .setDisablingAllowed(true);
         }
         hopper.importOrLoad();
@@ -1329,7 +1329,7 @@ public class GraphHopperIT {
                 setDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().
-                setLMProfileConfigs(new LMProfileConfig(profile).setMaximumLMWeight(2000)).
+                setLMProfiles(new LMProfile(profile).setMaximumLMWeight(2000)).
                 setDisablingAllowed(true);
 
         hopper.importOrLoad();
@@ -1392,12 +1392,12 @@ public class GraphHopperIT {
                 setStoreOnFlush(true);
 
         hopper.getLMPreparationHandler().
-                setLMProfileConfigs(
+                setLMProfiles(
                         // we have an LM setup for each profile, but only one LM preparation that we use for all of them!
                         // this works because profile1's weight is the lowest for every edge
-                        new LMProfileConfig(profile1),
-                        new LMProfileConfig(profile2).setPreparationProfile(profile1),
-                        new LMProfileConfig(profile3).setPreparationProfile(profile1)
+                        new LMProfile(profile1),
+                        new LMProfile(profile2).setPreparationProfile(profile1),
+                        new LMProfile(profile3).setPreparationProfile(profile1)
                 ).
                 setDisablingAllowed(true);
         hopper.importOrLoad();
@@ -1465,7 +1465,7 @@ public class GraphHopperIT {
                 setDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().
-                setLMProfileConfigs(new LMProfileConfig(profile1).setMaximumLMWeight(2000)).
+                setLMProfiles(new LMProfile(profile1).setMaximumLMWeight(2000)).
                 setDisablingAllowed(true);
 
         hopper.importOrLoad();
@@ -1508,7 +1508,7 @@ public class GraphHopperIT {
                 setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                 setStoreOnFlush(true);
         hopper.getLMPreparationHandler().
-                setLMProfileConfigs(new LMProfileConfig(profile).setMaximumLMWeight(2000)).
+                setLMProfiles(new LMProfile(profile).setMaximumLMWeight(2000)).
                 setDisablingAllowed(true);
         hopper.importOrLoad();
 
@@ -1537,7 +1537,7 @@ public class GraphHopperIT {
                         new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(turnCosts)
                 ));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile)).setDisablingAllowed(true);
-        hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig(profile)).setDisablingAllowed(true);
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile(profile)).setDisablingAllowed(true);
         hopper.importOrLoad();
 
         long seed = System.nanoTime();
@@ -1582,7 +1582,7 @@ public class GraphHopperIT {
                         new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true)
                 ));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile)).setDisablingAllowed(true);
-        hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig(profile)).setDisablingAllowed(true);
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile(profile)).setDisablingAllowed(true);
 
         hopper.importOrLoad();
 

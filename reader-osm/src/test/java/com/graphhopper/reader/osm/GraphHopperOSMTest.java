@@ -22,7 +22,7 @@ import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.Path;
@@ -1010,12 +1010,12 @@ public class GraphHopperOSMTest {
                     setGraphHopperLocation(ghLoc).
                     setDataReaderFile(testOsm);
             hopper.getLMPreparationHandler().
-                    setLMProfileConfigs(
-                            new LMProfileConfig("car_profile"),
-                            new LMProfileConfig("moto_profile"),
-                            new LMProfileConfig("mtb_profile"),
-                            new LMProfileConfig("bike_profile"),
-                            new LMProfileConfig("foot_profile")
+                    setLMProfiles(
+                            new LMProfile("car_profile"),
+                            new LMProfile("moto_profile"),
+                            new LMProfile("mtb_profile"),
+                            new LMProfile("bike_profile"),
+                            new LMProfile("foot_profile")
                     ).
                     setPreparationThreads(threadCount);
 

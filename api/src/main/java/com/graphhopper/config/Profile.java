@@ -25,7 +25,7 @@ import com.graphhopper.util.PMap;
  * used here needs to be used when setting up CH/LM preparations. See also the documentation in `config-example.yml'
  *
  * @see CHProfile
- * @see LMProfileConfig
+ * @see LMProfile
  */
 public class Profile {
     private String name = "car";

@@ -18,7 +18,7 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -51,7 +51,7 @@ public class LMPreparationHandler {
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
     // we first add the profile configs and later read them to create the actual profile objects (because they require
     // the actual Weightings)
-    private final List<LMProfileConfig> lmProfileConfigs = new ArrayList<>();
+    private final List<LMProfile> lmProfiles = new ArrayList<>();
     private final List<LMConfig> lmConfigs = new ArrayList<>();
     private final Map<String, Double> maximumWeights = new HashMap<>();
     private int minNodes = -1;
@@ -73,7 +73,7 @@ public class LMPreparationHandler {
 
         setPreparationThreads(ghConfig.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
         setDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
-        setLMProfileConfigs(ghConfig.getLMProfiles());
+        setLMProfiles(ghConfig.getLMProfiles());
 
         landmarkCount = ghConfig.getInt(Parameters.Landmark.COUNT, landmarkCount);
         activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
@@ -103,7 +103,7 @@ public class LMPreparationHandler {
     }
 
     public final boolean isEnabled() {
-        return !lmProfileConfigs.isEmpty() || !lmConfigs.isEmpty() || !preparations.isEmpty();
+        return !lmProfiles.isEmpty() || !lmConfigs.isEmpty() || !preparations.isEmpty();
     }
 
     public int getPreparationThreads() {
@@ -119,27 +119,27 @@ public class LMPreparationHandler {
         this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
-    public LMPreparationHandler setLMProfileConfigs(LMProfileConfig... lmProfileConfigs) {
-        return setLMProfileConfigs(Arrays.asList(lmProfileConfigs));
+    public LMPreparationHandler setLMProfiles(LMProfile... lmProfiles) {
+        return setLMProfiles(Arrays.asList(lmProfiles));
     }
 
     /**
      * Enables the use of landmarks to reduce query times.
      */
-    public LMPreparationHandler setLMProfileConfigs(Collection<LMProfileConfig> lmProfileConfigs) {
-        this.lmProfileConfigs.clear();
+    public LMPreparationHandler setLMProfiles(Collection<LMProfile> lmProfiles) {
+        this.lmProfiles.clear();
         this.maximumWeights.clear();
-        for (LMProfileConfig config : lmProfileConfigs) {
-            if (config.usesOtherPreparation())
+        for (LMProfile profile : lmProfiles) {
+            if (profile.usesOtherPreparation())
                 continue;
-            maximumWeights.put(config.getProfile(), config.getMaximumLMWeight());
+            maximumWeights.put(profile.getProfile(), profile.getMaximumLMWeight());
         }
-        this.lmProfileConfigs.addAll(lmProfileConfigs);
+        this.lmProfiles.addAll(lmProfiles);
         return this;
     }
 
-    public List<LMProfileConfig> getLMProfileConfigs() {
-        return lmProfileConfigs;
+    public List<LMProfile> getLMProfiles() {
+        return lmProfiles;
     }
 
     /**

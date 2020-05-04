@@ -20,7 +20,7 @@ package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public interface LMProfileConfigMixIn {
+public interface LMProfileMixIn {
     @JsonProperty("maximum_lm_weight")
     void setMaximumLMWeight(double maximumLMWeight);
 }

@@ -19,7 +19,7 @@ package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
@@ -67,7 +67,7 @@ public class GraphHopperLandmarksTest {
                         new CHProfile("car_profile")
                 ))
                 .setLMProfiles(Collections.singletonList(
-                        new LMProfileConfig("car_profile")
+                        new LMProfile("car_profile")
                 ));
         return config;
     }

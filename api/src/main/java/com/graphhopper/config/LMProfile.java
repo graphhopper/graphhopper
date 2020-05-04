@@ -26,16 +26,16 @@ import static com.graphhopper.config.Profile.validateProfileName;
  *
  * @see Profile
  */
-public class LMProfileConfig {
+public class LMProfile {
     private String profile = "";
     private String preparationProfile = "this";
     private double maximumLMWeight = -1;
 
-    private LMProfileConfig() {
+    private LMProfile() {
         // default constructor needed for jackson
     }
 
-    public LMProfileConfig(String profile) {
+    public LMProfile(String profile) {
         setProfile(profile);
     }
 
@@ -56,7 +56,7 @@ public class LMProfileConfig {
         return preparationProfile;
     }
 
-    public LMProfileConfig setPreparationProfile(String preparationProfile) {
+    public LMProfile setPreparationProfile(String preparationProfile) {
         validateProfileName(preparationProfile);
         if (maximumLMWeight >= 0)
             throw new IllegalArgumentException("Using non-default maximum_lm_weight and preparation_profile at the same time is not allowed");
@@ -68,7 +68,7 @@ public class LMProfileConfig {
         return maximumLMWeight;
     }
 
-    public LMProfileConfig setMaximumLMWeight(double maximumLMWeight) {
+    public LMProfile setMaximumLMWeight(double maximumLMWeight) {
         if (usesOtherPreparation())
             throw new IllegalArgumentException("Using non-default maximum_lm_weight and preparation_profile at the same time is not allowed");
         this.maximumLMWeight = maximumLMWeight;

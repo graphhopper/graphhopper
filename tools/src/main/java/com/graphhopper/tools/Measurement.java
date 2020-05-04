@@ -25,7 +25,7 @@ import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
@@ -322,12 +322,12 @@ public class Measurement {
         if (useCHEdge)
             chProfiles.add(new CHProfile("profile_tc"));
         ghConfig.setCHProfiles(chProfiles);
-        List<LMProfileConfig> lmProfiles = new ArrayList<>();
+        List<LMProfile> lmProfiles = new ArrayList<>();
         if (useLM) {
-            lmProfiles.add(new LMProfileConfig("profile_no_tc"));
+            lmProfiles.add(new LMProfile("profile_no_tc"));
             if (turnCosts)
                 // no need for a second LM preparation, we can do cross queries here
-                lmProfiles.add(new LMProfileConfig("profile_tc").setPreparationProfile("profile_no_tc"));
+                lmProfiles.add(new LMProfile("profile_tc").setPreparationProfile("profile_no_tc"));
         }
         ghConfig.setLMProfiles(lmProfiles);
         return ghConfig;

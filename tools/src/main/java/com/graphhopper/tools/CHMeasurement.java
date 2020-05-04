@@ -22,7 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ch.CHPreparationHandler;
@@ -100,7 +100,7 @@ public class CHMeasurement {
             ));
             if (landmarks > 0) {
                 ghConfig.setLMProfiles(Collections.singletonList(
-                        new LMProfileConfig(profile)
+                        new LMProfile(profile)
                 ));
                 ghConfig.putObject("prepare.lm.landmarks", landmarks);
             }

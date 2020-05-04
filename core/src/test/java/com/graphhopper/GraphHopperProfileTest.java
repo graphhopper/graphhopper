@@ -20,7 +20,7 @@ package com.graphhopper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ProfileMixIn;
@@ -138,7 +138,7 @@ public class GraphHopperProfileTest {
     public void lmProfileDoesNotExist_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
         hopper.setProfiles(new Profile("profile1").setVehicle("car"));
-        hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig("other_profile"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("other_profile"));
         assertIllegalArgument(new Runnable() {
             @Override
             public void run() {
@@ -151,9 +151,9 @@ public class GraphHopperProfileTest {
     public void duplicateLMProfile_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
         hopper.setProfiles(new Profile("profile").setVehicle("car"));
-        hopper.getLMPreparationHandler().setLMProfileConfigs(
-                new LMProfileConfig("profile"),
-                new LMProfileConfig("profile")
+        hopper.getLMPreparationHandler().setLMProfiles(
+                new LMProfile("profile"),
+                new LMProfile("profile")
         );
         assertIllegalArgument(new Runnable() {
             @Override
@@ -167,8 +167,8 @@ public class GraphHopperProfileTest {
     public void unknownLMPreparationProfile_error() {
         final GraphHopper hopper = createHopper(EncodingManager.create("car"));
         hopper.setProfiles(new Profile("profile").setVehicle("car"));
-        hopper.getLMPreparationHandler().setLMProfileConfigs(
-                new LMProfileConfig("profile").setPreparationProfile("xyz")
+        hopper.getLMPreparationHandler().setLMProfiles(
+                new LMProfile("profile").setPreparationProfile("xyz")
         );
         assertIllegalArgument(new Runnable() {
             @Override
@@ -186,10 +186,10 @@ public class GraphHopperProfileTest {
                 new Profile("profile2").setVehicle("bike"),
                 new Profile("profile3").setVehicle("foot")
         );
-        hopper.getLMPreparationHandler().setLMProfileConfigs(
-                new LMProfileConfig("profile1"),
-                new LMProfileConfig("profile2").setPreparationProfile("profile1"),
-                new LMProfileConfig("profile3").setPreparationProfile("profile2")
+        hopper.getLMPreparationHandler().setLMProfiles(
+                new LMProfile("profile1"),
+                new LMProfile("profile2").setPreparationProfile("profile1"),
+                new LMProfile("profile3").setPreparationProfile("profile2")
         );
         assertIllegalArgument(new Runnable() {
             @Override
@@ -207,8 +207,8 @@ public class GraphHopperProfileTest {
                 new Profile("profile2").setVehicle("bike"),
                 new Profile("profile3").setVehicle("foot")
         );
-        hopper.getLMPreparationHandler().setLMProfileConfigs(
-                new LMProfileConfig("profile1").setPreparationProfile("profile2")
+        hopper.getLMPreparationHandler().setLMProfiles(
+                new LMProfile("profile1").setPreparationProfile("profile2")
         );
         assertIllegalArgument(new Runnable() {
             @Override

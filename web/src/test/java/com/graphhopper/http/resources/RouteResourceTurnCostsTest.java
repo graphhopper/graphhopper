@@ -20,7 +20,7 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
@@ -68,9 +68,9 @@ public class RouteResourceTurnCostsTest {
                         new CHProfile("my_car_no_turn_costs")
                 ))
                 .setLMProfiles(Arrays.asList(
-                        new LMProfileConfig("my_car_no_turn_costs"),
+                        new LMProfile("my_car_no_turn_costs"),
                         // no need for a second LM preparation: we can just cross query here
-                        new LMProfileConfig("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs")
+                        new LMProfile("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs")
                 ));
         return config;
     }

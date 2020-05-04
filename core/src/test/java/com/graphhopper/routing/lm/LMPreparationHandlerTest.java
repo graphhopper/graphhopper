@@ -1,7 +1,7 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.LMProfileConfig;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -23,16 +23,16 @@ public class LMPreparationHandlerTest {
     public void testEnabled() {
         LMPreparationHandler instance = new LMPreparationHandler();
         assertFalse(instance.isEnabled());
-        instance.setLMProfileConfigs(new LMProfileConfig("myconfig"));
+        instance.setLMProfiles(new LMProfile("myconfig"));
         assertTrue(instance.isEnabled());
     }
 
     @Test
     public void maximumLMWeight() {
         LMPreparationHandler handler = new LMPreparationHandler();
-        handler.setLMProfileConfigs(
-                new LMProfileConfig("conf1").setMaximumLMWeight(65_000),
-                new LMProfileConfig("conf2").setMaximumLMWeight(20_000)
+        handler.setLMProfiles(
+                new LMProfile("conf1").setMaximumLMWeight(65_000),
+                new LMProfile("conf2").setMaximumLMWeight(20_000)
         );
         FlagEncoder car = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(car);
@@ -48,13 +48,13 @@ public class LMPreparationHandlerTest {
     public void testPrepareWeightingNo() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.setProfiles(Collections.singletonList(new Profile("profile")));
-        ghConfig.setLMProfiles(Collections.singletonList(new LMProfileConfig("profile")));
+        ghConfig.setLMProfiles(Collections.singletonList(new LMProfile("profile")));
         LMPreparationHandler handler = new LMPreparationHandler();
         handler.init(ghConfig);
         assertTrue(handler.isEnabled());
 
         // See #1076
-        ghConfig.setLMProfiles(Collections.<LMProfileConfig>emptyList());
+        ghConfig.setLMProfiles(Collections.<LMProfile>emptyList());
         handler = new LMPreparationHandler();
         handler.init(ghConfig);
         assertFalse(handler.isEnabled());
