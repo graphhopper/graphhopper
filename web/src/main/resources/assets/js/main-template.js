@@ -350,7 +350,9 @@ $(document).ready(function (e) {
 });
 
 function profileDisplayName(profileName) {
-   return translate.tr(profileName) + ' (' + profileName + ')'
+   // custom profile names like 'my_car' cannot be translated and will be returned like 'web.my_car', so we remove
+   // the 'web.' prefix in this case
+   return translate.tr(profileName).replace("web.", "");
 }
 
 /**
