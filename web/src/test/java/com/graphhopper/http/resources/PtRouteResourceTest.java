@@ -167,7 +167,7 @@ public class PtRouteResourceTest {
         assertEquals(200, response.getStatus());
         InfoResource.Info info = response.readEntity(InfoResource.Info.class);
         assertTrue(info.supported_vehicles.contains("pt"));
-        assertTrue(info.features.containsKey("pt"));
+        assertTrue(info.profiles.stream().anyMatch(p -> p.profileName.equals("pt")));
     }
 
 }

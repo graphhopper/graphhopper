@@ -35,11 +35,6 @@ if (ghenv.environment === 'development') {
     var autocomplete = AutoComplete.prototype.createStub();
 } else {
     var autocomplete = new AutoComplete(ghenv.geocoding.host, ghenv.geocoding.api_key);
-    // overwrite default for production
-    GHRequest.prototype.hasTCSupport = function() {
-       if(this.api_params.turn_costs !== false)
-          this.api_params.turn_costs = new Set(["car", "truck", "small_truck", "scooter"]).has(this.api_params.vehicle);
-    };
 }
 
 var mapLayer = require('./map.js');
@@ -51,7 +46,6 @@ var translate = require('./translate.js');
 
 var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
-var vehicleTools = require('./tools/vehicle.js');
 var tileLayers = require('./config/tileLayers.js');
 if(ghenv.with_tiles)
    tileLayers.enableVectorTiles();
@@ -126,6 +120,7 @@ $(document).ready(function (e) {
        jsonModel.points = points;
        jsonModel.points_encoded = false;
        jsonModel.elevation = ghRequest.api_params.elevation;
+       jsonModel.profile = ghRequest.api_params.profile;
        var request = JSON.stringify(jsonModel);
 
        $.ajax({
@@ -196,17 +191,20 @@ $(document).ready(function (e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 nominatim.setBounds(bounds);
-                var vehiclesDiv = $("#vehicles");
+                var profilesDiv = $("#profiles");
 
-                function createButton(vehicle, hide) {
-                    var button = $("<button class='vehicle-btn' title='" + translate.tr(vehicle) + "'/>");
+                function createButton(profile, hide) {
+                    var vehicle = profile.vehicle;
+                    var profileName = profile.profile_name;
+                    var button = $("<button class='vehicle-btn' title='" + profileDisplayName(profileName) + "'/>");
                     if (hide)
                         button.hide();
 
-                    button.attr('id', vehicle);
-                    button.html("<img src='img/" + vehicle + ".png' alt='" + translate.tr(vehicle) + "'></img>");
+                    button.attr('id', profileName);
+                    button.html("<img src='img/" + vehicle.toLowerCase() + ".png' alt='" + profileDisplayName(profileName) + "'></img>");
                     button.click(function () {
-                        ghRequest.initVehicle(vehicle);
+                        ghRequest.setProfile(profileName);
+                        ghRequest.removeLegacyParameters();
                         resolveAll();
                         if (ghRequest.route.isResolved())
                           routeLatLng(ghRequest);
@@ -214,36 +212,52 @@ $(document).ready(function (e) {
                     return button;
                 }
 
-                if (json.features) {
-                    ghRequest.features = json.features;
+                if (json.profiles) {
+                    var profiles = json.profiles;
+                    // first sort alphabetically to maintain a consistent order, then move certain elements to front/back
+                    profiles.sort(function (a, b) {
+                         return a.vehicle < b.vehicle ? -1 : a.vehicle > b.vehicle ? 1 : 0;
+                    });
+                    // the desired order is car,foot,bike,<others>,motorcycle
+                    var firstVehicles = ["car", "foot", "bike"];
+                    for (var i=firstVehicles.length-1; i>=0; --i) {
+                        profiles = moveToFront(profiles, function(p) { return p.vehicle === firstVehicles[i]; });
+                    }
+                    var lastVehicles = ["mtb", "motorcycle"];
+                    for (var i=0; i<lastVehicles.length; ++i) {
+                        profiles = moveToFront(profiles, function(p) { return p.vehicle !== lastVehicles[i]; });
+                    }
+                    ghRequest.profiles = profiles;
+                    ghRequest.setElevation(json.elevation);
 
-                    // car, foot and bike should come first. mc comes last
-                    var prefer = {"car": 1, "foot": 2, "bike": 3, "motorcycle": 10000};
-                    var showAllVehicles = urlParams.vehicle && (!prefer[urlParams.vehicle] || prefer[urlParams.vehicle] > 3);
-                    var vehicles = vehicleTools.getSortedVehicleKeys(json.features, prefer);
-                    if (vehicles.length > 0)
-                        ghRequest.initVehicle(vehicles[0]);
+                    // only show all profiles if the url already specifies an existing profile that is not amongst the 'firstVehicles'
+                    var urlProfile = profiles.find(function (p) { return urlParams.profile && p.profile_name === urlParams.profile; });
+                    var showAllProfiles = urlProfile && firstVehicles.indexOf(urlProfile.vehicle)>=0;
+                    if (profiles.length > 0)
+                        ghRequest.setProfile(profiles[0].profile_name);
 
+                    var numVehiclesWhenCollapsed = 3;
                     var hiddenVehicles = [];
-                    for (var i in vehicles) {
-                        var btn = createButton(vehicles[i].toLowerCase(), !showAllVehicles && i > 2);
-                        vehiclesDiv.append(btn);
-
-                        if (i > 2)
+                    for (var i = 0; i < profiles.length; ++i) {
+                        var btn = createButton(profiles[i], !showAllProfiles && i >= numVehiclesWhenCollapsed);
+                        profilesDiv.append(btn);
+                        if (i >= numVehiclesWhenCollapsed)
                             hiddenVehicles.push(btn);
                     }
 
-                    if (!showAllVehicles && vehicles.length > 3) {
+                    if (!showAllProfiles && profiles.length > numVehiclesWhenCollapsed) {
                         var moreBtn = $("<a id='more-vehicle-btn'> ...</a>").click(function () {
                             moreBtn.hide();
                             for (var i in hiddenVehicles) {
                                 hiddenVehicles[i].show();
                             }
                         });
-                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://docs.graphhopper.com/#section/Map-Data-and-Routing-Profiles/OpenStreetMap'>?</a>"));
-                        vehiclesDiv.append(moreBtn);
+                        profilesDiv.append($("<a class='vehicle-info-link' href='https://docs.graphhopper.com/#section/Map-Data-and-Routing-Profiles/OpenStreetMap'>?</a>"));
+                        profilesDiv.append(moreBtn);
                     }
                 }
+                $("button#" + profiles[0].profile_name).addClass("selectprofile");
+
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
                 // a very simplistic helper system that shows the possible entries and encoded values
                 if(json.encoded_values) {
@@ -255,7 +269,7 @@ $(document).ready(function (e) {
                         endIndex = endIndex < 0 ? cleanedText.length : endIndex;
                         var wordUnderCursor = cleanedText.substring(startIndex, endIndex);
                         if(this.selectionStart == 0 || this.value.substr(this.selectionStart - 1, 1) === "\n") {
-                           document.getElementById("ev_value").innerHTML = "<b>root:</b> profile, speed_factor, priority, max_speed, max_speed_fallback, distance_influence, areas";
+                           document.getElementById("ev_value").innerHTML = "<b>root:</b> speed_factor, priority, max_speed, max_speed_fallback, distance_influence, areas";
                         } else if(wordUnderCursor === "priority" || wordUnderCursor === "speed_factor" || wordUnderCursor === "max_speed") {
                            document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + Object.keys(json.encoded_values).join(", ");
                         } else if(json.encoded_values[wordUnderCursor]) {
@@ -272,7 +286,7 @@ $(document).ready(function (e) {
                 checkInput();
             }, function (err) {
                 console.log(err);
-                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
+                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps/">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
 
                 bounds = {
                     "minLon": -180,
@@ -335,6 +349,19 @@ $(document).ready(function (e) {
     checkInput();
 });
 
+function profileDisplayName(profileName) {
+   // custom profile names like 'my_car' cannot be translated and will be returned like 'web.my_car', so we remove
+   // the 'web.' prefix in this case
+   return translate.tr(profileName).replace("web.", "");
+}
+
+/**
+ * Takes an array and returns another array with the same elements but sorted such that all elements matching the given
+ * condition come first.
+ */
+function moveToFront(arr, condition) {
+    return arr.filter(condition).concat(arr.filter(function (e) { return !condition(e); }))
+}
 
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
@@ -676,7 +703,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
        if(json.paths.length > 0 && json.paths[0].points_order) {
            mapLayer.clearLayers();
            var po = json.paths[0].points_order;
-           for (i = 0; i < po.length; i++) {
+           for (var i = 0; i < po.length; i++) {
                setFlag(ghRequest.route.getIndex(po[i]), i);
            }
        }
@@ -761,7 +788,7 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
                // detailKey, would be for example average_speed
                for (var detailKey in detailObj) {
                    var pathDetailsArr = detailObj[detailKey];
-                   for (i = 0; i < pathDetailsArr.length; i++) {
+                   for (var i = 0; i < pathDetailsArr.length; i++) {
                        var pathDetailObj = pathDetailsArr[i];
                        var firstIndex = pathDetailObj[0];
                        var value = pathDetailObj[2];
@@ -800,11 +827,10 @@ function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
 }
 
 function routeLatLng(request, doQuery) {
-    var i;
-
     // do_zoom should not show up in the URL but in the request object to avoid zooming for history change
     var doZoom = request.do_zoom;
     request.do_zoom = true;
+    request.removeProfileParameterIfLegacyRequest();
 
     var urlForHistory = request.createHistoryURL() + "&layer=" + tileLayers.activeLayerName;
 
@@ -832,8 +858,11 @@ function routeLatLng(request, doQuery) {
 
     mapLayer.setDisabledForMapsContextMenu('intermediate', false);
 
-    $("#vehicles button").removeClass("selectvehicle");
-    $("button#" + request.getVehicle().toLowerCase()).addClass("selectvehicle");
+    $("#profiles button").removeClass("selectprofile");
+    var buttonToSelectId = request.getProfile();
+    // for legacy requests this might be undefined then we just do not select anything
+    if (buttonToSelectId)
+    $("button#" + buttonToSelectId.toLowerCase()).addClass("selectprofile");
 
     var urlForAPI = request.createURL();
     routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
