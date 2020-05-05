@@ -160,10 +160,6 @@ GHRequest.prototype.removeProfileParameterIfLegacyRequest = function() {
         ) {
             delete this.api_params.profile;
         }
-     // todonow: pasting a legacy url already works the only thing that is ugly is that when we do a normal request
-     // (including profile) then add something like vehicle=car the the profile parameter appears still in the url field
-     // (even though it will not be sent to the server). when we drag a marker afterwards it finally disappears, how can
-     // we do this already here?
 }
 
 GHRequest.prototype.removeLegacyParameters = function() {
@@ -260,7 +256,6 @@ GHRequest.prototype.doRequest = function (url, callback) {
         timeout: 30000,
         url: url,
         beforeSend: function(request) {
-            // todonow: maybe rename
             request.setRequestHeader("gh-client", "web-ui")
             request.setRequestHeader("gh-client-version", "1.0")
         },
