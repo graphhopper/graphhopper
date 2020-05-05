@@ -34,7 +34,7 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
 /**
  * Before the `profile` parameter was introduced in #1958 the cost-function used for route calculations could be
- * specified by setting the vehicle and weighting parameters as well as the turn_costs/edge_based flag. This class does
+ * specified by setting the vehicle and weighting parameters as well as the turn_costs/edge_based flags. This class does
  * the conversion between these legacy parameters and the corresponding profile. To resolve a profile we consider both
  * the request parameters as well as the available LM/CH preparations.
  * Note that this class is meant to be only used for the top-most web layer, while the GH engine should only deal with
@@ -81,7 +81,9 @@ public class ProfileResolver {
         String vehicle = hints.getString("vehicle", "").toLowerCase();
         if (!vehicle.isEmpty() && !encodingManager.hasEncoder(vehicle))
             throw new IllegalArgumentException("Vehicle not supported: `" + vehicle + "`. Supported are: `" + encodingManager.toString() +
-                    "`\nYou should consider using the profile parameter instead of specifying a vehicle, see #1958");
+                    "`\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
+                    "\nAvailable profiles: " + getProfileNames() +
+                    "\nTo learn more about profiles, see: docs/core/profiles.md");
 
         // we select the profile based on the given request hints and the available profiles
         if (!chProfiles.isEmpty() && !disableCH) {
@@ -110,7 +112,9 @@ public class ProfileResolver {
         if (matchingProfiles.isEmpty()) {
             throw new IllegalArgumentException("Cannot find matching profile that supports CH for your request. Please check your parameters." +
                     "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
-                    "\nrequested:  " + getCHRequestAsString(hintsMap, edgeBased, uTurnCosts) + "\navailable: " + chProfilesAsString(chProfiles));
+                    "\nrequested:  " + getCHRequestAsString(hintsMap, edgeBased, uTurnCosts) + "\navailable: " + chProfilesAsString(chProfiles) +
+                    "\nYou should consider using the `profile` parameter. The available profiles are: " + getProfileNames() +
+                    "\nTo learn more about profiles, see: docs/core/profiles.md");
         } else if (matchingProfiles.size() == 1) {
             return matchingProfiles.get(0);
         } else {
@@ -125,10 +129,11 @@ public class ProfileResolver {
                 return match1.isTurnCosts() ? match1 : match2;
             }
             throw new IllegalArgumentException("There are multiple CH profiles matching your request. Use the `weighting`," +
-                    "`vehicle`,`turn_costs` and/or `u_turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
+                    "`vehicle`,`turn_costs` and/or `u_turn_costs` parameters to be more specific." +
                     "\nYou can also try disabling CH altogether using " + Parameters.CH.DISABLE + "=true" +
-                    "\nrequested:  " + getCHRequestAsString(hintsMap, edgeBased, uTurnCosts) + "\nmatched:   " + chProfilesAsString(matchingProfiles) + "\navailable: " + chProfilesAsString(chProfiles));
-
+                    "\nrequested:  " + getCHRequestAsString(hintsMap, edgeBased, uTurnCosts) + "\nmatched:   " + chProfilesAsString(matchingProfiles) + "\navailable: " + chProfilesAsString(chProfiles) +
+                    "\nYou should consider using the `profile` parameter. The available profiles are: " + getProfileNames() +
+                    "\nTo learn more about profiles, see: docs/core/profiles.md");
         }
     }
 
@@ -156,7 +161,9 @@ public class ProfileResolver {
         if (matchingProfiles.isEmpty()) {
             throw new IllegalArgumentException("Cannot find matching LM profile for your request. Please check your parameters." +
                     "\nYou can try disabling LM by setting " + Parameters.Landmark.DISABLE + "=true" +
-                    "\nrequested:  " + getRequestAsString(hintsMap) + "\navailable: " + profilesAsString(lmProfiles));
+                    "\nrequested:  " + getRequestAsString(hintsMap) + "\navailable: " + profilesAsString(lmProfiles) +
+                    "\nYou should consider using the `profile` parameter. The available profiles are: " + getProfileNames() +
+                    "\nTo learn more about profiles, see: docs/core/profiles.md");
         } else if (matchingProfiles.size() == 1) {
             return matchingProfiles.get(0);
         } else {
@@ -172,9 +179,11 @@ public class ProfileResolver {
                 return match1.isTurnCosts() ? match1 : match2;
             }
             throw new IllegalArgumentException("There are multiple LM profiles matching your request. Use the `weighting`," +
-                    " `vehicle` and `turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
+                    " `vehicle` and `turn_costs` parameters to be more specific." +
                     "\nYou can also try disabling LM altogether using " + Parameters.Landmark.DISABLE + "=true" +
-                    "\nrequested:  " + getRequestAsString(hintsMap) + "\nmatched:   " + profilesAsString(matchingProfiles) + "\navailable: " + profilesAsString(lmProfiles));
+                    "\nrequested:  " + getRequestAsString(hintsMap) + "\nmatched:   " + profilesAsString(matchingProfiles) + "\navailable: " + profilesAsString(lmProfiles) +
+                    "\nYou should consider using the `profile` parameter. The available profiles are: " + getProfileNames() +
+                    "\nTo learn more about profiles, see: docs/core/profiles.md");
         }
     }
 
@@ -191,7 +200,9 @@ public class ProfileResolver {
         }
         if (matchingProfiles.isEmpty()) {
             throw new IllegalArgumentException("Cannot find matching profile for your request. Please check your parameters." +
-                    "\nrequested: " + getRequestAsString(hints) + "\navailable: " + profilesAsString(profiles));
+                    "\nrequested: " + getRequestAsString(hints) + "\navailable: " + profilesAsString(profiles) +
+                    "\nYou should consider using the `profile` parameter. The available profiles are: " + getProfileNames() +
+                    "\nTo learn more about profiles, see: docs/core/profiles.md");
         } else if (matchingProfiles.size() == 1) {
             return matchingProfiles.get(0);
         } else {
@@ -207,8 +218,10 @@ public class ProfileResolver {
                 return match1.isTurnCosts() ? match1 : match2;
             }
             throw new IllegalArgumentException("There are multiple profiles matching your request. Use the `weighting`," +
-                    " `vehicle and `turn_costs` parameters to be more specific or better use the `profile` parameter to explicitly choose a profile." +
-                    "\nrequested:  " + getRequestAsString(hints) + "\nmatched:   " + profilesAsString(matchingProfiles) + "\navailable: " + profilesAsString(profiles));
+                    " `vehicle and `turn_costs` parameters to be more specific." +
+                    "\nrequested:  " + getRequestAsString(hints) + "\nmatched:   " + profilesAsString(matchingProfiles) + "\navailable: " + profilesAsString(profiles) +
+                    "\nYou should consider using the `profile` parameter. The available profiles are: " + getProfileNames() +
+                    "\nTo learn more about profiles, see: docs/core/profiles.md");
         }
     }
 
@@ -252,6 +265,14 @@ public class ProfileResolver {
             String str = p.getWeighting() + "|" + p.getVehicle() + "|turn_costs=" + p.isTurnCosts();
             str += (p.isTurnCosts() ? "|u_turn_costs=" + p.getHints().getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : "");
             result.add(str);
+        }
+        return result;
+    }
+
+    private List<String> getProfileNames() {
+        List<String> result = new ArrayList<>(profiles.size());
+        for (ProfileConfig p : profiles) {
+            result.add(p.getName());
         }
         return result;
     }

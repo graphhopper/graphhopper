@@ -474,7 +474,9 @@ public class RouteResourceTest {
         ex = rsp.getErrors().get(0);
         assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.");
-        assertTrue(ex.getMessage().contains("Vehicle not supported: `space-shuttle`. Supported are: `car`\nYou should consider using the profile parameter instead of specifying a vehicle, see #1958"), ex.getMessage());
+        assertTrue(ex.getMessage().contains("Vehicle not supported: `space-shuttle`. Supported are: `car`" +
+                "\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
+                "\nAvailable profiles: [my_car]"), ex.getMessage());
 
         // an IllegalArgumentException from inside the core is written as JSON, unknown profile
         response = clientTarget(app, "/route?profile=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
