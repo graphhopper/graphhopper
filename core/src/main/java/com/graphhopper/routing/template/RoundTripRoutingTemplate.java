@@ -24,7 +24,7 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.tour.MultiPointTour;

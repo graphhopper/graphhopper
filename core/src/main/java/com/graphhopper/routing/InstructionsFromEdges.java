@@ -17,8 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.BikeCommonFlagEncoder;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;

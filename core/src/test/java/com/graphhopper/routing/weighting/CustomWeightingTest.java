@@ -18,7 +18,7 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.graphhopper.routing.profiles.RoadClass.*;
+import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -1,7 +1,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;

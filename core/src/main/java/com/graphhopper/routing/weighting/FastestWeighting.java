@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.util.EdgeIteratorState;
