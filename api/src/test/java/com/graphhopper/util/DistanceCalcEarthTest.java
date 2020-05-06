@@ -143,6 +143,46 @@ public class DistanceCalcEarthTest {
     }
 
     @Test
+    public void testEdgeDistanceStartEndSame() {
+        DistanceCalc calc = new DistancePlaneProjection();
+        // just change elevation
+        double dist = calc.calcNormalizedEdgeDistance3D(0, 0, 10,
+                0, 0, 0,
+                0, 0, 0);
+        assertEquals(10, calc.calcDenormalizedDist(dist), 1e-4);
+        // just change lat
+        dist = calc.calcNormalizedEdgeDistance3D(1, 0, 0,
+                0, 0, 0,
+                0, 0, 0);
+        assertEquals(DistanceCalcEarth.METERS_PER_DEGREE, calc.calcDenormalizedDist(dist), 1e-4);
+        // just change lon
+        dist = calc.calcNormalizedEdgeDistance3D(0, 1, 0,
+                0, 0, 0,
+                0, 0, 0);
+        assertEquals(DistanceCalcEarth.METERS_PER_DEGREE, calc.calcDenormalizedDist(dist), 1e-4);
+    }
+
+    @Test
+    public void testEdgeDistanceStartEndDifferentElevation() {
+        DistanceCalc calc = new DistancePlaneProjection();
+        // just change elevation
+        double dist = calc.calcNormalizedEdgeDistance3D(0, 0, 10,
+                0, 0, 0,
+                0, 0, 1);
+        assertEquals(9, calc.calcDenormalizedDist(dist), 1e-4);
+        // just change lat
+        dist = calc.calcNormalizedEdgeDistance3D(1, 0, 0,
+                0, 0, 0,
+                0, 0, 1);
+        assertEquals(DistanceCalcEarth.METERS_PER_DEGREE, calc.calcDenormalizedDist(dist), 1e-4);
+        // just change lon
+        dist = calc.calcNormalizedEdgeDistance3D(0, 1, 0,
+                0, 0, 0,
+                0, 0, 1);
+        assertEquals(DistanceCalcEarth.METERS_PER_DEGREE, calc.calcDenormalizedDist(dist), 1e-4);
+    }
+
+    @Test
     public void testValidEdgeDistance() {
         assertTrue(dc.validEdgeDistance(49.94241, 11.544356, 49.937964, 11.541824, 49.942272, 11.555643));
         assertTrue(dc.validEdgeDistance(49.936624, 11.547636, 49.937964, 11.541824, 49.942272, 11.555643));

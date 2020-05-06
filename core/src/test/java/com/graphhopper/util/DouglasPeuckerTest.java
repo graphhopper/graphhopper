@@ -182,4 +182,24 @@ public class DouglasPeuckerTest {
         new DouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
         assertEquals("(0.0,0.0,0.0), (0.0,1.0,14.0), (1.0,1.0,20.0)", pointList.toString());
     }
+
+    @Test
+    public void test3dSimplifyStartEndSame() {
+        PointList pointList = new PointList(3, true);
+        pointList.add(0, 0, 0);
+        pointList.add(0.03, 0, 30);
+        pointList.add(0, 0, 0);
+        new DouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
+        assertEquals("(0.0,0.0,0.0), (0.03,0.0,30.0), (0.0,0.0,0.0)", pointList.toString());
+    }
+
+    @Test
+    public void test2dSimplifyStartEndSame() {
+        PointList pointList = new PointList(3, false);
+        pointList.add(0, 0);
+        pointList.add(0.03, 0);
+        pointList.add(0, 0);
+        new DouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
+        assertEquals("(0.0,0.0), (0.03,0.0), (0.0,0.0)", pointList.toString());
+    }
 }

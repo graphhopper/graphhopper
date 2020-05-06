@@ -149,6 +149,8 @@ public class DistanceCalcEarth implements DistanceCalc {
 
         double norm = delta_lon * delta_lon + delta_lat * delta_lat + delta_ele * delta_ele;
         double factor = ((r_lon - a_lon) * delta_lon + (r_lat - a_lat) * delta_lat + (r_ele - a_ele) * delta_ele) / norm;
+        if (factor < 0 || Double.isNaN(factor)) factor = 0;
+        if (factor > 1) factor = 1;
 
         // x,y,z is projection of r onto segment a-b
         double c_lon = a_lon + factor * delta_lon;
