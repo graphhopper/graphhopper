@@ -5,14 +5,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Locale;
@@ -43,7 +46,7 @@ public class NavigateResponseConverterTest {
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFolder).
                 setEncodingManager(EncodingManager.create(vehicle)).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting("fastest").setTurnCosts(false)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting("fastest").setTurnCosts(false)).
                 importOrLoad();
     }
 
