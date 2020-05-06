@@ -1000,7 +1000,7 @@ public class GraphHopperIT {
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
                 setElevationWayPointMaxDistance(1).
-                setProfiles(new ProfileConfig("profile").setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting(weighting)).
                 setLongEdgeSamplingDistance(30);
 
         ElevationProvider elevationProvider = new SRTMProvider(DIR);
