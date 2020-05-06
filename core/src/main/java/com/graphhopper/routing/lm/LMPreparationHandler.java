@@ -18,6 +18,7 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.CHPreparationHandler;

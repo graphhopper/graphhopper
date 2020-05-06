@@ -18,6 +18,7 @@
 
 package com.graphhopper.config;
 
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 /**
@@ -111,5 +112,9 @@ public class Profile {
     @Override
     public int hashCode() {
         return name.hashCode();
+    }
+
+    public int getVersion() {
+        return Helper.staticHashCode(toString());
     }
 }
