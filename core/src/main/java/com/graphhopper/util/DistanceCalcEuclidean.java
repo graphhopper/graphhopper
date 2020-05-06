@@ -118,15 +118,17 @@ public class DistanceCalcEuclidean extends DistanceCalcEarth {
 
         double norm = dx * dx + dy * dy + dz * dz;
         double factor = ((rx - ax) * dx + (ry - ay) * dy + (rz - az) * dz) / norm;
+        if (factor < 0 || Double.isNaN(factor)) factor = 0;
+        if (factor > 1) factor = 1;
 
         // x,y,z is projection of r onto segment a-b
         double cx = ax + factor * dx;
         double cy = ay + factor * dy;
         double cz = az + factor * dz;
 
-        double rdx = cx - ax;
-        double rdy = cy - ay;
-        double rdz = cz - az;
+        double rdx = cx - rx;
+        double rdy = cy - ry;
+        double rdz = cz - rz;
 
         return rdx * rdx + rdy * rdy + rdz * rdz;
     }
