@@ -21,8 +21,8 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -70,8 +70,8 @@ public class MapMatchingTest {
         graphHopper.setDataReaderFile("../map-data/leipzig_germany.osm.pbf");
         graphHopper.setGraphHopperLocation(GH_LOCATION);
         graphHopper.setEncodingManager(EncodingManager.create(encoder));
-        graphHopper.setProfiles(new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest"));
-        graphHopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("my_profile"));
+        graphHopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
+        graphHopper.getCHPreparationHandler().setCHProfiles(new CHProfile("my_profile"));
         graphHopper.getCHPreparationHandler().setDisablingAllowed(true);
         graphHopper.importOrLoad();
     }

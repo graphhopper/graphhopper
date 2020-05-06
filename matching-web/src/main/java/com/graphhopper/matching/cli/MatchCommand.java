@@ -4,13 +4,13 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
+import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
@@ -78,7 +78,7 @@ public class MatchCommand extends Command {
         // Penalizing inner-link U-turns only works with fastest weighting, since
         // shortest weighting does not apply penalties to unfavored virtual edges.
         String weightingStr = "fastest";
-        ProfileConfig profile = new ProfileConfig(vehicle + "_profile").setVehicle(vehicle).setWeighting(weightingStr).setTurnCosts(false);
+        Profile profile = new Profile(vehicle + "_profile").setVehicle(vehicle).setWeighting(weightingStr).setTurnCosts(false);
         graphHopperConfiguration.setProfiles(Collections.singletonList(profile));
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
         System.out.println("loading graph from cache");

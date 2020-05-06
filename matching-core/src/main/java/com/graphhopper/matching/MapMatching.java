@@ -20,7 +20,7 @@ package com.graphhopper.matching;
 import com.bmw.hmm.SequenceState;
 import com.bmw.hmm.ViterbiAlgorithm;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.matching.util.HmmProbabilities;
 import com.graphhopper.matching.util.TimeStep;
 import com.graphhopper.routing.*;
@@ -31,7 +31,7 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -93,11 +93,11 @@ public class MapMatching {
             throw new IllegalArgumentException("You need to specify a profile to perform map matching");
         }
         String profileStr = hints.getString("profile", "");
-        ProfileConfig profile = graphHopper.getProfile(profileStr);
+        Profile profile = graphHopper.getProfile(profileStr);
         if (profile == null) {
-            List<ProfileConfig> profiles = graphHopper.getProfiles();
+            List<Profile> profiles = graphHopper.getProfiles();
             List<String> profileNames = new ArrayList<>(profiles.size());
-            for (ProfileConfig p : profiles) {
+            for (Profile p : profiles) {
                 profileNames.add(p.getName());
             }
             throw new IllegalArgumentException("Could not find profile '" + profileStr + "', choose one of: " + profileNames);
@@ -119,7 +119,7 @@ public class MapMatching {
         RoutingAlgorithmFactory routingAlgorithmFactory = graphHopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
         if (routingAlgorithmFactory instanceof CHRoutingAlgorithmFactory) {
             ch = true;
-            routingGraph = graphHopper.getGraphHopperStorage().getCHGraph(((CHRoutingAlgorithmFactory) routingAlgorithmFactory).getCHProfile());
+            routingGraph = graphHopper.getGraphHopperStorage().getCHGraph(((CHRoutingAlgorithmFactory) routingAlgorithmFactory).getCHConfig());
         } else {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();

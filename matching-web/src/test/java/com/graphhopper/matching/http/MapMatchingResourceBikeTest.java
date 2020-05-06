@@ -18,7 +18,7 @@
 package com.graphhopper.matching.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -46,7 +46,7 @@ public class MapMatchingResourceBikeTest {
                 putObject("graph.flag_encoders", "bike").
                 putObject("datareader.file", "../map-data/leipzig_germany.osm.pbf").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new ProfileConfig("fast_bike").setVehicle("bike").setWeighting("fastest")));
+                setProfiles(Collections.singletonList(new Profile("fast_bike").setVehicle("bike").setWeighting("fastest")));
         return config;
     }
 

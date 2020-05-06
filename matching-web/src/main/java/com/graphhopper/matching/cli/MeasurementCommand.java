@@ -21,7 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
@@ -84,7 +84,7 @@ public class MeasurementCommand extends Command {
     public void run(Bootstrap bootstrap, Namespace args) {
         // read and initialize arguments:
         GraphHopperConfig graphHopperConfiguration = new GraphHopperConfig();
-        graphHopperConfiguration.setProfiles(Collections.singletonList(new ProfileConfig("fast_car").setVehicle("car").setWeighting("fastest")));
+        graphHopperConfiguration.setProfiles(Collections.singletonList(new Profile("fast_car").setVehicle("car").setWeighting("fastest")));
         graphHopperConfiguration.putObject("graph.location", "graph-cache");
         seed = args.getLong("seed");
         count = args.getInt("count");

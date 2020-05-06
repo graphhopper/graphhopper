@@ -2,7 +2,7 @@ package com.graphhopper.matching.cli;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import io.dropwizard.cli.Command;
 import io.dropwizard.setup.Bootstrap;
@@ -38,10 +38,10 @@ public class ImportCommand extends Command {
         graphHopperConfiguration.putObject("graph.location", "graph-cache");
         // always using fastest weighting, see comment in MatchCommand
         String weightingStr = "fastest";
-        List<ProfileConfig> profiles = new ArrayList<>();
+        List<Profile> profiles = new ArrayList<>();
         for (String v : vehicle.split(",")) {
             v = v.trim();
-            profiles.add(new ProfileConfig(v + "_profile").setVehicle(v).setWeighting(weightingStr));
+            profiles.add(new Profile(v + "_profile").setVehicle(v).setWeighting(weightingStr));
         }
         graphHopperConfiguration.setProfiles(profiles);
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
