@@ -41,13 +41,14 @@ public class EdgeSampling {
         PointList output = new PointList(input.getSize() * 2, input.is3D());
         if (input.isEmpty()) return output;
         int nodes = input.getSize();
-        double lastLat = input.getLat(0), lastLon = input.getLon(0), thisLat, thisLon, thisEle;
+        double lastLat = input.getLat(0), lastLon = input.getLon(0), lastEle = input.getEle(0),
+                thisLat, thisLon, thisEle;
         for (int i = 0; i < nodes; i++) {
             thisLat = input.getLat(i);
             thisLon = input.getLon(i);
             thisEle = input.getEle(i);
             if (i > 0 && !distCalc.isCrossBoundary(lastLon, thisLon)) {
-                double segmentLength = distCalc.calcDist(lastLat, lastLon, thisLat, thisLon);
+                double segmentLength = distCalc.calcDist3D(lastLat, lastLon, lastEle, thisLat, thisLon, thisEle);
                 if (segmentLength > WARN_ON_SEGMENT_LENGTH) {
                     logger.warn("Edge from " + lastLat + "," + lastLon + " to " + thisLat + "," + thisLon + " is " +
                             (int)segmentLength + "m long, might cause issues with edge sampling.");
@@ -66,6 +67,7 @@ public class EdgeSampling {
             output.add(thisLat, thisLon, thisEle);
             lastLat = thisLat;
             lastLon = thisLon;
+            lastEle = thisEle;
         }
         return output;
     }
