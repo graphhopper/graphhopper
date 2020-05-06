@@ -47,7 +47,7 @@ public interface CHGraph extends Graph {
     /**
      * Returns the profile of this CH graph. This is used to identify the CH graph.
      */
-    CHProfile getCHProfile();
+    CHConfig getCHConfig();
 
     boolean isShortcut(int edgeId);
 

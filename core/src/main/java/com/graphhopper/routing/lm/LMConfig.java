@@ -16,54 +16,47 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.config;
+package com.graphhopper.routing.lm;
+
+import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.Objects;
 
-import static com.graphhopper.config.ProfileConfig.validateProfileName;
+import static com.graphhopper.config.Profile.validateProfileName;
 
-/**
- * Corresponds to an entry in the `profiles_ch` section in config.yml and specifies a routing profile that shall be
- * prepared using Contraction Hierarchies (CH)
- *
- * @see ProfileConfig
- */
-public class CHProfileConfig {
-    private String profile = "";
+public class LMConfig {
+    private final String profileName;
+    private final Weighting weighting;
 
-    private CHProfileConfig() {
-        // default constructor needed for jackson
+    public LMConfig(String profileName, Weighting weighting) {
+        validateProfileName(profileName);
+        this.profileName = profileName;
+        this.weighting = weighting;
     }
 
-    public CHProfileConfig(String profile) {
-        setProfile(profile);
+    public String getName() {
+        return profileName;
     }
 
-    public String getProfile() {
-        return profile;
-    }
-
-    CHProfileConfig setProfile(String profile) {
-        validateProfileName(profile);
-        this.profile = profile;
-        return this;
+    public Weighting getWeighting() {
+        return weighting;
     }
 
     @Override
     public String toString() {
-        return profile;
+        return profileName;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CHProfileConfig that = (CHProfileConfig) o;
-        return Objects.equals(profile, that.profile);
+        LMConfig lmConfig = (LMConfig) o;
+        return Objects.equals(profileName, lmConfig.profileName);
     }
 
     @Override
     public int hashCode() {
-        return profile.hashCode();
+        return profileName.hashCode();
     }
 }

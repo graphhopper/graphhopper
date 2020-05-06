@@ -21,9 +21,9 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ch.CHPreparationHandler;
@@ -33,7 +33,7 @@ import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -85,10 +85,10 @@ public class GraphHopperOSMTest {
         String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setStoreOnFlush(true).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.importOrLoad();
         GHResponse rsp = hopper.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
                 setProfile(profile));
@@ -99,9 +99,9 @@ public class GraphHopperOSMTest {
 
         // no encoding manager necessary
         hopper = new GraphHopperOSM().
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         assertTrue(hopper.load(ghLoc));
         rsp = hopper.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
                 setProfile(profile));
@@ -131,7 +131,7 @@ public class GraphHopperOSMTest {
         final String vehicle = "car";
         final String weighting = "fastest";
         GraphHopper gh = createGraphHopper(vehicle).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
@@ -146,7 +146,7 @@ public class GraphHopperOSMTest {
 
         gh.close();
         gh = createGraphHopper(vehicle).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true);
         assertTrue(gh.load(ghLoc));
         rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4)
@@ -157,7 +157,7 @@ public class GraphHopperOSMTest {
         gh.close();
 
         gh = createGraphHopper(vehicle).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
 
@@ -232,10 +232,10 @@ public class GraphHopperOSMTest {
         final String weighting = "fastest";
         GraphHopper gh = createGraphHopper(vehicle).
                 setStoreOnFlush(true).
-                setProfiles(Collections.singletonList(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting))).
+                setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
-        gh.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile));
+        gh.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         gh.importOrLoad();
         GHResponse rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).setProfile(profile));
         assertFalse(rsp.hasErrors());
@@ -253,7 +253,7 @@ public class GraphHopperOSMTest {
         // when there is no CH preparation we get an error if we try to load GH with a CH profile
         gh = createGraphHopper(vehicle).
                 setStoreOnFlush(true).
-                setProfiles(Collections.singletonList(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting))).
+                setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         gh.importOrLoad();
@@ -263,9 +263,9 @@ public class GraphHopperOSMTest {
         gh.close();
 
         gh = createGraphHopper("car").
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true);
-        gh.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("profile"));
+        gh.getCHPreparationHandler().setCHProfiles(new CHProfile("profile"));
 
         try {
             gh.load(ghLoc);
@@ -317,7 +317,7 @@ public class GraphHopperOSMTest {
         }.setStoreOnFlush(true).
                 setEncodingManager(EncodingManager.create("car")).
                 setGraphHopperLocation(ghLoc).
-                setProfiles(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")).
+                setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).
                 setDataReaderFile(testOsm);
         final AtomicReference<Exception> ar = new AtomicReference<>();
         Thread thread = new Thread() {
@@ -364,10 +364,10 @@ public class GraphHopperOSMTest {
 
         instance = createGraphHopper(vehicle).
                 setStoreOnFlush(false).
-                setProfiles(Collections.singletonList(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting))).
+                setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
-        instance.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile));
+        instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         instance.importOrLoad();
         GHResponse rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
                 setProfile(profile).
@@ -383,7 +383,7 @@ public class GraphHopperOSMTest {
         final String vehicle = "car";
         final String weighting = "fastest";
         instance = createGraphHopper(vehicle).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(false).
                 setSortGraph(true).
                 setGraphHopperLocation(ghLoc).
@@ -421,8 +421,8 @@ public class GraphHopperOSMTest {
         // now all ways are imported
         instance = createGraphHopper(vehicle1 + "," + vehicle2).
                 setProfiles(
-                        new ProfileConfig(profile1).setVehicle(vehicle1).setWeighting(weighting),
-                        new ProfileConfig(profile2).setVehicle(vehicle2).setWeighting(weighting)
+                        new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting),
+                        new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting)
                 ).
                 setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc).
@@ -474,8 +474,8 @@ public class GraphHopperOSMTest {
                         putObject("graph.flag_encoders", "foot,car")).
                 setGraphHopperLocation(ghLoc).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
-                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest")
+                        new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                        new Profile("car").setVehicle("car").setWeighting("fastest")
                 ));
         instance.importOrLoad();
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
@@ -490,7 +490,7 @@ public class GraphHopperOSMTest {
                             putObject("graph.flag_encoders", "foot")).
                     setDataReaderFile(testOsm3).
                     setProfiles(Collections.singletonList(
-                            new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")
+                            new Profile("foot").setVehicle("foot").setWeighting("fastest")
                     ));
             tmpGH.load(ghLoc);
             fail();
@@ -506,8 +506,8 @@ public class GraphHopperOSMTest {
                     putObject("graph.flag_encoders", "car,foot")).
                     setDataReaderFile(testOsm3).
                     setProfiles(Arrays.asList(
-                            new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
-                            new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")
+                            new Profile("car").setVehicle("car").setWeighting("fastest"),
+                            new Profile("foot").setVehicle("foot").setWeighting("fastest")
                     ));
             tmpGH.load(ghLoc);
             fail();
@@ -524,8 +524,8 @@ public class GraphHopperOSMTest {
                         putObject("graph.flag_encoders", "foot,car")).
                 setDataReaderFile(testOsm3).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
-                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest")
+                        new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                        new Profile("car").setVehicle("car").setWeighting("fastest")
                 ));
         try {
             instance.load(ghLoc);
@@ -545,7 +545,7 @@ public class GraphHopperOSMTest {
                 putObject("datareader.dataaccess", "RAM")).
                 setDataReaderFile(testOsm3).
                 setProfiles(Collections.singletonList(
-                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest")
+                        new Profile("car").setVehicle("car").setWeighting("fastest")
                 ));
         try {
             instance.load(ghLoc);
@@ -563,8 +563,8 @@ public class GraphHopperOSMTest {
                         putObject("datareader.dataaccess", "RAM").
                         putObject("graph.flag_encoders", "foot,car")).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
-                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest")
+                        new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                        new Profile("car").setVehicle("car").setWeighting("fastest")
                 )).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
@@ -582,8 +582,8 @@ public class GraphHopperOSMTest {
                         putObject("graph.encoded_values", "road_environment,road_class").
                         putObject("graph.flag_encoders", "foot,car")).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
-                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest")
+                        new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                        new Profile("car").setVehicle("car").setWeighting("fastest")
                 )).
                 setDataReaderFile(testOsm3);
         try {
@@ -600,7 +600,7 @@ public class GraphHopperOSMTest {
         String vehicle = "car";
         String weighting = "fastest";
         instance = createGraphHopper(vehicle).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true);
         try {
             // loading from empty directory
@@ -693,10 +693,10 @@ public class GraphHopperOSMTest {
         final String weighting = "fastest";
         instance = createGraphHopper(vehicle).
                 setStoreOnFlush(false).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm3);
-        instance.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile));
+        instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         instance.importOrLoad();
 
         assertEquals(2, instance.getGraphHopperStorage().getNodes());
@@ -720,8 +720,8 @@ public class GraphHopperOSMTest {
                         putObject("datareader.file", testOsm3).
                         putObject("prepare.min_network_size", 1).
                         putObject("graph.flag_encoders", vehicle)
-                        .setProfiles(Collections.singletonList(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)))
-                        .setCHProfiles(Collections.singletonList(new CHProfileConfig(profile)))
+                        .setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)))
+                        .setCHProfiles(Collections.singletonList(new CHProfile(profile)))
                 ).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
@@ -885,7 +885,7 @@ public class GraphHopperOSMTest {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(carEncoder);
         Weighting weighting = new FastestWeighting(carEncoder);
-        GraphHopperStorage g = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased("p", weighting)).setBytes(20).create();
+        GraphHopperStorage g = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p", weighting)).setBytes(20).create();
 
         //   2---3---4
         //  /    |    \
@@ -919,7 +919,7 @@ public class GraphHopperOSMTest {
 
         GraphHopper tmp = new GraphHopperOSM().
                 setEncodingManager(encodingManager).
-                setProfiles(new ProfileConfig("profile").setVehicle("car").setWeighting("fastest"));
+                setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest"));
         tmp.setGraphHopperStorage(g);
         tmp.postProcessing();
 
@@ -942,21 +942,21 @@ public class GraphHopperOSMTest {
                     setStoreOnFlush(false).
                     setEncodingManager(em).
                     setProfiles(
-                            new ProfileConfig("car_profile").setVehicle("car").setWeighting("fastest"),
-                            new ProfileConfig("moto_profile").setVehicle("motorcycle").setWeighting("fastest"),
-                            new ProfileConfig("mtb_profile").setVehicle("mtb").setWeighting("fastest"),
-                            new ProfileConfig("bike_profile").setVehicle("racingbike").setWeighting("fastest"),
-                            new ProfileConfig("foot_profile").setVehicle("foot").setWeighting("fastest")
+                            new Profile("car_profile").setVehicle("car").setWeighting("fastest"),
+                            new Profile("moto_profile").setVehicle("motorcycle").setWeighting("fastest"),
+                            new Profile("mtb_profile").setVehicle("mtb").setWeighting("fastest"),
+                            new Profile("bike_profile").setVehicle("racingbike").setWeighting("fastest"),
+                            new Profile("foot_profile").setVehicle("foot").setWeighting("fastest")
                     ).
                     setGraphHopperLocation(ghLoc).
                     setDataReaderFile(testOsm);
             hopper.getCHPreparationHandler()
-                    .setCHProfileConfigs(
-                            new CHProfileConfig("car_profile"),
-                            new CHProfileConfig("moto_profile"),
-                            new CHProfileConfig("mtb_profile"),
-                            new CHProfileConfig("bike_profile"),
-                            new CHProfileConfig("foot_profile")
+                    .setCHProfiles(
+                            new CHProfile("car_profile"),
+                            new CHProfile("moto_profile"),
+                            new CHProfile("mtb_profile"),
+                            new CHProfile("bike_profile"),
+                            new CHProfile("foot_profile")
                     )
                     .setPreparationThreads(threadCount);
 
@@ -1001,21 +1001,21 @@ public class GraphHopperOSMTest {
                     setStoreOnFlush(false).
                     setEncodingManager(em).
                     setProfiles(Arrays.asList(
-                            new ProfileConfig("car_profile").setVehicle("car").setWeighting("fastest"),
-                            new ProfileConfig("moto_profile").setVehicle("motorcycle").setWeighting("fastest"),
-                            new ProfileConfig("mtb_profile").setVehicle("mtb").setWeighting("fastest"),
-                            new ProfileConfig("bike_profile").setVehicle("racingbike").setWeighting("fastest"),
-                            new ProfileConfig("foot_profile").setVehicle("foot").setWeighting("fastest")
+                            new Profile("car_profile").setVehicle("car").setWeighting("fastest"),
+                            new Profile("moto_profile").setVehicle("motorcycle").setWeighting("fastest"),
+                            new Profile("mtb_profile").setVehicle("mtb").setWeighting("fastest"),
+                            new Profile("bike_profile").setVehicle("racingbike").setWeighting("fastest"),
+                            new Profile("foot_profile").setVehicle("foot").setWeighting("fastest")
                     )).
                     setGraphHopperLocation(ghLoc).
                     setDataReaderFile(testOsm);
             hopper.getLMPreparationHandler().
-                    setLMProfileConfigs(
-                            new LMProfileConfig("car_profile"),
-                            new LMProfileConfig("moto_profile"),
-                            new LMProfileConfig("mtb_profile"),
-                            new LMProfileConfig("bike_profile"),
-                            new LMProfileConfig("foot_profile")
+                    setLMProfiles(
+                            new LMProfile("car_profile"),
+                            new LMProfile("moto_profile"),
+                            new LMProfile("mtb_profile"),
+                            new LMProfile("bike_profile"),
+                            new LMProfile("foot_profile")
                     ).
                     setPreparationThreads(threadCount);
 
@@ -1025,7 +1025,7 @@ public class GraphHopperOSMTest {
             for (PrepareLandmarks prepLM : hopper.getLMPreparationHandler().getPreparations()) {
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", prepLM.isPrepared());
 
-                String name = prepLM.getLMProfile().getName();
+                String name = prepLM.getLMConfig().getName();
                 Integer singleThreadShortcutCount = landmarkCount.get(name);
                 if (singleThreadShortcutCount == null)
                     landmarkCount.put(name, prepLM.getSubnetworksWithLandmarks());
@@ -1064,22 +1064,22 @@ public class GraphHopperOSMTest {
         CHPreparationHandler chHandler = new CHPreparationHandler();
         Weighting fwSimpleTruck = new FastestWeighting(simpleTruck);
         Weighting fwTruck = new FastestWeighting(truck);
-        CHProfile simpleTruckProfile = CHProfile.nodeBased("simple_truck", fwSimpleTruck);
-        CHProfile truckProfile = CHProfile.nodeBased("truck", fwTruck);
-        GraphHopperStorage storage = new GraphBuilder(em).setCHProfiles(Arrays.asList(simpleTruckProfile, truckProfile)).build();
-        chHandler.addCHProfile(simpleTruckProfile);
-        chHandler.addCHProfile(truckProfile);
-        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckProfile));
-        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, truckProfile));
+        CHConfig simpleTruckConfig = CHConfig.nodeBased("simple_truck", fwSimpleTruck);
+        CHConfig truckConfig = CHConfig.nodeBased("truck", fwTruck);
+        GraphHopperStorage storage = new GraphBuilder(em).setCHConfigs(Arrays.asList(simpleTruckConfig, truckConfig)).build();
+        chHandler.addCHConfig(simpleTruckConfig);
+        chHandler.addCHConfig(truckConfig);
+        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckConfig));
+        chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, truckConfig));
 
         assertEquals("fastest|truck", ((CHRoutingAlgorithmFactory) chHandler.getAlgorithmFactory("truck")).getWeighting().toString());
         assertEquals("fastest|simple_truck", ((CHRoutingAlgorithmFactory) chHandler.getAlgorithmFactory("simple_truck")).getWeighting().toString());
 
         // make sure weighting cannot be mixed
-        chHandler.addCHProfile(truckProfile);
-        chHandler.addCHProfile(simpleTruckProfile);
+        chHandler.addCHConfig(truckConfig);
+        chHandler.addCHConfig(simpleTruckConfig);
         try {
-            chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckProfile));
+            chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckConfig));
             fail();
         } catch (Exception ex) {
         }
@@ -1090,15 +1090,15 @@ public class GraphHopperOSMTest {
         EncodingManager em = EncodingManager.create("car");
         GraphHopper hopper = new GraphHopperOSM().
                 setProfiles(
-                        new ProfileConfig("profile1").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("profile2").setVehicle("car").setWeighting("shortest")
+                        new Profile("profile1").setVehicle("car").setWeighting("fastest"),
+                        new Profile("profile2").setVehicle("car").setWeighting("shortest")
                 ).
                 setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm).
                 setEncodingManager(em);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(
-                new CHProfileConfig("profile1"), new CHProfileConfig("profile2")
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile("profile1"), new CHProfile("profile2")
         );
         hopper.importOrLoad();
         assertEquals(2, hopper.getCHPreparationHandler().getPreparations().size());
@@ -1109,9 +1109,9 @@ public class GraphHopperOSMTest {
 
     private GraphHopper createGraphHopper(String vehicles) {
         EncodingManager em = EncodingManager.create(vehicles);
-        List<ProfileConfig> profiles = new ArrayList<>();
+        List<Profile> profiles = new ArrayList<>();
         for (FlagEncoder enc : em.fetchEdgeEncoders()) {
-            profiles.add(new ProfileConfig(enc.toString()).setVehicle(enc.toString()).setWeighting("fastest"));
+            profiles.add(new Profile(enc.toString()).setVehicle(enc.toString()).setWeighting("fastest"));
         }
         return new GraphHopperOSM().
                 setEncodingManager(em).

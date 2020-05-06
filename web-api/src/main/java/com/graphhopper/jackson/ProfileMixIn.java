@@ -18,9 +18,17 @@
 
 package com.graphhopper.jackson;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.graphhopper.util.PMap;
 
-public interface LMProfileConfigMixIn {
-    @JsonProperty("maximum_lm_weight")
-    void setMaximumLMWeight(double maximumLMWeight);
+/**
+ * @see GHRequestMixIn
+ */
+public interface ProfileMixIn {
+    @JsonAnySetter
+    void putHint(String key, Object value);
+
+    @JsonIgnore
+    PMap getHints();
 }

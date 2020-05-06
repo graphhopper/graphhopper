@@ -1,0 +1,8 @@
+# this is a little customized model used to benchmark routing with a customized weighting that is similar to the
+# standard car profile
+priority:
+  road_access:
+    private: 0.1
+    destination: 0.1
+
+distance_influence: 0

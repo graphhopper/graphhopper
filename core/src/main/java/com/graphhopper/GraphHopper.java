@@ -17,9 +17,9 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -29,8 +29,8 @@ import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
-import com.graphhopper.routing.lm.LMProfile;
 import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
@@ -45,6 +45,8 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -81,7 +83,7 @@ import static com.graphhopper.util.Parameters.Routing.POINT_HINT;
  */
 public class GraphHopper implements GraphHopperAPI {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final Map<String, ProfileConfig> profilesByName = new LinkedHashMap<>();
+    private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
@@ -285,46 +287,46 @@ public class GraphHopper implements GraphHopperAPI {
      * {@code
      *   // make sure the encoding manager contains a "car" and a "bike" flag encoder
      *   hopper.setProfiles(
-     *     new ProfileConfig("my_car").setVehicle("car").setWeighting("shortest"),
-     *     new ProfileConfig("your_bike").setVehicle("bike").setWeighting("fastest")
+     *     new Profile("my_car").setVehicle("car").setWeighting("shortest"),
+     *     new Profile("your_bike").setVehicle("bike").setWeighting("fastest")
      *   );
-     *   hopper.getCHPreparationHandler().setCHProfileConfigs(
-     *     new CHProfileConfig("my_car"),
-     *     new CHProfileConfig("your_bike")
+     *   hopper.getCHPreparationHandler().setCHProfiles(
+     *     new CHProfile("my_car"),
+     *     new CHProfile("your_bike")
      *   );
-     *   hopper.getLMPreparationHandler().setLMProfileConfigs(
-     *     new LMProfileConfig("your_bike")
+     *   hopper.getLMPreparationHandler().setLMProfiles(
+     *     new LMProfile("your_bike")
      *   );
      * }
      * </pre>
      * <p>
      * See also https://github.com/graphhopper/graphhopper/pull/1922.
      *
-     * @see CHPreparationHandler#setCHProfileConfigs
-     * @see LMPreparationHandler#setLMProfileConfigs
+     * @see CHPreparationHandler#setCHProfiles
+     * @see LMPreparationHandler#setLMProfiles
      */
-    public GraphHopper setProfiles(ProfileConfig... profiles) {
+    public GraphHopper setProfiles(Profile... profiles) {
         return setProfiles(Arrays.asList(profiles));
     }
 
-    public GraphHopper setProfiles(List<ProfileConfig> profiles) {
+    public GraphHopper setProfiles(List<Profile> profiles) {
         profilesByName.clear();
-        for (ProfileConfig profile : profiles) {
-            ProfileConfig previous = this.profilesByName.put(profile.getName(), profile);
+        for (Profile profile : profiles) {
+            Profile previous = this.profilesByName.put(profile.getName(), profile);
             if (previous != null)
                 throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
         }
         return this;
     }
 
-    public List<ProfileConfig> getProfiles() {
+    public List<Profile> getProfiles() {
         return new ArrayList<>(profilesByName.values());
     }
 
     /**
      * Returns the profile for the given profile name, or null if it does not exist
      */
-    public ProfileConfig getProfile(String profileName) {
+    public Profile getProfile(String profileName) {
         return profilesByName.get(profileName);
     }
 
@@ -797,15 +799,15 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmPreparationHandler.isEnabled())
             initLMPreparationHandler();
 
-        List<CHProfile> chProfiles;
+        List<CHConfig> chConfigs;
         if (chPreparationHandler.isEnabled()) {
             initCHPreparationHandler();
-            chProfiles = chPreparationHandler.getCHProfiles();
+            chConfigs = chPreparationHandler.getCHConfigs();
         } else {
-            chProfiles = Collections.emptyList();
+            chConfigs = Collections.emptyList();
         }
 
-        ghStorage.addCHGraphs(chProfiles);
+        ghStorage.addCHGraphs(chConfigs);
 
         if (!new File(graphHopperFolder).exists())
             return false;
@@ -834,7 +836,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void checkProfilesConsistency() {
-        for (ProfileConfig profile : profilesByName.values()) {
+        for (Profile profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
             }
@@ -851,10 +853,20 @@ public class GraphHopper implements GraphHopperAPI {
                         "Profile: " + profile + "\n" +
                         "Error: " + e.getMessage());
             }
+
+            if (profile instanceof CustomProfile) {
+                CustomModel customModel = ((CustomProfile) profile).getCustomModel();
+                if (customModel == null)
+                    throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
+                if (!CustomWeighting.NAME.equals(profile.getWeighting()))
+                    throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
+                            "weighting=" + profile.getWeighting() + " was defined");
+            }
         }
-        Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
-        for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
-            boolean added = chProfileSet.add(chConfig.getProfile());
+
+        Set<String> chConfigSet = new LinkedHashSet<>(chPreparationHandler.getCHProfiles().size());
+        for (CHProfile chConfig : chPreparationHandler.getCHProfiles()) {
+            boolean added = chConfigSet.add(chConfig.getProfile());
             if (!added) {
                 throw new IllegalArgumentException("Duplicate CH reference to profile '" + chConfig.getProfile() + "'");
             }
@@ -862,20 +874,20 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("CH profile references unknown profile '" + chConfig.getProfile() + "'");
             }
         }
-        Map<String, LMProfileConfig> lmProfileMap = new LinkedHashMap<>(lmPreparationHandler.getLMProfileConfigs().size());
-        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
-            LMProfileConfig previous = lmProfileMap.put(lmConfig.getProfile(), lmConfig);
+        Map<String, LMProfile> lmProfileMap = new LinkedHashMap<>(lmPreparationHandler.getLMProfiles().size());
+        for (LMProfile lmProfile : lmPreparationHandler.getLMProfiles()) {
+            LMProfile previous = lmProfileMap.put(lmProfile.getProfile(), lmProfile);
             if (previous != null) {
-                throw new IllegalArgumentException("Multiple LM profiles are using the same profile '" + lmConfig.getProfile() + "'");
+                throw new IllegalArgumentException("Multiple LM profiles are using the same profile '" + lmProfile.getProfile() + "'");
             }
-            if (!profilesByName.containsKey(lmConfig.getProfile())) {
-                throw new IllegalArgumentException("LM profile references unknown profile '" + lmConfig.getProfile() + "'");
+            if (!profilesByName.containsKey(lmProfile.getProfile())) {
+                throw new IllegalArgumentException("LM profile references unknown profile '" + lmProfile.getProfile() + "'");
             }
-            if (lmConfig.usesOtherPreparation() && !profilesByName.containsKey(lmConfig.getPreparationProfile())) {
-                throw new IllegalArgumentException("LM profile references unknown preparation profile '" + lmConfig.getPreparationProfile() + "'");
+            if (lmProfile.usesOtherPreparation() && !profilesByName.containsKey(lmProfile.getPreparationProfile())) {
+                throw new IllegalArgumentException("LM profile references unknown preparation profile '" + lmProfile.getPreparationProfile() + "'");
             }
         }
-        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
+        for (LMProfile lmConfig : lmPreparationHandler.getLMProfiles()) {
             if (lmConfig.usesOtherPreparation() && !lmProfileMap.containsKey(lmConfig.getPreparationProfile())) {
                 throw new IllegalArgumentException("Unknown LM preparation profile '" + lmConfig.getPreparationProfile() + "' in LM profile '" + lmConfig.getProfile() + "' cannot be used as preparation_profile");
             }
@@ -897,7 +909,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (chPreparationHandler.isEnabled() && !disableCH) {
             return chPreparationHandler.getAlgorithmFactory(profile);
         } else if (lmPreparationHandler.isEnabled() && !disableLM) {
-            for (LMProfileConfig lmp : lmPreparationHandler.getLMProfileConfigs()) {
+            for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
                 if (lmp.getProfile().equals(profile)) {
                     return lmp.usesOtherPreparation()
                             // cross-querying
@@ -916,16 +928,16 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void initCHPreparationHandler() {
-        if (chPreparationHandler.hasCHProfiles()) {
+        if (chPreparationHandler.hasCHConfigs()) {
             return;
         }
 
-        for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
-            ProfileConfig profile = profilesByName.get(chConfig.getProfile());
+        for (CHProfile chConfig : chPreparationHandler.getCHProfiles()) {
+            Profile profile = profilesByName.get(chConfig.getProfile());
             if (profile.isTurnCosts()) {
-                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
+                chPreparationHandler.addCHConfig(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
             } else {
-                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
+                chPreparationHandler.addCHConfig(CHConfig.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
             }
         }
     }
@@ -938,17 +950,17 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmPreparationHandler.hasLMProfiles())
             return;
 
-        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
-            if (lmConfig.usesOtherPreparation())
+        for (LMProfile lmProfile : lmPreparationHandler.getLMProfiles()) {
+            if (lmProfile.usesOtherPreparation())
                 continue;
-            ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
+            Profile profile = profilesByName.get(lmProfile.getProfile());
             // Note that we have to make sure the weighting used for LM preparation does not include turn costs, because
             // the LM preparation is running node-based and the landmark weights will be wrong if there are non-zero
             // turn costs, see discussion in #1960
             // Running the preparation without turn costs is also useful to allow e.g. changing the u_turn_costs per
             // request (we have to use the minimum weight settings (= no turn costs) for the preparation)
             Weighting weighting = createWeighting(profile, new PMap(), true);
-            lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
+            lmPreparationHandler.addLMConfig(new LMConfig(profile.getName(), weighting));
         }
     }
 
@@ -1021,19 +1033,19 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    final public Weighting createWeighting(ProfileConfig profileConfig, PMap hints) {
-        return createWeighting(profileConfig, hints, false);
+    final public Weighting createWeighting(Profile profile, PMap hints) {
+        return createWeighting(profile, hints, false);
     }
 
     /**
-     * @param profileConfig    The profile for which the weighting shall be created
+     * @param profile          The profile for which the weighting shall be created
      * @param hints            Additional hints that can be used to further specify the weighting that shall be created
      * @param disableTurnCosts Can be used to explicitly create the weighting without turn costs. This is sometimes needed when the
      *                         weighting shall be used by some algorithm that can only be run with node-based graph traversal, like
      *                         LM preparation or Isochrones
      */
-    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, boolean disableTurnCosts) {
-        return new DefaultWeightingFactory(encodingManager, ghStorage).createWeighting(profileConfig, hints, disableTurnCosts);
+    public Weighting createWeighting(Profile profile, PMap hints, boolean disableTurnCosts) {
+        return new DefaultWeightingFactory(ghStorage, encodingManager).createWeighting(profile, hints, disableTurnCosts);
     }
 
     @Override
@@ -1065,12 +1077,20 @@ public class GraphHopper implements GraphHopperAPI {
             if (algoStr.isEmpty())
                 algoStr = chPreparationHandler.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
 
-            ProfileConfig profile = profilesByName.get(request.getProfile());
+            Profile profile = profilesByName.get(request.getProfile());
             if (profile == null) {
-                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
+                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist.\nAvailable profiles: " + profilesByName.keySet());
             }
-            if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
-                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
+            if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty()) {
+                List<String> turnCostProfiles = new ArrayList<>();
+                for (Profile p : profilesByName.values()) {
+                    if (p.isTurnCosts()) {
+                        turnCostProfiles.add(p.getName());
+                    }
+                }
+                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs" +
+                        "\nThe following profiles do support turn costs: " + turnCostProfiles);
+            }
 
             // todo later: should we be able to control this using the edge_based parameter?
             TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
@@ -1085,9 +1105,9 @@ public class GraphHopper implements GraphHopperAPI {
                 if (hints.has(Routing.BLOCK_AREA))
                     throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
 
-                CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
-                weighting = chProfile.getWeighting();
-                graph = ghStorage.getCHGraph(chProfile);
+                CHConfig chConfig = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHConfig();
+                weighting = chConfig.getWeighting();
+                graph = ghStorage.getCHGraph(chConfig);
             } else {
                 checkNonChMaxWaypointDistance(points);
                 final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
@@ -1153,16 +1173,16 @@ public class GraphHopper implements GraphHopperAPI {
 
     protected void validateRequest(GHRequest request) {
         if (Helper.isEmpty(request.getProfile()))
-            throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see #1958");
+            throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see core/docs/profiles.md");
 
         if (request.getHints().has("vehicle"))
-            throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
+            throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see core/docs/profiles.md");
         if (request.getHints().has("weighting"))
-            throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
+            throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see core/docs/profiles.md");
         if (request.getHints().has(Routing.TURN_COSTS))
-            throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
+            throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see core/docs/profiles.md");
         if (request.getHints().has(Routing.EDGE_BASED))
-            throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
+            throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see core/docs/profiles.md");
 
         if (request.getPoints().isEmpty())
             throw new IllegalArgumentException("You have to pass at least one point");
@@ -1386,12 +1406,12 @@ public class GraphHopper implements GraphHopperAPI {
         private final GraphHopperStorage ghStorage;
         private final EncodingManager encodingManager;
 
-        public DefaultWeightingFactory(EncodingManager encodingManager, GraphHopperStorage ghStorage) {
+        public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager) {
             this.ghStorage = ghStorage;
             this.encodingManager = encodingManager;
         }
 
-        public Weighting createWeighting(ProfileConfig profile, PMap requestHints, boolean disableTurnCosts) {
+        public Weighting createWeighting(Profile profile, PMap requestHints, boolean disableTurnCosts) {
             // Merge profile hints with request hints, the request hints take precedence.
             // Note that so far we do not check if overwriting the profile hints actually works with the preparation
             // for LM/CH. Later we should also limit the number of parameters that can be used to modify the profile.
@@ -1417,8 +1437,15 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("You have to specify a weighting");
 
             Weighting weighting = null;
-
-            if ("shortest".equalsIgnoreCase(weightingStr)) {
+            if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
+                if (!(profile instanceof CustomProfile))
+                    throw new IllegalArgumentException("custom weighting requires a CustomProfile but was profile=" + profile.getName());
+                CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
+                CustomProfile customProfile = (CustomProfile) profile;
+                queryCustomModel = queryCustomModel == null ?
+                        customProfile.getCustomModel() : CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
+                weighting = new CustomWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);
+            } else if ("shortest".equalsIgnoreCase(weightingStr)) {
                 weighting = new ShortestWeighting(encoder, turnCostProvider);
             } else if ("fastest".equalsIgnoreCase(weightingStr)) {
                 if (encoder.supports(PriorityWeighting.class))

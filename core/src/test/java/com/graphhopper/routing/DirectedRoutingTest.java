@@ -21,7 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.lm.LMProfile;
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -68,8 +68,8 @@ public class DirectedRoutingTest {
     private final boolean prepareLM;
     private Directory dir;
     private GraphHopperStorage graph;
-    private CHProfile chProfile;
-    private LMProfile lmProfile;
+    private CHConfig chConfig;
+    private LMConfig lmConfig;
     private CHGraph chGraph;
     private FlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
@@ -122,10 +122,10 @@ public class DirectedRoutingTest {
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
-        chProfile = CHProfile.edgeBased("p1", weighting);
+        chConfig = CHConfig.edgeBased("p1", weighting);
         // important: for LM preparation we need to use a weighting without turn costs #1960
-        lmProfile = new LMProfile("p2", new FastestWeighting(encoder));
-        graph.addCHGraph(chProfile);
+        lmConfig = new LMConfig("c2", new FastestWeighting(encoder));
+        graph.addCHGraph(chConfig);
         graph.create(1000);
     }
 
@@ -135,12 +135,12 @@ public class DirectedRoutingTest {
             return;
         }
         if (prepareCH) {
-            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
             pch.doWork();
-            chGraph = graph.getCHGraph(chProfile);
+            chGraph = graph.getCHGraph(chConfig);
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
+            lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
             lm.setMaximumWeight(1000);
             lm.doWork();
         }

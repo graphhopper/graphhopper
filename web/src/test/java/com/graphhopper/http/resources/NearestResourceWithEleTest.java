@@ -19,7 +19,7 @@ package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -54,7 +54,7 @@ public class NearestResourceWithEleTest {
                 putObject("graph.flag_encoders", "car").
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.location", dir).
-                setProfiles(Collections.singletonList(new ProfileConfig("car").setVehicle("car").setWeighting("fastest")));
+                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
         return config;
     }
 

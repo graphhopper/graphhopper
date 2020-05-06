@@ -450,7 +450,7 @@ public class GHUtility {
                 .withTurnCosts(store.getTurnCostStorage() != null)
                 .set3D(is3D)
                 .setDir(outdir)
-                .setCHProfiles(store.getCHProfiles())
+                .setCHConfigs(store.getCHConfigs())
                 .setBytes(store.getNodes())
                 .create();
     }

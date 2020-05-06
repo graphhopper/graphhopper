@@ -35,6 +35,12 @@ graphhopper:
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
   #   in seconds, so for example it does not work with shortest weighting.
+  # - custom_model_file: when you specified "weighting: custom" you need to set a yaml file that defines the custom_model.
+  #   If you want an empty model you can also set "custom_model_file: empty".
+  #
+  #   For more information about profiles and especially custom profiles have a look into the documentation
+  #   at docs/core/profiles.md or the examples under web/src/test/resources/com/graphhopper/http/resources/ or
+  #   the CustomWeighting class for the raw details.
   #
   # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
   # profiles (see below). Otherwise you should at least limit the number of `routing.max_visited_nodes`.

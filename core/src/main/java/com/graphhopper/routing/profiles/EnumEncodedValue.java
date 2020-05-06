@@ -36,6 +36,10 @@ public final class EnumEncodedValue<E extends Enum> extends UnsignedIntEncodedVa
         arr = enumType.getEnumConstants();
     }
 
+    public E[] getValues() {
+        return arr;
+    }
+
     public final void setEnum(boolean reverse, IntsRef ref, E value) {
         int intValue = value.ordinal();
         super.setInt(reverse, ref, intValue);

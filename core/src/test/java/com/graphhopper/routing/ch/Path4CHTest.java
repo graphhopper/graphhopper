@@ -29,7 +29,7 @@ public class Path4CHTest {
         encoder = new CarFlagEncoder(5, 5, 10).setSpeedTwoDirections(true);
         EncodingManager em = EncodingManager.create(encoder);
         graph = new GraphBuilder(em)
-                .setCHProfileStrings("p1|car|fastest|edge")
+                .setCHConfigStrings("p1|car|fastest|edge")
                 .create();
         chGraph = graph.getCHGraph();
     }

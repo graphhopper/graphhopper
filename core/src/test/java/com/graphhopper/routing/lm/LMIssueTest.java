@@ -64,7 +64,7 @@ public class LMIssueTest {
 
     private void preProcessGraph() {
         graph.freeze();
-        lm = new PrepareLandmarks(dir, graph, new LMProfile("p", weighting), 16);
+        lm = new PrepareLandmarks(dir, graph, new LMConfig("c", weighting), 16);
         lm.setMaximumWeight(10000);
         lm.doWork();
     }

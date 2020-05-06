@@ -16,47 +16,54 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.lm;
-
-import com.graphhopper.routing.weighting.Weighting;
+package com.graphhopper.config;
 
 import java.util.Objects;
 
-import static com.graphhopper.config.ProfileConfig.validateProfileName;
+import static com.graphhopper.config.Profile.validateProfileName;
 
-public class LMProfile {
-    private final String profileName;
-    private final Weighting weighting;
+/**
+ * Corresponds to an entry in the `profiles_ch` section in config.yml and specifies a routing profile that shall be
+ * prepared using Contraction Hierarchies (CH)
+ *
+ * @see Profile
+ */
+public class CHProfile {
+    private String profile = "";
 
-    public LMProfile(String profileName, Weighting weighting) {
-        validateProfileName(profileName);
-        this.profileName = profileName;
-        this.weighting = weighting;
+    private CHProfile() {
+        // default constructor needed for jackson
     }
 
-    public String getName() {
-        return profileName;
+    public CHProfile(String profile) {
+        setProfile(profile);
     }
 
-    public Weighting getWeighting() {
-        return weighting;
+    public String getProfile() {
+        return profile;
+    }
+
+    CHProfile setProfile(String profile) {
+        validateProfileName(profile);
+        this.profile = profile;
+        return this;
     }
 
     @Override
     public String toString() {
-        return profileName;
+        return profile;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        LMProfile lmProfile = (LMProfile) o;
-        return Objects.equals(profileName, lmProfile.profileName);
+        CHProfile that = (CHProfile) o;
+        return Objects.equals(profile, that.profile);
     }
 
     @Override
     public int hashCode() {
-        return profileName.hashCode();
+        return profile.hashCode();
     }
 }

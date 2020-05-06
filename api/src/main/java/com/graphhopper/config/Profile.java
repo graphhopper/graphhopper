@@ -21,13 +21,14 @@ package com.graphhopper.config;
 import com.graphhopper.util.PMap;
 
 /**
- * Corresponds to the `profiles` section in `config.yml` and specifies the properties of a routing profile. The name
- * used here needs to be used when setting up CH/LM preparations. See also the documentation in `config-example.yml'
+ * Corresponds to an entry of the `profiles` section in `config.yml` and specifies the properties of a routing profile.
+ * The name used here needs to be used when setting up CH/LM preparations. See also the documentation in
+ * `config-example.yml'
  *
- * @see CHProfileConfig
- * @see LMProfileConfig
+ * @see CHProfile
+ * @see LMProfile
  */
-public class ProfileConfig {
+public class Profile {
     private String name = "car";
     private String vehicle = "car";
     private String weighting = "fastest";
@@ -40,11 +41,11 @@ public class ProfileConfig {
         }
     }
 
-    private ProfileConfig() {
+    private Profile() {
         // default constructor needed for jackson
     }
 
-    public ProfileConfig(String name) {
+    public Profile(String name) {
         setName(name);
     }
 
@@ -52,7 +53,7 @@ public class ProfileConfig {
         return name;
     }
 
-    public ProfileConfig setName(String name) {
+    public Profile setName(String name) {
         validateProfileName(name);
         this.name = name;
         return this;
@@ -62,7 +63,7 @@ public class ProfileConfig {
         return vehicle;
     }
 
-    public ProfileConfig setVehicle(String vehicle) {
+    public Profile setVehicle(String vehicle) {
         this.vehicle = vehicle;
         return this;
     }
@@ -71,7 +72,7 @@ public class ProfileConfig {
         return weighting;
     }
 
-    public ProfileConfig setWeighting(String weighting) {
+    public Profile setWeighting(String weighting) {
         this.weighting = weighting;
         return this;
     }
@@ -80,7 +81,7 @@ public class ProfileConfig {
         return turnCosts;
     }
 
-    public ProfileConfig setTurnCosts(boolean turnCosts) {
+    public Profile setTurnCosts(boolean turnCosts) {
         this.turnCosts = turnCosts;
         return this;
     }
@@ -89,7 +90,7 @@ public class ProfileConfig {
         return hints;
     }
 
-    public ProfileConfig putHint(String key, Object value) {
+    public Profile putHint(String key, Object value) {
         this.hints.putObject(key, value);
         return this;
     }
@@ -103,7 +104,7 @@ public class ProfileConfig {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ProfileConfig profile = (ProfileConfig) o;
+        Profile profile = (Profile) o;
         return name.equals(profile.name);
     }
 

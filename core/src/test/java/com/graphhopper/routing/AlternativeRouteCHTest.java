@@ -24,7 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.RoutingCHGraphImpl;
@@ -43,8 +43,8 @@ public class AlternativeRouteCHTest {
 
     public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
         final GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false);
-        CHProfile chProfile = CHProfile.nodeBased("p", new FastestWeighting(carFE));
-        graph.addCHGraph(chProfile);
+        CHConfig chConfig = CHConfig.nodeBased("p", new FastestWeighting(carFE));
+        graph.addCHGraph(chConfig);
         graph.create(1000);
 
         /*
@@ -85,7 +85,7 @@ public class AlternativeRouteCHTest {
         // meet on all four possible paths from 5 to 10
         // 5 ---> 11 will be reachable via shortcuts, as 11 is on shortest path 5 --> 12
         final List<Integer> nodeOrdering = Arrays.asList(0, 10, 12, 4, 3, 2, 5, 1, 6, 7, 8, 9, 11);
-        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         contractionHierarchies.useFixedNodeOrdering(new NodeOrderingProvider() {
             @Override
             public int getNodeIdForLevel(int level) {

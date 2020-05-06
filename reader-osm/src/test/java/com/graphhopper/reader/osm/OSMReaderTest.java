@@ -22,7 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperIT;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
@@ -564,7 +564,7 @@ public class OSMReaderTest {
         hopper.setEncodingManager(new EncodingManager.Builder().
                 add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser()).
                 add(encoder).build());
-        hopper.setProfiles(new ProfileConfig("car").setVehicle("car").setWeighting("fastest"));
+        hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
         hopper.importOrLoad();
 
         DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
@@ -715,9 +715,9 @@ public class OSMReaderTest {
                 setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).setEncodingManager(manager).
                 setProfiles(
-                        new ProfileConfig("bike").setVehicle("bike").setWeighting("fastest"),
-                        new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("truck").setVehicle("truck").setWeighting("fastest")
+                        new Profile("bike").setVehicle("bike").setWeighting("fastest"),
+                        new Profile("car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("truck").setVehicle("truck").setWeighting("fastest")
                 ).
                 importOrLoad();
 
@@ -908,8 +908,8 @@ public class OSMReaderTest {
                 .setDataReaderFile(getClass().getResource(file7).getFile())
                 .setEncodingManager(EncodingManager.create("car,motorcycle"))
                 .setProfiles(
-                        new ProfileConfig("profile1").setVehicle("car").setWeighting("fastest"),
-                        new ProfileConfig("profile2").setVehicle("motorcycle").setWeighting("curvature")
+                        new Profile("profile1").setVehicle("car").setWeighting("fastest"),
+                        new Profile("profile2").setVehicle("motorcycle").setWeighting("curvature")
                 )
                 .setGraphHopperLocation(dir);
         hopper.importOrLoad();
@@ -935,7 +935,7 @@ public class OSMReaderTest {
                 }
             }
         }.setEncodingManager(EncodingManager.create("car,bike")).
-                setProfiles(new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")).
+                setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest")).
                 setGraphHopperLocation(dir).
                 importOrLoad();
 
@@ -976,9 +976,9 @@ public class OSMReaderTest {
             setEncodingManager(new EncodingManager.Builder().add(footEncoder).add(carEncoder).add(bikeEncoder).
                     setPreferredLanguage(prefLang).build());
             setProfiles(
-                    new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest"),
-                    new ProfileConfig("car").setVehicle("car").setWeighting("fastest"),
-                    new ProfileConfig("bike").setVehicle("bike").setWeighting("fastest")
+                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                    new Profile("car").setVehicle("car").setWeighting("fastest"),
+                    new Profile("bike").setVehicle("bike").setWeighting("fastest")
             );
             carAccessEnc = carEncoder.getAccessEnc();
         }

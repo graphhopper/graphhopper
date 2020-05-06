@@ -54,7 +54,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     final DataAccess shortcuts;
     final DataAccess nodesCH;
     final int scDirMask = PrepareEncoder.getScDirMask();
-    private final CHProfile chProfile;
+    private final CHConfig chConfig;
     private final BaseGraph baseGraph;
     private final CHEdgeAccess chEdgeAccess;
     int N_CH_REF;
@@ -67,12 +67,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private int shortcutCount = 0;
     private boolean isReadyForContraction;
 
-    CHGraphImpl(CHProfile chProfile, Directory dir, final BaseGraph baseGraph, int segmentSize) {
-        if (chProfile.getWeighting() == null)
+    CHGraphImpl(CHConfig chConfig, Directory dir, final BaseGraph baseGraph, int segmentSize) {
+        if (chConfig.getWeighting() == null)
             throw new IllegalStateException("Weighting for CHGraph cannot be null");
-        this.chProfile = chProfile;
+        this.chConfig = chConfig;
         this.baseGraph = baseGraph;
-        final String name = chProfile.getName();
+        final String name = chConfig.getName();
         this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.chEdgeAccess = new CHEdgeAccess(name);
@@ -83,8 +83,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public CHProfile getCHProfile() {
-        return chProfile;
+    public CHConfig getCHConfig() {
+        return chConfig;
     }
 
     @Override
@@ -127,7 +127,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public int shortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2, int origFirst, int origLast) {
-        if (!chProfile.isEdgeBased()) {
+        if (!chConfig.isEdgeBased()) {
             throw new IllegalStateException("Edge-based shortcuts should only be added when CHGraph is edge-based");
         }
         int scId = shortcut(a, b, accessFlags, weight, skippedEdge1, skippedEdge2);
@@ -328,7 +328,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         // shortcuts
         S_SKIP_EDGE1 = ea.E_FLAGS + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
-        if (chProfile.isEdgeBased()) {
+        if (chConfig.isEdgeBased()) {
             S_ORIG_FIRST = S_SKIP_EDGE2 + 4;
             S_ORIG_LAST = S_ORIG_FIRST + 4;
             shortcutEntryBytes = S_ORIG_LAST + 4;
@@ -385,7 +385,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public String toString() {
-        return "CHGraph|" + chProfile.getName() + "|" + chProfile.getTraversalMode();
+        return "CHGraph|" + chConfig.getName() + "|" + chConfig.getTraversalMode();
     }
 
     public void debugPrint() {
@@ -403,7 +403,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         String formatShortcutsBase = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s";
         String formatShortcutExt = " | %12s | %12s";
         String header = String.format(Locale.ROOT, formatShortcutsBase, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2");
-        if (chProfile.isEdgeBased()) {
+        if (chConfig.isEdgeBased()) {
             header += String.format(Locale.ROOT, formatShortcutExt, "S_ORIG_FIRST", "S_ORIG_LAST");
         }
         System.out.println(header);
@@ -418,7 +418,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     chEdgeAccess.getShortcutFlags(edgePointer),
                     shortcuts.getInt(edgePointer + S_SKIP_EDGE1),
                     shortcuts.getInt(edgePointer + S_SKIP_EDGE2));
-            if (chProfile.isEdgeBased()) {
+            if (chConfig.isEdgeBased()) {
                 edgeString += String.format(Locale.ROOT, formatShortcutExt,
                         shortcuts.getInt(edgePointer + S_ORIG_FIRST),
                         shortcuts.getInt(edgePointer + S_ORIG_LAST));
@@ -671,7 +671,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         public void setFirstAndLastOrigEdges(long edgePointer, int origFirst, int origLast) {
-            if (!chProfile.isEdgeBased()) {
+            if (!chConfig.isEdgeBased()) {
                 throw new IllegalStateException("Edge-based shortcuts should only be added when CHGraph is edge-based");
             }
             shortcuts.setInt(edgePointer + S_ORIG_FIRST, origFirst);
@@ -767,7 +767,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public int getOrigEdgeFirst() {
-            if (!isShortcut() || !chProfile.isEdgeBased()) {
+            if (!isShortcut() || !chConfig.isEdgeBased()) {
                 return getEdge();
             }
             return shortcuts.getInt(edgeIterable.edgePointer + S_ORIG_FIRST);
@@ -775,7 +775,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public int getOrigEdgeLast() {
-            if (!isShortcut() || !chProfile.isEdgeBased()) {
+            if (!isShortcut() || !chConfig.isEdgeBased()) {
                 return getEdge();
             }
             return shortcuts.getInt(edgeIterable.edgePointer + S_ORIG_LAST);

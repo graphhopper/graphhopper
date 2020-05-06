@@ -18,9 +18,9 @@
 
 package com.graphhopper.routing;
 
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHProfileSelectorTest;
 import com.graphhopper.routing.lm.LMProfileSelectorTest;
 import com.graphhopper.routing.util.EncodingManager;
@@ -45,10 +45,10 @@ public class ProfileResolverTest {
         ProfileResolver profileResolver = new ProfileResolver(
                 EncodingManager.create("car,foot,bike"),
                 Arrays.asList(
-                        new ProfileConfig("my_bike").setVehicle("bike"),
-                        new ProfileConfig("your_car").setVehicle("car")
+                        new Profile("my_bike").setVehicle("bike"),
+                        new Profile("your_car").setVehicle("car")
                 ),
-                Collections.<CHProfileConfig>emptyList(), Collections.<LMProfileConfig>emptyList());
+                Collections.<CHProfile>emptyList(), Collections.<LMProfile>emptyList());
         // without specifying the vehicle we get an error, because there are multiple matches
         assertMultiMatchError(profileResolver, new PMap(), "There are multiple profiles matching your request");
         // use vehicle to specify profile
@@ -61,10 +61,10 @@ public class ProfileResolverTest {
         ProfileResolver profileResolver = new ProfileResolver(
                 EncodingManager.create("bike,car,foot"),
                 Arrays.asList(
-                        new ProfileConfig("fast_bike").setVehicle("bike").setWeighting("fastest"),
-                        new ProfileConfig("short_bike").setVehicle("bike").setWeighting("shortest")
+                        new Profile("fast_bike").setVehicle("bike").setWeighting("fastest"),
+                        new Profile("short_bike").setVehicle("bike").setWeighting("shortest")
                 ),
-                Collections.<CHProfileConfig>emptyList(), Collections.<LMProfileConfig>emptyList());
+                Collections.<CHProfile>emptyList(), Collections.<LMProfile>emptyList());
         // without specifying the weighting we get an error, because there are multiple matches
         assertMultiMatchError(profileResolver, new PMap(), "There are multiple profiles matching your request");
         // use weighting to specify profile
@@ -77,10 +77,10 @@ public class ProfileResolverTest {
         ProfileResolver profileResolver = new ProfileResolver(
                 EncodingManager.create("car,bike"),
                 Arrays.asList(
-                        new ProfileConfig("fast_bike").setVehicle("bike").setWeighting("fastest"),
-                        new ProfileConfig("short_bike").setVehicle("bike").setWeighting("shortest")
+                        new Profile("fast_bike").setVehicle("bike").setWeighting("fastest"),
+                        new Profile("short_bike").setVehicle("bike").setWeighting("shortest")
                 ),
-                Collections.<CHProfileConfig>emptyList(), Collections.<LMProfileConfig>emptyList());
+                Collections.<CHProfile>emptyList(), Collections.<LMProfile>emptyList());
         // there is a car encoder but no associated profile
         assertProfileNotFound(profileResolver, new PMap().putObject("vehicle", "car"));
         // if we do not specify a vehicle or weighting we even have multiple matches
@@ -98,8 +98,8 @@ public class ProfileResolverTest {
     public void edgeBasedAndTurnCosts() {
         ProfileResolver profileResolver = new ProfileResolver(
                 EncodingManager.create("foot"),
-                Collections.singletonList(new ProfileConfig("profile").setVehicle("foot").setWeighting("fastest")),
-                Collections.<CHProfileConfig>emptyList(), Collections.<LMProfileConfig>emptyList());
+                Collections.singletonList(new Profile("profile").setVehicle("foot").setWeighting("fastest")),
+                Collections.<CHProfile>emptyList(), Collections.<LMProfile>emptyList());
 
         assertProfileNotFound(profileResolver, new PMap().putObject(Parameters.Routing.EDGE_BASED, true));
         assertEquals("profile", profileResolver.resolveProfile(new PMap()).getName());
@@ -117,11 +117,11 @@ public class ProfileResolverTest {
         ProfileResolver profileResolver = new ProfileResolver(
                 EncodingManager.create(vehicle1 + "," + vehicle2),
                 Arrays.asList(
-                        new ProfileConfig(profile1).setVehicle(vehicle1).setWeighting(weighting),
-                        new ProfileConfig(profile2).setVehicle(vehicle2).setWeighting(weighting)
+                        new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting),
+                        new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting)
                 ),
-                Arrays.asList(new CHProfileConfig(profile1), new CHProfileConfig(profile2)),
-                Arrays.asList(new LMProfileConfig(profile1), new LMProfileConfig(profile2))
+                Arrays.asList(new CHProfile(profile1), new CHProfile(profile2)),
+                Arrays.asList(new LMProfile(profile1), new LMProfile(profile2))
         );
         // when we do not specify vehicle/weighting, we get an error because there are multiple matches
         PMap hints = new PMap();

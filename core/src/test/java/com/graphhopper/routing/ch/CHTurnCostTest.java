@@ -63,8 +63,8 @@ public class CHTurnCostTest {
     private EncodingManager encodingManager;
     private GraphHopperStorage graph;
     private TurnCostStorage turnCostStorage;
-    private List<CHProfile> chProfiles;
-    private CHProfile chProfile;
+    private List<CHConfig> chConfigs;
+    private CHConfig chConfig;
     private CHGraph chGraph;
     private boolean checkStrict;
 
@@ -79,11 +79,11 @@ public class CHTurnCostTest {
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).build();
         turnCostStorage = graph.getTurnCostStorage();
-        chProfiles = createCHProfiles();
-        graph.addCHGraphs(chProfiles).create(1000);
+        chConfigs = createCHConfigs();
+        graph.addCHGraphs(chConfigs).create(1000);
         // the default CH profile with infinite u-turn costs, can be reset in tests that should run with finite u-turn
         // costs
-        chProfile = chProfiles.get(0);
+        chConfig = chConfigs.get(0);
         checkStrict = true;
     }
 
@@ -91,18 +91,18 @@ public class CHTurnCostTest {
      * Creates a list of distinct CHProfiles with different u-turn costs that can be used by the tests.
      * There is always a profile with infinite u-turn costs and one with u-turn-costs = 50.
      */
-    private List<CHProfile> createCHProfiles() {
-        Set<CHProfile> profileSet = new LinkedHashSet<>(5);
+    private List<CHConfig> createCHConfigs() {
+        Set<CHConfig> profileSet = new LinkedHashSet<>(5);
         // the first one is always the one with infinite u-turn costs
-        profileSet.add(CHProfile.edgeBased("p0", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, INFINITE_U_TURN_COSTS))));
+        profileSet.add(CHConfig.edgeBased("p0", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, INFINITE_U_TURN_COSTS))));
         // this one we also always add
-        profileSet.add(CHProfile.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 50))));
+        profileSet.add(CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 50))));
         // add more (distinct) profiles
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         while (profileSet.size() < 5) {
             int uTurnCosts = 10 + rnd.nextInt(90);
-            profileSet.add(CHProfile.edgeBased("p" + profileSet.size(), new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts))));
+            profileSet.add(CHConfig.edgeBased("p" + profileSet.size(), new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts))));
         }
         return new ArrayList<>(profileSet);
     }
@@ -666,7 +666,7 @@ public class CHTurnCostTest {
         graph.edge(3, 1, 100, false);
         setRestriction(0, 3, 1);
         graph.freeze();
-        chProfile = chProfiles.get(1);
+        chConfig = chConfigs.get(1);
         RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(4, 0, 2, 3, 1));
         Path path = pch.createAlgo(chGraph, AlgorithmOptions.start().build()).calcPath(0, 1);
         assertEquals(IntArrayList.from(0, 3, 4, 3, 1), path.calcNodes());
@@ -973,7 +973,7 @@ public class CHTurnCostTest {
         // not allowed to turn right at node 1 -> we have to take a u-turn at node 0 (or at the virtual node...)
         setRestriction(2, 1, 5);
         graph.freeze();
-        chProfile = chProfiles.get(1);
+        chConfig = chConfigs.get(1);
         RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
@@ -991,7 +991,7 @@ public class CHTurnCostTest {
         QueryResult qr2 = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr2);
         assertEquals(3, qr2.getClosestEdge().getEdge());
-        Weighting w = queryGraph.wrapWeighting(chProfile.getWeighting());
+        Weighting w = queryGraph.wrapWeighting(chConfig.getWeighting());
         Dijkstra dijkstra = new Dijkstra(queryGraph, w, TraversalMode.EDGE_BASED);
         Path dijkstraPath = dijkstra.calcPath(4, 6);
         assertEquals(IntArrayList.from(4, 3, 2, 1, 7, 0, 7, 1, 5, 6), dijkstraPath.calcNodes());
@@ -1017,8 +1017,8 @@ public class CHTurnCostTest {
     @Test
     public void testFindPath_random_compareWithDijkstra_finiteUTurnCost() {
         long seed = System.nanoTime();
-        LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chProfile.getWeighting());
-        chProfile = chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1));
+        LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chConfig.getWeighting());
+        chConfig = chConfigs.get(1 + new Random(seed).nextInt(chConfigs.size() - 1));
         compareWithDijkstraOnRandomGraph(seed);
     }
 
@@ -1048,8 +1048,8 @@ public class CHTurnCostTest {
     @Test
     public void testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost() {
         long seed = System.nanoTime();
-        LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chProfile.getWeighting());
-        chProfile = chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1));
+        LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chConfig.getWeighting());
+        chConfig = chConfigs.get(1 + new Random(seed).nextInt(chConfigs.size() - 1));
         compareWithDijkstraOnRandomGraph_heuristic(seed);
     }
 
@@ -1103,7 +1103,7 @@ public class CHTurnCostTest {
     }
 
     private Path findPathUsingDijkstra(int from, int to) {
-        Weighting w = graph.wrapWeighting(chProfile.getWeighting());
+        Weighting w = graph.wrapWeighting(chConfig.getWeighting());
         Dijkstra dijkstra = new Dijkstra(graph, w, TraversalMode.EDGE_BASED);
         return dijkstra.calcPath(from, to);
     }
@@ -1128,10 +1128,10 @@ public class CHTurnCostTest {
                 return contractionOrder.size();
             }
         };
-        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile)
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         ch.doWork();
-        chGraph = graph.getCHGraph(chProfile);
+        chGraph = graph.getCHGraph(chConfig);
         return ch.getRoutingAlgorithmFactory();
     }
 
@@ -1141,10 +1141,10 @@ public class CHTurnCostTest {
         pMap.putObject(LAST_LAZY_NODES_UPDATES, 100);
         pMap.putObject(NEIGHBOR_UPDATES, 4);
         pMap.putObject(LOG_MESSAGES, 10);
-        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         ch.setParams(pMap);
         ch.doWork();
-        chGraph = graph.getCHGraph(chProfile);
+        chGraph = graph.getCHGraph(chConfig);
         return ch.getRoutingAlgorithmFactory();
     }
 

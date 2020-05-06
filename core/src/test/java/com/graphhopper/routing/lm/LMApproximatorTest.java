@@ -68,7 +68,7 @@ public class LMApproximatorTest {
 
         Weighting weighting = new FastestWeighting(encoder);
 
-        PrepareLandmarks lm = new PrepareLandmarks(dir, graph, new LMProfile("p", weighting), 16);
+        PrepareLandmarks lm = new PrepareLandmarks(dir, graph, new LMConfig("c", weighting), 16);
         lm.setMaximumWeight(10000);
         lm.doWork();
         LandmarkStorage landmarkStorage = lm.getLandmarkStorage();

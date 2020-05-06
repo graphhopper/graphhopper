@@ -17,9 +17,9 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -96,10 +96,10 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig("profile").setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
-                .setCHProfileConfigs(new CHProfileConfig("profile"))
+                .setCHProfiles(new CHProfile("profile"))
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566)
@@ -126,7 +126,7 @@ public class GraphHopperIT {
         final String weighting = "shortest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -178,7 +178,7 @@ public class GraphHopperIT {
         final String weighting = "shortest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -203,7 +203,7 @@ public class GraphHopperIT {
         final String weighting = "shortest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
         hopper.importOrLoad();
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
 
@@ -233,32 +233,32 @@ public class GraphHopperIT {
         final String weighting = "shortest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(Collections.singletonList(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting))).
+                setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                 setStoreOnFlush(true).
                 setSortGraph(sort);
         if (ch) {
             hopper.getCHPreparationHandler()
-                    .setCHProfileConfigs(new CHProfileConfig(profile))
+                    .setCHProfiles(new CHProfile(profile))
                     .setDisablingAllowed(true);
         }
         if (lm) {
             hopper.getLMPreparationHandler()
-                    .setLMProfileConfigs(new LMProfileConfig(profile))
+                    .setLMProfiles(new LMProfile(profile))
                     .setDisablingAllowed(true);
         }
         hopper.importAndClose();
         hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(Collections.singletonList(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting))).
+                setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                 setStoreOnFlush(true);
         if (ch) {
             hopper.getCHPreparationHandler()
-                    .setCHProfileConfigs(new CHProfileConfig(profile))
+                    .setCHProfiles(new CHProfile(profile))
                     .setDisablingAllowed(true);
         }
         if (lm) {
             hopper.getLMPreparationHandler()
-                    .setLMProfileConfigs(new LMProfileConfig(profile))
+                    .setLMProfiles(new LMProfile(profile))
                     .setDisablingAllowed(true);
         }
         hopper.importOrLoad();
@@ -346,7 +346,7 @@ public class GraphHopperIT {
         final String weighting = "shortest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -379,7 +379,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(50.028917, 11.496506, 49.985228, 11.600876).
@@ -405,7 +405,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
@@ -431,7 +431,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(LAUF).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.46553, 11.154669, 49.465244, 11.152577).
@@ -468,7 +468,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
@@ -487,7 +487,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -581,7 +581,7 @@ public class GraphHopperIT {
         final String weighting = "shortest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -666,7 +666,7 @@ public class GraphHopperIT {
         final String weighting = "shortest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -697,7 +697,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -744,7 +744,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -770,7 +770,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -801,7 +801,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -839,7 +839,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -874,7 +874,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true);
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
@@ -929,7 +929,7 @@ public class GraphHopperIT {
                 .setOSMFile(MONACO)
                 .setStoreOnFlush(true)
                 .setGraphHopperLocation(GH_LOCATION)
-                .setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting))
+                .setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))
                 .setEncodingManager(EncodingManager.start().add(new OSMRoadEnvironmentParser() {
                     @Override
                     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
@@ -966,7 +966,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper("car,foot")
                 .setOSMFile(MONACO)
-                .setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting))
+                .setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))
                 .setStoreOnFlush(true);
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
@@ -1043,7 +1043,7 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
                 setProfiles(
-                        new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)
+                        new Profile(profile).setVehicle(vehicle).setWeighting(weighting)
                 ).
                 setStoreOnFlush(true);
 
@@ -1073,8 +1073,8 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle1 + "," + vehicle2).
                 setOSMFile(KREMS).
                 setProfiles(
-                        new ProfileConfig(profile1).setVehicle(vehicle1).setWeighting(weighting),
-                        new ProfileConfig(profile2).setVehicle(vehicle2).setWeighting(weighting)).
+                        new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting),
+                        new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -1127,13 +1127,13 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle1 + "," + vehicle2).
                 setOSMFile(MONACO).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig(profile1).setVehicle(vehicle1).setWeighting(weighting),
-                        new ProfileConfig(profile2).setVehicle(vehicle2).setWeighting(weighting))
+                        new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting),
+                        new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting))
                 ).
                 setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(
-                new CHProfileConfig(profile1),
-                new CHProfileConfig(profile2)
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(profile1),
+                new CHProfile(profile2)
         );
         hopper.importOrLoad();
 
@@ -1171,13 +1171,13 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle1 + "," + vehicle2).
                 setOSMFile(BERLIN).
                 setProfiles(
-                        new ProfileConfig(profile1).setVehicle(vehicle1).setWeighting(weighting),
-                        new ProfileConfig(profile2).setVehicle(vehicle2).setWeighting(weighting)
+                        new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting),
+                        new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting)
                 ).
                 setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(
-                new CHProfileConfig(profile1),
-                new CHProfileConfig(profile2)
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(profile1),
+                new CHProfile(profile2)
         );
         hopper.importOrLoad();
 
@@ -1198,17 +1198,17 @@ public class GraphHopperIT {
         final String vehicle1 = "bike";
         final String vehicle2 = "car";
         final String weighting = "fastest";
-        List<ProfileConfig> profiles = asList(
-                new ProfileConfig(profile1).setVehicle(vehicle1).setWeighting(weighting),
-                new ProfileConfig(profile2).setVehicle(vehicle2).setWeighting(weighting)
+        List<Profile> profiles = asList(
+                new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting),
+                new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting)
         );
         GraphHopper hopper = createGraphHopper(vehicle1 + "," + vehicle2).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
                 setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(
-                new CHProfileConfig(profile1),
-                new CHProfileConfig(profile2)
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(profile1),
+                new CHProfile(profile2)
         );
         hopper.importOrLoad();
         String str = hopper.getEncodingManager().toString();
@@ -1255,10 +1255,10 @@ public class GraphHopperIT {
         final String weighting = "shortest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(Collections.singletonList(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting))).
+                setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                 setStoreOnFlush(true).
                 setSortGraph(sort);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.importOrLoad();
 
         // same query as in testMonacoWithInstructions
@@ -1292,7 +1292,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -1321,7 +1321,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest().
@@ -1345,7 +1345,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(BAYREUTH).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest().
@@ -1366,15 +1366,15 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(true);
 
         hopper.getCHPreparationHandler().
-                setCHProfileConfigs(new CHProfileConfig(profile)).
+                setCHProfiles(new CHProfile(profile)).
                 setDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().
-                setLMProfileConfigs(new LMProfileConfig(profile).setMaximumLMWeight(2000)).
+                setLMProfiles(new LMProfile(profile).setMaximumLMWeight(2000)).
                 setDisablingAllowed(true);
 
         hopper.importOrLoad();
@@ -1430,19 +1430,19 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
                 setProfiles(
-                        new ProfileConfig(profile1).setVehicle("car").setWeighting("short_fastest").putHint("short_fastest.distance_factor", 0.07),
-                        new ProfileConfig(profile2).setVehicle("car").setWeighting("short_fastest").putHint("short_fastest.distance_factor", 0.10),
-                        new ProfileConfig(profile3).setVehicle("car").setWeighting("short_fastest").putHint("short_fastest.distance_factor", 0.15)
+                        new Profile(profile1).setVehicle("car").setWeighting("short_fastest").putHint("short_fastest.distance_factor", 0.07),
+                        new Profile(profile2).setVehicle("car").setWeighting("short_fastest").putHint("short_fastest.distance_factor", 0.10),
+                        new Profile(profile3).setVehicle("car").setWeighting("short_fastest").putHint("short_fastest.distance_factor", 0.15)
                 ).
                 setStoreOnFlush(true);
 
         hopper.getLMPreparationHandler().
-                setLMProfileConfigs(
+                setLMProfiles(
                         // we have an LM setup for each profile, but only one LM preparation that we use for all of them!
                         // this works because profile1's weight is the lowest for every edge
-                        new LMProfileConfig(profile1),
-                        new LMProfileConfig(profile2).setPreparationProfile(profile1),
-                        new LMProfileConfig(profile3).setPreparationProfile(profile1)
+                        new LMProfile(profile1),
+                        new LMProfile(profile2).setPreparationProfile(profile1),
+                        new LMProfile(profile3).setPreparationProfile(profile1)
                 ).
                 setDisablingAllowed(true);
         hopper.importOrLoad();
@@ -1477,7 +1477,7 @@ public class GraphHopperIT {
 
         GraphHopper hopper = createGraphHopper(vehicle + "|turn_costs=true").
                 setOSMFile(MONACO).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true).putHint(U_TURN_COSTS, 123));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true).putHint(U_TURN_COSTS, 123));
         hopper.importOrLoad();
 
         // if we do not pass u_turn_costs with the request hints we get those from the profile
@@ -1500,17 +1500,17 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper(vehicle).
                 setOSMFile(MONACO).
                 setProfiles(
-                        new ProfileConfig(profile1).setVehicle(vehicle).setWeighting(weighting1),
-                        new ProfileConfig(profile2).setVehicle(vehicle).setWeighting(weighting2)
+                        new Profile(profile1).setVehicle(vehicle).setWeighting(weighting1),
+                        new Profile(profile2).setVehicle(vehicle).setWeighting(weighting2)
                 ).
                 setStoreOnFlush(true);
 
         hopper.getCHPreparationHandler().
-                setCHProfileConfigs(new CHProfileConfig(profile1)).
+                setCHProfiles(new CHProfile(profile1)).
                 setDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().
-                setLMProfileConfigs(new LMProfileConfig(profile1).setMaximumLMWeight(2000)).
+                setLMProfiles(new LMProfile(profile1).setMaximumLMWeight(2000)).
                 setDisablingAllowed(true);
 
         hopper.importOrLoad();
@@ -1550,10 +1550,10 @@ public class GraphHopperIT {
         // cars such that the number of visited nodes depends on the bike encoder added here or not, #1910
         GraphHopper hopper = createGraphHopper(vehicle + ",bike").
                 setOSMFile(MONACO).
-                setProfiles(Collections.singletonList(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting))).
+                setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                 setStoreOnFlush(true);
         hopper.getLMPreparationHandler().
-                setLMProfileConfigs(new LMProfileConfig(profile).setMaximumLMWeight(2000)).
+                setLMProfiles(new LMProfile(profile).setMaximumLMWeight(2000)).
                 setDisablingAllowed(true);
         hopper.importOrLoad();
 
@@ -1579,10 +1579,10 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setProfiles(Collections.singletonList(
-                        new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(turnCosts)
+                        new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(turnCosts)
                 ));
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile)).setDisablingAllowed(true);
-        hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig(profile)).setDisablingAllowed(true);
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile)).setDisablingAllowed(true);
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile(profile)).setDisablingAllowed(true);
         hopper.importOrLoad();
 
         long seed = System.nanoTime();
@@ -1624,10 +1624,10 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setProfiles(Collections.singletonList(
-                        new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true)
+                        new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true)
                 ));
-        hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig(profile)).setDisablingAllowed(true);
-        hopper.getLMPreparationHandler().setLMProfileConfigs(new LMProfileConfig(profile)).setDisablingAllowed(true);
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile)).setDisablingAllowed(true);
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile(profile)).setDisablingAllowed(true);
 
         hopper.importOrLoad();
 
@@ -1658,8 +1658,8 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setProfiles(
-                        new ProfileConfig(profile1).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false),
-                        new ProfileConfig(profile2).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true)
+                        new Profile(profile1).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false),
+                        new Profile(profile2).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true)
                 ).
                 setStoreOnFlush(true);
         hopper.importOrLoad();
@@ -1680,13 +1680,13 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig(profile1).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true),
-                        new ProfileConfig(profile2).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false)
+                        new Profile(profile1).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true),
+                        new Profile(profile2).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false)
                 )).
                 setStoreOnFlush(true);
-        hopper.getCHPreparationHandler().setCHProfileConfigs(
-                new CHProfileConfig(profile1),
-                new CHProfileConfig(profile2)
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(profile1),
+                new CHProfile(profile2)
         );
         hopper.getCHPreparationHandler().setDisablingAllowed(true);
         hopper.importOrLoad();
@@ -1706,11 +1706,11 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setProfiles(Collections.singletonList(
-                        new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true))
+                        new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true))
                 ).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
-                .setCHProfileConfigs(new CHProfileConfig(profile))
+                .setCHProfiles(new CHProfile(profile))
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
 
@@ -1737,12 +1737,12 @@ public class GraphHopperIT {
         GraphHopper hopper = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MOSCOW).
                 setProfiles(Arrays.asList(
-                        new ProfileConfig(profile1).setVehicle("car").setWeighting(weighting).setTurnCosts(true),
-                        new ProfileConfig(profile2).setVehicle("car").setWeighting(weighting).setTurnCosts(false))).
+                        new Profile(profile1).setVehicle("car").setWeighting(weighting).setTurnCosts(true),
+                        new Profile(profile2).setVehicle("car").setWeighting(weighting).setTurnCosts(false))).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 // we only do the CH preparation for the profile without turn costs
-                .setCHProfileConfigs(new CHProfileConfig(profile2))
+                .setCHProfiles(new CHProfile(profile2))
                 .setDisablingAllowed(true);
         hopper.importOrLoad();
 
@@ -1776,7 +1776,7 @@ public class GraphHopperIT {
         final String weighting = "fastest";
         GraphHopper hopper = createGraphHopper("foot,car|turn_costs=true").
                 setOSMFile(MOSCOW).
-                setProfiles(new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
 
         hopper.importOrLoad();
         GHPoint p = new GHPoint(55.813357, 37.5958585);
@@ -1792,9 +1792,9 @@ public class GraphHopperIT {
         GraphHopper h = createGraphHopper("car|turn_costs=true").
                 setOSMFile(BAYREUTH).
                 setProfiles(Collections.singletonList(
-                        new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest").setTurnCosts(true)));
+                        new Profile("my_profile").setVehicle("car").setWeighting("fastest").setTurnCosts(true)));
         h.getCHPreparationHandler()
-                .setCHProfileConfigs(new CHProfileConfig("my_profile"));
+                .setCHProfiles(new CHProfile("my_profile"));
         h.importOrLoad();
 
         // depending on the curbside parameters we take very different routes
@@ -1842,10 +1842,10 @@ public class GraphHopperIT {
         GraphHopper h = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MONACO).
                 setProfiles(Collections.singletonList(
-                        new ProfileConfig(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true))
+                        new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true))
                 );
         h.getCHPreparationHandler()
-                .setCHProfileConfigs(new CHProfileConfig(profile));
+                .setCHProfiles(new CHProfile(profile));
         h.importOrLoad();
 
         // depending on the curbside parameters we take very different routes
@@ -1908,12 +1908,12 @@ public class GraphHopperIT {
         GraphHopper h = createGraphHopper("car|turn_costs=true").
                 setOSMFile(MONACO).
                 setProfiles(Collections.singletonList(
-                        new ProfileConfig("my_profile").setVehicle("car").setWeighting("fastest")
+                        new Profile("my_profile").setVehicle("car").setWeighting("fastest")
                                 .setTurnCosts(true)
                                 .putHint(U_TURN_COSTS, 40))
                 );
         h.getCHPreparationHandler()
-                .setCHProfileConfigs(new CHProfileConfig("my_profile"));
+                .setCHProfiles(new CHProfile("my_profile"));
         h.importOrLoad();
 
         GHPoint p = new GHPoint(43.73397, 7.414173);
@@ -1935,7 +1935,7 @@ public class GraphHopperIT {
         final String profile = "profile";
         GraphHopper hopper = new GraphHopperOSM().
                 setOSMFile(BAYREUTH).
-                setProfiles(new ProfileConfig(profile).setVehicle("car").setWeighting("fastest")).
+                setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest")).
                 setGraphHopperLocation(GH_LOCATION).
                 forServer();
         EncodingManager em = new EncodingManager.Builder()

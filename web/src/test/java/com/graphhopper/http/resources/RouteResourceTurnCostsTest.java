@@ -19,9 +19,9 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -60,17 +60,17 @@ public class RouteResourceTurnCostsTest {
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new ProfileConfig("my_car_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
-                        new ProfileConfig("my_car_no_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(false)
+                        new Profile("my_car_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
+                        new Profile("my_car_no_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(false)
                 ))
                 .setCHProfiles(Arrays.asList(
-                        new CHProfileConfig("my_car_turn_costs"),
-                        new CHProfileConfig("my_car_no_turn_costs")
+                        new CHProfile("my_car_turn_costs"),
+                        new CHProfile("my_car_no_turn_costs")
                 ))
                 .setLMProfiles(Arrays.asList(
-                        new LMProfileConfig("my_car_no_turn_costs"),
+                        new LMProfile("my_car_no_turn_costs"),
                         // no need for a second LM preparation: we can just cross query here
-                        new LMProfileConfig("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs")
+                        new LMProfile("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs")
                 ));
         return config;
     }

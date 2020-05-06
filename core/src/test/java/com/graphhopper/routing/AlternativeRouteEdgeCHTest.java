@@ -44,8 +44,8 @@ public class AlternativeRouteEdgeCHTest {
     public GraphHopperStorage createTestGraph(EncodingManager tmpEM) {
         final GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, true);
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage());
-        CHProfile chProfile = CHProfile.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
-        graph.addCHGraph(chProfile);
+        CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
+        graph.addCHGraph(chConfig);
         graph.create(1000);
 
         /*
@@ -87,7 +87,7 @@ public class AlternativeRouteEdgeCHTest {
 
         graph.freeze();
 
-        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         contractionHierarchies.doWork();
         return graph;
     }

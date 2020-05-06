@@ -23,8 +23,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.api.GraphHopperWeb;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -80,8 +80,8 @@ public class RouteResourceTest {
                 putObject("graph.location", DIR)
                 // adding this so the corresponding check is not just skipped...
                 .putObject(MAX_NON_CH_POINT_DISTANCE, 10e6)
-                .setProfiles(Collections.singletonList(new ProfileConfig("my_car").setVehicle("car").setWeighting("fastest")))
-                .setCHProfiles(Collections.singletonList(new CHProfileConfig("my_car")));
+                .setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest")))
+                .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }
 
@@ -474,7 +474,9 @@ public class RouteResourceTest {
         ex = rsp.getErrors().get(0);
         assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.");
-        assertTrue(ex.getMessage().contains("Vehicle not supported: `space-shuttle`. Supported are: `car`\nYou should consider using the profile parameter instead of specifying a vehicle, see #1958"), ex.getMessage());
+        assertTrue(ex.getMessage().contains("Vehicle not supported: `space-shuttle`. Supported are: `car`" +
+                "\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
+                "\nAvailable profiles: [my_car]"), ex.getMessage());
 
         // an IllegalArgumentException from inside the core is written as JSON, unknown profile
         response = clientTarget(app, "/route?profile=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
