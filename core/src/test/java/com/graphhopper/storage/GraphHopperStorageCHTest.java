@@ -18,7 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;

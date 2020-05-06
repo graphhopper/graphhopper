@@ -18,7 +18,7 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;

@@ -19,7 +19,7 @@ package com.graphhopper.reader.gtfs;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.util.EdgeIterator;
 
 import java.time.Instant;
