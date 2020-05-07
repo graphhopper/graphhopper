@@ -76,7 +76,7 @@ class QueryOverlayBuilder {
 
             EdgeIteratorState closestEdge = res.getClosestEdge();
             if (closestEdge == null)
-                throw new IllegalStateException("Do not call QueryGraph.lookup with invalid QueryResult " + res);
+                throw new IllegalStateException("Do not call QueryGraph.create with invalid QueryResult " + res);
 
             int base = closestEdge.getBaseNode();
 

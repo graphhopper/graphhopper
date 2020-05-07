@@ -39,7 +39,7 @@ import java.util.*;
  * introducing virtual nodes and edges. It is lightweight in order to be created every time a new
  * query comes in, which makes the behaviour thread safe.
  * <p>
- * Calling any <tt>lookup</tt> method creates virtual edges between the tower nodes of the existing
+ * Calling any <tt>create</tt> method creates virtual edges between the tower nodes of the existing
  * graph and new virtual tower nodes. Every virtual node has two adjacent nodes and is connected
  * to each adjacent nodes via 2 virtual edges with opposite base node / adjacent node encoding.
  * However, the edge explorer returned by {@link #createEdgeExplorer()} only returns two
@@ -64,15 +64,15 @@ public class QueryGraph implements Graph {
     private final IntObjectMap<List<EdgeIteratorState>> virtualEdgesAtRealNodes;
     private final List<List<EdgeIteratorState>> virtualEdgesAtVirtualNodes;
 
-    public static QueryGraph lookup(Graph graph, QueryResult qr) {
-        return QueryGraph.lookup(graph, Collections.singletonList(qr));
+    public static QueryGraph create(Graph graph, QueryResult qr) {
+        return QueryGraph.create(graph, Collections.singletonList(qr));
     }
 
-    public static QueryGraph lookup(Graph graph, QueryResult fromQR, QueryResult toQR) {
-        return QueryGraph.lookup(graph, Arrays.asList(fromQR, toQR));
+    public static QueryGraph create(Graph graph, QueryResult fromQR, QueryResult toQR) {
+        return QueryGraph.create(graph, Arrays.asList(fromQR, toQR));
     }
 
-    public static QueryGraph lookup(Graph graph, List<QueryResult> queryResults) {
+    public static QueryGraph create(Graph graph, List<QueryResult> queryResults) {
         return new QueryGraph(graph, queryResults);
     }
 
@@ -96,7 +96,7 @@ public class QueryGraph implements Graph {
     }
 
     /**
-     * See 'lookup' for further variables that are initialized
+     * See {@link #create} for further variables that are initialized
      */
     private QueryGraph(Graph graph, QueryGraph superQueryGraph) {
         mainGraph = graph;

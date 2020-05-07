@@ -1105,7 +1105,7 @@ public class GraphHopper implements GraphHopperAPI {
             if (ghRsp.hasErrors())
                 return Collections.emptyList();
 
-            QueryGraph queryGraph = QueryGraph.lookup(graph, qResults);
+            QueryGraph queryGraph = QueryGraph.create(graph, qResults);
             int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
             if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());

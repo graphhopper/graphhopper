@@ -469,7 +469,7 @@ public class PrepareContractionHierarchiesTest {
         qr.setClosestNode(8);
         qr.setWayIndex(0);
         qr.calcSnappedPoint(new DistanceCalcEuclidean());
-        QueryGraph queryGraph = QueryGraph.lookup(lg, qr);
+        QueryGraph queryGraph = QueryGraph.create(lg, qr);
 
         // we make sure our weight fine tunings do what they are supposed to
         double weight03 = getWeight(queryGraph, fastestWeighting, 0, 3, false);

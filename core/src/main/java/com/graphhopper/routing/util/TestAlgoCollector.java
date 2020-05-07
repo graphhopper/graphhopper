@@ -47,7 +47,7 @@ public class TestAlgoCollector {
     public TestAlgoCollector assertDistance(EncodingManager encodingManager, AlgoHelperEntry algoEntry, List<QueryResult> queryList,
                                             OneRun oneRun) {
         List<Path> altPaths = new ArrayList<>();
-        QueryGraph queryGraph = QueryGraph.lookup(algoEntry.getForQueryGraph(), queryList);
+        QueryGraph queryGraph = QueryGraph.create(algoEntry.getForQueryGraph(), queryList);
         RoutingAlgorithmFactory factory = algoEntry.createRoutingFactory();
         for (int i = 0; i < queryList.size() - 1; i++) {
             RoutingAlgorithm algo = factory.createAlgo(queryGraph, algoEntry.getAlgorithmOptions());

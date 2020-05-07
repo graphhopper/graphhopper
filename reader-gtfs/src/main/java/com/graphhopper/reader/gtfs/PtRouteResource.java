@@ -211,7 +211,7 @@ public final class PtRouteResource {
                 allQueryResults.add(station);
                 points.add(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
             }
-            queryGraph = QueryGraph.lookup(graphWithExtraEdges, pointQueryResults); // modifies queryResults
+            queryGraph = QueryGraph.create(graphWithExtraEdges, pointQueryResults); // modifies queryResults
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
             int startNode;
