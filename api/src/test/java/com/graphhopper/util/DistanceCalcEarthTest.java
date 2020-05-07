@@ -297,4 +297,38 @@ public class DistanceCalcEarthTest {
                 0, 0, Double.NaN
         ), 1e-6);
     }
+
+    @Test
+    public void testIntermediatePoint() {
+        DistanceCalc distCalc = new DistanceCalcEarth();
+        GHPoint point = distCalc.intermediatePoint(0, 0, 0, 0, 0);
+        assertEquals(0, point.getLat(), 1e-5);
+        assertEquals(0, point.getLon(), 1e-5);
+
+        point = distCalc.intermediatePoint(0.5, 0, 0, 10, 0);
+        assertEquals(5, point.getLat(), 1e-5);
+        assertEquals(0, point.getLon(), 1e-5);
+
+        point = distCalc.intermediatePoint(0.5, 0, 0, 0, 10);
+        assertEquals(0, point.getLat(), 1e-5);
+        assertEquals(5, point.getLon(), 1e-5);
+
+        // cross international date line going west
+        point = distCalc.intermediatePoint(0.5, 45, -179, 45, 177);
+        assertEquals(45, point.getLat(), 1);
+        assertEquals(179, point.getLon(), 1e-5);
+
+        // cross international date line going east
+        point = distCalc.intermediatePoint(0.5, 45, 179, 45, -177);
+        assertEquals(45, point.getLat(), 1);
+        assertEquals(-179, point.getLon(), 1e-5);
+
+        // cross north pole
+        point = distCalc.intermediatePoint(0.25, 45, -90, 45, 90);
+        assertEquals(67.5, point.getLat(), 1e-1);
+        assertEquals(-90, point.getLon(), 1e-5);
+        point = distCalc.intermediatePoint(0.75, 45, -90, 45, 90);
+        assertEquals(67.5, point.getLat(), 1e-1);
+        assertEquals(90, point.getLon(), 1e-5);
+    }
 }

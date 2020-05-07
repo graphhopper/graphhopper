@@ -20,20 +20,17 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * Ensures that elevation is sampled along a point list with no more than maxDistance between samples. Works by adding
  * points along long edges and fetching elevation at each inserted point.
  *
- * This uses a simple linear approximation to interpolate between points which should be fine for short distances, but
- * if support for longer distances is needed or to handle segments crossing the international date line, should use a
- * more robust algorithm that interpolates along the great circle path between points.
+ * For short distances this uses a simple linear approximation to interpolate between points and for longer distances it
+ * uses great circle interpolation.
  */
 public class EdgeSampling {
-    private static final Logger logger = LoggerFactory.getLogger(EdgeSampling.class);
-    private static final double WARN_ON_SEGMENT_LENGTH = DistanceCalcEarth.METERS_PER_DEGREE;
+    private static final double GREAT_CIRCLE_SEGMENT_LENGTH = DistanceCalcEarth.METERS_PER_DEGREE / 4;
 
     private EdgeSampling() {}
 
@@ -47,21 +44,26 @@ public class EdgeSampling {
             thisLat = input.getLat(i);
             thisLon = input.getLon(i);
             thisEle = input.getEle(i);
-            if (i > 0 && !distCalc.isCrossBoundary(lastLon, thisLon)) {
+            if (i > 0) {
                 double segmentLength = distCalc.calcDist3D(lastLat, lastLon, lastEle, thisLat, thisLon, thisEle);
-                if (segmentLength > WARN_ON_SEGMENT_LENGTH) {
-                    logger.warn("OSM way " + wayOsmId + " edge from " + lastLat + "," + lastLon + " to " + thisLat + "," + thisLon + " is " +
-                            (int)segmentLength + "m long so edge sampling is disabled on it. Please add intermediate points in OSM.");
-                } else {
-                    int segments = (int) Math.round(segmentLength / maxDistance);
-                    for (int segment = 1; segment < segments; segment++) {
-                        double ratio = (double) segment / segments;
-                        double lat = lastLat + (thisLat - lastLat) * ratio;
-                        double lon = lastLon + (thisLon - lastLon) * ratio;
-                        double ele = elevation.getEle(lat, lon);
-                        if (!Double.isNaN(ele)) {
-                            output.add(lat, lon, ele);
-                        }
+                int segments = (int) Math.round(segmentLength / maxDistance);
+                // for small distances, we use a simple and fast approximation to interpolate between points
+                // for longer distances (or when crossing international date line) we use great circle interpolation
+                boolean exact = segmentLength > GREAT_CIRCLE_SEGMENT_LENGTH || distCalc.isCrossBoundary(lastLon, thisLon);
+                for (int segment = 1; segment < segments; segment++) {
+                    double ratio = (double) segment / segments;
+                    double lat, lon;
+                    if (exact) {
+                        GHPoint point = distCalc.intermediatePoint(ratio, lastLat, lastLon, thisLat, thisLon);
+                        lat = point.getLat();
+                        lon = point.getLon();
+                    } else {
+                        lat = lastLat + (thisLat - lastLat) * ratio;
+                        lon = lastLon + (thisLon - lastLon) * ratio;
+                    }
+                    double ele = elevation.getEle(lat, lon);
+                    if (!Double.isNaN(ele)) {
+                        output.add(lat, lon, ele);
                     }
                 }
             }

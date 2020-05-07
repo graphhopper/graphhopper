@@ -93,6 +93,15 @@ public class DistanceCalcEuclidean extends DistanceCalcEarth {
     }
 
     @Override
+    public GHPoint intermediatePoint(double f, double lat1, double lon1, double lat2, double lon2) {
+        double delatLat = lat2 - lat1;
+        double deltaLon = lon2 - lon1;
+        double midLat = lat1 + delatLat * f;
+        double midLon = lon1 + deltaLon * f;
+        return new GHPoint(midLat, midLon);
+    }
+
+    @Override
     public boolean isCrossBoundary(double lon1, double lon2) {
         throw new UnsupportedOperationException("Not supported for the 2D Euclidean space");
     }

@@ -3,6 +3,7 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 
 public class EdgeSamplingTest {
@@ -20,6 +21,17 @@ public class EdgeSamplingTest {
         String getDownloadURL(double lat, double lon) { return ""; }
     };
 
+    private double round(double d) {
+        return Math.round(d * 1000) / 1000.0;
+    }
+
+    private PointList round(PointList list) {
+        for (int i = 0; i < list.size(); i++) {
+            list.set(i, round(list.getLat(i)), round(list.getLon(i)), list.getEle(i));
+        }
+        return list;
+    }
+
     @Test
     public void doesNotAddExtraPointBelowThreshold() {
         PointList in = new PointList(2, true);
@@ -34,7 +46,7 @@ public class EdgeSamplingTest {
                 elevation
         );
 
-        assertEquals("(0.0,0.0,0.0), (1.4,0.0,0.0)", out.toString());
+        assertEquals("(0.0,0.0,0.0), (1.4,0.0,0.0)", round(out).toString());
     }
 
     @Test
@@ -51,7 +63,7 @@ public class EdgeSamplingTest {
                 elevation
         );
 
-        assertEquals("(0.0,0.0,0.0), (0.4,0.0,10.0), (0.8,0.0,0.0)", out.toString());
+        assertEquals("(0.0,0.0,0.0), (0.4,0.0,10.0), (0.8,0.0,0.0)", round(out).toString());
     }
 
     @Test
@@ -68,7 +80,7 @@ public class EdgeSamplingTest {
                 elevation
         );
 
-        assertEquals("(0.0,0.0,0.0), (0.4,0.0,10.0), (0.8,0.0,0.0)", out.toString());
+        assertEquals("(0.0,0.0,0.0), (0.4,0.0,10.0), (0.8,0.0,0.0)", round(out).toString());
     }
 
     @Test
@@ -85,14 +97,14 @@ public class EdgeSamplingTest {
                 elevation
         );
 
-        assertEquals("(0.0,0.0,0.0), (0.25,0.0,10.0), (0.5,0.0,10.0), (0.75,0.0,0.0)", out.toString());
+        assertEquals("(0.0,0.0,0.0), (0.25,0.0,10.0), (0.5,0.0,10.0), (0.75,0.0,0.0)", round(out).toString());
     }
 
     @Test
     public void doesntAddPointsCrossingInternationalDateLine() {
         PointList in = new PointList(2, true);
-        in.add(0, -179, 0);
-        in.add(0.0, 179, 0);
+        in.add(0, -178.5, 0);
+        in.add(0.0, 178.5, 0);
 
         PointList out = EdgeSampling.sample(
                 1,
@@ -102,7 +114,24 @@ public class EdgeSamplingTest {
                 elevation
         );
 
-        assertEquals("(0.0,-179.0,0.0), (0.0,179.0,0.0)", out.toString());
+        assertEquals("(0.0,-178.5,0.0), (0.0,-179.5,10.0), (0.0,179.5,10.0), (0.0,178.5,0.0)", round(out).toString());
+    }
+
+    @Test
+    public void usesGreatCircleInterpolationOnLongPaths() {
+        PointList in = new PointList(2, true);
+        in.add(88.5, -90, 0);
+        in.add(88.5, 90, 0);
+
+        PointList out = EdgeSampling.sample(
+                1,
+                in,
+                DistanceCalcEarth.METERS_PER_DEGREE,
+                new DistanceCalcEarth(),
+                elevation
+        );
+
+        assertEquals("(88.5,-90.0,0.0), (89.5,-90.0,10.0), (89.5,90.0,10.0), (88.5,90.0,0.0)", round(out).toString());
     }
 
 }
