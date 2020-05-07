@@ -17,6 +17,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <gh.version>1.0-SNAPSHOT</gh.version>
+
+        <gh.core.hash>ecef5dc51734f65399f689700ade4796661611a5n</gh.core.hash>
     </properties>
 
     <scm>
