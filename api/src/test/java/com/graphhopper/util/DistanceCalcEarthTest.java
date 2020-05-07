@@ -169,7 +169,7 @@ public class DistanceCalcEarthTest {
         double dist = calc.calcNormalizedEdgeDistance3D(0, 0, 10,
                 0, 0, 0,
                 0, 0, 1);
-        assertEquals(9, calc.calcDenormalizedDist(dist), 1e-4);
+        assertEquals(0, calc.calcDenormalizedDist(dist), 1e-4);
         // just change lat
         dist = calc.calcNormalizedEdgeDistance3D(1, 0, 0,
                 0, 0, 0,
