@@ -132,7 +132,7 @@ public class CustomModel {
                 ", maxSpeed=" + maxSpeedMap +
                 ", maxSpeedFallback=" + maxSpeedFallback +
                 ", priorityMap=" + priorityMap +
-                ", #areas=" + areas.size() +
+                ", areas=" + areas +
                 '}';
     }
 
