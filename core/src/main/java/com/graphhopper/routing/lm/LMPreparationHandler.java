@@ -68,7 +68,7 @@ public class LMPreparationHandler {
     public void init(GraphHopperConfig ghConfig) {
         // throw explicit error for deprecated configs
         if (ghConfig.has("prepare.lm.weightings")) {
-            throw new IllegalStateException("Use profiles_lm instead of prepare.lm.weightings, see #1922 and core/docs/profiles.md");
+            throw new IllegalStateException("Use profiles_lm instead of prepare.lm.weightings, see #1922 and docs/core/profiles.md");
         }
 
         setPreparationThreads(ghConfig.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));

@@ -1146,16 +1146,16 @@ public class GraphHopper implements GraphHopperAPI {
 
     protected void validateRequest(GHRequest request) {
         if (Helper.isEmpty(request.getProfile()))
-            throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see core/docs/profiles.md");
+            throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see docs/core/profiles.md");
 
         if (request.getHints().has("vehicle"))
-            throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see core/docs/profiles.md");
+            throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see docs/core/profiles.md");
         if (request.getHints().has("weighting"))
-            throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see core/docs/profiles.md");
+            throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see docs/core/profiles.md");
         if (request.getHints().has(Routing.TURN_COSTS))
-            throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see core/docs/profiles.md");
+            throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see docs/core/profiles.md");
         if (request.getHints().has(Routing.EDGE_BASED))
-            throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see core/docs/profiles.md");
+            throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see docs/core/profiles.md");
 
         if (request.getPoints().isEmpty())
             throw new IllegalArgumentException("You have to pass at least one point");

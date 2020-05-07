@@ -62,9 +62,9 @@ public class CHPreparationHandler {
         if (ghConfig.has("prepare.threads"))
             throw new IllegalStateException("Use " + CH.PREPARE + "threads instead of prepare.threads");
         if (ghConfig.has("prepare.chWeighting") || ghConfig.has("prepare.chWeightings") || ghConfig.has("prepare.ch.weightings"))
-            throw new IllegalStateException("Use profiles_ch instead of prepare.chWeighting, prepare.chWeightings or prepare.ch.weightings, see #1922 and core/docs/profiles.md");
+            throw new IllegalStateException("Use profiles_ch instead of prepare.chWeighting, prepare.chWeightings or prepare.ch.weightings, see #1922 and docs/core/profiles.md");
         if (ghConfig.has("prepare.ch.edge_based"))
-            throw new IllegalStateException("Use profiles_ch instead of prepare.ch.edge_based, see #1922 and core/docs/profiles.md");
+            throw new IllegalStateException("Use profiles_ch instead of prepare.ch.edge_based, see #1922 and docs/core/profiles.md");
 
         setPreparationThreads(ghConfig.getInt(CH.PREPARE + "threads", getPreparationThreads()));
         setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
