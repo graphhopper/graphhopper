@@ -31,7 +31,6 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -165,11 +164,11 @@ public class MapMatching {
         for (Collection<QueryResult> qrs : queriesPerEntry) {
             allQueryResults.addAll(qrs);
         }
-        queryGraph = QueryGraph.lookup(routingGraph, allQueryResults);
+        queryGraph = QueryGraph.create(routingGraph, allQueryResults);
 
         // Different QueryResults can have the same tower node as their closest node.
         // Hence, we now dedupe the query results of each GPX entry by their closest node (#91).
-        // This must be done after calling queryGraph.lookup() since this replaces some of the
+        // This must be done after calling queryGraph.create() since this replaces some of the
         // QueryResult nodes with virtual nodes. Virtual nodes are not deduped since there is at
         // most one QueryResult per edge and virtual nodes are inserted into the middle of an edge.
         // Reducing the number of QueryResults improves performance since less shortest/fastest
