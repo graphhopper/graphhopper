@@ -57,7 +57,7 @@ public class QueryGraph implements Graph {
     private final QueryGraph baseGraph;
     private final TurnCostStorage turnCostStorage;
     private final NodeAccess nodeAccess;
-    private final GraphModification graphModification;
+    private final QueryOverlay queryOverlay;
 
     // Use LinkedHashSet for predictable iteration order.
     private final Set<VirtualEdgeIteratorState> unfavoredEdges = new LinkedHashSet<>(5);
@@ -81,8 +81,8 @@ public class QueryGraph implements Graph {
         mainNodes = graph.getNodes();
         mainEdges = graph.getEdges();
 
-        graphModification = GraphModificationBuilder.build(graph, queryResults);
-        nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
+        queryOverlay = QueryOverlayBuilder.build(graph, queryResults);
+        nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), queryOverlay.getVirtualNodes(), mainNodes);
         turnCostStorage = mainGraph.getTurnCostStorage();
 
         // build data structures holding the virtual edges at all real/virtual nodes that are modified compared to the
@@ -104,7 +104,7 @@ public class QueryGraph implements Graph {
         turnCostStorage = superQueryGraph.turnCostStorage;
         mainNodes = superQueryGraph.mainNodes;
         mainEdges = superQueryGraph.mainEdges;
-        graphModification = superQueryGraph.graphModification;
+        queryOverlay = superQueryGraph.queryOverlay;
         nodeAccess = superQueryGraph.nodeAccess;
         virtualEdgesAtRealNodes = buildVirtualEdgesAtRealNodes(graph.createEdgeExplorer());
         virtualEdgesAtVirtualNodes = buildVirtualEdgesAtVirtualNodes();
@@ -229,12 +229,12 @@ public class QueryGraph implements Graph {
 
     @Override
     public int getNodes() {
-        return graphModification.getVirtualNodes().getSize() + mainNodes;
+        return queryOverlay.getVirtualNodes().getSize() + mainNodes;
     }
 
     @Override
     public int getEdges() {
-        return graphModification.getNumVirtualEdges() + mainEdges;
+        return queryOverlay.getNumVirtualEdges() + mainEdges;
     }
 
     @Override
@@ -266,7 +266,7 @@ public class QueryGraph implements Graph {
     }
 
     private VirtualEdgeIteratorState getVirtualEdge(int edgeId) {
-        return graphModification.getVirtualEdge(edgeId);
+        return queryOverlay.getVirtualEdge(edgeId);
     }
 
     private int getPosOfReverseEdge(int edgeId) {
@@ -299,10 +299,10 @@ public class QueryGraph implements Graph {
 
     private IntObjectMap<List<EdgeIteratorState>> buildVirtualEdgesAtRealNodes(final EdgeExplorer mainExplorer) {
         final IntObjectMap<List<EdgeIteratorState>> virtualEdgesAtRealNodes =
-                new GHIntObjectHashMap<>(graphModification.getEdgeChangesAtRealNodes().size());
-        graphModification.getEdgeChangesAtRealNodes().forEach(new IntObjectProcedure<GraphModification.EdgeChanges>() {
+                new GHIntObjectHashMap<>(queryOverlay.getEdgeChangesAtRealNodes().size());
+        queryOverlay.getEdgeChangesAtRealNodes().forEach(new IntObjectProcedure<QueryOverlay.EdgeChanges>() {
             @Override
-            public void apply(int node, GraphModification.EdgeChanges edgeChanges) {
+            public void apply(int node, QueryOverlay.EdgeChanges edgeChanges) {
                 List<EdgeIteratorState> virtualEdges = new ArrayList<>(edgeChanges.getAdditionalEdges());
                 EdgeIterator mainIter = mainExplorer.setBaseNode(node);
                 while (mainIter.next()) {
@@ -319,10 +319,10 @@ public class QueryGraph implements Graph {
     private List<List<EdgeIteratorState>> buildVirtualEdgesAtVirtualNodes() {
         final List<List<EdgeIteratorState>> virtualEdgesAtVirtualNodes = new ArrayList<>();
         final int[] vEdges = {VE_BASE_REV, VE_ADJ};
-        for (int i = 0; i < graphModification.getVirtualNodes().size(); i++) {
+        for (int i = 0; i < queryOverlay.getVirtualNodes().size(); i++) {
             List<EdgeIteratorState> filteredEdges = new ArrayList<>(2);
             for (int vEdge : vEdges) {
-                filteredEdges.add(graphModification.getVirtualEdge(i * 4 + vEdge));
+                filteredEdges.add(queryOverlay.getVirtualEdge(i * 4 + vEdge));
             }
             virtualEdgesAtVirtualNodes.add(filteredEdges);
         }
@@ -361,7 +361,7 @@ public class QueryGraph implements Graph {
 
     @Override
     public Weighting wrapWeighting(Weighting weighting) {
-        return new QueryGraphWeighting(weighting, mainGraph.getNodes(), mainGraph.getEdges(), graphModification.getClosestEdges());
+        return new QueryGraphWeighting(weighting, mainGraph.getNodes(), mainGraph.getEdges(), queryOverlay.getClosestEdges());
     }
 
     @Override
@@ -382,7 +382,7 @@ public class QueryGraph implements Graph {
     }
 
     List<VirtualEdgeIteratorState> getVirtualEdges() {
-        return graphModification.getVirtualEdges();
+        return queryOverlay.getVirtualEdges();
     }
 
     private UnsupportedOperationException exc() {

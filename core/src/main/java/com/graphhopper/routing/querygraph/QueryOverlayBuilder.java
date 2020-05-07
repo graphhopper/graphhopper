@@ -32,34 +32,31 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Builds the data structures that represent the changes to a graph as realized by {@link QueryGraph}
- */
-class GraphModificationBuilder {
+class QueryOverlayBuilder {
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final boolean is3D;
-    private GraphModification graphModification;
+    private QueryOverlay queryOverlay;
 
-    public static GraphModification build(Graph graph, List<QueryResult> queryResults) {
+    public static QueryOverlay build(Graph graph, List<QueryResult> queryResults) {
         return build(graph.getNodes(), graph.getEdges(), graph.getNodeAccess().is3D(), queryResults);
     }
 
-    public static GraphModification build(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D, List<QueryResult> queryResults) {
-        return new GraphModificationBuilder(firstVirtualNodeId, firstVirtualEdgeId, is3D).build(queryResults);
+    public static QueryOverlay build(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D, List<QueryResult> queryResults) {
+        return new QueryOverlayBuilder(firstVirtualNodeId, firstVirtualEdgeId, is3D).build(queryResults);
     }
 
-    private GraphModificationBuilder(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D) {
+    private QueryOverlayBuilder(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D) {
         this.firstVirtualNodeId = firstVirtualNodeId;
         this.firstVirtualEdgeId = firstVirtualEdgeId;
         this.is3D = is3D;
     }
 
-    private GraphModification build(List<QueryResult> resList) {
-        graphModification = new GraphModification(resList.size(), is3D);
+    private QueryOverlay build(List<QueryResult> resList) {
+        queryOverlay = new QueryOverlay(resList.size(), is3D);
         buildVirtualEdges(resList);
         buildEdgeChangesAtRealNodes();
-        return graphModification;
+        return queryOverlay;
     }
 
     /**
@@ -153,7 +150,7 @@ class GraphModificationBuilder {
                 int origRevEdgeKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
-                int virtNodeId = graphModification.getVirtualNodes().getSize() + firstVirtualNodeId;
+                int virtNodeId = queryOverlay.getVirtualNodes().getSize() + firstVirtualNodeId;
                 boolean addedEdges = false;
 
                 // Create base and adjacent PointLists for all non-equal virtual nodes.
@@ -171,19 +168,19 @@ class GraphModificationBuilder {
                         continue;
                     }
 
-                    graphModification.getClosestEdges().add(res.getClosestEdge().getEdge());
+                    queryOverlay.getClosestEdges().add(res.getClosestEdge().getEdge());
                     boolean isPillar = res.getSnappedPosition() == QueryResult.Position.PILLAR;
                     createEdges(origEdgeKey, origRevEdgeKey,
                             prevPoint, prevWayIndex, isPillar,
                             res.getSnappedPoint(), res.getWayIndex(),
                             fullPL, closestEdge, prevNodeId, virtNodeId);
 
-                    graphModification.getVirtualNodes().add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
+                    queryOverlay.getVirtualNodes().add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
 
                     // add edges again to set adjacent edges for newVirtNodeId
                     if (addedEdges) {
-                        graphModification.addVirtualEdge(graphModification.getVirtualEdge(graphModification.getNumVirtualEdges() - 2));
-                        graphModification.addVirtualEdge(graphModification.getVirtualEdge(graphModification.getNumVirtualEdges() - 2));
+                        queryOverlay.addVirtualEdge(queryOverlay.getVirtualEdge(queryOverlay.getNumVirtualEdges() - 2));
+                        queryOverlay.addVirtualEdge(queryOverlay.getVirtualEdge(queryOverlay.getNumVirtualEdges() - 2));
                     }
 
                     addedEdges = true;
@@ -224,7 +221,7 @@ class GraphModificationBuilder {
 
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(Helper.DIST_PLANE);
-        int virtEdgeId = firstVirtualEdgeId + graphModification.getNumVirtualEdges();
+        int virtEdgeId = firstVirtualEdgeId + queryOverlay.getNumVirtualEdges();
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
@@ -235,11 +232,11 @@ class GraphModificationBuilder {
 
         baseEdge.setReverseEdge(baseReverseEdge);
         baseReverseEdge.setReverseEdge(baseEdge);
-        graphModification.addVirtualEdge(baseEdge);
-        graphModification.addVirtualEdge(baseReverseEdge);
+        queryOverlay.addVirtualEdge(baseEdge);
+        queryOverlay.addVirtualEdge(baseReverseEdge);
     }
 
     private void buildEdgeChangesAtRealNodes() {
-        EdgeChangeBuilder.build(graphModification.getClosestEdges(), graphModification.getVirtualEdges(), firstVirtualNodeId, graphModification.getEdgeChangesAtRealNodes());
+        EdgeChangeBuilder.build(queryOverlay.getClosestEdges(), queryOverlay.getVirtualEdges(), firstVirtualNodeId, queryOverlay.getEdgeChangesAtRealNodes());
     }
 }
