@@ -33,11 +33,11 @@ import org.slf4j.LoggerFactory;
  */
 public class EdgeSampling {
     private static final Logger logger = LoggerFactory.getLogger(EdgeSampling.class);
-    private static final double WARN_ON_SEGMENT_LENGTH = DistanceCalcEarth.METERS_PER_DEGREE / 4;
+    private static final double WARN_ON_SEGMENT_LENGTH = DistanceCalcEarth.METERS_PER_DEGREE;
 
     private EdgeSampling() {}
 
-    public static PointList sample(PointList input, double maxDistance, DistanceCalc distCalc, ElevationProvider elevation) {
+    public static PointList sample(long wayOsmId, PointList input, double maxDistance, DistanceCalc distCalc, ElevationProvider elevation) {
         PointList output = new PointList(input.getSize() * 2, input.is3D());
         if (input.isEmpty()) return output;
         int nodes = input.getSize();
@@ -50,17 +50,18 @@ public class EdgeSampling {
             if (i > 0 && !distCalc.isCrossBoundary(lastLon, thisLon)) {
                 double segmentLength = distCalc.calcDist3D(lastLat, lastLon, lastEle, thisLat, thisLon, thisEle);
                 if (segmentLength > WARN_ON_SEGMENT_LENGTH) {
-                    logger.warn("Edge from " + lastLat + "," + lastLon + " to " + thisLat + "," + thisLon + " is " +
-                            (int)segmentLength + "m long, might cause issues with edge sampling.");
-                }
-                int segments = (int) Math.round(segmentLength / maxDistance);
-                for (int segment = 1; segment < segments; segment++) {
-                    double ratio = (double) segment / segments;
-                    double lat = lastLat + (thisLat - lastLat) * ratio;
-                    double lon = lastLon + (thisLon - lastLon) * ratio;
-                    double ele = elevation.getEle(lat, lon);
-                    if (!Double.isNaN(ele)) {
-                        output.add(lat, lon, ele);
+                    logger.warn("OSM way " + wayOsmId + " edge from " + lastLat + "," + lastLon + " to " + thisLat + "," + thisLon + " is " +
+                            (int)segmentLength + "m long so edge sampling is disabled on it. Please add intermediate points in OSM.");
+                } else {
+                    int segments = (int) Math.round(segmentLength / maxDistance);
+                    for (int segment = 1; segment < segments; segment++) {
+                        double ratio = (double) segment / segments;
+                        double lat = lastLat + (thisLat - lastLat) * ratio;
+                        double lon = lastLon + (thisLon - lastLon) * ratio;
+                        double ele = elevation.getEle(lat, lon);
+                        if (!Double.isNaN(ele)) {
+                            output.add(lat, lon, ele);
+                        }
                     }
                 }
             }

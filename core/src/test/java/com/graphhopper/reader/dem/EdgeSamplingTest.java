@@ -27,6 +27,7 @@ public class EdgeSamplingTest {
         in.add(1.4, 0, 0);
 
         PointList out = EdgeSampling.sample(
+                1,
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE,
                 new DistanceCalcEarth(),
@@ -40,48 +41,51 @@ public class EdgeSamplingTest {
     public void addsExtraPointAboveThreshold() {
         PointList in = new PointList(2, true);
         in.add(0, 0, 0);
-        in.add(1.6, 0, 0);
+        in.add(0.8, 0, 0);
 
         PointList out = EdgeSampling.sample(
+                1,
                 in,
-                DistanceCalcEarth.METERS_PER_DEGREE,
+                DistanceCalcEarth.METERS_PER_DEGREE / 2,
                 new DistanceCalcEarth(),
                 elevation
         );
 
-        assertEquals("(0.0,0.0,0.0), (0.8,0.0,10.0), (1.6,0.0,0.0)", out.toString());
+        assertEquals("(0.0,0.0,0.0), (0.4,0.0,10.0), (0.8,0.0,0.0)", out.toString());
     }
 
     @Test
     public void addsExtraPointBelowSecondThreshold() {
         PointList in = new PointList(2, true);
         in.add(0, 0, 0);
-        in.add(2.4, 0, 0);
+        in.add(0.8, 0, 0);
 
         PointList out = EdgeSampling.sample(
+                1,
                 in,
-                DistanceCalcEarth.METERS_PER_DEGREE,
+                DistanceCalcEarth.METERS_PER_DEGREE / 3,
                 new DistanceCalcEarth(),
                 elevation
         );
 
-        assertEquals("(0.0,0.0,0.0), (1.2,0.0,10.0), (2.4,0.0,0.0)", out.toString());
+        assertEquals("(0.0,0.0,0.0), (0.4,0.0,10.0), (0.8,0.0,0.0)", out.toString());
     }
 
     @Test
     public void addsTwoPointsAboveThreshold() {
         PointList in = new PointList(2, true);
         in.add(0, 0, 0);
-        in.add(3.0, 0, 0);
+        in.add(0.75, 0, 0);
 
         PointList out = EdgeSampling.sample(
+                1,
                 in,
-                DistanceCalcEarth.METERS_PER_DEGREE,
+                DistanceCalcEarth.METERS_PER_DEGREE / 4,
                 new DistanceCalcEarth(),
                 elevation
         );
 
-        assertEquals("(0.0,0.0,0.0), (1.0,0.0,10.0), (2.0,0.0,10.0), (3.0,0.0,0.0)", out.toString());
+        assertEquals("(0.0,0.0,0.0), (0.25,0.0,10.0), (0.5,0.0,10.0), (0.75,0.0,0.0)", out.toString());
     }
 
     @Test
@@ -91,6 +95,7 @@ public class EdgeSamplingTest {
         in.add(0.0, 179, 0);
 
         PointList out = EdgeSampling.sample(
+                1,
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE,
                 new DistanceCalcEarth(),
