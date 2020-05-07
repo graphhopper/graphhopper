@@ -74,9 +74,9 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
 
         // if alternative route calculation was done then create the responses from single paths        
         PointList wpList = getWaypoints();
-        altResponse.setWaypoints(wpList);
-        ghResponse.add(altResponse);
-        pathMerger.doWork(altResponse, Collections.singletonList(pathList.get(0)), lookup, tr);
+        pathWrapper.setWaypoints(wpList);
+        ghResponse.add(pathWrapper);
+        pathMerger.doWork(pathWrapper, Collections.singletonList(pathList.get(0)), lookup, tr);
         for (int index = 1; index < pathList.size(); index++) {
             PathWrapper tmpAltRsp = new PathWrapper();
             tmpAltRsp.setWaypoints(wpList);

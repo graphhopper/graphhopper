@@ -29,12 +29,12 @@ import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
-import com.graphhopper.routing.lm.LMConfig;
-import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
 import com.graphhopper.routing.ev.EncodedValueFactory;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.lm.LMConfig;
+import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
@@ -1045,31 +1045,17 @@ public class GraphHopper implements GraphHopperAPI {
 
         try {
             validateRequest(request);
-            PMap hints = request.getHints();
             final boolean disableCH = getDisableCH(request.getHints());
             final boolean disableLM = getDisableLM(request.getHints());
-            String algoStr = request.getAlgorithm();
-            if (algoStr.isEmpty())
-                algoStr = chPreparationHandler.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
-
             Profile profile = profilesByName.get(request.getProfile());
-            if (profile == null) {
+            if (profile == null)
                 throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist.\nAvailable profiles: " + profilesByName.keySet());
-            }
-            if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty()) {
-                List<String> turnCostProfiles = new ArrayList<>();
-                for (Profile p : profilesByName.values()) {
-                    if (p.isTurnCosts()) {
-                        turnCostProfiles.add(p.getName());
-                    }
-                }
+            if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs" +
-                        "\nThe following profiles do support turn costs: " + turnCostProfiles);
-            }
+                        "\nThe following profiles do support turn costs: " + getTurnCostProfiles());
 
             // todo later: should we be able to control this using the edge_based parameter?
             TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
-            List<GHPoint> points = request.getPoints();
             RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile.getName(), disableCH, disableLM);
             Weighting weighting;
             Graph graph = ghStorage;
@@ -1077,36 +1063,39 @@ public class GraphHopper implements GraphHopperAPI {
                 if (!(algorithmFactory instanceof CHRoutingAlgorithmFactory))
                     throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algorithmFactory);
 
-                if (hints.has(Routing.BLOCK_AREA))
+                if (request.getHints().has(Routing.BLOCK_AREA))
                     throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
 
                 CHConfig chConfig = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHConfig();
                 weighting = chConfig.getWeighting();
                 graph = ghStorage.getCHGraph(chConfig);
             } else {
-                checkNonChMaxWaypointDistance(points);
-                final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                checkNonChMaxWaypointDistance(request.getPoints());
+                final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
                     throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
                 }
                 FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-                weighting = createWeighting(profile, hints);
-                if (hints.has(Routing.BLOCK_AREA))
+                weighting = createWeighting(profile, request.getHints());
+                if (request.getHints().has(Routing.BLOCK_AREA))
                     weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
-                            points, hints, DefaultEdgeFilter.allEdges(encoder)));
+                            request.getPoints(), request.getHints(), DefaultEdgeFilter.allEdges(encoder)));
             }
             ghRsp.addDebugInfo("tmode:" + tMode.toString());
 
+            String algoStr = request.getAlgorithm();
+            if (algoStr.isEmpty())
+                algoStr = chPreparationHandler.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
             RoutingTemplate routingTemplate = createRoutingTemplate(request, ghRsp, algoStr, weighting);
 
             StopWatch sw = new StopWatch().start();
-            List<QueryResult> qResults = routingTemplate.lookup(points);
+            List<QueryResult> qResults = routingTemplate.lookup(request.getPoints());
             ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
             if (ghRsp.hasErrors())
                 return Collections.emptyList();
 
             QueryGraph queryGraph = QueryGraph.create(graph, qResults);
-            int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
+            int maxVisitedNodesForRequest = request.getHints().getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
             if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
 
@@ -1115,15 +1104,15 @@ public class GraphHopper implements GraphHopperAPI {
                     traversalMode(tMode).
                     weighting(weighting).
                     maxVisitedNodes(maxVisitedNodesForRequest).
-                    hints(hints).
+                    hints(request.getHints()).
                     build();
 
             // do the actual route calculation !
             List<Path> altPaths = routingTemplate.calcPaths(queryGraph, algorithmFactory, algoOpts);
 
-            boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, encodingManager.isEnableInstructions());
-            boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, routingConfig.isCalcPoints());
-            double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
+            boolean tmpEnableInstructions = request.getHints().getBool(Routing.INSTRUCTIONS, encodingManager.isEnableInstructions());
+            boolean tmpCalcPoints = request.getHints().getBool(Routing.CALC_POINTS, routingConfig.isCalcPoints());
+            double wayPointMaxDistance = request.getHints().getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
 
             DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
             PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
@@ -1142,6 +1131,16 @@ public class GraphHopper implements GraphHopperAPI {
             ghRsp.addError(ex);
             return Collections.emptyList();
         }
+    }
+
+    private List<String> getTurnCostProfiles() {
+        List<String> turnCostProfiles = new ArrayList<>();
+        for (Profile p : profilesByName.values()) {
+            if (p.isTurnCosts()) {
+                turnCostProfiles.add(p.getName());
+            }
+        }
+        return turnCostProfiles;
     }
 
     protected void validateRequest(GHRequest request) {
