@@ -70,14 +70,4 @@ public class CHConfig {
     public int hashCode() {
         return getName().hashCode();
     }
-
-    public int getVersion() {
-        int hash = Helper.staticHashCode(chGraphName);
-        hash = 31 * hash + Helper.staticHashCode(weighting.getName());
-        // if flag encoder is removed we could use weighting.toString
-        hash = 31 * hash + Helper.staticHashCode(weighting.getFlagEncoder().toString());
-        hash *= weighting.hasTurnCosts() ? 31 : 62;
-        hash *= edgeBased ? 31 : 62;
-        return hash;
-    }
 }

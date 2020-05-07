@@ -982,8 +982,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (isCHPrepared()) {
             // check loaded profiles
             for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-                if (!getProfileHash(profile.getProfile()).isEmpty()
-                        && !getProfileHash(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                if (!getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
                     throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
             }
         } else {
@@ -1275,18 +1274,18 @@ public class GraphHopper implements GraphHopperAPI {
         return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
     }
 
-    private String getProfileHash(String profile) {
-        return ghStorage.getProperties().get("graph.profiles." + profile + ".hash");
+    private String getProfileVersion(String profile) {
+        return ghStorage.getProperties().get("graph.profiles." + profile + ".version");
     }
 
-    private void setProfileHash(String profile, int version) {
-        ghStorage.getProperties().put("graph.profiles." + profile + ".hash", version);
+    private void setProfileVersion(String profile, int version) {
+        ghStorage.getProperties().put("graph.profiles." + profile + ".version", version);
     }
 
     protected void prepareCH(boolean closeEarly) {
         for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-            if (!getProfileHash(profile.getProfile()).isEmpty()
-                    && !getProfileHash(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+            if (!getProfileVersion(profile.getProfile()).isEmpty()
+                    && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
                 throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
         }
 
@@ -1305,7 +1304,7 @@ public class GraphHopper implements GraphHopperAPI {
             ghStorage.getProperties().put(CH.PREPARE + "done", true);
             for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
                 // potentially overwrite existing keys from LM
-                setProfileHash(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+                setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
             }
         }
     }
@@ -1317,8 +1316,8 @@ public class GraphHopper implements GraphHopperAPI {
         boolean tmpPrepare = lmPreparationHandler.isEnabled() && !lmPreparationHandler.getPreparations().isEmpty();
         if (tmpPrepare) {
             for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
-                if (!getProfileHash(profile.getProfile()).isEmpty()
-                        && !getProfileHash(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                if (!getProfileVersion(profile.getProfile()).isEmpty()
+                        && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
                     throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
             }
             ensureWriteAccess();
@@ -1327,7 +1326,7 @@ public class GraphHopper implements GraphHopperAPI {
                 ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
                 for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
                     // potentially overwrite existing keys from CH
-                    setProfileHash(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+                    setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
                 }
             }
         }
