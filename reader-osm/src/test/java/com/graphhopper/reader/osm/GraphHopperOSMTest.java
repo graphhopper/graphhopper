@@ -966,7 +966,7 @@ public class GraphHopperOSMTest {
             for (PrepareContractionHierarchies pch : hopper.getCHPreparationHandler().getPreparations()) {
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", pch.isPrepared());
 
-                String name = pch.getCHProfile().toFileName();
+                String name = pch.getCHConfig().toFileName();
                 Long singleThreadShortcutCount = shortcutCountMap.get(name);
                 if (singleThreadShortcutCount == null)
                     shortcutCountMap.put(name, pch.getShortcuts());

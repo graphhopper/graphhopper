@@ -103,7 +103,7 @@ public class CHPreparationHandler {
             throw new IllegalStateException("You need to add the corresponding CH configs before adding preparations.");
         }
         CHConfig expectedConfig = chConfigs.get(preparations.size());
-        if (!pch.getCHProfile().equals(expectedConfig)) {
+        if (!pch.getCHConfig().equals(expectedConfig)) {
             throw new IllegalArgumentException("CH config of preparation: " + pch + " needs to be identical to previously added CH config: " + expectedConfig);
         }
         preparations.add(pch);
@@ -174,8 +174,8 @@ public class CHPreparationHandler {
             throw new IllegalStateException("No CH preparations added yet");
         List<String> profileNames = new ArrayList<>(preparations.size());
         for (PrepareContractionHierarchies preparation : preparations) {
-            profileNames.add(preparation.getCHProfile().getName());
-            if (preparation.getCHProfile().getName().equalsIgnoreCase(profile)) {
+            profileNames.add(preparation.getCHConfig().getName());
+            if (preparation.getCHConfig().getName().equalsIgnoreCase(profile)) {
                 return preparation;
             }
         }
@@ -206,8 +206,8 @@ public class CHPreparationHandler {
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : preparations) {
             LOGGER.info((++counter) + "/" + preparations.size() + " calling " +
-                    "CH prepare.doWork for profile '" + prepare.getCHProfile().getName() + "' " + prepare.getCHProfile().getTraversalMode() + " ... (" + getMemInfo() + ")");
-            final String name = prepare.getCHProfile().getName();
+                    "CH prepare.doWork for profile '" + prepare.getCHConfig().getName() + "' " + prepare.getCHConfig().getTraversalMode() + " ... (" + getMemInfo() + ")");
+            final String name = prepare.getCHConfig().getName();
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {
