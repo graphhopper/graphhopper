@@ -1408,13 +1408,13 @@ public class GraphHopperIT {
         testCrossQueryAssert(profile3, hopper, 815.4, 146, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
-        testCrossQueryAssert(profile1, hopper, 528.3, 106, false);
-        testCrossQueryAssert(profile2, hopper, 636.0, 78, false);
+        testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
+        testCrossQueryAssert(profile2, hopper, 636.0, 84, false);
         // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
         // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
         // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
         // instead of 124 visited nodes (not shown here)
-        testCrossQueryAssert(profile3, hopper, 815.4, 124, false);
+        testCrossQueryAssert(profile3, hopper, 815.4, 128, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {

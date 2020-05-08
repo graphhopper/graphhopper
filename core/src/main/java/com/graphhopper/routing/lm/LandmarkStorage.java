@@ -36,7 +36,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -227,28 +226,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             landmarkWeightDA.setShort(pointer, (short) SHORT_INFINITY);
         }
 
-        String additionalInfo = "";
-        // guess the factor
-        if (factor <= 0) {
-            // A 'factor' is necessary to store the weight in just a short value but without loosing too much precision.
-            // This factor is rather delicate to pick, we estimate it through the graph boundaries its maximum distance.
-            // For small areas we use max_bounds_dist*X and otherwise we use a big fixed value for this distance.
-            // If we would pick the distance too big for small areas this could lead to (slightly) suboptimal routes as there
-            // will be too big rounding errors. But picking it too small is dangerous regarding performance
-            // e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for just 1000km
-            BBox bounds = graph.getBounds();
-            double distanceInMeter = Helper.DIST_EARTH.calcDist(bounds.maxLat, bounds.maxLon, bounds.minLat, bounds.minLon) * 7;
-            if (distanceInMeter > 50_000 * 7 || /* for tests and convenience we do for now: */ !bounds.isValid())
-                distanceInMeter = 30_000_000;
-
-            double maxWeight = weighting.getMinWeight(distanceInMeter);
-            setMaximumWeight(maxWeight);
-            additionalInfo = ", maxWeight:" + maxWeight + ", from max distance:" + distanceInMeter / 1000f + "km";
-        }
-
-        if (logDetails)
-            LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + " with factor:" + factor + additionalInfo);
-
         int[] empty = new int[landmarks];
         Arrays.fill(empty, UNSET_SUBNETWORK);
         landmarkIDs.add(empty);
@@ -277,12 +254,30 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             LOGGER.info("Calculated " + graphComponents.size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
 
         EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
+        String additionalInfo = "";
+        // guess the factor
+        if (factor <= 0) {
+            // A 'factor' is necessary to store the weight in just a short value but without loosing too much precision.
+            // This factor is rather delicate to pick, we estimate it from an exploration with some "test landmarks",
+            // see estimateMaxWeight. If we pick the distance too big for small areas this could lead to (slightly)
+            // suboptimal routes as there will be too big rounding errors. But picking it too small is bad for performance
+            // e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for 1000km
+            double maxWeight = estimateMaxWeight(tmpExplorer, graphComponents, blockedEdges);
+            setMaximumWeight(maxWeight);
+            additionalInfo = ", maxWeight:" + maxWeight + " from quick estimation";
+        }
+
+        if (logDetails)
+            LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + " with factor:" + factor + additionalInfo);
 
         int nodes = 0;
         for (IntArrayList subnetworkIds : graphComponents) {
             nodes += subnetworkIds.size();
             if (subnetworkIds.size() < minimumNodes)
                 continue;
+            if (factor <= 0)
+                throw new IllegalStateException("factor wasn't initialized " + factor + ", subnetworks:"
+                        + graphComponents.size() + ", minimumNodes:" + minimumNodes + ", current size:" + subnetworkIds.size());
 
             int index = subnetworkIds.size() - 1;
             // ensure start node is reachable from both sides and no subnetwork is associated
@@ -336,6 +331,56 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     }
 
     /**
+     * This method returns the maximum weight for the graph starting from the landmarks
+     */
+    private double estimateMaxWeight(EdgeExplorer requireBothDirExplorer, List<IntArrayList> graphComponents, IntHashSet blockedEdges) {
+        double maxWeight = 0;
+        int searchedSubnetworks = 0;
+        for (IntArrayList subnetworkIds : graphComponents) {
+            if (subnetworkIds.size() < minimumNodes)
+                continue;
+
+            searchedSubnetworks++;
+            int index = subnetworkIds.size() - 1;
+            SUBNETWORK:
+            for (; index >= 0; index--) {
+                int nextStartNode = subnetworkIds.get(index);
+                if (GHUtility.count(requireBothDirExplorer.setBaseNode(nextStartNode)) > 0) {
+                    Weighting initWeighting = lmSelectionWeighting;
+                    int startNode = nextStartNode;
+
+                    for (int i = 0; i < landmarks; i++) {
+                        // search potential landmark
+                        LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
+                        explorer.setStartNode(startNode);
+                        explorer.setFilter(blockedEdges, true, true);
+                        explorer.runAlgo();
+                        if (explorer.getFromCount() < minimumNodes)
+                            continue;
+
+                        // from landmark we can explore the graph and get the max weight
+                        int potentialLandmarkNodeId = startNode = explorer.getLastEntry().adjNode;
+                        explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, true);
+                        explorer.setStartNode(potentialLandmarkNodeId);
+                        explorer.setFilter(blockedEdges, true, true);
+                        explorer.runAlgo();
+                        maxWeight = Math.max(maxWeight, explorer.getLastEntry().weight);
+                        break SUBNETWORK;
+                    }
+                }
+            }
+        }
+
+        if (maxWeight <= 0 && searchedSubnetworks > 0)
+            throw new IllegalStateException("max weight wasn't set although " + searchedSubnetworks + " subnetworks were searched (total " + graphComponents.size() + "), minimumNodes:" + minimumNodes);
+
+        // we have to increase maxWeight slightly as it is only an approximation towards the maximum weight
+        // TODO NOW but why is this necessary when we loop through all the landmarks and only those weights are used? We shouldn't need to determine All-to-All
+        //  a value too small <= 1.002 or too high >= 1.05 will let GraphHopperIT.testImportThenLoadLM fail
+        return maxWeight * 1.01;
+    }
+
+    /**
      * This method creates landmarks for the specified subnetwork (integer list)
      *
      * @return landmark mapping
@@ -370,40 +415,14 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         }
 
         if (pickedPrecalculatedLandmarks) {
-            LOGGER.info("Picked " + tmpLandmarkNodeIds.length + " landmark suggestions, skipped expensive landmark determination");
+            LOGGER.info("Picked " + tmpLandmarkNodeIds.length + " landmark suggestions, skip finding landmarks");
         } else {
-            // 1a) pick landmarks via special weighting for a better geographical spreading
-            Weighting initWeighting = lmSelectionWeighting;
-            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
-            explorer.setStartNode(startNode);
-            explorer.setFilter(blockedEdges, true, true);
-            explorer.runAlgo();
-
+            LandmarkExplorer explorer = findLandmarks(tmpLandmarkNodeIds, startNode, blockedEdges, logOffset);
             if (explorer.getFromCount() < minimumNodes) {
                 // too small subnetworks are initialized with special id==0
                 explorer.setSubnetworks(subnetworks, UNCLEAR_SUBNETWORK);
                 return false;
             }
-
-            // 1b) we have one landmark, now determine the other landmarks
-            tmpLandmarkNodeIds[0] = explorer.getLastNode();
-            for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length - 1; lmIdx++) {
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new RuntimeException("Thread was interrupted");
-                }
-                explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
-                explorer.setFilter(blockedEdges, true, true);
-                // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
-                for (int j = 0; j < lmIdx + 1; j++) {
-                    explorer.setStartNode(tmpLandmarkNodeIds[j]);
-                }
-                explorer.runAlgo();
-                tmpLandmarkNodeIds[lmIdx + 1] = explorer.getLastNode();
-                if (logDetails && lmIdx % logOffset == 0)
-                    LOGGER.info("Finding landmarks [" + lmConfig + "] in network [" + explorer.getVisitedNodes() + "]. "
-                            + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%, " + Helper.getMemInfo());
-            }
-
             if (logDetails)
                 LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
         }
@@ -521,7 +540,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     final boolean setWeight(long pointer, double value) {
         double tmpVal = value / factor;
         if (tmpVal > Integer.MAX_VALUE)
-            throw new UnsupportedOperationException("Cannot store infinity explicitely, pointer=" + pointer + ", value: " + value);
+            throw new UnsupportedOperationException("Cannot store infinity explicitly, pointer=" + pointer + ", value=" + value + ", factor=" + factor);
 
         if (tmpVal >= SHORT_MAX) {
             landmarkWeightDA.setShort(pointer, (short) SHORT_MAX);
@@ -551,7 +570,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (subnetworkFrom <= UNCLEAR_SUBNETWORK || subnetworkTo <= UNCLEAR_SUBNETWORK)
             return false;
         if (subnetworkFrom != subnetworkTo) {
-            throw new ConnectionNotFoundException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo, new HashMap<String, Object>());
+            throw new ConnectionNotFoundException("Connection between locations not found. Different subnetworks " + subnetworkFrom
+                    + " vs. " + subnetworkTo, new HashMap<String, Object>());
         }
 
         int[] tmpIDs = landmarkIDs.get(subnetworkFrom);
@@ -714,15 +734,46 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return graph.getNodes();
     }
 
+    private LandmarkExplorer findLandmarks(int[] landmarkNodeIdsToReturn, int startNode, IntHashSet blockedEdges, int logOffset) {
+        // 1a) pick landmarks via special weighting for a better geographical spreading
+        Weighting initWeighting = lmSelectionWeighting;
+        LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
+        explorer.setStartNode(startNode);
+        explorer.setFilter(blockedEdges, true, true);
+        explorer.runAlgo();
+
+        if (explorer.getFromCount() >= minimumNodes) {
+            // 1b) we have one landmark, now determine the other landmarks
+            landmarkNodeIdsToReturn[0] = explorer.getLastEntry().adjNode;
+            for (int lmIdx = 0; lmIdx < landmarkNodeIdsToReturn.length - 1; lmIdx++) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new RuntimeException("Thread was interrupted");
+                }
+                explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
+                explorer.setFilter(blockedEdges, true, true);
+                // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
+                for (int j = 0; j < lmIdx + 1; j++) {
+                    explorer.setStartNode(landmarkNodeIdsToReturn[j]);
+                }
+                explorer.runAlgo();
+                landmarkNodeIdsToReturn[lmIdx + 1] = explorer.getLastEntry().adjNode;
+                if (logDetails && lmIdx % logOffset == 0)
+                    LOGGER.info("Finding landmarks [" + lmConfig + "] in network [" + explorer.getVisitedNodes() + "]. "
+                            + "Progress " + (int) (100.0 * lmIdx / landmarkNodeIdsToReturn.length) + "%, " + Helper.getMemInfo());
+            }
+        }
+        return explorer;
+    }
+
     /**
      * This class is used to calculate landmark location (equally distributed).
      * It derives from DijkstraBidirectionRef, but is only used as forward or backward search.
      */
     private static class LandmarkExplorer extends DijkstraBidirectionRef {
-        private int lastNode;
         // todo: rename 'from' to 'reverse' (and flip it) ? 'from' is used in many places for node ids and 'reverse' is mostly used for the direction
         private boolean from;
         private final LandmarkStorage lms;
+        private SPTEntry lastEntry;
 
         public LandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode, boolean from) {
             super(g, weighting, tMode);
@@ -754,25 +805,23 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             return bestWeightMapFrom.size();
         }
 
-        int getToCount() {
-            return bestWeightMapTo.size();
-        }
-
-        public int getLastNode() {
-            return lastNode;
-        }
-
         public void runAlgo() {
             super.runAlgo();
+        }
+
+        SPTEntry getLastEntry() {
+            if (!finished())
+                throw new IllegalStateException("Cannot get max weight if not yet finished");
+            return lastEntry;
         }
 
         @Override
         public boolean finished() {
             if (from) {
-                lastNode = currFrom.adjNode;
+                lastEntry = currFrom;
                 return finishedFrom;
             } else {
-                lastNode = currTo.adjNode;
+                lastEntry = currTo;
                 return finishedTo;
             }
         }
