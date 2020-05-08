@@ -17,13 +17,10 @@ public class PointMatrixList extends AbstractList<PointMatrix> {
     private final IdentifiedPointList pointList;
     private final GraphHopperAPI graphHopper;
 
-    public PointMatrixList(GraphHopperAPI graphHopper, IdentifiedPointList pointList) {
+    public PointMatrixList(GraphHopperAPI graphHopper, IdentifiedPointList pointList, GHPoint depotPoint) {
         this.graphHopper = graphHopper;
         this.pointList = pointList;
-        this.pointList.add(new GHPoint(47.38449,8.4904332), "DEPOT"); // Zurich
-//        this.pointList.add(new GHPoint(46.5412127,6.6175954), "DEPOT"); // Laussanne
-//        this.pointList.add(new GHPoint(46.449892,6.8683), "DEPOT"); // Laussanne
-
+        this.pointList.add(depotPoint, "DEPOT"); // Zurich
         this.pointMatrixList = Build();
     }
 

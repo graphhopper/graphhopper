@@ -39,12 +39,14 @@ public class GraphHopperModule extends SimpleModule {
         addDeserializer(BBox.class, new BBoxDeserializer());
         addSerializer(BBox.class, new BBoxSerializer());
         addDeserializer(GHPoint.class, new GHPointDeserializer());
-        addSerializer(IdentifiedGHPoint3D.class, new IdentifiedGHPointSerializer());
         addSerializer(GHPoint.class, new GHPointSerializer());
         addDeserializer(PathDetail.class, new PathDetailDeserializer());
         addSerializer(PathDetail.class, new PathDetailSerializer());
         addSerializer(InstructionList.class, new InstructionListSerializer());
         addSerializer(MultiException.class, new MultiExceptionSerializer());
+
+        // Farmy
+        addSerializer(IdentifiedGHPoint3D.class, new IdentifiedGHPointSerializer());
     }
 
 }

@@ -6,7 +6,7 @@ in GraphHopper calculate the shortest path, which means the path with the [lowes
 The definition of the cost function is up to you, so you can create a cost function (we call this weighting) for the fastest path. 
 GraphHopper will still calculate the path with the lowest cost, but you can define the cost as a mix of distance speed, as shown in the [FastestWeighting](https://github.com/graphhopper/graphhopper/blob/master/core/src/main/java/com/graphhopper/routing/weighting/FastestWeighting.java).
 
-In order to create a custom weighting you need to do the following:
+In farmyOrder to create a custom weighting you need to do the following:
 
  1. Implement the Weighting class
  2. Create a subclass of GraphHopper and override `createWeighting`

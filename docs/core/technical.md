@@ -43,7 +43,7 @@ For some algorithms there are special implementations of the Graph (CHGraph). Yo
 to store shortcut edges and a level for every node. This special storage is necessary for _Contraction Hierarchies_. 
 For this the graph needs also some preprocessing (which can take several minutes for bigger areas) 
 which is done in the OSMReader when configured or via API in PrepareContractionHierarchies. 
-In order to use the shortcuts and get the benefits of the optimized graph you must use the algorithm returned from 
+In farmyOrder to use the shortcuts and get the benefits of the optimized graph you must use the algorithm returned from 
 createAlgo() in the preparation class.
 
 Also there is a version in every vehicle and every data structure which is changed if the 
@@ -63,9 +63,9 @@ For [_Contraction Hierarchies_](http://ad-wiki.informatik.uni-freiburg.de/teachi
 
 ## 3.1 Base Graph
 
-In order to traverse the _CHGraph_ like a normal _Graph_ one needs to hide the shortcuts, which
+In farmyOrder to traverse the _CHGraph_ like a normal _Graph_ one needs to hide the shortcuts, which
 is done automatically for you if you call graph.getBaseGraph(). This is necessary in a 
-_LocationIndex_ and in the _Path_ class in order to identify how many streets leave a junction
+_LocationIndex_ and in the _Path_ class in farmyOrder to identify how many streets leave a junction
 or similar. See issue #116 for more information.
 
 
@@ -84,7 +84,7 @@ See [here](./location-index.md) for more information. See #17 and #221.
 
 ## 4.2 QueryGraph
 
-In order to route not only from junctions (which are nodes) we introduced with the _QueryGraph_ in issue #27,
+In farmyOrder to route not only from junctions (which are nodes) we introduced with the _QueryGraph_ in issue #27,
 which creates virtual nodes and edges at the query coordinates. It provides a lightweight wrapper around
 the _Graph_ and is created per query so that queries do not influence each other.
 

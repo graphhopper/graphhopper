@@ -1,5 +1,6 @@
 package com.graphhopper.farmy;
 
+import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.TimeWindow;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
@@ -9,8 +10,9 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
     public String id;
     public String direction;
     public double serviceTime;
-
     public TimeWindow timeWindow;
+    public double plannedTime;
+    public double weight;
 
     public IdentifiedGHPoint3D(double lat, double lon, double elevation, String id) {
         super(lat, lon, elevation);
@@ -34,6 +36,11 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
 
     public IdentifiedGHPoint3D(GHPoint point, String id) {
         super(point.getLat(), point.getLon(), 0);
+        this.id = id;
+    }
+
+    public IdentifiedGHPoint3D(Location point, String id) {
+        super(point.getCoordinate().getX(), point.getCoordinate().getY(), 0);
         this.id = id;
     }
 
@@ -79,6 +86,24 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
         return this;
     }
 
+    public double getPlannedTime() {
+        return plannedTime;
+    }
+
+    public IdentifiedGHPoint3D setPlannedTime(double plannedTime) {
+        this.plannedTime = plannedTime;
+        return this;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public IdentifiedGHPoint3D setWeight(double weight) {
+        this.weight = weight;
+        return this;
+    }
+
     @Override
     public String toString() {
         return super.toString() + "," + id;
@@ -86,6 +111,17 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
 
 
     public String[] toGeoJsonWithId() {
-        return new String[]{String.valueOf(lat), String.valueOf(lon), String.valueOf(ele), id};
+        return new String[]{
+                String.valueOf(lat), // [0]
+                String.valueOf(lon), // [1]
+                String.valueOf(ele), // [2]
+                id, // [3]
+                getTimeWindow() != null ? String.valueOf(getTimeWindow().getStart() / 1000) : "", // [4]
+                getTimeWindow() != null ? String.valueOf(getTimeWindow().getEnd() / 1000) : "", // [5]
+                String.valueOf(getServiceTime() / 1000), // [6]
+                getDirection(), // [7]
+                String.valueOf(getPlannedTime() / 1000),
+                String.valueOf(getWeight())
+        };
     }
 }

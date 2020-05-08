@@ -1,17 +1,23 @@
 package com.graphhopper.resources;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.farmy.FarmyCourier;
+import com.graphhopper.farmy.FarmyOrder;
 import com.graphhopper.farmy.RouteOptimize;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.GET;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 
 @Path("optimize-route")
 public class OptimizeRouteResource {
@@ -27,18 +33,54 @@ public class OptimizeRouteResource {
         this.hasElevation = hasElevation;
     }
 
-    @GET
-    @Produces({MediaType.APPLICATION_JSON})
-    public Response doGet() {
+//    @GET
+//    @Produces({MediaType.APPLICATION_JSON})
+//    public Response doGet() {
+//
+//        RouteOptimize routeOptimize = null;
+//        try {
+//            routeOptimize = new RouteOptimize(this.graphHopper);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return Response.serverError().build();
+//        }
+//        return Response.ok().entity(routeOptimize.getOptimizedRoutes()).build();
+//    }
 
+
+//    @POST
+//    @Consumes(MediaType.MULTIPART_FORM_DATA)
+//    @Produces({MediaType.APPLICATION_JSON})
+//    public Response doPost(@FormDataParam("file") InputStream file,
+//                           @FormDataParam("file") FormDataContentDisposition fileInfo,
+//                           @FormDataParam("depotPoint") String depotPoint) {
+//
+//        RouteOptimize routeOptimize = null;
+//        try {
+//            routeOptimize = new RouteOptimize(this.graphHopper, file, GHPoint3D.fromString(depotPoint));
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return Response.serverError().build();
+//        }
+//        return Response.ok().entity(routeOptimize.getOptimizedRoutes()).build();
+//    }
+
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response doPost(@FormDataParam("orders") String farmyOrdersStr,
+                           @FormDataParam("couriers") String farmyCouriersStr) throws IOException {
+        FarmyOrder[] farmyOrders = new ObjectMapper().readValue(farmyOrdersStr, FarmyOrder[].class);
+        FarmyCourier[] farmyCouriers = new ObjectMapper().readValue(farmyCouriersStr, FarmyCourier[].class);
         RouteOptimize routeOptimize = null;
         try {
-            routeOptimize = new RouteOptimize(this.graphHopper);
+            routeOptimize = new RouteOptimize(this.graphHopper, farmyOrders, farmyCouriers);
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().build();
         }
         return Response.ok().entity(routeOptimize.getOptimizedRoutes()).build();
     }
+
 
 }

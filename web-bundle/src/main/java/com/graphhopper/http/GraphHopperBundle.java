@@ -46,6 +46,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -235,6 +236,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(SPTResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
+        environment.jersey().register(MultiPartFeature.class);
         environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopperManaged.getGraphHopper()));
     }
 }
