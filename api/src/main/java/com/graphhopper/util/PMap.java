@@ -21,7 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * A properties map (String to String) with convenient accessors
+ * A properties map (String to Object) with convenient methods to access the content.
  * <p>
  *
  * @author Peter Karich
