@@ -729,7 +729,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     }
 
     private LandmarkExplorer findLandmarks(int[] landmarkNodeIdsToReturn, int startNode, IntHashSet blockedEdges) {
-        int logOffset = Math.max(1, landmarks / 2);
+        int logOffset = Math.max(1, landmarkNodeIdsToReturn.length / 2);
         // 1a) pick landmarks via special weighting for a better geographical spreading
         Weighting initWeighting = lmSelectionWeighting;
         LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
