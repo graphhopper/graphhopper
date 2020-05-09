@@ -291,17 +291,23 @@ public class DistanceCalcEarth implements DistanceCalc {
 
         double deltaLat = lat2radians - lat1radians;
         double deltaLon = lon2radians - lon1radians;
-        double a = Math.sin(deltaLat/2) * Math.sin(deltaLat/2)
-                + Math.cos(lat1radians) * Math.cos(lat2radians) * Math.sin(deltaLon/2) * Math.sin(deltaLon/2);
+        double cosLat1 = cos(lat1radians);
+        double cosLat2 = cos(lat2radians);
+        double sinHalfDeltaLat = sin(deltaLat / 2);
+        double sinHalfDeltaLon = sin(deltaLon / 2);
+
+        double a = sinHalfDeltaLat * sinHalfDeltaLat + cosLat1 * cosLat2 * sinHalfDeltaLon * sinHalfDeltaLon;
         double angularDistance =  2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        double sinDistance = sin(angularDistance);
+
         if (angularDistance == 0) return new GHPoint(lat1, lon1);
 
-        double A = Math.sin((1-f)*angularDistance) / Math.sin(angularDistance);
-        double B = Math.sin(f*angularDistance) / Math.sin(angularDistance);
+        double A = Math.sin((1-f)*angularDistance) / sinDistance;
+        double B = Math.sin(f*angularDistance) / sinDistance;
 
-        double x = A * Math.cos(lat1radians) * Math.cos(lon1radians) + B * Math.cos(lat2radians) * Math.cos(lon2radians);
-        double y = A * Math.cos(lat1radians) * Math.sin(lon1radians) + B * Math.cos(lat2radians) * Math.sin(lon2radians);
-        double z = A * Math.sin(lat1radians) + B * Math.sin(lat2radians);
+        double x = A * cosLat1 * cos(lon1radians) + B * cosLat2 * cos(lon2radians);
+        double y = A * cosLat1 * sin(lon1radians) + B * cosLat2 * sin(lon2radians);
+        double z = A * sin(lat1radians) + B * sin(lat2radians);
 
         double midLat = Math.toDegrees(Math.atan2(z, Math.sqrt(x*x + y*y)));
         double midLon = Math.toDegrees(Math.atan2(y, x));
