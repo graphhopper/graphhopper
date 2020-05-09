@@ -118,7 +118,7 @@ public class PrepareLandmarksTest {
         assertEquals(0, store.getFromWeight(0, 224));
         double factor = store.getFactor();
         assertEquals(4671, Math.round(store.getFromWeight(0, 47) * factor));
-        assertEquals(3640, Math.round(store.getFromWeight(0, 52) * factor));
+        assertEquals(3639, Math.round(store.getFromWeight(0, 52) * factor));
 
         long weight1_224 = store.getFromWeight(1, 224);
         assertEquals(5525, Math.round(weight1_224 * factor));
