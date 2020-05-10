@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.matching.*;
 import com.graphhopper.matching.gpx.Gpx;
@@ -131,14 +131,14 @@ public class MapMatchingResource {
                     setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
                     setDouglasPeucker(peucker).
                     setSimplifyResponse(minPathPrecision > 0);
-            PathWrapper pathWrapper = new PathWrapper();
-            pathMerger.doWork(pathWrapper, Collections.singletonList(matchResult.getMergedPath()), graphHopper.getEncodingManager(), tr);
+            ResponsePath responsePath = new ResponsePath();
+            pathMerger.doWork(responsePath, Collections.singletonList(matchResult.getMergedPath()), graphHopper.getEncodingManager(), tr);
 
             // GraphHopper thinks an empty path is an invalid path, and further that an invalid path is still a path but
             // marked with a non-empty list of Exception objects. I disagree, so I clear it.
-            pathWrapper.getErrors().clear();
+            responsePath.getErrors().clear();
             GHResponse rsp = new GHResponse();
-            rsp.add(pathWrapper);
+            rsp.add(responsePath);
 
             if (writeGPX) {
                 long time = gpx.trk.get(0).getStartTime()

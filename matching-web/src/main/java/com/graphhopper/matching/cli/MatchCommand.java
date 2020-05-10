@@ -3,7 +3,7 @@ package com.graphhopper.matching.cli;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
@@ -121,11 +121,11 @@ public class MatchCommand extends Command {
                 String outFile = gpxFile.getAbsolutePath() + ".res.gpx";
                 System.out.println("\texport results to:" + outFile);
 
-                PathWrapper pathWrapper = new PathWrapper();
+                ResponsePath responsePath = new ResponsePath();
                 new PathMerger(mr.getGraph(), weighting).
-                        doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
-                if (pathWrapper.hasErrors()) {
-                    System.err.println("Problem with file " + gpxFile + ", " + pathWrapper.getErrors());
+                        doWork(responsePath, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
+                if (responsePath.hasErrors()) {
+                    System.err.println("Problem with file " + gpxFile + ", " + responsePath.getErrors());
                     continue;
                 }
 
@@ -133,7 +133,7 @@ public class MatchCommand extends Command {
                     long time = gpx.trk.get(0).getStartTime()
                             .map(Date::getTime)
                             .orElse(System.currentTimeMillis());
-                    writer.append(GpxFromInstructions.createGPX(pathWrapper.getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, hopper.hasElevation(), withRoute, true, false, Constants.VERSION, tr));
+                    writer.append(GpxFromInstructions.createGPX(responsePath.getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, hopper.hasElevation(), withRoute, true, false, Constants.VERSION, tr));
                 }
             } catch (Exception ex) {
                 importSW.stop();

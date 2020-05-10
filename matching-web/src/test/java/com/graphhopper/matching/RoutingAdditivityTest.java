@@ -20,7 +20,7 @@ package com.graphhopper.matching;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -61,14 +61,14 @@ public class RoutingAdditivityTest {
 
     @Test
     public void testBoundedAdditivityOfGraphhopperTravelTimes() {
-        PathWrapper route1 = graphHopper.route(new GHRequest(
+        ResponsePath route1 = graphHopper.route(new GHRequest(
                 new GHPoint(51.23, 12.18),
                 new GHPoint(51.45, 12.59))
                 .setProfile("my_profile")).getBest();
 
         // Re-route from snapped point to snapped point.
         // It's the only way to be sure.
-        PathWrapper route2 = graphHopper.route(new GHRequest(
+        ResponsePath route2 = graphHopper.route(new GHRequest(
                 route1.getWaypoints().get(0),
                 route1.getWaypoints().get(1))
                 .setProfile("my_profile")).getBest();
@@ -77,7 +77,7 @@ public class RoutingAdditivityTest {
 
         long travelTime = 0L;
         for (int i = 0; i < route2.getPoints().size() - 1; i++) {
-            PathWrapper segment = graphHopper.route(new GHRequest(
+            ResponsePath segment = graphHopper.route(new GHRequest(
                     route2.getPoints().get(i),
                     route2.getPoints().get(i + 1))
                     .setProfile("my_profile")).getBest();

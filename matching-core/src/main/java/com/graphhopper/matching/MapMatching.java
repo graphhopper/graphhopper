@@ -558,7 +558,7 @@ public class MapMatching {
         // Implementation note: We have to look at both states _and_ transitions, since we can have e.g. just one state,
         // or two states with a transition that is an empty path (observations snapped to the same node in the query graph),
         // but these states still happen on an edge, and for this representation, we want to have that edge.
-        // (Whereas in the PathWrapper representation, we would just see an empty path.)
+        // (Whereas in the ResponsePath representation, we would just see an empty path.)
 
         // Note that the result can be empty, even when the input is not. Observations can be on nodes as well as on
         // edges, and when all observations are on the same node, we get no edge at all.
