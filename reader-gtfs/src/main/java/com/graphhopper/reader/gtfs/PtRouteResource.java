@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.Trip;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -243,13 +243,13 @@ public final class PtRouteResource {
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
             for (List<Label.Transition> solution : solutions) {
                 final List<Trip.Leg> legs = tripFromLabel.getTrip(translation, queryGraph, accessEgressWeighting, solution);
-                final PathWrapper pathWrapper = tripFromLabel.createPathWrapper(translation, waypoints, legs);
-                pathWrapper.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
-                pathWrapper.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
-                response.add(pathWrapper);
+                final ResponsePath responsePath = tripFromLabel.createPathWrapper(translation, waypoints, legs);
+                responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
+                responsePath.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
+                response.add(responsePath);
             }
-            Comparator<PathWrapper> c = Comparator.comparingInt(p -> (p.isImpossible() ? 1 : 0));
-            Comparator<PathWrapper> d = Comparator.comparingDouble(PathWrapper::getTime);
+            Comparator<ResponsePath> c = Comparator.comparingInt(p -> (p.isImpossible() ? 1 : 0));
+            Comparator<ResponsePath> d = Comparator.comparingDouble(ResponsePath::getTime);
             response.getAll().sort(c.thenComparing(d));
         }
 

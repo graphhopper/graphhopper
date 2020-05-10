@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.CHGraph;
@@ -65,34 +65,34 @@ public class TestAlgoCollector {
                 setCalcPoints(true).
                 setSimplifyResponse(false).
                 setEnableInstructions(true);
-        PathWrapper rsp = new PathWrapper();
-        pathMerger.doWork(rsp, altPaths, encodingManager, trMap.getWithFallBack(Locale.US));
+        ResponsePath responsePath = new ResponsePath();
+        pathMerger.doWork(responsePath, altPaths, encodingManager, trMap.getWithFallBack(Locale.US));
 
-        if (rsp.hasErrors()) {
+        if (responsePath.hasErrors()) {
             errors.add("response for " + algoEntry + " contains errors. Expected distance: " + oneRun.getDistance()
-                    + ", expected points: " + oneRun + ". " + queryList + ", errors:" + rsp.getErrors());
+                    + ", expected points: " + oneRun + ". " + queryList + ", errors:" + responsePath.getErrors());
             return this;
         }
 
-        PointList pointList = rsp.getPoints();
+        PointList pointList = responsePath.getPoints();
         double tmpDist = pointList.calcDistance(distCalc);
-        if (Math.abs(rsp.getDistance() - tmpDist) > 2) {
-            errors.add(algoEntry + " path.getDistance was  " + rsp.getDistance()
+        if (Math.abs(responsePath.getDistance() - tmpDist) > 2) {
+            errors.add(algoEntry + " path.getDistance was  " + responsePath.getDistance()
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + oneRun.getLocs()
                     + ", expected distance " + oneRun.getDistance() + ") " + queryList);
         }
 
-        if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > 2) {
+        if (Math.abs(responsePath.getDistance() - oneRun.getDistance()) > 2) {
             errors.add(algoEntry + " returns path not matching the expected distance of " + oneRun.getDistance()
-                    + "\t Returned was " + rsp.getDistance() + "\t (expected points " + oneRun.getLocs()
-                    + ", was " + pointList.getSize() + ") " + "\t (weight " + rsp.getRouteWeight() + ") " + queryList);
+                    + "\t Returned was " + responsePath.getDistance() + "\t (expected points " + oneRun.getLocs()
+                    + ", was " + pointList.getSize() + ") " + "\t (weight " + responsePath.getRouteWeight() + ") " + queryList);
         }
 
         // There are real world instances where A-B-C is identical to A-C (in meter precision).
         if (Math.abs(pointList.getSize() - oneRun.getLocs()) > 1) {
             errors.add(algoEntry + " returns path not matching the expected points of " + oneRun.getLocs()
                     + "\t Returned was " + pointList.getSize() + "\t (expected distance " + oneRun.getDistance()
-                    + ", was " + rsp.getDistance() + ") " + queryList);
+                    + ", was " + responsePath.getDistance() + ") " + queryList);
         }
         return this;
     }

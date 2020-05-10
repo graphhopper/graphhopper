@@ -19,7 +19,7 @@ package com.graphhopper.routing.template;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
@@ -74,14 +74,14 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
 
         // if alternative route calculation was done then create the responses from single paths        
         PointList wpList = getWaypoints();
-        pathWrapper.setWaypoints(wpList);
-        ghResponse.add(pathWrapper);
-        pathMerger.doWork(pathWrapper, Collections.singletonList(pathList.get(0)), lookup, tr);
+        responsePath.setWaypoints(wpList);
+        ghResponse.add(responsePath);
+        pathMerger.doWork(responsePath, Collections.singletonList(pathList.get(0)), lookup, tr);
         for (int index = 1; index < pathList.size(); index++) {
-            PathWrapper tmpAltRsp = new PathWrapper();
-            tmpAltRsp.setWaypoints(wpList);
-            ghResponse.add(tmpAltRsp);
-            pathMerger.doWork(tmpAltRsp, Collections.singletonList(pathList.get(index)), lookup, tr);
+            ResponsePath p = new ResponsePath();
+            p.setWaypoints(wpList);
+            ghResponse.add(p);
+            pathMerger.doWork(p, Collections.singletonList(pathList.get(index)), lookup, tr);
         }
     }
 }

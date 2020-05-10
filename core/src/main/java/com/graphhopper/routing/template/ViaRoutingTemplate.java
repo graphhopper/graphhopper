@@ -19,7 +19,7 @@ package com.graphhopper.routing.template;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
@@ -56,7 +56,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     protected final GHResponse ghResponse;
     // result from route
     protected List<Path> pathList;
-    protected final PathWrapper pathWrapper = new PathWrapper();
+    protected final ResponsePath responsePath = new ResponsePath();
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
@@ -194,7 +194,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 debug += ", " + path.getDebugInfo();
             }
 
-            pathWrapper.addDebugInfo(debug);
+            responsePath.addDebugInfo(debug);
 
             // reset all direction enforcements in queryGraph to avoid influencing next path
             queryGraph.clearUnfavoredStatus();
@@ -203,7 +203,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + algoOpts.getMaxVisitedNodes());
 
             visitedNodesSum += algo.getVisitedNodes();
-            pathWrapper.addDebugInfo("visited nodes sum: " + visitedNodesSum);
+            responsePath.addDebugInfo("visited nodes sum: " + visitedNodesSum);
             fromQResult = toQResult;
         }
 
@@ -233,9 +233,9 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         if (ghRequest.getPoints().size() - 1 != pathList.size())
             throw new RuntimeException("There should be exactly one more points than paths. points:" + ghRequest.getPoints().size() + ", paths:" + pathList.size());
 
-        pathWrapper.setWaypoints(getWaypoints());
-        ghResponse.add(pathWrapper);
-        pathMerger.doWork(pathWrapper, pathList, lookup, tr);
+        responsePath.setWaypoints(getWaypoints());
+        ghResponse.add(responsePath);
+        pathMerger.doWork(responsePath, pathList, lookup, tr);
     }
 
 }

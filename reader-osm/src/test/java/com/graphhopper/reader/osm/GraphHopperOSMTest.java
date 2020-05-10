@@ -389,7 +389,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         instance.importOrLoad();
-        PathWrapper rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
+        ResponsePath rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
                 setProfile(profile).
                 setAlgorithm(DIJKSTRA_BI)).getBest();
         assertFalse(rsp.hasErrors());
@@ -435,7 +435,7 @@ public class GraphHopperOSMTest {
         // A to D
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setProfile(profile1));
         assertFalse(grsp.hasErrors());
-        PathWrapper rsp = grsp.getBest();
+        ResponsePath rsp = grsp.getBest();
         assertEquals(3, rsp.getPoints().getSize());
         // => found A and D
         assertEquals(50, rsp.getPoints().getLongitude(0), 1e-3);
@@ -705,7 +705,7 @@ public class GraphHopperOSMTest {
         // A to E only for foot
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.19, 52).setProfile(profile));
         assertFalse(grsp.hasErrors());
-        PathWrapper rsp = grsp.getBest();
+        ResponsePath rsp = grsp.getBest();
         // the last points snaps to the edge
         assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.194015, 51.995013), rsp.getPoints());
     }
@@ -739,7 +739,7 @@ public class GraphHopperOSMTest {
 
         GHResponse grsp = instance.route(new GHRequest(Arrays.asList(first, second, third)).setProfile(profile));
         assertFalse("should find 1->2->3", grsp.hasErrors());
-        PathWrapper rsp = grsp.getBest();
+        ResponsePath rsp = grsp.getBest();
         assertEquals(rsp12.getBest().getDistance() + rsp23.getBest().getDistance(), rsp.getDistance(), 1e-6);
         assertEquals(4, rsp.getPoints().getSize());
         assertEquals(5, rsp.getInstructions().size());

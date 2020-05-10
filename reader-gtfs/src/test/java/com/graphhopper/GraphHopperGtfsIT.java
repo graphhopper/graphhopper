@@ -392,7 +392,7 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 18, 0).atZone(zoneId).toInstant());
         GHResponse response = ptRouteResource.route(ghRequest);
-        PathWrapper mondayTrip = response.getBest();
+        ResponsePath mondayTrip = response.getBest();
         assertEquals("Monday trip has no transfers", 0, mondayTrip.getNumChanges());
         assertEquals("Monday trip has 3 legs", 3, mondayTrip.getLegs().size());
         assertEquals("FUNNY_BLOCK_AB1", (((Trip.PtLeg) mondayTrip.getLegs().get(0)).trip_id));
@@ -401,7 +401,7 @@ public class GraphHopperGtfsIT {
 
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 7, 18, 0).atZone(zoneId).toInstant());
         response = ptRouteResource.route(ghRequest);
-        PathWrapper sundayTrip = response.getBest();
+        ResponsePath sundayTrip = response.getBest();
         assertEquals("Sunday trip has no transfers", 0, sundayTrip.getNumChanges());
         assertEquals("Sunday trip has 2 legs", 2, sundayTrip.getLegs().size());
         assertEquals("FUNNY_BLOCK_AB1", (((Trip.PtLeg) sundayTrip.getLegs().get(0)).trip_id));
@@ -502,8 +502,8 @@ public class GraphHopperGtfsIT {
 
         GHResponse response = ptRouteResource.route(ghRequest);
 
-        PathWrapper solutionWithTransfer = response.getAll().get(0);
-        PathWrapper solutionWithoutTransfer = response.getAll().get(1);
+        ResponsePath solutionWithTransfer = response.getAll().get(0);
+        ResponsePath solutionWithoutTransfer = response.getAll().get(1);
 
         Assume.assumeTrue("First solution has one transfer", solutionWithTransfer.getNumChanges() == 1);
         Assume.assumeTrue("Second solution has no transfers", solutionWithoutTransfer.getNumChanges() == 0);

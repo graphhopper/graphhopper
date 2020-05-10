@@ -48,7 +48,7 @@ public interface RoutingTemplate {
 
     /**
      * This method merges the returned paths appropriately e.g. all paths from the list into one
-     * PathWrapper of GHResponse or multiple (via / round trip).
+     * ResponsePath of GHResponse or multiple (via / round trip).
      */
     void finish(PathMerger pathMerger, Translation tr);
 
