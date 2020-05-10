@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.*;
 
@@ -46,10 +46,10 @@ public class NavigateResponseConverter {
 
         final ArrayNode routesJson = json.putArray("routes");
 
-        List<PathWrapper> paths = ghResponse.getAll();
+        List<ResponsePath> paths = ghResponse.getAll();
 
         for (int i = 0; i < paths.size(); i++) {
-            PathWrapper path = paths.get(i);
+            ResponsePath path = paths.get(i);
             ObjectNode pathJson = routesJson.addObject();
 
             putRouteInformation(pathJson, path, i, translationMap, navigateResponseConverterTranslationMap, locale, distanceConfig);
@@ -70,7 +70,7 @@ public class NavigateResponseConverter {
         return json;
     }
 
-    private static void putRouteInformation(ObjectNode pathJson, PathWrapper path, int routeNr, TranslationMap translationMap, TranslationMap navigateResponseConverterTranslationMap, Locale locale, DistanceConfig distanceConfig) {
+    private static void putRouteInformation(ObjectNode pathJson, ResponsePath path, int routeNr, TranslationMap translationMap, TranslationMap navigateResponseConverterTranslationMap, Locale locale, DistanceConfig distanceConfig) {
         InstructionList instructions = path.getInstructions();
 
         pathJson.put("geometry", WebHelper.encodePolyline(path.getPoints(), false, 1e6));
@@ -111,7 +111,7 @@ public class NavigateResponseConverter {
         pathJson.put("voiceLocale", locale.toLanguageTag());
     }
 
-    private static void putLegInformation(ObjectNode legJson, PathWrapper path, int i, long time, double distance) {
+    private static void putLegInformation(ObjectNode legJson, ResponsePath path, int i, long time, double distance) {
         // TODO: Improve path descriptions, so that every path has a description, not just alternative routes
         String summary;
         if (!path.getDescription().isEmpty())
