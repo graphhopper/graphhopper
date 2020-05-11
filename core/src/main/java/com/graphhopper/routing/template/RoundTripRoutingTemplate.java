@@ -19,7 +19,7 @@ package com.graphhopper.routing.template;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
@@ -150,10 +150,10 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
 
     @Override
     public void finish(PathMerger pathMerger, Translation tr) {
-        PathWrapper altResponse = new PathWrapper();
-        altResponse.setWaypoints(getWaypoints());
-        ghResponse.add(altResponse);
-        pathMerger.doWork(altResponse, pathList, lookup, tr);
+        ResponsePath responsePath = new ResponsePath();
+        responsePath.setWaypoints(getWaypoints());
+        ghResponse.add(responsePath);
+        pathMerger.doWork(responsePath, pathList, lookup, tr);
     }
 
     private QueryResult generateValidPoint(GHPoint from, double distanceInMeters, double heading,

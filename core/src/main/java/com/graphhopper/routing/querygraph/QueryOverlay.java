@@ -31,7 +31,7 @@ import java.util.List;
  * This class holds the data that is necessary to add additional nodes and edges to an existing graph, as it is needed
  * when we want to start/end a route at a location that is in between the actual nodes of the graph (virtual nodes+edges).
  */
-class GraphModification {
+class QueryOverlay {
     // stores the coordinates of the additional/virtual nodes
     private final PointList virtualNodes;
     // stores the closest edge id for each virtual node
@@ -41,7 +41,7 @@ class GraphModification {
     // stores the changes that need to be done to the real nodes
     private final IntObjectMap<EdgeChanges> edgeChangesAtRealNodes;
 
-    GraphModification(int numVirtualNodes, boolean is3D) {
+    QueryOverlay(int numVirtualNodes, boolean is3D) {
         this.virtualNodes = new PointList(numVirtualNodes, is3D);
         this.virtualEdges = new ArrayList<>(numVirtualNodes * 2);
         this.closestEdges = new IntArrayList(numVirtualNodes);

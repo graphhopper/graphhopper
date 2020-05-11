@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.Trip;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -91,7 +91,7 @@ public final class PtRouteResource {
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
                             @QueryParam("pt.limit_solutions") Integer limitSolutions,
-                            @QueryParam("pt.limit_street_time") Integer limitStreetTime) {
+                            @QueryParam("pt.limit_street_time") DurationParam limitStreetTime) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get();
@@ -103,7 +103,7 @@ public final class PtRouteResource {
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
-        Optional.ofNullable(limitStreetTime).ifPresent(request::setLimitStreetTime);
+        Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
 
         GHResponse route = new RequestHandler(request).route();
         return WebHelper.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
@@ -177,7 +177,7 @@ public final class PtRouteResource {
             translation = translationMap.getWithFallBack(request.getLocale());
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
-            limitStreetTime = request.getLimitStreetTime() != null ? request.getLimitStreetTime() * 60 * 1_000 : Long.MAX_VALUE;
+            limitStreetTime = request.getLimitStreetTime() != null ? request.getLimitStreetTime().toMillis() : Long.MAX_VALUE;
         }
 
         GHResponse route() {
@@ -211,7 +211,7 @@ public final class PtRouteResource {
                 allQueryResults.add(station);
                 points.add(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
             }
-            queryGraph = QueryGraph.lookup(graphWithExtraEdges, pointQueryResults); // modifies queryResults
+            queryGraph = QueryGraph.create(graphWithExtraEdges, pointQueryResults); // modifies queryResults
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
             int startNode;
@@ -243,13 +243,13 @@ public final class PtRouteResource {
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
             for (List<Label.Transition> solution : solutions) {
                 final List<Trip.Leg> legs = tripFromLabel.getTrip(translation, queryGraph, accessEgressWeighting, solution);
-                final PathWrapper pathWrapper = tripFromLabel.createPathWrapper(translation, waypoints, legs);
-                pathWrapper.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
-                pathWrapper.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
-                response.add(pathWrapper);
+                final ResponsePath responsePath = tripFromLabel.createPathWrapper(translation, waypoints, legs);
+                responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
+                responsePath.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
+                response.add(responsePath);
             }
-            Comparator<PathWrapper> c = Comparator.comparingInt(p -> (p.isImpossible() ? 1 : 0));
-            Comparator<PathWrapper> d = Comparator.comparingDouble(PathWrapper::getTime);
+            Comparator<ResponsePath> c = Comparator.comparingInt(p -> (p.isImpossible() ? 1 : 0));
+            Comparator<ResponsePath> d = Comparator.comparingDouble(ResponsePath::getTime);
             response.getAll().sort(c.thenComparing(d));
         }
 

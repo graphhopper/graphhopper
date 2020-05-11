@@ -31,38 +31,38 @@ import java.util.List;
 public class GHResponse {
     private final List<Throwable> errors = new ArrayList<>(4);
     private final PMap hintsMap = new PMap();
-    private final List<PathWrapper> pathWrappers = new ArrayList<>(5);
+    private final List<ResponsePath> responsePaths = new ArrayList<>(5);
     private String debugInfo = "";
 
     public GHResponse() {
     }
 
-    public void add(PathWrapper altResponse) {
-        pathWrappers.add(altResponse);
+    public void add(ResponsePath responsePath) {
+        responsePaths.add(responsePath);
     }
 
     /**
      * Returns the best path.
      */
-    public PathWrapper getBest() {
-        if (pathWrappers.isEmpty())
+    public ResponsePath getBest() {
+        if (responsePaths.isEmpty())
             throw new RuntimeException("Cannot fetch best response if list is empty");
 
-        return pathWrappers.get(0);
+        return responsePaths.get(0);
     }
 
     /**
      * This method returns the best path as well as all alternatives.
      */
-    public List<PathWrapper> getAll() {
-        return pathWrappers;
+    public List<ResponsePath> getAll() {
+        return responsePaths;
     }
 
     /**
      * This method returns true if there are alternative paths available besides the best.
      */
     public boolean hasAlternatives() {
-        return pathWrappers.size() > 1;
+        return responsePaths.size() > 1;
     }
 
     public void addDebugInfo(String debugInfo) {
@@ -77,11 +77,11 @@ public class GHResponse {
 
     public String getDebugInfo() {
         String str = debugInfo;
-        for (PathWrapper ar : pathWrappers) {
+        for (ResponsePath p : responsePaths) {
             if (!str.isEmpty())
                 str += "; ";
 
-            str += ar.getDebugInfo();
+            str += p.getDebugInfo();
         }
         return str;
     }
@@ -94,8 +94,8 @@ public class GHResponse {
         if (!errors.isEmpty())
             return true;
 
-        for (PathWrapper ar : pathWrappers) {
-            if (ar.hasErrors())
+        for (ResponsePath p : responsePaths) {
+            if (p.hasErrors())
                 return true;
         }
 
@@ -108,8 +108,8 @@ public class GHResponse {
     public List<Throwable> getErrors() {
         List<Throwable> list = new ArrayList<>();
         list.addAll(errors);
-        for (PathWrapper ar : pathWrappers) {
-            list.addAll(ar.getErrors());
+        for (ResponsePath p : responsePaths) {
+            list.addAll(p.getErrors());
         }
         return list;
     }
@@ -127,11 +127,11 @@ public class GHResponse {
     @Override
     public String toString() {
         String str = "";
-        for (PathWrapper a : pathWrappers) {
+        for (ResponsePath a : responsePaths) {
             str += "; " + a.toString();
         }
 
-        if (pathWrappers.isEmpty())
+        if (responsePaths.isEmpty())
             str = "no paths";
 
         if (!errors.isEmpty())

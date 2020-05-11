@@ -146,8 +146,8 @@ public class RandomCHRoutingTest {
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
             List<QueryResult> qrs = createQueryResults(rnd, numVirtualNodes);
-            QueryGraph queryGraph = QueryGraph.lookup(graph, qrs);
-            QueryGraph chQueryGraph = QueryGraph.lookup(chGraph, qrs);
+            QueryGraph queryGraph = QueryGraph.create(graph, qrs);
+            QueryGraph chQueryGraph = QueryGraph.create(chGraph, qrs);
 
             int numQueries = 100;
             int numPathsNotFound = 0;

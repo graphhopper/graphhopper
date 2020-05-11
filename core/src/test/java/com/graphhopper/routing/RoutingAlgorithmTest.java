@@ -1091,7 +1091,7 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
-            QueryGraph queryGraph = QueryGraph.lookup(graph, from, to);
+            QueryGraph queryGraph = QueryGraph.create(graph, from, to);
             RoutingAlgorithm algo = createAlgo(queryGraph, weighting, traversalMode);
             algo.setMaxVisitedNodes(maxVisitedNodes);
             return algo.calcPath(from.getClosestNode(), to.getClosestNode());
@@ -1196,7 +1196,7 @@ public class RoutingAlgorithmTest {
                 graph.freeze();
                 pch.doWork();
             }
-            QueryGraph queryGraph = QueryGraph.lookup(chGraph, from, to);
+            QueryGraph queryGraph = QueryGraph.create(chGraph, from, to);
             RoutingAlgorithmFactory algoFactory = pch.getRoutingAlgorithmFactory();
             AlgorithmOptions opts = AlgorithmOptions.start()
                     .algorithm(getAlgorithm())

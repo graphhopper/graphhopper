@@ -40,7 +40,7 @@ public class Request {
     private double walkSpeedKmH = 5.0;
     private int blockedRouteTypes;
     private Locale locale = Helper.getLocale("en");
-    private Integer limitStreetTime;
+    private Duration limitStreetTime;
     private Duration maxProfileDuration = Duration.ofHours(1);
 
     public Request(List<GHLocation> points, Instant departureTime) {
@@ -144,11 +144,11 @@ public class Request {
         return points;
     }
 
-    public Integer getLimitStreetTime() {
+    public Duration getLimitStreetTime() {
         return this.limitStreetTime;
     }
 
-    public void setLimitStreetTime(Integer streetTime) {
+    public void setLimitStreetTime(Duration streetTime) {
         this.limitStreetTime = streetTime;
     }
 

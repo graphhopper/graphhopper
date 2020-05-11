@@ -19,7 +19,7 @@ package com.graphhopper.http.resources;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
@@ -113,23 +113,23 @@ public class RouteResourceClientHCTest {
                 putHint("elevation", false).
                 putHint("instructions", true).
                 putHint("calc_points", true);
-        GHResponse res = gh.route(req);
-        assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
-        PathWrapper alt = res.getBest();
-        isBetween(60, 70, alt.getPoints().size());
-        isBetween(2900, 3000, alt.getDistance());
-        isBetween(110, 120, alt.getAscend());
-        isBetween(70, 80, alt.getDescend());
-        isBetween(190, 200, alt.getRouteWeight());
+        GHResponse rsp = gh.route(req);
+        assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
+        ResponsePath res = rsp.getBest();
+        isBetween(60, 70, res.getPoints().size());
+        isBetween(2900, 3000, res.getDistance());
+        isBetween(110, 120, res.getAscend());
+        isBetween(70, 80, res.getDescend());
+        isBetween(190, 200, res.getRouteWeight());
 
         // change vehicle
-        res = gh.route(new GHRequest(42.5093, 1.5274, 42.5126, 1.5410).
+        rsp = gh.route(new GHRequest(42.5093, 1.5274, 42.5126, 1.5410).
                 putHint("vehicle", "bike"));
-        alt = res.getBest();
-        assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
-        isBetween(2500, 2600, alt.getDistance());
+        res = rsp.getBest();
+        assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
+        isBetween(2500, 2600, res.getDistance());
 
-        assertEquals("[0, 1]", alt.getPointsOrder().toString());
+        assertEquals("[0, 1]", res.getPointsOrder().toString());
     }
 
     @ParameterizedTest
@@ -146,10 +146,10 @@ public class RouteResourceClientHCTest {
                 putHint("ch.disable", true);
         GHResponse res = gh.route(req);
         assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
-        List<PathWrapper> paths = res.getAll();
+        List<ResponsePath> paths = res.getAll();
         assertEquals(2, paths.size());
 
-        PathWrapper path = paths.get(0);
+        ResponsePath path = paths.get(0);
         isBetween(31, 37, path.getPoints().size());
         isBetween(1670, 1710, path.getDistance());
         assertTrue("Avinguda Carlemany".contains(path.getDescription().get(0)), "expected: " + path.getDescription().get(0));
@@ -171,11 +171,11 @@ public class RouteResourceClientHCTest {
 
         req.putHint("instructions", false);
         req.putHint("calc_points", false);
-        GHResponse res = gh.route(req);
-        assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
-        PathWrapper alt = res.getBest();
-        assertEquals(0, alt.getPoints().size());
-        isBetween(1750, 1800, alt.getDistance());
+        GHResponse rsp = gh.route(req);
+        assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
+        ResponsePath res = rsp.getBest();
+        assertEquals(0, res.getPoints().size());
+        isBetween(1750, 1800, res.getDistance());
     }
 
     @ParameterizedTest
@@ -222,7 +222,7 @@ public class RouteResourceClientHCTest {
         assertEquals(Arrays.asList("Carrer de l'Aigüeta", "Carrer Pere d'Urg", "Carrer Bonaventura Armengol", "Avinguda Consell d'Europa", ""), given);
     }
 
-    private List<String> extractInstructionNames(PathWrapper path, int count) {
+    private List<String> extractInstructionNames(ResponsePath path, int count) {
         List<String> result = new ArrayList<>();
         for (Instruction instruction : path.getInstructions()) {
             result.add(instruction.getName());
@@ -307,7 +307,7 @@ public class RouteResourceClientHCTest {
         req.getPathDetails().add("average_speed");
         GHResponse res = gh.route(req);
         assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
-        PathWrapper alt = res.getBest();
+        ResponsePath alt = res.getBest();
         assertEquals(1, alt.getPathDetails().size());
         List<PathDetail> details = alt.getPathDetails().get("average_speed");
         assertFalse(details.isEmpty());

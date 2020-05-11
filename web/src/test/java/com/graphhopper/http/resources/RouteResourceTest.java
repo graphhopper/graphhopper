@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
@@ -209,9 +209,9 @@ public class RouteResourceTest {
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertTrue(rsp.getErrors().isEmpty(), rsp.getErrors().toString());
 
-        PathWrapper arsp = rsp.getBest();
-        assertTrue(arsp.getDistance() > 9000, "distance wasn't correct:" + arsp.getDistance());
-        assertTrue(arsp.getDistance() < 9500, "distance wasn't correct:" + arsp.getDistance());
+        ResponsePath res = rsp.getBest();
+        assertTrue(res.getDistance() > 9000, "distance wasn't correct:" + res.getDistance());
+        assertTrue(res.getDistance() < 9500, "distance wasn't correct:" + res.getDistance());
 
         rsp = hopper.route(new GHRequest().
                 setProfile("my_car").
@@ -219,11 +219,11 @@ public class RouteResourceTest {
                 addPoint(new GHPoint(42.531896, 1.553278)).
                 addPoint(new GHPoint(42.510071, 1.548128)));
         assertTrue(rsp.getErrors().isEmpty(), rsp.getErrors().toString());
-        arsp = rsp.getBest();
-        assertTrue(arsp.getDistance() > 20000, "distance wasn't correct:" + arsp.getDistance());
-        assertTrue(arsp.getDistance() < 21000, "distance wasn't correct:" + arsp.getDistance());
+        res = rsp.getBest();
+        assertTrue(res.getDistance() > 20000, "distance wasn't correct:" + res.getDistance());
+        assertTrue(res.getDistance() < 21000, "distance wasn't correct:" + res.getDistance());
 
-        InstructionList instructions = arsp.getInstructions();
+        InstructionList instructions = res.getInstructions();
         assertEquals(24, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).getTurnDescription(null));
         assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));

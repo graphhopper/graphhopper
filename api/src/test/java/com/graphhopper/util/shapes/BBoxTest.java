@@ -33,7 +33,7 @@ public class BBoxTest {
         DistanceCalc c = new DistanceCalcEarth();
         BBox b = c.createBBox(52, 10, 100000);
 
-        // The calclulated bounding box has no negative values (also for southern hemisphere and negative meridians)
+        // The calculated bounding box has no negative values (also for southern hemisphere and negative meridians)
         // and the ordering is always the same (top to bottom and left to right)
         assertEquals(52.8993, b.maxLat, 1e-4);
         assertEquals(8.5393, b.minLon, 1e-4);

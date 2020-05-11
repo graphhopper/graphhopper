@@ -77,7 +77,7 @@ public class GraphHopperMultimodalIT {
         GHResponse response = graphHopper.route(ghRequest);
         assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(243);
 
-        PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
+        ResponsePath firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:41:04.833"));
         assertThat(firstTransitSolution.getLegs().get(0).getArrivalTime().toInstant())
@@ -98,7 +98,7 @@ public class GraphHopperMultimodalIT {
         GHResponse response = graphHopper.route(ghRequest);
         assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(129);
 
-        PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
+        ResponsePath firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:41:04.833"));
         assertThat(firstTransitSolution.getLegs().get(0).getArrivalTime().toInstant())
@@ -106,7 +106,7 @@ public class GraphHopperMultimodalIT {
         assertThat(firstTransitSolution.getLegs().get(2).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:52:02.729"));
 
-        PathWrapper walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         // In principle, this would dominate the transit solution, since it's faster, but
@@ -148,7 +148,7 @@ public class GraphHopperMultimodalIT {
 
         GHResponse response = graphHopper.route(ghRequest);
 
-        PathWrapper walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
@@ -169,7 +169,7 @@ public class GraphHopperMultimodalIT {
 
         GHResponse response = graphHopper.route(ghRequest);
 
-        PathWrapper walkSolution = response.getAll().get(0);
+        ResponsePath walkSolution = response.getAll().get(0);
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
@@ -215,7 +215,7 @@ public class GraphHopperMultimodalIT {
 
         GHResponse response = graphHopper.route(ghRequest);
 
-        PathWrapper transitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
+        ResponsePath transitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
         assertThat(transitSolution.getLegs().size()).isEqualTo(3);
     }
 }

@@ -165,8 +165,8 @@ public class QueryGraphTest {
         // this query result is not very intuitive as we would expect snapping to the 1-0 edge, but this is how this
         // test was written initially...
         QueryResult qr = createLocationResult(2, 1.7, iter, 1, PILLAR);
-        GraphModification graphModification = GraphModificationBuilder.build(g, Collections.singletonList(qr));
-        IntObjectMap<GraphModification.EdgeChanges> realNodeModifications = graphModification.getEdgeChangesAtRealNodes();
+        QueryOverlay queryOverlay = QueryOverlayBuilder.build(g, Collections.singletonList(qr));
+        IntObjectMap<QueryOverlay.EdgeChanges> realNodeModifications = queryOverlay.getEdgeChangesAtRealNodes();
         assertEquals(2, realNodeModifications.size());
         // ignore nodes should include baseNode == 1
         assertEquals("[3->4]", realNodeModifications.get(3).getAdditionalEdges().toString());
@@ -174,7 +174,7 @@ public class QueryGraphTest {
         assertEquals("[1->4]", realNodeModifications.get(1).getAdditionalEdges().toString());
         assertEquals("[2]", realNodeModifications.get(1).getRemovedEdges().toString());
 
-        QueryGraph queryGraph = QueryGraph.lookup(g, qr);
+        QueryGraph queryGraph = QueryGraph.create(g, qr);
         EdgeIteratorState state = GHUtility.getEdge(queryGraph, 0, 1);
         assertEquals(4, state.fetchWayGeometry(FetchMode.ALL).size());
 
@@ -517,7 +517,7 @@ public class QueryGraphTest {
         // now use turn costs with query graph
         QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);
         QueryResult res2 = createLocationResult(0.005, 0.010, edge1, 0, QueryResult.Position.EDGE);
-        QueryGraph qGraph = QueryGraph.lookup(graphWithTurnCosts, res1, res2);
+        QueryGraph qGraph = QueryGraph.create(graphWithTurnCosts, res1, res2);
         weighting = qGraph.wrapWeighting(weighting);
 
         int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
@@ -774,7 +774,7 @@ public class QueryGraphTest {
     }
 
     private QueryGraph lookup(List<QueryResult> queryResults) {
-        return QueryGraph.lookup(g, queryResults);
+        return QueryGraph.create(g, queryResults);
     }
 
 }

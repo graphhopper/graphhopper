@@ -68,10 +68,10 @@ public class GraphHopperAPITest {
         // 3 -> 0
         GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10).setProfile(profile));
         assertFalse(rsp.hasErrors());
-        PathWrapper arsp = rsp.getBest();
-        assertEquals(80, arsp.getDistance(), 1e-6);
+        ResponsePath responsePath = rsp.getBest();
+        assertEquals(80, responsePath.getDistance(), 1e-6);
 
-        PointList points = arsp.getPoints();
+        PointList points = responsePath.getPoints();
         assertEquals(42, points.getLatitude(0), 1e-5);
         assertEquals(10.4, points.getLongitude(0), 1e-5);
         assertEquals(41.9, points.getLatitude(1), 1e-5);

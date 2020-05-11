@@ -282,7 +282,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         QueryResult fromRes = createQR(1.004, 1.01, 0, edge1);
         QueryResult toRes = createQR(1.019, 1.00, 0, edge1);
-        QueryGraph qGraph = QueryGraph.lookup(chGraph, fromRes, toRes);
+        QueryGraph qGraph = QueryGraph.create(chGraph, fromRes, toRes);
 
         Graph baseGraph = qGraph.getBaseGraph();
         EdgeExplorer explorer = baseGraph.createEdgeExplorer();

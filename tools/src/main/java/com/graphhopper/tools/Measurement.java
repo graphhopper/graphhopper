@@ -739,7 +739,7 @@ public class Measurement {
                     return 0;
                 }
 
-                PathWrapper arsp = rsp.getBest();
+                ResponsePath responsePath = rsp.getBest();
                 if (!warmup) {
                     long visitedNodes = rsp.getHints().getLong("visited_nodes.sum", 0);
                     visitedNodesSum.addAndGet(visitedNodes);
@@ -747,7 +747,7 @@ public class Measurement {
                         maxVisitedNodes.set(visitedNodes);
                     }
 
-                    long dist = (long) arsp.getDistance();
+                    long dist = (long) responsePath.getDistance();
                     distSum.addAndGet(dist);
 
                     airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
@@ -762,7 +762,7 @@ public class Measurement {
                         altCount.addAndGet(rsp.getAll().size());
                 }
 
-                return arsp.getPoints().getSize();
+                return responsePath.getPoints().getSize();
             }
         }.setIterations(querySettings.count).start();
 

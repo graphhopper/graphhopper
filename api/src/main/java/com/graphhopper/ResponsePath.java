@@ -31,7 +31,7 @@ import java.util.*;
  *
  * @author Peter Karich
  */
-public class PathWrapper {
+public class ResponsePath {
     private final List<Throwable> errors = new ArrayList<>(4);
     private List<String> description;
     private double distance;
@@ -60,12 +60,12 @@ public class PathWrapper {
         return description;
     }
 
-    public PathWrapper setDescription(List<String> names) {
+    public ResponsePath setDescription(List<String> names) {
         this.description = names;
         return this;
     }
 
-    public PathWrapper addDebugInfo(String debugInfo) {
+    public ResponsePath addDebugInfo(String debugInfo) {
         if (debugInfo == null)
             throw new IllegalStateException("Debug information has to be none null");
 
@@ -80,7 +80,7 @@ public class PathWrapper {
         return debugInfo;
     }
 
-    public PathWrapper setPointsOrder(List<Integer> list) {
+    public ResponsePath setPointsOrder(List<Integer> list) {
         pointsOrder.clear();
         pointsOrder.addAll(list);
         return this;
@@ -100,7 +100,7 @@ public class PathWrapper {
         return pointList;
     }
 
-    public PathWrapper setPoints(PointList points) {
+    public ResponsePath setPoints(PointList points) {
         if (pointList != PointList.EMPTY)
             throw new IllegalStateException("Cannot call setPoint twice");
 
@@ -138,7 +138,7 @@ public class PathWrapper {
         return distance;
     }
 
-    public PathWrapper setDistance(double distance) {
+    public ResponsePath setDistance(double distance) {
         this.distance = distance;
         return this;
     }
@@ -153,7 +153,7 @@ public class PathWrapper {
         return ascend;
     }
 
-    public PathWrapper setAscend(double ascend) {
+    public ResponsePath setAscend(double ascend) {
         if (ascend < 0 || Double.isNaN(ascend))
             throw new IllegalStateException("ascend has to be positive but was " + ascend);
 
@@ -171,7 +171,7 @@ public class PathWrapper {
         return descend;
     }
 
-    public PathWrapper setDescend(double descend) {
+    public ResponsePath setDescend(double descend) {
         if (descend < 0 || Double.isNaN(descend))
             throw new IllegalStateException("descend has to be positive but was " + descend);
 
@@ -187,7 +187,7 @@ public class PathWrapper {
         return time;
     }
 
-    public PathWrapper setTime(long timeInMillis) {
+    public ResponsePath setTime(long timeInMillis) {
         this.time = timeInMillis;
         return this;
     }
@@ -202,7 +202,7 @@ public class PathWrapper {
         return routeWeight;
     }
 
-    public PathWrapper setRouteWeight(double weight) {
+    public ResponsePath setRouteWeight(double weight) {
         this.routeWeight = weight;
         return this;
     }
@@ -307,12 +307,12 @@ public class PathWrapper {
         return errors;
     }
 
-    public PathWrapper addError(Throwable error) {
+    public ResponsePath addError(Throwable error) {
         errors.add(error);
         return this;
     }
 
-    public PathWrapper addErrors(List<Throwable> errors) {
+    public ResponsePath addErrors(List<Throwable> errors) {
         this.errors.addAll(errors);
         return this;
     }

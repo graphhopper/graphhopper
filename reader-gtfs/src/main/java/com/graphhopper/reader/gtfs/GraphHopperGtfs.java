@@ -191,7 +191,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                     tostation.setClosestNode(tonode);
                     points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
 
-                    QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
+                    QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
                     final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, 5.0, false);
 
                     MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, Integer.MAX_VALUE, new ArrayList<>());

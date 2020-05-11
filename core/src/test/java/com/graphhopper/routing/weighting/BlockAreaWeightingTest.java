@@ -79,7 +79,7 @@ public class BlockAreaWeightingTest {
 
         LocationIndex index = new LocationIndexTree(graph, graph.getDirectory()).prepareIndex();
         QueryResult qr = index.findClosest(0.005, 0.005, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, qr);
 
         BlockAreaWeighting instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());

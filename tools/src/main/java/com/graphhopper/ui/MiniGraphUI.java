@@ -331,7 +331,7 @@ public class MiniGraphUI {
                     return;
 
                 makeTransparent(g2);
-                QueryGraph qGraph = QueryGraph.lookup(routingGraph, fromRes, toRes);
+                QueryGraph qGraph = QueryGraph.create(routingGraph, fromRes, toRes);
                 RoutingAlgorithm algo = algoFactory.createAlgo(qGraph, algoOpts);
                 if (algo instanceof DebugAlgo) {
                     ((DebugAlgo) algo).setGraphics2D(g2);

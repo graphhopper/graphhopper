@@ -100,7 +100,7 @@ public class SPTResource {
             throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
-        QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, qr);
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
 
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);

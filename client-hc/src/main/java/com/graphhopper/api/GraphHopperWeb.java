@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.PathWrapperDeserializer;
@@ -210,7 +210,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
             JsonNode paths = json.get("paths");
 
             for (JsonNode path : paths) {
-                PathWrapper altRsp = PathWrapperDeserializer.createPathWrapper(objectMapper, path, tmpElevation, tmpTurnDescription);
+                ResponsePath altRsp = PathWrapperDeserializer.createPathWrapper(objectMapper, path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }
 

@@ -171,7 +171,7 @@ public class PrepareLandmarksTest {
         // due to the two more virtual nodes but this should not harm in practise
         QueryResult fromQR = index.findClosest(-0.0401, 0.2201, EdgeFilter.ALL_EDGES);
         QueryResult toQR = index.findClosest(-0.2401, 0.0601, EdgeFilter.ALL_EDGES);
-        QueryGraph qGraph = QueryGraph.lookup(graph, fromQR, toQR);
+        QueryGraph qGraph = QueryGraph.create(graph, fromQR, toQR);
         RoutingAlgorithm qGraphOneDirAlgo = prepare.getRoutingAlgorithmFactory().createAlgo(qGraph,
                 AlgorithmOptions.start().algorithm(ASTAR).weighting(weighting).traversalMode(tm).hints(hints).build());
         path = qGraphOneDirAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());

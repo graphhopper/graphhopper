@@ -107,7 +107,7 @@ public class IsochroneResource {
             throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
-        QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, qr);
 
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))

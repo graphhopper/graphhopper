@@ -235,8 +235,8 @@ public class RandomizedRoutingTest {
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
 
-            QueryGraph chQueryGraph = QueryGraph.lookup(prepareCH ? chGraph : graph, chQueryResults);
-            QueryGraph queryGraph = QueryGraph.lookup(graph, queryResults);
+            QueryGraph chQueryGraph = QueryGraph.create(prepareCH ? chGraph : graph, chQueryResults);
+            QueryGraph queryGraph = QueryGraph.create(graph, queryResults);
 
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();
