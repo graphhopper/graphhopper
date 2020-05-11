@@ -338,8 +338,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         int searchedSubnetworks = 0;
         // the maximum weight can only be an approximation so there is only a tiny improvement when we would do this for
         // all landmarks. See #2027 (1st commit) where only 1 landmark was sufficient when multiplied with 1.01 at the end
-        // TODO instead of calculating the landmarks twice we could store them in landmarkIDs and do this for all here
-        int[] tmpLandmarkNodeIds = new int[6];
+        // TODO instead of calculating the landmarks again here we could store them in landmarkIDs and do this for all here
+        int[] tmpLandmarkNodeIds = new int[3];
         for (IntArrayList subnetworkIds : graphComponents) {
             if (subnetworkIds.size() < minimumNodes)
                 continue;
@@ -371,7 +371,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             throw new IllegalStateException("max weight wasn't set although " + searchedSubnetworks + " subnetworks were searched (total " + graphComponents.size() + "), minimumNodes:" + minimumNodes);
 
         // we have to increase maxWeight slightly as it is only an approximation towards the maximum weight, especially when external landmarks are provided
-        return maxWeight * 1.005;
+        // but also because we do not traverse all landmarks
+        return maxWeight * 1.008;
     }
 
     /**
