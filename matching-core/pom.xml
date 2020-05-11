@@ -15,7 +15,7 @@
     
     <dependencies>
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>${gh.groupID}</groupId>
             <artifactId>graphhopper-reader-osm</artifactId>
 	        <version>${gh.version}</version>
         </dependency>

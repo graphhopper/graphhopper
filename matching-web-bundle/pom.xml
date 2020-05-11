@@ -23,7 +23,7 @@
             <version>${project.parent.version}</version>            
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>${gh.groupID}</groupId>
             <artifactId>graphhopper-web-api</artifactId>
             <version>${gh.version}</version>
         </dependency>
