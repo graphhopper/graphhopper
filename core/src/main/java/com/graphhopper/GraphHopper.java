@@ -971,7 +971,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         initLocationIndex();
 
-        importPublicTranst();
+        importPublicTransit();
 
         if (lmPreparationHandler.isEnabled())
             lmPreparationHandler.createPreparations(ghStorage, locationIndex);
