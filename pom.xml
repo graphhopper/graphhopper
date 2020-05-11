@@ -16,9 +16,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- jitpack uses a different domain name and the git short hash as version -->
-        <gh.groupID>com.github.graphhopper.graphhopper</gh.groupID>
-        <gh.version>7e648d5eab</gh.version>
+        <gh.version>1.0-pre42</gh.version>
     </properties>
 
     <scm>
@@ -58,11 +56,6 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-        <!-- we are releasing every commit of GH core to jitpack -->
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
     </repositories>
 
     <build>
@@ -81,7 +74,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>${gh.groupID}</groupId>
+            <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-web</artifactId>
             <version>${gh.version}</version>
         </dependency>
@@ -95,17 +88,6 @@
     </dependencies>
 
     <profiles>
-        <!-- use this for development if you want to use the source code that is currently checked out on your disk -->
-        <profile>
-            <id>dev</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <properties>
-                <gh.groupID>com.graphhopper</gh.groupID>
-                <gh.version>1.0-SNAPSHOT</gh.version>
-            </properties>
-        </profile>
         <!-- mvn clean deploy -P release -->
         <profile>
             <id>release</id>
