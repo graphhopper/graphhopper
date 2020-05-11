@@ -84,7 +84,7 @@ Path path = new Dijkstra(queryGraph, encoder).calcPath(fromQR.getClosestNode(), 
 Path path = new Dijkstra(graph, encoder).calcPath(fromId, toId);
 ```
 
-### Use CHGraph to make queries faster
+### Use Contraction Hierarchies to make queries faster
 
 ```java
 // Creating and saving the graph
@@ -100,7 +100,7 @@ EdgeIteratorState edge = graph.edge(fromId, toId);
 // Prepare the graph for fast querying ...
 TraversalMode tMode = TraversalMode.NODE_BASED;
 CHConfig chConfig = CHConfig.nodeBased("chGraphName", weighting);
-PrepareContractionHierarchies pch = new PrepareContractionHierarchies(ghStorage, chConfig);
+PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chConfig);
 pch.doWork();
 
 // flush after preparation!
@@ -123,6 +123,6 @@ QueryGraph queryGraph = QueryGraph.create(graph, fromQR, toQR);
 AlgorithmOptions algoOpts = AlgorithmOptions.start().
    algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(tMode).weighting(weighting).
    build();
-RoutingAlgorithm algorithm = pch.createAlgo(queryGraph, algoOpts);
+RoutingAlgorithm algorithm = pch.getRoutingAlgorithmFactory().createAlgo(queryGraph, algoOpts);
 Path path = algorithm.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
 ```
