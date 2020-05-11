@@ -126,14 +126,13 @@ public class CustomModel {
 
     @Override
     public String toString() {
-        return "CustomModel{" +
-                "distanceInfluence=" + distanceInfluence +
-                ", speedFactor=" + speedFactorMap +
-                ", maxSpeed=" + maxSpeedMap +
-                ", maxSpeedFallback=" + maxSpeedFallback +
-                ", priorityMap=" + priorityMap +
-                ", #areas=" + areas.size() +
-                '}';
+        return createContentString();
+    }
+
+    private String createContentString() {
+        // used to check against stored custom models, see #2026
+        return "distanceInfluence=" + distanceInfluence + "|speedFactor=" + speedFactorMap + "|maxSpeed=" + maxSpeedMap +
+                "|maxSpeedFallback=" + maxSpeedFallback + "|priorityMap=" + priorityMap + "|areas=" + areas;
     }
 
     /**

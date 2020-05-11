@@ -684,5 +684,4 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
                 .withTurnCosts(true)
                 .build();
     }
-
 }

@@ -18,6 +18,7 @@
 package com.graphhopper.routing.ev;
 
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -178,7 +179,7 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
 
     @Override
     public int getVersion() {
-        int val = staticHashCode(name);
+        int val = Helper.staticHashCode(name);
         val = 31 * val + (storeTwoDirections ? 1231 : 1237);
         return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
     }
@@ -226,20 +227,5 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     static int staticHashCode(double val) {
         long var2 = Double.doubleToLongBits(val);
         return (int) (var2 ^ var2 >>> 32);
-    }
-
-    /**
-     * Produces a static hashcode for a string that is platform independent and still compatible to the default
-     * of openjdk. Do not use for performance critical applications.
-     *
-     * @see String#hashCode()
-     */
-    static int staticHashCode(String str) {
-        int len = str.length();
-        int val = 0;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + str.charAt(idx);
-        }
-        return val;
     }
 }

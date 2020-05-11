@@ -33,6 +33,7 @@ import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -1116,5 +1117,93 @@ public class GraphHopperOSMTest {
         return new GraphHopperOSM().
                 setEncodingManager(em).
                 setProfiles(profiles);
+    }
+
+    @Test
+    public void testLoadingLMAndCHProfiles() {
+        GraphHopper hopper = new GraphHopperOSM()
+                .setGraphHopperLocation(ghLoc)
+                .setDataReaderFile(testOsm)
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
+        hopper.importOrLoad();
+        hopper.close();
+
+        // load without problem
+        hopper = new GraphHopperOSM()
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
+        assertTrue(hopper.load(ghLoc));
+        hopper.close();
+
+        // problem: changed weighting in profile although LM preparation was enabled
+        hopper = new GraphHopperOSM()
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new Profile("car").setVehicle("car").setWeighting("shortest"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        // do not load CH
+        try {
+            assertFalse(hopper.load(ghLoc));
+            fail("load should fail");
+        } catch (Exception ex) {
+            assertEquals("LM preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
+        } finally {
+            hopper.close();
+        }
+
+        // problem: changed weighting in profile although CH preparation was enabled
+        hopper = new GraphHopperOSM()
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new Profile("car").setVehicle("car").setWeighting("shortest"));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
+        // do not load LM
+        try {
+            assertFalse(hopper.load(ghLoc));
+            fail("load should fail");
+        } catch (Exception ex) {
+            assertEquals("CH preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
+        } finally {
+            hopper.close();
+        }
+    }
+
+    @Test
+    public void testLoadingCustomProfiles() {
+        CustomModel customModel = new CustomModel().setDistanceInfluence(123);
+        GraphHopper hopper = new GraphHopperOSM()
+                .setGraphHopperLocation(ghLoc)
+                .setDataReaderFile(testOsm)
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new CustomProfile("car").setCustomModel(customModel));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        hopper.importOrLoad();
+        hopper.close();
+
+        // load without problem
+        hopper = new GraphHopperOSM()
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new CustomProfile("car").setCustomModel(customModel));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        assertTrue(hopper.load(ghLoc));
+        hopper.close();
+
+        // do not load changed CustomModel
+        customModel.setDistanceInfluence(100);
+        hopper = new GraphHopperOSM()
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new CustomProfile("car").setCustomModel(customModel));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        try {
+            assertFalse(hopper.load(ghLoc));
+            fail("load should fail");
+        } catch (Exception ex) {
+            assertEquals("LM preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
+        } finally {
+            hopper.close();
+        }
     }
 }
