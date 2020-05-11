@@ -131,8 +131,8 @@ public class CustomModel {
 
     private String createContentString() {
         // used to check against stored custom models, see #2026
-        return "distanceInfluence=" + distanceInfluence + ", speedFactor=" + speedFactorMap + ", maxSpeed=" + maxSpeedMap +
-                ", maxSpeedFallback=" + maxSpeedFallback + ", priorityMap=" + priorityMap + ", areas=" + areas;
+        return "distanceInfluence=" + distanceInfluence + "|speedFactor=" + speedFactorMap + "|maxSpeed=" + maxSpeedMap +
+                "|maxSpeedFallback=" + maxSpeedFallback + "|priorityMap=" + priorityMap + "|areas=" + areas;
     }
 
     /**
