@@ -157,7 +157,7 @@ public class PrepareLandmarksTest {
 
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 133, oneDirAlgoWithLandmarks.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 135, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
         RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph,
@@ -180,7 +180,7 @@ public class PrepareLandmarksTest {
         expectedPath = expectedAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 133, qGraphOneDirAlgo.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 135, qGraphOneDirAlgo.getVisitedNodes());
     }
 
     @Test
@@ -202,7 +202,7 @@ public class PrepareLandmarksTest {
         assertEquals(Arrays.toString(new int[]{
                 2, 0
         }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
-        assertEquals(4791, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
+        assertEquals(4800, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         dir = new RAMDirectory(fileStr, true);
         plm = new PrepareLandmarks(dir, graph, lmConfig, 2);
@@ -211,7 +211,7 @@ public class PrepareLandmarksTest {
         assertEquals(Arrays.toString(new int[]{
                 2, 0
         }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
-        assertEquals(4791, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
+        assertEquals(4800, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         Helper.removeDir(new File(fileStr));
     }
