@@ -16,11 +16,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- jitpack uses a different domain name -->
+        <!-- jitpack uses a different domain name and the git short hash as version -->
         <gh.groupID>com.github.graphhopper.graphhopper</gh.groupID>
         <gh.version>7e648d5eab</gh.version>
-
-        <gh.core.hash>92025cee52a0e89d489aa4960784e74785558226</gh.core.hash>
     </properties>
 
     <scm>
@@ -60,7 +58,7 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-        <!-- we are releasing every commit of GH core to jitpack using the git short hash as version -->
+        <!-- we are releasing every commit of GH core to jitpack -->
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
