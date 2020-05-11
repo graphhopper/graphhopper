@@ -370,8 +370,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (maxWeight <= 0 && searchedSubnetworks > 0)
             throw new IllegalStateException("max weight wasn't set although " + searchedSubnetworks + " subnetworks were searched (total " + graphComponents.size() + "), minimumNodes:" + minimumNodes);
 
-        // we have to increase maxWeight slightly as it is only an approximation towards the maximum weight, especially when external landmarks are provided
-        // but also because we do not traverse all landmarks
+        // we have to increase maxWeight slightly as it is only an approximation towards the maximum weight,
+        // especially when external landmarks are provided, but also because we do not traverse all landmarks
         return maxWeight * 1.008;
     }
 
