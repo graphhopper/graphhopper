@@ -34,4 +34,4 @@ spt.search(qr.getClosestNode(), label->labelsMap.put(label.node /*label.edge for
 labelsMap will be a map of the traversal id and an isoLabel for all nodes (edges for edge-based traversal mode) reachable within the time limit.
 For how to create a cirumscribed polygon for those reachable points,
 and for a more comprehensive construction of an isochrone,
-See [GraphHopper's servlet](https://github.com/graphhopper/graphhopper/blob/master/web-bundle/src/main/java/com/graphhopper/resources/IsochroneResource.java)
+See [GraphHopper's servlet](https://github.com/graphhopper/graphhopper/blob/master/web-bundle/src/main/java/com/graphhopper/resources/IsochroneResource.java).
