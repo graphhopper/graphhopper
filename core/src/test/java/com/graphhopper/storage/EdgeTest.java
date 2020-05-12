@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
 import org.junit.Test;
 

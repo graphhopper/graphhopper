@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.ch.CHEntry;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.storage.SPTEntry;
 
 /**
  * @author easbar
