@@ -1,6 +1,5 @@
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;

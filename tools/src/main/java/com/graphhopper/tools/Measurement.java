@@ -157,10 +157,19 @@ public class Measurement {
             }
 
             @Override
+            protected void cleanUp() {
+                StopWatch sw = new StopWatch().start();
+                super.cleanUp();
+                put("graph.subnetwork_removal_time_ms", sw.stop().getMillis());
+            }
+
+            @Override
             protected DataReader importData() throws IOException {
                 StopWatch sw = new StopWatch().start();
                 DataReader dr = super.importData();
-                put("graph.import_time", sw.stop().getSeconds());
+                sw.stop();
+                put("graph.import_time", sw.getSeconds());
+                put("graph.import_time_ms", sw.getMillis());
                 return dr;
             }
         };
