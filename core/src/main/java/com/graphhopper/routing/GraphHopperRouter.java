@@ -255,7 +255,7 @@ public class GraphHopperRouter {
             return new CHRoutingAlgorithmFactory(ghStorage.getCHGraph(chProfile));
         } else if (lmEnabled && !disableLM) {
             // todonow: create routing algo factory without the need of lmPrepHandler, just as for CH above -> then remove lmPrepHandler dependency
-            // see #1900
+            // see #1900.
             return lmPreparationHandler.getAlgorithmFactory(map);
         } else {
             return new RoutingAlgorithmFactorySimple();
@@ -270,7 +270,7 @@ public class GraphHopperRouter {
         }
     }
 
-    // todonow: make private
+    // todonow: make this method private
     public FlagEncoder getDefaultVehicle() {
         if (encodingManager == null)
             throw new IllegalStateException("No encoding manager specified or loaded");
