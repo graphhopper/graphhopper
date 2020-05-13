@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.subnetwork;
 
+import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHBitSet;
@@ -43,7 +44,7 @@ public class TarjansSCCAlgorithm {
     // TODO use just the Graph interface here
     private final GraphHopperStorage graph;
     private final IntArrayDeque nodeStack;
-    private final GHBitSet onStack;
+    private final BitSet onStack;
     private final GHBitSet ignoreSet;
     private final int[] nodeIndex;
     private final int[] nodeLowLink;
@@ -53,7 +54,7 @@ public class TarjansSCCAlgorithm {
     public TarjansSCCAlgorithm(GraphHopperStorage ghStorage, final EdgeFilter edgeFilter, boolean ignoreSingleEntries) {
         this.graph = ghStorage;
         this.nodeStack = new IntArrayDeque();
-        this.onStack = new GHBitSetImpl(ghStorage.getNodes());
+        this.onStack = new BitSet(ghStorage.getNodes());
         this.nodeIndex = new int[ghStorage.getNodes()];
         this.nodeLowLink = new int[ghStorage.getNodes()];
         this.edgeFilter = edgeFilter;
@@ -120,7 +121,7 @@ public class TarjansSCCAlgorithm {
                 nodeLowLink[start] = index;
                 index++;
                 nodeStack.addLast(start);
-                onStack.add(start);
+                onStack.set(start);
 
                 iter = graph.createEdgeExplorer(edgeFilter).setBaseNode(start);
 
@@ -145,7 +146,7 @@ public class TarjansSCCAlgorithm {
                     stateStack.push(TarjanState.resumeState(start, iter));
                     stateStack.push(TarjanState.startState(connectedId));
                     continue nextState;
-                } else if (onStack.contains(connectedId)) {
+                } else if (onStack.get(connectedId)) {
                     nodeLowLink[start] = Math.min(nodeLowLink[start], nodeIndex[connectedId]);
                 }
             }
@@ -157,11 +158,11 @@ public class TarjansSCCAlgorithm {
                 int node;
                 while ((node = nodeStack.removeLast()) != start) {
                     component.add(node);
-                    onStack.remove(node);
+                    onStack.clear(node);
                 }
                 component.add(start);
                 component.trimToSize();
-                onStack.remove(start);
+                onStack.clear(start);
                 components.add(component);
             }
         }
