@@ -866,6 +866,18 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void test1258(){
+        GHRequest rq = new GHRequest().
+                addPoint(new GHPoint(43.74072,7.422853)).
+                addPoint(new GHPoint(43.741484,7.423437)).
+                addPoint(new GHPoint(43.740693,7.423078)).
+                setVehicle(vehicle).setWeighting("fastest");
+        rq.getHints().put(Routing.PASS_THROUGH, true);
+        GHResponse rsp = hopper.route(rq);
+        assertFalse(rsp.hasErrors());
+    }
+
+    @Test
     public void testSRTMWithInstructions() {
         final String profile = "profile";
         final String vehicle = "foot";
