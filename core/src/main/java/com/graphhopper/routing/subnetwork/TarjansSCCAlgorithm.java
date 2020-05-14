@@ -38,7 +38,7 @@ import java.util.Stack;
  * http://www.timl.id.au/?p=327 and http://homepages.ecs.vuw.ac.nz/~djp/files/P05.pdf
  */
 public class TarjansSCCAlgorithm {
-    private final ArrayList<IntArrayList> components = new ArrayList<>();
+    private final List<IntArrayList> components = new ArrayList<>();
     // TODO use just the Graph interface here
     private final GraphHopperStorage graph;
     private final IntArrayDeque nodeStack;
