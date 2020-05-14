@@ -123,7 +123,7 @@ public class PrepareRoutingSubnetworks {
 
         sw = new StopWatch().start();
         // find the biggest component
-        IntArrayList biggest = components.get(0);
+        IntArrayList biggest = components.isEmpty() ? new IntArrayList(0) : components.get(0);
         for (IntArrayList component : components) {
             if (component.size() > biggest.size()) {
                 biggest = component;
