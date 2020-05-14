@@ -25,14 +25,14 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -41,8 +41,8 @@ public class PrepareRoutingSubnetworksTest {
     private final FlagEncoder carFlagEncoder = new CarFlagEncoder();
     private final EncodingManager em = EncodingManager.create(carFlagEncoder);
 
-    GraphHopperStorage createStorage(EncodingManager eman) {
-        return new GraphBuilder(eman).create();
+    GraphHopperStorage createStorage(EncodingManager em) {
+        return new GraphBuilder(em).create();
     }
 
     GraphHopperStorage createSubnetworkTestStorage() {
@@ -109,13 +109,13 @@ public class PrepareRoutingSubnetworksTest {
     }
 
     @Test
-    public void testKeepLargestNetworks() {
+    public void testRemoveSmallSubNetworks() {
         GraphHopperStorage g = createSubnetworkTestStorage();
         DefaultEdgeFilter filter = DefaultEdgeFilter.allEdges(carFlagEncoder);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder));
         List<IntArrayList> components = instance.findSubnetworks(filter);
         assertEquals(3, components.size());
-        int removedEdges = instance.keepLargeNetworks(filter, components);
+        int removedEdges = instance.removeSmallSubNetworks(filter, components);
         assertEquals(8, removedEdges);
         instance.markNodesRemovedIfUnreachable();
         g.optimize();

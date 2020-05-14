@@ -31,7 +31,8 @@ import java.util.Stack;
 /**
  * Implementation of Tarjan's algorithm using an explicit stack. The traditional recursive approach
  * runs into stack overflow pretty quickly. The algorithm is used within GraphHopper to find
- * strongly connected components to detect dead-ends leading to routes not found.
+ * strongly connected components to detect dead-ends leading to routes not found and it is used for landmark
+ * calculation as well.
  * <p>
  * See http://en.wikipedia.org/wiki/Tarjan's_strongly_connected_components_algorithm. See
  * http://www.timl.id.au/?p=327 and http://homepages.ecs.vuw.ac.nz/~djp/files/P05.pdf
@@ -59,7 +60,8 @@ public class TarjansSCCAlgorithm {
     }
 
     /**
-     * Find and return list of all strongly connected components in g.
+     * Find and return a list of all strongly connected components of g. Components with only a single node will
+     * be excluded from the result depending on {@link #excludeSingleNodeComponents}
      */
     public List<IntArrayList> findComponents() {
         int nodes = graph.getNodes();
