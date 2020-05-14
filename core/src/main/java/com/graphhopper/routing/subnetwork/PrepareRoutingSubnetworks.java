@@ -19,13 +19,14 @@ package com.graphhopper.routing.subnetwork;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,16 +81,10 @@ public class PrepareRoutingSubnetworks {
         logger.info("Graph edges: " + Helper.nf(ghStorage.getEdges()));
         for (FlagEncoder encoder : encoders) {
             logger.info("--- vehicle: '" + encoder.toString() + "'");
-            if (minOneWayNetworkSize > 0)
-                removeDeadEndUnvisitedNetworks(encoder.getAccessEnc());
-
-            List<IntArrayList> components = findSubnetworks(encoder.getAccessEnc());
-            removeSmallSubNetworks(encoder.getAccessEnc(), components);
-            subnetworks = Math.max(components.size(), subnetworks);
+            if (minNetworkSize > 0)
+                removeSmallSubNetworks(encoder.getAccessEnc());
         }
-
         markNodesRemovedIfUnreachable();
-
         optimize();
         logger.info("Finished finding and removing subnetworks for " + encoders.size() + " vehicles, took: " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
     }
@@ -106,125 +101,25 @@ public class PrepareRoutingSubnetworks {
     }
 
     /**
-     * This method finds the double linked components according to the specified filter.
-     */
-    List<IntArrayList> findSubnetworks(final BooleanEncodedValue accessEnc) {
-        StopWatch sw = new StopWatch().start();
-        final EdgeExplorer explorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.allEdges(accessEnc));
-        int locs = ghStorage.getNodes();
-        List<IntArrayList> list = new ArrayList<>(100);
-        final GHBitSet bs = new GHBitSetImpl(locs);
-        for (int start = 0; start < locs; start++) {
-            if (bs.contains(start))
-                continue;
-
-            final IntArrayList intList = new IntArrayList(20);
-            list.add(intList);
-            new BreadthFirstSearch() {
-                int tmpCounter = 0;
-
-                @Override
-                protected GHBitSet createBitSet() {
-                    return bs;
-                }
-
-                @Override
-                protected final boolean goFurther(int nodeId) {
-                    if (tmpCounter > maxEdgesPerNode.get())
-                        maxEdgesPerNode.set(tmpCounter);
-
-                    tmpCounter = 0;
-                    intList.add(nodeId);
-                    return true;
-                }
-
-                @Override
-                protected final boolean checkAdjacent(EdgeIteratorState edge) {
-                    if (edge.get(accessEnc) || edge.getReverse(accessEnc)) {
-                        tmpCounter++;
-                        return true;
-                    }
-                    return false;
-                }
-
-            }.start(explorer, start);
-            intList.trimToSize();
-        }
-        logger.info("Found " + list.size() + " subnetworks, took: " + sw.stop().getSeconds() + "s");
-        return list;
-    }
-
-    /**
-     * Deletes all sub-networks with size < {@link #minNetworkSize}, but always keeps the biggest one
-     */
-    int removeSmallSubNetworks(BooleanEncodedValue accessEnc, List<IntArrayList> components) {
-        if (components.size() <= 1)
-            return 0;
-
-        StopWatch sw = new StopWatch().start();
-        EdgeExplorer explorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.allEdges(accessEnc));
-
-        // find the biggest component
-        IntArrayList biggest = components.get(0);
-        for (IntArrayList component : components) {
-            if (component.size() > biggest.size()) {
-                biggest = component;
-            }
-        }
-
-        // remove all small networks except the biggest (even when its too small)
-        int removedComponents = 0;
-        int removedEdges = 0;
-        int biggestRemaining = 0;
-        int smallestRemaining = Integer.MAX_VALUE;
-        int biggestRemoved = 0;
-        for (IntArrayList component : components) {
-            if (component == biggest)
-                continue;
-
-            if (component.size() < minNetworkSize) {
-                int tmpRemovedEdges = blockEdgesForComponent(explorer, accessEnc, component);
-                removedEdges += tmpRemovedEdges;
-                if (tmpRemovedEdges > 0) {
-                    removedComponents++;
-                    biggestRemoved = Math.max(biggestRemoved, component.size());
-                }
-            } else {
-                biggestRemaining = Math.max(biggestRemaining, component.size());
-                smallestRemaining = Math.min(smallestRemaining, component.size());
-            }
-        }
-
-        int allowedRemoved = ghStorage.getEdges() / 2;
-        if (removedEdges > allowedRemoved) {
-            throw new IllegalStateException("Too many total edges were removed: " + removedEdges + " out of " + ghStorage.getEdges() + "\n" +
-                    "The maximum number of removed edges is: " + allowedRemoved);
-        }
-        int componentsLeft = components.size() - removedComponents;
-        logger.info("Removed " + removedComponents + " subnetworks (biggest removed: " + biggestRemoved + " nodes) -> "
-                + componentsLeft + " subnetworks left " + (componentsLeft > 0 ? "(smallest: " + smallestRemaining + " nodes, biggest: " + biggestRemaining + ")" : "")
-                + ", total removed edges: " + removedEdges + ", took: " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo()
-        );
-        logger.info("The main network has " + biggest.size() + " nodes");
-        return removedEdges;
-    }
-
-    /**
+     * todonow
      * This method removes networks that will be never be visited by this filter, see #235.
      * For example, small areas like parking lots are sometimes connected to the whole network through a
      * one-way road. This is clearly a (mapping) error - but it causes the routing to fail when a point gets
      * connected to this small area. This routine removes all these networks from the graph if their size is
      * < {@link #minOneWayNetworkSize}
+     * <p>
+     * Deletes all sub-networks with size < {@link #minNetworkSize}, but always keeps the biggest one
      *
      * @return number of removed edges
      */
-    int removeDeadEndUnvisitedNetworks(BooleanEncodedValue accessEnc) {
+    int removeSmallSubNetworks(BooleanEncodedValue accessEnc) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
         TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, DefaultEdgeFilter.outEdges(accessEnc), false);
         List<IntArrayList> components = tarjan.findComponents();
-        logger.info("Found " + components.size() + " one-way subnetworks, took: " + sw.stop().getSeconds() + "s");
+        logger.info("Found " + components.size() + " subnetworks, took: " + sw.stop().getSeconds() + "s");
         // todonow
+        sw = new StopWatch().start();
         int total = 0;
         int single = 0;
         for (IntArrayList c : components) {
@@ -234,27 +129,46 @@ public class PrepareRoutingSubnetworks {
         }
         logger.info("num single: " + single + " -> non-single: " + (components.size() - single));
         logger.info("total checksum: " + total);
+        logger.info("counting single-node components took: " + sw.stop().getSeconds() + "s");
 
-        // remove edges determined from nodes but only if less than minimum size
         sw = new StopWatch().start();
-        EdgeExplorer explorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.allEdges(accessEnc));
+        // find the biggest component
+        IntArrayList biggest = components.get(0);
+        for (IntArrayList component : components) {
+            if (component.size() > biggest.size()) {
+                biggest = component;
+            }
+        }
+        logger.info("finding the biggest component took: " + sw.stop().getSeconds() + "s");
+
+        // remove all small networks except the biggest (even when its smaller than the given min_network_size)
+        sw = new StopWatch().start();
         int removedComponents = 0;
         int removedEdges = 0;
+        int smallestRemaining = biggest.size();
         int biggestRemoved = 0;
-        int smallestRemaining = Integer.MAX_VALUE;
-        int biggestRemaining = 0;
+        EdgeExplorer explorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.allEdges(accessEnc));
         for (IntArrayList component : components) {
-            if (component.size() < minOneWayNetworkSize) {
+            if (component == biggest)
+                continue;
+
+            if (component.size() < minNetworkSize) {
                 removedEdges += blockEdgesForComponent(explorer, accessEnc, component);
                 removedComponents++;
                 biggestRemoved = Math.max(biggestRemoved, component.size());
             } else {
                 smallestRemaining = Math.min(smallestRemaining, component.size());
-                biggestRemaining = Math.max(biggestRemaining, component.size());
             }
         }
-        logger.info("Removed " + removedComponents + " one-way subnetworks (biggest removed: " + biggestRemoved + " nodes) -> " +
-                (components.size() - removedComponents) + " one-way subnetworks left (smallest: " + smallestRemaining + ", biggest: " + biggestRemaining + ")"
+
+        int allowedRemoved = ghStorage.getEdges() / 2;
+        if (removedEdges > allowedRemoved)
+            throw new IllegalStateException("Too many total edges were removed: " + removedEdges + " out of " + ghStorage.getEdges() + "\n" +
+                    "The maximum number of removed edges is: " + allowedRemoved);
+
+        subnetworks = components.size() - removedComponents;
+        logger.info("Removed " + removedComponents + " subnetworks (biggest removed: " + biggestRemoved + " nodes) -> " +
+                subnetworks + " subnetwork(s) left (smallest: " + smallestRemaining + ", biggest: " + biggest.size() + " nodes)"
                 + ", total removed edges: " + removedEdges + ", took: " + sw.stop().getSeconds() + "s");
         return removedEdges;
     }
