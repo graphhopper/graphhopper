@@ -26,7 +26,7 @@ import android.widget.Toast;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters.Algorithms;
@@ -403,7 +403,7 @@ public class MainActivity extends Activity {
         prepareInProgress = false;
     }
 
-    private PathLayer createPathLayer(PathWrapper response) {
+    private PathLayer createPathLayer(ResponsePath response) {
         Style style = Style.builder()
                 .fixed(true)
                 .generalization(Style.GENERALIZATION_SMALL)
@@ -433,10 +433,10 @@ public class MainActivity extends Activity {
                          final double toLat, final double toLon) {
 
         log("calculating path ...");
-        new AsyncTask<Void, Void, PathWrapper>() {
+        new AsyncTask<Void, Void, ResponsePath>() {
             float time;
 
-            protected PathWrapper doInBackground(Void... v) {
+            protected ResponsePath doInBackground(Void... v) {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                         setAlgorithm(Algorithms.DIJKSTRA_BI);
@@ -447,7 +447,7 @@ public class MainActivity extends Activity {
                 return resp.getBest();
             }
 
-            protected void onPostExecute(PathWrapper resp) {
+            protected void onPostExecute(ResponsePath resp) {
                 if (!resp.hasErrors()) {
                     log("from:" + fromLat + "," + fromLon + " to:" + toLat + ","
                             + toLon + " found path with distance:" + resp.getDistance()
