@@ -110,4 +110,52 @@ class TarjansSCCAlgorithmTest {
         assertEquals(IntArrayList.from(7, 6, 5, 4), components.get(0));
     }
 
+    @Test
+    public void testTarjan_issue761() {
+        GraphHopperStorage g = new GraphBuilder(em).create();
+        //     11-10-9
+        //     |     |
+        // 0-1-2->3->4->5
+        //        |     |
+        //        6     12
+        //        |     |
+        //        7     13-14
+        //        |       \|
+        //        8        15-16
+
+        // oneway main road
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, false);
+        g.edge(3, 4, 1, false);
+        g.edge(4, 5, 1, false);
+
+        // going south from main road
+        g.edge(3, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(7, 8, 1, true);
+
+        // connects the two nodes 2 and 4
+        g.edge(4, 9, 1, true);
+        g.edge(9, 10, 1, true);
+        g.edge(10, 11, 1, true);
+        g.edge(11, 2, 1, true);
+
+        // eastern part (only connected by a single directed edge to the rest of the graph)
+        g.edge(5, 12, 1, true);
+        g.edge(12, 13, 1, true);
+        g.edge(13, 14, 1, true);
+        g.edge(14, 15, 1, true);
+        g.edge(15, 13, 1, true);
+        g.edge(15, 16, 1, true);
+
+        FlagEncoder encoder = em.fetchEdgeEncoders().iterator().next();
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(g, encoder.getAccessEnc(), false);
+        List<IntArrayList> components = tarjan.findComponents();
+        assertEquals(2, components.size());
+
+        assertEquals(IntArrayList.from(14, 16, 15, 13, 12, 5), components.get(0));
+        assertEquals(IntArrayList.from(8, 7, 6, 3, 4, 9, 10, 11, 2, 1, 0), components.get(1));
+    }
+
 }
