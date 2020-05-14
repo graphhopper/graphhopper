@@ -96,14 +96,12 @@ public class PrepareRoutingSubnetworks {
     }
 
     /**
-     * todonow
-     * This method removes networks that will be never be visited by this filter, see #235.
-     * For example, small areas like parking lots are sometimes connected to the whole network through a
-     * one-way road. This is clearly a (mapping) error - but it causes the routing to fail when a point gets
-     * connected to this small area. This routine removes all these networks from the graph if their size is
-     * < {@link #minNetworkSize}
-     * <p>
-     * Deletes all sub-networks with size < {@link #minNetworkSize}, but always keeps the biggest one
+     * Removes components with less than {@link #minNetworkSize} nodes from the graph by disabling access to the nodes
+     * of the removed components (for the given access encoded value). It is important to search for strongly connected
+     * components here (i.e. consider that the graph is directed). For example, small areas like parking lots are
+     * sometimes connected to the whole network through a single one-way road. This is clearly a (mapping) error - but
+     * it causes the routing to fail when starting from the parking lot (and there is no way out from it).
+     * The biggest component is always kept regardless of its size.
      *
      * @return number of removed edges
      */
@@ -178,7 +176,6 @@ public class PrepareRoutingSubnetworks {
         for (int i = 0; i < component.size(); i++) {
             EdgeIterator edge = explorer.setBaseNode(component.get(i));
             while (edge.next()) {
-                // todonow
                 if (!edge.get(accessEnc) && !edge.getReverse(accessEnc))
                     continue;
                 edge.set(accessEnc, false).setReverse(accessEnc, false);
