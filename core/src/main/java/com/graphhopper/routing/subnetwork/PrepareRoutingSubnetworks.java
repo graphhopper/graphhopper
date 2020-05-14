@@ -200,7 +200,7 @@ public class PrepareRoutingSubnetworks {
         final EdgeFilter outFilter = DefaultEdgeFilter.outEdges(bothFilter.getAccessEnc());
 
         // partition graph into strongly connected components using Tarjan's algorithm        
-        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, outFilter, true);
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, outFilter, false);
         List<IntArrayList> components = tarjan.findComponents();
         logger.info(sw.stop() + ", size:" + components.size());
 

@@ -20,11 +20,8 @@ package com.graphhopper.routing.subnetwork;
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 import java.util.ArrayList;
@@ -45,41 +42,20 @@ public class TarjansSCCAlgorithm {
     private final GraphHopperStorage graph;
     private final IntArrayDeque nodeStack;
     private final BitSet onStack;
-    private final GHBitSet ignoreSet;
     private final int[] nodeIndex;
     private final int[] nodeLowLink;
     private final EdgeFilter edgeFilter;
+    private final boolean excludeSingleNodeComponents;
     private int index = 1;
 
-    public TarjansSCCAlgorithm(GraphHopperStorage ghStorage, final EdgeFilter edgeFilter, boolean ignoreSingleEntries) {
+    public TarjansSCCAlgorithm(GraphHopperStorage ghStorage, final EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
         this.graph = ghStorage;
         this.nodeStack = new IntArrayDeque();
         this.onStack = new BitSet(ghStorage.getNodes());
         this.nodeIndex = new int[ghStorage.getNodes()];
         this.nodeLowLink = new int[ghStorage.getNodes()];
         this.edgeFilter = edgeFilter;
-
-        if (ignoreSingleEntries) {
-            // Very important case to boost performance - see #520. Exclude single entry components as we don't need them! 
-            // But they'll be created a lot for multiple vehicles because many nodes e.g. for foot are not accessible at all for car.
-            // We can ignore these single entry components as they are already set 'not accessible'
-            EdgeExplorer explorer = ghStorage.createEdgeExplorer(edgeFilter);
-            int nodes = ghStorage.getNodes();
-            ignoreSet = new GHBitSetImpl(ghStorage.getNodes());
-            for (int start = 0; start < nodes; start++) {
-                if (!ghStorage.isNodeRemoved(start)) {
-                    EdgeIterator iter = explorer.setBaseNode(start);
-                    if (!iter.next())
-                        ignoreSet.add(start);
-                }
-            }
-        } else {
-            ignoreSet = new GHBitSetImpl();
-        }
-    }
-
-    public GHBitSet getIgnoreSet() {
-        return ignoreSet;
+        this.excludeSingleNodeComponents = excludeSingleNodeComponents;
     }
 
     /**
@@ -88,9 +64,7 @@ public class TarjansSCCAlgorithm {
     public List<IntArrayList> findComponents() {
         int nodes = graph.getNodes();
         for (int start = 0; start < nodes; start++) {
-            if (nodeIndex[start] == 0
-                    && !ignoreSet.contains(start)
-                    && !graph.isNodeRemoved(start))
+            if (nodeIndex[start] == 0 && !graph.isNodeRemoved(start))
                 strongConnect(start);
         }
 
@@ -137,9 +111,6 @@ public class TarjansSCCAlgorithm {
             // a successor with a lower nodeLowLink.
             while (iter.next()) {
                 int connectedId = iter.getAdjNode();
-                if (ignoreSet.contains(start))
-                    continue;
-
                 if (nodeIndex[connectedId] == 0) {
                     // Push resume and start states onto state stack to continue our DFS through the graph after the jump.
                     // Ideally we'd just call strongConnectIterative(connectedId);
@@ -154,15 +125,24 @@ public class TarjansSCCAlgorithm {
             // If nodeLowLink == nodeIndex, then we are the first element in a component.
             // Add all nodes higher up on nodeStack to this component.
             if (nodeIndex[start] == nodeLowLink[start]) {
-                IntArrayList component = new IntArrayList();
-                int node;
-                while ((node = nodeStack.removeLast()) != start) {
+                // in case we are excluding single-node components from the result we do not need to create the array
+                if (excludeSingleNodeComponents && nodeStack.getLast() == start) {
+                    nodeStack.removeLast();
+                    onStack.clear(start);
+                    continue;
+                }
+                IntArrayList component = new IntArrayList(nodeStack.getLast() == start ? 1 : 64);
+                while (true) {
+                    int node = nodeStack.removeLast();
                     component.add(node);
                     onStack.clear(node);
+                    if (node == start)
+                        break;
                 }
-                component.add(start);
+                // trimming the component arrays is important to reduce memory usage as there are very many components
+                // with only a single node, especially when using multiple vehicles (e.g. inner cities with lots of
+                // foot ways that are not accessible for cars), see also #520
                 component.trimToSize();
-                onStack.clear(start);
                 components.add(component);
             }
         }
