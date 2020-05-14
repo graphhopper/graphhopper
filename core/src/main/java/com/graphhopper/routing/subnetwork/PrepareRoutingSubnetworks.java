@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Removes nodes/edges which are not part of the 'main' network(s). I.e. mostly nodes with no edges at all but
@@ -46,7 +45,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PrepareRoutingSubnetworks {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopperStorage ghStorage;
-    private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
     private final List<FlagEncoder> encoders;
     private final List<BooleanEncodedValue> accessEncList;
     private int minNetworkSize = 200;
@@ -87,8 +85,7 @@ public class PrepareRoutingSubnetworks {
     private void optimize() {
         StopWatch sw = new StopWatch().start();
         ghStorage.optimize();
-        logger.info("Optimized storage after subnetwork removal, took: " + sw.stop().getSeconds() + "s, "
-                + "maxEdges/node (" + maxEdgesPerNode.get() + "), " + Helper.getMemInfo());
+        logger.info("Optimized storage after subnetwork removal, took: " + sw.stop().getSeconds() + "s," + Helper.getMemInfo());
     }
 
     public int getMaxSubnetworks() {
