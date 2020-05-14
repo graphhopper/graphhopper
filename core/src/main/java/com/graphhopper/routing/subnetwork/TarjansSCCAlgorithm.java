@@ -20,9 +20,12 @@ package com.graphhopper.routing.subnetwork;
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,18 +48,32 @@ public class TarjansSCCAlgorithm {
     private final BitSet onStack;
     private final int[] nodeIndex;
     private final int[] nodeLowLink;
-    private final EdgeFilter edgeFilter;
     private final boolean excludeSingleNodeComponents;
+    private final EdgeFilter outFilter;
+    private EdgeFilter edgeFilter;
     private int index = 1;
 
-    public TarjansSCCAlgorithm(GraphHopperStorage ghStorage, final EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
+    public TarjansSCCAlgorithm(GraphHopperStorage ghStorage, final BooleanEncodedValue accessEnc, boolean excludeSingleNodeComponents) {
         this.graph = ghStorage;
         this.nodeStack = new IntArrayDeque();
         this.onStack = new BitSet(ghStorage.getNodes());
         this.nodeIndex = new int[ghStorage.getNodes()];
         this.nodeLowLink = new int[ghStorage.getNodes()];
-        this.edgeFilter = edgeFilter;
+        this.outFilter = DefaultEdgeFilter.outEdges(accessEnc);
+        this.edgeFilter = outFilter;
         this.excludeSingleNodeComponents = excludeSingleNodeComponents;
+    }
+
+    /**
+     * Allows adding an additional edge filter to exclude edges while searching for connected components.
+     */
+    public void setExcludeEdgeFilter(final EdgeFilter excludeEdgeFilter) {
+        this.edgeFilter = new EdgeFilter() {
+            @Override
+            public boolean accept(EdgeIteratorState edgeState) {
+                return outFilter.accept(edgeState) && excludeEdgeFilter.accept(edgeState);
+            }
+        };
     }
 
     /**
@@ -75,7 +92,6 @@ public class TarjansSCCAlgorithm {
 
     /**
      * Find all components reachable from firstNode, add them to 'components'
-     * <p>
      *
      * @param firstNode start search of SCC at this node
      */

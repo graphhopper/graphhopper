@@ -21,7 +21,6 @@ package com.graphhopper.routing.subnetwork;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
@@ -74,7 +73,7 @@ class TarjansSCCAlgorithmTest {
         g.edge(6, 14, 1, true);
         g.edge(10, 14, 1, true);
 
-        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(g, DefaultEdgeFilter.outEdges(accessEnc), false);
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(g, accessEnc, false);
         List<IntArrayList> components = tarjan.findComponents();
 
         assertEquals(4, components.size());
@@ -102,7 +101,7 @@ class TarjansSCCAlgorithmTest {
         g.edge(6, 7, 1, false);
         g.edge(7, 4, 1, false);
 
-        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(g, DefaultEdgeFilter.outEdges(accessEnc), false);
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(g, accessEnc, false);
         List<IntArrayList> components = tarjan.findComponents();
 
         assertEquals(3, components.size());
