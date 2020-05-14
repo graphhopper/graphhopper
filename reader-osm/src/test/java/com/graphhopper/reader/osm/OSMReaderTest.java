@@ -205,7 +205,9 @@ public class OSMReaderTest {
 
     @Test
     public void testOneWay() {
-        GraphHopper hopper = new GraphHopperFacade(file2).importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file2)
+                .setMinNetworkSize(0)
+                .importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
         assertEquals("2014-01-02T01:10:14Z", graph.getProperties().get("datareader.data.date"));
@@ -306,7 +308,9 @@ public class OSMReaderTest {
 
     @Test
     public void testFoot() {
-        GraphHopper hopper = new GraphHopperFacade(file3).importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file3)
+                .setMinNetworkSize(0)
+                .importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 11.1);
@@ -354,7 +358,7 @@ public class OSMReaderTest {
     @Test
     public void testBarriers() {
         GraphHopper hopper = new GraphHopperFacade(fileBarriers).
-                setMinNetworkSize(0, 0).
+                setMinNetworkSize(0).
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
@@ -440,7 +444,7 @@ public class OSMReaderTest {
     @Test
     public void testBarriersOnTowerNodes() {
         GraphHopper hopper = new GraphHopperFacade(fileBarriers).
-                setMinNetworkSize(0, 0).
+                setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(8, graph.getNodes());
@@ -880,7 +884,9 @@ public class OSMReaderTest {
 
     @Test
     public void testDataDateWithinPBF() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm6.pbf").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-osm6.pbf")
+                .setMinNetworkSize(0)
+                .importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
         assertEquals("2014-01-02T00:10:14Z", graph.getProperties().get("datareader.data.date"));
@@ -936,6 +942,7 @@ public class OSMReaderTest {
             }
         }.setEncodingManager(EncodingManager.create("car,bike")).
                 setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest")).
+                setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
 

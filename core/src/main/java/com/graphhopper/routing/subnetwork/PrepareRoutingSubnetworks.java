@@ -50,7 +50,6 @@ public class PrepareRoutingSubnetworks {
     private final List<FlagEncoder> encoders;
     private final List<BooleanEncodedValue> accessEncList;
     private int minNetworkSize = 200;
-    private int minOneWayNetworkSize = 0;
     private int subnetworks = -1;
 
     public PrepareRoutingSubnetworks(GraphHopperStorage ghStorage, List<FlagEncoder> encoders) {
@@ -67,22 +66,18 @@ public class PrepareRoutingSubnetworks {
         return this;
     }
 
-    public PrepareRoutingSubnetworks setMinOneWayNetworkSize(int minOnewayNetworkSize) {
-        this.minOneWayNetworkSize = minOnewayNetworkSize;
-        return this;
-    }
-
     public void doWork() {
-        if (minNetworkSize <= 0 && minOneWayNetworkSize <= 0)
+        if (minNetworkSize <= 0) {
+            logger.info("Skipping subnetwork removal: prepare.min_network_size: " + minNetworkSize);
             return;
+        }
         StopWatch sw = new StopWatch().start();
-        logger.info("Start removing subnetworks (prepare.min_network_size:" + minNetworkSize + ", prepare.min_one_way_network_size:" + minOneWayNetworkSize + ") " + Helper.getMemInfo());
+        logger.info("Start removing subnetworks (prepare.min_network_size:" + minNetworkSize + ") " + Helper.getMemInfo());
         logger.info("Graph nodes: " + Helper.nf(ghStorage.getNodes()));
         logger.info("Graph edges: " + Helper.nf(ghStorage.getEdges()));
         for (FlagEncoder encoder : encoders) {
             logger.info("--- vehicle: '" + encoder.toString() + "'");
-            if (minNetworkSize > 0)
-                removeSmallSubNetworks(encoder.getAccessEnc());
+            removeSmallSubNetworks(encoder.getAccessEnc());
         }
         markNodesRemovedIfUnreachable();
         optimize();
@@ -106,7 +101,7 @@ public class PrepareRoutingSubnetworks {
      * For example, small areas like parking lots are sometimes connected to the whole network through a
      * one-way road. This is clearly a (mapping) error - but it causes the routing to fail when a point gets
      * connected to this small area. This routine removes all these networks from the graph if their size is
-     * < {@link #minOneWayNetworkSize}
+     * < {@link #minNetworkSize}
      * <p>
      * Deletes all sub-networks with size < {@link #minNetworkSize}, but always keeps the biggest one
      *

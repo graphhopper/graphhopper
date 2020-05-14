@@ -65,6 +65,7 @@ public class GraphHopperOSMTest {
     private static final String ghLoc = "./target/tmp/ghosm";
     private static final String testOsm = "./src/test/resources/com/graphhopper/reader/osm/test-osm.xml";
     private static final String testOsm3 = "./src/test/resources/com/graphhopper/reader/osm/test-osm3.xml";
+    private static final String testOsm8 = "./src/test/resources/com/graphhopper/reader/osm/test-osm8.xml";
     private GraphHopper instance;
 
     @Before
@@ -196,7 +197,7 @@ public class GraphHopperOSMTest {
             }
         });
 
-        assertEquals(57, indexNodeList.size());
+        assertEquals(47, indexNodeList.size());
         for (int nodeId : indexNodeList) {
             if (!bbox.contains(na.getLatitude(nodeId), na.getLongitude(nodeId)))
                 fail("bbox " + bbox + " should contain " + nodeId);
@@ -427,7 +428,7 @@ public class GraphHopperOSMTest {
                 ).
                 setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc).
-                setDataReaderFile(testOsm3);
+                setDataReaderFile(testOsm8);
         instance.importOrLoad();
 
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
@@ -435,7 +436,7 @@ public class GraphHopperOSMTest {
 
         // A to D
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setProfile(profile1));
-        assertFalse(grsp.hasErrors());
+        assertFalse(grsp.getErrors().toString(), grsp.hasErrors());
         ResponsePath rsp = grsp.getBest();
         assertEquals(3, rsp.getPoints().getSize());
         // => found A and D

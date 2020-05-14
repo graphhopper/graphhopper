@@ -270,7 +270,7 @@ elif [ "$ACTION" = "import" ]; then
 elif [ "$ACTION" = "measurement" ]; then
   ARGS="$GH_WEB_OPTS graph.location=$GRAPH datareader.file=$OSM_FILE \
        measurement.weighting=fastest measurement.ch.node=true measurement.ch.edge=false measurement.lm=true graph.flag_encoders=car|turn_costs=true \
-       prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
+       prepare.min_network_size=10000"
 
  function startMeasurement {
     execMvn --projects tools -am -DskipTests clean package

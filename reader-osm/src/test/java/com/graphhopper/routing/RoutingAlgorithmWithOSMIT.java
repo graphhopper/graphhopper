@@ -565,7 +565,7 @@ public class RoutingAlgorithmWithOSMIT {
                     setEncodingManager(em);
 
             if (osmFile.contains("krautsand"))
-                hopper.setMinNetworkSize(0, 0);
+                hopper.setMinNetworkSize(0);
             // avoid that path.getDistance is too different to path.getPoint.calcDistance
             hopper.setWayPointMaxDistance(0);
 

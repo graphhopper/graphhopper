@@ -53,7 +53,6 @@ public class RouteResourceProfileSelectionTest {
                 putObject("graph.flag_encoders", "bike,car,foot").
                 putObject("routing.ch.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
-                putObject("prepare.min_one_way_network_size", 0).
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("graph.location", DIR)

@@ -56,7 +56,6 @@ public class CustomWeightingRouteResourceLMTest {
                 putObject("graph.flag_encoders", "car,foot").
                 putObject("routing.lm.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
-                putObject("prepare.min_one_way_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "surface").
                 putObject("graph.location", DIR)
