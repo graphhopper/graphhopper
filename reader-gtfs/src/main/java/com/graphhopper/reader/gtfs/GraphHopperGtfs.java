@@ -129,6 +129,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
     protected void importPublicTransit() {
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
         if (!getGtfsStorage().loadExisting()) {
+            ensureWriteAccess();
             getGtfsStorage().create();
             GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
             int idx = 0;
@@ -145,7 +146,6 @@ public class GraphHopperGtfs extends GraphHopperOSM {
             //this commit https://github.com/graphhopper/graphhopper/commit/31ae1e1534849099f24e45d53c96340a7c6a5197.
             boolean createTransferStopsConnectSameOsmNode = ghConfig.has("gtfs.create_transfers_stops_same_osm_node") &&
                                                             ghConfig.getBool("gtfs.create_transfers_stops_same_osm_node", false);
-
 
             LocationIndex streetNetworkIndex = getLocationIndex();
             getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
