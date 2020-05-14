@@ -60,7 +60,7 @@ import static java.util.Arrays.asList;
 /**
  * @author Peter Karich
  */
-public class GraphHopperIT {
+public class GraphHopperTest {
 
     public static final String DIR = "../core/files";
 

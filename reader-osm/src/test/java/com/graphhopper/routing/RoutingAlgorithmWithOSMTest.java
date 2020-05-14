@@ -21,6 +21,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.reader.PrincetonReader;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
@@ -28,32 +29,100 @@ import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.GZIPInputStream;
 
-import static com.graphhopper.GraphHopperIT.DIR;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.GraphHopperTest.DIR;
+import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Try algorithms, indices and graph storages with real data
  *
  * @author Peter Karich
  */
-public class RoutingAlgorithmWithOSMIT {
+public class RoutingAlgorithmWithOSMTest {
     TestAlgoCollector testCollector;
+
+    public static List<AlgoHelperEntry> createAlgos(final GraphHopper hopper, final String weightingStr, final String vehicleStr, TraversalMode tMode) {
+        GraphHopperStorage ghStorage = hopper.getGraphHopperStorage();
+        LocationIndex idx = hopper.getLocationIndex();
+
+        String addStr = "";
+        if (tMode.isEdgeBased())
+            addStr = "turn|";
+
+        Profile profile = new Profile("profile").setVehicle(vehicleStr).setWeighting(weightingStr).setTurnCosts(tMode.isEdgeBased());
+        Weighting weighting = hopper.createWeighting(profile, new PMap());
+
+        PMap defaultHints = new PMap()
+                .putObject(Parameters.CH.DISABLE, true)
+                .putObject(Parameters.Landmark.DISABLE, true)
+                .putObject("vehicle", vehicleStr)
+                .putObject("weighting", weightingStr);
+
+        AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
+        List<AlgoHelperEntry> algos = new ArrayList<>();
+        algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(), idx, "astar|beeline|" + addStr + weighting));
+        // later: include dijkstraOneToMany
+        algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
+
+        AlgorithmOptions astarbiOpts = AlgorithmOptions.start(defaultOpts).algorithm(ASTAR_BI).build();
+        astarbiOpts.getHints().putObject(ASTAR_BI + ".approximation", "BeelineSimplification");
+        AlgorithmOptions dijkstrabiOpts = AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA_BI).build();
+        algos.add(new AlgoHelperEntry(ghStorage, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
+
+        // add additional preparations if CH and LM preparation are enabled
+        if (hopper.getLMPreparationHandler().isEnabled()) {
+            final PMap lmHints = new PMap(defaultHints).putObject(Parameters.Landmark.DISABLE, false);
+            algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
+                @Override
+                public RoutingAlgorithmFactory createRoutingFactory() {
+                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", true, false);
+                }
+            });
+        }
+
+        if (hopper.getCHPreparationHandler().isEnabled()) {
+            final PMap chHints = new PMap(defaultHints);
+            chHints.putObject(Parameters.CH.DISABLE, false);
+            chHints.putObject(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
+            Profile pickedProfile = new ProfileResolver(hopper.getEncodingManager(), hopper.getProfiles(), hopper.getCHPreparationHandler().getCHProfiles(), Collections.<LMProfile>emptyList()).selectProfileCH(chHints);
+            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
+                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + weightingStr) {
+                @Override
+                public RoutingAlgorithmFactory createRoutingFactory() {
+                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", false, true);
+                }
+            });
+
+            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
+                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + weightingStr) {
+                @Override
+                public RoutingAlgorithmFactory createRoutingFactory() {
+                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", false, true);
+                }
+            });
+        }
+
+        return algos;
+    }
 
     @Before
     public void setUp() {
@@ -589,7 +658,7 @@ public class RoutingAlgorithmWithOSMIT {
             TraversalMode tMode = importVehicles.contains("turn_costs=true")
                     ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Collection<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper, weightStr, vehicle, tMode);
+            Collection<AlgoHelperEntry> prepares = createAlgos(hopper, weightStr, vehicle, tMode);
 
             EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
             for (AlgoHelperEntry entry : prepares) {
@@ -679,5 +748,54 @@ public class RoutingAlgorithmWithOSMIT {
         assertEquals(MAX * algosLength * instances.size(), integ.get());
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
         hopper.close();
+    }
+
+    @Test
+    public void testPerformance() throws IOException {
+        int N = 10;
+        int noJvmWarming = N / 4;
+
+        Random rand = new Random(0);
+        final EncodingManager eManager = EncodingManager.create("car");
+        final GraphHopperStorage graph = new GraphBuilder(eManager).create();
+
+        String bigFile = "10000EWD.txt.gz";
+        new PrincetonReader(graph).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream(bigFile))).read();
+        GraphHopper hopper = new GraphHopper() {
+            {
+                setEncodingManager(eManager);
+                loadGraph(graph);
+            }
+
+            @Override
+            protected LocationIndex createLocationIndex(Directory dir) {
+                return new LocationIndexTree(graph, dir);
+            }
+        };
+
+        Collection<AlgoHelperEntry> prepares = createAlgos(hopper, "shortest", "car", TraversalMode.NODE_BASED);
+
+        for (AlgoHelperEntry entry : prepares) {
+            StopWatch sw = new StopWatch();
+            for (int i = 0; i < N; i++) {
+                int node1 = Math.abs(rand.nextInt(graph.getNodes()));
+                int node2 = Math.abs(rand.nextInt(graph.getNodes()));
+                RoutingAlgorithm d = entry.createRoutingFactory().createAlgo(graph, entry.getAlgorithmOptions());
+                if (i >= noJvmWarming)
+                    sw.start();
+
+                Path p = d.calcPath(node1, node2);
+                // avoid jvm optimization => call p.distance
+                if (i >= noJvmWarming && p.getDistance() > -1)
+                    sw.stop();
+
+                // System.out.println("#" + i + " " + name + ":" + sw.getSeconds() + " " + p.nodes());
+            }
+
+            float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
+            System.out.println("# " + getClass().getSimpleName() + " " + entry
+                    + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
+            assertTrue("speed too low!? " + perRun + " per run", perRun < 0.08);
+        }
     }
 }
