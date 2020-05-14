@@ -80,12 +80,11 @@ public class PrepareRoutingSubnetworks {
         logger.info("Graph edges: " + Helper.nf(ghStorage.getEdges()));
         for (FlagEncoder encoder : encoders) {
             logger.info("--- vehicle: '" + encoder.toString() + "'");
-            DefaultEdgeFilter filter = DefaultEdgeFilter.allEdges(encoder);
             if (minOneWayNetworkSize > 0)
-                removeDeadEndUnvisitedNetworks(filter);
+                removeDeadEndUnvisitedNetworks(encoder.getAccessEnc());
 
-            List<IntArrayList> components = findSubnetworks(filter);
-            removeSmallSubNetworks(filter, components);
+            List<IntArrayList> components = findSubnetworks(encoder.getAccessEnc());
+            removeSmallSubNetworks(encoder.getAccessEnc(), components);
             subnetworks = Math.max(components.size(), subnetworks);
         }
 
@@ -109,10 +108,9 @@ public class PrepareRoutingSubnetworks {
     /**
      * This method finds the double linked components according to the specified filter.
      */
-    List<IntArrayList> findSubnetworks(DefaultEdgeFilter filter) {
+    List<IntArrayList> findSubnetworks(final BooleanEncodedValue accessEnc) {
         StopWatch sw = new StopWatch().start();
-        final BooleanEncodedValue accessEnc = filter.getAccessEnc();
-        final EdgeExplorer explorer = ghStorage.createEdgeExplorer(filter);
+        final EdgeExplorer explorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.allEdges(accessEnc));
         int locs = ghStorage.getNodes();
         List<IntArrayList> list = new ArrayList<>(100);
         final GHBitSet bs = new GHBitSetImpl(locs);
@@ -159,13 +157,12 @@ public class PrepareRoutingSubnetworks {
     /**
      * Deletes all sub-networks with size < {@link #minNetworkSize}, but always keeps the biggest one
      */
-    int removeSmallSubNetworks(DefaultEdgeFilter filter, List<IntArrayList> components) {
+    int removeSmallSubNetworks(BooleanEncodedValue accessEnc, List<IntArrayList> components) {
         if (components.size() <= 1)
             return 0;
 
         StopWatch sw = new StopWatch().start();
-        BooleanEncodedValue accessEnc = filter.getAccessEnc();
-        EdgeExplorer explorer = ghStorage.createEdgeExplorer(filter);
+        EdgeExplorer explorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.allEdges(accessEnc));
 
         // find the biggest component
         IntArrayList biggest = components.get(0);
@@ -221,10 +218,10 @@ public class PrepareRoutingSubnetworks {
      *
      * @return number of removed edges
      */
-    int removeDeadEndUnvisitedNetworks(final DefaultEdgeFilter bothFilter) {
+    int removeDeadEndUnvisitedNetworks(BooleanEncodedValue accessEnc) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
-        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, DefaultEdgeFilter.outEdges(bothFilter.getAccessEnc()), false);
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, DefaultEdgeFilter.outEdges(accessEnc), false);
         List<IntArrayList> components = tarjan.findComponents();
         logger.info("Found " + components.size() + " one-way subnetworks, took: " + sw.stop().getSeconds() + "s");
         // todonow
@@ -240,7 +237,7 @@ public class PrepareRoutingSubnetworks {
 
         // remove edges determined from nodes but only if less than minimum size
         sw = new StopWatch().start();
-        EdgeExplorer explorer = ghStorage.createEdgeExplorer(bothFilter);
+        EdgeExplorer explorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.allEdges(accessEnc));
         int removedComponents = 0;
         int removedEdges = 0;
         int biggestRemoved = 0;
@@ -248,7 +245,7 @@ public class PrepareRoutingSubnetworks {
         int biggestRemaining = 0;
         for (IntArrayList component : components) {
             if (component.size() < minOneWayNetworkSize) {
-                removedEdges += blockEdgesForComponent(explorer, bothFilter.getAccessEnc(), component);
+                removedEdges += blockEdgesForComponent(explorer, accessEnc, component);
                 removedComponents++;
                 biggestRemoved = Math.max(biggestRemoved, component.size());
             } else {
