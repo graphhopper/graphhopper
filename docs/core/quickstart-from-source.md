@@ -14,9 +14,7 @@ Then do:
 
 ```bash
 git clone git://github.com/graphhopper/graphhopper.git
-cd graphhopper; git checkout 0.13
-# fetches main.js, can be omitted if no UI is needed
-cd web/src/main/resources/ && ZFILE=/tmp/gh.jar && wget -O $ZFILE "https://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.graphhopper&a=graphhopper-web&v=LATEST" && unzip $ZFILE assets/js/main.js && rm $ZFILE && cd ../../../..
+cd graphhopper; git checkout 1.0
 ./graphhopper.sh -a web -i europe_germany_berlin.pbf
 # now go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
 ```
@@ -143,12 +141,11 @@ npm run lint
 # see the package.json where more scripts are defined
 ```
 
-### Experimental
+You can also avoid installing npm and build the main.js via maven:
 
-If you need **offline** routing in the browser like for smaller areas or hybrid routing solution
-then there is a highly experimental version of GraphHopper using TeaVM. 
-Have a look into this [blog post](http://karussell.wordpress.com/2014/05/04/graphhopper-in-the-browser-teavm-makes-offline-routing-via-openstreetmap-possible-in-javascript/) 
-for a demo and more information.
+```
+mvn -Pinclude-web-ui install
+```
 
 ### Android Usage
  
