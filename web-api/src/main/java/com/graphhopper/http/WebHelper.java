@@ -153,7 +153,7 @@ public class WebHelper {
     public static ObjectNode jsonResponsePutInfo(ObjectNode json, float took) {
         final ObjectNode info = json.putObject("info");
         info.putPOJO("copyrights", COPYRIGHTS);
-        info.put("took", Math.round(took * 1000));
+        info.put("took", Math.round(took));
         return json;
     }
 

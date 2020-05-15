@@ -223,7 +223,7 @@ public class IsochroneResource {
             finalJson = json;
         } else {
             json.putPOJO("polygons", features);
-            finalJson = WebHelper.jsonResponsePutInfo(json, sw.getSeconds());
+            finalJson = WebHelper.jsonResponsePutInfo(json, sw.getMillis());
         }
 
         sw.stop();
