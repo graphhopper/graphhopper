@@ -1011,7 +1011,7 @@ public class GraphHopperTest {
         GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
                 setAlgorithm(ASTAR).setProfile(profile));
 
-        PathWrapper arsp = rsp.getBest();
+        ResponsePath arsp = rsp.getBest();
         assertEquals(1570.4, arsp.getDistance(), .1);
         assertEquals(60, arsp.getPoints().getSize());
         assertTrue(arsp.getPoints().is3D());
