@@ -141,12 +141,6 @@ npm run lint
 # see the package.json where more scripts are defined
 ```
 
-You can also avoid installing npm and build the main.js via maven:
-
-```
-mvn -Pinclude-web-ui install
-```
-
 ### Android Usage
  
 For details on Android-usage have a look into this [Android site](../android/index.md)
