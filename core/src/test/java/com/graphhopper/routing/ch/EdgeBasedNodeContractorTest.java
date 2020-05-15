@@ -20,9 +20,9 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;

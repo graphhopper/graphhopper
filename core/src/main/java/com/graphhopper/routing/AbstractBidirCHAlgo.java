@@ -204,7 +204,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 continue;
 
             if (updateBestPath) {
-                // only needed for edge-based -> skip the calculation and use dummy value otherwise
+                // use dummy value for edge weight as it is used for neither node- nor edge-based CH
                 updateBestPath(Double.POSITIVE_INFINITY, entry, origEdgeId, traversalId, reverse);
             }
         }

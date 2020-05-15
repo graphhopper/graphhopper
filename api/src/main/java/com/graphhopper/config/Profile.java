@@ -18,6 +18,7 @@
 
 package com.graphhopper.config;
 
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 /**
@@ -97,7 +98,7 @@ public class Profile {
 
     @Override
     public String toString() {
-        return "name=" + name + "|vehicle=" + vehicle + "|weighting=" + weighting + "|turnCosts=" + turnCosts + "|hints=" + hints;
+        return createContentString();
     }
 
     @Override
@@ -108,8 +109,17 @@ public class Profile {
         return name.equals(profile.name);
     }
 
+    private String createContentString() {
+        // used to check against stored custom models, see #2026
+        return "name=" + name + "|vehicle=" + vehicle + "|weighting=" + weighting + "|turnCosts=" + turnCosts + "|hints=" + hints;
+    }
+
     @Override
     public int hashCode() {
         return name.hashCode();
+    }
+
+    public int getVersion() {
+        return Helper.staticHashCode(createContentString());
     }
 }

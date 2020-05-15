@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 
 /**

@@ -5,7 +5,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.ProfileResolver;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
@@ -100,7 +100,7 @@ public class SPTResource {
             throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
-        QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, qr);
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
 
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);

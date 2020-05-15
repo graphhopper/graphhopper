@@ -21,7 +21,6 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.SPTEntry;
 
 import java.util.Collections;
 import java.util.List;

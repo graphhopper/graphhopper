@@ -157,10 +157,19 @@ public class Measurement {
             }
 
             @Override
+            protected void cleanUp() {
+                StopWatch sw = new StopWatch().start();
+                super.cleanUp();
+                put("graph.subnetwork_removal_time_ms", sw.stop().getMillis());
+            }
+
+            @Override
             protected DataReader importData() throws IOException {
                 StopWatch sw = new StopWatch().start();
                 DataReader dr = super.importData();
-                put("graph.import_time", sw.stop().getSeconds());
+                sw.stop();
+                put("graph.import_time", sw.getSeconds());
+                put("graph.import_time_ms", sw.getMillis());
                 return dr;
             }
         };
@@ -739,7 +748,7 @@ public class Measurement {
                     return 0;
                 }
 
-                PathWrapper arsp = rsp.getBest();
+                ResponsePath responsePath = rsp.getBest();
                 if (!warmup) {
                     long visitedNodes = rsp.getHints().getLong("visited_nodes.sum", 0);
                     visitedNodesSum.addAndGet(visitedNodes);
@@ -747,7 +756,7 @@ public class Measurement {
                         maxVisitedNodes.set(visitedNodes);
                     }
 
-                    long dist = (long) arsp.getDistance();
+                    long dist = (long) responsePath.getDistance();
                     distSum.addAndGet(dist);
 
                     airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
@@ -762,7 +771,7 @@ public class Measurement {
                         altCount.addAndGet(rsp.getAll().size());
                 }
 
-                return arsp.getPoints().getSize();
+                return responsePath.getPoints().getSize();
             }
         }.setIterations(querySettings.count).start();
 

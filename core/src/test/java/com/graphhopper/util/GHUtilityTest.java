@@ -18,7 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;

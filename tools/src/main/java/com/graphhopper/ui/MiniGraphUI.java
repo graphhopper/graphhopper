@@ -28,8 +28,8 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -331,7 +331,7 @@ public class MiniGraphUI {
                     return;
 
                 makeTransparent(g2);
-                QueryGraph qGraph = QueryGraph.lookup(routingGraph, fromRes, toRes);
+                QueryGraph qGraph = QueryGraph.create(routingGraph, fromRes, toRes);
                 RoutingAlgorithm algo = algoFactory.createAlgo(qGraph, algoOpts);
                 if (algo instanceof DebugAlgo) {
                     ((DebugAlgo) algo).setGraphics2D(g2);

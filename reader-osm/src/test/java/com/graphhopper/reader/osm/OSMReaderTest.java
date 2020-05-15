@@ -21,7 +21,7 @@ import com.carrotsearch.hppc.LongIndexedContainer;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperIT;
+import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ReaderNode;
@@ -29,7 +29,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
@@ -678,7 +678,7 @@ public class OSMReaderTest {
     public void testReadEleFromDataProvider() {
         GraphHopper hopper = new GraphHopperFacade("test-osm5.xml");
         // get N10E046.hgt.zip
-        ElevationProvider provider = new SRTMProvider(GraphHopperIT.DIR);
+        ElevationProvider provider = new SRTMProvider(GraphHopperTest.DIR);
         hopper.setElevationProvider(provider);
         hopper.importOrLoad();
 

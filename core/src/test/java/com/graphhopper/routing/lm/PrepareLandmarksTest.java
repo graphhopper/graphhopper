@@ -21,8 +21,8 @@ import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -157,7 +157,7 @@ public class PrepareLandmarksTest {
 
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 133, oneDirAlgoWithLandmarks.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 135, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
         RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph,
@@ -171,7 +171,7 @@ public class PrepareLandmarksTest {
         // due to the two more virtual nodes but this should not harm in practise
         QueryResult fromQR = index.findClosest(-0.0401, 0.2201, EdgeFilter.ALL_EDGES);
         QueryResult toQR = index.findClosest(-0.2401, 0.0601, EdgeFilter.ALL_EDGES);
-        QueryGraph qGraph = QueryGraph.lookup(graph, fromQR, toQR);
+        QueryGraph qGraph = QueryGraph.create(graph, fromQR, toQR);
         RoutingAlgorithm qGraphOneDirAlgo = prepare.getRoutingAlgorithmFactory().createAlgo(qGraph,
                 AlgorithmOptions.start().algorithm(ASTAR).weighting(weighting).traversalMode(tm).hints(hints).build());
         path = qGraphOneDirAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
@@ -180,7 +180,7 @@ public class PrepareLandmarksTest {
         expectedPath = expectedAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 133, qGraphOneDirAlgo.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 135, qGraphOneDirAlgo.getVisitedNodes());
     }
 
     @Test
@@ -202,7 +202,7 @@ public class PrepareLandmarksTest {
         assertEquals(Arrays.toString(new int[]{
                 2, 0
         }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
-        assertEquals(4791, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
+        assertEquals(4800, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         dir = new RAMDirectory(fileStr, true);
         plm = new PrepareLandmarks(dir, graph, lmConfig, 2);
@@ -211,7 +211,7 @@ public class PrepareLandmarksTest {
         assertEquals(Arrays.toString(new int[]{
                 2, 0
         }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
-        assertEquals(4791, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
+        assertEquals(4800, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         Helper.removeDir(new File(fileStr));
     }

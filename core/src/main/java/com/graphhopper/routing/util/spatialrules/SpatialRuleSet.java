@@ -20,8 +20,8 @@ package com.graphhopper.routing.util.spatialrules;
 import java.util.Collections;
 import java.util.List;
 
-import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
 
 /**
  * Contains all rules which are applicable for a certain position.

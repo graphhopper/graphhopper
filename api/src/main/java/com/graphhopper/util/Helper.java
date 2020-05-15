@@ -504,4 +504,19 @@ public class Helper {
         }
         return result;
     }
+
+    /**
+     * Produces a static hashcode for a string that is platform independent and still compatible to the default
+     * of openjdk. Do not use for performance critical applications.
+     *
+     * @see String#hashCode()
+     */
+    public static int staticHashCode(String str) {
+        int len = str.length();
+        int val = 0;
+        for (int idx = 0; idx < len; ++idx) {
+            val = 31 * val + str.charAt(idx);
+        }
+        return val;
+    }
 }

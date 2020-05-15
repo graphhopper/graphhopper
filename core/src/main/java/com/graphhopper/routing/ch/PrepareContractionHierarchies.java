@@ -393,7 +393,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         return chConfig.getWeighting();
     }
 
-    public CHConfig getCHProfile() {
+    public CHConfig getCHConfig() {
         return chConfig;
     }
 

@@ -24,7 +24,7 @@ import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.*;

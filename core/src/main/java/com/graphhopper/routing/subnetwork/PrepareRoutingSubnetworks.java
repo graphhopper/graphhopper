@@ -21,7 +21,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -200,7 +200,7 @@ public class PrepareRoutingSubnetworks {
         final EdgeFilter outFilter = DefaultEdgeFilter.outEdges(bothFilter.getAccessEnc());
 
         // partition graph into strongly connected components using Tarjan's algorithm        
-        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, outFilter, true);
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, outFilter, false);
         List<IntArrayList> components = tarjan.findComponents();
         logger.info(sw.stop() + ", size:" + components.size());
 

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.ArrayList;

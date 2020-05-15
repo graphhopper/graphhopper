@@ -2,6 +2,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.Helper;
 
 import static com.graphhopper.config.Profile.validateProfileName;
 
@@ -69,5 +70,4 @@ public class CHConfig {
     public int hashCode() {
         return getName().hashCode();
     }
-
 }

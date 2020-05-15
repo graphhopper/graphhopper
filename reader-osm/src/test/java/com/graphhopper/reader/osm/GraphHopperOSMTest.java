@@ -33,6 +33,7 @@ import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -389,7 +390,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         instance.importOrLoad();
-        PathWrapper rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
+        ResponsePath rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
                 setProfile(profile).
                 setAlgorithm(DIJKSTRA_BI)).getBest();
         assertFalse(rsp.hasErrors());
@@ -435,7 +436,7 @@ public class GraphHopperOSMTest {
         // A to D
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setProfile(profile1));
         assertFalse(grsp.hasErrors());
-        PathWrapper rsp = grsp.getBest();
+        ResponsePath rsp = grsp.getBest();
         assertEquals(3, rsp.getPoints().getSize());
         // => found A and D
         assertEquals(50, rsp.getPoints().getLongitude(0), 1e-3);
@@ -705,7 +706,7 @@ public class GraphHopperOSMTest {
         // A to E only for foot
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.19, 52).setProfile(profile));
         assertFalse(grsp.hasErrors());
-        PathWrapper rsp = grsp.getBest();
+        ResponsePath rsp = grsp.getBest();
         // the last points snaps to the edge
         assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.194015, 51.995013), rsp.getPoints());
     }
@@ -739,7 +740,7 @@ public class GraphHopperOSMTest {
 
         GHResponse grsp = instance.route(new GHRequest(Arrays.asList(first, second, third)).setProfile(profile));
         assertFalse("should find 1->2->3", grsp.hasErrors());
-        PathWrapper rsp = grsp.getBest();
+        ResponsePath rsp = grsp.getBest();
         assertEquals(rsp12.getBest().getDistance() + rsp23.getBest().getDistance(), rsp.getDistance(), 1e-6);
         assertEquals(4, rsp.getPoints().getSize());
         assertEquals(5, rsp.getInstructions().size());
@@ -966,7 +967,7 @@ public class GraphHopperOSMTest {
             for (PrepareContractionHierarchies pch : hopper.getCHPreparationHandler().getPreparations()) {
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", pch.isPrepared());
 
-                String name = pch.getCHProfile().toFileName();
+                String name = pch.getCHConfig().toFileName();
                 Long singleThreadShortcutCount = shortcutCountMap.get(name);
                 if (singleThreadShortcutCount == null)
                     shortcutCountMap.put(name, pch.getShortcuts());
@@ -1116,5 +1117,93 @@ public class GraphHopperOSMTest {
         return new GraphHopperOSM().
                 setEncodingManager(em).
                 setProfiles(profiles);
+    }
+
+    @Test
+    public void testLoadingLMAndCHProfiles() {
+        GraphHopper hopper = new GraphHopperOSM()
+                .setGraphHopperLocation(ghLoc)
+                .setDataReaderFile(testOsm)
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
+        hopper.importOrLoad();
+        hopper.close();
+
+        // load without problem
+        hopper = new GraphHopperOSM()
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
+        assertTrue(hopper.load(ghLoc));
+        hopper.close();
+
+        // problem: changed weighting in profile although LM preparation was enabled
+        hopper = new GraphHopperOSM()
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new Profile("car").setVehicle("car").setWeighting("shortest"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        // do not load CH
+        try {
+            assertFalse(hopper.load(ghLoc));
+            fail("load should fail");
+        } catch (Exception ex) {
+            assertEquals("LM preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
+        } finally {
+            hopper.close();
+        }
+
+        // problem: changed weighting in profile although CH preparation was enabled
+        hopper = new GraphHopperOSM()
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new Profile("car").setVehicle("car").setWeighting("shortest"));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
+        // do not load LM
+        try {
+            assertFalse(hopper.load(ghLoc));
+            fail("load should fail");
+        } catch (Exception ex) {
+            assertEquals("CH preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
+        } finally {
+            hopper.close();
+        }
+    }
+
+    @Test
+    public void testLoadingCustomProfiles() {
+        CustomModel customModel = new CustomModel().setDistanceInfluence(123);
+        GraphHopper hopper = new GraphHopperOSM()
+                .setGraphHopperLocation(ghLoc)
+                .setDataReaderFile(testOsm)
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new CustomProfile("car").setCustomModel(customModel));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        hopper.importOrLoad();
+        hopper.close();
+
+        // load without problem
+        hopper = new GraphHopperOSM()
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new CustomProfile("car").setCustomModel(customModel));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        assertTrue(hopper.load(ghLoc));
+        hopper.close();
+
+        // do not load changed CustomModel
+        customModel.setDistanceInfluence(100);
+        hopper = new GraphHopperOSM()
+                .setEncodingManager(EncodingManager.create("car"))
+                .setProfiles(new CustomProfile("car").setCustomModel(customModel));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
+        try {
+            assertFalse(hopper.load(ghLoc));
+            fail("load should fail");
+        } catch (Exception ex) {
+            assertEquals("LM preparation of car already exists in storage and doesn't match configuration", ex.getMessage());
+        } finally {
+            hopper.close();
+        }
     }
 }

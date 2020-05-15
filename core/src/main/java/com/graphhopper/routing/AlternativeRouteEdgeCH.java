@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
+import com.graphhopper.routing.ch.ShortcutUnpacker;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;

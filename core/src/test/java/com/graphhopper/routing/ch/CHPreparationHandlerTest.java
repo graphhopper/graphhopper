@@ -121,7 +121,7 @@ public class CHPreparationHandlerTest {
         CHConfig[] expectedConfigs = new CHConfig[]{configNode1, configNode2, configEdge1, configEdge2, configNode3};
         List<PrepareContractionHierarchies> preparations = instance.getPreparations();
         for (int i = 0; i < preparations.size(); ++i) {
-            assertSame(expectedConfigs[i], preparations.get(i).getCHProfile());
+            assertSame(expectedConfigs[i], preparations.get(i).getCHConfig());
         }
     }
 

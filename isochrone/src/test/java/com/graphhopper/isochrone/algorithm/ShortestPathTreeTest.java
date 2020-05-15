@@ -1,6 +1,6 @@
 package com.graphhopper.isochrone.algorithm;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;

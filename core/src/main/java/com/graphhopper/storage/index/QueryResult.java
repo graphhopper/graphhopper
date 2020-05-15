@@ -56,7 +56,7 @@ public class QueryResult {
 
     /**
      * Returns the closest matching node. This is either a tower node of the base graph
-     * or a virtual node (see also {@link QueryGraph#lookup(Graph, List)}).
+     * or a virtual node (see also {@link QueryGraph#create(Graph, List)}).
      *
      * @return {@link #INVALID_NODE} if nothing found, this should be avoided via a call of 'isValid'
      */

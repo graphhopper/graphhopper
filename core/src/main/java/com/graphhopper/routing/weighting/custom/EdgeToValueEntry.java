@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Map;

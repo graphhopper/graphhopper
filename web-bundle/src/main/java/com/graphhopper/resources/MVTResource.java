@@ -1,7 +1,7 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.NodeAccess;

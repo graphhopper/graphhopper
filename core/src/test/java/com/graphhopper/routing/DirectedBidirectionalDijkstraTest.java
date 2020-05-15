@@ -3,8 +3,8 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
@@ -486,7 +486,7 @@ public class DirectedBidirectionalDijkstraTest {
         LocationIndex locationIndex = new LocationIndexTree(graph, dir);
         locationIndex.prepareIndex();
         QueryResult qr = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, qr);
 
         assertEquals("wanted to get EDGE", QueryResult.Position.EDGE, qr.getSnappedPosition());
         assertEquals(6, qr.getClosestNode());

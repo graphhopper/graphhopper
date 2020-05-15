@@ -1,11 +1,10 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.GetOffBike;
-import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.GetOffBike;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
