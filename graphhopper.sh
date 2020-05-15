@@ -171,7 +171,7 @@ function packageJar {
   if [ ! -f "$JAR" ]; then
     echo "## building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
-    execMvn --projects web -am -DskipTests=true package
+    execMvn -Pinclude-web-ui --projects web -am -DskipTests=true package
   else
     echo "## existing jar found $JAR"
   fi
@@ -188,17 +188,6 @@ elif [ "$ACTION" = "build" ]; then
  packageJar
  exit
 
-elif [ "$ACTION" = "web" ]; then
- # remove once #1700 is implemented
- if [ ! -f "web/src/main/resources/assets/js/main.js" ]; then
-   rm -rf ./*/target # force rebuilding the jar as overrides is likely not enabled for assets in config.yml
-   cd web
-   npm install
-   BROWSERIFYSWAP_ENV='development' npm run bundleProduction
-   cd ..
- else
-   echo "## existing main.js found $JAR"
- fi
 fi
  
 if [ "$FILE" = "" ]; then
