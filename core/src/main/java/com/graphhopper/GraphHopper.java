@@ -1080,7 +1080,8 @@ public class GraphHopper implements GraphHopperAPI {
                 checkNonChMaxWaypointDistance(request.getPoints());
                 final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
-                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
+                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, you need to use a profile that" +
+                            "supports turn costs. Currently the following profiles that support turn costs are available: " + getTurnCostProfiles());
                 }
                 FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
                 weighting = createWeighting(profile, request.getHints());
