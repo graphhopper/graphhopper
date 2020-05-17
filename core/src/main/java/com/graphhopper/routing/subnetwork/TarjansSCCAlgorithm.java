@@ -67,7 +67,7 @@ public class TarjansSCCAlgorithm {
     /**
      * Allows adding an additional edge filter to exclude edges while searching for connected components.
      */
-    public void setAddationalEdgeFilter(final EdgeFilter additionalFilter) {
+    public void setAdditionalEdgeFilter(final EdgeFilter additionalFilter) {
         this.edgeFilter = new EdgeFilter() {
             @Override
             public boolean accept(EdgeIteratorState edgeState) {
