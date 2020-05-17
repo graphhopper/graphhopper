@@ -107,19 +107,18 @@ public class PrepareRoutingSubnetworks {
         StopWatch sw = new StopWatch().start();
         TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, accessEnc, false);
         List<IntArrayList> components = tarjan.findComponents();
-        logger.info("Found " + components.size() + " subnetworks, took: " + sw.stop().getSeconds() + "s");
-        // todonow
-        sw = new StopWatch().start();
-        int total = 0;
-        int single = 0;
+        int totalNodes = 0;
+        int singleNodeComponents = 0;
         for (IntArrayList c : components) {
-            total += c.size();
+            totalNodes += c.size();
             if (c.size() == 1)
-                single++;
+                singleNodeComponents++;
         }
-        logger.info("num single: " + single + " -> non-single: " + (components.size() - single));
-        logger.info("total checksum: " + total);
+        logger.info("num single: " + singleNodeComponents + " -> non-single: " + (components.size() - singleNodeComponents));
+        logger.info("total checksum: " + totalNodes);
         logger.info("counting single-node components took: " + sw.stop().getSeconds() + "s");
+        logger.info("Found " + components.size() + " subnetworks (" + singleNodeComponents + " single nodes and "
+                + (components.size() - singleNodeComponents) + " components with more than one node, total nodes: " + totalNodes + "), took: " + sw.stop().getSeconds() + "s");
 
         sw = new StopWatch().start();
         // find the biggest component
