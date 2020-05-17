@@ -27,6 +27,8 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters.Algorithms;
@@ -378,8 +380,10 @@ public class MainActivity extends Activity {
     void loadGraphStorage() {
         logUser("loading graph (" + Constants.VERSION + ") ... ");
         new GHAsyncTask<Void, Void, Path>() {
-            protected Path saveDoInBackground(Void... v) throws Exception {
+            protected Path saveDoInBackground(Void... v) {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
+                tmpHopp.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
+                tmpHopp.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
                 tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath() + "-gh");
                 log("found graph " + tmpHopp.getGraphHopperStorage().toString() + ", nodes:" + tmpHopp.getGraphHopperStorage().getNodes());
                 hopper = tmpHopp;
@@ -438,17 +442,19 @@ public class MainActivity extends Activity {
 
             protected ResponsePath doInBackground(Void... v) {
                 StopWatch sw = new StopWatch().start();
-                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setAlgorithm(Algorithms.DIJKSTRA_BI);
-                req.getHints().
-                        put(Routing.INSTRUCTIONS, "false");
+                GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).setProfile("car");
+                req.getHints().putObject(Routing.INSTRUCTIONS, false);
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
+                if (resp.getAll().isEmpty())
+                    return null;
                 return resp.getBest();
             }
 
             protected void onPostExecute(ResponsePath resp) {
-                if (!resp.hasErrors()) {
+                if (resp == null) {
+                    logUser("Cannot find path");
+                } else if (!resp.hasErrors()) {
                     log("from:" + fromLat + "," + fromLon + " to:" + toLat + ","
                             + toLon + " found path with distance:" + resp.getDistance()
                             / 1000f + ", nodes:" + resp.getPoints().getSize() + ", time:"
