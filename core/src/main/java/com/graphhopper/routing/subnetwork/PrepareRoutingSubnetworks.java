@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.subnetwork;
 
-import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
@@ -106,22 +105,37 @@ public class PrepareRoutingSubnetworks {
     int removeSmallSubNetworks(BooleanEncodedValue accessEnc) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
-        TarjanSCC tarjan = new TarjanSCC(ghStorage, accessEnc, false);
-        TarjanSCC.ConnectedComponents ccs = tarjan.findComponents();
-        List<IntArrayList> components = ccs.getComponents();
-        BitSet singleNodeComponents = ccs.getSingleNodeComponents();
-        logger.info("Found " + ccs.getTotalComponents() + " subnetworks (" + singleNodeComponents.cardinality() + " single nodes and "
-                + components.size() + " components with more than one node, total nodes: " + ccs.getNodes() + "), took: " + sw.stop().getSeconds() + "s");
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, accessEnc, false);
+        List<IntArrayList> components = tarjan.findComponents();
+        int totalNodes = 0;
+        int singleNodeComponents = 0;
+        for (IntArrayList c : components) {
+            totalNodes += c.size();
+            if (c.size() == 1)
+                singleNodeComponents++;
+        }
+        logger.info("Found " + components.size() + " subnetworks (" + singleNodeComponents + " single nodes and "
+                + (components.size() - singleNodeComponents) + " components with more than one node, total nodes: " + totalNodes + "), took: " + sw.stop().getSeconds() + "s");
+
+        sw = new StopWatch().start();
+        // find the biggest component
+        IntArrayList biggest = components.isEmpty() ? new IntArrayList(0) : components.get(0);
+        for (IntArrayList component : components) {
+            if (component.size() > biggest.size()) {
+                biggest = component;
+            }
+        }
+        logger.info("finding the biggest component took: " + sw.stop().getSeconds() + "s");
 
         // remove all small networks except the biggest (even when its smaller than the given min_network_size)
         sw = new StopWatch().start();
         int removedComponents = 0;
         int removedEdges = 0;
-        int smallestRemaining = ccs.getBiggestComponent().size();
+        int smallestRemaining = biggest.size();
         int biggestRemoved = 0;
         EdgeExplorer explorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.allEdges(accessEnc));
         for (IntArrayList component : components) {
-            if (component == ccs.getBiggestComponent())
+            if (component == biggest)
                 continue;
 
             if (component.size() < minNetworkSize) {
@@ -138,9 +152,9 @@ public class PrepareRoutingSubnetworks {
             throw new IllegalStateException("Too many total edges were removed: " + removedEdges + " out of " + ghStorage.getEdges() + "\n" +
                     "The maximum number of removed edges is: " + allowedRemoved);
 
-        subnetworks = ccs.getTotalComponents() - removedComponents;
+        subnetworks = components.size() - removedComponents;
         logger.info("Removed " + removedComponents + " subnetworks (biggest removed: " + biggestRemoved + " nodes) -> " +
-                subnetworks + " subnetwork(s) left (smallest: " + smallestRemaining + ", biggest: " + ccs.getBiggestComponent().size() + " nodes)"
+                subnetworks + " subnetwork(s) left (smallest: " + smallestRemaining + ", biggest: " + biggest.size() + " nodes)"
                 + ", total removed edges: " + removedEdges + ", took: " + sw.stop().getSeconds() + "s");
         return removedEdges;
     }
