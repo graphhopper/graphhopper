@@ -114,9 +114,6 @@ public class PrepareRoutingSubnetworks {
             if (c.size() == 1)
                 singleNodeComponents++;
         }
-        logger.info("num single: " + singleNodeComponents + " -> non-single: " + (components.size() - singleNodeComponents));
-        logger.info("total checksum: " + totalNodes);
-        logger.info("counting single-node components took: " + sw.stop().getSeconds() + "s");
         logger.info("Found " + components.size() + " subnetworks (" + singleNodeComponents + " single nodes and "
                 + (components.size() - singleNodeComponents) + " components with more than one node, total nodes: " + totalNodes + "), took: " + sw.stop().getSeconds() + "s");
 
