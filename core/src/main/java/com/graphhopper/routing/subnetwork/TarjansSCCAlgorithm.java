@@ -20,9 +20,12 @@ package com.graphhopper.routing.subnetwork;
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,35 +34,51 @@ import java.util.Stack;
 /**
  * Implementation of Tarjan's algorithm using an explicit stack. The traditional recursive approach
  * runs into stack overflow pretty quickly. The algorithm is used within GraphHopper to find
- * strongly connected components to detect dead-ends leading to routes not found.
+ * strongly connected components to detect dead-ends leading to routes not found and it is used for landmark
+ * calculation as well.
  * <p>
  * See http://en.wikipedia.org/wiki/Tarjan's_strongly_connected_components_algorithm. See
  * http://www.timl.id.au/?p=327 and http://homepages.ecs.vuw.ac.nz/~djp/files/P05.pdf
  */
 public class TarjansSCCAlgorithm {
-    private final ArrayList<IntArrayList> components = new ArrayList<>();
+    private final List<IntArrayList> components = new ArrayList<>();
     // TODO use just the Graph interface here
     private final GraphHopperStorage graph;
     private final IntArrayDeque nodeStack;
     private final BitSet onStack;
     private final int[] nodeIndex;
     private final int[] nodeLowLink;
-    private final EdgeFilter edgeFilter;
     private final boolean excludeSingleNodeComponents;
+    private final EdgeFilter outFilter;
+    private EdgeFilter edgeFilter;
     private int index = 1;
 
-    public TarjansSCCAlgorithm(GraphHopperStorage ghStorage, final EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
+    public TarjansSCCAlgorithm(GraphHopperStorage ghStorage, final BooleanEncodedValue accessEnc, boolean excludeSingleNodeComponents) {
         this.graph = ghStorage;
         this.nodeStack = new IntArrayDeque();
         this.onStack = new BitSet(ghStorage.getNodes());
         this.nodeIndex = new int[ghStorage.getNodes()];
         this.nodeLowLink = new int[ghStorage.getNodes()];
-        this.edgeFilter = edgeFilter;
+        this.outFilter = DefaultEdgeFilter.outEdges(accessEnc);
+        this.edgeFilter = outFilter;
         this.excludeSingleNodeComponents = excludeSingleNodeComponents;
     }
 
     /**
-     * Find and return list of all strongly connected components in g.
+     * Allows adding an additional edge filter to exclude edges while searching for connected components.
+     */
+    public void setAdditionalEdgeFilter(final EdgeFilter additionalFilter) {
+        this.edgeFilter = new EdgeFilter() {
+            @Override
+            public boolean accept(EdgeIteratorState edgeState) {
+                return outFilter.accept(edgeState) && additionalFilter.accept(edgeState);
+            }
+        };
+    }
+
+    /**
+     * Find and return a list of all strongly connected components of g. Components with only a single node will
+     * be excluded from the result depending on {@link #excludeSingleNodeComponents}
      */
     public List<IntArrayList> findComponents() {
         int nodes = graph.getNodes();
@@ -73,7 +92,6 @@ public class TarjansSCCAlgorithm {
 
     /**
      * Find all components reachable from firstNode, add them to 'components'
-     * <p>
      *
      * @param firstNode start search of SCC at this node
      */

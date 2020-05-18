@@ -1,4 +1,5 @@
 1.0
+    removed min_one_way_network_size parameter, #2042
     moved package from core/src/test/java/com/graphhopper/routing/profiles to ev
     removed HintsMap
     removed /change endpoint

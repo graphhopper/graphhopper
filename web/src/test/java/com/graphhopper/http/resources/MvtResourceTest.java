@@ -62,7 +62,6 @@ public class MvtResourceTest {
                 putObject("graph.flag_encoders", "car").
                 putObject("graph.encoded_values", "road_class,road_environment,max_speed,surface").
                 putObject("prepare.min_network_size", 0).
-                putObject("prepare.min_one_way_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));

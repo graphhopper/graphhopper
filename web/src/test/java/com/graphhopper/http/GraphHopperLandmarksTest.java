@@ -54,7 +54,6 @@ public class GraphHopperLandmarksTest {
                 putObject("graph.flag_encoders", "car").
                 putObject("datareader.file", "../core/files/belarus-east.osm.gz").
                 putObject("prepare.min_network_size", 0).
-                putObject("prepare.min_one_way_network_size", 0).
                 putObject("routing.ch.disabling_allowed", true).
                 putObject("routing.lm.disabling_allowed", true).
                 putObject("graph.location", DIR)

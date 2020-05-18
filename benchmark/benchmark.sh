@@ -56,7 +56,6 @@ measurement.lm=false \
 "graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-small-gh \
 prepare.min_network_size=10000 \
-prepare.min_one_way_network_size=10000 \
 spatial_rules.borders_directory=${BORDERS_DIRECTORY} \
 measurement.json=true \
 measurement.count=5000 \
@@ -82,7 +81,6 @@ measurement.lm.edge_based=true \
 "graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-big-gh \
 prepare.min_network_size=10000 \
-prepare.min_one_way_network_size=10000 \
 spatial_rules.borders_directory=${BORDERS_DIRECTORY} \
 measurement.json=true \
 measurement.count=5000 \
@@ -111,7 +109,6 @@ measurement.lm.edge_based=false \
 "graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-big-little-custom-gh \
 prepare.min_network_size=10000 \
-prepare.min_one_way_network_size=10000 \
 spatial_rules.borders_directory=${BORDERS_DIRECTORY} \
 measurement.json=true \
 measurement.count=5000 \
@@ -140,7 +137,6 @@ measurement.lm.edge_based=false \
 "graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-big-very-custom-gh \
 prepare.min_network_size=10000 \
-prepare.min_one_way_network_size=10000 \
 spatial_rules.borders_directory=${BORDERS_DIRECTORY} \
 measurement.json=true \
 measurement.count=5000 \
