@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -42,8 +42,7 @@ import java.util.Stack;
  */
 public class TarjansSCCAlgorithm {
     private final List<IntArrayList> components = new ArrayList<>();
-    // TODO use just the Graph interface here
-    private final GraphHopperStorage graph;
+    private final Graph graph;
     private final IntArrayDeque nodeStack;
     private final BitSet onStack;
     private final int[] nodeIndex;
@@ -53,12 +52,12 @@ public class TarjansSCCAlgorithm {
     private EdgeFilter edgeFilter;
     private int index = 1;
 
-    public TarjansSCCAlgorithm(GraphHopperStorage ghStorage, final BooleanEncodedValue accessEnc, boolean excludeSingleNodeComponents) {
-        this.graph = ghStorage;
+    public TarjansSCCAlgorithm(Graph graph, final BooleanEncodedValue accessEnc, boolean excludeSingleNodeComponents) {
+        this.graph = graph;
         this.nodeStack = new IntArrayDeque();
-        this.onStack = new BitSet(ghStorage.getNodes());
-        this.nodeIndex = new int[ghStorage.getNodes()];
-        this.nodeLowLink = new int[ghStorage.getNodes()];
+        this.onStack = new BitSet(graph.getNodes());
+        this.nodeIndex = new int[graph.getNodes()];
+        this.nodeLowLink = new int[graph.getNodes()];
         this.outFilter = DefaultEdgeFilter.outEdges(accessEnc);
         this.edgeFilter = outFilter;
         this.excludeSingleNodeComponents = excludeSingleNodeComponents;
@@ -83,7 +82,7 @@ public class TarjansSCCAlgorithm {
     public List<IntArrayList> findComponents() {
         int nodes = graph.getNodes();
         for (int start = 0; start < nodes; start++) {
-            if (nodeIndex[start] == 0 && !graph.isNodeRemoved(start))
+            if (nodeIndex[start] == 0)
                 strongConnect(start);
         }
 
