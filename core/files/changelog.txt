@@ -1,16 +1,20 @@
 1.0
+    changes to config.yml:
+      properties have to follow the snake_case, #1918, easy convert via https://github.com/karussell/snake_case
+      all routing profiles have to be configured when setting up GraphHopper, #1958, #1922
+      for developing with JavaScript, npm and the web UI it is important to change your assets overrides to web/target/classes/assets/, see #2041
+    moved SPTEntry and ShortcutUnpacker to com.graphhopper.routing(.ch)
+    renamed PathWrapper to ResponsePath
     removed min_one_way_network_size parameter, #2042
     moved package from core/src/test/java/com/graphhopper/routing/profiles to ev
     removed HintsMap
     removed /change endpoint
     removed vehicle,weighting and edge_based from GraphHopper class, replaced with new profile parameter, #1958
-    all routing profiles have to be configured when setting up GraphHopper, #1958
     there no longer is a default vehicle, not setting the vehicle now only works if there is exactly one profile that matches the other parameters. anyway you should use the new profile rather than the vehicle parameter.
     removed IPFilter. Use a firewall instead.
     PMap refactored. It is recommended to use putObject(String, Object) instead of put, #1956
     removed UnsafeDataAccess as not maintained, see #1620
     add profiles parameter and replace prepare.ch/lm.weightings and prepare.ch.edge_based with profiles_ch/lm config parameters, #1922
-    Properties in config.yml have to follow the snake_case, #1918, easy convert via https://github.com/karussell/snake_case
     GraphHopper class no longer enables CH by default, #1914
     replaced command line arguments -Dgraphhopper.. with -Ddw.graphhopper.. due to #1879, see also #1897
     GraphHopper.init(CmdArgs)->GraphHopper.init(GraphHopperConfig), see #1879
