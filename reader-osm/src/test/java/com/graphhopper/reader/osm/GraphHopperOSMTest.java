@@ -720,7 +720,7 @@ public class GraphHopperOSMTest {
         instance = new GraphHopperOSM().setStoreOnFlush(true).
                 init(new GraphHopperConfig().
                         putObject("datareader.file", testOsm3).
-                        putObject("prepare.min_network_size", 1).
+                        putObject("prepare.min_network_size", 0).
                         putObject("graph.flag_encoders", vehicle)
                         .setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)))
                         .setCHProfiles(Collections.singletonList(new CHProfile(profile)))
