@@ -110,7 +110,6 @@ public class GraphHopper implements GraphHopperAPI {
     private int maxRegionSearch = 4;
     // for prepare
     private int minNetworkSize = 200;
-    private int minOneWayNetworkSize = 0;
 
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
@@ -236,9 +235,9 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public GraphHopper setMinNetworkSize(int minNetworkSize, int minOneWayNetworkSize) {
+    public GraphHopper setMinNetworkSize(int minNetworkSize) {
+        ensureNotLoaded();
         this.minNetworkSize = minNetworkSize;
-        this.minOneWayNetworkSize = minOneWayNetworkSize;
         return this;
     }
 
@@ -557,7 +556,6 @@ public class GraphHopper implements GraphHopperAPI {
 
         // optimizable prepare
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
-        minOneWayNetworkSize = ghConfig.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
 
         // profiles
         setProfiles(ghConfig.getProfiles());
@@ -1105,7 +1103,8 @@ public class GraphHopper implements GraphHopperAPI {
                 checkNonChMaxWaypointDistance(request.getPoints());
                 final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
                 if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
-                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
+                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, you need to use a profile that" +
+                            "supports turn costs. Currently the following profiles that support turn costs are available: " + getTurnCostProfiles());
                 }
                 FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
                 weighting = createWeighting(profile, request.getHints());
@@ -1365,7 +1364,6 @@ public class GraphHopper implements GraphHopperAPI {
         int prevNodeCount = ghStorage.getNodes();
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager.fetchEdgeEncoders());
         preparation.setMinNetworkSize(minNetworkSize);
-        preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         preparation.doWork();
         int currNodeCount = ghStorage.getNodes();
         logger.info("edges: " + Helper.nf(ghStorage.getEdges()) + ", nodes " + Helper.nf(currNodeCount)

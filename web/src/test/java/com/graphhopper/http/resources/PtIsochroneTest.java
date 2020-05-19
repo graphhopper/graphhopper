@@ -50,7 +50,7 @@ public class PtIsochroneTest {
 
     private static final String GRAPH_LOC = "target/PtIsochroneResourceTest";
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private GeometryFactory geometryFactory = new GeometryFactory();
+    private final GeometryFactory geometryFactory = new GeometryFactory();
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
     private static GraphHopperServerConfiguration createConfig() {

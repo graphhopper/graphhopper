@@ -75,10 +75,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     private ConditionalTagInspector conditionalTagInspector;
 
-    public AbstractFlagEncoder(PMap properties) {
-        throw new RuntimeException("This method must be overridden in derived classes");
-    }
-
     /**
      * @param speedBits    specify the number of bits used for speed
      * @param speedFactor  specify the factor to multiple the stored value (can be used to increase

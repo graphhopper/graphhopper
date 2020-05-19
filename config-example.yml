@@ -120,11 +120,11 @@ graphhopper:
   # the default worked for you.
   # prepare.lm.threads: 1
 
-
-  # avoid being stuck in a (oneway) subnetwork, see https://discuss.graphhopper.com/t/93
+  # In many cases the road network consists of independent components without any routes going in between. In
+  # the most simple case you can imagine an island without a bridge or ferry connection. The following parameter
+  # allows setting a minimum size (number of nodes) for such detached components. This can be used to reduce the number
+  # of cases where a connection between locations might not be found.
   prepare.min_network_size: 200
-  prepare.min_one_way_network_size: 200
-
 
 
   ##### Routing #####

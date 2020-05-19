@@ -160,6 +160,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * compact graph data structure.
      */
     void preProcess(File osmFile) {
+        LOGGER.info("Starting to process OSM file: '" + osmFile + "'");
         try (OSMInput in = openOsmInputFile(osmFile)) {
             long tmpWayCounter = 1;
             long tmpRelationCounter = 1;

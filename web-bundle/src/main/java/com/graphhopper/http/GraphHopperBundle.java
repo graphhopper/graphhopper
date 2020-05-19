@@ -134,6 +134,26 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
+    static class ProfileResolverFactory implements Factory<ProfileResolver> {
+
+        @Inject
+        GraphHopper graphHopper;
+
+        @Override
+        public ProfileResolver provide() {
+            return new ProfileResolver(graphHopper.getEncodingManager(),
+                    graphHopper.getProfiles(),
+                    graphHopper.getCHPreparationHandler().getCHProfiles(),
+                    graphHopper.getLMPreparationHandler().getLMProfiles()
+            );
+        }
+
+        @Override
+        public void dispose(ProfileResolver profileResolver) {
+
+        }
+    }
+
     static class HasElevation implements Factory<Boolean> {
 
         @Inject
@@ -225,9 +245,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(configuration.getGraphHopperConfiguration()).to(GraphHopperConfig.class);
                 bind(graphHopper).to(GraphHopper.class);
                 bind(graphHopper).to(GraphHopperAPI.class);
-                bind(new ProfileResolver(graphHopper.getEncodingManager(), graphHopper.getProfiles(), graphHopper.getCHPreparationHandler().getCHProfiles(), graphHopper.getLMPreparationHandler().getLMProfiles()))
-                        .to(ProfileResolver.class);
 
+                bindFactory(ProfileResolverFactory.class).to(ProfileResolver.class);
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);

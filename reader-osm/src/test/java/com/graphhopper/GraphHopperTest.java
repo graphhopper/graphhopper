@@ -74,7 +74,7 @@ public class GraphHopperTest {
     private static final String MOSCOW = DIR + "/moscow.osm.gz";
 
     // when creating GH instances make sure to use this as the GH location such that it will be cleaned between tests
-    private static final String GH_LOCATION = "target/graphhopper-it-gh";
+    private static final String GH_LOCATION = "target/graphhopper-test-gh";
 
     @BeforeEach
     @AfterEach
@@ -88,8 +88,8 @@ public class GraphHopperTest {
             ASTAR + ",false,439",
             DIJKSTRA_BI + ",false,208",
             ASTAR_BI + ",false,172",
-            DIJKSTRA_BI + ",true,29",
-            ASTAR_BI + ",true,29"
+            ASTAR_BI + ",true,33",
+            DIJKSTRA_BI + ",true,30"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";
@@ -101,6 +101,7 @@ public class GraphHopperTest {
         hopper.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile("profile"))
                 .setDisablingAllowed(true);
+        hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566)
                 .setAlgorithm(algo)
@@ -1135,6 +1136,7 @@ public class GraphHopperTest {
                 new CHProfile(profile1),
                 new CHProfile(profile2)
         );
+        hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
 
         assertEquals(2, hopper.getCHPreparationHandler().getPreparations().size());
@@ -1179,6 +1181,7 @@ public class GraphHopperTest {
                 new CHProfile(profile1),
                 new CHProfile(profile2)
         );
+        hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
 
         assertEquals(2, hopper.getCHPreparationHandler().getPreparations().size());
@@ -1445,6 +1448,7 @@ public class GraphHopperTest {
                         new LMProfile(profile3).setPreparationProfile(profile1)
                 ).
                 setDisablingAllowed(true);
+        hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
 
         // flex

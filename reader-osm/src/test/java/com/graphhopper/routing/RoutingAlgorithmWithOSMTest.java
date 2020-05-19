@@ -632,9 +632,10 @@ public class RoutingAlgorithmWithOSMTest {
                     setProfiles(profiles).
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(em);
+            hopper.setMinNetworkSize(0);
 
-            if (osmFile.contains("krautsand"))
-                hopper.setMinNetworkSize(0, 0);
+            if (osmFile.contains("moscow"))
+                hopper.setMinNetworkSize(200);
             // avoid that path.getDistance is too different to path.getPoint.calcDistance
             hopper.setWayPointMaxDistance(0);
 
@@ -698,6 +699,7 @@ public class RoutingAlgorithmWithOSMTest {
                 setWayPointMaxDistance(0).
                 setDataReaderFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
+                setMinNetworkSize(0).
                 setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest")).
                 importOrLoad();
         final Graph g = hopper.getGraphHopperStorage();

@@ -141,11 +141,11 @@ public class RouteResource {
                     + ", debugInfo: " + ghResponse.getDebugInfo());
             return writeGPX ?
                     gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
-                            header("X-GH-Took", "" + Math.round(took * 1000)).
+                            header("X-GH-Took", "" + Math.round(took)).
                             build()
                     :
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
-                            header("X-GH-Took", "" + Math.round(took * 1000)).
+                            header("X-GH-Took", "" + Math.round(took)).
                             type(MediaType.APPLICATION_JSON).
                             build();
         }
@@ -188,7 +188,7 @@ public class RouteResource {
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
             return Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
-                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    header("X-GH-Took", "" + Math.round(took)).
                     type(MediaType.APPLICATION_JSON).
                     build();
         }
