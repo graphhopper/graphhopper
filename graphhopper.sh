@@ -92,7 +92,7 @@ fi
 
 # default init, https://stackoverflow.com/a/28085062/194609
 : "${CONFIG:=config.yml}"
-if [ -f $CONFIG ]; then
+if [[ -f $CONFIG && $CONFIG != config.yml ]]; then
   echo "copying non-default config file: $CONFIG"
   cp $CONFIG config.yml
 fi
@@ -146,8 +146,8 @@ function ensureMaven {
       if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
         echo "No Maven found in the PATH. Now downloading+installing it to $MAVEN_HOME"
         cd "$GH_HOME"
-        MVN_PACKAGE=apache-maven-3.5.0
-        wget -O maven.zip http://archive.apache.org/dist/maven/maven-3/3.5.0/binaries/$MVN_PACKAGE-bin.zip
+        MVN_PACKAGE=apache-maven-3.6.3
+        wget -O maven.zip http://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/$MVN_PACKAGE-bin.zip
         unzip maven.zip
         mv $MVN_PACKAGE maven
         rm maven.zip
