@@ -42,7 +42,6 @@ public class CustomWeightingRouteResourceTest {
                 putObject("graph.flag_encoders", "bike,car").
                 putObject("routing.ch.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
-                putObject("prepare.min_one_way_network_size", 0).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").

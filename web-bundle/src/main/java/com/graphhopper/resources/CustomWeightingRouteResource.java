@@ -114,7 +114,7 @@ public class CustomWeightingRouteResource {
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
             return Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
-                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    header("X-GH-Took", "" + Math.round(took)).
                     build();
         }
     }
