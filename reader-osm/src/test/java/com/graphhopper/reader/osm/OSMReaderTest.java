@@ -757,6 +757,7 @@ public class OSMReaderTest {
     public void testConditionalTurnRestriction() {
         String fileConditionalTurnRestrictions = "test-conditional-turn-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileConditionalTurnRestrictions, true, "").
+                setMinNetworkSize(0).
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();

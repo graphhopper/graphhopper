@@ -206,8 +206,7 @@ public class PrepareRoutingSubnetworks {
 
             if (component.size() < minNetworkSizeEdges) {
                 for (IntCursor cursor : component) {
-                    removeEdgeWithKey(cursor.value, accessEnc);
-                    removedEdgeKeys++;
+                    removedEdgeKeys += removeEdgeWithKey(cursor.value, accessEnc);
                 }
                 removedComponents++;
                 biggestRemoved = Math.max(biggestRemoved, component.size());
@@ -219,8 +218,7 @@ public class PrepareRoutingSubnetworks {
         if (minNetworkSizeEdges > 0) {
             BitSetIterator iter = singleEdgeComponents.iterator();
             for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit()) {
-                removeEdgeWithKey(edgeKey, accessEnc);
-                removedEdgeKeys++;
+                removedEdgeKeys += removeEdgeWithKey(edgeKey, accessEnc);
                 removedComponents++;
                 biggestRemoved = Math.max(biggestRemoved, 1);
             }
@@ -230,8 +228,8 @@ public class PrepareRoutingSubnetworks {
 
         int allowedRemoved = ghStorage.getEdges() / 2;
         if (removedEdgeKeys / 2 > allowedRemoved)
-            throw new IllegalStateException("Too many total edges were removed: " + removedEdgeKeys + " out of " + ghStorage.getEdges() + "\n" +
-                    "The maximum number of removed edges is: " + allowedRemoved);
+            throw new IllegalStateException("Too many total (directed) edges were removed: " + removedEdgeKeys + " out of " + (2 * ghStorage.getEdges()) + "\n" +
+                    "The maximum number of removed edges is: " + (2 * allowedRemoved));
 
         logger.info("Removed " + removedComponents + " subnetworks (biggest removed: " + biggestRemoved + " nodes) -> " +
                 (ccs.getTotalComponents() - removedComponents) + " subnetwork(s) left (smallest: " + smallestRemaining + ", biggest: " + ccs.getBiggestComponent().size() + " nodes)"
@@ -239,13 +237,18 @@ public class PrepareRoutingSubnetworks {
         return removedEdgeKeys;
     }
 
-    private void removeEdgeWithKey(int edgeKey, BooleanEncodedValue accessEnc) {
-        int edgeId = GHUtility.getEdgeFromEdgeKey(edgeKey);
+    private int removeEdgeWithKey(int edgeKey, BooleanEncodedValue accessEnc) {
+        int edgeId = EdgeBasedTarjanSCC.getEdgeFromKey(edgeKey);
         EdgeIteratorState edge = ghStorage.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
-        if (edgeKey % 2 == 0)
+        if (edgeKey % 2 == 0 && edge.get(accessEnc)) {
             edge.set(accessEnc, false);
-        else
+            return 1;
+        }
+        if (edgeKey % 2 != 0 && edge.getReverse(accessEnc)) {
             edge.setReverse(accessEnc, false);
+            return 1;
+        }
+        return 0;
     }
 
     /**

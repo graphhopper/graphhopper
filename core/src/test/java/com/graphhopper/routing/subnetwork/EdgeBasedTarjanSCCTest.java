@@ -152,7 +152,7 @@ class EdgeBasedTarjanSCCTest {
         assertEquals(6, result.getTotalComponents());
         assertEquals(2, result.getComponents().size());
         assertEquals(result.getComponents().get(0), result.getBiggestComponent());
-        assertEquals(IntArrayList.from(6, 9, 8, 7), result.getComponents().get(0));
+        assertEquals(IntArrayList.from(7, 9, 8, 6), result.getComponents().get(0));
         assertEquals(IntArrayList.from(1, 0), result.getComponents().get(1));
         assertEquals(4, result.getSingleEdgeComponents().cardinality());
         for (IntCursor c : IntArrayList.from(2, 3, 4, 5)) {
@@ -185,9 +185,9 @@ class EdgeBasedTarjanSCCTest {
         assertEquals(2, result.getComponents().size());
         assertEquals(result.getComponents().get(1), result.getBiggestComponent());
         assertEquals(IntArrayList.from(1, 5, 4, 0), result.getComponents().get(0));
-        assertEquals(IntArrayList.from(7, 9, 13, 14, 17, 16, 15, 12, 10, 6), result.getComponents().get(1));
+        assertEquals(IntArrayList.from(7, 8, 13, 14, 17, 16, 15, 12, 10, 6), result.getComponents().get(1));
         assertEquals(4, result.getSingleEdgeComponents().cardinality());
-        for (IntCursor c : IntArrayList.from(8, 2, 3, 11)) {
+        for (IntCursor c : IntArrayList.from(9, 2, 3, 11)) {
             assertTrue(result.getSingleEdgeComponents().get(c.value));
         }
     }
@@ -196,24 +196,24 @@ class EdgeBasedTarjanSCCTest {
     public void withTurnRestriction() {
         GraphHopperStorage g = new GraphBuilder(em).create();
         // here 0-1-2-3 would be a circle and thus belong to same connected component. but if there is a
-        // turn restriction for going 0->2->3 and this splits the graph into multiple components
+        // turn restriction for going 0->2->3 this splits the graph into multiple components
         // 0->1
         // |  |
         // 3<-2->4
-        g.edge(0, 1, 1, false);
-        g.edge(1, 2, 1, false);
-        g.edge(2, 3, 1, false);
-        g.edge(3, 0, 1, false);
-        g.edge(2, 4, 1, false);
+        g.edge(0, 1, 1, false); // edge-keys 0,1
+        g.edge(1, 2, 1, false); // edge-keys 2,3
+        g.edge(2, 3, 1, false); // edge-keys 4,5
+        g.edge(3, 0, 1, false); // edge-keys 6,7
+        g.edge(2, 4, 1, false); // edge-keys 8,9
 
         // first lets check what happens without turn costs
         EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(g, accessEnc, NO_TURN_COST_PROVIDER, false);
         ConnectedComponents result = tarjan.findComponentsRecursive();
         assertEquals(7, result.getTotalComponents());
         assertEquals(1, result.getComponents().size());
-        assertEquals(IntArrayList.from(7, 4, 2, 0), result.getBiggestComponent());
+        assertEquals(IntArrayList.from(6, 4, 2, 0), result.getBiggestComponent());
         assertEquals(6, result.getSingleEdgeComponents().cardinality());
-        for (IntCursor c : IntArrayList.from(1, 3, 5, 6, 8, 9)) {
+        for (IntCursor c : IntArrayList.from(1, 3, 5, 7, 8, 9)) {
             assertTrue(result.getSingleEdgeComponents().get(c.value));
         }
 
