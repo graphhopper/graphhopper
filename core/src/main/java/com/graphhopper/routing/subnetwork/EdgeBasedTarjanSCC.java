@@ -339,6 +339,8 @@ public class EdgeBasedTarjanSCC {
         /**
          * A list of arrays each containing the edge keys of a strongly connected component. Components with only a single
          * edge key are not included here, but need to be obtained using {@link #getSingleEdgeComponents()}.
+         * The edge key is either 2*edgeId (if the edge direction corresponds to the storage order) or 2*edgeId+1 (for
+         * the opposite direction).
          */
         public List<IntArrayList> getComponents() {
             return components;
