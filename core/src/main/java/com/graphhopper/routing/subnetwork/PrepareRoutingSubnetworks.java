@@ -36,8 +36,11 @@ import java.util.List;
 /**
  * Removes nodes/edges which are not part of the 'main' network(s). I.e. mostly nodes with no edges at all but
  * also small subnetworks which could be bugs in OSM data or 'islands' or indicate otherwise disconnected areas
- * e.g. via barriers or one way problems - see #86.
- * <p>
+ * e.g. via barriers or one way problems - see #86. Subnetworks are removed by disabling access to the corresponding
+ * edges for a given access encoded value. It is important to search for strongly connected components here (i.e.
+ * consider that the graph is directed). For example, small areas like parking lots are sometimes connected to the whole
+ * network through a single one-way road (a mapping error) and have to be removed because otherwise the routing fails
+ * when starting from such a parking lot.
  *
  * @author Peter Karich
  * @author easbar
@@ -53,6 +56,11 @@ public class PrepareRoutingSubnetworks {
         this.prepareJobs = prepareJobs;
     }
 
+    /**
+     * The subnetwork removal removes components with less than {@link #minNetworkSize} nodes from the graph if it is
+     * run node-based. For edge-based subnetwork removal it removes components with less than 2*{@link #minNetworkSize}
+     * (directed) edges.
+     */
     public PrepareRoutingSubnetworks setMinNetworkSize(int minNetworkSize) {
         this.minNetworkSize = minNetworkSize;
         return this;
@@ -84,12 +92,9 @@ public class PrepareRoutingSubnetworks {
     }
 
     /**
-     * Removes components with less than {@link #minNetworkSize} nodes from the graph by disabling access to the
-     * corresponding edges (for the given access encoded value). It is important to search for strongly connected
-     * components here (i.e. consider that the graph is directed). For example, small areas like parking lots are
-     * sometimes connected to the whole network through a single one-way road. This is clearly a (mapping) error - but
-     * it causes the routing to fail when starting from the parking lot (and there is no way out from it).
-     * The biggest component is always kept regardless of its size.
+     * The biggest component is always kept regardless of its size. For edge-based routing with turn restrictions the
+     * subnetwork search has to consider the turn restrictions as well to make sure components that are not reachable
+     * due to turn restrictions are also removed.
      *
      * @return number of removed edges
      */
@@ -155,8 +160,6 @@ public class PrepareRoutingSubnetworks {
 
     /**
      * Makes all edges of the given component (the given set of node ids) inaccessible for the given access encoded value.
-     * So far we are not removing the edges entirely from the graph (we could probably do this for edges that are blocked
-     * for *all* vehicles similar to {@link #markNodesRemovedIfUnreachable})
      */
     int blockEdgesForComponent(EdgeExplorer explorer, BooleanEncodedValue accessEnc, IntIndexedContainer component) {
         int removedEdges = 0;
@@ -252,7 +255,9 @@ public class PrepareRoutingSubnetworks {
     }
 
     /**
-     * Removes nodes if all edges are not accessible. I.e. removes zero degree nodes.
+     * Removes nodes if all edges are not accessible. I.e. removes zero degree nodes. Note that so far we are not
+     * removing any edges entirely from the graph (we could probably do this for edges that are blocked for *all*
+     * vehicles.
      */
     void markNodesRemovedIfUnreachable() {
         EdgeExplorer edgeExplorer = ghStorage.createEdgeExplorer();
