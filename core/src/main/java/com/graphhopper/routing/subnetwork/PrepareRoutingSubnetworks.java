@@ -234,8 +234,8 @@ public class PrepareRoutingSubnetworks {
             throw new IllegalStateException("Too many total (directed) edges were removed: " + removedEdgeKeys + " out of " + (2 * ghStorage.getEdges()) + "\n" +
                     "The maximum number of removed edges is: " + (2 * allowedRemoved));
 
-        logger.info("Removed " + removedComponents + " subnetworks (biggest removed: " + biggestRemoved + " nodes) -> " +
-                (ccs.getTotalComponents() - removedComponents) + " subnetwork(s) left (smallest: " + smallestRemaining + ", biggest: " + ccs.getBiggestComponent().size() + " nodes)"
+        logger.info("Removed " + removedComponents + " subnetworks (biggest removed: " + biggestRemoved + " edges) -> " +
+                (ccs.getTotalComponents() - removedComponents) + " subnetwork(s) left (smallest: " + smallestRemaining + ", biggest: " + ccs.getBiggestComponent().size() + " edges)"
                 + ", total removed edges: " + removedEdgeKeys + ", took: " + sw.stop().getSeconds() + "s");
         return removedEdgeKeys;
     }
