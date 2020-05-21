@@ -1335,13 +1335,13 @@ public class GraphHopper implements GraphHopperAPI {
      * Internal method to clean up the graph.
      */
     protected void cleanUp() {
-        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, buildSubnetworRemovalJobs());
+        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, buildSubnetworkRemovalJobs());
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.doWork();
         logger.info("nodes: " + Helper.nf(ghStorage.getNodes()) + ", edges: " + Helper.nf(ghStorage.getEdges()));
     }
 
-    private List<PrepareJob> buildSubnetworRemovalJobs() {
+    private List<PrepareJob> buildSubnetworkRemovalJobs() {
         List<FlagEncoder> encoders = encodingManager.fetchEdgeEncoders();
         List<PrepareJob> jobs = new ArrayList<>();
         for (FlagEncoder encoder : encoders) {
