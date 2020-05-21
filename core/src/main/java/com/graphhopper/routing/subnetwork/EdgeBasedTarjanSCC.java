@@ -30,7 +30,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -112,14 +112,10 @@ public class EdgeBasedTarjanSCC {
     public ConnectedComponents findComponentsRecursive() {
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            int edgeKeyFwd = GHUtility.createEdgeKey(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), false);
+            int edgeKeyFwd = createEdgeKey(iter, false);
             if (edgeKeyIndex[edgeKeyFwd] == -1)
                 findComponentForEdgeKey(edgeKeyFwd, iter.getAdjNode());
-            int edgeKeyBwd = GHUtility.createEdgeKey(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), true);
-            if (iter.getAdjNode() == iter.getBaseNode())
-                // unfortunately we need special treatment for loops here, because GHUtility.createEdgeKey returns the
-                // same value for both directions of the loop.
-                edgeKeyBwd++;
+            int edgeKeyBwd = createEdgeKey(iter, true);
             if (edgeKeyIndex[edgeKeyBwd] == -1)
                 findComponentForEdgeKey(edgeKeyBwd, iter.getAdjNode());
         }
@@ -129,13 +125,13 @@ public class EdgeBasedTarjanSCC {
     private void findComponentForEdgeKey(int p, int adjNode) {
         setupNextEdgeKey(p);
         // we have to create a new explorer on each iteration because of the nested edge iterations
-        final int edge = GHUtility.getEdgeFromEdgeKey(p);
+        final int edge = getEdgeFromKey(p);
         EdgeExplorer explorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc));
         EdgeIterator iter = explorer.setBaseNode(adjNode);
         while (iter.next()) {
             if (isTurnRestricted(edge, adjNode, iter.getEdge()))
                 continue;
-            int q = GHUtility.createEdgeKey(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), false);
+            int q = createEdgeKey(iter, false);
             handleNeighbor(p, q, iter.getAdjNode());
             // we need a special treatment for loops because our edge iterator only sees it once but it can be travelled
             // both ways
@@ -196,15 +192,13 @@ public class EdgeBasedTarjanSCC {
     public ConnectedComponents findComponents() {
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            int edgeKeyFwd = GHUtility.createEdgeKey(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), false);
+            int edgeKeyFwd = createEdgeKey(iter, false);
             if (edgeKeyIndex[edgeKeyFwd] == -1)
                 pushFindComponentForEdgeKey(edgeKeyFwd, iter.getAdjNode());
             startSearch();
             // We need to start the search for both edge keys of this edge, but its important to check if the second
             // has already been found by the first search. So we cannot simply push them both and start the search once.
-            int edgeKeyBwd = GHUtility.createEdgeKey(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), true);
-            if (iter.getBaseNode() == iter.getAdjNode())
-                edgeKeyBwd++;
+            int edgeKeyBwd = createEdgeKey(iter, true);
             if (edgeKeyIndex[edgeKeyBwd] == -1)
                 pushFindComponentForEdgeKey(edgeKeyBwd, iter.getAdjNode());
             startSearch();
@@ -235,12 +229,12 @@ public class EdgeBasedTarjanSCC {
                     setupNextEdgeKey(p);
                     // we push buildComponent first so it will run *after* we finished traversing the edges
                     pushBuildComponent(p);
-                    final int edge = GHUtility.getEdgeFromEdgeKey(p);
+                    final int edge = getEdgeFromKey(p);
                     EdgeIterator it = explorer.setBaseNode(adj);
                     while (it.next()) {
                         if (isTurnRestricted(edge, adj, it.getEdge()))
                             continue;
-                        int q = GHUtility.createEdgeKey(it.getBaseNode(), it.getAdjNode(), it.getEdge(), false);
+                        int q = createEdgeKey(it, false);
                         pushHandleNeighbor(p, q, it.getAdjNode());
                         if (it.getBaseNode() == it.getAdjNode())
                             pushHandleNeighbor(p, q + 1, it.getAdjNode());
@@ -316,6 +310,17 @@ public class EdgeBasedTarjanSCC {
         return turnCostProvider.calcTurnWeight(inEdge, node, outEdge) == Double.POSITIVE_INFINITY;
     }
 
+    public static int createEdgeKey(EdgeIteratorState edgeState, boolean reverse) {
+        int edgeKey = edgeState.getEdge() << 1;
+        if (edgeState.get(EdgeIteratorState.REVERSE_STATE) == !reverse)
+            edgeKey++;
+        return edgeKey;
+    }
+
+    public static int getEdgeFromKey(int edgeKey) {
+        return edgeKey / 2;
+    }
+
     public static class ConnectedComponents {
         private final List<IntArrayList> components;
         private final BitSet singleEdgeComponents;
@@ -334,6 +339,8 @@ public class EdgeBasedTarjanSCC {
         /**
          * A list of arrays each containing the edge keys of a strongly connected component. Components with only a single
          * edge key are not included here, but need to be obtained using {@link #getSingleEdgeComponents()}.
+         * The edge key is either 2*edgeId (if the edge direction corresponds to the storage order) or 2*edgeId+1 (for
+         * the opposite direction).
          */
         public List<IntArrayList> getComponents() {
             return components;
