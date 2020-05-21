@@ -71,7 +71,7 @@ public class GraphHopperTest {
     private static final String LAUF = DIR + "/Laufamholzstrasse.osm.xml";
     private static final String MONACO = DIR + "/monaco.osm.gz";
     private static final String MOSCOW = DIR + "/moscow.osm.gz";
-    private static final String ESSEN = DIR + "/edge_based_subnetwork.osm.pbf";
+    private static final String ESSEN = DIR + "/edge_based_subnetwork.osm.xml.gz";
 
     // when creating GH instances make sure to use this as the GH location such that it will be cleaned between tests
     private static final String GH_LOCATION = "target/graphhopper-test-gh";
