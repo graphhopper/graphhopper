@@ -44,7 +44,8 @@ See also the builds at [Docker Hub](https://hub.docker.com/r/graphhopper/graphho
 
 ## Questions
 
-All questions can go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage (iOS&Android), and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions would be on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper), but please do **not** use our issue section. Create new issues only if you are sure that this is a bug. Also, see how to contribute in the next section.
+All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage (iOS&Android), and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions
+is on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper). Do **not** use our issue section for questions.
 
 ## Contribute
 
@@ -87,7 +88,7 @@ There is an extension that creates a [navigation endpoint](https://github.com/gr
 
 There is the isochrone subproject to calculate and visualize the reachable area for a certain travel mode
 
-**[Isochrone Web API]()**
+**[Isochrone Web API](../stable/docs/web/api-doc.md#isochrone)**
 
 [![Isochrone API image](./docs/isochrone/images/isochrone.png)](../stable/docs/web/api-doc.md#isochrone)
 
@@ -95,7 +96,7 @@ There is the isochrone subproject to calculate and visualize the reachable area 
 
 [![high precision reachability image](https://www.graphhopper.com/wp-content/uploads/2018/06/berlin-reachability-768x401.png)](https://www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
 
-To support these high precision reachability approaches there is a special /spt
+To support these high precision reachability approaches there is the /spt
 endpoint (shortest path tree). [See #1577](https://github.com/graphhopper/graphhopper/pull/1577)
 
 # Technical Overview
@@ -109,10 +110,9 @@ very easily. We call this **speed mode**; without this CH preparation, we call i
 
 The speed mode comes with very fast and lightweight (less RAM) responses, although it does not use heuristics 
 in its default settings. The downsides are that the speed mode allows only pre-defined vehicle profiles (multiple possible in GraphHopper) 
-and requires a time consuming and resource-intensive preparation. Finally, implementing certain features is not possible 
-or very complex compared to the flexible mode. 
+and requires a time consuming and resource-intensive preparation.
 
-The **hybrid mode** also requires preparation time and memory,
+Then there is the **hybrid mode** which also requires preparation time and memory,
 but it is much more flexible regarding changing properties per request or e.g. integrating traffic data and more. 
 Furthermore, this hybrid mode is slower than the speed mode, but it is an 
 order of magnitude faster than the flexible mode and uses also less RAM for one request.
@@ -192,7 +192,7 @@ A fast and production ready map visualization for the Desktop can be implemented
 
 # Features
 
-Here is a list of the more detailed features including a link to the documentation:
+Here is a list of the more detailed features:
 
  * Based on Java and simple start for developers via Maven.
  * Works out of the box with OpenStreetMap (osm/xml and pbf) and can be adapted to custom data
@@ -200,14 +200,13 @@ Here is a list of the more detailed features including a link to the documentati
  * GraphHopper is fast. And with the so called "Contraction Hierarchies" it can be even faster (enabled by default).
  * Memory efficient data structures, algorithms and [the low and high level API](../stable/docs/core/low-level-api.md) is tuned towards ease of use and efficiency
  * Provides a simple [web API](../stable/docs/web/api-doc.md) including JavaScript and Java clients
- * Multiple weightings (fastest/shortest/...) and pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
+ * Multiple weightings (fastest/shortest/custom/...) and pre-built routing profiles: car, bike, racing bike, mountain bike, foot, hike, motorcycle, wheelchair, ...
+ * [Customization of these profiles](../stable/docs/core/profiles.md#custom-profiles) are possible to get truck and cargo bike support or individual improvements
  * Supports public transit routing and [GTFS](../stable/reader-gtfs/README.md).
  * Offers turn instructions in more than 42 languages, contribute or improve [here](../stable/docs/core/translations.md)
- * Displays and takes into account [elevation data](../stable/docs/core/elevation.md) (per default disabled)
+ * Displays and takes into account [elevation data](../stable/docs/core/elevation.md)
  * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexible and hybrid mode only)
- * Customization of vehicle profiles per request are possible (flexible and hybrid mode only)
- * [Custom profiles][../stable/docs/core/profiles.md#custom-profiles]
- * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424) (flexible and hybrid mode only)
+ * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424)
  * [Turn costs and restrictions](../stable/docs/core/turn-restrictions.md)
  * Country specific routing via SpatialRules
  * The core uses only a few dependencies (hppc, jts and slf4j)
@@ -216,4 +215,4 @@ Here is a list of the more detailed features including a link to the documentati
  * Does [map matching](https://github.com/graphhopper/map-matching)
  * Calculates isochrones and [shortest path trees](https://github.com/graphhopper/graphhopper/pull/1577)
  * Shows the whole road network in the browser for debugging purposes ("vector tile support") [#1572](https://github.com/graphhopper/graphhopper/pull/1572)
- * Shows details along a route like road_class or max_speed ("path details") [#1142](https://github.com/graphhopper/graphhopper/pull/1142) or for the whole road network via the "vector tile support"
+ * Shows details along a route like road_class or max_speed ("path details") [#1142](https://github.com/graphhopper/graphhopper/pull/1142) or for the whole road network via vector tiles
