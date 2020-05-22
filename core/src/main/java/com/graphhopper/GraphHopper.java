@@ -37,6 +37,7 @@ import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
+import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
 import com.graphhopper.routing.template.RoutingTemplate;
@@ -1334,15 +1335,28 @@ public class GraphHopper implements GraphHopperAPI {
      * Internal method to clean up the graph.
      */
     protected void cleanUp() {
-        int prevNodeCount = ghStorage.getNodes();
-        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager.fetchEdgeEncoders());
+        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, buildSubnetworkRemovalJobs());
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.doWork();
-        int currNodeCount = ghStorage.getNodes();
-        logger.info("edges: " + Helper.nf(ghStorage.getEdges()) + ", nodes " + Helper.nf(currNodeCount)
-                + ", there were " + Helper.nf(preparation.getMaxSubnetworks())
-                + " subnetworks. removed them => " + Helper.nf(prevNodeCount - currNodeCount)
-                + " less nodes");
+        logger.info("nodes: " + Helper.nf(ghStorage.getNodes()) + ", edges: " + Helper.nf(ghStorage.getEdges()));
+    }
+
+    private List<PrepareJob> buildSubnetworkRemovalJobs() {
+        List<FlagEncoder> encoders = encodingManager.fetchEdgeEncoders();
+        List<PrepareJob> jobs = new ArrayList<>();
+        for (FlagEncoder encoder : encoders) {
+            // for encoders with turn costs we do an edge-based subnetwork removal, because they *might* be used with
+            // a profile with turn_costs=true
+            if (encoder.supportsTurnCosts()) {
+                // u-turn costs are zero as we only want to make sure the graph is fully connected assuming finite
+                // u-turn costs
+                TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), 0);
+                jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), turnCostProvider));
+            } else {
+                jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), null));
+            }
+        }
+        return jobs;
     }
 
     protected void flush() {

@@ -21,14 +21,12 @@ import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.BitSetIterator;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +36,11 @@ import java.util.List;
 /**
  * Removes nodes/edges which are not part of the 'main' network(s). I.e. mostly nodes with no edges at all but
  * also small subnetworks which could be bugs in OSM data or 'islands' or indicate otherwise disconnected areas
- * e.g. via barriers or one way problems - see #86.
- * <p>
+ * e.g. via barriers or one way problems - see #86. Subnetworks are removed by disabling access to the corresponding
+ * edges for a given access encoded value. It is important to search for strongly connected components here (i.e.
+ * consider that the graph is directed). For example, small areas like parking lots are sometimes connected to the whole
+ * network through a single one-way road (a mapping error) and have to be removed because otherwise the routing fails
+ * when starting from such a parking lot.
  *
  * @author Peter Karich
  * @author easbar
@@ -47,20 +48,19 @@ import java.util.List;
 public class PrepareRoutingSubnetworks {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopperStorage ghStorage;
-    private final List<FlagEncoder> encoders;
-    private final List<BooleanEncodedValue> accessEncList;
+    private final List<PrepareJob> prepareJobs;
     private int minNetworkSize = 200;
-    private int subnetworks = -1;
 
-    public PrepareRoutingSubnetworks(GraphHopperStorage ghStorage, List<FlagEncoder> encoders) {
+    public PrepareRoutingSubnetworks(GraphHopperStorage ghStorage, List<PrepareJob> prepareJobs) {
         this.ghStorage = ghStorage;
-        this.encoders = encoders;
-        this.accessEncList = new ArrayList<>();
-        for (FlagEncoder flagEncoder : encoders) {
-            accessEncList.add(flagEncoder.getAccessEnc());
-        }
+        this.prepareJobs = prepareJobs;
     }
 
+    /**
+     * The subnetwork removal removes components with less than {@link #minNetworkSize} nodes from the graph if it is
+     * run node-based. For edge-based subnetwork removal it removes components with less than 2*{@link #minNetworkSize}
+     * (directed) edges.
+     */
     public PrepareRoutingSubnetworks setMinNetworkSize(int minNetworkSize) {
         this.minNetworkSize = minNetworkSize;
         return this;
@@ -73,15 +73,16 @@ public class PrepareRoutingSubnetworks {
         }
         StopWatch sw = new StopWatch().start();
         logger.info("Start removing subnetworks (prepare.min_network_size:" + minNetworkSize + ") " + Helper.getMemInfo());
+        logger.info("Subnetwork removal jobs: " + prepareJobs);
         logger.info("Graph nodes: " + Helper.nf(ghStorage.getNodes()));
         logger.info("Graph edges: " + Helper.nf(ghStorage.getEdges()));
-        for (FlagEncoder encoder : encoders) {
-            logger.info("--- vehicle: '" + encoder.toString() + "'");
-            removeSmallSubNetworks(encoder.getAccessEnc());
+        for (PrepareJob job : prepareJobs) {
+            logger.info("--- vehicle: '" + job.name + "'");
+            removeSmallSubNetworks(job.accessEnc, job.turnCostProvider);
         }
         markNodesRemovedIfUnreachable();
         optimize();
-        logger.info("Finished finding and removing subnetworks for " + encoders.size() + " vehicles, took: " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
+        logger.info("Finished finding and removing subnetworks for " + prepareJobs.size() + " vehicles, took: " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
     }
 
     private void optimize() {
@@ -90,21 +91,21 @@ public class PrepareRoutingSubnetworks {
         logger.info("Optimized storage after subnetwork removal, took: " + sw.stop().getSeconds() + "s," + Helper.getMemInfo());
     }
 
-    public int getMaxSubnetworks() {
-        return subnetworks;
-    }
-
     /**
-     * Removes components with less than {@link #minNetworkSize} nodes from the graph by disabling access to the nodes
-     * of the removed components (for the given access encoded value). It is important to search for strongly connected
-     * components here (i.e. consider that the graph is directed). For example, small areas like parking lots are
-     * sometimes connected to the whole network through a single one-way road. This is clearly a (mapping) error - but
-     * it causes the routing to fail when starting from the parking lot (and there is no way out from it).
-     * The biggest component is always kept regardless of its size.
+     * The biggest component is always kept regardless of its size. For edge-based routing with turn restrictions the
+     * subnetwork search has to consider the turn restrictions as well to make sure components that are not reachable
+     * due to turn restrictions are also removed.
      *
      * @return number of removed edges
      */
-    int removeSmallSubNetworks(BooleanEncodedValue accessEnc) {
+    int removeSmallSubNetworks(BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider) {
+        if (turnCostProvider == null)
+            return removeSmallSubNetworksNodeBased(accessEnc);
+        else
+            return removeSmallSubNetworksEdgeBased(accessEnc, turnCostProvider);
+    }
+
+    private int removeSmallSubNetworksNodeBased(BooleanEncodedValue accessEnc) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
         TarjanSCC tarjan = new TarjanSCC(ghStorage, accessEnc, false);
@@ -115,7 +116,7 @@ public class PrepareRoutingSubnetworks {
         logger.info("Found " + ccs.getTotalComponents() + " subnetworks (" + numSingleNodeComponents + " single nodes and "
                 + components.size() + " components with more than one node, total nodes: " + ccs.getNodes() + "), took: " + sw.stop().getSeconds() + "s");
 
-        // remove all small networks except the biggest (even when its smaller than the given min_network_size)
+        // remove all small networks, but keep the biggest (even when its smaller than the given min_network_size)
         sw = new StopWatch().start();
         int removedComponents = 0;
         int removedEdges = 0;
@@ -151,17 +152,14 @@ public class PrepareRoutingSubnetworks {
             throw new IllegalStateException("Too many total edges were removed: " + removedEdges + " out of " + ghStorage.getEdges() + "\n" +
                     "The maximum number of removed edges is: " + allowedRemoved);
 
-        subnetworks = ccs.getTotalComponents() - removedComponents;
         logger.info("Removed " + removedComponents + " subnetworks (biggest removed: " + biggestRemoved + " nodes) -> " +
-                subnetworks + " subnetwork(s) left (smallest: " + smallestRemaining + ", biggest: " + ccs.getBiggestComponent().size() + " nodes)"
+                (ccs.getTotalComponents() - removedComponents) + " subnetwork(s) left (smallest: " + smallestRemaining + ", biggest: " + ccs.getBiggestComponent().size() + " nodes)"
                 + ", total removed edges: " + removedEdges + ", took: " + sw.stop().getSeconds() + "s");
         return removedEdges;
     }
 
     /**
      * Makes all edges of the given component (the given set of node ids) inaccessible for the given access encoded value.
-     * So far we are not removing the edges entirely from the graph (we could probably do this for edges that are blocked
-     * for *all* vehicles similar to {@link #markNodesRemovedIfUnreachable})
      */
     int blockEdgesForComponent(EdgeExplorer explorer, BooleanEncodedValue accessEnc, IntIndexedContainer component) {
         int removedEdges = 0;
@@ -183,8 +181,83 @@ public class PrepareRoutingSubnetworks {
         return removedEdges;
     }
 
+    private int removeSmallSubNetworksEdgeBased(BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider) {
+        // partition graph into strongly connected components using Tarjan's algorithm
+        StopWatch sw = new StopWatch().start();
+        EdgeBasedTarjanSCC tarjan = new EdgeBasedTarjanSCC(ghStorage, accessEnc, turnCostProvider, false);
+        EdgeBasedTarjanSCC.ConnectedComponents ccs = tarjan.findComponents();
+        List<IntArrayList> components = ccs.getComponents();
+        BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
+        long numSingleEdgeComponents = singleEdgeComponents.cardinality();
+        logger.info("Found " + ccs.getTotalComponents() + " subnetworks (" + numSingleEdgeComponents + " single edges and "
+                + components.size() + " components with more than one edge, total nodes: " + ccs.getEdgeKeys() + "), took: " + sw.stop().getSeconds() + "s");
+
+        // n edge-keys roughly equal n/2 edges and components with n/2 edges approximately have n/2 nodes
+        // we could actually count the nodes to make this more consistent, but is it really needed?
+        final int minNetworkSizeEdges = 2 * minNetworkSize;
+
+        // remove all small networks, but keep the biggest (even when its smaller than the given min_network_size)
+        sw = new StopWatch().start();
+        int removedComponents = 0;
+        int removedEdgeKeys = 0;
+        int smallestRemaining = ccs.getBiggestComponent().size();
+        int biggestRemoved = 0;
+
+        for (IntArrayList component : components) {
+            if (component == ccs.getBiggestComponent())
+                continue;
+
+            if (component.size() < minNetworkSizeEdges) {
+                for (IntCursor cursor : component) {
+                    removedEdgeKeys += removeEdgeWithKey(cursor.value, accessEnc);
+                }
+                removedComponents++;
+                biggestRemoved = Math.max(biggestRemoved, component.size());
+            } else {
+                smallestRemaining = Math.min(smallestRemaining, component.size());
+            }
+        }
+
+        if (minNetworkSizeEdges > 0) {
+            BitSetIterator iter = singleEdgeComponents.iterator();
+            for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit()) {
+                removedEdgeKeys += removeEdgeWithKey(edgeKey, accessEnc);
+                removedComponents++;
+                biggestRemoved = Math.max(biggestRemoved, 1);
+            }
+        } else if (numSingleEdgeComponents > 0) {
+            smallestRemaining = Math.min(smallestRemaining, 1);
+        }
+
+        int allowedRemoved = ghStorage.getEdges() / 2;
+        if (removedEdgeKeys / 2 > allowedRemoved)
+            throw new IllegalStateException("Too many total (directed) edges were removed: " + removedEdgeKeys + " out of " + (2 * ghStorage.getEdges()) + "\n" +
+                    "The maximum number of removed edges is: " + (2 * allowedRemoved));
+
+        logger.info("Removed " + removedComponents + " subnetworks (biggest removed: " + biggestRemoved + " edges) -> " +
+                (ccs.getTotalComponents() - removedComponents) + " subnetwork(s) left (smallest: " + smallestRemaining + ", biggest: " + ccs.getBiggestComponent().size() + " edges)"
+                + ", total removed edges: " + removedEdgeKeys + ", took: " + sw.stop().getSeconds() + "s");
+        return removedEdgeKeys;
+    }
+
+    private int removeEdgeWithKey(int edgeKey, BooleanEncodedValue accessEnc) {
+        int edgeId = EdgeBasedTarjanSCC.getEdgeFromKey(edgeKey);
+        EdgeIteratorState edge = ghStorage.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
+        if (edgeKey % 2 == 0 && edge.get(accessEnc)) {
+            edge.set(accessEnc, false);
+            return 1;
+        }
+        if (edgeKey % 2 != 0 && edge.getReverse(accessEnc)) {
+            edge.setReverse(accessEnc, false);
+            return 1;
+        }
+        return 0;
+    }
+
     /**
-     * Removes nodes if all edges are not accessible. I.e. removes zero degree nodes.
+     * Removes nodes if all edges are not accessible. I.e. removes zero degree nodes. Note that so far we are not
+     * removing any edges entirely from the graph (we could probably do this for edges that are blocked for *all*
+     * vehicles.
      */
     void markNodesRemovedIfUnreachable() {
         EdgeExplorer edgeExplorer = ghStorage.createEdgeExplorer();
@@ -207,6 +280,10 @@ public class PrepareRoutingSubnetworks {
         // we could implement a 'fast check' for several previously marked removed nodes via GHBitSet 
         // removedNodesPerVehicle. The problem is that we would need long-indices but BitSet only supports int (due to nodeIndex*numberOfEncoders)
 
+        List<BooleanEncodedValue> accessEncList = new ArrayList<>();
+        for (PrepareJob job : prepareJobs) {
+            accessEncList.add(job.accessEnc);
+        }
         // if no edges are reachable return true
         EdgeIterator iter = edgeExplorerAllEdges.setBaseNode(nodeIndex);
         while (iter.next()) {
@@ -218,5 +295,22 @@ public class PrepareRoutingSubnetworks {
         }
 
         return true;
+    }
+
+    public static class PrepareJob {
+        private final String name;
+        private final BooleanEncodedValue accessEnc;
+        private final TurnCostProvider turnCostProvider;
+
+        public PrepareJob(String name, BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider) {
+            this.name = name;
+            this.accessEnc = accessEnc;
+            this.turnCostProvider = turnCostProvider;
+        }
+
+        @Override
+        public String toString() {
+            return name + "|" + (turnCostProvider == null ? "node-based" : "edge-based");
+        }
     }
 }
