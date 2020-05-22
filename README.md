@@ -9,6 +9,16 @@ By default it uses OpenStreetMap and GTFS data, but it can import other data sou
 
 We have a prospering community and welcome everyone. Let us know your problems, use cases or just [say hello](https://discuss.graphhopper.com/). Please see our [community guidelines](https://graphhopper.com/agreements/cccoc.html).
 
+## Questions
+
+All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage (iOS&Android), and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions
+is on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper). Do **not** use our issue section for questions.
+
+## Contribute
+
+Read through [how to contribute](CONTRIBUTING.md) for information on topics
+like finding and fixing bugs and improving our documentation or translations!
+
 ## Get Started
 
 To get started, read through our documentation and install the GraphHopper Web Service locally.
@@ -42,19 +52,9 @@ See also the builds at [Docker Hub](https://hub.docker.com/r/graphhopper/graphho
 
 [There is an experimental step by step guide](https://github.com/graphhopper/graphhopper/issues/561#issuecomment-473567727) that creates a debian or rpm package from the cloned and compiled repository. Before we can recommend this we need some more testers and feedback :)
 
-## Questions
-
-All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage (iOS&Android), and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions
-is on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper). Do **not** use our issue section for questions.
-
-## Contribute
-
-Read through [how to contribute](CONTRIBUTING.md) for information on topics
-like finding and fixing bugs and improving our documentation or translations!
-
 ## For the Web
 
-See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps) and [install it](../stable/docs/index.md) on your own machine:
+See the road routing feature of GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps) and [install it](../stable/docs/index.md) on your own machine:
 
 [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
 
