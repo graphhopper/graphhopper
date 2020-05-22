@@ -5,7 +5,7 @@ The following steps are simpler and only need the JRE, a jar file and an OSM fil
 
  1. Install the latest JRE 
  2. Get the [GraphHopper Web Service](https://github.com/graphhopper/graphhopper/blob/master/README.md#get-started)
-as jar file and download this [config-example.yml](https://raw.githubusercontent.com/graphhopper/graphhopper/master/config-example.yml)
+as jar file and download this [config-example.yml](https://raw.githubusercontent.com/graphhopper/graphhopper/1.0/config-example.yml)
  3. Copy an OSM file to the same directory. For example [berlin-latest.osm.pbf](http://download.geofabrik.de/europe/germany/berlin.html)
  4. Start GraphHopper Maps via: 
     ```bash
