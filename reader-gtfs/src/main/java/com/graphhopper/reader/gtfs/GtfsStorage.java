@@ -85,6 +85,30 @@ public class GtfsStorage implements GtfsStorageI {
 
 	}
 
+	static class FeedIdWithStopId implements Serializable {
+		final String feedId;
+		final String stopId;
+
+		FeedIdWithStopId(String feedId, String stopId) {
+			this.feedId = feedId;
+			this.stopId = stopId;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			FeedIdWithStopId that = (FeedIdWithStopId) o;
+			return feedId.equals(that.feedId) &&
+					stopId.equals(that.stopId);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(feedId, stopId);
+		}
+	}
+
 	private boolean isClosed = false;
 	private Directory dir;
 	private Set<String> gtfsFeedIds;
@@ -102,7 +126,7 @@ public class GtfsStorage implements GtfsStorageI {
 	private Map<String, int[]> boardEdgesForTrip;
 	private Map<String, int[]> leaveEdgesForTrip;
 
-	private Map<String, Integer> stationNodes;
+	private Map<FeedIdWithStopId, Integer> stationNodes;
 
 	public enum EdgeType {
 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL
@@ -246,7 +270,7 @@ public class GtfsStorage implements GtfsStorageI {
 	}
 
 	@Override
-	public Map<String, Integer> getStationNodes() {
+	public Map<FeedIdWithStopId, Integer> getStationNodes() {
 		return stationNodes;
 	}
 

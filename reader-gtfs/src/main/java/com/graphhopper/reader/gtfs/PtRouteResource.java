@@ -183,31 +183,18 @@ public final class PtRouteResource {
             ArrayList<QueryResult> pointQueryResults = new ArrayList<>();
             ArrayList<QueryResult> allQueryResults = new ArrayList<>();
             PointList points = new PointList(2, false);
-            if (enter instanceof GHPointLocation) {
-                final QueryResult closest = findClosest(((GHPointLocation) enter).ghPoint, 0);
-                pointQueryResults.add(closest);
-                allQueryResults.add(closest);
-                points.add(closest.getSnappedPoint());
-            } else if (enter instanceof GHStationLocation) {
-                final String stop_id = ((GHStationLocation) enter).stop_id;
-                final int node = gtfsStorage.getStationNodes().get(stop_id);
-                final QueryResult station = new QueryResult(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
-                station.setClosestNode(node);
-                allQueryResults.add(station);
-                points.add(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
-            }
-            if (exit instanceof GHPointLocation) {
-                final QueryResult closest = findClosest(((GHPointLocation) exit).ghPoint, 1);
-                pointQueryResults.add(closest);
-                allQueryResults.add(closest);
-                points.add(closest.getSnappedPoint());
-            } else if (exit instanceof GHStationLocation) {
-                final String stop_id = ((GHStationLocation) exit).stop_id;
-                final int node = gtfsStorage.getStationNodes().get(stop_id);
-                final QueryResult station = new QueryResult(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
-                station.setClosestNode(node);
-                allQueryResults.add(station);
-                points.add(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
+            List<GHLocation> locations = Arrays.asList(enter, exit);
+            for (int i = 0; i < locations.size(); i++) {
+                if (enter instanceof GHPointLocation) {
+                    final QueryResult closest = findByPoint(((GHPointLocation) locations.get(i)).ghPoint, i);
+                    pointQueryResults.add(closest);
+                    allQueryResults.add(closest);
+                    points.add(closest.getSnappedPoint());
+                } else if (enter instanceof GHStationLocation) {
+                    final QueryResult station = findByStationId((GHStationLocation) locations.get(i), i);
+                    allQueryResults.add(station);
+                    points.add(graphHopperStorage.getNodeAccess().getLat(station.getClosestNode()), graphHopperStorage.getNodeAccess().getLon(station.getClosestNode()));
+                }
             }
             queryGraph = QueryGraph.create(graphWithExtraEdges, pointQueryResults); // modifies queryResults
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
@@ -226,7 +213,7 @@ public final class PtRouteResource {
             return response;
         }
 
-        private QueryResult findClosest(GHPoint point, int indexForErrorMessage) {
+        private QueryResult findByPoint(GHPoint point, int indexForErrorMessage) {
             final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
             QueryResult source = locationIndex.findClosest(point.lat, point.lon, filter);
             if (!source.isValid()) {
@@ -236,6 +223,16 @@ public final class PtRouteResource {
                 throw new RuntimeException(source.getClosestEdge().get(ptEncodedValues.getTypeEnc()).name());
             }
             return source;
+        }
+
+        private QueryResult findByStationId(GHStationLocation exit, int indexForErrorMessage) {
+            final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId("gtfs_1", exit.stop_id));
+            if (node == null) {
+                throw new PointNotFoundException("Cannot find station: " + exit.stop_id, indexForErrorMessage);
+            }
+            final QueryResult station = new QueryResult(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
+            station.setClosestNode(node);
+            return station;
         }
 
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {

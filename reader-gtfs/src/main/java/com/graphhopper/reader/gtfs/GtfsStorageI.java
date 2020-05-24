@@ -134,7 +134,7 @@ public interface GtfsStorageI {
 
     Map<String, Transfers> getTransfers();
 
-    Map<String, Integer> getStationNodes();
+    Map<GtfsStorage.FeedIdWithStopId, Integer> getStationNodes();
 
     Map<Integer, PlatformDescriptor> getPlatformDescriptorByEdge();
 }

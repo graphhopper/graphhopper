@@ -325,7 +325,7 @@ public class RealtimeFeed {
                 }
 
                 @Override
-                public Map<String, Integer> getStationNodes() {
+                public Map<GtfsStorage.FeedIdWithStopId, Integer> getStationNodes() {
                     return staticGtfs.getStationNodes();
                 }
 

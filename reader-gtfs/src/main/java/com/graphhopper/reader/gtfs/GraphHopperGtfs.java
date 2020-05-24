@@ -152,7 +152,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), getGtfsStorage(), streetNetworkIndex);
                 gtfsReader.setCreateTransferStopsConnectSameOsmNode(createTransferStopsConnectSameOsmNode);
                 gtfsReader.connectStopsToStreetNetwork();
-                getType0TransferWithTimes(gtfsFeed)
+                getType0TransferWithTimes(id, gtfsFeed)
                         .forEach(t -> {
                             t.transfer.transfer_type = 2;
                             t.transfer.min_transfer_time = (int) (t.time / 1000L);
@@ -171,7 +171,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
         }
     }
 
-    private Stream<TransferWithTime> getType0TransferWithTimes(GTFSFeed gtfsFeed) {
+    private Stream<TransferWithTime> getType0TransferWithTimes(String id, GTFSFeed gtfsFeed) {
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         RealtimeFeed realtimeFeed = RealtimeFeed.empty(getGtfsStorage());
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
@@ -181,12 +181,12 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 .filter(e -> e.getValue().transfer_type == 0)
                 .map(e -> {
                     PointList points = new PointList(2, false);
-                    final int fromnode = getGtfsStorage().getStationNodes().get(e.getValue().from_stop_id);
+                    final int fromnode = getGtfsStorage().getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, e.getValue().from_stop_id));
                     final QueryResult fromstation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
                     fromstation.setClosestNode(fromnode);
                     points.add(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
 
-                    final int tonode = getGtfsStorage().getStationNodes().get(e.getValue().to_stop_id);
+                    final int tonode = getGtfsStorage().getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, e.getValue().to_stop_id));
                     final QueryResult tostation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
                     tostation.setClosestNode(tonode);
                     points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
