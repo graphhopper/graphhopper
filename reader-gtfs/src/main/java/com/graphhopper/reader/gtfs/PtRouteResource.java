@@ -115,13 +115,11 @@ public final class PtRouteResource {
 
     public static class Factory {
         private final TranslationMap translationMap;
-        private final PtEncodedValues ptEncodedValues;
         private final GraphHopperStorage graphHopperStorage;
         private final LocationIndex locationIndex;
         private final GtfsStorage gtfsStorage;
 
         private Factory(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-            this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
             this.translationMap = translationMap;
             this.graphHopperStorage = graphHopperStorage;
             this.locationIndex = locationIndex;
@@ -131,7 +129,7 @@ public final class PtRouteResource {
         public PtRouteResource createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouteResource(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, ptEncodedValues, realtimeFeeds));
+            return new PtRouteResource(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, realtimeFeeds));
         }
 
         public PtRouteResource createWithoutRealtimeFeed() {

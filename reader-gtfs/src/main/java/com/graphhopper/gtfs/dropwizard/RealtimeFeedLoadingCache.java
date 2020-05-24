@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.reader.gtfs.RealtimeFeed;
 import com.graphhopper.storage.GraphHopperStorage;
 import org.apache.http.client.HttpClient;
@@ -99,7 +98,7 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed> {
                 throw new RuntimeException(e);
             }
         }
-        return RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager()), feedMessageMap);
+        return RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, feedMessageMap);
     }
 
 }

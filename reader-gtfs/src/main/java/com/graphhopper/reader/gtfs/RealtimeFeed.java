@@ -91,7 +91,7 @@ public class RealtimeFeed {
         return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), staticGtfs.getOperatingDayPatterns(), staticGtfs.getWritableTimeZones());
     }
 
-    public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, PtEncodedValues encoder, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
+    public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
         final IntHashSet blockedEdges = new IntHashSet();
         final IntLongHashMap delaysForBoardEdges = new IntLongHashMap();
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
