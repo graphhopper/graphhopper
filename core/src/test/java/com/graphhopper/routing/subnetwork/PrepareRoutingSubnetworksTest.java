@@ -209,10 +209,10 @@ public class PrepareRoutingSubnetworksTest {
         GraphHopperStorage g = createSubnetworkTestStorageWithOneWays(em);
         assertEquals(11, g.getNodes());
 
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
-                new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, null))).
+        PrepareRoutingSubnetworks.PrepareJob job = new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, null);
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(job)).
                 setMinNetworkSize(3);
-        int removed = instance.removeSmallSubNetworks(accessEnc, null);
+        int removed = instance.removeSmallSubNetworks(job);
 
         // the (7) and the (5,6) components get removed -> 2 remaining components and
         // 3 removed edges total
@@ -228,10 +228,10 @@ public class PrepareRoutingSubnetworksTest {
         GraphHopperStorage g = createSubnetworkTestStorageWithOneWays(em);
         assertEquals(11, g.getNodes());
 
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
-                new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, null))).
+        PrepareRoutingSubnetworks.PrepareJob job = new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, null);
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(job)).
                 setMinNetworkSize(3);
-        int removed = instance.removeSmallSubNetworks(accessEnc, null);
+        int removed = instance.removeSmallSubNetworks(job);
 
         assertEquals(3, removed);
         instance.markNodesRemovedIfUnreachable();
@@ -255,10 +255,10 @@ public class PrepareRoutingSubnetworksTest {
         g.edge(3, 4, 1, true);
         g.edge(4, 5, 1, true);
 
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
-                new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, null))).
+        PrepareRoutingSubnetworks.PrepareJob job = new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, null);
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(job)).
                 setMinNetworkSize(2);
-        int removedEdges = instance.removeSmallSubNetworks(accessEnc, null);
+        int removedEdges = instance.removeSmallSubNetworks(job);
         assertEquals(2, removedEdges);
     }
 
