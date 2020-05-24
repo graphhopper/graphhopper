@@ -69,7 +69,6 @@ public class RealtimeFeed {
     private final Map<Integer, byte[]> additionalTripDescriptors;
     private final Map<Integer, Integer> stopSequences;
     private final Map<Integer, GtfsStorage.Validity> validities;
-    private final Map<Integer, GtfsStorage.FeedIdWithTimezone> feedIdWithTimezones;
 
     private RealtimeFeed(GtfsStorage staticGtfs, Map<String, GtfsRealtime.FeedMessage> feedMessages, IntHashSet blockedEdges,
                          IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<VirtualEdgeIteratorState> additionalEdges, Map<Integer, byte[]> tripDescriptors, Map<Integer, Integer> stopSequences, Map<GtfsStorage.Validity, Integer> operatingDayPatterns, Map<GtfsStorage.FeedIdWithTimezone, Integer> writableTimeZones) {
@@ -86,11 +85,6 @@ public class RealtimeFeed {
             reverseOperatingDayPatterns.put(entry.getValue(), entry.getKey());
         }
         this.validities = Collections.unmodifiableMap(reverseOperatingDayPatterns);
-        Map<Integer, GtfsStorage.FeedIdWithTimezone> feedIdWithTimezoneMap = new HashMap<>();
-        for (Map.Entry<GtfsStorage.FeedIdWithTimezone, Integer> entry : writableTimeZones.entrySet()) {
-            feedIdWithTimezoneMap.put(entry.getValue(), entry.getKey());
-        }
-        this.feedIdWithTimezones = Collections.unmodifiableMap(feedIdWithTimezoneMap);
     }
 
     public static RealtimeFeed empty(GtfsStorage staticGtfs) {
