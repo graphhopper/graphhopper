@@ -117,25 +117,22 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         }
     }
 
-    public CHGraph getCHGraph(CHConfig chConfig) {
-        return getCHGraph(chConfig.getName());
+    /**
+     * @return the {@link CHGraph} for the specified profile name, or null if it does not exist
+     */
+    public CHGraph getCHGraph(String chGraphName) {
+        for (CHGraphImpl cg : chGraphs) {
+            if (cg.getCHConfig().getName().equals(chGraphName))
+                return cg;
+        }
+        return null;
     }
 
-    /**
-     * @return the {@link CHGraph} for the specified profile name
-     */
-    public CHGraph getCHGraph(String profileName) {
-        if (chGraphs.isEmpty())
-            throw new IllegalStateException("There is no CHGraph");
-
-        List<String> existing = new ArrayList<>();
-        for (CHGraphImpl cg : chGraphs) {
-            if (cg.getCHConfig().getName().equals(profileName))
-                return cg;
-            existing.add(cg.getCHConfig().getName());
-        }
-
-        throw new IllegalStateException("Cannot find CHGraph for the specified profile: " + profileName + ", existing:" + existing);
+    public List<String> getCHGraphNames() {
+        List<String> result = new ArrayList<>();
+        for (CHGraphImpl cg : chGraphs)
+            result.add(cg.getCHConfig().getName());
+        return result;
     }
 
     public boolean isCHPossible() {

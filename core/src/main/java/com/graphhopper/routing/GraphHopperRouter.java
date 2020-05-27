@@ -36,10 +36,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphEdgeIdFinder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -111,7 +108,7 @@ public class GraphHopperRouter {
 
                 CHConfig chConfig = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHConfig();
                 weighting = chConfig.getWeighting();
-                graph = ghStorage.getCHGraph(chConfig);
+                graph = ghStorage.getCHGraph(chConfig.getName());
             } else {
                 checkNonChMaxWaypointDistance(request.getPoints());
                 final int uTurnCostsInt = request.getHints().getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
@@ -187,7 +184,12 @@ public class GraphHopperRouter {
 
         // for now do not allow mixing CH&LM #1082,#1889
         if (chPreparationHandler.isEnabled() && !disableCH) {
-            return chPreparationHandler.getAlgorithmFactory(profile);
+            CHGraph chGraph = ghStorage.getCHGraph(profile);
+            if (chGraph == null)
+                throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile + "'" +
+                        "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
+                        "\navailable CH profiles: " + ghStorage.getCHGraphNames());
+            return new CHRoutingAlgorithmFactory(chGraph);
         } else if (lmPreparationHandler.isEnabled() && !disableLM) {
             for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
                 if (lmp.getProfile().equals(profile)) {
