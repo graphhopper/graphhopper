@@ -88,6 +88,16 @@
     </dependencies>
 
     <profiles>
+        <!-- use this for development if you want to use the GH core source code on your disk -->
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <gh.version>2.0-SNAPSHOT</gh.version>
+            </properties>
+        </profile>
         <!-- mvn clean deploy -P release -->
         <profile>
             <id>release</id>
