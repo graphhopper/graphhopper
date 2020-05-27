@@ -26,7 +26,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.DistanceCalc2D;
+import com.graphhopper.util.DistanceCalcEuclidean;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import org.junit.Test;
@@ -66,7 +66,7 @@ public class GraphExplorerTest {
         RealtimeFeed realtimeFeed = mock(RealtimeFeed.class);
         List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>();
 
-        QueryGraph queryGraph = QueryGraph.lookup(graph, Collections.emptyList());
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.emptyList());
         GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0, false);
 
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 4, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
@@ -91,7 +91,7 @@ public class GraphExplorerTest {
         extraEdges.add(g);
 
         WrapperGraph wrapperGraph = new WrapperGraph(graph, extraEdges);
-        QueryGraph queryGraph = QueryGraph.lookup(wrapperGraph, Collections.emptyList());
+        QueryGraph queryGraph = QueryGraph.create(wrapperGraph, Collections.emptyList());
         GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0, false);
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains(e.toString()));
@@ -126,7 +126,7 @@ public class GraphExplorerTest {
         extraEdges.add(h);
 
         WrapperGraph wrapperGraph = new WrapperGraph(graph, extraEdges);
-        QueryGraph queryGraph = QueryGraph.lookup(wrapperGraph, emptyList());
+        QueryGraph queryGraph = QueryGraph.create(wrapperGraph, emptyList());
         GraphExplorer forward = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0, false);
         assertThat(() -> forward.exploreEdgesAround(new Label(0, -1, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains("0->1"));
@@ -184,13 +184,13 @@ public class GraphExplorerTest {
         point1.setQueryDistance(0.0);
         point1.setWayIndex(0);
         point1.setSnappedPosition(QueryResult.Position.EDGE);
-        point1.calcSnappedPoint(new DistanceCalc2D());
+        point1.calcSnappedPoint(new DistanceCalcEuclidean());
         point2.setClosestEdge(d);
         point2.setQueryDistance(0.0);
         point2.setWayIndex(0);
         point2.setSnappedPosition(QueryResult.Position.EDGE);
-        point2.calcSnappedPoint(new DistanceCalc2D());
-        QueryGraph queryGraph = QueryGraph.lookup(wrapperGraph, point1, point2);
+        point2.calcSnappedPoint(new DistanceCalcEuclidean());
+        QueryGraph queryGraph = QueryGraph.create(wrapperGraph, point1, point2);
 
         GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0, false);
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),

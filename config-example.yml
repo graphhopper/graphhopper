@@ -1,12 +1,16 @@
 graphhopper:
 
-  # OpenStreetMap input file
-  # datareader.file: some.pbf
+  # OpenStreetMap input file PBF or XML, can be changed via command line -Ddw.graphhopper.datareader.file=some.pbf
+  datareader.file: ""
+  # Local folder used by graphhopper to store its data
+  graph.location: graph-cache
+  # GTFS zip data for public transit module
+  gtfs.file: ""
 
   ##### Vehicles #####
 
 
-  # More options: foot,bike,bike2,mtb,racingbike,motorcycle (comma separated)
+  # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,car4wd,wheelchair (comma separated)
   # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
   graph.flag_encoders: car
 
@@ -18,10 +22,67 @@ graphhopper:
   # More are: surface,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type
   # graph.encoded_values: surface,toll,track_type
 
+  ##### Routing Profiles ####
+
+  # Routing can be done for the following list of profiles. Note that it is required to specify all the profiles you
+  # would like to use here. The fields of each profile are as follows:
+  # - name (required): a unique string identifier for the profile
+  # - vehicle (required): refers to the `graph.flag_encoders` used for this profile
+  # - weighting (required): the weighting used for this profile, e.g. fastest,shortest or short_fastest
+  # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
+  #   this will only work if the `graph.flag_encoders` for the given `vehicle` is configured with `|turn_costs=true`.
+  #
+  # Depending on the above fields there are other properties that can be used, e.g.
+  # - distance_factor: 0.1 (can be used to fine tune the time/distance trade-off of short_fastest weighting)
+  # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
+  #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
+  #   in seconds, so for example it does not work with shortest weighting.
+  # - custom_model_file: when you specified "weighting: custom" you need to set a yaml file that defines the custom_model.
+  #   If you want an empty model you can also set "custom_model_file: empty".
+  #
+  #   For more information about profiles and especially custom profiles have a look into the documentation
+  #   at docs/core/profiles.md or the examples under web/src/test/resources/com/graphhopper/http/resources/ or
+  #   the CustomWeighting class for the raw details.
+  #
+  # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
+  # profiles (see below). Otherwise you should at least limit the number of `routing.max_visited_nodes`.
+  profiles:
+    - name: car
+      vehicle: car
+      weighting: fastest
+
+  #  - name: car_with_turn_costs
+  #    vehicle: car
+  #    weighting: short_fastest
+  #    distance_factor: 0.1
+  #    turn_costs: true
+  #    u_turn_costs: 60
+
+  # Speed mode:
+  # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
+  # more RAM/disk space for holding the prepared graph but also means less memory usage per request. Using the following
+  # list you can define for which of the above routing profiles such preparation shall be performed. Note that to support
+  # profiles with `turn_costs: true` a more elaborate preparation is required (longer preparation time and more memory
+  # usage) and the routing will also be slower than with `turn_costs: false`.
+  profiles_ch:
+    - profile: car
+  #   - profile: car_with_turn_costs
+
+  # Hybrid mode:
+  # Similar to speed mode, the hybrid mode (Landmarks, LM) also speeds up routing by doing calculating auxiliary data
+  # in advance. Its not as fast as speed mode, but more flexible.
+  #
+  # Advanced usage: It is possible to use the same preparation for multiple profiles which saves memory and preparation
+  # time. To do this use e.g. `preparation_profile: my_other_profile` where `my_other_profile` is the name of another
+  # profile for which an LM profile exists. Important: This only will give correct routing results if the weights
+  # calculated for the profile are equal or larger (for every edge) than those calculated for the profile that was used
+  # for the preparation (`my_other_profile`)
+  profiles_lm: []
+
   ##### Elevation #####
 
 
-  # To populate your graph with elevation data use SRTM, default is noop (no elevation)
+  # To populate your graph with elevation data use SRTM, default is noop (no elevation). Read more about it in docs/core/elevation.md
   # graph.elevation.provider: srtm
 
 
@@ -37,52 +98,22 @@ graphhopper:
   #### Speed, hybrid and flexible mode ####
 
 
-  # By default the speed mode with the 'fastest' weighting is used. Internally a graph preparation via
-  # contraction hierarchies (CH) is done to speed routing up. This requires more RAM/disc space for holding the
-  # graph but less for every request. You can also setup multiple weightings, by providing a comma separated list.
-  # To enable finite u-turn costs use something like fastest|u_turn_costs=30, where 30 are the u-turn costs in seconds
-  # (given as integer). Note that since the u-turn costs are given in seconds the weighting you use should also
-  # calculate the weight in seconds. The u-turn costs will only be applied for edge_based, see below.
-  prepare.ch.weightings: fastest
-
-  # Turn costs can be enabled also for speed mode (contraction hierarchies), but this requires a special kind of graph
-  # preparation (which uses edge- instead of node-based graph traversal), which takes more time and memory than a
-  # node-based preparation. You can also perform both node- and edge-based preparation for the same vehicle. This will
-  # allow switching between faster node-based routing and slower edge-based routing which supports turn costs.
-  # Using the following option you can specify what kind of preparation shall be performed for the different vehicles.
-  # You can choose:
-  # 'off': there will be no edge-based preparation for any of the vehicles, you will not be able to use turn costs
-  #        with speed mode
-  # 'edge_or_node': use edge-based preparation for all vehicles with |turn_costs=true (see graph.flag_encoders) and
-  #                 node-based preparation for all others
-  # 'edge_and_node': use node-based preparation for all vehicles and additionally use edge-based preparation for all
-  #                  vehicles with |turn_costs=true
-  prepare.ch.edge_based: off
-
-
-  # Disable the speed mode. Should be used only with routing.max_visited_nodes or when the hybrid mode is enabled instead
-  # prepare.ch.weightings: no
-
-
-  # To make CH preparation faster for multiple flagEncoders you can increase the default threads if you have enough RAM.
+  # To make CH preparation faster for multiple profiles you can increase the default threads if you have enough RAM.
   # Change this setting only if you know what you are doing and if the default worked for you.
   # prepare.ch.threads: 1
-
-
-  # The hybrid mode can be enabled with
-  # prepare.lm.weightings: fastest
 
   # To tune the performance vs. memory usage for the hybrid mode use
   # prepare.lm.landmarks: 16
 
-  # Make landmark preparation parallel if you have enough RAM. Change this only if you know what you are doing and if the default worked for you.
+  # Make landmark preparation parallel if you have enough RAM. Change this only if you know what you are doing and if
+  # the default worked for you.
   # prepare.lm.threads: 1
 
-
-  # avoid being stuck in a (oneway) subnetwork, see https://discuss.graphhopper.com/t/93
+  # In many cases the road network consists of independent components without any routes going in between. In
+  # the most simple case you can imagine an island without a bridge or ferry connection. The following parameter
+  # allows setting a minimum size (number of nodes) for such detached components. This can be used to reduce the number
+  # of cases where a connection between locations might not be found.
   prepare.min_network_size: 200
-  prepare.min_one_way_network_size: 200
-
 
 
   ##### Routing #####
@@ -147,32 +178,32 @@ graphhopper:
 #
 # assets:
 #  overrides:
-#    /maps: web/src/main/resources/assets/
+#    /maps: web/target/classes/assets/
 
 # Dropwizard server configuration
 server:
-  applicationConnectors:
+  application_connectors:
   - type: http
     port: 8989
     # for security reasons bind to localhost
-    bindHost: localhost
-  requestLog:
+    bind_host: localhost
+  request_log:
       appenders: []
-  adminConnectors:
+  admin_connectors:
   - type: http
     port: 8990
-    bindHost: localhost
+    bind_host: localhost
 # See https://www.dropwizard.io/1.3.8/docs/manual/configuration.html#logging
 logging:
   appenders:
   - type: file
-    timeZone: UTC
-    currentLogFilename: logs/graphhopper.log
-    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    time_zone: UTC
+    current_log_filename: logs/graphhopper.log
+    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     archive: true
-    archivedLogFilenamePattern: ./logs/graphhopper-%d.log.gz
-    archivedFileCount: 30
-    neverBlock: true
+    archived_log_filename_pattern: ./logs/graphhopper-%d.log.gz
+    archived_file_count: 30
+    never_block: true
   - type: console
-    timeZone: UTC
-    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    time_zone: UTC
+    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

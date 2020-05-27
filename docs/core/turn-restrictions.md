@@ -13,17 +13,21 @@ Turn restrictions are crucial for correct vehicle navigation and help to avoid f
 
 Turn restrictions have to be enabled on a vehicle basis. To enable it for one vehicle add
 `|turn_costs=true` in the config, for example: `graph.flag_encoders=car|turn_costs=true`.
+Or when using the Java API directly you can either create the encoding manager like `EncodingManager.create("car|turn_costs=true")` or
+`new EncodingManager.Builder().add(new CarFlagEncoder(5, 5, 1)` where the last parameter of `CarFlagEncoder` represents
+the maximum turn costs (a value of 1 means the turn can either be legal or forbidden).
 Turn restrictions are not available for every vehicle as they have low relevance
 for some vehicles like `foot`. 
 To enable turn restrictions when using the 'speed mode' additional graph preparation is required, because turn restrictions
-require edge-based (vs. node-based) traversal of the graph. First you have to set the weightings for which the graph 
-preparation should be run using e.g. `prepare.ch.weightings=fastest`, just like when you use the 'speed mode' without 
-turn restrictions. To use u-turn costs with speed mode you need to specify the time penalty for each u-turn like this:
-`prepare.ch.weightings=fastest|u_turn_costs=60`. 
-Additionally you need to set `prepare.ch.edge_based` to `edge_or_node` or `edge_and_node`. You can
-also specify a time penalty for taking u-turns (turning from one road back to the same road at a junction). Note that 
-this time-penalty only works reasonably when your weighting is time-based (like "fastest"). See 
-`config-example.yml` for further details regarding these configurations. If you prepare multiple 'speed mode' profiles you have to specify which
+require edge-based (vs. node-based) traversal of the graph. You have to configure the profiles for which the graph
+preparation should be run using e.g. `profiles_ch`, just like when you use the 'speed mode' without turn restrictions.
+The edge-based CH preparation will be chosen if you configure `turn_costs: true` for the profile you are referencing
+in `profiles_ch`.
+You can also specify a time penalty for taking u-turns (turning from one road back to the same road at a junction).
+Note that this time-penalty only works reasonably when your weighting is time-based (like "fastest"). To use u-turn 
+costs with speed mode you need to specify the time penalty for each u-turn (again in the profile configuration):
+ `u_turn_costs: 60`. See `config-example.yml` for further details regarding these configurations. 
+If you prepare multiple 'speed mode' profiles you have to specify which 
 one to use at request time: Use the `edge_based=true/false` parameter to enforce edge-based or node-based routing and 
 the `u_turn_costs` parameter to specify the u-turn costs (only needed if there are multiple edge-based 'speed mode'
 profiles with different u-turn costs). To disable the 'speed mode' per request you can add `ch.disable=true` and choose

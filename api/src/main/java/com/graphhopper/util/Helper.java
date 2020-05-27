@@ -36,7 +36,6 @@ import java.util.Map.Entry;
  */
 public class Helper {
     public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
-    public static final DistanceCalc3D DIST_3D = new DistanceCalc3D();
     public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
     public static final AngleCalc ANGLE_CALC = new AngleCalc();
     public static final Charset UTF_CS = Charset.forName("UTF-8");
@@ -411,6 +410,33 @@ public class Helper {
         return (int) x;
     }
 
+    /**
+     * This method probes the specified string for a boolean, int, long, float and double. If all this fails it returns
+     * the unchanged string.
+     */
+    public static Object toObject(String string) {
+        if ("true".equalsIgnoreCase(string) || "false".equalsIgnoreCase(string))
+            return Boolean.parseBoolean(string);
+        try {
+            return Integer.parseInt(string);
+        } catch (NumberFormatException ex) {
+            try {
+                return Long.parseLong(string);
+            } catch (NumberFormatException ex2) {
+                try {
+                    return Float.parseFloat(string);
+                } catch (NumberFormatException ex3) {
+                    try {
+                        return Double.parseDouble(string);
+                    } catch (NumberFormatException ex4) {
+                        // give up and simply return the string
+                        return string;
+                    }
+                }
+            }
+        }
+    }
+
     public static String camelCaseToUnderScore(String key) {
         if (key.isEmpty())
             return key;
@@ -459,5 +485,38 @@ public class Helper {
             sb.append(strings.get(i));
         }
         return sb.toString();
+    }
+
+    /**
+     * parses a string like [a,b,c]
+     */
+    public static List<String> parseList(String listStr) {
+        String trimmed = listStr.trim();
+        if (trimmed.length() < 2)
+            return Collections.emptyList();
+        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
+        List<String> result = new ArrayList<>();
+        for (String item : items) {
+            String s = item.trim();
+            if (!s.isEmpty()) {
+                result.add(s);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Produces a static hashcode for a string that is platform independent and still compatible to the default
+     * of openjdk. Do not use for performance critical applications.
+     *
+     * @see String#hashCode()
+     */
+    public static int staticHashCode(String str) {
+        int len = str.length();
+        int val = 0;
+        for (int idx = 0; idx < len; ++idx) {
+            val = 31 * val + str.charAt(idx);
+        }
+        return val;
     }
 }

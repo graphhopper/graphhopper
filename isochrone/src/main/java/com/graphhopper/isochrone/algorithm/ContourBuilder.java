@@ -16,7 +16,7 @@ package com.graphhopper.isochrone.algorithm;
 import org.locationtech.jts.algorithm.CGAlgorithms;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.quadedge.QuadEdge;
-import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
+import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.*;
 
@@ -32,19 +32,19 @@ import java.util.*;
 public class ContourBuilder {
 
     private static final double EPSILON = 0.000001;
-    private QuadEdgeSubdivision triangulation;
 
     private GeometryFactory geometryFactory = new GeometryFactory();
+    private Collection<QuadEdge> edges;
 
-    public ContourBuilder(QuadEdgeSubdivision triangulation) {
-        this.triangulation = triangulation;
+    public ContourBuilder(Collection<QuadEdge> edges) {
+        this.edges = edges;
     }
 
     public MultiPolygon computeIsoline(double z0) {
         Set<QuadEdge> processed = new HashSet<>();
         List<LinearRing> rings = new ArrayList<>();
 
-        Queue<QuadEdge> processQ = new ArrayDeque<>(getPrimaryEdges());
+        Queue<QuadEdge> processQ = new ArrayDeque<>(edges);
         while (!processQ.isEmpty()) {
             QuadEdge e = processQ.remove();
             if (processed.contains(e))
@@ -59,14 +59,14 @@ public class ContourBuilder {
             while (true) {
                 // Add a point to polyline
                 Coordinate cC;
-                if (triangulation.isFrameVertex(e.orig())) {
+                if (isFrameVertex(e.orig())) {
                     cC = moveEpsilonTowards(e.dest().getCoordinate(), e.orig().getCoordinate());
-                } else if (triangulation.isFrameVertex(e.dest())) {
+                } else if (isFrameVertex(e.dest())) {
                     cC = moveEpsilonTowards(e.orig().getCoordinate(), e.dest().getCoordinate());
                 } else {
                     cC = e.orig().midPoint(e.dest()).getCoordinate();
                 }
-                polyPoints.add(cC);
+                polyPoints.add(new Coordinate(cC.x, cC.y)); // Strip z coordinate
                 processed.add(e);
                 QuadEdge E1 = ccw ? e.oNext().getPrimary() : e.oPrev().getPrimary();
                 QuadEdge E2 = ccw ? e.dPrev().getPrimary() : e.dNext().getPrimary();
@@ -97,9 +97,8 @@ public class ContourBuilder {
         return geometryFactory.createMultiPolygon(isolinePolygons.toArray(new Polygon[isolinePolygons.size()]));
     }
 
-    @SuppressWarnings("unchecked") // JTS is not generified
-    private Collection<QuadEdge> getPrimaryEdges() {
-        return (Collection<QuadEdge>) triangulation.getPrimaryEdges(true);
+    private boolean isFrameVertex(Vertex v) {
+        return v.getZ() == Double.MAX_VALUE;
     }
 
     private Coordinate moveEpsilonTowards(Coordinate coordinate, Coordinate distantFrameCoordinate) {

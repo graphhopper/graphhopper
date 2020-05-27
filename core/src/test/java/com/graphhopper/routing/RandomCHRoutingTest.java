@@ -1,7 +1,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -38,7 +38,7 @@ public class RandomCHRoutingTest {
     private EncodingManager encodingManager;
     private Weighting weighting;
     private GraphHopperStorage graph;
-    private CHProfile chProfile;
+    private CHConfig chConfig;
     private LocationIndexTree locationIndex;
 
     @Parameterized.Parameters(name = "{0}, u-turn-costs={1}")
@@ -62,10 +62,10 @@ public class RandomCHRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)
+                .setCHConfigStrings("p|car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)
                 .create();
-        chProfile = graph.getCHGraph().getCHProfile();
-        weighting = chProfile.getWeighting();
+        chConfig = graph.getCHGraph().getCHConfig();
+        weighting = chConfig.getWeighting();
     }
 
     /**
@@ -137,8 +137,8 @@ public class RandomCHRoutingTest {
         locationIndex.prepareIndex();
 
         graph.freeze();
-        CHGraph chGraph = graph.getCHGraph(chProfile);
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+        CHGraph chGraph = graph.getCHGraph(chConfig);
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         pch.doWork();
 
         int numQueryGraph = 25;
@@ -146,8 +146,8 @@ public class RandomCHRoutingTest {
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
             List<QueryResult> qrs = createQueryResults(rnd, numVirtualNodes);
-            QueryGraph queryGraph = QueryGraph.lookup(graph, qrs);
-            QueryGraph chQueryGraph = QueryGraph.lookup(chGraph, qrs);
+            QueryGraph queryGraph = QueryGraph.create(graph, qrs);
+            QueryGraph chQueryGraph = QueryGraph.create(chGraph, qrs);
 
             int numQueries = 100;
             int numPathsNotFound = 0;
@@ -166,7 +166,8 @@ public class RandomCHRoutingTest {
                     continue;
                 }
 
-                RoutingAlgorithm algo = pch.getRoutingAlgorithmFactory().createAlgo(chQueryGraph, AlgorithmOptions.start().hints(new PMap().put("stall_on_demand", true)).build());
+                RoutingAlgorithm algo = pch.getRoutingAlgorithmFactory().createAlgo(chQueryGraph, AlgorithmOptions.start().
+                        hints(new PMap().putObject("stall_on_demand", true)).build());
                 Path path = algo.calcPath(from, to);
                 if (!path.isFound()) {
                     fail("path not found for " + from + "->" + to + ", expected weight: " + refWeight);

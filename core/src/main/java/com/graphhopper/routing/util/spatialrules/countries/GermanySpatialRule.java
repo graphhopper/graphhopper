@@ -17,9 +17,15 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
-import com.graphhopper.routing.profiles.Country;
-import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
+import java.util.List;
+
+import org.locationtech.jts.geom.Polygon;
+
+import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.MaxSpeed;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
@@ -27,36 +33,68 @@ import com.graphhopper.routing.util.spatialrules.TransportationMode;
  *
  * @author Robin Boldt
  */
-public class GermanySpatialRule extends DefaultSpatialRule {
+public class GermanySpatialRule extends AbstractSpatialRule {
+    
+    public GermanySpatialRule(List<Polygon> borders) {
+        super(borders);
+    }
 
     /**
-     * Germany contains roads with no speed limit. For these roads, this method will return Integer.MAX_VALUE.
+     * Germany contains roads with no speed limit. For these roads, this method
+     * will return {@link MaxSpeed#UNLIMITED_SIGN_SPEED}.
+     * <p>
      * Your implementation should be able to handle these cases.
      */
     @Override
-    public double getMaxSpeed(String highwayTag, double _default) {
+    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
+        if (currentMaxSpeed > 0 || transport != TransportationMode.MOTOR_VEHICLE) {
+            return currentMaxSpeed;
+        }
+        
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
-        switch (highwayTag) {
-            case "motorway":
-            case "trunk":
-                return Integer.MAX_VALUE;
-            case "residential":
+        switch (roadClass) {
+            case MOTORWAY:
+            case TRUNK:
+                return MaxSpeed.UNLIMITED_SIGN_SPEED;
+            case PRIMARY:
                 return 100;
-            case "living_street":
+            case SECONDARY:
+                return 100;
+            case TERTIARY:
+                return 100;
+            case UNCLASSIFIED:
+                return 100;
+            case RESIDENTIAL:
+                return 100;
+            case LIVING_STREET:
                 return 4;
             default:
-                return super.getMaxSpeed(highwayTag, _default);
+                return -1;
         }
     }
-
+    
     @Override
-    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
-        if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
-            if (highwayTag.equals("track"))
-                return RoadAccess.DESTINATION;
+    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
+        if (currentRoadAccess != RoadAccess.YES) {
+            return currentRoadAccess;
+        }
+        
+        if (transport != TransportationMode.MOTOR_VEHICLE) {
+            return RoadAccess.YES;
         }
 
-        return super.getAccess(highwayTag, transportationMode, _default);
+        switch (roadClass) {
+        case TRACK:
+            return RoadAccess.DESTINATION;
+        case PATH:
+        case BRIDLEWAY:
+        case CYCLEWAY:
+        case FOOTWAY:
+        case PEDESTRIAN:
+            return RoadAccess.NO;
+        default:
+            return RoadAccess.YES;
+        }
     }
 
     @Override

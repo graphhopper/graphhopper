@@ -20,14 +20,11 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 import java.util.TreeMap;
 
-import static com.graphhopper.routing.profiles.RouteNetwork.*;
+import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -42,12 +39,15 @@ public class HikeFlagEncoder extends FootFlagEncoder {
     }
 
     public HikeFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 4),
-                properties.getDouble("speed_factor", 1));
-        this.setBlockFords(properties.getBool("block_fords", false));
+        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1));
+
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
+        blockBarriersByDefault(properties.getBool("block_barriers", false));
+        speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 
-    public HikeFlagEncoder(int speedBits, double speedFactor) {
+    protected HikeFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
@@ -95,7 +95,7 @@ public class HikeFlagEncoder extends FootFlagEncoder {
 
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        PointList pl = edge.fetchWayGeometry(3);
+        PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
         if (!pl.is3D())
             return;
 

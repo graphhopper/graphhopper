@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -60,18 +59,17 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
         return superWeighting.calcTurnMillis(inEdge, viaNode, outEdge);
     }
 
+    @Override
+    public boolean hasTurnCosts() {
+        return superWeighting.hasTurnCosts();
+    }
+
     /**
      * Returns the flagEncoder of the superWeighting. Usually we do not have a FlagEncoder here.
      */
     @Override
     public FlagEncoder getFlagEncoder() {
         return superWeighting.getFlagEncoder();
-    }
-
-    @Override
-    public boolean matches(HintsMap reqMap) {
-        return getName().equals(reqMap.getWeighting())
-                && superWeighting.getFlagEncoder().toString().equals(reqMap.getVehicle());
     }
 
     @Override

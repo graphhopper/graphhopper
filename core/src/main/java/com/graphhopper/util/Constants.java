@@ -68,7 +68,7 @@ public class Constants {
 
     public static final int VERSION_NODE = 5;
     public static final int VERSION_EDGE = 15;
-    public static final int VERSION_SHORTCUT = 5;
+    public static final int VERSION_SHORTCUT = 6;
     public static final int VERSION_GEOMETRY = 4;
     public static final int VERSION_LOCATION_IDX = 3;
     public static final int VERSION_STRING_IDX = 5;

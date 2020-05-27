@@ -1,6 +1,8 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -9,7 +11,6 @@ import com.graphhopper.util.Helper;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
@@ -48,8 +49,10 @@ public class GraphHopperStorageLMTest {
         graph.flush();
         graph.close();
 
-        GraphHopper hopper = new GraphHopper().setGraphHopperLocation(defaultGraphLoc);
-        hopper.getLMPreparationHandler().setLMProfileStrings(Arrays.asList("fastest"));
+        GraphHopper hopper = new GraphHopper()
+                .setGraphHopperLocation(defaultGraphLoc)
+                .setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         // does lm preparation
         hopper.importOrLoad();
         EncodingManager em = hopper.getEncodingManager();
@@ -57,8 +60,10 @@ public class GraphHopperStorageLMTest {
         assertEquals(1, em.fetchEdgeEncoders().size());
         assertEquals(16, hopper.getLMPreparationHandler().getLandmarks());
 
-        hopper = new GraphHopper().setGraphHopperLocation(defaultGraphLoc);
-        hopper.getLMPreparationHandler().setLMProfileStrings(Arrays.asList("fastest"));
+        hopper = new GraphHopper()
+                .setGraphHopperLocation(defaultGraphLoc)
+                .setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         // just loads the LM data
         hopper.importOrLoad();
         assertEquals(1, em.fetchEdgeEncoders().size());

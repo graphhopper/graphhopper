@@ -17,9 +17,14 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
-import com.graphhopper.routing.profiles.Country;
-import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
+import java.util.List;
+
+import org.locationtech.jts.geom.Polygon;
+
+import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
@@ -27,31 +32,64 @@ import com.graphhopper.routing.util.spatialrules.TransportationMode;
  *
  * @author Robin Boldt
  */
-public class AustriaSpatialRule extends DefaultSpatialRule {
+public class AustriaSpatialRule extends AbstractSpatialRule {
 
+    public AustriaSpatialRule(List<Polygon> borders) {
+        super(borders);
+    }
+    
     @Override
-    public double getMaxSpeed(String highwayTag, double _default) {
-        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
-        switch (highwayTag) {
-            case "trunk":
-                return 100;
-            case "residential":
-                return 50;
-            default:
-                return super.getMaxSpeed(highwayTag, _default);
+    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
+        if (currentMaxSpeed > 0 || transport != TransportationMode.MOTOR_VEHICLE) {
+            return currentMaxSpeed;
+        }
+        
+        switch (roadClass) {
+        case MOTORWAY:
+            return 130;
+        case TRUNK:
+            return 100;
+        case PRIMARY:
+            return 100;
+        case SECONDARY:
+            return 100;
+        case TERTIARY:
+            return 100;
+        case UNCLASSIFIED:
+            return 100;
+        case RESIDENTIAL:
+            return 50;
+        case LIVING_STREET:
+            return 20;
+        default:
+            return -1;
         }
     }
-
+    
     @Override
-    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
-        if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
-            if (highwayTag.equals("living_street"))
-                return RoadAccess.DESTINATION;
-            if (highwayTag.equals("track"))
-                return RoadAccess.FORESTRY;
+    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
+        if (currentRoadAccess != RoadAccess.YES) {
+            return currentRoadAccess;
         }
-
-        return super.getAccess(highwayTag, transportationMode, _default);
+        
+        if (transport != TransportationMode.MOTOR_VEHICLE) {
+            return RoadAccess.YES;
+        }
+        
+        switch (roadClass) {
+        case LIVING_STREET:
+            return RoadAccess.DESTINATION;
+        case TRACK:
+            return RoadAccess.FORESTRY;
+        case PATH:
+        case BRIDLEWAY:
+        case CYCLEWAY:
+        case FOOTWAY:
+        case PEDESTRIAN:
+            return RoadAccess.NO;
+        default:
+            return RoadAccess.YES;
+        }
     }
 
     @Override

@@ -13,10 +13,10 @@ env:
 matrix:
   include:
     - jdk: openjdk8
-    - env: JDK='OpenJDK 13'
-      install: . ./install-jdk.sh -F 13 -C
-    - env: JDK='OpenJDK 14' SKIP_EXT_TESTS=true
+    - env: JDK='OpenJDK 14'
       install: . ./install-jdk.sh -F 14 -C
+    - env: JDK='OpenJDK 15'
+      install: . ./install-jdk.sh -F 15 -C
     
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
@@ -30,19 +30,14 @@ before_install:
   - 'wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh'
   - nvm install $NODE_VERSION
 
-# avoid increase of memory via travis https://github.com/travis-ci/travis-ci/issues/8408
-before_script:
-  - _JAVA_OPTIONS=
-
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
   - _JAVA_OPTIONS=
   - "mvn --version"
   - "if [ -z \"$API_KEY\" ]; then API_KEY=78da6e9a-273e-43d1-bdda-8f24e007a1fa; fi" # change in GraphHopperWebIT too
-  - cd web && npm install && BROWSERIFYSWAP_ENV='development' npm run bundleProduction && cd ..
 
 script:
-  - "mvn -Dkey=$API_KEY clean install -B"
+  - "mvn -Pinclude-web-ui -Dkey=$API_KEY clean install -B"
 
 after_success:
   # often spotbugs etc take long to be compatible with a future JDK version so skip them

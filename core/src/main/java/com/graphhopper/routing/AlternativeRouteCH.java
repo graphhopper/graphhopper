@@ -22,8 +22,8 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,12 +40,33 @@ import java.util.List;
  */
 public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
-    private double maxWeightFactor = 1.4;
-    private double maxShareFactor = 0.6;
-    public static final double T = 10000.0;
+    private final double maxWeightFactor;
+    private final double maxShareFactor;
+    private final double localOptimalityFactor;
+    private final int maxPaths;
+    private int extraVisitedNodes = 0;
+    private List<AlternativeInfo> alternatives = new ArrayList<>();
 
-    public AlternativeRouteCH(RoutingCHGraph graph) {
+    public AlternativeRouteCH(RoutingCHGraph graph, PMap hints) {
         super(graph);
+        maxWeightFactor = hints.getDouble("alternative_route.max_weight_factor", 1.25);
+        maxShareFactor = hints.getDouble("alternative_route.max_share_factor", 0.8);
+        localOptimalityFactor = hints.getDouble("alternative_route.local_optimality_factor", 0.25);
+        maxPaths = hints.getInt("alternative_route.max_paths", 3);
+    }
+
+    @Override
+    public boolean finished() {
+        if (finishedFrom && finishedTo)
+            return true;
+
+        // Continue search longer than for point to point search -- not sure if makes a difference at all
+        return currFrom.weight >= bestWeight * maxWeightFactor && currTo.weight >= bestWeight * maxWeightFactor;
+    }
+
+    @Override
+    public int getVisitedNodes() {
+        return visitedCountFrom + visitedCountTo + extraVisitedNodes;
     }
 
     List<AlternativeInfo> calcAlternatives(final int s, final int t) {
@@ -58,9 +79,9 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
             return Collections.emptyList();
         }
 
-        final List<AlternativeInfo> alternatives = new ArrayList<>();
         alternatives.add(new AlternativeInfo(bestPath, 0));
-        final double maxWeight = maxWeightFactor * bestPath.getWeight();
+
+        final ArrayList<PotentialAlternativeInfo> potentialAlternativeInfos = new ArrayList<>();
 
         bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
             @Override
@@ -69,8 +90,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 if (toSPTEntry == null)
                     return true;
 
-                // Filter alternatives that are too long
-                if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > maxWeight)
+                if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > bestPath.getWeight() * maxWeightFactor)
                     return true;
 
                 // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
@@ -82,94 +102,137 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 if (preliminaryShare > maxShareFactor) {
                     return true;
                 }
-
-                // Okay, now we want the s -> v -> t shortest via-path, so we route s -> v and v -> t
-                // and glue them together.
-                DijkstraBidirectionCHNoSOD svRouter = new DijkstraBidirectionCHNoSOD(graph);
-                final Path svPath = svRouter.calcPath(s, v);
-                DijkstraBidirectionCHNoSOD vtRouter = new DijkstraBidirectionCHNoSOD(graph);
-                final Path vtPath = vtRouter.calcPath(v, t);
-                Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
-
-                // And calculate the share again, because this can be totally different.
-                // The first filter is a good heuristic, but we still need this one.
-                double share = calculateShare(path);
-                if (share > maxShareFactor) {
-                    return true;
-                }
-
-                // This is the final test we need: Discard paths that are not "locally shortest" around v.
-                // So move a couple of nodes to the left and right from v on our path,
-                // route, and check if v is on the shortest path.
-                final IntIndexedContainer svNodes = svPath.calcNodes();
-                int vIndex = svNodes.size() - 1;
-                if (!tTest(path, vIndex))
-                    return true;
-
-                alternatives.add(new AlternativeInfo(path, share));
+                PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
+                potentialAlternativeInfo.v = v;
+                potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
+                potentialAlternativeInfos.add(potentialAlternativeInfo);
                 return true;
             }
 
-            private double calculateShare(final Path path) {
-                double sharedDistance = 0.0;
-                List<EdgeIteratorState> edges = path.calcEdges();
-                for (EdgeIteratorState edge : edges) {
-                    if (nodesInCurrentAlternativeSetContains(edge.getBaseNode()) && nodesInCurrentAlternativeSetContains(edge.getAdjNode())) {
-                        sharedDistance += edge.getDistance();
-                    }
-                }
-                return sharedDistance / path.getDistance();
-            }
-
-            private boolean nodesInCurrentAlternativeSetContains(int v) {
-                for (AlternativeInfo alternative : alternatives) {
-                    if (alternative.nodes.contains(v)) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            private boolean tTest(Path path, int vIndex) {
-                if (path.getEdgeCount() == 0) return true;
-                int fromNode = getPreviousNodeTMetersAway(path, vIndex);
-                int toNode = getNextNodeTMetersAway(path, vIndex);
-                DijkstraBidirectionCHNoSOD tRouter = new DijkstraBidirectionCHNoSOD(graph);
-                Path tPath = tRouter.calcPath(fromNode, toNode);
-                IntIndexedContainer tNodes = tPath.calcNodes();
-                return tNodes.contains(path.calcNodes().get(vIndex));
-            }
-
-            private int getPreviousNodeTMetersAway(Path path, int vIndex) {
-                List<EdgeIteratorState> edges = path.calcEdges();
-                double distance = 0.0;
-                int i = vIndex;
-                while (i > 0 && distance < T) {
-                    distance += edges.get(i - 1).getDistance();
-                    i--;
-                }
-                return edges.get(i).getBaseNode();
-            }
-
-            private int getNextNodeTMetersAway(Path path, int vIndex) {
-                List<EdgeIteratorState> edges = path.calcEdges();
-                double distance = 0.0;
-                int i = vIndex;
-                while (i < edges.size() - 1 && distance < T) {
-                    distance += edges.get(i).getDistance();
-                    i++;
-                }
-                return edges.get(i - 1).getAdjNode();
-            }
-
         });
-        Collections.sort(alternatives, new Comparator<AlternativeInfo>() {
+
+        Collections.sort(potentialAlternativeInfos, new Comparator<PotentialAlternativeInfo>() {
             @Override
-            public int compare(AlternativeInfo o1, AlternativeInfo o2) {
-                return Double.compare(o1.path.getWeight(), o2.path.getWeight());
+            public int compare(PotentialAlternativeInfo o1, PotentialAlternativeInfo o2) {
+                return Double.compare(o1.weight, o2.weight);
             }
         });
+
+        for (PotentialAlternativeInfo potentialAlternativeInfo : potentialAlternativeInfos) {
+            int v = potentialAlternativeInfo.v;
+
+            // Okay, now we want the s -> v -> t shortest via-path, so we route s -> v and v -> t
+            // and glue them together.
+            DijkstraBidirectionCH svRouter = new DijkstraBidirectionCH(graph);
+            final Path svPath = svRouter.calcPath(s, v);
+            extraVisitedNodes += svRouter.getVisitedNodes();
+
+            DijkstraBidirectionCH vtRouter = new DijkstraBidirectionCH(graph);
+            final Path vtPath = vtRouter.calcPath(v, t);
+            Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
+            extraVisitedNodes += vtRouter.getVisitedNodes();
+
+            double sharedDistanceWithShortest = sharedDistanceWithShortest(path);
+            double detourLength = path.getDistance() - sharedDistanceWithShortest;
+            double directLength = bestPath.getDistance() - sharedDistanceWithShortest;
+            if (detourLength > directLength * maxWeightFactor) {
+                continue;
+            }
+
+            double share = calculateShare(path);
+            if (share > maxShareFactor) {
+                continue;
+            }
+
+            // This is the final test we need: Discard paths that are not "locally shortest" around v.
+            // So move a couple of nodes to the left and right from v on our path,
+            // route, and check if v is on the shortest path.
+            final IntIndexedContainer svNodes = svPath.calcNodes();
+            int vIndex = svNodes.size() - 1;
+            if (!tTest(path, vIndex))
+                continue;
+
+            alternatives.add(new AlternativeInfo(path, share));
+            if (alternatives.size() >= maxPaths)
+                break;
+        }
         return alternatives;
+    }
+
+    private double calculateShare(final Path path) {
+        double sharedDistance = sharedDistance(path);
+        return sharedDistance / path.getDistance();
+    }
+
+    private double sharedDistance(Path path) {
+        double sharedDistance = 0.0;
+        List<EdgeIteratorState> edges = path.calcEdges();
+        for (EdgeIteratorState edge : edges) {
+            if (nodesInCurrentAlternativeSetContains(edge.getBaseNode()) && nodesInCurrentAlternativeSetContains(edge.getAdjNode())) {
+                sharedDistance += edge.getDistance();
+            }
+        }
+        return sharedDistance;
+    }
+
+    private double sharedDistanceWithShortest(Path path) {
+        double sharedDistance = 0.0;
+        List<EdgeIteratorState> edges = path.calcEdges();
+        for (EdgeIteratorState edge : edges) {
+            if (alternatives.get(0).nodes.contains(edge.getBaseNode()) && alternatives.get(0).nodes.contains(edge.getAdjNode())) {
+                sharedDistance += edge.getDistance();
+            }
+        }
+        return sharedDistance;
+    }
+
+    private boolean nodesInCurrentAlternativeSetContains(int v) {
+        for (AlternativeInfo alternative : alternatives) {
+            if (alternative.nodes.contains(v)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean tTest(Path path, int vIndex) {
+        if (path.getEdgeCount() == 0) return true;
+        double detourDistance = detourDistance(path);
+        double T = 0.5 * localOptimalityFactor * detourDistance;
+        int fromNode = getPreviousNodeTMetersAway(path, vIndex, T);
+        int toNode = getNextNodeTMetersAway(path, vIndex, T);
+        DijkstraBidirectionCH tRouter = new DijkstraBidirectionCH(graph);
+        Path tPath = tRouter.calcPath(fromNode, toNode);
+        extraVisitedNodes += tRouter.getVisitedNodes();
+        IntIndexedContainer tNodes = tPath.calcNodes();
+        int v = path.calcNodes().get(vIndex);
+        return tNodes.contains(v);
+    }
+
+    private double detourDistance(Path path) {
+        return path.getDistance() - sharedDistanceWithShortest(path);
+    }
+
+    private int getPreviousNodeTMetersAway(Path path, int vIndex, double T) {
+        List<EdgeIteratorState> edges = path.calcEdges();
+        double distance = 0.0;
+        int i = vIndex;
+        while (i > 0 && distance < T) {
+            distance += edges.get(i - 1).getDistance();
+            i--;
+        }
+        return edges.get(i).getBaseNode();
+    }
+
+    private int getNextNodeTMetersAway(Path path, int vIndex, double T) {
+        List<EdgeIteratorState> edges = path.calcEdges();
+        double distance = 0.0;
+        int i = vIndex;
+        while (i < edges.size() - 1 && distance < T) {
+            distance += edges.get(i).getDistance();
+            i++;
+        }
+        return edges.get(i - 1).getAdjNode();
     }
 
     private static Path concat(Graph graph, Path svPath, Path vtPath) {
@@ -202,17 +265,14 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
         return paths;
     }
 
-    public void setMaxWeightFactor(double maxWeightFactor) {
-        this.maxWeightFactor = maxWeightFactor;
-    }
-
-    public void setMaxShareFactor(double maxShareFactor) {
-        this.maxShareFactor = maxShareFactor;
+    public static class PotentialAlternativeInfo {
+        int v;
+        double weight;
     }
 
     public static class AlternativeInfo {
-        final Path path;
         final double shareWeight;
+        final Path path;
         final IntIndexedContainer nodes;
 
         AlternativeInfo(Path path, double shareWeight) {
@@ -221,18 +281,18 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
             this.nodes = path.calcNodes();
         }
 
+        @Override
+        public String toString() {
+            return "AlternativeInfo{" +
+                    "shareWeight=" + shareWeight +
+                    ", path=" + path.calcNodes() +
+                    '}';
+        }
+
         public Path getPath() {
             return path;
         }
 
-        @Override
-        public String toString() {
-            return "AlternativeInfo{" +
-                    "path=" + path +
-                    ", shareWeight=" + shareWeight +
-                    ", nodes=" + nodes +
-                    '}';
-        }
     }
 
 }

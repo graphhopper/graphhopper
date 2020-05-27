@@ -39,6 +39,11 @@ public interface DistanceCalc {
     double calcDist(double fromLat, double fromLon, double toLat, double toLon);
 
     /**
+     * Calculates 3d distance of (from, to) in meter.
+     */
+    double calcDist3D(double fromLat, double fromLon, double fromEle, double toLat, double toLon, double toEle);
+
+    /**
      * Returns the specified length in normalized meter.
      */
     double calcNormalizedDist(double dist);
@@ -84,6 +89,15 @@ public interface DistanceCalc {
     double calcNormalizedEdgeDistance(double r_lat_deg, double r_lon_deg,
                                       double a_lat_deg, double a_lon_deg,
                                       double b_lat_deg, double b_lon_deg);
+
+    /**
+     * This method calculates the distance from r to edge (a, b) where the crossing point is c including elevation
+     *
+     * @return the distance in normalized meter
+     */
+    double calcNormalizedEdgeDistance3D(double r_lat_deg, double r_lon_deg, double r_ele_m,
+                                        double a_lat_deg, double a_lon_deg, double a_ele_m,
+                                        double b_lat_deg, double b_lon_deg, double b_ele_m);
 
     /**
      * @return the crossing point c of the vertical line from r to line (a, b)

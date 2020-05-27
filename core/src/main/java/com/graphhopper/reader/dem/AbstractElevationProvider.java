@@ -39,7 +39,7 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
     String baseUrl;
     Directory dir;
     DAType daType = DAType.MMAP;
-    boolean calcMean = false;
+    boolean interpolate = false;
     boolean autoRemoveTemporary = true;
     long sleep = 2000;
 
@@ -55,8 +55,8 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
     }
 
     @Override
-    public void setCalcMean(boolean eleCalcMean) {
-        calcMean = eleCalcMean;
+    public void setInterpolate(boolean interpolate) {
+        this.interpolate = interpolate;
     }
 
     void setSleep(long sleep) {
@@ -97,7 +97,7 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
             return dir;
 
         logger.info(this.toString() + " Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType +
-                " using calcmean: " + calcMean);
+                " using interpolate: " + interpolate);
         return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
     }
 

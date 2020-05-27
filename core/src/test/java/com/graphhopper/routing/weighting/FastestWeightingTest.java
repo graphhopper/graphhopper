@@ -17,15 +17,14 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.Test;
@@ -50,8 +49,7 @@ public class FastestWeightingTest {
 
     @Test
     public void testWeightWrongHeading() {
-        Weighting instance = new FastestWeighting(encoder, new PMap().
-                put(Parameters.Routing.HEADING_PENALTY, "100"));
+        Weighting instance = new FastestWeighting(encoder, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100));
 
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
                 GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 10, true, false), "test", Helper.createPointList(51, 0, 51, 1), false);
@@ -137,7 +135,7 @@ public class FastestWeightingTest {
     }
 
     private void setTurnCost(Graph graph, int from, int via, int to, double turnCost) {
-        graph.getTurnCostStorage().setExpensive(encoder.toString(), encodingManager, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnCost);
+        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnCost);
     }
 
 }

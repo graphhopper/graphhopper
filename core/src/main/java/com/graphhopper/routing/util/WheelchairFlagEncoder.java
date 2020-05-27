@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
@@ -49,16 +50,17 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     public WheelchairFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 4),
-                properties.getDouble("speed_factor", 1));
-        this.setBlockFords(properties.getBool("block_fords", false));
+        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1));
+
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
+        blockBarriersByDefault(properties.getBool("block_barriers", false));
     }
 
-    public WheelchairFlagEncoder(int speedBits, double speedFactor) {
+    protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor);
         restrictions.add("wheelchair");
 
-        setBlockByDefault(false);
         absoluteBarriers.add("handrail");
         absoluteBarriers.add("wall");
         absoluteBarriers.add("turnstile");
@@ -215,7 +217,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
      */
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        PointList pl = edge.fetchWayGeometry(3);
+        PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
 
         double prevEle = pl.getElevation(0);
         double fullDist2D = edge.getDistance();

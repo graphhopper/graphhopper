@@ -132,7 +132,7 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         System.out.println(provider.getEle(48.469123, 9.576393));
 
         // 1113 vs new: (1115)
-        provider.setCalcMean(true);
+        provider.setInterpolate(true);
         System.out.println(provider.getEle(47.467753, 14.573911));
 
         // 0

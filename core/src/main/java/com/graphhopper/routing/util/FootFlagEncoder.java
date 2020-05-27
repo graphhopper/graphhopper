@@ -18,14 +18,15 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
 
-import static com.graphhopper.routing.profiles.RouteNetwork.*;
+import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
@@ -54,32 +55,28 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     private EnumEncodedValue<RouteNetwork> footRouteEnc;
     Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
-    /**
-     * Should be only instantiated via EncodingManager
-     */
     public FootFlagEncoder() {
         this(4, 1);
     }
 
     public FootFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 4),
-                properties.getDouble("speed_factor", 1));
-        this.setBlockFords(properties.getBool("block_fords", false));
-        this.speedTwoDirections = properties.getBool("speed_two_directions", false);
+        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1));
+
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
+        blockBarriersByDefault(properties.getBool("block_barriers", false));
+        speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 
-    public FootFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
-    public FootFlagEncoder(int speedBits, double speedFactor) {
+    protected FootFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor, 0);
         restrictions.addAll(Arrays.asList("foot", "access"));
-        restrictedValues.add("private");
+
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+        restrictedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -96,7 +93,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         sidewalkValues.add("left");
         sidewalkValues.add("right");
 
-        setBlockByDefault(false);
+        blockBarriersByDefault(false);
         absoluteBarriers.add("fence");
         potentialBarriers.add("gate");
         potentialBarriers.add("cattle_grid");
@@ -141,6 +138,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         maxPossibleSpeed = FERRY_SPEED;
         speedDefault = MEAN_SPEED;
+    }
+
+    public TransportationMode getTransportationMode() {
+        return TransportationMode.FOOT;
     }
 
     @Override

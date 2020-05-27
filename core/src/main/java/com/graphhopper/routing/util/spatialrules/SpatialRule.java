@@ -17,10 +17,10 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
 
 import java.util.List;
-import java.util.Objects;
 
 import org.locationtech.jts.geom.Polygon;
 
@@ -35,23 +35,24 @@ import org.locationtech.jts.geom.Polygon;
 public interface SpatialRule {
 
     /**
-     * Return the max speed for a certain highway type. If there is no max speed defined, _default will be returned.
+     * Return the max speed for a certain road class and transportation mode.
      *
-     * @param highway  The highway type, e.g. primary, secondary
-     * @param _default The default max speed
-     * @return max speed
+     * @param roadClass       The highway type, e.g. {@link RoadClass#MOTORWAY}
+     * @param transport       The mode of transportation
+     * @param currentMaxSpeed The current max speed value or -1 if no value has been set yet
+     * @return the maximum speed value to be used
      */
-    double getMaxSpeed(String highway, double _default);
-
+    double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed);
+    
     /**
-     * Returns the {@link RoadAccess} for a certain highway type and transportation mode. If nothing is defined,
-     * _default will be returned.
+     * Returns the {@link RoadAccess} for a certain highway type and transportation transport.
      *
-     * @param highwayTag         The highway type, e.g. primary, secondary
-     * @param transportationMode The mode of transportation
-     * @param _default           The default AccessValue
+     * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
+     * @param transport          The mode of transportation
+     * @param currentRoadAccess  The current road access value (default: {@link RoadAccess#YES})
+     * @return the type of access to be used
      */
-    RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default);
+    RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess);
 
     /**
      * Returns the borders in which the SpatialRule is valid
@@ -59,48 +60,17 @@ public interface SpatialRule {
     List<Polygon> getBorders();
 
     /**
+     * Returns the priority of the rule. If multiple rules overlap they're
+     * processed in natural order of their priority.
+     * 
+     * @return the priority as an integer value between
+     *         {@link Integer#MIN_VALUE} (minimum priority) and
+     *         {@link Integer#MAX_VALUE} (maximum priority)
+     */
+    int getPriority();
+
+    /**
      * Returns the id for this rule, e.g. the ISO name of the country. The id has to be unique.
      */
     String getId();
-
-    SpatialRule EMPTY = new SpatialRule() {
-        @Override
-        public double getMaxSpeed(String highwayTag, double _default) {
-            return _default;
-        }
-
-        @Override
-        public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
-            return _default;
-        }
-
-        // should we use Country.DEFAULT here?
-        @Override
-        public String getId() {
-            return "SpatialRule.EMPTY";
-        }
-
-        @Override
-        public List<Polygon> getBorders() {
-            throw new IllegalArgumentException("Empty rule does not have borders");
-        }
-
-        @Override
-        public String toString() {
-            return "SpatialRule.EMPTY";
-        }
-        
-        @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof SpatialRule)) {
-                return false;
-            }
-            return Objects.equals(getId(), ((SpatialRule) obj).getId());
-        }
-        
-        @Override
-        public int hashCode() {
-            return getId().hashCode();
-        }
-    };
 }

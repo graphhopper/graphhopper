@@ -18,10 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
@@ -78,7 +75,7 @@ class InstructionsHelper {
     static GHPoint getPointForOrientationCalculation(EdgeIteratorState edgeIteratorState, NodeAccess nodeAccess) {
         double tmpLat;
         double tmpLon;
-        PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(3);
+        PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(FetchMode.ALL);
         if (tmpWayGeo.getSize() <= 2) {
             tmpLat = nodeAccess.getLatitude(edgeIteratorState.getAdjNode());
             tmpLon = nodeAccess.getLongitude(edgeIteratorState.getAdjNode());

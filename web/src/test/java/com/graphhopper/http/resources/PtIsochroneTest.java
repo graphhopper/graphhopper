@@ -18,15 +18,18 @@
 
 package com.graphhopper.http.resources;
 
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.resources.PtIsochroneResource;
 import com.graphhopper.util.Helper;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -36,39 +39,40 @@ import javax.ws.rs.client.WebTarget;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class PtIsochroneTest {
 
     private static final String GRAPH_LOC = "target/PtIsochroneResourceTest";
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private GeometryFactory geometryFactory = new GeometryFactory();
+    private final GeometryFactory geometryFactory = new GeometryFactory();
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
-
-    static {
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration()
-                .put("graph.flag_encoders", "foot")
-                .put("graph.location", GRAPH_LOC)
-                .put("gtfs.file", "../reader-gtfs/files/sample-feed.zip");
+                .putObject("graph.flag_encoders", "foot")
+                .putObject("graph.location", GRAPH_LOC)
+                .putObject("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
+                setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
+        return config;
     }
 
-    @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
-
-    @BeforeClass
-    @AfterClass
+    @BeforeAll
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(GRAPH_LOC));
     }
 
     @Test
     public void testIsoline() {
-        WebTarget webTarget = app.client()
-                .target("http://localhost:8080/isochrone")
+        WebTarget webTarget = clientTarget(app, "/isochrone")
                 .queryParam("vehicle", "pt")
                 .queryParam("point", "36.914893,-116.76821") // NADAV
                 .queryParam("pt.earliest_departure_time", LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant())

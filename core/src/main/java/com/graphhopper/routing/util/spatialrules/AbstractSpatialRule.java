@@ -17,42 +17,59 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.locationtech.jts.geom.Polygon;
 
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
+
 /**
  * @author Robin Boldt
  */
 public abstract class AbstractSpatialRule implements SpatialRule {
+    
+    public static final int DEFAULT_PRIORITY = 100;
 
-    protected List<Polygon> polygons = Collections.emptyList();
-
-    public List<Polygon> getBorders() {
-        return polygons;
+    private final List<Polygon> borders;
+    
+    public AbstractSpatialRule(List<Polygon> borders) {
+        this.borders = borders;
     }
-
-    public SpatialRule setBorders(List<Polygon> polygons) {
-        this.polygons = polygons;
-        return this;
+    
+    public AbstractSpatialRule(Polygon border) {
+        this(Collections.singletonList(border));
     }
-
-    public SpatialRule addBorder(Polygon polygon) {
-        if (polygons.isEmpty())
-            polygons = new ArrayList<>();
-        this.polygons.add(polygon);
-        return this;
+    
+    @Override
+    public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
+        return currentMaxSpeed;
     }
 
     @Override
+    public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
+        return currentRoadAccess;
+    }
+    
+    public List<Polygon> getBorders() {
+        return borders;
+    }
+
+    @Override
+    public int getPriority() {
+        return DEFAULT_PRIORITY;
+    }
+    
+    @Override
     public boolean equals(Object obj) {
-        if (obj instanceof SpatialRule) {
-            if (((SpatialRule) obj).getId().equals(this.getId()))
-                return true;
+        if (this == obj) {
+            return true;
         }
-        return false;
+        if (!(obj instanceof SpatialRule)) {
+            return false;
+        }
+        return this.getId().equals(((SpatialRule) obj).getId());
     }
 
     @Override
@@ -62,6 +79,12 @@ public abstract class AbstractSpatialRule implements SpatialRule {
 
     @Override
     public String toString() {
-        return getId();
+        StringBuilder builder = new StringBuilder();
+        builder.append("SpatialRule [getId()=");
+        builder.append(getId());
+        builder.append(", getPriority()=");
+        builder.append(getPriority());
+        builder.append("]");
+        return builder.toString();
     }
 }

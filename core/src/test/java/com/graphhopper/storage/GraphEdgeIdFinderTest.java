@@ -17,7 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -59,14 +58,12 @@ public class GraphEdgeIdFinderTest {
 
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
         GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("0.01,0.005,1", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
-        assertEquals("[0]", blockArea.blockedEdges.toString());
-        assertFalse(blockArea.blockedShapes.isEmpty());
+        assertEquals("[0]", blockArea.toString(0));
 
         // big area => no edgeIds are collected up-front
         graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
         blockArea = graphFinder.parseBlockArea("0,0,1000", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
-        assertEquals("[]", blockArea.blockedEdges.toString());
-        assertFalse(blockArea.blockedShapes.isEmpty());
+        assertFalse(blockArea.hasCachedEdgeIds(0));
     }
 
     @Test
@@ -114,15 +111,17 @@ public class GraphEdgeIdFinderTest {
         // big value => the polygon is small => force edgeId optimization
         double area = 500_000L * 500_000L;
         GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("2.1,1, -1.1,2, 2,3", DefaultEdgeFilter.allEdges(encoder), area);
-        GHIntHashSet blockedEdges = new GHIntHashSet();
-        blockedEdges.addAll(1, 2, 6, 7, 11, 12);
-        assertEquals(blockedEdges, blockArea.blockedEdges);
+        assertEquals("[1, 2, 6, 7, 11, 12]", blockArea.toString(0));
         assertEdges(graph, "[1, 2, 6, 7, 11, 12]", blockArea);
 
         // small value => same polygon is now "large" => do not pre-calculate edgeId set => check only geometries
         blockArea = graphFinder.parseBlockArea("2.1,1, 0.9,3, 0.9,2, -0.3,0", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
-        assertEquals("[]", blockArea.blockedEdges.toString());
+        assertFalse(blockArea.hasCachedEdgeIds(0));
         assertEdges(graph, "[0, 1, 4, 5, 6, 7, 9, 10]", blockArea);
+
+        blockArea = graphFinder.parseBlockArea("1.5,3,100000", DefaultEdgeFilter.allEdges(encoder), area);
+        assertEquals("[2, 7]", blockArea.toString(0));
+        assertEdges(graph, "[2, 7]", blockArea);
     }
 
     private void assertEdges(Graph g, String assertSetContent, GraphEdgeIdFinder.BlockArea blockArea) {

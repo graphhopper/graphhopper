@@ -49,7 +49,8 @@ public class ShortFastestWeightingTest {
     @Test
     public void testTooSmall() {
         try {
-            new ShortFastestWeighting(encoder, new PMap("short_fastest.distance_factor=0|short_fastest.time_factor=0"));
+            new ShortFastestWeighting(encoder, new PMap("short_fastest.distance_factor=0|short_fastest.time_factor=0"),
+                    TurnCostProvider.NO_TURN_COST_PROVIDER);
             fail();
         } catch (Exception ex) {
         }

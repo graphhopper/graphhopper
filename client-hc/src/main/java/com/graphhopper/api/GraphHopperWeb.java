@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.PathWrapperDeserializer;
@@ -65,7 +65,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean elevation = false;
     private String optimize = "false";
     private boolean postRequest = true;
-    int maxUnzippedLength = 1000;
+    private int maxUnzippedLength = 1000;
     private final Set<String> ignoreSet;
     private final Set<String> ignoreSetForPost;
 
@@ -112,6 +112,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
         ignoreSet.add("pointsencoded");
         ignoreSet.add("type");
         objectMapper = Jackson.newObjectMapper();
+    }
+
+    public GraphHopperWeb setMaxUnzippedLength(int maxUnzippedLength) {
+        this.maxUnzippedLength = maxUnzippedLength;
+        return this;
     }
 
     public GraphHopperWeb setDownloader(OkHttpClient downloader) {
@@ -205,7 +210,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
             JsonNode paths = json.get("paths");
 
             for (JsonNode path : paths) {
-                PathWrapper altRsp = PathWrapperDeserializer.createPathWrapper(objectMapper, path, tmpElevation, tmpTurnDescription);
+                ResponsePath altRsp = PathWrapperDeserializer.createPathWrapper(objectMapper, path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }
 
@@ -218,7 +223,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         }
     }
 
-    private OkHttpClient getClientForRequest(GHRequest request) {
+    OkHttpClient getClientForRequest(GHRequest request) {
         OkHttpClient client = this.downloader;
         if (request.getHints().has(TIMEOUT)) {
             long timeout = request.getHints().getLong(TIMEOUT, DEFAULT_TIMEOUT);
@@ -232,7 +237,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     private Request createPostRequest(GHRequest ghRequest) {
-        String tmpServiceURL = ghRequest.getHints().get(SERVICE_URL, routeServiceUrl);
+        String tmpServiceURL = ghRequest.getHints().getString(SERVICE_URL, routeServiceUrl);
         String url = tmpServiceURL + "?";
         if (!Helper.isEmpty(key))
             url += "key=" + key;
@@ -249,6 +254,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
             requestJson.putArray("details").addAll(createStringList(ghRequest.getPathDetails()));
 
         requestJson.put("locale", ghRequest.getLocale().toString());
+        if (!ghRequest.getProfile().isEmpty())
+            requestJson.put("profile", ghRequest.getProfile());
         if (!ghRequest.getAlgorithm().isEmpty())
             requestJson.put("algorithm", ghRequest.getAlgorithm());
 
@@ -256,15 +263,19 @@ public class GraphHopperWeb implements GraphHopperAPI {
         requestJson.put(INSTRUCTIONS, ghRequest.getHints().getBool(INSTRUCTIONS, instructions));
         requestJson.put(CALC_POINTS, ghRequest.getHints().getBool(CALC_POINTS, calcPoints));
         requestJson.put("elevation", ghRequest.getHints().getBool("elevation", elevation));
-        requestJson.put("optimize", ghRequest.getHints().get("optimize", optimize));
+        requestJson.put("optimize", ghRequest.getHints().getString("optimize", optimize));
 
-        Map<String, String> hintsMap = ghRequest.getHints().toMap();
-        for (String hintKey : hintsMap.keySet()) {
+        Map<String, Object> hintsMap = ghRequest.getHints().toMap();
+        for (Map.Entry<String, Object> entry : hintsMap.entrySet()) {
+            String hintKey = entry.getKey();
             if (ignoreSetForPost.contains(hintKey))
                 continue;
 
-            String hint = hintsMap.get(hintKey);
-            requestJson.put(hintKey, hint);
+            // special case for String required, see testPutPOJO
+            if (entry.getValue() instanceof String)
+                requestJson.put(hintKey, (String) entry.getValue());
+            else
+                requestJson.putPOJO(hintKey, entry.getValue());
         }
         String stringData = requestJson.toString();
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
@@ -277,7 +288,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private Request createGetRequest(GHRequest ghRequest) {
         boolean tmpInstructions = ghRequest.getHints().getBool(INSTRUCTIONS, instructions);
         boolean tmpCalcPoints = ghRequest.getHints().getBool(CALC_POINTS, calcPoints);
-        String tmpOptimize = ghRequest.getHints().get("optimize", optimize);
+        String tmpOptimize = ghRequest.getHints().getString("optimize", optimize);
 
         if (tmpInstructions && !tmpCalcPoints) {
             throw new IllegalStateException("Cannot calculate instructions without points (only points without instructions). "
@@ -291,11 +302,12 @@ public class GraphHopperWeb implements GraphHopperAPI {
             places += "point=" + round6(p.lat) + "," + round6(p.lon) + "&";
         }
 
-        String type = ghRequest.getHints().get("type", "json");
+        String type = ghRequest.getHints().getString("type", "json");
 
         String url = routeServiceUrl
                 + "?"
                 + places
+                + "&profile=" + ghRequest.getProfile()
                 + "&type=" + type
                 + "&instructions=" + tmpInstructions
                 + "&points_encoded=true"
@@ -305,8 +317,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 + "&elevation=" + tmpElevation
                 + "&optimize=" + tmpOptimize;
 
-        if (!ghRequest.getVehicle().isEmpty()) {
-            url += "&vehicle=" + ghRequest.getVehicle();
+        if (ghRequest.getHints().has("vehicle")) {
+            url += "&vehicle=" + ghRequest.getHints().getString("vehicle", "");
         }
 
         for (String details : ghRequest.getPathDetails()) {
@@ -341,9 +353,9 @@ public class GraphHopperWeb implements GraphHopperAPI {
             url += "&key=" + WebHelper.encodeURL(key);
         }
 
-        for (Map.Entry<String, String> entry : ghRequest.getHints().toMap().entrySet()) {
+        for (Map.Entry<String, Object> entry : ghRequest.getHints().toMap().entrySet()) {
             String urlKey = entry.getKey();
-            String urlValue = entry.getValue();
+            String urlValue = entry.getValue().toString();
 
             // use lower case conversion for check only!
             if (ignoreSet.contains(toLowerCase(urlKey))) {
@@ -361,6 +373,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
     public String export(GHRequest ghRequest) {
         String str = "Creating request failed";
         try {
+            if (postRequest)
+                throw new IllegalArgumentException("GPX export only works for GET requests, make sure to use `setPostRequest(false)`");
             Request okRequest = createGetRequest(ghRequest);
             str = getClientForRequest(ghRequest).newCall(okRequest).execute().body().string();
 

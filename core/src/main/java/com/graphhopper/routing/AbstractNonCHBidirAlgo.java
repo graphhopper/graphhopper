@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -53,6 +52,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     public AbstractNonCHBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(tMode);
         this.weighting = weighting;
+        if (weighting.hasTurnCosts() && !tMode.isEdgeBased())
+            throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
         this.flagEncoder = weighting.getFlagEncoder();
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
@@ -219,6 +220,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (!access) {
             return Double.POSITIVE_INFINITY;
         }
+        // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
+        // turn weights, see discussion in #1960
         return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
     }
 

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -64,6 +64,10 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHazmatTunnelParser();
         else if (name.equals(HazmatWater.KEY))
             return new OSMHazmatWaterParser();
+        else if (name.equals(Country.KEY))
+            throw new IllegalArgumentException("The property spatial_rules.borders_directory is required in the configuration " +
+                    "when using 'country' in encoded_values");
+
         throw new IllegalArgumentException("entry in encoder list not supported " + name);
     }
 }

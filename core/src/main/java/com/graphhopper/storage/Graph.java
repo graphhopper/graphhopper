@@ -48,7 +48,7 @@ public interface Graph {
     int getEdges();
 
     /**
-     * Creates a node explorer to access node properties.
+     * Creates an object to access node properties.
      */
     NodeAccess getNodeAccess();
 

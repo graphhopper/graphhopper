@@ -18,54 +18,64 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Peter Karich
  */
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceIssue1574Test {
     private static final String DIR = "./target/andorra-1574-gh/";
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
-
-    static {
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         // this is the reason we put this test into an extra file: we can only reproduce the bug of issue 1574 by increasing the one-way-network size
         config.getGraphHopperConfiguration().
-                put("graph.flag_encoders", "car").
-                put("prepare.ch.weightings", "fastest").
-                put("prepare.min_network_size", "0").
-                put("prepare.min_one_way_network_size", "12").
-                put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR);
+                putObject("graph.flag_encoders", "car").
+                putObject("prepare.min_network_size", 0).
+                putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("graph.location", DIR)
+                .setProfiles(Collections.singletonList(
+                        new Profile("car_profile").setVehicle("car").setWeighting("fastest")
+                ))
+                .setCHProfiles(Collections.singletonList(
+                        new CHProfile("car_profile")
+                ));
+        return config;
     }
 
-    @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
-
-    @BeforeClass
-    @AfterClass
+    @BeforeAll
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
     }
 
     @Test
     public void testStallOnDemandBug_issue1574() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&&vehicle=car&weighting=fastest&stall_on_demand=true").request().buildGet().invoke();
+        final Response response = clientTarget(app, "/route?profile=car_profile&" +
+                "point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&stall_on_demand=true").request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
-        assertFalse("there should be no error, but: " + json.get("message"), json.has("message"));
+        assertFalse(json.has("message"), "there should be no error, but: " + json.get("message"));
         System.out.println(json);
         assertEquals(200, response.getStatus());
     }

@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.storage.SPTEntry;
 
 public class DijkstraBidirectionCHNoSOD extends AbstractBidirCHAlgo {
     public DijkstraBidirectionCHNoSOD(RoutingCHGraph graph) {

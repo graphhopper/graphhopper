@@ -50,9 +50,7 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
 
     @Override
     public void run(GraphHopperServerConfiguration configuration, Environment environment) throws Exception {
-        environment.jersey().register(new GHJerseyViolationExceptionMapper());
         environment.jersey().register(new RootResource());
         environment.servlets().addFilter("cors", CORSFilter.class).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
-        environment.servlets().addFilter("ipfilter", new IPFilter(configuration.getGraphHopperConfiguration().get("jetty.whiteips", ""), configuration.getGraphHopperConfiguration().get("jetty.blackips", ""))).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
     }
 }

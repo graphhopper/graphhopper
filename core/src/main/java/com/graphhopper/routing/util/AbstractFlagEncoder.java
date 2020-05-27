@@ -22,7 +22,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -63,7 +63,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected int maxPossibleSpeed;
     /* Edge Flag Encoder fields */
     private long nodeBitMask;
-    private long relBitMask;
     private boolean blockByDefault = true;
     private boolean blockFords = true;
     private boolean registered;
@@ -75,14 +74,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected static final double LONG_TRIP_FERRY_SPEED = 30;
 
     private ConditionalTagInspector conditionalTagInspector;
-
-    public AbstractFlagEncoder(PMap properties) {
-        throw new RuntimeException("This method must be overridden in derived classes");
-    }
-
-    public AbstractFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
 
     /**
      * @param speedBits    specify the number of bits used for speed
@@ -125,7 +116,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * Should potential barriers block when no access limits are given?
      */
-    public void setBlockByDefault(boolean blockByDefault) {
+    protected void blockBarriersByDefault(boolean blockByDefault) {
         this.blockByDefault = blockByDefault;
     }
 
@@ -133,8 +124,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return blockFords;
     }
 
-    public void setBlockFords(boolean blockFords) {
+    protected void blockFords(boolean blockFords) {
         this.blockFords = blockFords;
+    }
+
+    protected void blockPrivate(boolean blockPrivate) {
+        if (!blockPrivate) {
+            if (!restrictedValues.remove("private"))
+                throw new IllegalStateException("no 'private' found in restrictedValues");
+            intendedValues.add("private");
+        }
     }
 
     public ConditionalTagInspector getConditionalTagInspector() {
@@ -462,6 +461,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     protected String getPropertiesString() {
         return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
+    }
+
+    @Override
+    public List<EncodedValue> getAllShared() {
+        return encodedValueLookup.getAllShared();
     }
 
     @Override

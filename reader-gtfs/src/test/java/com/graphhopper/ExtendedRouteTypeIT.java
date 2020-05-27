@@ -45,9 +45,9 @@ public class ExtendedRouteTypeIT {
     @BeforeClass
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.put("graph.flag_encoders", "car,foot");
-        ghConfig.put("graph.location", GRAPH_LOC);
-        ghConfig.put("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
+        ghConfig.putObject("graph.flag_encoders", "car,foot");
+        ghConfig.putObject("graph.location", GRAPH_LOC);
+        ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
@@ -64,12 +64,12 @@ public class ExtendedRouteTypeIT {
     @Test
     public void testRoute1() {
         final double FROM_LAT = 36.9010208, FROM_LON = -116.7659466;
-        final double TO_LAT =  36.9059371, TO_LON = -116.7618071;
+        final double TO_LAT = 36.9059371, TO_LON = -116.7618071;
         Request ghRequest = new Request(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,9,0,0).atZone(zoneId).toInstant());
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 9, 0, 0).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
         GHResponse route = ptRouteResource.route(ghRequest);
 

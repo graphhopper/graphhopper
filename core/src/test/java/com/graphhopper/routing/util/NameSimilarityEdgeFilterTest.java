@@ -17,8 +17,14 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
@@ -29,6 +35,8 @@ import static org.junit.Assert.assertTrue;
  * @author Robin Boldt
  */
 public class NameSimilarityEdgeFilterTest {
+
+    private GHPoint basePoint = new GHPoint(49.4652132, 11.1435159);
 
     @Test
     public void testAccept() {
@@ -75,6 +83,33 @@ public class NameSimilarityEdgeFilterTest {
 
         edge = createTestEdgeIterator("Hauptstr.");
         assertTrue(edgeFilter.accept(edge));
+    }
+
+    @Test
+    public void testDistanceFiltering() {
+        CarFlagEncoder encoder = new CarFlagEncoder();
+        Graph g = new GraphBuilder(EncodingManager.create(encoder)).create();
+        NodeAccess na = g.getNodeAccess();
+
+        GHPoint pointFarAway = new GHPoint(49.458629, 11.146124);
+        GHPoint point25mAway = new GHPoint(49.464871, 11.143575);
+        GHPoint point200mAway = new GHPoint(49.464598, 11.149039);
+
+        int farAwayId = 0;
+        int nodeId50 = 1;
+        int nodeID200 = 2;
+
+        na.setNode(farAwayId, pointFarAway.lat, pointFarAway.lon);
+        na.setNode(nodeId50, point25mAway.lat, point25mAway.lon);
+        na.setNode(nodeID200, point200mAway.lat, point200mAway.lon);
+
+        // Check that it matches a street 50m away
+        EdgeIteratorState edge1 = g.edge(nodeId50, farAwayId).setName("Wentworth Street");
+        assertTrue(createNameSimilarityEdgeFilter("Wentworth Street").accept(edge1));
+
+        // Check that it doesn't match streets 200m away
+        EdgeIteratorState edge2 = g.edge(nodeID200, farAwayId).setName("Wentworth Street");
+        assertFalse(createNameSimilarityEdgeFilter("Wentworth Street").accept(edge2));
     }
 
     /**
@@ -192,22 +227,47 @@ public class NameSimilarityEdgeFilterTest {
 //        assertTrue(edgeFilter.accept(edge));
     }
 
+    /**
+     * Create a NameSimilarityEdgeFilter that uses the same coordinates for all nodes
+     * so distance is not used when matching
+     */
     private NameSimilarityEdgeFilter createNameSimilarityEdgeFilter(String pointHint) {
         return new NameSimilarityEdgeFilter(new EdgeFilter() {
             @Override
             public boolean accept(EdgeIteratorState edgeState) {
                 return true;
             }
-        }, pointHint);
+        }, pointHint, basePoint, 100);
     }
 
-    private EdgeIteratorState createTestEdgeIterator(final String name) {
+    private EdgeIteratorState createTestEdgeIterator(final String name, final int baseNodeId, final int adjNodeId) {
         return new GHUtility.DisabledEdgeIterator() {
-
             @Override
             public String getName() {
                 return name;
             }
+
+            @Override
+            public int getBaseNode() {
+                return baseNodeId;
+            }
+
+            @Override
+            public int getAdjNode() {
+                return adjNodeId;
+            }
+
+            @Override
+            public PointList fetchWayGeometry(FetchMode type) {
+                PointList list = new PointList();
+                list.add(basePoint);
+                return list;
+            }
         };
     }
+
+    private EdgeIteratorState createTestEdgeIterator(final String name) {
+        return createTestEdgeIterator(name, 0, 0);
+    }
+
 }

@@ -18,9 +18,9 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.CHProfile;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.PMap;
@@ -32,7 +32,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.util.Helper.createFormatter;
+import static com.graphhopper.util.Helper.getMemInfo;
 
 /**
  * This class handles the different CH preparations and serves the corresponding {@link RoutingAlgorithmFactory}
@@ -43,13 +44,11 @@ import static com.graphhopper.util.Helper.*;
 public class CHPreparationHandler {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
-    // we need to decouple the CH profile objects from the list of CH profile strings
-    // as we need the strings to create the GraphHopperStorage and the GraphHopperStorage to create the preparations
-    // from the CHProfile objects currently requiring the encoders
+    // we first add the profiles and later read them to create the config objects (because they require
+    // the actual Weightings)
     private final List<CHProfile> chProfiles = new ArrayList<>();
-    private final Set<String> chProfileStrings = new LinkedHashSet<>();
+    private final List<CHConfig> chConfigs = new ArrayList<>();
     private boolean disablingAllowed = false;
-    private EdgeBasedCHMode edgeBasedCHMode = EdgeBasedCHMode.OFF;
     private int preparationThreads;
     private ExecutorService threadPool;
     private PMap pMap = new PMap();
@@ -60,36 +59,21 @@ public class CHPreparationHandler {
 
     public void init(GraphHopperConfig ghConfig) {
         // throw explicit error for deprecated configs
-        if (!ghConfig.get("prepare.threads", "").isEmpty())
+        if (ghConfig.has("prepare.threads"))
             throw new IllegalStateException("Use " + CH.PREPARE + "threads instead of prepare.threads");
-        if (!ghConfig.get("prepare.chWeighting", "").isEmpty() || !ghConfig.get("prepare.chWeightings", "").isEmpty())
-            throw new IllegalStateException("Use " + CH.PREPARE + "weightings and a comma separated list instead of prepare.chWeighting or prepare.chWeightings");
+        if (ghConfig.has("prepare.chWeighting") || ghConfig.has("prepare.chWeightings") || ghConfig.has("prepare.ch.weightings"))
+            throw new IllegalStateException("Use profiles_ch instead of prepare.chWeighting, prepare.chWeightings or prepare.ch.weightings, see #1922 and docs/core/profiles.md");
+        if (ghConfig.has("prepare.ch.edge_based"))
+            throw new IllegalStateException("Use profiles_ch instead of prepare.ch.edge_based, see #1922 and docs/core/profiles.md");
 
         setPreparationThreads(ghConfig.getInt(CH.PREPARE + "threads", getPreparationThreads()));
-
-        // default is enabled & fastest
-        String chWeightingsStr = ghConfig.get(CH.PREPARE + "weightings", "");
-        if (chWeightingsStr.contains("edge_based")) {
-            throw new IllegalArgumentException("Adding 'edge_based` to " + (CH.PREPARE + "weightings") + " is not allowed, to enable edge-based CH use " + (CH.PREPARE + "edge_based") + " instead.");
-        }
-
-        if ("no".equals(chWeightingsStr) || "false".equals(chWeightingsStr)) {
-            setCHProfilesAsStrings(Collections.<String>emptyList());
-        } else if (!chWeightingsStr.isEmpty()) {
-            setCHProfilesAsStrings(Arrays.asList(chWeightingsStr.split(",")));
-        }
-
         setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
-
-        String edgeBasedCHStr = ghConfig.get(CH.PREPARE + "edge_based", "off").trim();
-        edgeBasedCHStr = edgeBasedCHStr.equals("false") ? "off" : edgeBasedCHStr;
-        setEdgeBasedCHMode(EdgeBasedCHMode.valueOf(edgeBasedCHStr.toUpperCase(Locale.ROOT)));
-
+        setCHProfiles(ghConfig.getCHProfiles());
         pMap = ghConfig.asPMap();
     }
 
     public final boolean isEnabled() {
-        return !chProfiles.isEmpty() || !chProfileStrings.isEmpty() || !preparations.isEmpty();
+        return !chProfiles.isEmpty() || !chConfigs.isEmpty() || !preparations.isEmpty();
     }
 
     public final boolean isDisablingAllowed() {
@@ -105,100 +89,72 @@ public class CHPreparationHandler {
     }
 
     /**
-     * This method specifies whether or not edge-based CH preparation (needed for turn costs) should be performed.
-     *
-     * @see EdgeBasedCHMode
-     */
-    public final CHPreparationHandler setEdgeBasedCHMode(EdgeBasedCHMode edgeBasedCHMode) {
-        this.edgeBasedCHMode = edgeBasedCHMode;
-        return this;
-    }
-
-    /**
      * Decouple CH profiles from PrepareContractionHierarchies as we need CH profiles for the
      * graphstorage and the graphstorage for the preparation.
      */
-    public CHPreparationHandler addCHProfile(CHProfile chProfile) {
-        chProfiles.add(chProfile);
+    public CHPreparationHandler addCHConfig(CHConfig chConfig) {
+        chConfigs.add(chConfig);
         return this;
     }
 
     public CHPreparationHandler addPreparation(PrepareContractionHierarchies pch) {
         // we want to make sure that CH preparations are added in the same order as their corresponding profiles
-        if (preparations.size() >= chProfiles.size()) {
-            throw new IllegalStateException("You need to add the corresponding CH profiles before adding preparations.");
+        if (preparations.size() >= chConfigs.size()) {
+            throw new IllegalStateException("You need to add the corresponding CH configs before adding preparations.");
         }
-        CHProfile expectedProfile = chProfiles.get(preparations.size());
-        if (!pch.getCHProfile().equals(expectedProfile)) {
-            throw new IllegalArgumentException("CH profile of preparation: " + pch + " needs to be identical to previously added CH profile: " + expectedProfile);
+        CHConfig expectedConfig = chConfigs.get(preparations.size());
+        if (!pch.getCHConfig().equals(expectedConfig)) {
+            throw new IllegalArgumentException("CH config of preparation: " + pch + " needs to be identical to previously added CH config: " + expectedConfig);
         }
         preparations.add(pch);
         return this;
     }
 
-    public final boolean hasCHProfiles() {
-        return !chProfiles.isEmpty();
+    public final boolean hasCHConfigs() {
+        return !chConfigs.isEmpty();
+    }
+
+    public List<CHConfig> getCHConfigs() {
+        return chConfigs;
+    }
+
+    public List<CHConfig> getNodeBasedCHConfigs() {
+        List<CHConfig> result = new ArrayList<>();
+        for (CHConfig chConfig : chConfigs) {
+            if (!chConfig.getTraversalMode().isEdgeBased()) {
+                result.add(chConfig);
+            }
+        }
+        return result;
+    }
+
+    public List<CHConfig> getEdgeBasedCHConfigs() {
+        List<CHConfig> result = new ArrayList<>();
+        for (CHConfig chConfig : chConfigs) {
+            if (chConfig.getTraversalMode().isEdgeBased()) {
+                result.add(chConfig);
+            }
+        }
+        return result;
+    }
+
+    public CHPreparationHandler setCHProfiles(CHProfile... chProfiles) {
+        setCHProfiles(Arrays.asList(chProfiles));
+        return this;
+    }
+
+    /**
+     * Enables the use of contraction hierarchies to reduce query times.
+     * "fastest|u_turn_costs=30 or your own weight-calculation type.
+     */
+    public CHPreparationHandler setCHProfiles(Collection<CHProfile> chProfiles) {
+        this.chProfiles.clear();
+        this.chProfiles.addAll(chProfiles);
+        return this;
     }
 
     public List<CHProfile> getCHProfiles() {
         return chProfiles;
-    }
-
-    public List<CHProfile> getNodeBasedCHProfiles() {
-        List<CHProfile> result = new ArrayList<>();
-        for (CHProfile chProfile : chProfiles) {
-            if (!chProfile.getTraversalMode().isEdgeBased()) {
-                result.add(chProfile);
-            }
-        }
-        return result;
-    }
-
-    public List<CHProfile> getEdgeBasedCHProfiles() {
-        List<CHProfile> result = new ArrayList<>();
-        for (CHProfile chProfile : chProfiles) {
-            if (chProfile.getTraversalMode().isEdgeBased()) {
-                result.add(chProfile);
-            }
-        }
-        return result;
-    }
-
-    public EdgeBasedCHMode getEdgeBasedCHMode() {
-        return edgeBasedCHMode;
-    }
-
-    public List<String> getCHProfileStrings() {
-        return new ArrayList<>(chProfileStrings);
-    }
-
-    public CHPreparationHandler setCHProfileStrings(String... profileStrings) {
-        return setCHProfilesAsStrings(Arrays.asList(profileStrings));
-    }
-
-    /**
-     * @param profileStrings A list of multiple CH profile strings
-     * @see #addCHProfileAsString(String)
-     */
-    public CHPreparationHandler setCHProfilesAsStrings(List<String> profileStrings) {
-        chProfileStrings.clear();
-        for (String profileString : profileStrings) {
-            profileString = toLowerCase(profileString);
-            profileString = profileString.trim();
-            addCHProfileAsString(profileString);
-        }
-        return this;
-    }
-
-    /**
-     * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
-     *
-     * @param profileString String representation of a CH profile like: "fastest", "shortest|edge_based=true",
-     *                      "fastest|u_turn_costs=30 or your own weight-calculation type.
-     */
-    public CHPreparationHandler addCHProfileAsString(String profileString) {
-        chProfileStrings.add(profileString);
-        return this;
     }
 
     public List<PrepareContractionHierarchies> getPreparations() {
@@ -207,35 +163,29 @@ public class CHPreparationHandler {
 
     /**
      * @return a {@link RoutingAlgorithmFactory} for CH or throw an error if no preparation is available for the given
-     * hints
+     * profile name
      */
-    // todonow: remove this and related methods
-    public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
+    public RoutingAlgorithmFactory getAlgorithmFactory(String profile) {
+        return getPreparation(profile).getRoutingAlgorithmFactory();
+    }
+
+    public PrepareContractionHierarchies getPreparation(String profile) {
         if (preparations.isEmpty())
             throw new IllegalStateException("No CH preparations added yet");
-        return getPreparation(map).getRoutingAlgorithmFactory();
-    }
-
-    public PrepareContractionHierarchies getPreparation(HintsMap map) {
-        CHProfile selectedProfile = selectProfile(map);
-        return getPreparation(selectedProfile);
-    }
-
-    public PrepareContractionHierarchies getPreparation(CHProfile chProfile) {
-        for (PrepareContractionHierarchies p : getPreparations()) {
-            if (p.getCHProfile().equals(chProfile)) {
-                return p;
+        List<String> profileNames = new ArrayList<>(preparations.size());
+        for (PrepareContractionHierarchies preparation : preparations) {
+            profileNames.add(preparation.getCHConfig().getName());
+            if (preparation.getCHConfig().getName().equalsIgnoreCase(profile)) {
+                return preparation;
             }
         }
-        throw new IllegalStateException("Could not find CH preparation for profile: " + chProfile);
+        throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile + "'" +
+                "\nYou can try disabling CH using " + CH.DISABLE + "=true" +
+                "\navailable CH profiles: " + profileNames);
     }
 
-    private CHProfile selectProfile(HintsMap map) {
-        try {
-            return CHProfileSelector.select(chProfiles, map);
-        } catch (CHProfileSelectionException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
+    public PrepareContractionHierarchies getPreparation(CHConfig chConfig) {
+        return getPreparation(chConfig.getName());
     }
 
     public int getPreparationThreads() {
@@ -254,10 +204,10 @@ public class CHPreparationHandler {
     public void prepare(final StorableProperties properties, final boolean closeEarly) {
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
-        for (final PrepareContractionHierarchies prepare : getPreparations()) {
-            LOGGER.info((++counter) + "/" + getPreparations().size() + " calling " +
-                    "CH prepare.doWork for " + prepare.getCHProfile() + " ... (" + getMemInfo() + ")");
-            final String name = prepare.getCHProfile().toFileName();
+        for (final PrepareContractionHierarchies prepare : preparations) {
+            LOGGER.info((++counter) + "/" + preparations.size() + " calling " +
+                    "CH prepare.doWork for profile '" + prepare.getCHConfig().getName() + "' " + prepare.getCHConfig().getTraversalMode() + " ... (" + getMemInfo() + ")");
+            final String name = prepare.getCHConfig().getName();
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -275,7 +225,7 @@ public class CHPreparationHandler {
         threadPool.shutdown();
 
         try {
-            for (int i = 0; i < getPreparations().size(); i++) {
+            for (int i = 0; i < preparations.size(); i++) {
                 completionService.take().get();
             }
         } catch (Exception e) {
@@ -285,38 +235,19 @@ public class CHPreparationHandler {
     }
 
     public void createPreparations(GraphHopperStorage ghStorage) {
-        if (!isEnabled() || !getPreparations().isEmpty())
+        if (!isEnabled() || !preparations.isEmpty())
             return;
-        if (!hasCHProfiles())
+        if (!hasCHConfigs())
             throw new IllegalStateException("No CH profiles found");
 
-        for (CHProfile chProfile : chProfiles) {
-            addPreparation(createCHPreparation(ghStorage, chProfile));
+        for (CHConfig chConfig : chConfigs) {
+            addPreparation(createCHPreparation(ghStorage, chConfig));
         }
     }
 
-    private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHProfile chProfile) {
-        PrepareContractionHierarchies tmpPrepareCH = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chProfile);
-        tmpPrepareCH.setParams(pMap);
-        return tmpPrepareCH;
-    }
-
-    /**
-     * Determines whether or not edge-based CH will be prepared for the different weightings/encoders.
-     */
-    public enum EdgeBasedCHMode {
-        /**
-         * no edge-based CH preparation will be performed
-         */
-        OFF,
-        /**
-         * for encoders with enabled turn costs edge-based CH and otherwise node-based CH preparation will be performed
-         */
-        EDGE_OR_NODE,
-        /**
-         * for encoders with enabled turn costs edge-based CH will be performed and node-based CH preparation will be
-         * performed for all encoders
-         */
-        EDGE_AND_NODE
+    private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHConfig chConfig) {
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chConfig);
+        pch.setParams(pMap);
+        return pch;
     }
 }

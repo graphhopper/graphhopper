@@ -17,16 +17,13 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.FetchMode;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static com.graphhopper.util.Helper.isEmpty;
-import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * @author Peter Karich
@@ -70,7 +67,7 @@ public abstract class AbstractWeighting implements Weighting {
         if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
                     "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
-                    + edgeState.fetchWayGeometry(3) + ", dist: " + edgeState.getDistance() + " "
+                    + edgeState.fetchWayGeometry(FetchMode.ALL) + ", dist: " + edgeState.getDistance() + " "
                     + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(avSpeedEnc) + ", bwd-speed: " + edgeState.getReverse(avSpeedEnc));
 
         double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
@@ -93,11 +90,8 @@ public abstract class AbstractWeighting implements Weighting {
     }
 
     @Override
-    public boolean matches(HintsMap reqMap) {
-        String requestedUTurnCosts = reqMap.get(Parameters.Routing.U_TURN_COSTS, "");
-        return (reqMap.getWeighting().isEmpty() || getName().equals(reqMap.getWeighting())) &&
-                (requestedUTurnCosts.isEmpty() || turnCostProvider.getName().equals(requestedUTurnCosts)) &&
-                (reqMap.getVehicle().isEmpty() || flagEncoder.toString().equals(reqMap.getVehicle()));
+    public boolean hasTurnCosts() {
+        return turnCostProvider != NO_TURN_COST_PROVIDER;
     }
 
     @Override
@@ -129,22 +123,8 @@ public abstract class AbstractWeighting implements Weighting {
         return name.matches("[\\|_a-z]+");
     }
 
-    /**
-     * Replaces all characters which are not numbers, characters or underscores with underscores
-     */
-    public static String weightingToFileName(Weighting w) {
-        String name = w.toString();
-        name = name.replaceAll("u_turn_costs=", "");
-        return toLowerCase(name).replaceAll("\\|", "_");
-    }
-
     @Override
     public String toString() {
-        String turnCostProviderName = turnCostProvider.getName();
-        String result = getName() + "|" + flagEncoder;
-        if (!isEmpty(turnCostProviderName)) {
-            result += "|u_turn_costs=" + turnCostProviderName;
-        }
-        return result;
+        return getName() + "|" + flagEncoder;
     }
 }

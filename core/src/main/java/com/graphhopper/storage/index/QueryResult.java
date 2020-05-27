@@ -21,6 +21,7 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
@@ -55,7 +56,7 @@ public class QueryResult {
 
     /**
      * Returns the closest matching node. This is either a tower node of the base graph
-     * or a virtual node (see also {@link QueryGraph#lookup(Graph, List)}).
+     * or a virtual node (see also {@link QueryGraph#create(Graph, List)}).
      *
      * @return {@link #INVALID_NODE} if nothing found, this should be avoided via a call of 'isValid'
      */
@@ -144,7 +145,7 @@ public class QueryResult {
         if (snappedPoint != null)
             throw new IllegalStateException("Calculate snapped point only once");
 
-        PointList fullPL = getClosestEdge().fetchWayGeometry(3);
+        PointList fullPL = getClosestEdge().fetchWayGeometry(FetchMode.ALL);
         double tmpLat = fullPL.getLatitude(wayIndex);
         double tmpLon = fullPL.getLongitude(wayIndex);
         double tmpEle = fullPL.getElevation(wayIndex);

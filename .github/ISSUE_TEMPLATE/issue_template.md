@@ -4,9 +4,9 @@ about: Create a report to help us improve
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is. If you are unsure if this is really a bug, please create a new topic in [our forum](https://discuss.graphhopper.com/c/graphhopper).
+A clear and concise description of what the bug is. Before creating an issue please create a new topic in [our forum](https://discuss.graphhopper.com/c/graphhopper).
 
-If you have an Android application that uses GraphHopper, please always post to the [forum](https://discuss.graphhopper.com/c/graphhopper/graphhopper-ios-and-android) before and include logs and the version of
+If you have an Android application that uses GraphHopper, use [this forum category](https://discuss.graphhopper.com/c/graphhopper/graphhopper-ios-and-android) and include logs and the version of
 your Android system.
 
 **To Reproduce**

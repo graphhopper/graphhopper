@@ -104,7 +104,7 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
             int minLon = getMinLonForTile(lon);
             // less restrictive against boundary checking
             demProvider = new HeightTile(minLat, minLon, WIDTH, HEIGHT, LON_DEGREE * precision, LON_DEGREE, LAT_DEGREE);
-            demProvider.setCalcMean(calcMean);
+            demProvider.setInterpolate(interpolate);
 
             cacheData.put(name, demProvider);
             DataAccess heights = getDirectory().find(name + ".gh");

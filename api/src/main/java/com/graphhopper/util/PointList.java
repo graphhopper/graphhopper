@@ -152,7 +152,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
     };
 
-    private final static DistanceCalc3D distCalc3D = new DistanceCalc3D();
     final static String ERR_MSG = "Tried to access PointList with too big index!";
     protected int size = 0;
     protected boolean is3D;
@@ -549,7 +548,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         for (int i = 0; i < size(); i++) {
             if (i > 0) {
                 if (is3D())
-                    dist += distCalc3D.calcDist(prevLat, prevLon, prevEle, getLat(i), getLon(i), getEle(i));
+                    dist += calc.calcDist3D(prevLat, prevLon, prevEle, getLat(i), getLon(i), getEle(i));
                 else
                     dist += calc.calcDist(prevLat, prevLon, getLat(i), getLon(i));
             }

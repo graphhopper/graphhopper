@@ -27,9 +27,7 @@ package com.graphhopper.routing.util.spatialrules;
  */
 public enum TransportationMode {
 
-    MOTOR_VEHICLE(0),
-    BICYCLE(1),
-    FOOT(2);
+    OTHER(0), MOTOR_VEHICLE(1), BICYCLE(2), FOOT(3);
 
     private final int value;
 

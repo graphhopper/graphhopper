@@ -22,8 +22,8 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -146,7 +146,7 @@ public class EdgeElevationInterpolator {
                 double lon1 = nodeAccess.getLon(secondNodeId);
                 double ele1 = nodeAccess.getEle(secondNodeId);
 
-                final PointList pointList = edge.fetchWayGeometry(3);
+                final PointList pointList = edge.fetchWayGeometry(FetchMode.ALL);
                 final int count = pointList.size();
                 for (int index = 1; index < count - 1; index++) {
                     double lat = pointList.getLat(index);
@@ -157,7 +157,7 @@ public class EdgeElevationInterpolator {
                 }
                 if (count > 2)
                     edge.setWayGeometry(pointList.shallowCopy(1, count - 1, false));
-                edge.setDistance(pointList.calcDistance(Helper.DIST_3D));
+                edge.setDistance(pointList.calcDistance(Helper.DIST_EARTH));
             }
         }
     }

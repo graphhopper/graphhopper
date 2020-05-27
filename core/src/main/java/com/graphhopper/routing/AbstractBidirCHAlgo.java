@@ -44,6 +44,8 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     public AbstractBidirCHAlgo(RoutingCHGraph graph, TraversalMode tMode) {
         super(tMode);
         this.graph = graph;
+        if (graph.hasTurnCosts() && !tMode.isEdgeBased())
+            throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
         this.nodeAccess = graph.getGraph().getNodeAccess();
         allEdgeExplorer = graph.createAllEdgeExplorer();
         outEdgeExplorer = graph.createOutEdgeExplorer();
@@ -202,7 +204,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 continue;
 
             if (updateBestPath) {
-                // only needed for edge-based -> skip the calculation and use dummy value otherwise
+                // use dummy value for edge weight as it is used for neither node- nor edge-based CH
                 updateBestPath(Double.POSITIVE_INFINITY, entry, origEdgeId, traversalId, reverse);
             }
         }

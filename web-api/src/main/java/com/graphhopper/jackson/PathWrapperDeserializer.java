@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
@@ -33,32 +33,32 @@ import org.locationtech.jts.geom.LineString;
 import java.io.IOException;
 import java.util.*;
 
-public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
+public class PathWrapperDeserializer extends JsonDeserializer<ResponsePath> {
     @Override
-    public PathWrapper deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    public ResponsePath deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         return createPathWrapper((ObjectMapper) p.getCodec(), p.readValueAsTree(), false, true);
     }
 
-    public static PathWrapper createPathWrapper(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, boolean turnDescription) {
-        PathWrapper pathWrapper = new PathWrapper();
-        pathWrapper.addErrors(readErrors(objectMapper, path));
-        if (pathWrapper.hasErrors())
-            return pathWrapper;
+    public static ResponsePath createPathWrapper(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, boolean turnDescription) {
+        ResponsePath responsePath = new ResponsePath();
+        responsePath.addErrors(readErrors(objectMapper, path));
+        if (responsePath.hasErrors())
+            return responsePath;
 
         if (path.has("snapped_waypoints")) {
             JsonNode snappedWaypoints = path.get("snapped_waypoints");
             PointList snappedPoints = deserializePointList(objectMapper, snappedWaypoints, hasElevation);
-            pathWrapper.setWaypoints(snappedPoints);
+            responsePath.setWaypoints(snappedPoints);
         }
 
         if (path.has("ascend")) {
-            pathWrapper.setAscend(path.get("ascend").asDouble());
+            responsePath.setAscend(path.get("ascend").asDouble());
         }
         if (path.has("descend")) {
-            pathWrapper.setDescend(path.get("descend").asDouble());
+            responsePath.setDescend(path.get("descend").asDouble());
         }
         if (path.has("weight")) {
-            pathWrapper.setRouteWeight(path.get("weight").asDouble());
+            responsePath.setRouteWeight(path.get("weight").asDouble());
         }
         if (path.has("description")) {
             JsonNode descriptionNode = path.get("description");
@@ -67,7 +67,7 @@ public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
                 for (JsonNode descNode : descriptionNode) {
                     description.add(descNode.asText());
                 }
-                pathWrapper.setDescription(description);
+                responsePath.setDescription(description);
             } else {
                 throw new IllegalStateException("Description has to be an array");
             }
@@ -75,7 +75,7 @@ public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
 
         if (path.has("points")) {
             final PointList pointList = deserializePointList(objectMapper, path.get("points"), hasElevation);
-            pathWrapper.setPoints(pointList);
+            responsePath.setPoints(pointList);
 
             if (path.has("instructions")) {
                 JsonNode instrArr = path.get("instructions");
@@ -147,7 +147,7 @@ public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
                     instr.setDistance(instDist).setTime(instTime);
                     il.add(instr);
                 }
-                pathWrapper.setInstructions(il);
+                responsePath.setInstructions(il);
             }
 
             if (path.has("details")) {
@@ -163,24 +163,24 @@ public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
                     }
                     pathDetails.put(detailEntry.getKey(), pathDetailList);
                 }
-                pathWrapper.addPathDetails(pathDetails);
+                responsePath.addPathDetails(pathDetails);
             }
         }
 
         if (path.has("points_order")) {
-            pathWrapper.setPointsOrder((List<Integer>) objectMapper.convertValue(path.get("points_order"), List.class));
+            responsePath.setPointsOrder((List<Integer>) objectMapper.convertValue(path.get("points_order"), List.class));
         } else {
-            List<Integer> list = new ArrayList<>(pathWrapper.getWaypoints().size());
-            for (int i = 0; i < pathWrapper.getWaypoints().size(); i++) {
+            List<Integer> list = new ArrayList<>(responsePath.getWaypoints().size());
+            for (int i = 0; i < responsePath.getWaypoints().size(); i++) {
                 list.add(i);
             }
-            pathWrapper.setPointsOrder(list);
+            responsePath.setPointsOrder(list);
         }
 
         double distance = path.get("distance").asDouble();
         long time = path.get("time").asLong();
-        pathWrapper.setDistance(distance).setTime(time);
-        return pathWrapper;
+        responsePath.setDistance(distance).setTime(time);
+        return responsePath;
     }
 
     private static PointList deserializePointList(ObjectMapper objectMapper, JsonNode jsonNode, boolean hasElevation) {

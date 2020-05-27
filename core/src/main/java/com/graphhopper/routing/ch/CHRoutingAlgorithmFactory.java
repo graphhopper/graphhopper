@@ -23,20 +23,18 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_SHARE;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_WEIGHT;
 
 public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
-    private final CHProfile chProfile;
+    private final CHConfig chConfig;
 
     public CHRoutingAlgorithmFactory(CHGraph chGraph) {
-        this.chProfile = chGraph.getCHProfile();
+        this.chConfig = chGraph.getCHConfig();
     }
 
     @Override
     public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
         // todo: This method does not really fit for CH: We get a graph, but really we already know which
-        // graph we have to use: the CH graph. Same with  opts.weighting: The CHProfile already contains a weighting
+        // graph we have to use: the CH graph. Same with  opts.weighting: The CHConfig already contains a weighting
         // and we cannot really use it here. The real reason we do this the way its done atm is that graph might be
         // a QueryGraph that wraps (our) CHGraph.
         RoutingAlgorithm algo = doCreateAlgo(graph, opts);
@@ -45,7 +43,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     }
 
     private RoutingAlgorithm doCreateAlgo(Graph graph, AlgorithmOptions opts) {
-        if (chProfile.isEdgeBased()) {
+        if (chConfig.isEdgeBased()) {
             // important: do not simply take the turn cost storage from ghStorage, because we need the wrapped storage from
             // query graph!
             TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
@@ -55,7 +53,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
             RoutingCHGraph g = new RoutingCHGraphImpl(graph, graph.wrapWeighting(getWeighting()));
             return createAlgoEdgeBased(g, opts);
         } else {
-            RoutingCHGraph g = new RoutingCHGraphImpl(graph, chProfile.getWeighting());
+            RoutingCHGraph g = new RoutingCHGraphImpl(graph, chConfig.getWeighting());
             return createAlgoNodeBased(g, opts);
         }
     }
@@ -66,6 +64,8 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
             return new DijkstraBidirectionEdgeCHNoSOD(g);
+        } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
+            return new AlternativeRouteEdgeCH(g, opts.getHints());
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for edge-based Contraction Hierarchies. Try with ch.disable=true");
         }
@@ -82,20 +82,17 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
                 return new DijkstraBidirectionCHNoSOD(g);
             }
         } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
-            AlternativeRouteCH altRouteAlgo = new AlternativeRouteCH(g);
-            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
-            altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
-            return altRouteAlgo;
+            return new AlternativeRouteCH(g, opts.getHints());
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for node-based Contraction Hierarchies. Try with ch.disable=true");
         }
     }
 
     public Weighting getWeighting() {
-        return chProfile.getWeighting();
+        return chConfig.getWeighting();
     }
 
-    public CHProfile getCHProfile() {
-        return chProfile;
+    public CHConfig getCHConfig() {
+        return chConfig;
     }
 }

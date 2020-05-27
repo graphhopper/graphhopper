@@ -12,7 +12,7 @@ only a sub-set of them are actual junctions, which are the ones we are intereste
 Those junction nodes (and end-standing nodes of dead alleys) we call *tower nodes* which also 
 have a graphhopper node ID associated, going from 0 to graph.getNodes(). 
 The helper nodes between the junctions we call 'pillar nodes' which can be fetched via
-`edgeIteratorState.fetchWayGeometry(0)`. Avoiding the traversal of pillar nodes while routing makes 
+`edgeIteratorState.fetchWayGeometry(FetchMode.PILLAR_ONLY)`. Avoiding the traversal of pillar nodes while routing makes 
 routing a lot faster (~8 times).
 
 That splitting into pillar and tower nodes is also the reason why there can't be a unique mapping from 
@@ -39,7 +39,7 @@ But we need to decouple requests from each other and therefor we create a very l
 
 The virtual nodes and edges have a higher `int` ID than `graph.getNodes()` or `allEdges.length()`
 
-A call `queryGraph.lookup(allQRs)` will determine the correct node for all `QueryResult`s: and either 
+A call `QueryGraph.create(graph, allQRs)` will determine the correct node for all `QueryResult`s: and either 
 create new virtual nodes or if close enough use the existing junction node.
 
 ### Create and save the graph
@@ -73,8 +73,7 @@ if (!index.loadExisting())
 ```java
 QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
 QueryResult toQR = index.findClosest(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
-QueryGraph queryGraph = new QueryGraph(graph);
-queryGraph.lookup(fromQR, toQR);
+QueryGraph queryGraph = QueryGraph.create(graph, fromQR, toQR);
 Path path = new Dijkstra(queryGraph, encoder).calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
 ```
 
@@ -85,7 +84,7 @@ Path path = new Dijkstra(queryGraph, encoder).calcPath(fromQR.getClosestNode(), 
 Path path = new Dijkstra(graph, encoder).calcPath(fromId, toId);
 ```
 
-### Use CHGraph to make queries faster
+### Use Contraction Hierarchies to make queries faster
 
 ```java
 // Creating and saving the graph
@@ -100,7 +99,8 @@ EdgeIteratorState edge = graph.edge(fromId, toId);
 
 // Prepare the graph for fast querying ...
 TraversalMode tMode = TraversalMode.NODE_BASED;
-PrepareContractionHierarchies pch = new PrepareContractionHierarchies(ghStorage, encoder, weighting, tMode);
+CHConfig chConfig = CHConfig.nodeBased("chGraphName", weighting);
+PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chConfig);
 pch.doWork();
 
 // flush after preparation!
@@ -117,13 +117,12 @@ if (!index.loadExisting())
 // calculate path is identical
 QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
 QueryResult toQR = index.findClosest(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
-QueryGraph queryGraph = new QueryGraph(graph);
-queryGraph.lookup(fromQR, toQR);
+QueryGraph queryGraph = QueryGraph.create(graph, fromQR, toQR);
 
 // create the algorithm using the PrepareContractionHierarchies object
 AlgorithmOptions algoOpts = AlgorithmOptions.start().
    algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(tMode).weighting(weighting).
    build();
-RoutingAlgorithm algorithm = pch.createAlgo(queryGraph, algoOpts);
+RoutingAlgorithm algorithm = pch.getRoutingAlgorithmFactory().createAlgo(queryGraph, algoOpts);
 Path path = algorithm.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
 ```

@@ -29,7 +29,7 @@ See Bike2WeightFlagEncoder for an example that uses different weights: slower sp
 ## Elevation
 
 To incorporate or precalculate values based on the elevation data you can hook into applyWayTags
-and call edge.fetchWayGeometry(3) or again, see Bike2WeightFlagEncoder.
+and call edge.fetchWayGeometry(FetchMode.ALL) or again, see Bike2WeightFlagEncoder.
 
 ## Add to the core
 

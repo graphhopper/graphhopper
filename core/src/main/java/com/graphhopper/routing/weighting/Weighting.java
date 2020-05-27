@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -61,12 +60,15 @@ public interface Weighting {
 
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 
+    /**
+     * This method can be used to check whether or not this weighting returns turn costs (or if they are all zero).
+     * This is sometimes needed to do safety checks as not all graph algorithms can be run edge-based and might yield
+     * wrong results when turn costs are applied while running node-based.
+     */
+    boolean hasTurnCosts();
+
     FlagEncoder getFlagEncoder();
 
     String getName();
 
-    /**
-     * Returns true if the specified weighting and encoder matches to this Weighting.
-     */
-    boolean matches(HintsMap map);
 }

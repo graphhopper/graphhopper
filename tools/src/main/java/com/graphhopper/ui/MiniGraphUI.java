@@ -22,22 +22,24 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
@@ -51,9 +53,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.Arrays;
 import java.util.Random;
-
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 /**
  * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
@@ -97,17 +98,16 @@ public class MiniGraphUI {
         encoder = hopper.getEncodingManager().getEncoder("car");
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
-        HintsMap map = new HintsMap("fastest").
-                setVehicle("car");
-
+        Profile profile = hopper.getProfiles().iterator().next();
         boolean ch = true;
         if (ch) {
-            map.put(Parameters.Landmark.DISABLE, true);
-            CHProfile chProfile = hopper.getCHPreparationHandler().getNodeBasedCHProfiles().get(0);
-            weighting = chProfile.getWeighting();
-            routingGraph = hopper.getGraphHopperStorage().getCHGraph(chProfile);
+            CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
+            weighting = chConfig.getWeighting();
+            routingGraph = hopper.getGraphHopperStorage().getCHGraph(chConfig);
 
-            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
+            boolean disableCH = false;
+            boolean disableLM = true;
+            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
             algoFactory = new RoutingAlgorithmFactory() {
 
                 class TmpAlgo extends DijkstraBidirectionCH implements DebugAlgo {
@@ -143,11 +143,11 @@ public class MiniGraphUI {
             algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
 
         } else {
-            map.put(Parameters.CH.DISABLE, true);
-//            map.put(Parameters.Landmark.DISABLE, true);
             routingGraph = graph;
-            weighting = hopper.createWeighting(map, encoder, NO_TURN_COST_PROVIDER);
-            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
+            weighting = hopper.createWeighting(profile, new PMap());
+            boolean disableCH = true;
+            boolean disableLM = false;
+            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
             algoFactory = new RoutingAlgorithmFactory() {
 
                 @Override
@@ -281,7 +281,7 @@ public class MiniGraphUI {
                     boolean fwd = edge.get(accessEnc);
                     boolean bwd = edge.getReverse(accessEnc);
                     float width = speed > 90 ? 1f : 0.8f;
-                    PointList pl = edge.fetchWayGeometry(3);
+                    PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
                     for (int i = 1; i < pl.size(); i++) {
                         if (fwd && !bwd) {
                             mg.plotDirectedEdge(g2, pl.getLatitude(i - 1), pl.getLongitude(i - 1), pl.getLatitude(i), pl.getLongitude(i), width);
@@ -331,7 +331,7 @@ public class MiniGraphUI {
                     return;
 
                 makeTransparent(g2);
-                QueryGraph qGraph = QueryGraph.lookup(routingGraph, fromRes, toRes);
+                QueryGraph qGraph = QueryGraph.create(routingGraph, fromRes, toRes);
                 RoutingAlgorithm algo = algoFactory.createAlgo(qGraph, algoOpts);
                 if (algo instanceof DebugAlgo) {
                     ((DebugAlgo) algo).setGraphics2D(g2);
@@ -385,9 +385,20 @@ public class MiniGraphUI {
         }
     }
 
-    public static void main(String[] strs) throws Exception {
+    public static void main(String[] strs) {
         PMap args = PMap.read(strs);
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
+        ghConfig.setProfiles(Arrays.asList(
+                new Profile("profile")
+                        .setVehicle("car")
+                        .setWeighting("fastest")
+        ));
+        ghConfig.setCHProfiles(Arrays.asList(
+                new CHProfile("profile")
+        ));
+        ghConfig.setLMProfiles(Arrays.asList(
+                new LMProfile("profile")
+        ));
         GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
         boolean debug = args.getBool("minigraphui.debug", false);
         new MiniGraphUI(hopper, debug).visualize();

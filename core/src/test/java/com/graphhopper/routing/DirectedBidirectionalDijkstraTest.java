@@ -3,11 +3,14 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -322,7 +325,7 @@ public class DirectedBidirectionalDijkstraTest {
         graph.edge(4, 5, 1, true);
         graph.edge(5, 2, 1, true);
 
-        addRestriction(0, 3, 4);
+        setRestriction(0, 3, 4);
         setTurnCost(4, 5, 2, 6);
 
         // due to the restrictions we have to take the expensive path with turn costs
@@ -356,8 +359,8 @@ public class DirectedBidirectionalDijkstraTest {
         int right6 = graph.edge(9, 6, 10, true).getEdge();
 
         // enforce p-turn (using the loop in clockwise direction)
-        addRestriction(0, 1, 6);
-        addRestriction(5, 4, 3);
+        setRestriction(0, 1, 6);
+        setRestriction(5, 4, 3);
 
         assertPath(calcPath(0, 6, right0, left6), 64.2, 1070, 64200, nodes(0, 1, 2, 3, 4, 5, 2, 1, 6));
         // if the u-turn cost is finite it depends on its value if we rather do the p-turn or do an immediate u-turn at node 2
@@ -388,7 +391,6 @@ public class DirectedBidirectionalDijkstraTest {
         // start/target edges.
         final long seed = System.nanoTime();
         final int numQueries = 1000;
-        System.out.println("compare_standard_dijkstra seed: " + seed);
 
         Random rnd = new Random(seed);
         int numNodes = 100;
@@ -401,8 +403,8 @@ public class DirectedBidirectionalDijkstraTest {
             int target = rnd.nextInt(numNodes);
             Path dijkstraPath = new Dijkstra(graph, w, TraversalMode.EDGE_BASED).calcPath(source, target);
             Path path = calcPath(source, target, ANY_EDGE, ANY_EDGE, w);
-            assertEquals("dijkstra found/did not find a path, from: " + source + ", to: " + target, dijkstraPath.isFound(), path.isFound());
-            assertEquals("weight does not match dijkstra, from: " + source + ", to: " + target, dijkstraPath.getWeight(), path.getWeight(), 1.e-6);
+            assertEquals("dijkstra found/did not find a path, from: " + source + ", to: " + target + ", seed: " + seed, dijkstraPath.isFound(), path.isFound());
+            assertEquals("weight does not match dijkstra, from: " + source + ", to: " + target + ", seed: " + seed, dijkstraPath.getWeight(), path.getWeight(), 1.e-6);
             // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
             // however, when there are too many deviations we fail
             if (
@@ -413,7 +415,7 @@ public class DirectedBidirectionalDijkstraTest {
             }
         }
         if (numStrictViolations > Math.max(1, 0.05 * numQueries)) {
-            fail("Too many strict violations: " + numStrictViolations + " / " + numQueries);
+            fail("Too many strict violations, seed: " + seed + " - " + numStrictViolations + " / " + numQueries);
         }
     }
 
@@ -484,7 +486,7 @@ public class DirectedBidirectionalDijkstraTest {
         LocationIndex locationIndex = new LocationIndexTree(graph, dir);
         locationIndex.prepareIndex();
         QueryResult qr = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, qr);
 
         assertEquals("wanted to get EDGE", QueryResult.Position.EDGE, qr.getSnappedPosition());
         assertEquals(6, qr.getClosestNode());
@@ -515,27 +517,6 @@ public class DirectedBidirectionalDijkstraTest {
         return new DijkstraBidirectionRef(graph, weighting, TraversalMode.EDGE_BASED);
     }
 
-    private void addRestriction(int fromNode, int node, int toNode) {
-        IntsRef tcFlags = TurnCost.createFlags();
-        turnCostEnc.setDecimal(false, tcFlags, Double.POSITIVE_INFINITY);
-        turnCostStorage.setTurnCost(
-                tcFlags,
-                GHUtility.getEdge(graph, fromNode, node).getEdge(),
-                node,
-                GHUtility.getEdge(graph, node, toNode).getEdge()
-        );
-    }
-
-    private void setTurnCost(int fromNode, int node, int toNode, double turnCost) {
-        IntsRef tcFlags = TurnCost.createFlags();
-        turnCostEnc.setDecimal(false, tcFlags, turnCost);
-        turnCostStorage.setTurnCost(
-                tcFlags,
-                GHUtility.getEdge(graph, fromNode, node).getEdge(),
-                node,
-                GHUtility.getEdge(graph, node, toNode).getEdge());
-    }
-
     private IntArrayList nodes(int... nodes) {
         return IntArrayList.from(nodes);
     }
@@ -555,5 +536,13 @@ public class DirectedBidirectionalDijkstraTest {
         assertEquals(0, path.getDistance(), 1.e-6);
         assertEquals(0, path.getTime());
         assertEquals(nodes(), path.calcNodes());
+    }
+
+    private void setRestriction(int fromNode, int node, int toNode) {
+        setTurnCost(fromNode, node, toNode, Double.POSITIVE_INFINITY);
+    }
+
+    private void setTurnCost(int fromNode, int node, int toNode, double turnCost) {
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, fromNode, node).getEdge(), node, GHUtility.getEdge(graph, node, toNode).getEdge(), turnCost);
     }
 }

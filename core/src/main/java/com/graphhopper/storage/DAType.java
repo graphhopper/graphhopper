@@ -53,10 +53,6 @@ public class DAType {
      * embedded data stores.
      */
     public static final DAType MMAP_RO = new DAType(MemRef.MMAP, true, false, false);
-    /**
-     * Experimental API. Do not use yet.
-     */
-    public static final DAType UNSAFE_STORE = new DAType(MemRef.UNSAFE, true, false, true);
     private final MemRef memRef;
     private final boolean storing;
     private final boolean integ;
@@ -81,7 +77,7 @@ public class DAType {
         else if (dataAccess.contains("MMAP"))
             type = DAType.MMAP;
         else if (dataAccess.contains("UNSAFE"))
-            type = DAType.UNSAFE_STORE;
+            throw new IllegalArgumentException("UNSAFE option is no longer supported, see #1620");
         else if (dataAccess.contains("RAM_STORE"))
             type = DAType.RAM_STORE;
         else
@@ -139,10 +135,8 @@ public class DAType {
         String str;
         if (getMemRef() == MemRef.MMAP)
             str = "MMAP";
-        else if (getMemRef() == MemRef.HEAP)
-            str = "RAM";
         else
-            str = "UNSAFE";
+            str = "RAM";
 
         if (isInteg())
             str += "_INT";
@@ -177,8 +171,6 @@ public class DAType {
     }
 
     public enum MemRef {
-        HEAP, MMAP, UNSAFE
-        /*, DIRECT */
-
+        HEAP, MMAP
     }
 }
