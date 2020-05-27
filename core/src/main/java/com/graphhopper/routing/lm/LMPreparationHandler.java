@@ -189,7 +189,11 @@ public class LMPreparationHandler {
         return preparation.getRoutingAlgorithmFactory().setDefaultActiveLandmarks(activeLandmarkCount);
     }
 
-    private PrepareLandmarks getPreparation(String profile) {
+    public int getActiveLandmarkCount() {
+        return activeLandmarkCount;
+    }
+
+    public PrepareLandmarks getPreparation(String profile) {
         if (preparations.isEmpty())
             throw new IllegalStateException("No LM preparations added yet");
 

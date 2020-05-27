@@ -25,6 +25,8 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMPreparationHandler;
+import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -67,11 +69,13 @@ public class GraphHopperRouter {
     private final boolean lmEnabled;
     private final boolean chDisablingAllowed;
     private final boolean lmDisablingAllowed;
-    private final LMPreparationHandler lmPreparationHandler;
+    private final Map<String, LandmarkStorage> landmarks;
+    private final int activeLandmarkCount;
 
     public GraphHopperRouter(GraphHopperStorage ghStorage, EncodingManager encodingManager, LocationIndex locationIndex,
                              Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathDetailsBuilderFactory,
                              TranslationMap translationMap, RoutingConfig routingConfig, WeightingFactory weightingFactory,
+                             Map<String, LandmarkStorage> landmarks,
                              CHPreparationHandler chPreparationHandler, LMPreparationHandler lmPreparationHandler) {
         this.ghStorage = ghStorage;
         this.encodingManager = encodingManager;
@@ -81,11 +85,12 @@ public class GraphHopperRouter {
         this.translationMap = translationMap;
         this.routingConfig = routingConfig;
         this.weightingFactory = weightingFactory;
+        this.landmarks = landmarks;
+        this.activeLandmarkCount = lmPreparationHandler.getActiveLandmarkCount();
         this.chEnabled = chPreparationHandler.isEnabled();
         this.lmEnabled = lmPreparationHandler.isEnabled();
         this.chDisablingAllowed = chPreparationHandler.isDisablingAllowed();
         this.lmDisablingAllowed = lmPreparationHandler.isDisablingAllowed();
-        this.lmPreparationHandler = lmPreparationHandler;
     }
 
     public List<Path> route(GHRequest request, GHResponse ghRsp) {
@@ -197,15 +202,12 @@ public class GraphHopperRouter {
                         "\navailable CH profiles: " + ghStorage.getCHGraphNames());
             return new CHRoutingAlgorithmFactory(chGraph);
         } else if (lmEnabled && !disableLM) {
-            for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
-                if (lmp.getProfile().equals(profile)) {
-                    return lmp.usesOtherPreparation()
-                            // cross-querying
-                            ? lmPreparationHandler.getAlgorithmFactory(lmp.getPreparationProfile())
-                            : lmPreparationHandler.getAlgorithmFactory(lmp.getProfile());
-                }
-            }
-            throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'");
+            LandmarkStorage landmarkStorage = landmarks.get(profile);
+            if (landmarkStorage == null)
+                throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'" +
+                        "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
+                        "\navailable LM profiles: " + landmarks.keySet());
+            return new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(activeLandmarkCount);
         } else {
             return new RoutingAlgorithmFactorySimple();
         }
