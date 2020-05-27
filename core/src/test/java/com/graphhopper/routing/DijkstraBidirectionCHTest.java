@@ -139,7 +139,7 @@ public class DijkstraBidirectionCHTest {
         RoutingAlgorithmFactory contractedFactory = prepareCH(g, carConfig);
 
         // use contracted graph for car
-        Path p1 = contractedFactory.createAlgo(g.getCHGraph(carConfig), carOptions).calcPath(0, 7);
+        Path p1 = contractedFactory.createAlgo(g.getCHGraph(carConfig.getName()), carOptions).calcPath(0, 7);
         assertEquals(IntArrayList.from(0, 4, 6, 7), p1.calcNodes());
         assertEquals(p1.toString(), 15000, p1.getDistance(), 1e-6);
 

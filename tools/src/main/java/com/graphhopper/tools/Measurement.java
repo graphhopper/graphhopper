@@ -136,13 +136,13 @@ public class Measurement {
                 int edges = getGraphHopperStorage().getEdges();
                 if (!getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chConfig).getEdges();
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chConfig.getName()).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
                     put(Parameters.CH.PREPARE + "node.time", getCHPreparationHandler().getPreparation(chConfig).getTotalPrepareTime());
                 }
                 if (!getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = getCHPreparationHandler().getEdgeBasedCHConfigs().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chConfig).getEdges();
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chConfig.getName()).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
                     put(Parameters.CH.PREPARE + "edge.time", getCHPreparationHandler().getPreparation(chConfig).getTotalPrepareTime());
                 }
@@ -242,7 +242,7 @@ public class Measurement {
                 System.gc();
                 if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
-                    CHGraph lg = g.getCHGraph(chConfig);
+                    CHGraph lg = g.getCHGraph(chConfig.getName());
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", count, isCH, isLM).
