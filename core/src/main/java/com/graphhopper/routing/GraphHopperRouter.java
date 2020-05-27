@@ -63,7 +63,10 @@ public class GraphHopperRouter {
     private final TranslationMap translationMap;
     private final RoutingConfig routingConfig;
     private final WeightingFactory weightingFactory;
-    private final CHPreparationHandler chPreparationHandler;
+    private final boolean chEnabled;
+    private final boolean lmEnabled;
+    private final boolean chDisablingAllowed;
+    private final boolean lmDisablingAllowed;
     private final LMPreparationHandler lmPreparationHandler;
 
     public GraphHopperRouter(GraphHopperStorage ghStorage, EncodingManager encodingManager, LocationIndex locationIndex,
@@ -78,7 +81,10 @@ public class GraphHopperRouter {
         this.translationMap = translationMap;
         this.routingConfig = routingConfig;
         this.weightingFactory = weightingFactory;
-        this.chPreparationHandler = chPreparationHandler;
+        this.chEnabled = chPreparationHandler.isEnabled();
+        this.lmEnabled = lmPreparationHandler.isEnabled();
+        this.chDisablingAllowed = chPreparationHandler.isDisablingAllowed();
+        this.lmDisablingAllowed = lmPreparationHandler.isDisablingAllowed();
         this.lmPreparationHandler = lmPreparationHandler;
     }
 
@@ -99,7 +105,7 @@ public class GraphHopperRouter {
             RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile.getName(), disableCH, disableLM);
             Weighting weighting;
             Graph graph = ghStorage;
-            if (chPreparationHandler.isEnabled() && !disableCH) {
+            if (chEnabled && !disableCH) {
                 if (!(algorithmFactory instanceof CHRoutingAlgorithmFactory))
                     throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algorithmFactory);
 
@@ -126,7 +132,7 @@ public class GraphHopperRouter {
 
             String algoStr = request.getAlgorithm();
             if (algoStr.isEmpty())
-                algoStr = chPreparationHandler.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
+                algoStr = chEnabled && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
             RoutingTemplate routingTemplate = createRoutingTemplate(request, ghRsp, algoStr, weighting);
 
             StopWatch sw = new StopWatch().start();
@@ -175,22 +181,22 @@ public class GraphHopperRouter {
     }
 
     public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
-        if (chPreparationHandler.isEnabled() && disableCH && !chPreparationHandler.isDisablingAllowed()) {
+        if (chEnabled && disableCH && !chDisablingAllowed) {
             throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
         }
-        if (lmPreparationHandler.isEnabled() && disableLM && !lmPreparationHandler.isDisablingAllowed()) {
+        if (lmEnabled && disableLM && !lmDisablingAllowed) {
             throw new IllegalArgumentException("Disabling LM is not allowed on the server side");
         }
 
         // for now do not allow mixing CH&LM #1082,#1889
-        if (chPreparationHandler.isEnabled() && !disableCH) {
+        if (chEnabled && !disableCH) {
             CHGraph chGraph = ghStorage.getCHGraph(profile);
             if (chGraph == null)
                 throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile + "'" +
                         "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
                         "\navailable CH profiles: " + ghStorage.getCHGraphNames());
             return new CHRoutingAlgorithmFactory(chGraph);
-        } else if (lmPreparationHandler.isEnabled() && !disableLM) {
+        } else if (lmEnabled && !disableLM) {
             for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
                 if (lmp.getProfile().equals(profile)) {
                     return lmp.usesOtherPreparation()
@@ -235,15 +241,15 @@ public class GraphHopperRouter {
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
         boolean disableCH = getDisableCH(request.getHints());
-        if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
+        if (chEnabled && !chDisablingAllowed && disableCH)
             throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
 
         boolean disableLM = getDisableLM(request.getHints());
-        if (lmPreparationHandler.isEnabled() && !lmPreparationHandler.isDisablingAllowed() && disableLM)
+        if (lmEnabled && !lmDisablingAllowed && disableLM)
             throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
 
         // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
-        if (chPreparationHandler.isEnabled() && !disableCH) {
+        if (chEnabled && !disableCH) {
             if (!request.getHeadings().isEmpty())
                 throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
