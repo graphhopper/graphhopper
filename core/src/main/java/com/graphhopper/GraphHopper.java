@@ -23,10 +23,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
@@ -45,7 +42,10 @@ import com.graphhopper.routing.template.ViaRoutingTemplate;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.BlockAreaWeighting;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
@@ -69,7 +69,6 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
@@ -1014,19 +1013,16 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    final public Weighting createWeighting(Profile profile, PMap hints) {
+    public final Weighting createWeighting(Profile profile, PMap hints) {
         return createWeighting(profile, hints, false);
     }
 
-    /**
-     * @param profile          The profile for which the weighting shall be created
-     * @param hints            Additional hints that can be used to further specify the weighting that shall be created
-     * @param disableTurnCosts Can be used to explicitly create the weighting without turn costs. This is sometimes needed when the
-     *                         weighting shall be used by some algorithm that can only be run with node-based graph traversal, like
-     *                         LM preparation or Isochrones
-     */
-    public Weighting createWeighting(Profile profile, PMap hints, boolean disableTurnCosts) {
-        return new DefaultWeightingFactory(ghStorage, encodingManager).createWeighting(profile, hints, disableTurnCosts);
+    public final Weighting createWeighting(Profile profile, PMap hints, boolean disableTurnCosts) {
+        return createWeightingFactory().createWeighting(profile, hints, disableTurnCosts);
+    }
+
+    protected WeightingFactory createWeightingFactory() {
+        return new DefaultWeightingFactory(ghStorage, encodingManager);
     }
 
     @Override
@@ -1413,71 +1409,6 @@ public class GraphHopper implements GraphHopperAPI {
 
     private void setFullyLoaded() {
         fullyLoaded = true;
-    }
-
-    private static class DefaultWeightingFactory {
-        private final GraphHopperStorage ghStorage;
-        private final EncodingManager encodingManager;
-
-        public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager) {
-            this.ghStorage = ghStorage;
-            this.encodingManager = encodingManager;
-        }
-
-        public Weighting createWeighting(Profile profile, PMap requestHints, boolean disableTurnCosts) {
-            // Merge profile hints with request hints, the request hints take precedence.
-            // Note that so far we do not check if overwriting the profile hints actually works with the preparation
-            // for LM/CH. Later we should also limit the number of parameters that can be used to modify the profile.
-            // todo: since we are not dealing with block_area here yet we cannot really apply any merging rules
-            // for it, see discussion here: https://github.com/graphhopper/graphhopper/pull/1958#discussion_r395462901
-            PMap hints = new PMap();
-            hints.putAll(profile.getHints());
-            hints.putAll(requestHints);
-
-            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            TurnCostProvider turnCostProvider;
-            if (profile.isTurnCosts() && !disableTurnCosts) {
-                if (!encoder.supportsTurnCosts())
-                    throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
-                int uTurnCosts = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-                turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
-            } else {
-                turnCostProvider = NO_TURN_COST_PROVIDER;
-            }
-
-            String weightingStr = toLowerCase(profile.getWeighting());
-            if (weightingStr.isEmpty())
-                throw new IllegalArgumentException("You have to specify a weighting");
-
-            Weighting weighting = null;
-            if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
-                if (!(profile instanceof CustomProfile))
-                    throw new IllegalArgumentException("custom weighting requires a CustomProfile but was profile=" + profile.getName());
-                CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
-                CustomProfile customProfile = (CustomProfile) profile;
-                queryCustomModel = queryCustomModel == null ?
-                        customProfile.getCustomModel() : CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
-                weighting = new CustomWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);
-            } else if ("shortest".equalsIgnoreCase(weightingStr)) {
-                weighting = new ShortestWeighting(encoder, turnCostProvider);
-            } else if ("fastest".equalsIgnoreCase(weightingStr)) {
-                if (encoder.supports(PriorityWeighting.class))
-                    weighting = new PriorityWeighting(encoder, hints, turnCostProvider);
-                else
-                    weighting = new FastestWeighting(encoder, hints, turnCostProvider);
-            } else if ("curvature".equalsIgnoreCase(weightingStr)) {
-                if (encoder.supports(CurvatureWeighting.class))
-                    weighting = new CurvatureWeighting(encoder, hints, turnCostProvider);
-
-            } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
-                weighting = new ShortFastestWeighting(encoder, hints, turnCostProvider);
-            }
-
-            if (weighting == null)
-                throw new IllegalArgumentException("Weighting '" + weightingStr + "' not supported");
-
-            return weighting;
-        }
     }
 
     private static class RoutingConfig {
