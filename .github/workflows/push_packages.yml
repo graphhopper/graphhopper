@@ -1,4 +1,4 @@
-name: Publish package to GitHub Packages
+name: Publish packages to GitHub Packages
 on: push
 jobs:
   publish:
@@ -12,3 +12,4 @@ jobs:
         run: mvn versions:set -DnewVersion=test-$GITHUB_SHA -DgenerateBackupPoms=false; mvn deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
