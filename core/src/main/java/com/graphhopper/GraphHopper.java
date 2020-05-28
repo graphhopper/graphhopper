@@ -834,12 +834,6 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    @Deprecated
-    // todo: remove this method
-    public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
-        return createGraphHopperRouter().getAlgorithmFactory(profile, disableCH, disableLM);
-    }
-
     public final CHPreparationHandler getCHPreparationHandler() {
         return chPreparationHandler;
     }

@@ -94,7 +94,7 @@ public class RoutingAlgorithmWithOSMTest {
             algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", true, false);
+                    return hopper.getLMPreparationHandler().getPreparation(vehicleStr + "_profile").getRoutingAlgorithmFactory();
                 }
             });
         }
@@ -108,7 +108,7 @@ public class RoutingAlgorithmWithOSMTest {
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + weightingStr) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", false, true);
+                    return hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile").getRoutingAlgorithmFactory();
                 }
             });
 
@@ -116,7 +116,7 @@ public class RoutingAlgorithmWithOSMTest {
                     AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + weightingStr) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", false, true);
+                    return hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile").getRoutingAlgorithmFactory();
                 }
             });
         }
