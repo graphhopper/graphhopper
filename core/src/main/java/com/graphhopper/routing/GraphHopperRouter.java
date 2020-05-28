@@ -69,12 +69,12 @@ public class GraphHopperRouter {
     private final boolean chEnabled;
     private final boolean lmEnabled;
 
-    public GraphHopperRouter(GraphHopperStorage ghStorage, EncodingManager encodingManager, LocationIndex locationIndex,
+    public GraphHopperRouter(GraphHopperStorage ghStorage, LocationIndex locationIndex,
                              Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathDetailsBuilderFactory,
                              TranslationMap translationMap, RoutingConfig routingConfig, WeightingFactory weightingFactory,
                              Map<String, CHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
         this.ghStorage = ghStorage;
-        this.encodingManager = encodingManager;
+        this.encodingManager = ghStorage.getEncodingManager();
         this.locationIndex = locationIndex;
         this.profilesByName = profilesByName;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
