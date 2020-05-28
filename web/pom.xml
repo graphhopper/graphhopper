@@ -16,6 +16,7 @@
         <version>2.0-SNAPSHOT</version>
     </parent>
     <properties>
+        <shade-phase>package</shade-phase>
         <jetty.version>9.4.2.v20170220</jetty.version>
     </properties>
 
@@ -114,7 +115,7 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <phase>package</phase>
+                        <phase>${shade-phase}</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
@@ -134,6 +135,15 @@
 
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <!-- use -Pskip-shaded-web-jar to build the web module as standard jar instead of the shaded fat jar -->
+            <id>skip-shaded-web-jar</id>
+            <properties>
+                <shade-phase>none</shade-phase>
+            </properties>
+        </profile>
+    </profiles>
 </project>
 
 

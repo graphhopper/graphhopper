@@ -159,7 +159,7 @@ public class IsochroneResource {
             }
         });
         int consumedNodes = sites.size();
-        if (consumedNodes > graphHopper.getMaxVisitedNodes() / 3)
+        if (consumedNodes > graphHopper.getRouterConfig().getMaxVisitedNodes() / 3)
             throw new IllegalArgumentException("Too many nodes would be included in post processing (" + consumedNodes + "). Let us know if you need this increased.");
 
         // Sites may contain repeated coordinates. Especially for edge-based traversal, that's expected -- we visit

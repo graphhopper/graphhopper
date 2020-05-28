@@ -137,7 +137,7 @@ public class RandomCHRoutingTest {
         locationIndex.prepareIndex();
 
         graph.freeze();
-        CHGraph chGraph = graph.getCHGraph(chConfig);
+        CHGraph chGraph = graph.getCHGraph(chConfig.getName());
         PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         pch.doWork();
 
