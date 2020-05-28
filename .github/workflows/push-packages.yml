@@ -9,7 +9,7 @@ jobs:
         with:
           java-version: 1.8
       - name: Publish package
-        run: mvn versions:set -DnewVersion=test-$GITHUB_SHA -DgenerateBackupPoms=false; mvn deploy
+        run: mvn -B versions:set -DnewVersion=test-$GITHUB_SHA -DgenerateBackupPoms=false; mvn -B deploy -DskipTests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
