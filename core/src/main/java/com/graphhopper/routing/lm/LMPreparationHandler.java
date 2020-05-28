@@ -19,7 +19,6 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
@@ -44,9 +43,8 @@ import static com.graphhopper.util.Helper.getMemInfo;
  * @author Peter Karich
  */
 public class LMPreparationHandler {
-    private Logger LOGGER = LoggerFactory.getLogger(LMPreparationHandler.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(LMPreparationHandler.class);
     private int landmarkCount = 16;
-    private int activeLandmarkCount = 8;
 
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
     // we first add the profiles and later read them to create the config objects (because they require
@@ -55,7 +53,6 @@ public class LMPreparationHandler {
     private final List<LMConfig> lmConfigs = new ArrayList<>();
     private final Map<String, Double> maximumWeights = new HashMap<>();
     private int minNodes = -1;
-    private boolean disablingAllowed = false;
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
     private int preparationThreads;
     private ExecutorService threadPool;
@@ -72,14 +69,9 @@ public class LMPreparationHandler {
         }
 
         setPreparationThreads(ghConfig.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
-        setDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
         setLMProfiles(ghConfig.getLMProfiles());
 
         landmarkCount = ghConfig.getInt(Parameters.Landmark.COUNT, landmarkCount);
-        activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
-        if (activeLandmarkCount > landmarkCount)
-            throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount
-                    + " should be less or equal to landmark count of " + landmarkCount);
         logDetails = ghConfig.getBool(Landmark.PREPARE + "log_details", false);
         minNodes = ghConfig.getInt(Landmark.PREPARE + "min_network_size", -1);
 
@@ -91,15 +83,6 @@ public class LMPreparationHandler {
 
     public int getLandmarks() {
         return landmarkCount;
-    }
-
-    public LMPreparationHandler setDisablingAllowed(boolean disablingAllowed) {
-        this.disablingAllowed = disablingAllowed;
-        return this;
-    }
-
-    public final boolean isDisablingAllowed() {
-        return disablingAllowed || !isEnabled();
     }
 
     public final boolean isEnabled() {
@@ -180,16 +163,7 @@ public class LMPreparationHandler {
         return preparations;
     }
 
-    /**
-     * @return a {@link RoutingAlgorithmFactory} for LM or throw an error if no preparation is available for the given
-     * profile name
-     */
-    public RoutingAlgorithmFactory getAlgorithmFactory(String profile) {
-        PrepareLandmarks preparation = getPreparation(profile);
-        return preparation.getRoutingAlgorithmFactory().setDefaultActiveLandmarks(activeLandmarkCount);
-    }
-
-    private PrepareLandmarks getPreparation(String profile) {
+    public PrepareLandmarks getPreparation(String profile) {
         if (preparations.isEmpty())
             throw new IllegalStateException("No LM preparations added yet");
 

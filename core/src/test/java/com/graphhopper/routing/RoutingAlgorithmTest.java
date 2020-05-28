@@ -1165,7 +1165,7 @@ public class RoutingAlgorithmTest {
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, int from, int to) {
             CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
             PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-            CHGraph chGraph = graph.getCHGraph(chConfig);
+            CHGraph chGraph = graph.getCHGraph(chConfig.getName());
             if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
                 graph.freeze();
                 pch.doWork();
@@ -1191,7 +1191,7 @@ public class RoutingAlgorithmTest {
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
             CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
             PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-            CHGraph chGraph = graph.getCHGraph(chConfig);
+            CHGraph chGraph = graph.getCHGraph(chConfig.getName());
             if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
                 graph.freeze();
                 pch.doWork();

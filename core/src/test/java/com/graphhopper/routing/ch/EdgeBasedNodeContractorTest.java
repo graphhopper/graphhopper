@@ -73,7 +73,7 @@ public class EdgeBasedNodeContractorTest {
                 )
                 .create();
         chConfigs = graph.getCHConfigs();
-        chGraph = graph.getCHGraph(chConfigs.get(0));
+        chGraph = graph.getCHGraph(chConfigs.get(0).getName());
     }
 
     @Test
@@ -1119,7 +1119,7 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     public void testFindPath_finiteUTurnCost() {
-        chGraph = graph.getCHGraph(chConfigs.get(1));
+        chGraph = graph.getCHGraph(chConfigs.get(1).getName());
         // turning to 1 at node 3 when coming from 0 is forbidden, but taking the full loop 3-4-2-3 is very
         // expensive, so the best solution is to go straight to 4 and take a u-turn there
         //   1

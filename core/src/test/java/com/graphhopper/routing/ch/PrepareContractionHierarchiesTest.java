@@ -638,7 +638,7 @@ public class PrepareContractionHierarchiesTest {
         StopWatch sw = new StopWatch().start();
         PrepareContractionHierarchies carPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, carConfig);
         carPch.doWork();
-        CHGraph carCH = ghStorage.getCHGraph(carConfig);
+        CHGraph carCH = ghStorage.getCHGraph(carConfig.getName());
         long timeCar = sw.stop().getMillis();
 
         // create CH for motorcycles, re-use car contraction order
@@ -648,7 +648,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies motorCyclePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, motorCycleConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         motorCyclePch.doWork();
-        CHGraph motorCycleCH = ghStorage.getCHGraph(motorCycleConfig);
+        CHGraph motorCycleCH = ghStorage.getCHGraph(motorCycleConfig.getName());
 
         // run a few sample queries to check correctness
         for (int i = 0; i < numQueries; ++i) {
@@ -667,7 +667,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     private void checkPath(GraphHopperStorage g, CHConfig c, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
-        CHGraph lg = g.getCHGraph(c);
+        CHGraph lg = g.getCHGraph(c.getName());
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, c);
         prepare.doWork();
         assertEquals(c.toString(), expShortcuts, prepare.getShortcuts());

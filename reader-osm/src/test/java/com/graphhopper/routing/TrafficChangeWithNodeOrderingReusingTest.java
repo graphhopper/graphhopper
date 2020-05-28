@@ -77,7 +77,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         // create CH
         PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, baseCHConfig);
         basePch.doWork();
-        CHGraph baseCHGraph = ghStorage.getCHGraph(baseCHConfig);
+        CHGraph baseCHGraph = ghStorage.getCHGraph(baseCHConfig.getName());
 
         // check correctness & performance
         checkCorrectness(ghStorage, baseCHGraph, basePch, seed, 100);
@@ -87,7 +87,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, trafficCHConfig)
                 .useFixedNodeOrdering(baseCHGraph.getNodeOrderingProvider());
         trafficPch.doWork();
-        CHGraph trafficCHGraph = ghStorage.getCHGraph(trafficCHConfig);
+        CHGraph trafficCHGraph = ghStorage.getCHGraph(trafficCHConfig.getName());
 
         // check correctness & performance
         checkCorrectness(ghStorage, trafficCHGraph, trafficPch, seed, 100);

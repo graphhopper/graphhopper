@@ -137,7 +137,7 @@ public class DirectedRoutingTest {
         if (prepareCH) {
             pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
             pch.doWork();
-            chGraph = graph.getCHGraph(chConfig);
+            chGraph = graph.getCHGraph(chConfig.getName());
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, lmConfig, 16);

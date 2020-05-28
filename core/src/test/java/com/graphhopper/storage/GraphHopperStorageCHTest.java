@@ -42,7 +42,7 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     private CHGraph getGraph(GraphHopperStorage ghStorage) {
-        return ghStorage.getCHGraph(ghStorage.getCHConfigs().get(0));
+        return ghStorage.getCHGraph(ghStorage.getCHConfigs().get(0).getName());
     }
 
     @Override
@@ -498,11 +498,11 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         graph.freeze();
 
-        CHGraph carCHGraph = graph.getCHGraph(chConfigs.get(0));
+        CHGraph carCHGraph = graph.getCHGraph(chConfigs.get(0).getName());
         // enable forward directions for car
         int carSC02 = carCHGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 10, NO_EDGE, NO_EDGE);
 
-        CHGraph bikeCHGraph = graph.getCHGraph(chConfigs.get(1));
+        CHGraph bikeCHGraph = graph.getCHGraph(chConfigs.get(1).getName());
         // enable both directions for bike
         int bikeSC02 = bikeCHGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 

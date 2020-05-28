@@ -94,7 +94,7 @@ public class RoutingAlgorithmWithOSMTest {
             algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", true, false);
+                    return hopper.getLMPreparationHandler().getPreparation(vehicleStr + "_profile").getRoutingAlgorithmFactory();
                 }
             });
         }
@@ -108,7 +108,7 @@ public class RoutingAlgorithmWithOSMTest {
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + weightingStr) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", false, true);
+                    return hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile").getRoutingAlgorithmFactory();
                 }
             });
 
@@ -116,7 +116,7 @@ public class RoutingAlgorithmWithOSMTest {
                     AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + weightingStr) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
-                    return hopper.getAlgorithmFactory(vehicleStr + "_profile", false, true);
+                    return hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile").getRoutingAlgorithmFactory();
                 }
             });
         }
@@ -641,14 +641,14 @@ public class RoutingAlgorithmWithOSMTest {
 
             // always enable landmarks
             hopper.getLMPreparationHandler().
-                    setLMProfiles(new LMProfile(vehicle + "_profile")).
-                    setDisablingAllowed(true);
+                    setLMProfiles(new LMProfile(vehicle + "_profile"));
+            hopper.getRouterConfig().setLMDisablingAllowed(true);
 
             if (withCH) {
                 assert !Helper.isEmpty(weightStr);
                 hopper.getCHPreparationHandler().
-                        setCHProfiles(new CHProfile(vehicle + "_profile")).
-                        setDisablingAllowed(true);
+                        setCHProfiles(new CHProfile(vehicle + "_profile"));
+                hopper.getRouterConfig().setCHDisablingAllowed(true);
             }
 
             if (is3D)
