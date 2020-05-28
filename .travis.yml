@@ -25,7 +25,7 @@ before_script:
   - "mvn --version"
 
 script:
-  - "mvn clean test verify -B"
+  - "mvn clean test verify --settings settings.xml -B"
 
 after_success:
   - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
