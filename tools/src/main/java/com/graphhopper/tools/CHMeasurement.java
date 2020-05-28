@@ -108,8 +108,8 @@ public class CHMeasurement {
                     new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(false)
             ));
         }
-        graphHopper.setCHDisablingAllowed(true);
-        graphHopper.setLMDisablingAllowed(true);
+        graphHopper.getRoutingConfig().setCHDisablingAllowed(true);
+        graphHopper.getRoutingConfig().setLMDisablingAllowed(true);
 
         ghConfig.putObject(PERIODIC_UPDATES, periodicUpdates);
         ghConfig.putObject(LAST_LAZY_NODES_UPDATES, lazyUpdates);

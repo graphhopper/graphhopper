@@ -33,6 +33,10 @@ public class RoutingConfig {
         return maxVisitedNodes;
     }
 
+    /**
+     * This methods stops the algorithm from searching further if the resulting path would go over
+     * the specified node count, important if none-CH routing is used.
+     */
     public void setMaxVisitedNodes(int maxVisitedNodes) {
         this.maxVisitedNodes = maxVisitedNodes;
     }
@@ -73,6 +77,9 @@ public class RoutingConfig {
         return calcPoints;
     }
 
+    /**
+     * This methods enables gps point calculation. If disabled only distance will be calculated.
+     */
     public void setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
     }
@@ -81,6 +88,10 @@ public class RoutingConfig {
         return simplifyResponse;
     }
 
+    /**
+     * This method specifies if the returned path should be simplified or not, via douglas-peucker
+     * or similar algorithm.
+     */
     public void setSimplifyResponse(boolean simplifyResponse) {
         this.simplifyResponse = simplifyResponse;
     }

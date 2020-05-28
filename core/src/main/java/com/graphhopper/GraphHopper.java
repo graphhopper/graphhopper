@@ -186,7 +186,7 @@ public class GraphHopper implements GraphHopperAPI {
      * also optimized for usage in the web module i.e. try reduce network IO.
      */
     public GraphHopper forServer() {
-        setSimplifyResponse(true);
+        routingConfig.setSimplifyResponse(true);
         return setInMemory();
     }
 
@@ -195,7 +195,7 @@ public class GraphHopper implements GraphHopperAPI {
      * application with enough RAM but no network latency.
      */
     public GraphHopper forDesktop() {
-        setSimplifyResponse(false);
+        routingConfig.setSimplifyResponse(false);
         return setInMemory();
     }
 
@@ -204,7 +204,7 @@ public class GraphHopper implements GraphHopperAPI {
      * Raspberry Pi with only few MB of RAM.
      */
     public GraphHopper forMobile() {
-        setSimplifyResponse(false);
+        routingConfig.setSimplifyResponse(false);
         return setMemoryMapped();
     }
 
@@ -313,18 +313,6 @@ public class GraphHopper implements GraphHopperAPI {
         return profilesByName.get(profileName);
     }
 
-    public int getMaxVisitedNodes() {
-        return routingConfig.getMaxVisitedNodes();
-    }
-
-    /**
-     * This methods stops the algorithm from searching further if the resulting path would go over
-     * the specified node count, important if none-CH routing is used.
-     */
-    public void setMaxVisitedNodes(int maxVisitedNodes) {
-        routingConfig.setMaxVisitedNodes(maxVisitedNodes);
-    }
-
     /**
      * @return true if storing and fetching elevation data is enabled. Default is false
      */
@@ -337,23 +325,6 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public GraphHopper setElevation(boolean includeElevation) {
         this.elevation = includeElevation;
-        return this;
-    }
-
-    /**
-     * This methods enables gps point calculation. If disabled only distance will be calculated.
-     */
-    public GraphHopper setEnableCalcPoints(boolean b) {
-        routingConfig.setCalcPoints(b);
-        return this;
-    }
-
-    /**
-     * This method specifies if the returned path should be simplified or not, via douglas-peucker
-     * or similar algorithm.
-     */
-    private GraphHopper setSimplifyResponse(boolean doSimplify) {
-        routingConfig.setSimplifyResponse(doSimplify);
         return this;
     }
 
@@ -1198,27 +1169,11 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Writes are not allowed!");
     }
 
-    public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
-        routingConfig.setNonChMaxWaypointDistance(nonChMaxWaypointDistance);
-    }
-
     private void setFullyLoaded() {
         fullyLoaded = true;
     }
 
-    public boolean isCHDisablingAllowed() {
-        return routingConfig.isCHDisablingAllowed();
-    }
-
-    public void setCHDisablingAllowed(boolean chDisablingAllowed) {
-        routingConfig.setCHDisablingAllowed(chDisablingAllowed);
-    }
-
-    public boolean isLMDisablingAllowed() {
-        return routingConfig.isLMDisablingAllowed();
-    }
-
-    public void setLMDisablingAllowed(boolean lmDisablingAllowed) {
-        routingConfig.setLMDisablingAllowed(lmDisablingAllowed);
+    public RoutingConfig getRoutingConfig() {
+        return routingConfig;
     }
 }

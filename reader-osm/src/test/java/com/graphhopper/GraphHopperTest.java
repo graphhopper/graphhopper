@@ -100,7 +100,7 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile("profile"));
-        hopper.setCHDisablingAllowed(true);
+        hopper.getRoutingConfig().setCHDisablingAllowed(true);
         hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566)
@@ -240,12 +240,12 @@ public class GraphHopperTest {
         if (ch) {
             hopper.getCHPreparationHandler()
                     .setCHProfiles(new CHProfile(profile));
-            hopper.setCHDisablingAllowed(true);
+            hopper.getRoutingConfig().setCHDisablingAllowed(true);
         }
         if (lm) {
             hopper.getLMPreparationHandler()
                     .setLMProfiles(new LMProfile(profile));
-            hopper.setLMDisablingAllowed(true);
+            hopper.getRoutingConfig().setLMDisablingAllowed(true);
         }
         hopper.importAndClose();
         hopper = createGraphHopper(vehicle).
@@ -255,12 +255,12 @@ public class GraphHopperTest {
         if (ch) {
             hopper.getCHPreparationHandler()
                     .setCHProfiles(new CHProfile(profile));
-            hopper.setCHDisablingAllowed(true);
+            hopper.getRoutingConfig().setCHDisablingAllowed(true);
         }
         if (lm) {
             hopper.getLMPreparationHandler()
                     .setLMProfiles(new LMProfile(profile));
-            hopper.setLMDisablingAllowed(true);
+            hopper.getRoutingConfig().setLMDisablingAllowed(true);
         }
         hopper.importOrLoad();
 
@@ -781,7 +781,7 @@ public class GraphHopperTest {
         GHRequest req = new GHRequest(from, to).setProfile(profile);
 
         // Fail since points are too far apart
-        hopper.setNonChMaxWaypointDistance(1000);
+        hopper.getRoutingConfig().setNonChMaxWaypointDistance(1000);
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
@@ -789,7 +789,7 @@ public class GraphHopperTest {
         assertTrue(errorString, errorString.contains("Point 1 is too far from Point 0"));
 
         // Succeed since points are not far anymore
-        hopper.setNonChMaxWaypointDistance(Integer.MAX_VALUE);
+        hopper.getRoutingConfig().setNonChMaxWaypointDistance(Integer.MAX_VALUE);
         rsp = hopper.route(req);
 
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -815,7 +815,7 @@ public class GraphHopperTest {
                 setProfile(profile);
 
         // Fail since points are too far
-        hopper.setNonChMaxWaypointDistance(1000);
+        hopper.getRoutingConfig().setNonChMaxWaypointDistance(1000);
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
@@ -827,7 +827,7 @@ public class GraphHopperTest {
         assertEquals(2, exception.getDetails().get("to"));
 
         // Succeed since points are not far anymore
-        hopper.setNonChMaxWaypointDistance(Integer.MAX_VALUE);
+        hopper.getRoutingConfig().setNonChMaxWaypointDistance(Integer.MAX_VALUE);
         rsp = hopper.route(req);
 
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -1330,11 +1330,11 @@ public class GraphHopperTest {
 
         hopper.getCHPreparationHandler().
                 setCHProfiles(new CHProfile(profile));
-        hopper.setCHDisablingAllowed(true);
+        hopper.getRoutingConfig().setCHDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().
                 setLMProfiles(new LMProfile(profile).setMaximumLMWeight(2000));
-        hopper.setLMDisablingAllowed(true);
+        hopper.getRoutingConfig().setLMDisablingAllowed(true);
 
         hopper.importOrLoad();
 
@@ -1403,7 +1403,7 @@ public class GraphHopperTest {
                         new LMProfile(profile2).setPreparationProfile(profile1),
                         new LMProfile(profile3).setPreparationProfile(profile1)
                 );
-        hopper.setLMDisablingAllowed(true);
+        hopper.getRoutingConfig().setLMDisablingAllowed(true);
         hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
 
@@ -1467,11 +1467,11 @@ public class GraphHopperTest {
 
         hopper.getCHPreparationHandler().
                 setCHProfiles(new CHProfile(profile1));
-        hopper.setCHDisablingAllowed(true);
+        hopper.getRoutingConfig().setCHDisablingAllowed(true);
 
         hopper.getLMPreparationHandler().
                 setLMProfiles(new LMProfile(profile1).setMaximumLMWeight(2000));
-        hopper.setLMDisablingAllowed(true);
+        hopper.getRoutingConfig().setLMDisablingAllowed(true);
 
         hopper.importOrLoad();
         // request a profile that was not prepared
@@ -1514,7 +1514,7 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
         hopper.getLMPreparationHandler().
                 setLMProfiles(new LMProfile(profile).setMaximumLMWeight(2000));
-        hopper.setLMDisablingAllowed(true);
+        hopper.getRoutingConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         // we can switch LM on/off
@@ -1543,8 +1543,8 @@ public class GraphHopperTest {
                 ));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile(profile));
-        hopper.setCHDisablingAllowed(true);
-        hopper.setLMDisablingAllowed(true);
+        hopper.getRoutingConfig().setCHDisablingAllowed(true);
+        hopper.getRoutingConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         long seed = System.nanoTime();
@@ -1590,8 +1590,8 @@ public class GraphHopperTest {
                 ));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile(profile));
-        hopper.setCHDisablingAllowed(true);
-        hopper.setLMDisablingAllowed(true);
+        hopper.getRoutingConfig().setCHDisablingAllowed(true);
+        hopper.getRoutingConfig().setLMDisablingAllowed(true);
 
         hopper.importOrLoad();
 
@@ -1652,7 +1652,7 @@ public class GraphHopperTest {
                 new CHProfile(profile1),
                 new CHProfile(profile2)
         );
-        hopper.setCHDisablingAllowed(true);
+        hopper.getRoutingConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
@@ -1675,7 +1675,7 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile(profile));
-        hopper.setCHDisablingAllowed(true);
+        hopper.getRoutingConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
@@ -1707,7 +1707,7 @@ public class GraphHopperTest {
         hopper.getCHPreparationHandler()
                 // we only do the CH preparation for the profile without turn costs
                 .setCHProfiles(new CHProfile(profile2));
-        hopper.setCHDisablingAllowed(true);
+        hopper.getRoutingConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
