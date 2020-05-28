@@ -1,4 +1,4 @@
-name: Publish to GitHub Packages
+name: Publixyzsh to GitHub Packages
 on: push
 jobs:
   publish:
