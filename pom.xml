@@ -45,6 +45,14 @@
         </license>
     </licenses>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub GraphHopper Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/graphhopper/graphhopper-navigation</url>
+        </repository>
+    </distributionManagement>
+
     <repositories>
         <repository>
             <id>sonatype-oss-public</id>
