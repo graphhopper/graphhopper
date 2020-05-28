@@ -61,7 +61,7 @@ public class MapMatching2Test {
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("my_profile"));
-        hopper.getCHPreparationHandler().setDisablingAllowed(true);
+        hopper.getRouterConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
 
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
@@ -93,7 +93,7 @@ public class MapMatching2Test {
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("my_profile"));
-        hopper.getCHPreparationHandler().setDisablingAllowed(true);
+        hopper.getRouterConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
 
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
@@ -120,7 +120,7 @@ public class MapMatching2Test {
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("my_profile"));
-        hopper.getCHPreparationHandler().setDisablingAllowed(true);
+        hopper.getRouterConfig().setCHDisablingAllowed(true);
         hopper.importOrLoad();
 
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));

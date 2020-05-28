@@ -19,5 +19,10 @@
       <id>packagecloud-read</id>
       <password>${env.PACKAGECLOUD_TOKEN_READ}</password>
     </server>
+    <server>
+      <id>github</id>
+      <username>${env.GITHUB_USERNAME}</username>
+      <password>${env.GITHUB_PASSWORD}</password>
+    </server>
   </servers>
 </settings>

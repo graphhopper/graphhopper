@@ -72,7 +72,7 @@ public class MapMatchingTest {
         graphHopper.setEncodingManager(EncodingManager.create(encoder));
         graphHopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
         graphHopper.getCHPreparationHandler().setCHProfiles(new CHProfile("my_profile"));
-        graphHopper.getCHPreparationHandler().setDisablingAllowed(true);
+        graphHopper.getRouterConfig().setCHDisablingAllowed(true);
         graphHopper.importOrLoad();
     }
 

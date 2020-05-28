@@ -19,7 +19,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.26</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
-        <gh.version>1.0</gh.version>
+        <gh.version>b15256635e179355563945d068fce87a6c58cd2d</gh.version>
 
         <dropwizard.version>2.0.8</dropwizard.version>
         <jackson.version>2.10.3</jackson.version>
@@ -132,26 +132,17 @@
 
     <distributionManagement>
         <repository>
-            <id>packagecloud-graphhopper</id>
-            <url>packagecloud+https://packagecloud.io/graphhopper/map-matching</url>
+            <id>github</id>
+            <name>GitHub GraphHopper Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/graphhopper/map-matching</url>
         </repository>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
     </distributionManagement>
 
-    <!-- While we are on a GraphHopper SNAPSHOT -->
     <repositories>
         <repository>
-            <id>snapshots-repo</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+            <id>github</id>
+            <name>GitHub GraphHopper Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/graphhopper/graphhopper</url>
         </repository>
     </repositories>
 

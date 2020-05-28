@@ -23,8 +23,10 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.matching.util.HmmProbabilities;
 import com.graphhopper.matching.util.TimeStep;
-import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.DijkstraBidirectionCH;
+import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -114,11 +116,16 @@ public class MapMatching {
         uTurnDistancePenalty = headingTimePenalty * PENALTY_CONVERSION_VELOCITY;
 
         boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
-        boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
-        RoutingAlgorithmFactory routingAlgorithmFactory = graphHopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
-        if (routingAlgorithmFactory instanceof CHRoutingAlgorithmFactory) {
+        if (graphHopper.getCHPreparationHandler().isEnabled() && disableCH && !graphHopper.getRouterConfig().isCHDisablingAllowed())
+            throw new IllegalArgumentException("Disabling CH is not allowed");
+
+        if (graphHopper.getCHPreparationHandler().isEnabled() && !disableCH) {
             ch = true;
-            routingGraph = graphHopper.getGraphHopperStorage().getCHGraph(((CHRoutingAlgorithmFactory) routingAlgorithmFactory).getCHConfig());
+            routingGraph = graphHopper.getGraphHopperStorage().getCHGraph(profile.getName());
+            if (routingGraph == null)
+                throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile + "'" +
+                        "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
+                        "\navailable CH profiles: " + graphHopper.getGraphHopperStorage().getCHGraphNames());
         } else {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();

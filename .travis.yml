@@ -16,7 +16,7 @@ before_install:
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
 
 script:
-  - "mvn --version && mvn clean test verify -B"
+  - "mvn --version && mvn clean test verify --settings .travis.settings.xml -B"
 
 after_success:
   # deploy snapshot artifacts to sonatype
