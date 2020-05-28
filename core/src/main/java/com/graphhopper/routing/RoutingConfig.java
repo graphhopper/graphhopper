@@ -22,8 +22,12 @@ public class RoutingConfig {
     private int maxVisitedNodes = Integer.MAX_VALUE;
     private int maxRoundTripRetries = 3;
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
+    private boolean chDisablingAllowed = false;
+    // todonow: is this the intended default?
+    private boolean lmDisablingAllowed = true;
     private boolean calcPoints = true;
     private boolean simplifyResponse = true;
+    private int activeLandmarkCount = 8;
 
     public int getMaxVisitedNodes() {
         return maxVisitedNodes;
@@ -49,6 +53,22 @@ public class RoutingConfig {
         this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
     }
 
+    public boolean isCHDisablingAllowed() {
+        return chDisablingAllowed;
+    }
+
+    public void setCHDisablingAllowed(boolean chDisablingAllowed) {
+        this.chDisablingAllowed = chDisablingAllowed;
+    }
+
+    public boolean isLMDisablingAllowed() {
+        return lmDisablingAllowed;
+    }
+
+    public void setLMDisablingAllowed(boolean lmDisablingAllowed) {
+        this.lmDisablingAllowed = lmDisablingAllowed;
+    }
+
     public boolean isCalcPoints() {
         return calcPoints;
     }
@@ -63,5 +83,13 @@ public class RoutingConfig {
 
     public void setSimplifyResponse(boolean simplifyResponse) {
         this.simplifyResponse = simplifyResponse;
+    }
+
+    public int getActiveLandmarkCount() {
+        return activeLandmarkCount;
+    }
+
+    public void setActiveLandmarkCount(int activeLandmarkCount) {
+        this.activeLandmarkCount = activeLandmarkCount;
     }
 }

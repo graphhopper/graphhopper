@@ -641,14 +641,14 @@ public class RoutingAlgorithmWithOSMTest {
 
             // always enable landmarks
             hopper.getLMPreparationHandler().
-                    setLMProfiles(new LMProfile(vehicle + "_profile")).
-                    setDisablingAllowed(true);
+                    setLMProfiles(new LMProfile(vehicle + "_profile"));
+            hopper.setLMDisablingAllowed(true);
 
             if (withCH) {
                 assert !Helper.isEmpty(weightStr);
                 hopper.getCHPreparationHandler().
-                        setCHProfiles(new CHProfile(vehicle + "_profile")).
-                        setDisablingAllowed(true);
+                        setCHProfiles(new CHProfile(vehicle + "_profile"));
+                hopper.setCHDisablingAllowed(true);
             }
 
             if (is3D)

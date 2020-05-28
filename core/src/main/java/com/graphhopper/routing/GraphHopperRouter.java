@@ -20,11 +20,8 @@ package com.graphhopper.routing;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
-import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -65,18 +62,17 @@ public class GraphHopperRouter {
     private final TranslationMap translationMap;
     private final RoutingConfig routingConfig;
     private final WeightingFactory weightingFactory;
+    // todo: these should not be necessary anymore as soon as GraphHopperStorage (or something that replaces) it acts
+    // like a 'graph database'
+    private final Map<String, CHGraph> chGraphs;
+    private final Map<String, LandmarkStorage> landmarks;
     private final boolean chEnabled;
     private final boolean lmEnabled;
-    private final boolean chDisablingAllowed;
-    private final boolean lmDisablingAllowed;
-    private final Map<String, LandmarkStorage> landmarks;
-    private final int activeLandmarkCount;
 
     public GraphHopperRouter(GraphHopperStorage ghStorage, EncodingManager encodingManager, LocationIndex locationIndex,
                              Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathDetailsBuilderFactory,
                              TranslationMap translationMap, RoutingConfig routingConfig, WeightingFactory weightingFactory,
-                             Map<String, LandmarkStorage> landmarks,
-                             CHPreparationHandler chPreparationHandler, LMPreparationHandler lmPreparationHandler) {
+                             Map<String, CHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
         this.ghStorage = ghStorage;
         this.encodingManager = encodingManager;
         this.locationIndex = locationIndex;
@@ -85,12 +81,13 @@ public class GraphHopperRouter {
         this.translationMap = translationMap;
         this.routingConfig = routingConfig;
         this.weightingFactory = weightingFactory;
+        this.chGraphs = chGraphs;
         this.landmarks = landmarks;
-        this.activeLandmarkCount = lmPreparationHandler.getActiveLandmarkCount();
-        this.chEnabled = chPreparationHandler.isEnabled();
-        this.lmEnabled = lmPreparationHandler.isEnabled();
-        this.chDisablingAllowed = chPreparationHandler.isDisablingAllowed();
-        this.lmDisablingAllowed = lmPreparationHandler.isDisablingAllowed();
+        // todonow: this is not the same as !ghStorage.getCHConfigs().isEmpty(), because the GHStorage might have some
+        // CHGraphs that were not built yet (and possibly no CH profiles were configured). If this wasn't so we would
+        // not need the chGraphs map at all here, because we could get the CHGraphs from GHStorage
+        this.chEnabled = !chGraphs.isEmpty();
+        this.lmEnabled = !landmarks.isEmpty();
     }
 
     public List<Path> route(GHRequest request, GHResponse ghRsp) {
@@ -119,7 +116,8 @@ public class GraphHopperRouter {
 
                 CHConfig chConfig = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHConfig();
                 weighting = chConfig.getWeighting();
-                graph = ghStorage.getCHGraph(chConfig.getName());
+                graph = chGraphs.get(chConfig.getName());
+                // we know this exists because we already got the algorithm factory this way -> will be cleaned up soon
             } else {
                 checkNonChMaxWaypointDistance(request.getPoints());
                 final int uTurnCostsInt = request.getHints().getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
@@ -186,20 +184,20 @@ public class GraphHopperRouter {
     }
 
     public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
-        if (chEnabled && disableCH && !chDisablingAllowed) {
+        if (chEnabled && disableCH && !routingConfig.isCHDisablingAllowed()) {
             throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
         }
-        if (lmEnabled && disableLM && !lmDisablingAllowed) {
+        if (lmEnabled && disableLM && !routingConfig.isLMDisablingAllowed()) {
             throw new IllegalArgumentException("Disabling LM is not allowed on the server side");
         }
 
         // for now do not allow mixing CH&LM #1082,#1889
         if (chEnabled && !disableCH) {
-            CHGraph chGraph = ghStorage.getCHGraph(profile);
+            CHGraph chGraph = chGraphs.get(profile);
             if (chGraph == null)
                 throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile + "'" +
                         "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
-                        "\navailable CH profiles: " + ghStorage.getCHGraphNames());
+                        "\navailable CH profiles: " + chGraphs.keySet());
             return new CHRoutingAlgorithmFactory(chGraph);
         } else if (lmEnabled && !disableLM) {
             LandmarkStorage landmarkStorage = landmarks.get(profile);
@@ -207,7 +205,7 @@ public class GraphHopperRouter {
                 throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'" +
                         "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
                         "\navailable LM profiles: " + landmarks.keySet());
-            return new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(activeLandmarkCount);
+            return new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routingConfig.getActiveLandmarkCount());
         } else {
             return new RoutingAlgorithmFactorySimple();
         }
@@ -243,11 +241,11 @@ public class GraphHopperRouter {
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
         boolean disableCH = getDisableCH(request.getHints());
-        if (chEnabled && !chDisablingAllowed && disableCH)
+        if (chEnabled && !routingConfig.isCHDisablingAllowed() && disableCH)
             throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
 
         boolean disableLM = getDisableLM(request.getHints());
-        if (lmEnabled && !lmDisablingAllowed && disableLM)
+        if (lmEnabled && !routingConfig.isLMDisablingAllowed() && disableLM)
             throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
 
         // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM

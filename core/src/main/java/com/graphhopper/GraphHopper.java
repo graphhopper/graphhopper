@@ -540,6 +540,13 @@ public class GraphHopper implements GraphHopperAPI {
         routingConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes()));
         routingConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routingConfig.getMaxRoundTripRetries()));
         routingConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routingConfig.getNonChMaxWaypointDistance()));
+        routingConfig.setCHDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, routingConfig.isCHDisablingAllowed()));
+        routingConfig.setLMDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, routingConfig.isLMDisablingAllowed()));
+        int activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, lmPreparationHandler.getLandmarks()));
+        if (activeLandmarkCount > lmPreparationHandler.getLandmarks())
+            throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount
+                    + " should be less or equal to landmark count of " + lmPreparationHandler.getLandmarks());
+        routingConfig.setActiveLandmarkCount(activeLandmarkCount);
 
         return this;
     }
@@ -1013,6 +1020,11 @@ public class GraphHopper implements GraphHopperAPI {
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
+        Map<String, CHGraph> chGraphs = new LinkedHashMap<>();
+        for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
+            String chGraphName = chPreparationHandler.getPreparation(chProfile.getProfile()).getCHConfig().getName();
+            chGraphs.put(chProfile.getProfile(), ghStorage.getCHGraph(chGraphName));
+        }
         Map<String, LandmarkStorage> landmarks = new LinkedHashMap<>();
         for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
             landmarks.put(lmp.getProfile(),
@@ -1021,9 +1033,8 @@ public class GraphHopper implements GraphHopperAPI {
                             ? lmPreparationHandler.getPreparation(lmp.getPreparationProfile()).getLandmarkStorage()
                             : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
         }
-
         return new GraphHopperRouter(ghStorage, encodingManager, locationIndex, profilesByName, pathBuilderFactory,
-                trMap, routingConfig, createWeightingFactory(), landmarks, chPreparationHandler, lmPreparationHandler
+                trMap, routingConfig, createWeightingFactory(), chGraphs, landmarks
         );
     }
 
@@ -1195,4 +1206,19 @@ public class GraphHopper implements GraphHopperAPI {
         fullyLoaded = true;
     }
 
+    public boolean isCHDisablingAllowed() {
+        return routingConfig.isCHDisablingAllowed();
+    }
+
+    public void setCHDisablingAllowed(boolean chDisablingAllowed) {
+        routingConfig.setCHDisablingAllowed(chDisablingAllowed);
+    }
+
+    public boolean isLMDisablingAllowed() {
+        return routingConfig.isLMDisablingAllowed();
+    }
+
+    public void setLMDisablingAllowed(boolean lmDisablingAllowed) {
+        routingConfig.setLMDisablingAllowed(lmDisablingAllowed);
+    }
 }

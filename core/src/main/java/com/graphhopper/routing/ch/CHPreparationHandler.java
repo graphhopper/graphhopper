@@ -19,7 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
@@ -36,7 +35,7 @@ import static com.graphhopper.util.Helper.createFormatter;
 import static com.graphhopper.util.Helper.getMemInfo;
 
 /**
- * This class handles the different CH preparations and serves the corresponding {@link RoutingAlgorithmFactory}
+ * This class handles the different CH preparations
  *
  * @author Peter Karich
  * @author easbar
@@ -48,7 +47,6 @@ public class CHPreparationHandler {
     // the actual Weightings)
     private final List<CHProfile> chProfiles = new ArrayList<>();
     private final List<CHConfig> chConfigs = new ArrayList<>();
-    private boolean disablingAllowed = false;
     private int preparationThreads;
     private ExecutorService threadPool;
     private PMap pMap = new PMap();
@@ -67,25 +65,12 @@ public class CHPreparationHandler {
             throw new IllegalStateException("Use profiles_ch instead of prepare.ch.edge_based, see #1922 and docs/core/profiles.md");
 
         setPreparationThreads(ghConfig.getInt(CH.PREPARE + "threads", getPreparationThreads()));
-        setDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
         setCHProfiles(ghConfig.getCHProfiles());
         pMap = ghConfig.asPMap();
     }
 
     public final boolean isEnabled() {
         return !chProfiles.isEmpty() || !chConfigs.isEmpty() || !preparations.isEmpty();
-    }
-
-    public final boolean isDisablingAllowed() {
-        return disablingAllowed;
-    }
-
-    /**
-     * This method specifies if it is allowed to disable CH routing at runtime via routing hints.
-     */
-    public final CHPreparationHandler setDisablingAllowed(boolean disablingAllowed) {
-        this.disablingAllowed = disablingAllowed;
-        return this;
     }
 
     /**
@@ -159,14 +144,6 @@ public class CHPreparationHandler {
 
     public List<PrepareContractionHierarchies> getPreparations() {
         return preparations;
-    }
-
-    /**
-     * @return a {@link RoutingAlgorithmFactory} for CH or throw an error if no preparation is available for the given
-     * profile name
-     */
-    public RoutingAlgorithmFactory getAlgorithmFactory(String profile) {
-        return getPreparation(profile).getRoutingAlgorithmFactory();
     }
 
     public PrepareContractionHierarchies getPreparation(String profile) {
