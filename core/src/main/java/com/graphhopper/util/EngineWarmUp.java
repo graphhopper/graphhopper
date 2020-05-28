@@ -59,8 +59,8 @@ public class EngineWarmUp {
         Random rand = new Random(0);
 
         for (int i = 0; i < iterations; i++) {
-            int startNode = rand.nextInt(graphHopper.getRoutingConfig().getMaxVisitedNodes() + 1);
-            int endNode = rand.nextInt(graphHopper.getRoutingConfig().getMaxVisitedNodes() + 1);
+            int startNode = rand.nextInt(graphHopper.getRouterConfig().getMaxVisitedNodes() + 1);
+            int endNode = rand.nextInt(graphHopper.getRouterConfig().getMaxVisitedNodes() + 1);
 
             double fromLatitude = ghStorage.getNodeAccess().getLatitude(startNode);
             double fromLongitude = ghStorage.getNodeAccess().getLongitude(startNode);
@@ -83,13 +83,13 @@ public class EngineWarmUp {
 
                 @Override
                 protected GHBitSet createBitSet() {
-                    return new GHTBitSet(graphHopper.getRoutingConfig().getMaxVisitedNodes());
+                    return new GHTBitSet(graphHopper.getRouterConfig().getMaxVisitedNodes());
                 }
 
                 @Override
                 public boolean goFurther(int nodeId) {
                     counter++;
-                    return counter < graphHopper.getRoutingConfig().getMaxVisitedNodes();
+                    return counter < graphHopper.getRouterConfig().getMaxVisitedNodes();
                 }
             };
             int startNode = rand.nextInt(ghStorage.getBaseGraph().getNodes() + 1);

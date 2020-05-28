@@ -19,9 +19,9 @@
 package com.graphhopper.routing;
 
 /**
- * This class contains various parameters that control the behavior of {@link GraphHopperRouter}.
+ * This class contains various parameters that control the behavior of {@link Router}.
  */
-public class RoutingConfig {
+public class RouterConfig {
     private int maxVisitedNodes = Integer.MAX_VALUE;
     private int maxRoundTripRetries = 3;
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;

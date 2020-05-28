@@ -53,14 +53,14 @@ import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 import static com.graphhopper.util.Parameters.Routing.POINT_HINT;
 
-public class GraphHopperRouter {
+public class Router {
     private final GraphHopperStorage ghStorage;
     private final EncodingManager encodingManager;
     private final LocationIndex locationIndex;
     private final Map<String, Profile> profilesByName;
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final TranslationMap translationMap;
-    private final RoutingConfig routingConfig;
+    private final RouterConfig routerConfig;
     private final WeightingFactory weightingFactory;
     // todo: these should not be necessary anymore as soon as GraphHopperStorage (or something that replaces) it acts
     // like a 'graph database'
@@ -69,17 +69,17 @@ public class GraphHopperRouter {
     private final boolean chEnabled;
     private final boolean lmEnabled;
 
-    public GraphHopperRouter(GraphHopperStorage ghStorage, LocationIndex locationIndex,
-                             Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathDetailsBuilderFactory,
-                             TranslationMap translationMap, RoutingConfig routingConfig, WeightingFactory weightingFactory,
-                             Map<String, CHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
+    public Router(GraphHopperStorage ghStorage, LocationIndex locationIndex,
+                  Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathDetailsBuilderFactory,
+                  TranslationMap translationMap, RouterConfig routerConfig, WeightingFactory weightingFactory,
+                  Map<String, CHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
         this.ghStorage = ghStorage;
         this.encodingManager = ghStorage.getEncodingManager();
         this.locationIndex = locationIndex;
         this.profilesByName = profilesByName;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
         this.translationMap = translationMap;
-        this.routingConfig = routingConfig;
+        this.routerConfig = routerConfig;
         this.weightingFactory = weightingFactory;
         this.chGraphs = chGraphs;
         this.landmarks = landmarks;
@@ -145,9 +145,9 @@ public class GraphHopperRouter {
                 return Collections.emptyList();
 
             QueryGraph queryGraph = QueryGraph.create(graph, qResults);
-            int maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
-            if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
-                throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
+            int maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
+            if (maxVisitedNodesForRequest > routerConfig.getMaxVisitedNodes())
+                throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routerConfig.getMaxVisitedNodes());
 
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
                     algorithm(algoStr).
@@ -161,7 +161,7 @@ public class GraphHopperRouter {
             List<Path> altPaths = routingTemplate.calcPaths(queryGraph, algorithmFactory, algoOpts);
 
             boolean tmpEnableInstructions = request.getHints().getBool(Parameters.Routing.INSTRUCTIONS, encodingManager.isEnableInstructions());
-            boolean tmpCalcPoints = request.getHints().getBool(Parameters.Routing.CALC_POINTS, routingConfig.isCalcPoints());
+            boolean tmpCalcPoints = request.getHints().getBool(Parameters.Routing.CALC_POINTS, routerConfig.isCalcPoints());
             double wayPointMaxDistance = request.getHints().getDouble(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 1d);
 
             DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
@@ -170,7 +170,7 @@ public class GraphHopperRouter {
                     setDouglasPeucker(peucker).
                     setEnableInstructions(tmpEnableInstructions).
                     setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
-                    setSimplifyResponse(routingConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
+                    setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
 
             if (!request.getHeadings().isEmpty())
                 pathMerger.setFavoredHeading(request.getHeadings().get(0));
@@ -184,10 +184,10 @@ public class GraphHopperRouter {
     }
 
     public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
-        if (chEnabled && disableCH && !routingConfig.isCHDisablingAllowed()) {
+        if (chEnabled && disableCH && !routerConfig.isCHDisablingAllowed()) {
             throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
         }
-        if (lmEnabled && disableLM && !routingConfig.isLMDisablingAllowed()) {
+        if (lmEnabled && disableLM && !routerConfig.isLMDisablingAllowed()) {
             throw new IllegalArgumentException("Disabling LM is not allowed on the server side");
         }
 
@@ -205,7 +205,7 @@ public class GraphHopperRouter {
                 throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'" +
                         "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
                         "\navailable LM profiles: " + landmarks.keySet());
-            return new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routingConfig.getActiveLandmarkCount());
+            return new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routerConfig.getActiveLandmarkCount());
         } else {
             return new RoutingAlgorithmFactorySimple();
         }
@@ -241,11 +241,11 @@ public class GraphHopperRouter {
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
         boolean disableCH = getDisableCH(request.getHints());
-        if (chEnabled && !routingConfig.isCHDisablingAllowed() && disableCH)
+        if (chEnabled && !routerConfig.isCHDisablingAllowed() && disableCH)
             throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
 
         boolean disableLM = getDisableLM(request.getHints());
-        if (lmEnabled && !routingConfig.isLMDisablingAllowed() && disableLM)
+        if (lmEnabled && !routerConfig.isLMDisablingAllowed() && disableLM)
             throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
 
         // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
@@ -279,7 +279,7 @@ public class GraphHopperRouter {
     protected RoutingTemplate createRoutingTemplate(GHRequest request, GHResponse ghRsp, String algoStr, Weighting weighting) {
         RoutingTemplate routingTemplate;
         if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-            routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, routingConfig.getMaxRoundTripRetries());
+            routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, routerConfig.getMaxRoundTripRetries());
         else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
             routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
         else
@@ -298,7 +298,7 @@ public class GraphHopperRouter {
     }
 
     private void checkNonChMaxWaypointDistance(List<GHPoint> points) {
-        if (routingConfig.getNonChMaxWaypointDistance() == Integer.MAX_VALUE) {
+        if (routerConfig.getNonChMaxWaypointDistance() == Integer.MAX_VALUE) {
             return;
         }
         GHPoint lastPoint = points.get(0);
@@ -308,7 +308,7 @@ public class GraphHopperRouter {
         for (int i = 1; i < points.size(); i++) {
             point = points.get(i);
             dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
-            if (dist > routingConfig.getNonChMaxWaypointDistance()) {
+            if (dist > routerConfig.getNonChMaxWaypointDistance()) {
                 Map<String, Object> detailMap = new HashMap<>(2);
                 detailMap.put("from", i - 1);
                 detailMap.put("to", i);

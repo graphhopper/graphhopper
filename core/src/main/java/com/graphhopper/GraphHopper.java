@@ -87,7 +87,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean fullyLoaded = false;
     private boolean smoothElevation = false;
     // for routing
-    private final RoutingConfig routingConfig = new RoutingConfig();
+    private final RouterConfig routerConfig = new RouterConfig();
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -186,7 +186,7 @@ public class GraphHopper implements GraphHopperAPI {
      * also optimized for usage in the web module i.e. try reduce network IO.
      */
     public GraphHopper forServer() {
-        routingConfig.setSimplifyResponse(true);
+        routerConfig.setSimplifyResponse(true);
         return setInMemory();
     }
 
@@ -195,7 +195,7 @@ public class GraphHopper implements GraphHopperAPI {
      * application with enough RAM but no network latency.
      */
     public GraphHopper forDesktop() {
-        routingConfig.setSimplifyResponse(false);
+        routerConfig.setSimplifyResponse(false);
         return setInMemory();
     }
 
@@ -204,7 +204,7 @@ public class GraphHopper implements GraphHopperAPI {
      * Raspberry Pi with only few MB of RAM.
      */
     public GraphHopper forMobile() {
-        routingConfig.setSimplifyResponse(false);
+        routerConfig.setSimplifyResponse(false);
         return setMemoryMapped();
     }
 
@@ -508,16 +508,16 @@ public class GraphHopper implements GraphHopperAPI {
         maxRegionSearch = ghConfig.getInt("index.max_region_search", maxRegionSearch);
 
         // routing
-        routingConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes()));
-        routingConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routingConfig.getMaxRoundTripRetries()));
-        routingConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routingConfig.getNonChMaxWaypointDistance()));
-        routingConfig.setCHDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, routingConfig.isCHDisablingAllowed()));
-        routingConfig.setLMDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, routingConfig.isLMDisablingAllowed()));
+        routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
+        routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
+        routerConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routerConfig.getNonChMaxWaypointDistance()));
+        routerConfig.setCHDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, routerConfig.isCHDisablingAllowed()));
+        routerConfig.setLMDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, routerConfig.isLMDisablingAllowed()));
         int activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, lmPreparationHandler.getLandmarks()));
         if (activeLandmarkCount > lmPreparationHandler.getLandmarks())
             throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount
                     + " should be less or equal to landmark count of " + lmPreparationHandler.getLandmarks());
-        routingConfig.setActiveLandmarkCount(activeLandmarkCount);
+        routerConfig.setActiveLandmarkCount(activeLandmarkCount);
 
         return this;
     }
@@ -974,10 +974,10 @@ public class GraphHopper implements GraphHopperAPI {
      * This method calculates the alternative path list using the low level Path objects.
      */
     public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
-        return createGraphHopperRouter().route(request, ghRsp);
+        return createRouter().route(request, ghRsp);
     }
 
-    private GraphHopperRouter createGraphHopperRouter() {
+    private Router createRouter() {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
         if (ghStorage.isClosed())
@@ -998,8 +998,8 @@ public class GraphHopper implements GraphHopperAPI {
                             ? lmPreparationHandler.getPreparation(lmp.getPreparationProfile()).getLandmarkStorage()
                             : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
         }
-        return new GraphHopperRouter(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
-                trMap, routingConfig, createWeightingFactory(), chGraphs, landmarks
+        return new Router(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
+                trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks
         );
     }
 
@@ -1167,7 +1167,7 @@ public class GraphHopper implements GraphHopperAPI {
         fullyLoaded = true;
     }
 
-    public RoutingConfig getRoutingConfig() {
-        return routingConfig;
+    public RouterConfig getRouterConfig() {
+        return routerConfig;
     }
 }
