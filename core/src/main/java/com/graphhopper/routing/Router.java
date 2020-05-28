@@ -83,7 +83,7 @@ public class Router {
         this.weightingFactory = weightingFactory;
         this.chGraphs = chGraphs;
         this.landmarks = landmarks;
-        // todonow: this is not the same as !ghStorage.getCHConfigs().isEmpty(), because the GHStorage might have some
+        // note that his is not the same as !ghStorage.getCHConfigs().isEmpty(), because the GHStorage might have some
         // CHGraphs that were not built yet (and possibly no CH profiles were configured). If this wasn't so we would
         // not need the chGraphs map at all here, because we could get the CHGraphs from GHStorage
         this.chEnabled = !chGraphs.isEmpty();

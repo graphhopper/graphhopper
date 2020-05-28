@@ -26,7 +26,6 @@ public class RouterConfig {
     private int maxRoundTripRetries = 3;
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     private boolean chDisablingAllowed = false;
-    // todonow: is this the intended default?
     private boolean lmDisablingAllowed = true;
     private boolean calcPoints = true;
     private boolean simplifyResponse = true;
