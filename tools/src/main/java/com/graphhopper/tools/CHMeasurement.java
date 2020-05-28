@@ -25,8 +25,6 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -110,8 +108,9 @@ public class CHMeasurement {
                     new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(false)
             ));
         }
-        CHPreparationHandler chHandler = graphHopper.getCHPreparationHandler();
-        chHandler.setDisablingAllowed(true);
+        graphHopper.getRouterConfig().setCHDisablingAllowed(true);
+        graphHopper.getRouterConfig().setLMDisablingAllowed(true);
+
         ghConfig.putObject(PERIODIC_UPDATES, periodicUpdates);
         ghConfig.putObject(LAST_LAZY_NODES_UPDATES, lazyUpdates);
         ghConfig.putObject(NEIGHBOR_UPDATES, neighborUpdates);
@@ -123,9 +122,6 @@ public class CHMeasurement {
         ghConfig.putObject(SIGMA_FACTOR, sigmaFactor);
         ghConfig.putObject(MIN_MAX_SETTLED_EDGES, minMaxSettledEdges);
         ghConfig.putObject(SETTLED_EDGES_RESET_INTERVAL, resetInterval);
-
-        LMPreparationHandler lmHandler = graphHopper.getLMPreparationHandler();
-        lmHandler.setDisablingAllowed(true);
 
         LOGGER.info("Initializing graph hopper with args: {}", ghConfig);
         graphHopper.init(ghConfig);

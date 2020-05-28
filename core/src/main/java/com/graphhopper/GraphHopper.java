@@ -25,24 +25,18 @@ import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
 import com.graphhopper.routing.ev.EncodedValueFactory;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
-import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
-import com.graphhopper.routing.template.AlternativeRoutingTemplate;
-import com.graphhopper.routing.template.RoundTripRoutingTemplate;
-import com.graphhopper.routing.template.RoutingTemplate;
-import com.graphhopper.routing.template.ViaRoutingTemplate;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
@@ -51,16 +45,11 @@ import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.exceptions.PointDistanceExceededException;
-import com.graphhopper.util.exceptions.PointOutOfBoundsException;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,11 +58,8 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
-import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
-import static com.graphhopper.util.Parameters.Routing.POINT_HINT;
+import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -101,7 +87,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean fullyLoaded = false;
     private boolean smoothElevation = false;
     // for routing
-    private final RoutingConfig routingConfig = new RoutingConfig();
+    private final RouterConfig routerConfig = new RouterConfig();
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -200,7 +186,7 @@ public class GraphHopper implements GraphHopperAPI {
      * also optimized for usage in the web module i.e. try reduce network IO.
      */
     public GraphHopper forServer() {
-        setSimplifyResponse(true);
+        routerConfig.setSimplifyResponse(true);
         return setInMemory();
     }
 
@@ -209,7 +195,7 @@ public class GraphHopper implements GraphHopperAPI {
      * application with enough RAM but no network latency.
      */
     public GraphHopper forDesktop() {
-        setSimplifyResponse(false);
+        routerConfig.setSimplifyResponse(false);
         return setInMemory();
     }
 
@@ -218,7 +204,7 @@ public class GraphHopper implements GraphHopperAPI {
      * Raspberry Pi with only few MB of RAM.
      */
     public GraphHopper forMobile() {
-        setSimplifyResponse(false);
+        routerConfig.setSimplifyResponse(false);
         return setMemoryMapped();
     }
 
@@ -327,18 +313,6 @@ public class GraphHopper implements GraphHopperAPI {
         return profilesByName.get(profileName);
     }
 
-    public int getMaxVisitedNodes() {
-        return routingConfig.getMaxVisitedNodes();
-    }
-
-    /**
-     * This methods stops the algorithm from searching further if the resulting path would go over
-     * the specified node count, important if none-CH routing is used.
-     */
-    public void setMaxVisitedNodes(int maxVisitedNodes) {
-        routingConfig.setMaxVisitedNodes(maxVisitedNodes);
-    }
-
     /**
      * @return true if storing and fetching elevation data is enabled. Default is false
      */
@@ -351,23 +325,6 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public GraphHopper setElevation(boolean includeElevation) {
         this.elevation = includeElevation;
-        return this;
-    }
-
-    /**
-     * This methods enables gps point calculation. If disabled only distance will be calculated.
-     */
-    public GraphHopper setEnableCalcPoints(boolean b) {
-        routingConfig.setCalcPoints(b);
-        return this;
-    }
-
-    /**
-     * This method specifies if the returned path should be simplified or not, via douglas-peucker
-     * or similar algorithm.
-     */
-    private GraphHopper setSimplifyResponse(boolean doSimplify) {
-        routingConfig.setSimplifyResponse(doSimplify);
         return this;
     }
 
@@ -551,9 +508,16 @@ public class GraphHopper implements GraphHopperAPI {
         maxRegionSearch = ghConfig.getInt("index.max_region_search", maxRegionSearch);
 
         // routing
-        routingConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes()));
-        routingConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routingConfig.getMaxRoundTripRetries()));
-        routingConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routingConfig.getNonChMaxWaypointDistance()));
+        routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
+        routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
+        routerConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routerConfig.getNonChMaxWaypointDistance()));
+        routerConfig.setCHDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, routerConfig.isCHDisablingAllowed()));
+        routerConfig.setLMDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, routerConfig.isLMDisablingAllowed()));
+        int activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, lmPreparationHandler.getLandmarks()));
+        if (activeLandmarkCount > lmPreparationHandler.getLandmarks())
+            throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount
+                    + " should be less or equal to landmark count of " + lmPreparationHandler.getLandmarks());
+        routerConfig.setActiveLandmarkCount(activeLandmarkCount);
 
         return this;
     }
@@ -870,32 +834,6 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
-        if (chPreparationHandler.isEnabled() && disableCH && !chPreparationHandler.isDisablingAllowed()) {
-            throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
-        }
-        if (lmPreparationHandler.isEnabled() && disableLM && !lmPreparationHandler.isDisablingAllowed()) {
-            throw new IllegalArgumentException("Disabling LM is not allowed on the server side");
-        }
-
-        // for now do not allow mixing CH&LM #1082,#1889
-        if (chPreparationHandler.isEnabled() && !disableCH) {
-            return chPreparationHandler.getAlgorithmFactory(profile);
-        } else if (lmPreparationHandler.isEnabled() && !disableLM) {
-            for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
-                if (lmp.getProfile().equals(profile)) {
-                    return lmp.usesOtherPreparation()
-                            // cross-querying
-                            ? lmPreparationHandler.getAlgorithmFactory(lmp.getPreparationProfile())
-                            : lmPreparationHandler.getAlgorithmFactory(lmp.getProfile());
-                }
-            }
-            throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'");
-        } else {
-            return new RoutingAlgorithmFactorySimple();
-        }
-    }
-
     public final CHPreparationHandler getCHPreparationHandler() {
         return chPreparationHandler;
     }
@@ -1036,211 +974,33 @@ public class GraphHopper implements GraphHopperAPI {
      * This method calculates the alternative path list using the low level Path objects.
      */
     public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
+        return createRouter().route(request, ghRsp);
+    }
+
+    private Router createRouter() {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
-
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
-
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        try {
-            validateRequest(request);
-            final boolean disableCH = getDisableCH(request.getHints());
-            final boolean disableLM = getDisableLM(request.getHints());
-            Profile profile = profilesByName.get(request.getProfile());
-            if (profile == null)
-                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist.\nAvailable profiles: " + profilesByName.keySet());
-            if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
-                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs" +
-                        "\nThe following profiles do support turn costs: " + getTurnCostProfiles());
-
-            // todo later: should we be able to control this using the edge_based parameter?
-            TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
-            RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile.getName(), disableCH, disableLM);
-            Weighting weighting;
-            Graph graph = ghStorage;
-            if (chPreparationHandler.isEnabled() && !disableCH) {
-                if (!(algorithmFactory instanceof CHRoutingAlgorithmFactory))
-                    throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algorithmFactory);
-
-                if (request.getHints().has(Routing.BLOCK_AREA))
-                    throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
-
-                CHConfig chConfig = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHConfig();
-                weighting = chConfig.getWeighting();
-                graph = ghStorage.getCHGraph(chConfig);
-            } else {
-                checkNonChMaxWaypointDistance(request.getPoints());
-                final int uTurnCostsInt = request.getHints().getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-                if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
-                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, you need to use a profile that" +
-                            "supports turn costs. Currently the following profiles that support turn costs are available: " + getTurnCostProfiles());
-                }
-                FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-                weighting = createWeighting(profile, request.getHints());
-                if (request.getHints().has(Routing.BLOCK_AREA))
-                    weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
-                            request.getPoints(), request.getHints(), DefaultEdgeFilter.allEdges(encoder)));
-            }
-            ghRsp.addDebugInfo("tmode:" + tMode.toString());
-
-            String algoStr = request.getAlgorithm();
-            if (algoStr.isEmpty())
-                algoStr = chPreparationHandler.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
-            RoutingTemplate routingTemplate = createRoutingTemplate(request, ghRsp, algoStr, weighting);
-
-            StopWatch sw = new StopWatch().start();
-            List<QueryResult> qResults = routingTemplate.lookup(request.getPoints());
-            ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-            if (ghRsp.hasErrors())
-                return Collections.emptyList();
-
-            QueryGraph queryGraph = QueryGraph.create(graph, qResults);
-            int maxVisitedNodesForRequest = request.getHints().getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
-            if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
-                throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
-
-            AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                    algorithm(algoStr).
-                    traversalMode(tMode).
-                    weighting(weighting).
-                    maxVisitedNodes(maxVisitedNodesForRequest).
-                    hints(request.getHints()).
-                    build();
-
-            // do the actual route calculation !
-            List<Path> altPaths = routingTemplate.calcPaths(queryGraph, algorithmFactory, algoOpts);
-
-            boolean tmpEnableInstructions = request.getHints().getBool(Routing.INSTRUCTIONS, encodingManager.isEnableInstructions());
-            boolean tmpCalcPoints = request.getHints().getBool(Routing.CALC_POINTS, routingConfig.isCalcPoints());
-            double wayPointMaxDistance = request.getHints().getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
-
-            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
-            PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
-                    setCalcPoints(tmpCalcPoints).
-                    setDouglasPeucker(peucker).
-                    setEnableInstructions(tmpEnableInstructions).
-                    setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
-                    setSimplifyResponse(routingConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
-
-            if (!request.getHeadings().isEmpty())
-                pathMerger.setFavoredHeading(request.getHeadings().get(0));
-
-            routingTemplate.finish(pathMerger, trMap.getWithFallBack(request.getLocale()));
-            return altPaths;
-        } catch (IllegalArgumentException ex) {
-            ghRsp.addError(ex);
-            return Collections.emptyList();
+        Map<String, CHGraph> chGraphs = new LinkedHashMap<>();
+        for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
+            String chGraphName = chPreparationHandler.getPreparation(chProfile.getProfile()).getCHConfig().getName();
+            chGraphs.put(chProfile.getProfile(), ghStorage.getCHGraph(chGraphName));
         }
-    }
-
-    private List<String> getTurnCostProfiles() {
-        List<String> turnCostProfiles = new ArrayList<>();
-        for (Profile p : profilesByName.values()) {
-            if (p.isTurnCosts()) {
-                turnCostProfiles.add(p.getName());
-            }
+        Map<String, LandmarkStorage> landmarks = new LinkedHashMap<>();
+        for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
+            landmarks.put(lmp.getProfile(),
+                    lmp.usesOtherPreparation()
+                            // cross-querying
+                            ? lmPreparationHandler.getPreparation(lmp.getPreparationProfile()).getLandmarkStorage()
+                            : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
         }
-        return turnCostProfiles;
-    }
-
-    protected void validateRequest(GHRequest request) {
-        if (Helper.isEmpty(request.getProfile()))
-            throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see docs/core/profiles.md");
-
-        if (request.getHints().has("vehicle"))
-            throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see docs/core/profiles.md");
-        if (request.getHints().has("weighting"))
-            throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see docs/core/profiles.md");
-        if (request.getHints().has(Routing.TURN_COSTS))
-            throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see docs/core/profiles.md");
-        if (request.getHints().has(Routing.EDGE_BASED))
-            throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see docs/core/profiles.md");
-
-        if (request.getPoints().isEmpty())
-            throw new IllegalArgumentException("You have to pass at least one point");
-        checkIfPointsAreInBounds(request.getPoints());
-
-        if (request.getHeadings().size() > 1 && request.getHeadings().size() != request.getPoints().size())
-            throw new IllegalArgumentException("The number of 'heading' parameters must be zero, one "
-                    + "or equal to the number of points (" + request.getPoints().size() + ")");
-        for (int i = 0; i < request.getHeadings().size(); i++)
-            if (!GHRequest.isAzimuthValue(request.getHeadings().get(i)))
-                throw new IllegalArgumentException("Heading for point " + i + " must be in range [0,360) or NaN, but was: " + request.getHeadings().get(i));
-
-        if (request.getPointHints().size() > 0 && request.getPointHints().size() != request.getPoints().size())
-            throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
-        if (request.getCurbsides().size() > 0 && request.getCurbsides().size() != request.getPoints().size())
-            throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
-
-        boolean disableCH = getDisableCH(request.getHints());
-        if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
-            throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
-
-        boolean disableLM = getDisableLM(request.getHints());
-        if (lmPreparationHandler.isEnabled() && !lmPreparationHandler.isDisablingAllowed() && disableLM)
-            throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
-
-        // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
-        if (chPreparationHandler.isEnabled() && !disableCH) {
-            if (!request.getHeadings().isEmpty())
-                throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
-
-            if (request.getHints().getBool(Routing.PASS_THROUGH, false))
-                throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
-        }
-    }
-
-    private boolean getDisableLM(PMap hints) {
-        return hints.getBool(Landmark.DISABLE, false);
-    }
-
-    private boolean getDisableCH(PMap hints) {
-        return hints.getBool(CH.DISABLE, false);
-    }
-
-    protected RoutingTemplate createRoutingTemplate(GHRequest request, GHResponse ghRsp, String algoStr, Weighting weighting) {
-        RoutingTemplate routingTemplate;
-        if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-            routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, routingConfig.getMaxRoundTripRetries());
-        else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
-        else
-            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
-        return routingTemplate;
-    }
-
-    private void checkIfPointsAreInBounds(List<GHPoint> points) {
-        BBox bounds = ghStorage.getBounds();
-        for (int i = 0; i < points.size(); i++) {
-            GHPoint point = points.get(i);
-            if (!bounds.contains(point.getLat(), point.getLon())) {
-                throw new PointOutOfBoundsException("Point " + i + " is out of bounds: " + point, i);
-            }
-        }
-    }
-
-    private void checkNonChMaxWaypointDistance(List<GHPoint> points) {
-        if (routingConfig.getNonChMaxWaypointDistance() == Integer.MAX_VALUE) {
-            return;
-        }
-        GHPoint lastPoint = points.get(0);
-        GHPoint point;
-        double dist;
-        DistanceCalc calc = DIST_EARTH;
-        for (int i = 1; i < points.size(); i++) {
-            point = points.get(i);
-            dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
-            if (dist > routingConfig.getNonChMaxWaypointDistance()) {
-                Map<String, Object> detailMap = new HashMap<>(2);
-                detailMap.put("from", i - 1);
-                detailMap.put("to", i);
-                throw new PointDistanceExceededException("Point " + i + " is too far from Point " + (i - 1) + ": " + point, detailMap);
-            }
-            lastPoint = point;
-        }
+        return new Router(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
+                trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks
+        );
     }
 
     protected LocationIndex createLocationIndex(Directory dir) {
@@ -1403,59 +1163,11 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Writes are not allowed!");
     }
 
-    public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
-        routingConfig.setNonChMaxWaypointDistance(nonChMaxWaypointDistance);
-    }
-
     private void setFullyLoaded() {
         fullyLoaded = true;
     }
 
-    private static class RoutingConfig {
-        private int maxVisitedNodes = Integer.MAX_VALUE;
-        private int maxRoundTripRetries = 3;
-        private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
-        private boolean calcPoints = true;
-        private boolean simplifyResponse = true;
-
-        public int getMaxVisitedNodes() {
-            return maxVisitedNodes;
-        }
-
-        public void setMaxVisitedNodes(int maxVisitedNodes) {
-            this.maxVisitedNodes = maxVisitedNodes;
-        }
-
-        public int getMaxRoundTripRetries() {
-            return maxRoundTripRetries;
-        }
-
-        public void setMaxRoundTripRetries(int maxRoundTripRetries) {
-            this.maxRoundTripRetries = maxRoundTripRetries;
-        }
-
-        public int getNonChMaxWaypointDistance() {
-            return nonChMaxWaypointDistance;
-        }
-
-        public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
-            this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
-        }
-
-        public boolean isCalcPoints() {
-            return calcPoints;
-        }
-
-        public void setCalcPoints(boolean calcPoints) {
-            this.calcPoints = calcPoints;
-        }
-
-        public boolean isSimplifyResponse() {
-            return simplifyResponse;
-        }
-
-        public void setSimplifyResponse(boolean simplifyResponse) {
-            this.simplifyResponse = simplifyResponse;
-        }
+    public RouterConfig getRouterConfig() {
+        return routerConfig;
     }
 }

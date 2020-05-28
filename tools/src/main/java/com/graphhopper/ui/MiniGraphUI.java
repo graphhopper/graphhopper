@@ -27,9 +27,10 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -103,11 +104,9 @@ public class MiniGraphUI {
         if (ch) {
             CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
             weighting = chConfig.getWeighting();
-            routingGraph = hopper.getGraphHopperStorage().getCHGraph(chConfig);
+            routingGraph = hopper.getGraphHopperStorage().getCHGraph(chConfig.getName());
 
-            boolean disableCH = false;
-            boolean disableLM = true;
-            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
+            final PrepareContractionHierarchies preparation = hopper.getCHPreparationHandler().getPreparation(profile.getName());
             algoFactory = new RoutingAlgorithmFactory() {
 
                 class TmpAlgo extends DijkstraBidirectionCH implements DebugAlgo {
@@ -136,7 +135,7 @@ public class MiniGraphUI {
                 @Override
                 public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                     // doable but ugly
-                    Weighting w = ((CHRoutingAlgorithmFactory) tmpFactory).getWeighting();
+                    Weighting w = preparation.getCHConfig().getWeighting();
                     return new TmpAlgo(new RoutingCHGraphImpl(routingGraph, w), mg);
                 }
             };
@@ -145,14 +144,11 @@ public class MiniGraphUI {
         } else {
             routingGraph = graph;
             weighting = hopper.createWeighting(profile, new PMap());
-            boolean disableCH = true;
-            boolean disableLM = false;
-            final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
+            final PrepareLandmarks preparation = hopper.getLMPreparationHandler().getPreparation(profile.getName());
             algoFactory = new RoutingAlgorithmFactory() {
-
                 @Override
                 public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                    RoutingAlgorithm algo = tmpFactory.createAlgo(g, opts);
+                    RoutingAlgorithm algo = preparation.getRoutingAlgorithmFactory().createAlgo(g, opts);
                     if (algo instanceof AStarBidirection) {
                         return new DebugAStarBi(g, opts.getWeighting(), opts.getTraversalMode(), mg).
                                 setApproximation(((AStarBidirection) algo).getApproximation());
