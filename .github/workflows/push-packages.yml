@@ -1,4 +1,4 @@
-name: Publish packages to GitHub Packages
+name: Publish GraphHopper packages to GitHub Packages
 on: push
 jobs:
   publish:
