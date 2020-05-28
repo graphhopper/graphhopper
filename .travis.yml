@@ -49,7 +49,11 @@ after_success:
         echo "release to maven central";
         mvn versions:set -DnewVersion=$TRAVIS_TAG -DgenerateBackupPoms=false;
         mvn deploy -P release --settings core/files/settings.xml -DskipTests=true -B;
-    elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+    elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ]
+        echo "release to github packages";
+        # 1. how can we avoid/include pushing SNAPSHOTs to sonatype?
+        # 2. or should we use TRAVIS_JOB_NUMBER instead of TRAVIS_COMMIT? and potentially prefix with TRAVIS_PULL_REQUEST?
+        mvn versions:set -DnewVersion=$TRAVIS_COMMIT -DgenerateBackupPoms=false;
         mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
