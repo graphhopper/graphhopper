@@ -8,7 +8,6 @@ env:
     # TODO move this into the travis settings
     - secure: "j6a61/qnfFcSjx5XxmxO2hqBOwtVx5HWrD1+4Atl7WG/pRKz9+jSga1Y7oDAFb2SIl8S65kDmPQB/vC8aHxUDj/Wizjxnxn1FhPqoe9yO6Ztft+984FKFyvj7s6tsBJKcehGec+chTOwZQpH4oI4rU6IlepDHnGLHiOd0Iviryg="
     - secure: "GiFr+v2lTQk/sTQB7CYjju1/mupS8LSJupmizLqY454utiZkabDMBOZQnF9ukpy7WhveB9hKQyEKf9iP2w7HSYEjgvogT26vZ5f2MeLnR4SWvqEtf/WBvvh+W+k/rb2f6YgitkB4Jlxn2izemBEDuKplGJphzGW41lf8XZ2IxVI="
-    - NODE_VERSION="10.16.0"
 
 matrix:
   include:
@@ -28,7 +27,6 @@ before_install:
   - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
   - 'wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh'
-  - nvm install $NODE_VERSION
 
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
@@ -44,15 +42,15 @@ after_success:
   - if [ "$SKIP_EXT_TESTS" != "true" ]; then
         mvn checkstyle:check forbiddenapis:check;
     fi
-  # if tagged deploy then release to maven central or deploy snapshot artifacts to sonatype 
+  # a tagged commit should end up at maven central otherwise at github packages repo
+  # 1. how can we avoid/include pushing SNAPSHOTs to sonatype?
+  # 2. or should we use TRAVIS_JOB_NUMBER instead of TRAVIS_COMMIT? and potentially prefix with TRAVIS_PULL_REQUEST?
   - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
         echo "release to maven central";
         mvn versions:set -DnewVersion=$TRAVIS_TAG -DgenerateBackupPoms=false;
         mvn deploy -P release --settings core/files/settings.xml -DskipTests=true -B;
     elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ]; then
         echo "release to github packages";
-        # 1. how can we avoid/include pushing SNAPSHOTs to sonatype?
-        # 2. or should we use TRAVIS_JOB_NUMBER instead of TRAVIS_COMMIT? and potentially prefix with TRAVIS_PULL_REQUEST?
         mvn versions:set -DnewVersion=$TRAVIS_COMMIT -DgenerateBackupPoms=false;
         mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
     else
