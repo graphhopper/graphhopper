@@ -264,10 +264,11 @@
     </build>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
+        <repository>
+            <id>github</id>
+            <name>GitHub GraphHopper Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/graphhopper/graphhopper</url>
+        </repository>
     </distributionManagement>
 
     <!-- mvn clean deploy -P release -->
