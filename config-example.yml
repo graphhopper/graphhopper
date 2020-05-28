@@ -4,8 +4,6 @@ graphhopper:
   datareader.file: ""
   # Local folder used by graphhopper to store its data
   graph.location: graph-cache
-  # GTFS zip data for public transit module
-  gtfs.file: ""
 
   ##### Vehicles #####
 
