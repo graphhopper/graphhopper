@@ -13,6 +13,7 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
     public TimeWindow timeWindow;
     public double plannedTime;
     public double weight;
+    public double distance;
 
     public IdentifiedGHPoint3D(double lat, double lon, double elevation, String id) {
         super(lat, lon, elevation);
@@ -104,6 +105,14 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
         return this;
     }
 
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
+
     @Override
     public String toString() {
         return super.toString() + "," + id;
@@ -112,16 +121,17 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
 
     public String[] toGeoJsonWithId() {
         return new String[]{
-                String.valueOf(lat), // [0]
-                String.valueOf(lon), // [1]
-                String.valueOf(ele), // [2]
-                id, // [3]
-                getTimeWindow() != null ? String.valueOf(getTimeWindow().getStart() / 1000) : "", // [4]
-                getTimeWindow() != null ? String.valueOf(getTimeWindow().getEnd() / 1000) : "", // [5]
-                String.valueOf(getServiceTime() / 1000), // [6]
-                getDirection(), // [7]
-                String.valueOf(getPlannedTime() / 1000),
-                String.valueOf(getWeight())
+                String.valueOf(lat), // [0] Latitude
+                String.valueOf(lon), // [1] Longitude
+                String.valueOf(ele), // [2] Elevation
+                id, // [3] // ID
+                getTimeWindow() != null ? String.valueOf(getTimeWindow().getStart() / 1000) : "", // [4] Time window start
+                getTimeWindow() != null ? String.valueOf(getTimeWindow().getEnd() / 1000) : "", // [5] Time window end
+                String.valueOf(getServiceTime() / 1000), // [6] Service time
+                getDirection(), // [7] // Direction
+                String.valueOf(getPlannedTime() / 1000), // [8] Planned time
+                String.valueOf(getWeight()), // [9] Weight
+                String.valueOf(getDistance()) // [9] Weight
         };
     }
 }
