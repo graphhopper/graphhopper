@@ -32,8 +32,11 @@ import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.Translation;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -100,42 +103,53 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     @Override
     public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
         long visitedNodesSum = 0L;
-        final boolean viaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
+        final boolean passThrough = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
         final int pointsCount = ghRequest.getPoints().size();
         pathList = new ArrayList<>(pointsCount - 1);
 
-        List<DirectionResolverResult> directions = Collections.emptyList();
-        if (!ghRequest.getCurbsides().isEmpty()) {
-            DirectionResolver directionResolver = new DirectionResolver(queryGraph, accessEnc);
-            directions = new ArrayList<>(queryResults.size());
-            for (QueryResult qr : queryResults) {
-                directions.add(directionResolver.resolveDirections(qr.getClosestNode(), qr.getQueryPoint()));
-            }
-        }
+        List<DirectionResolverResult> directions = buildDirections(queryGraph);
+        HeadingResolver headingResolver = new HeadingResolver(queryGraph);
 
-        QueryResult fromQResult = queryResults.get(0);
-        StopWatch sw;
-        for (int placeIndex = 1; placeIndex < pointsCount; placeIndex++) {
-            if (placeIndex == 1) {
+        for (int p = 1; p < pointsCount; p++) {
+            QueryResult fromQResult = queryResults.get(p - 1);
+            QueryResult toQResult = queryResults.get(p);
+
+            if (p == 1) {
                 // enforce start direction
-                double initialHeading = ghRequest.getHeadings().isEmpty() ? Double.NaN : ghRequest.getHeadings().get(0);
-                queryGraph.enforceHeading(fromQResult.getClosestNode(), initialHeading, false);
-            } else if (viaTurnPenalty) {
+                if (!ghRequest.getHeadings().isEmpty()) {
+                    double heading = ghRequest.getHeadings().get(0);
+                    if (!Double.isNaN(heading))
+                        queryGraph.unfavorVirtualEdges(headingResolver.getEdgesWithDifferentHeading(fromQResult.getClosestNode(), heading));
+                }
+            } else if (passThrough) {
                 // enforce straight start after via stop
-                Path prevRoute = pathList.get(placeIndex - 2);
+                Path prevRoute = pathList.get(p - 2);
                 if (prevRoute.getEdgeCount() > 0) {
-                    EdgeIteratorState incomingVirtualEdge = prevRoute.getFinalEdge();
-                    queryGraph.unfavorVirtualEdgePair(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge());
+                    queryGraph.unfavorVirtualEdge(prevRoute.getFinalEdge().getEdge());
                 }
             }
 
-            QueryResult toQResult = queryResults.get(placeIndex);
-
             // enforce end direction
-            double heading = ghRequest.getPoints().size() == ghRequest.getHeadings().size() ? ghRequest.getHeadings().get(placeIndex) : Double.NaN;
-            queryGraph.enforceHeading(toQResult.getClosestNode(), heading, true);
+            if (ghRequest.getPoints().size() == ghRequest.getHeadings().size()) {
+                double heading = ghRequest.getHeadings().get(p);
+                if (!Double.isNaN(heading)) {
+                    // at via-nodes and the target node the heading parameter is interpreted as the direction we want
+                    // to enforce for arriving (not starting) at this node. the starting direction is not enforced at
+                    // all for these points (unless using pass through). see this forum discussion:
+                    // https://discuss.graphhopper.com/t/meaning-of-heading-parameter-for-via-routing/5643/6
+                    heading += 180;
+                    if (heading > 360)
+                        heading -= 360;
+                    queryGraph.unfavorVirtualEdges(headingResolver.getEdgesWithDifferentHeading(toQResult.getClosestNode(), heading));
+                }
+            }
 
-            sw = new StopWatch().start();
+            StopWatch sw = new StopWatch().start();
+            // todo: so far 'heading' is implemented like this: we mark the unfavored edges on the query graph and then
+            // our weighting applies a penalty to these edges. however, this only works for virtual edges and to make
+            // this compatible with edge-based routing we would have to use edge keys instead of edge ids. either way a
+            // better approach seems to be making the weighting (or the algorithm for that matter) aware of the unfavored
+            // edges directly without changing the graph
             RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);
             String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
 
@@ -150,13 +164,13 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 if (!(algo instanceof BidirRoutingAlgorithm))
                     throw new IllegalArgumentException("To make use of the " + Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
 
-                final String fromCurbside = ghRequest.getCurbsides().get(placeIndex - 1);
-                final String toCurbside = ghRequest.getCurbsides().get(placeIndex);
-                int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), fromCurbside);
-                int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), toCurbside);
+                final String fromCurbside = ghRequest.getCurbsides().get(p - 1);
+                final String toCurbside = ghRequest.getCurbsides().get(p);
+                int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(p - 1), fromCurbside);
+                int targetInEdge = DirectionResolverResult.getInEdge(directions.get(p), toCurbside);
                 final boolean forceCurbsides = ghRequest.getHints().getBool(Routing.FORCE_CURBSIDE, true);
-                sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbsides(sourceOutEdge, placeIndex - 1, forceCurbsides);
-                targetInEdge = ignoreThrowOrAcceptImpossibleCurbsides(targetInEdge, placeIndex, forceCurbsides);
+                sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbsides(sourceOutEdge, p - 1, forceCurbsides);
+                targetInEdge = ignoreThrowOrAcceptImpossibleCurbsides(targetInEdge, p, forceCurbsides);
 
                 if (fromQResult.getClosestNode() == toQResult.getClosestNode()) {
                     // special case where we go from one point back to itself. for example going from a point A
@@ -204,13 +218,23 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
 
             visitedNodesSum += algo.getVisitedNodes();
             responsePath.addDebugInfo("visited nodes sum: " + visitedNodesSum);
-            fromQResult = toQResult;
         }
 
         ghResponse.getHints().putObject("visited_nodes.sum", visitedNodesSum);
         ghResponse.getHints().putObject("visited_nodes.average", (float) visitedNodesSum / (pointsCount - 1));
 
         return pathList;
+    }
+
+    private List<DirectionResolverResult> buildDirections(QueryGraph queryGraph) {
+        if (ghRequest.getCurbsides().isEmpty())
+            return Collections.emptyList();
+        DirectionResolver directionResolver = new DirectionResolver(queryGraph, accessEnc);
+        List<DirectionResolverResult> directions = new ArrayList<>(queryResults.size());
+        for (QueryResult qr : queryResults) {
+            directions.add(directionResolver.resolveDirections(qr.getClosestNode(), qr.getQueryPoint()));
+        }
+        return directions;
     }
 
     private int ignoreThrowOrAcceptImpossibleCurbsides(int edge, int placeIndex, boolean forceCurbsides) {

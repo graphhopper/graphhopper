@@ -17,7 +17,9 @@
  */
 package com.graphhopper.routing.querygraph;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -29,7 +31,9 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.*;
@@ -49,11 +53,10 @@ import java.util.*;
  */
 public class QueryGraph implements Graph {
     static final int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
-    private static final AngleCalc AC = Helper.ANGLE_CALC;
     private final Graph mainGraph;
     private final int mainNodes;
     private final int mainEdges;
-    // todo: why do we need this and do we still need it when we stop wrapping CHGraph with QueryGraph ?
+    // todo: why do we need this and do we still need it when we stop wrapping CHGraph with QueryGraph?
     private final QueryGraph baseGraph;
     private final TurnCostStorage turnCostStorage;
     private final NodeAccess nodeAccess;
@@ -126,90 +129,31 @@ public class QueryGraph implements Graph {
         return nodeId >= mainNodes;
     }
 
-    /**
-     * Set those edges at the virtual node (nodeId) to 'unfavored' that require at least a turn of
-     * 100° from favoredHeading.
-     * <p>
-     *
-     * @param nodeId         VirtualNode at which edges get unfavored
-     * @param favoredHeading north based azimuth of favored heading between 0 and 360
-     * @param incoming       if true, incoming edges are unfavored, else outgoing edges
-     * @return boolean indicating if enforcement took place
-     */
-    public boolean enforceHeading(int nodeId, double favoredHeading, boolean incoming) {
-        if (Double.isNaN(favoredHeading))
-            return false;
-
-        if (!isVirtualNode(nodeId))
-            return false;
-
-        int virtNodeIDintern = nodeId - mainNodes;
-        favoredHeading = AC.convertAzimuth2xaxisAngle(favoredHeading);
-
-        // either penalize incoming or outgoing edges
-        int[] edgePositions = incoming ? new int[]{VE_BASE, VE_ADJ_REV} : new int[]{VE_BASE_REV, VE_ADJ};
-        boolean enforcementOccurred = false;
-        for (int edgePos : edgePositions) {
-            VirtualEdgeIteratorState edge = getVirtualEdge(virtNodeIDintern * 4 + edgePos);
-
-            PointList wayGeo = edge.fetchWayGeometry(FetchMode.ALL);
-            double edgeOrientation;
-            if (incoming) {
-                int numWayPoints = wayGeo.getSize();
-                edgeOrientation = AC.calcOrientation(wayGeo.getLat(numWayPoints - 2), wayGeo.getLon(numWayPoints - 2),
-                        wayGeo.getLat(numWayPoints - 1), wayGeo.getLon(numWayPoints - 1));
-            } else {
-                edgeOrientation = AC.calcOrientation(wayGeo.getLat(0), wayGeo.getLon(0),
-                        wayGeo.getLat(1), wayGeo.getLon(1));
-            }
-
-            edgeOrientation = AC.alignOrientation(favoredHeading, edgeOrientation);
-            double delta = (edgeOrientation - favoredHeading);
-
-            if (Math.abs(delta) > 1.74) // penalize if a turn of more than 100°
-            {
-                edge.setUnfavored(true);
-                unfavoredEdges.add(edge);
-                //also apply to opposite edge for reverse routing
-                VirtualEdgeIteratorState reverseEdge = getVirtualEdge(virtNodeIDintern * 4 + getPosOfReverseEdge(edgePos));
-                reverseEdge.setUnfavored(true);
-                unfavoredEdges.add(reverseEdge);
-                enforcementOccurred = true;
-            }
-
+    public void unfavorVirtualEdges(IntArrayList edgeIds) {
+        for (IntCursor c : edgeIds) {
+            unfavorVirtualEdge(c.value);
         }
-        return enforcementOccurred;
     }
 
     /**
-     * Sets the virtual edge with virtualEdgeId and its reverse edge to 'unfavored', which
-     * effectively penalizes both virtual edges towards an adjacent node of virtualNodeId.
-     * This makes it more likely (but does not guarantee) that the router chooses a route towards
-     * the other adjacent node of virtualNodeId.
-     * <p>
-     *
-     * @param virtualNodeId virtual node at which edges get unfavored
-     * @param virtualEdgeId this edge and the reverse virtual edge become unfavored
+     * Assigns the 'unfavored' flag to a virtual edge (for both directions)
      */
-    public void unfavorVirtualEdgePair(int virtualNodeId, int virtualEdgeId) {
-        if (!isVirtualNode(virtualNodeId)) {
-            throw new IllegalArgumentException("Node id " + virtualNodeId
-                    + " must be a virtual node.");
-        }
-
-        VirtualEdgeIteratorState incomingEdge =
-                (VirtualEdgeIteratorState) getEdgeIteratorState(virtualEdgeId, virtualNodeId);
-        VirtualEdgeIteratorState reverseEdge = (VirtualEdgeIteratorState) getEdgeIteratorState(
-                virtualEdgeId, incomingEdge.getBaseNode());
-        incomingEdge.setUnfavored(true);
-        unfavoredEdges.add(incomingEdge);
+    public void unfavorVirtualEdge(int virtualEdgeId) {
+        if (!isVirtualEdge(virtualEdgeId))
+            return;
+        VirtualEdgeIteratorState edge = getVirtualEdge(getInternalVirtualEdgeId(virtualEdgeId));
+        edge.setUnfavored(true);
+        unfavoredEdges.add(edge);
+        // we have to set the unfavored flag also for the virtual edge state that is used when we discover the same edge
+        // from the adjacent node. note that the unfavored flag will be set for both 'directions' of the same edge state.
+        VirtualEdgeIteratorState reverseEdge = getVirtualEdge(getPosOfReverseEdge(getInternalVirtualEdgeId(virtualEdgeId)));
         reverseEdge.setUnfavored(true);
         unfavoredEdges.add(reverseEdge);
     }
 
     /**
      * Returns all virtual edges that have been unfavored via
-     * {@link #enforceHeading(int, double, boolean)} or {@link #unfavorVirtualEdgePair(int, int)}.
+     * {@link #unfavorVirtualEdge(int)} or {@link #unfavorVirtualEdges(IntArrayList)}
      */
     public Set<EdgeIteratorState> getUnfavoredVirtualEdges() {
         // Need to create a new set to convert Set<VirtualEdgeIteratorState> to
@@ -252,7 +196,7 @@ public class QueryGraph implements Graph {
         if (!isVirtualEdge(origEdgeId))
             return mainGraph.getEdgeIteratorState(origEdgeId, adjNode);
 
-        int edgeId = origEdgeId - mainEdges;
+        int edgeId = getInternalVirtualEdgeId(origEdgeId);
         EdgeIteratorState eis = getVirtualEdge(edgeId);
         if (eis.getAdjNode() == adjNode || adjNode == Integer.MIN_VALUE)
             return eis;
@@ -272,6 +216,10 @@ public class QueryGraph implements Graph {
     private int getPosOfReverseEdge(int edgeId) {
         // find reverse edge via convention. see virtualEdges comment above
         return edgeId % 2 == 0 ? edgeId + 1 : edgeId - 1;
+    }
+
+    private int getInternalVirtualEdgeId(int origEdgeId) {
+        return origEdgeId - mainEdges;
     }
 
     @Override
