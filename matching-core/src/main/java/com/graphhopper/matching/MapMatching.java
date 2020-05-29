@@ -445,14 +445,12 @@ public class MapMatching {
                 if (from.isOnDirectedEdge()) {
                     // Make sure that the path starting at the "from" candidate goes through
                     // the outgoing edge.
-                    queryGraph.unfavorVirtualEdgePair(from.getQueryResult().getClosestNode(),
-                            from.getIncomingVirtualEdge().getEdge());
+                    queryGraph.unfavorVirtualEdge(from.getIncomingVirtualEdge().getEdge());
                 }
                 if (to.isOnDirectedEdge()) {
                     // Make sure that the path ending at "to" candidate goes through
                     // the incoming edge.
-                    queryGraph.unfavorVirtualEdgePair(to.getQueryResult().getClosestNode(),
-                            to.getOutgoingVirtualEdge().getEdge());
+                    queryGraph.unfavorVirtualEdge(to.getOutgoingVirtualEdge().getEdge());
                 }
 
                 RoutingAlgorithm router;
