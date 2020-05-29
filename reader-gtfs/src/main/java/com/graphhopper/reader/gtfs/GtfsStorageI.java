@@ -30,11 +30,13 @@ import java.util.Objects;
 // TODO: Make that explicit
 public interface GtfsStorageI {
 
-    public abstract class PlatformDescriptor implements Serializable {
+    abstract class PlatformDescriptor implements Serializable {
+        String feed_id;
         String stop_id;
 
-        public static PlatformDescriptor route(String stop_id, String route_id) {
+        public static PlatformDescriptor route(String feed_id, String stop_id, String route_id) {
             RoutePlatform routePlatform = new RoutePlatform();
+            routePlatform.feed_id = feed_id;
             routePlatform.stop_id = stop_id;
             routePlatform.route_id = route_id;
             return routePlatform;
@@ -45,16 +47,18 @@ public interface GtfsStorageI {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             PlatformDescriptor that = (PlatformDescriptor) o;
-            return Objects.equals(stop_id, that.stop_id);
+            return Objects.equals(feed_id, that.feed_id) &&
+                    Objects.equals(stop_id, that.stop_id);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(stop_id);
+            return Objects.hash(feed_id, stop_id);
         }
 
-        public static RouteTypePlatform routeType(String stop_id, int route_type) {
+        public static RouteTypePlatform routeType(String feed_id, String stop_id, int route_type) {
             RouteTypePlatform routeTypePlatform = new RouteTypePlatform();
+            routeTypePlatform.feed_id = feed_id;
             routeTypePlatform.stop_id = stop_id;
             routeTypePlatform.route_type = route_type;
             return routeTypePlatform;
@@ -68,7 +72,8 @@ public interface GtfsStorageI {
         @Override
         public String toString() {
             return "RoutePlatform{" +
-                    "stop_id='" + stop_id + '\'' +
+                    "feed_id='" + feed_id + '\'' +
+                    ", stop_id='" + stop_id + '\'' +
                     ", route_id='" + route_id + '\'' +
                     '}';
         }
@@ -108,7 +113,8 @@ public interface GtfsStorageI {
         @Override
         public String toString() {
             return "RouteTypePlatform{" +
-                    "stop_id='" + stop_id + '\'' +
+                    "feed_id='" + feed_id + '\'' +
+                    ", stop_id='" + stop_id + '\'' +
                     ", route_type=" + route_type +
                     '}';
         }
