@@ -96,7 +96,7 @@ public class MiniGraphUI {
     public MiniGraphUI(GraphHopper hopper, boolean debug) {
         final Graph graph = hopper.getGraphHopperStorage();
         this.na = graph.getNodeAccess();
-        encoder = hopper.getEncodingManager().getEncoder("car");
+        encoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
         Profile profile = hopper.getProfiles().iterator().next();
@@ -136,7 +136,7 @@ public class MiniGraphUI {
                 public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                     // doable but ugly
                     Weighting w = preparation.getCHConfig().getWeighting();
-                    return new TmpAlgo(new RoutingCHGraphImpl(routingGraph, w), mg);
+                    return new TmpAlgo(new RoutingCHGraphImpl(g, g.wrapWeighting(w)), mg);
                 }
             };
             algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
