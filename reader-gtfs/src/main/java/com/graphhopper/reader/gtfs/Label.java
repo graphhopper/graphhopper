@@ -23,6 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 public class Label {
@@ -46,14 +47,14 @@ public class Label {
     public static class EdgeLabel {
         public final EdgeIteratorState edgeIteratorState;
         public final GtfsStorage.EdgeType edgeType;
-        public final int timeZoneId;
+        public final String feedId;
         public final int nTransfers;
         public final double distance;
 
-        public EdgeLabel(EdgeIteratorState edgeIteratorState, GtfsStorage.EdgeType edgeType, int timeZoneId, int nTransfers, double distance) {
+        public EdgeLabel(EdgeIteratorState edgeIteratorState, GtfsStorage.EdgeType edgeType, String feedId, int nTransfers, double distance) {
             this.edgeIteratorState = edgeIteratorState;
             this.edgeType = edgeType;
-            this.timeZoneId = timeZoneId;
+            this.feedId = feedId;
             this.nTransfers = nTransfers;
             this.distance = distance;
         }
@@ -98,7 +99,7 @@ public class Label {
         return adjNode + " " + (departureTime != null ? Instant.ofEpochMilli(departureTime) : "---") + "\t" + nTransfers + "\t" + Instant.ofEpochMilli(currentTime);
     }
 
-    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph) {
+    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, GtfsStorage gtfsStorage) {
         Label label = _label;
         boolean reverseEdgeFlags = !arriveBy;
         List<Label.Transition> result = new ArrayList<>();
@@ -116,9 +117,9 @@ public class Label {
 
             Label.Transition transition;
             if (reverseEdgeFlags) {
-                transition = new Label.Transition(label, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder) : null);
+                transition = new Label.Transition(label, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder, gtfsStorage) : null);
             } else {
-                transition = new Label.Transition(label.parent, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder) : null);
+                transition = new Label.Transition(label.parent, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder, gtfsStorage) : null);
             }
             label = label.parent;
             result.add(transition);
@@ -130,9 +131,18 @@ public class Label {
         return result;
     }
 
-    public static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtEncodedValues flagEncoder) {
-        return new EdgeLabel(edgeIteratorState, edgeIteratorState.get(flagEncoder.getTypeEnc()), edgeIteratorState.get(flagEncoder.getValidityIdEnc()),
-                edgeIteratorState.get(flagEncoder.getTransfersEnc()), edgeIteratorState.getDistance());
+    public static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtEncodedValues flagEncoder, GtfsStorage gtfsStorage) {
+        GtfsStorage.EdgeType edgeType = edgeIteratorState.get(flagEncoder.getTypeEnc());
+        String feedId;
+        if (edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.TRANSFER) {
+            GtfsStorageI.PlatformDescriptor platformDescriptor = gtfsStorage.getPlatformDescriptorByEdge().get(edgeIteratorState.getEdge());
+            feedId = platformDescriptor.feed_id;
+        } else {
+            feedId = null;
+        }
+        int nTransfers = edgeIteratorState.get(flagEncoder.getTransfersEnc());
+        double distance = edgeIteratorState.getDistance();
+        return new EdgeLabel(edgeIteratorState, edgeType, feedId, nTransfers, distance);
     }
 
 }

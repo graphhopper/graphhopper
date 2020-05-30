@@ -311,7 +311,7 @@ class TripFromLabel {
             return Collections.emptyList();
         }
         if (GtfsStorage.EdgeType.ENTER_PT == path.get(1).edge.edgeType) {
-            final GtfsStorage.FeedIdWithTimezone feedIdWithTimezone = gtfsStorage.getTimeZones().get(path.get(2).edge.timeZoneId);
+            String feedId = path.get(1).edge.feedId;
             List<Trip.Leg> result = new ArrayList<>();
             long boardTime = -1;
             List<Label.Transition> partition = null;
@@ -333,7 +333,7 @@ class TripFromLabel {
                     } catch (InvalidProtocolBufferException e) {
                         throw new RuntimeException(e);
                     }
-                    final StopsFromBoardHopDwellEdges stopsFromBoardHopDwellEdges = new StopsFromBoardHopDwellEdges(feedIdWithTimezone.feedId, tripDescriptor);
+                    final StopsFromBoardHopDwellEdges stopsFromBoardHopDwellEdges = new StopsFromBoardHopDwellEdges(feedId, tripDescriptor);
                     partition.stream()
                             .filter(e -> EnumSet.of(GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.BOARD, GtfsStorage.EdgeType.DWELL).contains(e.edge.edgeType))
                             .forEach(stopsFromBoardHopDwellEdges::next);
@@ -341,7 +341,7 @@ class TripFromLabel {
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
 
                     result.add(new Trip.PtLeg(
-                            feedIdWithTimezone.feedId, partition.get(0).edge.nTransfers == 0,
+                            feedId, partition.get(0).edge.nTransfers == 0,
                             tripDescriptor.getTripId(),
                             tripDescriptor.getRouteId(),
                             edges(partition).map(edgeLabel -> edgeLabel.edgeIteratorState).collect(Collectors.toList()).get(0).getName(),
@@ -350,6 +350,7 @@ class TripFromLabel {
                             path.get(i - 1).label.currentTime - boardTime,
                             lineString));
                     partition = null;
+                    feedId = edge.feedId;
                 }
             }
             return result;
