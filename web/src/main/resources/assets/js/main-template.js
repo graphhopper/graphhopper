@@ -80,6 +80,10 @@ $(document).ready(function (e) {
         $("#searchButton").toggle();
         mapLayer.adjustMapSize();
     });
+    $("#flex-example").click(function() {
+         $("#flex-input-text").val("speed_factor:\n  road_class:\n    motorway: 0.8\npriority:\n  road_environment:\n    tunnel: 0.0\n  road_class:\n    residential: 0.7\n  max_weight:\n    \">3\": 0.0");
+         return false;
+    });
 
     var sendCustomData = function() {
        mapLayer.clearElevation();
@@ -113,7 +117,7 @@ $(document).ready(function (e) {
        try {
          jsonModel = inputText.indexOf("{") == 0? JSON.parse(inputText) : YAML.safeLoad(inputText);
        } catch(ex) {
-         routeResultsDiv.html("Cannot parse " + contentType + " " + ex);
+         routeResultsDiv.html("Cannot parse " + inputText + " " + ex);
          return;
        }
 
@@ -167,6 +171,9 @@ $(document).ready(function (e) {
     });
 
     var urlParams = urlTools.parseUrlWithHisto();
+
+    if(urlParams.flex)
+        $("#flex-input-link").click();
 
     var customURL = urlParams.load_custom;
     if(customURL && ghenv.environment === 'development')
