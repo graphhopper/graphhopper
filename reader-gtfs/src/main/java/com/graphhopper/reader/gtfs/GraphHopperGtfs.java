@@ -38,6 +38,8 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +50,8 @@ import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
 public class GraphHopperGtfs extends GraphHopperOSM {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperGtfs.class);
 
     private final GraphHopperConfig ghConfig;
     private GtfsStorage gtfsStorage;
@@ -180,6 +184,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
     }
 
     private void insertTransfersBetweenFeeds(HashMap<String, GtfsReader> readers) {
+        LOGGER.info("Looking for inter-feed transfers");
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
         FastestWeighting accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
@@ -187,7 +192,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, 5.0, false);
         getGtfsStorage().getStationNodes().values().stream().distinct().forEach(stationNode -> {
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, true, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
-            router.setLimitStreetTime(Duration.ofMinutes(5).toMillis());
+            router.setLimitStreetTime(Duration.ofMinutes(2).toMillis());
             Iterator<Label> iterator = router.calcLabels(stationNode, Instant.ofEpochMilli(0), 0).iterator();
             while (iterator.hasNext()) {
                 Label label = iterator.next();
@@ -203,7 +208,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                                 GtfsStorageI.PlatformDescriptor toPlatformDescriptor = getGtfsStorage().getPlatformDescriptorByEdge().get(edgeIterator.getEdge());
                                 if (!toPlatformDescriptor.feed_id.equals(fromPlatformDescriptor.feed_id)) {
                                     GtfsReader toFeedReader = readers.get(toPlatformDescriptor.feed_id);
-                                    toFeedReader.insertTransferEdges(label.adjNode, (int) Duration.ofMinutes(5).getSeconds(), toPlatformDescriptor);
+                                    toFeedReader.insertTransferEdges(label.adjNode, (int) Duration.ofMinutes(2).getSeconds(), toPlatformDescriptor);
                                 }
                             }
                         }
@@ -211,6 +216,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 }
             }
         });
+        LOGGER.info("Finished looking for inter-feed transfers");
     }
 
     private Stream<TransferWithTime> getType0TransferWithTimes(String id, GTFSFeed gtfsFeed) {
