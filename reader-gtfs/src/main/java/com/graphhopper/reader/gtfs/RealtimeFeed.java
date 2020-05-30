@@ -69,9 +69,10 @@ public class RealtimeFeed {
     private final Map<Integer, byte[]> additionalTripDescriptors;
     private final Map<Integer, Integer> stopSequences;
     private final Map<Integer, GtfsStorage.Validity> validities;
+    private final Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge;
 
     private RealtimeFeed(GtfsStorage staticGtfs, Map<String, GtfsRealtime.FeedMessage> feedMessages, IntHashSet blockedEdges,
-                         IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<VirtualEdgeIteratorState> additionalEdges, Map<Integer, byte[]> tripDescriptors, Map<Integer, Integer> stopSequences, Map<GtfsStorage.Validity, Integer> operatingDayPatterns, Map<GtfsStorage.FeedIdWithTimezone, Integer> writableTimeZones) {
+                         IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<VirtualEdgeIteratorState> additionalEdges, Map<Integer, byte[]> tripDescriptors, Map<Integer, Integer> stopSequences, Map<GtfsStorage.Validity, Integer> operatingDayPatterns, Map<GtfsStorage.FeedIdWithTimezone, Integer> writableTimeZones, Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge) {
         this.staticGtfs = staticGtfs;
         this.feedMessages = feedMessages;
         this.blockedEdges = blockedEdges;
@@ -85,10 +86,11 @@ public class RealtimeFeed {
             reverseOperatingDayPatterns.put(entry.getValue(), entry.getKey());
         }
         this.validities = Collections.unmodifiableMap(reverseOperatingDayPatterns);
+        this.platformDescriptorByEdge = platformDescriptorByEdge;
     }
 
     public static RealtimeFeed empty(GtfsStorage staticGtfs) {
-        return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), staticGtfs.getOperatingDayPatterns(), staticGtfs.getWritableTimeZones());
+        return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), staticGtfs.getOperatingDayPatterns(), staticGtfs.getWritableTimeZones(), staticGtfs.getPlatformDescriptorByEdge());
     }
 
     public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
@@ -266,7 +268,7 @@ public class RealtimeFeed {
         Map<String, int[]> boardEdgesForTrip = new HashMap<>();
         Map<String, int[]> alightEdgesForTrip = new HashMap<>();
         Map<GtfsStorage.FeedIdWithTimezone, Integer> writableTimeZones = new HashMap<>(staticGtfs.getWritableTimeZones());
-
+        Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge = new HashMap<>(staticGtfs.getPlatformDescriptorByEdge());
 
         feedMessages.forEach((feedKey, feedMessage) -> {
             GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);
@@ -331,7 +333,7 @@ public class RealtimeFeed {
 
                 @Override
                 public Map<Integer, PlatformDescriptor> getPlatformDescriptorByEdge() {
-                    return staticGtfs.getPlatformDescriptorByEdge();
+                    return platformDescriptorByEdge;
                 }
             };
             final GtfsReader gtfsReader = new GtfsReader(feedKey, overlayGraph, graphHopperStorage.getEncodingManager(), gtfsStorage, null);
@@ -406,7 +408,7 @@ public class RealtimeFeed {
             gtfsReader.wireUpAdditionalDeparturesAndArrivals(timezone);
         });
 
-        return new RealtimeFeed(staticGtfs, feedMessages, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges, tripDescriptors, stopSequences, operatingDayPatterns, writableTimeZones);
+        return new RealtimeFeed(staticGtfs, feedMessages, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges, tripDescriptors, stopSequences, operatingDayPatterns, writableTimeZones, platformDescriptorByEdge);
     }
 
     boolean isBlocked(int edgeId) {
@@ -595,6 +597,10 @@ public class RealtimeFeed {
 
     public GtfsStorage.Validity getValidity(int validityId) {
         return validities.get(validityId);
+    }
+
+    public Map<Integer, GtfsStorageI.PlatformDescriptor> getPlatformDescriptorByEdge() {
+        return platformDescriptorByEdge;
     }
 
 }

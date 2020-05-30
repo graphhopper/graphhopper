@@ -23,7 +23,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 
 public class Label {
@@ -99,7 +98,7 @@ public class Label {
         return adjNode + " " + (departureTime != null ? Instant.ofEpochMilli(departureTime) : "---") + "\t" + nTransfers + "\t" + Instant.ofEpochMilli(currentTime);
     }
 
-    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, GtfsStorage gtfsStorage) {
+    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, RealtimeFeed realtimeFeed) {
         Label label = _label;
         boolean reverseEdgeFlags = !arriveBy;
         List<Label.Transition> result = new ArrayList<>();
@@ -117,9 +116,9 @@ public class Label {
 
             Label.Transition transition;
             if (reverseEdgeFlags) {
-                transition = new Label.Transition(label, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder, gtfsStorage) : null);
+                transition = new Label.Transition(label, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder, realtimeFeed) : null);
             } else {
-                transition = new Label.Transition(label.parent, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder, gtfsStorage) : null);
+                transition = new Label.Transition(label.parent, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder, realtimeFeed) : null);
             }
             label = label.parent;
             result.add(transition);
@@ -131,11 +130,11 @@ public class Label {
         return result;
     }
 
-    public static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtEncodedValues flagEncoder, GtfsStorage gtfsStorage) {
+    public static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtEncodedValues flagEncoder, RealtimeFeed realtimeFeed) {
         GtfsStorage.EdgeType edgeType = edgeIteratorState.get(flagEncoder.getTypeEnc());
         String feedId;
         if (edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.TRANSFER) {
-            GtfsStorageI.PlatformDescriptor platformDescriptor = gtfsStorage.getPlatformDescriptorByEdge().get(edgeIteratorState.getEdge());
+            GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edgeIteratorState.getEdge());
             feedId = platformDescriptor.feed_id;
         } else {
             feedId = null;
