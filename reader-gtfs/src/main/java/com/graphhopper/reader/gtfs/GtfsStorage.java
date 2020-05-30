@@ -120,7 +120,7 @@ public class GtfsStorage implements GtfsStorageI {
 	private Map<Integer, byte[]> tripDescriptors;
 	private Map<Integer, Integer> stopSequences;
 
-	private Map<Integer, PlatformDescriptor> routes;
+	private Map<Integer, PlatformDescriptor> platformDescriptorsByEdge;
 
 	private Map<String, Fare> fares;
 	private Map<String, int[]> boardEdgesForTrip;
@@ -189,7 +189,7 @@ public class GtfsStorage implements GtfsStorageI {
 		this.boardEdgesForTrip = data.getHashMap("boardEdgesForTrip");
 		this.leaveEdgesForTrip = data.getHashMap("leaveEdgesForTrip");
 		this.stationNodes = data.getHashMap("stationNodes");
-		this.routes = data.getHashMap("routes");
+		this.platformDescriptorsByEdge = data.getHashMap("routes");
 	}
 
 	void loadGtfsFromZipFile(String id, ZipFile zipFile) {
@@ -252,7 +252,7 @@ public class GtfsStorage implements GtfsStorageI {
 
     @Override
     public Map<Integer, PlatformDescriptor> getPlatformDescriptorByEdge() {
-        return routes;
+        return platformDescriptorsByEdge;
     }
 
     @Override
