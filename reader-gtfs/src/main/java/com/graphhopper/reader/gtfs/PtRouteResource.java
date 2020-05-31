@@ -243,7 +243,7 @@ public final class PtRouteResource {
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
             for (List<Label.Transition> solution : solutions) {
                 final List<Trip.Leg> legs = tripFromLabel.getTrip(translation, queryGraph, accessEgressWeighting, solution);
-                final ResponsePath responsePath = tripFromLabel.createPathWrapper(translation, waypoints, legs);
+                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, legs);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
                 responsePath.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
                 response.add(responsePath);

@@ -34,7 +34,7 @@ public class GraphHopperModule extends SimpleModule {
         setMixInAnnotation(LMProfile.class, LMProfileMixIn.class);
         setMixInAnnotation(GraphHopperConfig.class, GraphHopperConfigMixIn.class);
         addDeserializer(GHResponse.class, new GHResponseDeserializer());
-        addDeserializer(ResponsePath.class, new PathWrapperDeserializer());
+        addDeserializer(ResponsePath.class, new ResponsePathDeserializer());
         addDeserializer(BBox.class, new BBoxDeserializer());
         addSerializer(BBox.class, new BBoxSerializer());
         addDeserializer(GHPoint.class, new GHPointDeserializer());

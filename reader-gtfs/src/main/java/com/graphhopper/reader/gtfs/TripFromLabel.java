@@ -59,7 +59,7 @@ class TripFromLabel {
         this.realtimeFeed = realtimeFeed;
     }
 
-    ResponsePath createPathWrapper(Translation tr, PointList waypoints, List<Trip.Leg> legs) {
+    ResponsePath createResponsePath(Translation tr, PointList waypoints, List<Trip.Leg> legs) {
         if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {
             final Trip.WalkLeg accessLeg = (Trip.WalkLeg) legs.get(0);
             legs.set(0, new Trip.WalkLeg(accessLeg.departureLocation, new Date(legs.get(1).getDepartureTime().getTime() - (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime())),

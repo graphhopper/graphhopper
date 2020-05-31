@@ -49,7 +49,7 @@ if(res.hasErrors()) {
    return;
 }
 
-PathWrapper res = fullRes.getBest();
+ResponsePath res = fullRes.getBest();
 // get path geometry information (latitude, longitude and optionally elevation)
 PointList pl = res.getPoints();
 // distance of the full path, in meter

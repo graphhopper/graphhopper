@@ -33,13 +33,13 @@ import org.locationtech.jts.geom.LineString;
 import java.io.IOException;
 import java.util.*;
 
-public class PathWrapperDeserializer extends JsonDeserializer<ResponsePath> {
+public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
     @Override
     public ResponsePath deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        return createPathWrapper((ObjectMapper) p.getCodec(), p.readValueAsTree(), false, true);
+        return createResponsePath((ObjectMapper) p.getCodec(), p.readValueAsTree(), false, true);
     }
 
-    public static ResponsePath createPathWrapper(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, boolean turnDescription) {
+    public static ResponsePath createResponsePath(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, boolean turnDescription) {
         ResponsePath responsePath = new ResponsePath();
         responsePath.addErrors(readErrors(objectMapper, path));
         if (responsePath.hasErrors())
