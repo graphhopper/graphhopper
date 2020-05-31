@@ -268,7 +268,7 @@ public class RealtimeFeed {
         Map<String, int[]> boardEdgesForTrip = new HashMap<>();
         Map<String, int[]> alightEdgesForTrip = new HashMap<>();
         Map<GtfsStorage.FeedIdWithTimezone, Integer> writableTimeZones = new HashMap<>(staticGtfs.getWritableTimeZones());
-        Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge = new HashMap<>(staticGtfs.getPlatformDescriptorByEdge());
+        Map<Integer, GtfsStorageI.PlatformDescriptor> platformDescriptorByEdge = new HashMap<>(staticGtfs.getPlatformDescriptorByEdge()); // FIXME: Too slow for production
 
         feedMessages.forEach((feedKey, feedMessage) -> {
             GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);

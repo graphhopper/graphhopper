@@ -18,14 +18,17 @@
 
 package com.graphhopper.gtfs.dropwizard;
 
+import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.RealtimeFeed;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.client.HttpClientBuilder;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.apache.http.client.HttpClient;
+import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 public class RealtimeBundle implements ConfiguredBundle<RealtimeBundleConfiguration> {
@@ -36,17 +39,45 @@ public class RealtimeBundle implements ConfiguredBundle<RealtimeBundleConfigurat
 
     @Override
     public void run(RealtimeBundleConfiguration configuration, Environment environment) {
-        final HttpClient httpClient = new HttpClientBuilder(environment)
-                .using(configuration.gtfsrealtime().getHttpClientConfiguration())
-                .build("gtfs-realtime-feed-loader");
-        environment.jersey().register(new AbstractBinder() {
-            @Override
-            protected void configure() {
-                bind(httpClient).to(HttpClient.class);
-                bind(configuration).to(RealtimeBundleConfiguration.class);
-                bindFactory(RealtimeFeedLoadingCache.class, Singleton.class).to(RealtimeFeed.class);
-            }
-        });
+        if (configuration.gtfsrealtime().getFeeds().isEmpty()) {
+            environment.jersey().register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bindFactory(EmptyRealtimeFeedFactory.class).to(RealtimeFeed.class).in(Singleton.class);
+                }
+            });
+        } else {
+            final HttpClient httpClient = new HttpClientBuilder(environment)
+                    .using(configuration.gtfsrealtime().getHttpClientConfiguration())
+                    .build("gtfs-realtime-feed-loader");
+            environment.jersey().register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bind(httpClient).to(HttpClient.class);
+                    bind(configuration).to(RealtimeBundleConfiguration.class);
+                    bindFactory(RealtimeFeedLoadingCache.class, Singleton.class).to(RealtimeFeed.class);
+                }
+            });
+        }
     }
 
+    private static class EmptyRealtimeFeedFactory implements Factory<RealtimeFeed> {
+
+        private final GtfsStorage staticGtfs;
+
+        @Inject
+        EmptyRealtimeFeedFactory(GtfsStorage staticGtfs) {
+            this.staticGtfs = staticGtfs;
+        }
+
+        @Override
+        public RealtimeFeed provide() {
+            return RealtimeFeed.empty(staticGtfs);
+        }
+
+        @Override
+        public void dispose(RealtimeFeed realtimeFeed) {
+
+        }
+    }
 }
