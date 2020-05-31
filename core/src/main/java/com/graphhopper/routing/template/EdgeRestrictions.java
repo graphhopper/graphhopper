@@ -15,32 +15,35 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.exceptions;
 
-import java.util.Collections;
-import java.util.Map;
+package com.graphhopper.routing.template;
 
-/**
- * Represents an instance of the "Cannot find Point" Exception, whereas the Point that cannot be
- * found is at pointIndex.
- *
- * @author Robin Boldt
- */
-public class PointNotFoundException extends IllegalArgumentException implements GHException {
+import com.carrotsearch.hppc.IntArrayList;
 
-    protected final int pointIndex;
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
-    public PointNotFoundException(String message, int pointIndex) {
-        super(message);
-        this.pointIndex = pointIndex;
+public class EdgeRestrictions {
+    private int sourceOutEdge = ANY_EDGE;
+    private int targetInEdge = ANY_EDGE;
+    private final IntArrayList unfavoredEdges = IntArrayList.from();
+
+    public int getSourceOutEdge() {
+        return sourceOutEdge;
     }
 
-    public int getPointIndex() {
-        return this.pointIndex;
+    public void setSourceOutEdge(int sourceOutEdge) {
+        this.sourceOutEdge = sourceOutEdge;
     }
 
-    @Override
-    public Map<String, Object> getDetails() {
-        return Collections.<String, Object>singletonMap("point_index", pointIndex);
+    public int getTargetInEdge() {
+        return targetInEdge;
+    }
+
+    public void setTargetInEdge(int targetInEdge) {
+        this.targetInEdge = targetInEdge;
+    }
+
+    public IntArrayList getUnfavoredEdges() {
+        return unfavoredEdges;
     }
 }

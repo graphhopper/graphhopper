@@ -20,22 +20,23 @@ package com.graphhopper.routing;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.template.AlternativeRoutingTemplate;
-import com.graphhopper.routing.template.RoundTripRoutingTemplate;
-import com.graphhopper.routing.template.RoutingTemplate;
-import com.graphhopper.routing.template.ViaRoutingTemplate;
+import com.graphhopper.routing.template.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -50,8 +51,8 @@ import java.util.*;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
-import static com.graphhopper.util.Parameters.Routing.POINT_HINT;
+import static com.graphhopper.util.Parameters.Routing.*;
+import static java.util.Collections.emptyList;
 
 public class Router {
     private final GraphHopperStorage ghStorage;
@@ -101,114 +102,204 @@ public class Router {
             if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs" +
                         "\nThe following profiles do support turn costs: " + getTurnCostProfiles());
-
             // todo later: should we be able to control this using the edge_based parameter?
-            TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
-            RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile.getName(), disableCH, disableLM);
-            Weighting weighting;
-            Graph graph = ghStorage;
-            if (chEnabled && !disableCH) {
-                if (!(algorithmFactory instanceof CHRoutingAlgorithmFactory))
-                    throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algorithmFactory);
-
-                if (request.getHints().has(Parameters.Routing.BLOCK_AREA))
-                    throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
-
-                CHConfig chConfig = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHConfig();
-                weighting = chConfig.getWeighting();
-                graph = chGraphs.get(chConfig.getName());
-                // we know this exists because we already got the algorithm factory this way -> will be cleaned up soon
-            } else {
-                checkNonChMaxWaypointDistance(request.getPoints());
-                final int uTurnCostsInt = request.getHints().getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-                if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
-                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, you need to use a profile that" +
-                            " supports turn costs. Currently the following profiles that support turn costs are available: " + getTurnCostProfiles());
-                }
-                FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-                weighting = weightingFactory.createWeighting(profile, request.getHints(), false);
-                if (request.getHints().has(Parameters.Routing.BLOCK_AREA))
-                    weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
-                            request.getPoints(), request.getHints(), DefaultEdgeFilter.allEdges(encoder)));
+            TraversalMode traversalMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
+            final int uTurnCostsInt = request.getHints().getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+            if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !traversalMode.isEdgeBased()) {
+                throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, you need to use a profile that" +
+                        " supports turn costs. Currently the following profiles that support turn costs are available: " + getTurnCostProfiles());
             }
-            ghRsp.addDebugInfo("tmode:" + tMode.toString());
-
-            String algoStr = request.getAlgorithm();
-            if (algoStr.isEmpty())
-                algoStr = chEnabled && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
-            RoutingTemplate routingTemplate = createRoutingTemplate(request, ghRsp, algoStr, weighting);
-
-            StopWatch sw = new StopWatch().start();
-            List<QueryResult> qResults = routingTemplate.lookup(request.getPoints());
-            ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-            if (ghRsp.hasErrors())
-                return Collections.emptyList();
-
-            QueryGraph queryGraph = QueryGraph.create(graph, qResults);
+            ghRsp.addDebugInfo("traversal-mode:" + traversalMode.toString());
+            final boolean passThrough = request.getHints().getBool(PASS_THROUGH, false);
+            final boolean forceCurbsides = request.getHints().getBool(FORCE_CURBSIDE, true);
             int maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
             if (maxVisitedNodesForRequest > routerConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routerConfig.getMaxVisitedNodes());
+            final boolean useCH = chEnabled && !disableCH;
 
+            // determine weighting
+            Weighting weighting = createWeighting(profile, request.getHints(), request.getPoints(), useCH);
+
+            String algorithm = request.getAlgorithm().isEmpty() ? ASTAR_BI : request.getAlgorithm();
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                    algorithm(algoStr).
-                    traversalMode(tMode).
+                    algorithm(algorithm).
+                    traversalMode(traversalMode).
                     weighting(weighting).
                     maxVisitedNodes(maxVisitedNodesForRequest).
                     hints(request.getHints()).
                     build();
 
-            // do the actual route calculation !
-            List<Path> altPaths = routingTemplate.calcPaths(queryGraph, algorithmFactory, algoOpts);
+            if (ROUND_TRIP.equalsIgnoreCase(request.getAlgorithm())) {
+                // ROUND TRIP
+                StopWatch sw = new StopWatch().start();
+                double startHeading = request.getHeadings().isEmpty() ? Double.NaN : request.getHeadings().get(0);
+                RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
+                List<QueryResult> qResults = RoundTripRouting.lookup(request.getPoints(), weighting, locationIndex, params);
+                ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+                PathCalculator pathCalculator = createPathCalculator(qResults, profile, algoOpts, disableCH, disableLM);
+                QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
 
-            boolean tmpEnableInstructions = request.getHints().getBool(Parameters.Routing.INSTRUCTIONS, encodingManager.isEnableInstructions());
-            boolean tmpCalcPoints = request.getHints().getBool(Parameters.Routing.CALC_POINTS, routerConfig.isCalcPoints());
-            double wayPointMaxDistance = request.getHints().getDouble(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 1d);
+                PathCalculatorWithAvoidedEdges roundTripPathCalculator = new PathCalculatorWithAvoidedEdges(pathCalculator);
+                RoundTripRouting.Result result = RoundTripRouting.calcPaths(qResults, roundTripPathCalculator);
+                // we merge the different legs of the roundtrip into one response path
+                ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
+                ghRsp.add(responsePath);
+                ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
+                ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
+                return result.paths;
+            } else if (ALT_ROUTE.equalsIgnoreCase(request.getAlgorithm())) {
+                // ALTERNATIVE ROUTES
+                if (request.getPoints().size() > 2)
+                    throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + request.getPoints().size() + " points");
+                StopWatch sw = new StopWatch().start();
+                List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
+                ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+                PathCalculator pathCalculator = createPathCalculator(qResults, profile, algoOpts, disableCH, disableLM);
+                QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
 
-            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
-            PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
-                    setCalcPoints(tmpCalcPoints).
-                    setDouglasPeucker(peucker).
-                    setEnableInstructions(tmpEnableInstructions).
-                    setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
-                    setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
+                if (passThrough)
+                    throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
+                ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+                if (result.paths.isEmpty())
+                    throw new RuntimeException("Empty paths for alternative route calculation not expected");
 
-            if (!request.getHeadings().isEmpty())
-                pathMerger.setFavoredHeading(request.getHeadings().get(0));
+                // each path represents a different alternative and we do the path merging for each of them
+                PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
+                for (Path path : result.paths) {
+                    ResponsePath responsePath = new ResponsePath();
+                    responsePath.setWaypoints(getWaypoints(qResults));
+                    pathMerger.doWork(responsePath, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
+                    ghRsp.add(responsePath);
+                }
+                ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
+                ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
+                return result.paths;
+            } else {
+                StopWatch sw = new StopWatch().start();
+                List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
+                ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+                PathCalculator pathCalculator = createPathCalculator(qResults, profile, algoOpts, disableCH, disableLM);
+                // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
+                // a (possibly implementation specific) query graph used for PathCalculator
+                // todonow: here we 'create' the QueryGraph a second time.
+                //          Step 1) how much slower is this really?
+                //          Step 2) split out the QueryOverlay (but if step 1) turns out to be ok, merge to master first)
+                QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
+                ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
 
-            routingTemplate.finish(pathMerger, translationMap.getWithFallBack(request.getLocale()));
-            return altPaths;
+                if (request.getPoints().size() != result.paths.size() + 1)
+                    throw new RuntimeException("There should be exactly one more points than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
+
+                // here each path represents one leg of the via-route and we merge them all together into one response path
+                ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
+                responsePath.addDebugInfo(result.debug);
+                ghRsp.add(responsePath);
+                ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
+                ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
+                return result.paths;
+            }
+        } catch (MultiException ex) {
+            for (Throwable t : ex.getErrors()) {
+                ghRsp.addError(t);
+            }
+            return emptyList();
         } catch (IllegalArgumentException ex) {
             ghRsp.addError(ex);
-            return Collections.emptyList();
+            return emptyList();
         }
     }
 
-    public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
-        if (chEnabled && disableCH && !routerConfig.isCHDisablingAllowed()) {
-            throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
-        }
-        if (lmEnabled && disableLM && !routerConfig.isLMDisablingAllowed()) {
-            throw new IllegalArgumentException("Disabling LM is not allowed on the server side");
-        }
+    private ResponsePath concatenatePaths(GHRequest request, Weighting weighting, QueryGraph queryGraph, List<Path> paths, PointList waypoints) {
+        ResponsePath responsePath = new ResponsePath();
+        responsePath.setWaypoints(waypoints);
+        PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
+        pathMerger.doWork(responsePath, paths, encodingManager, translationMap.getWithFallBack(request.getLocale()));
+        return responsePath;
+    }
 
-        // for now do not allow mixing CH&LM #1082,#1889
+    private Weighting createWeighting(Profile profile, PMap requestHints, List<GHPoint> points, boolean forCH) {
+        Weighting weighting;
+        if (forCH) {
+            // todonow: should we make this safe by comparing some hash of the weighting/profile that was used for
+            // the preparation with the one of the weighting we create here?
+            // todonow: is it slower since we are now creating the weighting for every request also for CH?
+            // todonow: maybe this is the right place to throw an error if things are requested that cannot be fulfilled
+            // like short_fastest.distance_factor or u_turn_costs
+            // todonow: or maybe simply create the weighting *with* the request hints and only throw an error if
+            // the hashes are different (=the user specified some hints that changed the weighting in a CH-incompatible
+            // way, but how to report which parameters caused the problem?
+            weighting = weightingFactory.createWeighting(profile, new PMap(), false);
+            if (requestHints.has(Parameters.Routing.BLOCK_AREA))
+                throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
+        } else {
+            weighting = weightingFactory.createWeighting(profile, requestHints, false);
+            if (requestHints.has(Parameters.Routing.BLOCK_AREA)) {
+                FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+                GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
+                        points, requestHints, DefaultEdgeFilter.allEdges(encoder));
+                weighting = new BlockAreaWeighting(weighting, blockArea);
+            }
+        }
+        return weighting;
+    }
+
+    private PathCalculator createPathCalculator(List<QueryResult> qResults, Profile profile, AlgorithmOptions algoOpts, boolean disableCH, boolean disableLM) {
         if (chEnabled && !disableCH) {
-            CHGraph chGraph = chGraphs.get(profile);
+            CHGraph chGraph = chGraphs.get(profile.getName());
             if (chGraph == null)
-                throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile + "'" +
+                throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile.getName() + "'" +
                         "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
                         "\navailable CH profiles: " + chGraphs.keySet());
-            return new CHRoutingAlgorithmFactory(chGraph);
-        } else if (lmEnabled && !disableLM) {
-            LandmarkStorage landmarkStorage = landmarks.get(profile);
-            if (landmarkStorage == null)
-                throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'" +
-                        "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
-                        "\navailable LM profiles: " + landmarks.keySet());
-            return new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routerConfig.getActiveLandmarkCount());
+            QueryGraph chQueryGraph = QueryGraph.create(chGraph, qResults);
+            // todonow: what do we want here? and actually we only want to change anything if the algorithm was not given (but
+            // algoopts does not allow us to find out...)
+            algoOpts = AlgorithmOptions.start(algoOpts)
+                    .algorithm(algoOpts.getTraversalMode().isEdgeBased() ? ASTAR_BI : DIJKSTRA_BI)
+                    .build();
+            return new PathCalculator(chQueryGraph, new CHRoutingAlgorithmFactory(chGraph), algoOpts);
         } else {
-            return new RoutingAlgorithmFactorySimple();
+            RoutingAlgorithmFactory algorithmFactory;
+            // for now do not allow mixing CH&LM #1082,#1889
+            if (lmEnabled && !disableLM) {
+                LandmarkStorage landmarkStorage = landmarks.get(profile.getName());
+                if (landmarkStorage == null)
+                    throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile.getName() + "'" +
+                            "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
+                            "\navailable LM profiles: " + landmarks.keySet());
+                algorithmFactory = new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routerConfig.getActiveLandmarkCount());
+            } else {
+                algorithmFactory = new RoutingAlgorithmFactorySimple();
+            }
+            checkNonChMaxWaypointDistance(qResults);
+            QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
+            return new PathCalculator(queryGraph, algorithmFactory, algoOpts);
         }
+    }
+
+    private PathMerger createPathMerger(GHRequest request, Weighting weighting, Graph graph) {
+        boolean enableInstructions = request.getHints().getBool(Parameters.Routing.INSTRUCTIONS, encodingManager.isEnableInstructions());
+        boolean calcPoints = request.getHints().getBool(Parameters.Routing.CALC_POINTS, routerConfig.isCalcPoints());
+        double wayPointMaxDistance = request.getHints().getDouble(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 1d);
+
+        DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
+        PathMerger pathMerger = new PathMerger(graph, weighting).
+                setCalcPoints(calcPoints).
+                setDouglasPeucker(peucker).
+                setEnableInstructions(enableInstructions).
+                setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
+                setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
+
+        if (!request.getHeadings().isEmpty())
+            pathMerger.setFavoredHeading(request.getHeadings().get(0));
+        return pathMerger;
+    }
+
+    protected PointList getWaypoints(List<QueryResult> queryResults) {
+        PointList pointList = new PointList(queryResults.size(), true);
+        for (QueryResult qr : queryResults) {
+            pointList.add(qr.getSnappedPoint());
+        }
+        return pointList;
     }
 
     protected void validateRequest(GHRequest request) {
@@ -268,23 +359,12 @@ public class Router {
         return turnCostProfiles;
     }
 
-    private boolean getDisableLM(PMap hints) {
+    private static boolean getDisableLM(PMap hints) {
         return hints.getBool(Parameters.Landmark.DISABLE, false);
     }
 
-    private boolean getDisableCH(PMap hints) {
+    private static boolean getDisableCH(PMap hints) {
         return hints.getBool(Parameters.CH.DISABLE, false);
-    }
-
-    protected RoutingTemplate createRoutingTemplate(GHRequest request, GHResponse ghRsp, String algoStr, Weighting weighting) {
-        RoutingTemplate routingTemplate;
-        if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-            routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, routerConfig.getMaxRoundTripRetries());
-        else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
-        else
-            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
-        return routingTemplate;
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {
@@ -292,22 +372,21 @@ public class Router {
         for (int i = 0; i < points.size(); i++) {
             GHPoint point = points.get(i);
             if (!bounds.contains(point.getLat(), point.getLon())) {
-                throw new PointOutOfBoundsException("Point " + i + " is out of bounds: " + point, i);
+                throw new PointOutOfBoundsException("Point " + i + " is out of bounds: " + point + ", the bounds are: " + bounds, i);
             }
         }
     }
 
-    private void checkNonChMaxWaypointDistance(List<GHPoint> points) {
+    private void checkNonChMaxWaypointDistance(List<QueryResult> points) {
         if (routerConfig.getNonChMaxWaypointDistance() == Integer.MAX_VALUE) {
             return;
         }
-        GHPoint lastPoint = points.get(0);
+        GHPoint lastPoint = points.get(0).getQueryPoint();
         GHPoint point;
         double dist;
-        DistanceCalc calc = DIST_EARTH;
         for (int i = 1; i < points.size(); i++) {
-            point = points.get(i);
-            dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
+            point = points.get(i).getQueryPoint();
+            dist = DIST_EARTH.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
             if (dist > routerConfig.getNonChMaxWaypointDistance()) {
                 Map<String, Object> detailMap = new HashMap<>(2);
                 detailMap.put("from", i - 1);

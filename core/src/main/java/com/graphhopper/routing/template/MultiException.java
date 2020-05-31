@@ -15,32 +15,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.exceptions;
 
-import java.util.Collections;
-import java.util.Map;
+package com.graphhopper.routing.template;
 
-/**
- * Represents an instance of the "Cannot find Point" Exception, whereas the Point that cannot be
- * found is at pointIndex.
- *
- * @author Robin Boldt
- */
-public class PointNotFoundException extends IllegalArgumentException implements GHException {
+import java.util.List;
 
-    protected final int pointIndex;
+public class MultiException extends RuntimeException {
 
-    public PointNotFoundException(String message, int pointIndex) {
-        super(message);
-        this.pointIndex = pointIndex;
+    private final List<Throwable> errors;
+
+    public MultiException(List<Throwable> errors) {
+        this.errors = errors;
     }
 
-    public int getPointIndex() {
-        return this.pointIndex;
+    public List<Throwable> getErrors() {
+        return errors;
     }
 
-    @Override
-    public Map<String, Object> getDetails() {
-        return Collections.<String, Object>singletonMap("point_index", pointIndex);
-    }
 }
