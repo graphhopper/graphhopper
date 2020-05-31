@@ -26,6 +26,8 @@ import org.mapdb.Bind;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +39,8 @@ import java.util.*;
 import java.util.zip.ZipFile;
 
 public class GtfsStorage implements GtfsStorageI {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(GtfsStorage.class);
 
 	public static class Validity implements Serializable {
 		final BitSet validity;
@@ -158,6 +162,10 @@ public class GtfsStorage implements GtfsStorageI {
 			this.gtfsFeeds.put(gtfsFeedId, feed);
 			this.transfers.put(gtfsFeedId, new Transfers(feed));
 		}
+
+		LocalDate latestStartDate = LocalDate.ofEpochDay(this.gtfsFeeds.values().stream().mapToLong(f -> f.getStartDate().toEpochDay()).max().getAsLong());
+		LocalDate earliestEndDate = LocalDate.ofEpochDay(this.gtfsFeeds.values().stream().mapToLong(f -> f.getEndDate().toEpochDay()).min().getAsLong());
+		LOGGER.info("Calendar range covered by all feeds: {} till {}", latestStartDate, earliestEndDate);
 		return true;
 	}
 
