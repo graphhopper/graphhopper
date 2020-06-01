@@ -76,15 +76,6 @@ class SearchInput extends React.Component {
         }, "Options"), this.state.isShowingOptions ? React.createElement(
             "div",
             null,
-            React.createElement(
-                TextInput,
-                {
-                    value: this.props.search.limitSolutions,
-                    label: "# Alternatives",
-                    actionType: SearchActionType.LIMIT_SOLUTIONS,
-                    onChange: this.onChange
-                }
-            ),
             React.createElement(Select, {
                 value: this.props.search.rangeQuery,
                 label: "Range query",

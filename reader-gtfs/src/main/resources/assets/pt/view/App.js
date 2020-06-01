@@ -30,7 +30,6 @@ export default class App extends React.Component {
             from: null,
             to: null,
             departureDateTime: new moment(),
-            limitSolutions: 5,
             rangeQuery: false,
             rangeQueryDuration: "PT120M",
             limitStreetTime: "PT30M",
