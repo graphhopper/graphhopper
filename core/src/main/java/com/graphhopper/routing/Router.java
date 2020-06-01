@@ -164,7 +164,9 @@ public class Router {
             boolean tmpCalcPoints = request.getHints().getBool(Parameters.Routing.CALC_POINTS, routerConfig.isCalcPoints());
             double wayPointMaxDistance = request.getHints().getDouble(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 1d);
 
-            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
+            DouglasPeucker peucker = new DouglasPeucker().
+                    setMaxDistance(wayPointMaxDistance).
+                    setElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance());
             PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
                     setCalcPoints(tmpCalcPoints).
                     setDouglasPeucker(peucker).
