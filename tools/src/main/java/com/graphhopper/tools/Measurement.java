@@ -776,6 +776,8 @@ public class Measurement {
         }.setIterations(querySettings.count).start();
 
         int count = querySettings.count - failedCount.get();
+        if (count == 0)
+            throw new RuntimeException("All requests failed, something must be wrong: " + failedCount.get());
 
         // if using non-bidirectional algorithm make sure you exclude CH routing
         String algoStr = (querySettings.ch && !querySettings.edgeBased) ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;
