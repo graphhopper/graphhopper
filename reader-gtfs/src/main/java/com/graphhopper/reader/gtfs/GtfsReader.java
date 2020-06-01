@@ -78,7 +78,7 @@ class GtfsReader {
     private final GtfsStorageI gtfsStorage;
 
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
-    private Transfers transfers;
+    private final Transfers transfers;
     private final NodeAccess nodeAccess;
     private final String id;
     private int i;
@@ -91,7 +91,7 @@ class GtfsReader {
     private final IntEncodedValue validityIdEnc;
     private boolean createTransferStopsConnectSameOsmNode = false;
 
-    GtfsReader(String id, Graph graph, EncodingManager encodingManager, GtfsStorageI gtfsStorage, LocationIndex walkNetworkIndex) {
+    GtfsReader(String id, Graph graph, EncodingManager encodingManager, GtfsStorageI gtfsStorage, LocationIndex walkNetworkIndex, Transfers transfers) {
         this.id = id;
         this.graph = graph;
         this.gtfsStorage = gtfsStorage;
@@ -102,7 +102,7 @@ class GtfsReader {
         this.timeEnc = ptEncodedValues.getTimeEnc();
         this.validityIdEnc = ptEncodedValues.getValidityIdEnc();
         this.feed = this.gtfsStorage.getGtfsFeeds().get(id);
-        this.transfers = this.gtfsStorage.getTransfers().get(id);
+        this.transfers = transfers;
         this.i = graph.getNodes();
         this.startDate = feed.getStartDate();
         this.endDate = feed.getEndDate();
@@ -139,8 +139,6 @@ class GtfsReader {
 
     void buildPtNetwork() {
         gtfsStorage.getFares().putAll(feed.fares);
-        transfers = new Transfers(feed);
-        gtfsStorage.getTransfers().put(id, transfers);
         createTrips();
         wireUpStops();
         insertGtfsTransfers();

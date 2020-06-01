@@ -160,7 +160,8 @@ public class GraphHopperGtfs extends GraphHopperOSM {
 
                 HashMap<String, GtfsReader> readers = new HashMap<>();
                 getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
-                    GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), getGtfsStorage(), streetNetworkIndex);
+                    Transfers transfers = new Transfers(gtfsFeed);
+                    GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), getGtfsStorage(), streetNetworkIndex, transfers);
                     gtfsReader.setCreateTransferStopsConnectSameOsmNode(createTransferStopsConnectSameOsmNode);
                     gtfsReader.connectStopsToStreetNetwork();
                     getType0TransferWithTimes(id, gtfsFeed)
