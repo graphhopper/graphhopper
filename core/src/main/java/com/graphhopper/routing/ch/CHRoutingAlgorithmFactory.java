@@ -59,7 +59,8 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     }
 
     private RoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, AlgorithmOptions opts) {
-        if (ASTAR_BI.equals(opts.getAlgorithm())) {
+        // use astar by default for edge-based (its faster)
+        if (ASTAR_BI.equals(opts.getAlgorithm()) || opts.getAlgorithm().isEmpty()) {
             return new AStarBidirectionEdgeCHNoSOD(g)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
@@ -75,7 +76,8 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
             return new AStarBidirectionCH(g)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
-        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
+        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm()) || opts.getAlgorithm().isEmpty()) {
+            // use dijkstra by default for node-based (its faster, but maybe try the same as for edge-based)
             if (opts.getHints().getBool("stall_on_demand", true)) {
                 return new DijkstraBidirectionCH(g);
             } else {

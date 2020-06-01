@@ -50,7 +50,8 @@ import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.DIST_EARTH;
-import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
+import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
 import static com.graphhopper.util.Parameters.Routing.*;
 import static java.util.Collections.emptyList;
 
@@ -115,14 +116,13 @@ public class Router {
             int maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
             if (maxVisitedNodesForRequest > routerConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routerConfig.getMaxVisitedNodes());
-            final boolean useCH = chEnabled && !disableCH;
 
             // determine weighting
+            final boolean useCH = chEnabled && !disableCH;
             Weighting weighting = createWeighting(profile, request.getHints(), request.getPoints(), useCH);
 
-            String algorithm = request.getAlgorithm().isEmpty() ? ASTAR_BI : request.getAlgorithm();
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                    algorithm(algorithm).
+                    algorithm(request.getAlgorithm()).
                     traversalMode(traversalMode).
                     weighting(weighting).
                     maxVisitedNodes(maxVisitedNodesForRequest).
@@ -188,7 +188,7 @@ public class Router {
                 ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
 
                 if (request.getPoints().size() != result.paths.size() + 1)
-                    throw new RuntimeException("There should be exactly one more points than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
+                    throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
 
                 // here each path represents one leg of the via-route and we merge them all together into one response path
                 ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
@@ -209,14 +209,6 @@ public class Router {
         }
     }
 
-    private ResponsePath concatenatePaths(GHRequest request, Weighting weighting, QueryGraph queryGraph, List<Path> paths, PointList waypoints) {
-        ResponsePath responsePath = new ResponsePath();
-        responsePath.setWaypoints(waypoints);
-        PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
-        pathMerger.doWork(responsePath, paths, encodingManager, translationMap.getWithFallBack(request.getLocale()));
-        return responsePath;
-    }
-
     private Weighting createWeighting(Profile profile, PMap requestHints, List<GHPoint> points, boolean forCH) {
         Weighting weighting;
         if (forCH) {
@@ -228,6 +220,7 @@ public class Router {
             // todonow: or maybe simply create the weighting *with* the request hints and only throw an error if
             // the hashes are different (=the user specified some hints that changed the weighting in a CH-incompatible
             // way, but how to report which parameters caused the problem?
+            // todonow: would be nice to get rid of the forCH flag here
             weighting = weightingFactory.createWeighting(profile, new PMap(), false);
             if (requestHints.has(Parameters.Routing.BLOCK_AREA))
                 throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
@@ -251,11 +244,6 @@ public class Router {
                         "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
                         "\navailable CH profiles: " + chGraphs.keySet());
             QueryGraph chQueryGraph = QueryGraph.create(chGraph, qResults);
-            // todonow: what do we want here? and actually we only want to change anything if the algorithm was not given (but
-            // algoopts does not allow us to find out...)
-            algoOpts = AlgorithmOptions.start(algoOpts)
-                    .algorithm(algoOpts.getTraversalMode().isEdgeBased() ? ASTAR_BI : DIJKSTRA_BI)
-                    .build();
             return new PathCalculator(chQueryGraph, new CHRoutingAlgorithmFactory(chGraph), algoOpts);
         } else {
             RoutingAlgorithmFactory algorithmFactory;
@@ -294,7 +282,15 @@ public class Router {
         return pathMerger;
     }
 
-    protected PointList getWaypoints(List<QueryResult> queryResults) {
+    private ResponsePath concatenatePaths(GHRequest request, Weighting weighting, QueryGraph queryGraph, List<Path> paths, PointList waypoints) {
+        ResponsePath responsePath = new ResponsePath();
+        responsePath.setWaypoints(waypoints);
+        PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
+        pathMerger.doWork(responsePath, paths, encodingManager, translationMap.getWithFallBack(request.getLocale()));
+        return responsePath;
+    }
+
+    private PointList getWaypoints(List<QueryResult> queryResults) {
         PointList pointList = new PointList(queryResults.size(), true);
         for (QueryResult qr : queryResults) {
             pointList.add(qr.getSnappedPoint());
