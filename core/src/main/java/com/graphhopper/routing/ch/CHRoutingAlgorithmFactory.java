@@ -21,6 +21,7 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.Helper;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
 
@@ -60,7 +61,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
 
     private RoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, AlgorithmOptions opts) {
         // use astar by default for edge-based (its faster)
-        if (ASTAR_BI.equals(opts.getAlgorithm()) || opts.getAlgorithm().isEmpty()) {
+        if (ASTAR_BI.equals(opts.getAlgorithm()) || Helper.isEmpty(opts.getAlgorithm())) {
             return new AStarBidirectionEdgeCHNoSOD(g)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
@@ -76,7 +77,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
             return new AStarBidirectionCH(g)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
-        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm()) || opts.getAlgorithm().isEmpty()) {
+        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm()) || Helper.isEmpty(opts.getAlgorithm())) {
             // use dijkstra by default for node-based (its faster, but maybe try the same as for edge-based)
             if (opts.getHints().getBool("stall_on_demand", true)) {
                 return new DijkstraBidirectionCH(g);
