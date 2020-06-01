@@ -17,7 +17,8 @@
  */
 package com.graphhopper.util;
 
-import static java.lang.Math.*;
+import static java.lang.Math.sqrt;
+import static java.lang.Math.toRadians;
 
 /**
  * Calculates the approximate distance of two points on earth. Very good results if delat_lon is
@@ -63,12 +64,31 @@ public class DistancePlaneProjection extends DistanceCalcEarth {
     public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = toRadians(toLat - fromLat);
         double dLon = toRadians(toLon - fromLon);
-        double left = cos(toRadians((fromLat + toLat) / 2)) * dLon;
+//        double left = cos((float)toRadians((fromLat + toLat) / 2)) * dLon;
+        double left = FastMath.cos((float) toRadians((fromLat + toLat) / 2)) * dLon;
         return dLat * dLat + left * left;
     }
 
     @Override
     public String toString() {
         return "PLANE_PROJ";
+    }
+
+    public static class FastMath {
+        private static final double[] vals = new double[65536];
+
+        public static double sin(float f) {
+            return vals[(int) (f * 10430.378F) & '\uffff'];
+        }
+
+        public static double cos(float f) {
+            return vals[(int) (f * 10430.378F + 16384.0F) & '\uffff'];
+        }
+
+        static {
+            for (int i = 0; i < 65536; ++i) {
+                vals[i] = Math.sin((double) i * 3.141592653589793D * 2.0D / 65536.0D);
+            }
+        }
     }
 }
