@@ -107,7 +107,6 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
         return currTo.weight + weightApprox.approximate(currTo.adjNode, true);
     }
 
-
     @Override
     public String getName() {
         return "astarbi|ch|edge_based|no_sod";

@@ -30,6 +30,7 @@ import com.graphhopper.util.Helper;
  * @see AStarBidirection
  */
 public class AStarBidirectionCH extends AbstractBidirCHAlgo {
+    private final boolean useHeuristicForNodeOrder = false;
     private BalancedWeightApproximator weightApprox;
 
     public AStarBidirectionCH(RoutingCHGraph graph) {
@@ -46,15 +47,25 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo {
     }
 
     @Override
+    protected boolean fwdSearchCanBeStopped() {
+        return getMinCurrFromPathWeight() > bestWeight;
+    }
+
+    @Override
+    protected boolean bwdSearchCanBeStopped() {
+        return getMinCurrToPathWeight() > bestWeight;
+    }
+
+    @Override
     protected SPTEntry createStartEntry(int node, double weight, boolean reverse) {
-        double heapWeight = weight + weightApprox.approximate(node, reverse);
+        double heapWeight = getHeapWeight(node, reverse, weight);
         return new AStar.AStarEntry(EdgeIterator.NO_EDGE, node, heapWeight, weight);
     }
 
     @Override
     protected SPTEntry createEntry(RoutingCHEdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
         int neighborNode = edge.getAdjNode();
-        double heapWeight = weight + weightApprox.approximate(neighborNode, reverse);
+        double heapWeight = getHeapWeight(neighborNode, reverse, weight);
         AStar.AStarEntry entry = new AStar.AStarEntry(edge.getEdge(), neighborNode, heapWeight, weight);
         entry.parent = parent;
         return entry;
@@ -63,7 +74,7 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo {
     @Override
     protected void updateEntry(SPTEntry entry, RoutingCHEdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
-        entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
+        entry.weight = getHeapWeight(edge.getAdjNode(), reverse, weight);
         ((AStar.AStarEntry) entry).weightOfVisitedPath = weight;
         entry.parent = parent;
     }
@@ -85,6 +96,27 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo {
     public AStarBidirectionCH setApproximation(WeightApproximator approx) {
         weightApprox = new BalancedWeightApproximator(approx);
         return this;
+    }
+
+    private double getHeapWeight(int node, boolean reverse, double weightOfVisitedPath) {
+        if (useHeuristicForNodeOrder) {
+            return weightOfVisitedPath + weightApprox.approximate(node, reverse);
+        }
+        return weightOfVisitedPath;
+    }
+
+    private double getMinCurrFromPathWeight() {
+        if (useHeuristicForNodeOrder) {
+            return currFrom.weight;
+        }
+        return currFrom.weight + weightApprox.approximate(currFrom.adjNode, false);
+    }
+
+    private double getMinCurrToPathWeight() {
+        if (useHeuristicForNodeOrder) {
+            return currTo.weight;
+        }
+        return currTo.weight + weightApprox.approximate(currTo.adjNode, true);
     }
 
     @Override

@@ -22,7 +22,8 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 
-import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
+import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 
 public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final CHConfig chConfig;
@@ -68,19 +69,15 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     }
 
     private RoutingAlgorithm createAlgoNodeBased(RoutingCHGraph g, AlgorithmOptions opts) {
-        if (ASTAR_BI.equals(opts.getAlgorithm())) {
+        if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
+            return new AlternativeRouteCH(g, opts.getHints());
+        }
+        boolean sod = opts.getHints().getBool("stall_on_demand", true);
+        if (sod) {
+            return new DijkstraBidirectionCH(g);
+        } else {
             return new AStarBidirectionCH(g)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
-        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            if (opts.getHints().getBool("stall_on_demand", true)) {
-                return new DijkstraBidirectionCH(g);
-            } else {
-                return new DijkstraBidirectionCHNoSOD(g);
-            }
-        } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
-            return new AlternativeRouteCH(g, opts.getHints());
-        } else {
-            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for node-based Contraction Hierarchies. Try with ch.disable=true");
         }
     }
 
