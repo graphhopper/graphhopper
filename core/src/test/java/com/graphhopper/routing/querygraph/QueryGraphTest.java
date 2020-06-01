@@ -17,7 +17,9 @@
  */
 package com.graphhopper.routing.querygraph;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.routing.HeadingResolver;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
@@ -41,6 +43,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
+import static com.graphhopper.util.EdgeIteratorState.UNFAVORED_EDGE;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
 
@@ -49,14 +52,14 @@ import static org.junit.Assert.*;
  */
 public class QueryGraphTest {
     private EncodingManager encodingManager;
-    private FlagEncoder carEncoder;
+    private FlagEncoder encoder;
     private GraphHopperStorage g;
 
     @Before
     public void setUp() {
-        carEncoder = new CarFlagEncoder();
-        encodingManager = EncodingManager.create(carEncoder);
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
+        encoder = new CarFlagEncoder();
+        encodingManager = EncodingManager.create(encoder);
+        g = new GraphBuilder(encodingManager).create();
     }
 
     @After
@@ -331,8 +334,8 @@ public class QueryGraphTest {
         na.setNode(0, 0, 0);
         na.setNode(1, 0, -0.001);
         g.edge(0, 1, 10, true);
-        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
-        DecimalEncodedValue avSpeedEnc = carEncoder.getAverageSpeedEnc();
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
         // in the case of identical nodes the wayGeometry defines the direction!
         EdgeIteratorState edge = g.edge(0, 0).
                 setDistance(100).
@@ -555,16 +558,18 @@ public class QueryGraphTest {
 
     @Test
     public void testEnforceHeading() {
-
         initHorseshoeGraph(g);
         EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
 
-        // query result on first vertical part of way (upward)
+        // query result on first vertical part of way (upward, base is in south)
         QueryResult qr = fakeEdgeQueryResult(edge, 1.5, 0, 0);
         QueryGraph queryGraph = lookup(qr);
 
         // enforce going out north
-        queryGraph.enforceHeading(qr.getClosestNode(), 0., false);
+        HeadingResolver headingResolver = new HeadingResolver(queryGraph);
+        IntArrayList unfavoredEdges = headingResolver.getEdgesWithDifferentHeading(qr.getClosestNode(), 0);
+        queryGraph.unfavorVirtualEdges(unfavoredEdges);
+
         // test penalized south
         boolean expect = true;
         assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE_REV));
@@ -576,36 +581,67 @@ public class QueryGraphTest {
         assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE_REV));
         assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE));
 
-        // enforce coming in north
-        queryGraph.enforceHeading(qr.getClosestNode(), 180., true);
-        // test penalized south
-        expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE_REV));
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE));
+        // enforce going south (same as coming in from north)
+        unfavoredEdges = headingResolver.getEdgesWithDifferentHeading(qr.getClosestNode(), 180);
+        queryGraph.unfavorVirtualEdges(unfavoredEdges);
 
-        // query result on second vertical part of way (downward)
+        // test penalized north
+        expect = true;
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ_REV));
+
+        // query result on second vertical part of way (downward, base is in north)
         qr = fakeEdgeQueryResult(edge, 1.5, 2, 2);
         queryGraph = lookup(Arrays.asList(qr));
 
-        // enforce going north
-        queryGraph.enforceHeading(qr.getClosestNode(), 0., false);
+        // enforce north
+        unfavoredEdges = headingResolver.getEdgesWithDifferentHeading(qr.getClosestNode(), 180);
+        queryGraph.unfavorVirtualEdges(unfavoredEdges);
         // test penalized south
         expect = true;
         assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ));
         assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ_REV));
 
         queryGraph.clearUnfavoredStatus();
-        // enforce coming in north
-        queryGraph.enforceHeading(qr.getClosestNode(), 180., true);
-        // test penalized south
+        // enforce south
+        unfavoredEdges = headingResolver.getEdgesWithDifferentHeading(qr.getClosestNode(), 0);
+        queryGraph.unfavorVirtualEdges(unfavoredEdges);
+
+        // test penalized north
         expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ));
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ_REV));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE_REV));
     }
 
     @Test
-    public void testunfavorVirtualEdgePair() {
+    public void testUnfavoredEdgeDirections() {
+        NodeAccess na = g.getNodeAccess();
+        // 0 <-> x <-> 1
+        //       2
+        na.setNode(0, 0, 0);
+        na.setNode(1, 0, 2);
+        EdgeIteratorState edge = g.edge(0, 1, 10, true);
 
+        QueryResult qr = fakeEdgeQueryResult(edge, 0, 1, 0);
+        QueryGraph queryGraph = QueryGraph.create(g, qr);
+        queryGraph.unfavorVirtualEdge(1);
+        // this sets the unfavored flag for both 'directions' (not sure if this is really what we want, but this is how
+        // it is). for example we can not set the virtual edge 0-2 unfavored when going from 0 to 2 but *not* unfavored
+        // when going from 2 to 0. this would be a problem for edge-based routing where we might apply a penalty when
+        // going in one direction but not the other
+        assertTrue(GHUtility.getEdge(queryGraph, 2, 0).get(UNFAVORED_EDGE));
+        assertTrue(GHUtility.getEdge(queryGraph, 2, 0).getReverse(UNFAVORED_EDGE));
+        assertTrue(GHUtility.getEdge(queryGraph, 0, 2).get(UNFAVORED_EDGE));
+        assertTrue(GHUtility.getEdge(queryGraph, 0, 2).getReverse(UNFAVORED_EDGE));
+
+        assertFalse(GHUtility.getEdge(queryGraph, 2, 1).get(UNFAVORED_EDGE));
+        assertFalse(GHUtility.getEdge(queryGraph, 2, 1).getReverse(UNFAVORED_EDGE));
+        assertFalse(GHUtility.getEdge(queryGraph, 1, 2).get(UNFAVORED_EDGE));
+        assertFalse(GHUtility.getEdge(queryGraph, 1, 2).getReverse(UNFAVORED_EDGE));
+    }
+
+    @Test
+    public void testUnfavorVirtualEdgePair() {
         initHorseshoeGraph(g);
         EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
 
@@ -614,7 +650,7 @@ public class QueryGraphTest {
         QueryGraph queryGraph = lookup(qr);
 
         // enforce coming in north
-        queryGraph.unfavorVirtualEdgePair(2, 1);
+        queryGraph.unfavorVirtualEdge(1);
         // test penalized south
         VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(1, 2);
         VirtualEdgeIteratorState incomingEdgeReverse = (VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(1, incomingEdge.getBaseNode());
@@ -669,7 +705,7 @@ public class QueryGraphTest {
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
         locationIndex.prepareIndex();
-        QueryResult qr = locationIndex.findClosest(0.15, 0.15, DefaultEdgeFilter.allEdges(carEncoder));
+        QueryResult qr = locationIndex.findClosest(0.15, 0.15, DefaultEdgeFilter.allEdges(encoder));
         assertTrue(qr.isValid());
         assertEquals("this test was supposed to test the Position.EDGE case", EDGE, qr.getSnappedPosition());
         QueryGraph queryGraph = lookup(qr);
@@ -710,7 +746,7 @@ public class QueryGraphTest {
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
         locationIndex.prepareIndex();
-        QueryResult qr = locationIndex.findClosest(0.2, 0.21, DefaultEdgeFilter.allEdges(carEncoder));
+        QueryResult qr = locationIndex.findClosest(0.2, 0.21, DefaultEdgeFilter.allEdges(encoder));
         assertTrue(qr.isValid());
         assertEquals("this test was supposed to test the Position.PILLAR case", PILLAR, qr.getSnappedPosition());
         QueryGraph queryGraph = lookup(qr);
@@ -767,7 +803,6 @@ public class QueryGraphTest {
         double directDist = g.getEdgeIteratorState(0, 1).getDistance();
         assertEquals(directDist, virtualEdgeDistanceSum, 1.e-3);
     }
-
 
     private QueryGraph lookup(QueryResult res) {
         return lookup(Collections.singletonList(res));

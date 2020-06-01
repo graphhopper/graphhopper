@@ -1131,7 +1131,7 @@ public class CHTurnCostTest {
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         ch.doWork();
-        chGraph = graph.getCHGraph(chConfig);
+        chGraph = graph.getCHGraph(chConfig.getName());
         return ch.getRoutingAlgorithmFactory();
     }
 
@@ -1144,7 +1144,7 @@ public class CHTurnCostTest {
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         ch.setParams(pMap);
         ch.doWork();
-        chGraph = graph.getCHGraph(chConfig);
+        chGraph = graph.getCHGraph(chConfig.getName());
         return ch.getRoutingAlgorithmFactory();
     }
 

@@ -85,10 +85,15 @@ public final class GraphExplorer {
                     // time expanded network. Later departures are reached via
                     // WAIT edges. Algorithmically not necessary, and does not
                     // reduce total number of relaxed nodes, but takes stress
-                    // off the priority queue.
+                    // off the priority queue. Additionally, when only walking,
+                    // don't bother finding the enterEdge, because we are not going to enter.
                     if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
-                        action.accept(findEnterEdge()); // fully consumes edgeIterator
-                        return true;
+                        if (walkOnly) {
+                            return false;
+                        } else {
+                            action.accept(findEnterEdge()); // fully consumes edgeIterator
+                            return true;
+                        }
                     }
 
                     action.accept(edgeIterator);

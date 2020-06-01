@@ -10,8 +10,11 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>2.0-SNAPSHOT</version>
     </parent>
+    <properties>
+        <assembly-phase>package</assembly-phase>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -85,7 +88,7 @@
                 <executions>
                     <execution>
                         <id>make-assembly</id>
-                        <phase>package</phase>
+                        <phase>${assembly-phase}</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
@@ -94,4 +97,13 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <!-- use -Ptools-jar to skip building the tools jar with dependencies -->
+            <id>skip-tools-jar</id>
+            <properties>
+                <assembly-phase>none</assembly-phase>
+            </properties>
+        </profile>
+    </profiles>
 </project>

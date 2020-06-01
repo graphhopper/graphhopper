@@ -56,12 +56,12 @@ public class InfoResource {
             public ProfileData() {
             }
 
-            public ProfileData(String profileName, String vehicle) {
-                this.profileName = profileName;
+            public ProfileData(String name, String vehicle) {
+                this.name = name;
                 this.vehicle = vehicle;
             }
 
-            public String profileName;
+            public String name;
             public String vehicle;
         }
 
@@ -73,8 +73,6 @@ public class InfoResource {
         public Map<String, List<Object>> encoded_values;
         public String import_date;
         public String data_date;
-        public String prepare_ch_date;
-        public String prepare_date;
     }
 
     @GET
@@ -97,8 +95,6 @@ public class InfoResource {
         }
         info.import_date = storage.getProperties().get("datareader.import.date");
         info.data_date = storage.getProperties().get("datareader.data.date");
-        info.prepare_ch_date = storage.getProperties().get("prepare.ch.date");
-        info.prepare_date = storage.getProperties().get("prepare.ch.date");
 
         // do not list all supported encoded values like the none-shared ones or *.turn_costs
         List<EncodedValue> evList = storage.getEncodingManager().getAllShared();

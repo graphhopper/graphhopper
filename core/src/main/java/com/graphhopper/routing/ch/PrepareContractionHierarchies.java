@@ -79,7 +79,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        this.chGraph = ghStorage.getCHGraph(chConfig);
+        chGraph = ghStorage.getCHGraph(chConfig.getName());
+        if (chGraph == null)
+            throw new IllegalArgumentException("There is no CH graph '" + chConfig.getName() + "', existing: " + ghStorage.getCHGraphNames());
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());
         updatedNeighbors = new IntHashSet(50);

@@ -80,6 +80,10 @@ $(document).ready(function (e) {
         $("#searchButton").toggle();
         mapLayer.adjustMapSize();
     });
+    $("#flex-example").click(function() {
+         $("#flex-input-text").val("speed_factor:\n  road_class:\n    motorway: 0.8\npriority:\n  road_environment:\n    tunnel: 0.0\n  road_class:\n    residential: 0.7\n  max_weight:\n    \">3\": 0.0");
+         return false;
+    });
 
     var sendCustomData = function() {
        mapLayer.clearElevation();
@@ -113,7 +117,7 @@ $(document).ready(function (e) {
        try {
          jsonModel = inputText.indexOf("{") == 0? JSON.parse(inputText) : YAML.safeLoad(inputText);
        } catch(ex) {
-         routeResultsDiv.html("Cannot parse " + contentType + " " + ex);
+         routeResultsDiv.html("Cannot parse " + inputText + " " + ex);
          return;
        }
 
@@ -168,6 +172,9 @@ $(document).ready(function (e) {
 
     var urlParams = urlTools.parseUrlWithHisto();
 
+    if(urlParams.flex)
+        $("#flex-input-link").click();
+
     var customURL = urlParams.load_custom;
     if(customURL && ghenv.environment === 'development')
         $.ajax(customURL).
@@ -195,7 +202,7 @@ $(document).ready(function (e) {
 
                 function createButton(profile, hide) {
                     var vehicle = profile.vehicle;
-                    var profileName = profile.profile_name;
+                    var profileName = profile.name;
                     var button = $("<button class='vehicle-btn' title='" + profileDisplayName(profileName) + "'/>");
                     if (hide)
                         button.hide();
@@ -231,10 +238,10 @@ $(document).ready(function (e) {
                     ghRequest.setElevation(json.elevation);
 
                     // only show all profiles if the url already specifies an existing profile that is not amongst the 'firstVehicles'
-                    var urlProfile = profiles.find(function (p) { return urlParams.profile && p.profile_name === urlParams.profile; });
-                    var showAllProfiles = urlProfile && firstVehicles.indexOf(urlProfile.vehicle)>=0;
+                    var urlProfile = profiles.find(function (profile) { return urlParams.profile && profile.name === urlParams.profile; });
+                    var showAllProfiles = urlProfile && firstVehicles.indexOf(urlProfile.vehicle) >= 0;
                     if (profiles.length > 0)
-                        ghRequest.setProfile(profiles[0].profile_name);
+                        ghRequest.setProfile(profiles[0].name);
 
                     var numVehiclesWhenCollapsed = 3;
                     var hiddenVehicles = [];
@@ -256,7 +263,7 @@ $(document).ready(function (e) {
                         profilesDiv.append(moreBtn);
                     }
                 }
-                $("button#" + profiles[0].profile_name).addClass("selectprofile");
+                $("button#" + profiles[0].name).addClass("selectprofile");
 
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
                 // a very simplistic helper system that shows the possible entries and encoded values

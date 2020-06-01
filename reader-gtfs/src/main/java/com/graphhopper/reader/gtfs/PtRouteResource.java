@@ -18,6 +18,7 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.conveyal.gtfs.GTFSFeed;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
@@ -115,23 +116,26 @@ public final class PtRouteResource {
 
     public static class Factory {
         private final TranslationMap translationMap;
-        private final PtEncodedValues ptEncodedValues;
         private final GraphHopperStorage graphHopperStorage;
         private final LocationIndex locationIndex;
         private final GtfsStorage gtfsStorage;
+        private final Map<String, Transfers> transfers;
 
         private Factory(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-            this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
             this.translationMap = translationMap;
             this.graphHopperStorage = graphHopperStorage;
             this.locationIndex = locationIndex;
             this.gtfsStorage = gtfsStorage;
+            this.transfers = new HashMap<>();
+            for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
+                this.transfers.put(entry.getKey(), new Transfers(entry.getValue()));
+            }
         }
 
         public PtRouteResource createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouteResource(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, ptEncodedValues, realtimeFeeds));
+            return new PtRouteResource(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds));
         }
 
         public PtRouteResource createWithoutRealtimeFeed() {
@@ -185,31 +189,18 @@ public final class PtRouteResource {
             ArrayList<QueryResult> pointQueryResults = new ArrayList<>();
             ArrayList<QueryResult> allQueryResults = new ArrayList<>();
             PointList points = new PointList(2, false);
-            if (enter instanceof GHPointLocation) {
-                final QueryResult closest = findClosest(((GHPointLocation) enter).ghPoint, 0);
-                pointQueryResults.add(closest);
-                allQueryResults.add(closest);
-                points.add(closest.getSnappedPoint());
-            } else if (enter instanceof GHStationLocation) {
-                final String stop_id = ((GHStationLocation) enter).stop_id;
-                final int node = gtfsStorage.getStationNodes().get(stop_id);
-                final QueryResult station = new QueryResult(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
-                station.setClosestNode(node);
-                allQueryResults.add(station);
-                points.add(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
-            }
-            if (exit instanceof GHPointLocation) {
-                final QueryResult closest = findClosest(((GHPointLocation) exit).ghPoint, 1);
-                pointQueryResults.add(closest);
-                allQueryResults.add(closest);
-                points.add(closest.getSnappedPoint());
-            } else if (exit instanceof GHStationLocation) {
-                final String stop_id = ((GHStationLocation) exit).stop_id;
-                final int node = gtfsStorage.getStationNodes().get(stop_id);
-                final QueryResult station = new QueryResult(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
-                station.setClosestNode(node);
-                allQueryResults.add(station);
-                points.add(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
+            List<GHLocation> locations = Arrays.asList(enter, exit);
+            for (int i = 0; i < locations.size(); i++) {
+                if (enter instanceof GHPointLocation) {
+                    final QueryResult closest = findByPoint(((GHPointLocation) locations.get(i)).ghPoint, i);
+                    pointQueryResults.add(closest);
+                    allQueryResults.add(closest);
+                    points.add(closest.getSnappedPoint());
+                } else if (enter instanceof GHStationLocation) {
+                    final QueryResult station = findByStationId((GHStationLocation) locations.get(i), i);
+                    allQueryResults.add(station);
+                    points.add(graphHopperStorage.getNodeAccess().getLat(station.getClosestNode()), graphHopperStorage.getNodeAccess().getLon(station.getClosestNode()));
+                }
             }
             queryGraph = QueryGraph.create(graphWithExtraEdges, pointQueryResults); // modifies queryResults
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
@@ -228,7 +219,7 @@ public final class PtRouteResource {
             return response;
         }
 
-        private QueryResult findClosest(GHPoint point, int indexForErrorMessage) {
+        private QueryResult findByPoint(GHPoint point, int indexForErrorMessage) {
             final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
             QueryResult source = locationIndex.findClosest(point.lat, point.lon, filter);
             if (!source.isValid()) {
@@ -240,10 +231,22 @@ public final class PtRouteResource {
             return source;
         }
 
+        private QueryResult findByStationId(GHStationLocation exit, int indexForErrorMessage) {
+            for (Map.Entry<String, GTFSFeed> entry : gtfsStorage.getGtfsFeeds().entrySet()) {
+                final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(entry.getKey(), exit.stop_id));
+                if (node != null) {
+                    final QueryResult station = new QueryResult(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
+                    station.setClosestNode(node);
+                    return station;
+                }
+            }
+            throw new PointNotFoundException("Cannot find station: " + exit.stop_id, indexForErrorMessage);
+        }
+
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
             for (List<Label.Transition> solution : solutions) {
                 final List<Trip.Leg> legs = tripFromLabel.getTrip(translation, queryGraph, accessEgressWeighting, solution);
-                final ResponsePath responsePath = tripFromLabel.createPathWrapper(translation, waypoints, legs);
+                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, legs);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
                 responsePath.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
                 response.add(responsePath);
@@ -352,9 +355,9 @@ public final class PtRouteResource {
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
                 Label originalSolution = originalSolutions.get(discoveredSolution);
-                List<Label.Transition> pathToDestinationStop = Label.getTransitions(originalSolution, arriveBy, ptEncodedValues, queryGraph);
+                List<Label.Transition> pathToDestinationStop = Label.getTransitions(originalSolution, arriveBy, ptEncodedValues, queryGraph, realtimeFeed);
                 if (arriveBy) {
-                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(0).label.adjNode), false, ptEncodedValues, queryGraph);
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(0).label.adjNode), false, ptEncodedValues, queryGraph, realtimeFeed);
                     long diff = pathToDestinationStop.get(0).label.currentTime - pathFromStation.get(pathFromStation.size() - 1).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
                         return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.walkDistanceOnCurrentLeg, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
@@ -363,7 +366,7 @@ public final class PtRouteResource {
                     pp.addAll(0, patchedPathFromStation);
                     paths.add(pp);
                 } else {
-                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(pathToDestinationStop.size() - 1).label.adjNode), true, ptEncodedValues, queryGraph);
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(pathToDestinationStop.size() - 1).label.adjNode), true, ptEncodedValues, queryGraph, realtimeFeed);
                     long diff = pathToDestinationStop.get(pathToDestinationStop.size() - 1).label.currentTime - pathFromStation.get(0).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
                         return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.walkDistanceOnCurrentLeg, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);

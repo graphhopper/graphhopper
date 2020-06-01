@@ -28,7 +28,8 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
-import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
+import com.graphhopper.routing.subnetwork.TarjanSCC;
+import com.graphhopper.routing.subnetwork.TarjanSCC.ConnectedComponents;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -253,11 +254,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // we cannot reuse the components calculated in PrepareRoutingSubnetworks as the edgeIds changed in between (called graph.optimize)
         // also calculating subnetworks from scratch makes bigger problems when working with many oneways
-        TarjansSCCAlgorithm tarjanAlgo = new TarjansSCCAlgorithm(graph, encoder.getAccessEnc(), true);
-        tarjanAlgo.setAdditionalEdgeFilter(tarjanFilter);
-        List<IntArrayList> graphComponents = tarjanAlgo.findComponents();
+        TarjanSCC tarjan = new TarjanSCC(graph, encoder.getAccessEnc(), true);
+        tarjan.setAdditionalEdgeFilter(tarjanFilter);
+        ConnectedComponents graphComponents = tarjan.findComponents();
         if (logDetails)
-            LOGGER.info("Calculated " + graphComponents.size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
+            LOGGER.info("Calculated " + graphComponents.getComponents().size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
 
         EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
         String additionalInfo = "";
@@ -268,7 +269,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             // see estimateMaxWeight. If we pick the distance too big for small areas this could lead to (slightly)
             // suboptimal routes as there will be too big rounding errors. But picking it too small is bad for performance
             // e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for 1000km
-            double maxWeight = estimateMaxWeight(tmpExplorer, graphComponents, blockedEdges);
+            double maxWeight = estimateMaxWeight(tmpExplorer, graphComponents.getComponents(), blockedEdges);
             setMaximumWeight(maxWeight);
             additionalInfo = ", maxWeight:" + maxWeight + " from quick estimation";
         }
@@ -277,13 +278,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + " with factor:" + factor + additionalInfo);
 
         int nodes = 0;
-        for (IntArrayList subnetworkIds : graphComponents) {
+        for (IntArrayList subnetworkIds : graphComponents.getComponents()) {
             nodes += subnetworkIds.size();
             if (subnetworkIds.size() < minimumNodes)
                 continue;
             if (factor <= 0)
                 throw new IllegalStateException("factor wasn't initialized " + factor + ", subnetworks:"
-                        + graphComponents.size() + ", minimumNodes:" + minimumNodes + ", current size:" + subnetworkIds.size());
+                        + graphComponents.getComponents().size() + ", minimumNodes:" + minimumNodes + ", current size:" + subnetworkIds.size());
 
             int index = subnetworkIds.size() - 1;
             // ensure start node is reachable from both sides and no subnetwork is associated

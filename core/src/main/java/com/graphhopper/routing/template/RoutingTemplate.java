@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.template;
 
+import com.graphhopper.GHResponse;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
@@ -29,8 +30,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.util.List;
 
 /**
- * This interface provides steps to create the final GHResponse consisting of multiple Paths (via
- * PathWrappers).
+ * This interface provides steps to create the final {@link GHResponse} consisting of multiple Paths
  *
  * @author Peter Karich
  */

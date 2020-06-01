@@ -27,7 +27,6 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
@@ -139,7 +138,7 @@ public class GraphHopperOSMTest {
                 setDataReaderFile(testOsm);
         gh.importOrLoad();
 
-        assertFalse(gh.getAlgorithmFactory("profile", false, false) instanceof CHRoutingAlgorithmFactory);
+        assertTrue(gh.getCHPreparationHandler().getPreparations().isEmpty());
 
         GHResponse rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4)
                 .setProfile(profile));
@@ -163,7 +162,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
 
-        assertFalse(gh.getAlgorithmFactory("profile", false, false) instanceof CHRoutingAlgorithmFactory);
+        assertTrue(gh.getCHPreparationHandler().getPreparations().isEmpty());
         gh.close();
     }
 
@@ -720,7 +719,7 @@ public class GraphHopperOSMTest {
         instance = new GraphHopperOSM().setStoreOnFlush(true).
                 init(new GraphHopperConfig().
                         putObject("datareader.file", testOsm3).
-                        putObject("prepare.min_network_size", 1).
+                        putObject("prepare.min_network_size", 0).
                         putObject("graph.flag_encoders", vehicle)
                         .setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)))
                         .setCHProfiles(Collections.singletonList(new CHProfile(profile)))
@@ -765,7 +764,7 @@ public class GraphHopperOSMTest {
                 setProfile("profile");
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
-        assertFalse(response.hasErrors());
+        assertFalse(response.getErrors().toString(), response.hasErrors());
         assertArrayEquals(new int[]{9, 5, 8, 3, 10}, paths.get(0).calcNodes().toArray());
     }
 
@@ -1074,8 +1073,8 @@ public class GraphHopperOSMTest {
         chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, simpleTruckConfig));
         chHandler.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, truckConfig));
 
-        assertEquals("fastest|truck", ((CHRoutingAlgorithmFactory) chHandler.getAlgorithmFactory("truck")).getWeighting().toString());
-        assertEquals("fastest|simple_truck", ((CHRoutingAlgorithmFactory) chHandler.getAlgorithmFactory("simple_truck")).getWeighting().toString());
+        assertEquals("fastest|truck", chHandler.getPreparation("truck").getCHConfig().getWeighting().toString());
+        assertEquals("fastest|simple_truck", chHandler.getPreparation("simple_truck").getCHConfig().getWeighting().toString());
 
         // make sure weighting cannot be mixed
         chHandler.addCHConfig(truckConfig);

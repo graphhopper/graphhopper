@@ -26,6 +26,8 @@ import org.mapdb.Bind;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +39,8 @@ import java.util.*;
 import java.util.zip.ZipFile;
 
 public class GtfsStorage implements GtfsStorageI {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(GtfsStorage.class);
 
 	public static class Validity implements Serializable {
 		final BitSet validity;
@@ -85,24 +89,47 @@ public class GtfsStorage implements GtfsStorageI {
 
 	}
 
+	static class FeedIdWithStopId implements Serializable {
+		final String feedId;
+		final String stopId;
+
+		FeedIdWithStopId(String feedId, String stopId) {
+			this.feedId = feedId;
+			this.stopId = stopId;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			FeedIdWithStopId that = (FeedIdWithStopId) o;
+			return feedId.equals(that.feedId) &&
+					stopId.equals(that.stopId);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(feedId, stopId);
+		}
+	}
+
 	private boolean isClosed = false;
 	private Directory dir;
 	private Set<String> gtfsFeedIds;
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
-	private Map<String, Transfers> transfers = new HashMap<>();
 	private HTreeMap<Validity, Integer> operatingDayPatterns;
 	private Bind.MapWithModificationListener<FeedIdWithTimezone, Integer> timeZones;
 	private Map<Integer, FeedIdWithTimezone> readableTimeZones;
 	private Map<Integer, byte[]> tripDescriptors;
 	private Map<Integer, Integer> stopSequences;
 
-	private Map<Integer, PlatformDescriptor> routes;
+	private Map<Integer, PlatformDescriptor> platformDescriptorsByEdge;
 
 	private Map<String, Fare> fares;
 	private Map<String, int[]> boardEdgesForTrip;
 	private Map<String, int[]> leaveEdgesForTrip;
 
-	private Map<String, Integer> stationNodes;
+	private Map<FeedIdWithStopId, Integer> stationNodes;
 
 	public enum EdgeType {
 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL
@@ -122,10 +149,21 @@ public class GtfsStorage implements GtfsStorageI {
 		this.data = DBMaker.newFileDB(file).transactionDisable().mmapFileEnable().readOnly().make();
 		init();
 		for (String gtfsFeedId : this.gtfsFeedIds) {
-			GTFSFeed feed = new GTFSFeed(new File(dir.getLocation() + "/" + gtfsFeedId));
+			File dbFile = new File(dir.getLocation() + "/" + gtfsFeedId);
+
+			if (!dbFile.exists()) {
+				throw new RuntimeException(String.format("The mapping of the gtfsFeeds in the transit_schedule DB does not reflect the files in %s. "
+								+ "dbFile %s is missing.",
+						dir.getLocation(), dbFile.getName()));
+			}
+
+			GTFSFeed feed = new GTFSFeed(dbFile);
 			this.gtfsFeeds.put(gtfsFeedId, feed);
-			this.transfers.put(gtfsFeedId, new Transfers(feed));
 		}
+
+		LocalDate latestStartDate = LocalDate.ofEpochDay(this.gtfsFeeds.values().stream().mapToLong(f -> f.getStartDate().toEpochDay()).max().getAsLong());
+		LocalDate earliestEndDate = LocalDate.ofEpochDay(this.gtfsFeeds.values().stream().mapToLong(f -> f.getEndDate().toEpochDay()).min().getAsLong());
+		LOGGER.info("Calendar range covered by all feeds: {} till {}", latestStartDate, earliestEndDate);
 		return true;
 	}
 
@@ -157,7 +195,7 @@ public class GtfsStorage implements GtfsStorageI {
 		this.boardEdgesForTrip = data.getHashMap("boardEdgesForTrip");
 		this.leaveEdgesForTrip = data.getHashMap("leaveEdgesForTrip");
 		this.stationNodes = data.getHashMap("stationNodes");
-		this.routes = data.getHashMap("routes");
+		this.platformDescriptorsByEdge = data.getHashMap("routes");
 	}
 
 	void loadGtfsFromZipFile(String id, ZipFile zipFile) {
@@ -220,7 +258,7 @@ public class GtfsStorage implements GtfsStorageI {
 
     @Override
     public Map<Integer, PlatformDescriptor> getPlatformDescriptorByEdge() {
-        return routes;
+        return platformDescriptorsByEdge;
     }
 
     @Override
@@ -233,12 +271,7 @@ public class GtfsStorage implements GtfsStorageI {
 	}
 
 	@Override
-	public Map<String, Transfers> getTransfers() {
-		return transfers;
-	}
-
-	@Override
-	public Map<String, Integer> getStationNodes() {
+	public Map<FeedIdWithStopId, Integer> getStationNodes() {
 		return stationNodes;
 	}
 

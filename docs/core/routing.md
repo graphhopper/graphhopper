@@ -41,7 +41,7 @@ if(rsp.hasErrors()) {
 }
 
 // use the best path, see the GHResponse class for more possibilities.
-PathWrapper path = rsp.getBest();
+ResponsePath path = rsp.getBest();
 
 // points, distance in meters and time in millis of the full path
 PointList pointList = path.getPoints();
