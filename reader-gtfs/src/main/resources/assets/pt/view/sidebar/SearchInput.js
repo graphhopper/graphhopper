@@ -1,6 +1,6 @@
-import { SearchActionType, TimeOption } from "../../data/Search.js";
 import { DateInput, Select, TextInput, TimeInput } from "../components/Inputs.js";
 import Point from "../../data/Point.js";
+import {TimeOption} from "../../data/Query.js";
 export default (({
                      search,
                      onSearchChange
@@ -24,6 +24,13 @@ const trueFalse = [{
     value: "false",
     label: "false"
 }];
+const SearchActionType = {
+    FROM: "SearchActionType_FROM",
+    TO: "SearchActionType_TO",
+    DEPARTURE_TIME: "SearchActionType_DEPARTURE_TIME",
+    DEPARTURE_DATE: "SearchActionType_DEPARTURE_DATE",
+    TIME_OPTION: "SearchActionType_TIME_OPTION",
+};
 
 class SearchInput extends React.Component {
     constructor(props) {
@@ -156,12 +163,6 @@ class SearchInput extends React.Component {
                     });
                 }
 
-                break;
-
-            case SearchActionType.LIMIT_SOLUTIONS:
-                this.props.onSearchChange({
-                    limitSolutions: action.value
-                });
                 break;
 
             case SearchActionType.TIME_OPTION:

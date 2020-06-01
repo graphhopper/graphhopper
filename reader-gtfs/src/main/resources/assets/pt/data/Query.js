@@ -1,5 +1,9 @@
-import {TimeOption} from "./Search.js";
 import Point from "./Point.js";
+
+const TimeOption = {
+    ARRIVAL: 1,
+    DEPARTURE: 2
+};
 
 const CreateQuery = (baseUrl, search) => {
     let url = new URL(baseUrl);
@@ -64,4 +68,4 @@ const ParseQuery = (search, searchParams) => {
     return search;
 };
 
-export {CreateQuery, ParseQuery};
+export {CreateQuery, ParseQuery, TimeOption};
