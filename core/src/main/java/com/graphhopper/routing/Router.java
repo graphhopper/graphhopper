@@ -110,7 +110,7 @@ public class Router {
                         " supports turn costs. Currently the following profiles that support turn costs are available: " + getTurnCostProfiles());
             }
             ghRsp.addDebugInfo("traversal-mode:" + traversalMode.toString());
-            final boolean passThrough = request.getHints().getBool(PASS_THROUGH, false);
+            final boolean passThrough = getPassThrough(request.getHints());
             final boolean forceCurbsides = request.getHints().getBool(FORCE_CURBSIDE, true);
             int maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
             if (maxVisitedNodesForRequest > routerConfig.getMaxVisitedNodes())
@@ -158,8 +158,9 @@ public class Router {
 
                 if (passThrough)
                     throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
-                // todonow: what about this comment?
-                // todo: allow restricting source/target edges for alternative routes as well ?
+                if (!request.getCurbsides().isEmpty())
+                    throw new IllegalArgumentException("Alternative paths do not support the " + CURBSIDE + " parameter yet");
+
                 ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
                 if (result.paths.isEmpty())
                     throw new RuntimeException("Empty paths for alternative route calculation not expected");
@@ -181,10 +182,8 @@ public class Router {
                 ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
                 PathCalculator pathCalculator = createPathCalculator(qResults, profile, algoOpts, disableCH, disableLM);
                 // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
-                // a (possibly implementation specific) query graph used for PathCalculator
-                // todonow: here we 'create' the QueryGraph a second time.
-                //          Step 1) how much slower is this really?
-                //          Step 2) split out the QueryOverlay (but if step 1) turns out to be ok, merge to master first)
+                // the (possibly implementation specific) query graph used by PathCalculator
+                // todonow: check performance of this for long via routes
                 QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
                 ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
 
@@ -212,17 +211,15 @@ public class Router {
 
     private Weighting createWeighting(Profile profile, PMap requestHints, List<GHPoint> points, boolean forCH) {
         if (forCH) {
-            // todonow: should we make this safe by comparing some hash of the weighting/profile that was used for
-            // the preparation with the one of the weighting we create here?
-            // todonow: is it slower since we are now creating the weighting for every request also for CH?
-            // todonow: maybe this is the right place to throw an error if things are requested that cannot be fulfilled
-            // like short_fastest.distance_factor or u_turn_costs
-            // todonow: or maybe simply create the weighting *with* the request hints and only throw an error if
-            // the hashes are different (=the user specified some hints that changed the weighting in a CH-incompatible
-            // way, but how to report which parameters caused the problem?
-            // todonow: would be nice to get rid of the forCH flag here
-            if (requestHints.has(Parameters.Routing.BLOCK_AREA))
-                throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
+            // todo: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled
+            // and only under certain conditions for LM
+            // todo: maybe create the weighting *with* the request hints and only throw an error if some hash value we
+            // calculate from it is different (=the user specified some hints that changed the weighting in a
+            // CH-incompatible way). but how to report which parameters caused the problem?
+
+            // the request hints are ignored for CH as we cannot change the profile after the preparation like this
+            // the weighting here has to be created the same way as we did when we created the weighting for the preparation
+            // todonow: should we make this safer somehow?
             return weightingFactory.createWeighting(profile, new PMap(), false);
         } else {
             Weighting weighting = weightingFactory.createWeighting(profile, requestHints, false);
@@ -343,13 +340,15 @@ public class Router {
         if (lmEnabled && !routerConfig.isLMDisablingAllowed() && disableLM)
             throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
 
-        // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
         if (chEnabled && !disableCH) {
             if (!request.getHeadings().isEmpty())
                 throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
-            if (request.getHints().getBool(Parameters.Routing.PASS_THROUGH, false))
+            if (getPassThrough(request.getHints()))
                 throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
+
+            if (request.getHints().has(Parameters.Routing.BLOCK_AREA))
+                throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
         }
     }
 
@@ -369,6 +368,10 @@ public class Router {
 
     private static boolean getDisableCH(PMap hints) {
         return hints.getBool(Parameters.CH.DISABLE, false);
+    }
+
+    private static boolean getPassThrough(PMap hints) {
+        return hints.getBool(PASS_THROUGH, false);
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {

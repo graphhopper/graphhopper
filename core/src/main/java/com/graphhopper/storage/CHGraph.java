@@ -31,9 +31,6 @@ import com.graphhopper.util.EdgeExplorer;
  *
  * @author Peter Karich
  */
-// todonow: another main goal here: CHGraph should not be a Graph and the biggest problem is that this means that
-// we cannot build a QueryGraph from it. We need a dedicated CHQueryGraph and this should be only a very little
-// code (reuse QueryOverlay etc.)
 public interface CHGraph extends Graph {
 
     /**
