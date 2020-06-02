@@ -18,6 +18,7 @@
 package com.graphhopper.tools;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.carrotsearch.hppc.IntArrayList;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -259,6 +260,10 @@ public class Measurement {
                             sod());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
                             withInstructions().withPointHints().sod().simplify());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
+                            withPoints(100).sod());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
+                            withPoints(100).sod().withInstructions().simplify());
                 }
                 if (!hopper.getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
@@ -267,6 +272,10 @@ public class Measurement {
                             edgeBased());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
                             edgeBased().withInstructions().withPointHints().simplify());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100", count / 100, isCH, isLM).
+                            withPoints(100).edgeBased().sod());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100_full", count / 100, isCH, isLM).
+                            withPoints(100).edgeBased().sod().withInstructions().simplify());
                 }
             }
             if (!isEmpty(countryBordersDirectory)) {
@@ -351,6 +360,7 @@ public class Measurement {
         int activeLandmarks = -1;
         boolean withInstructions, withPointHints, sod, edgeBased, simplify, alternative;
         String blockArea;
+        int points = 2;
 
         QuerySettings(String prefix, int count, boolean isCH, boolean isLM) {
             this.prefix = prefix;
@@ -361,6 +371,11 @@ public class Measurement {
 
         QuerySettings withInstructions() {
             this.withInstructions = true;
+            return this;
+        }
+
+        QuerySettings withPoints(int points) {
+            this.points = points;
             return this;
         }
 
@@ -712,32 +727,38 @@ public class Measurement {
         MiniPerfTest miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
-                int from = -1, to = -1;
-                double fromLat = 0, fromLon = 0, toLat = 0, toLon = 0;
-                GHRequest req = null;
+                int numPoints = 2;
+                GHRequest req = new GHRequest(querySettings.points);
+                IntArrayList nodes = new IntArrayList(querySettings.points);
+                // we try a few times to find points that do not lie within our blocked area
                 for (int i = 0; i < 5; i++) {
-                    from = rand.nextInt(maxNode);
-                    to = rand.nextInt(maxNode);
-                    fromLat = na.getLatitude(from);
-                    fromLon = na.getLongitude(from);
-                    toLat = na.getLatitude(to);
-                    toLon = na.getLongitude(to);
-                    req = new GHRequest(fromLat, fromLon, toLat, toLon);
-                    req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
+                    List<GHPoint> points = new ArrayList<>();
+                    List<String> pointHints = new ArrayList<>();
+                    for (int p = 0; p < numPoints; p++) {
+                        int node = rand.nextInt(maxNode);
+                        nodes.add(node);
+                        if (querySettings.withPointHints) {
+                            points.add(new GHPoint(na.getLatitude(node), na.getLongitude(node)));
+                            EdgeIterator iter = edgeExplorer.setBaseNode(node);
+                            iter.next();
+                            pointHints.add(iter.getName());
+                        }
+                    }
+                    req.setPoints(points);
+                    req.setPointHints(pointHints);
                     if (querySettings.blockArea == null)
                         break;
-
                     try {
                         req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
                         GraphEdgeIdFinder.createBlockArea(hopper.getGraphHopperStorage(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
                         break;
                     } catch (IllegalArgumentException ex) {
                         if (i >= 4)
-                            throw new RuntimeException("Give up after 5 trials. Cannot find points outside of the block_area "
+                            throw new RuntimeException("Give up after 5 tries. Cannot find points outside of the block_area "
                                     + querySettings.blockArea + " - too big block_area or map too small? Request:" + req);
                     }
                 }
-
+                req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
                 req.getHints().
                         putObject(CH.DISABLE, !querySettings.ch).
                         putObject("stall_on_demand", querySettings.sod).
@@ -758,16 +779,6 @@ public class Measurement {
                     req.getHints().putObject(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
                 }
 
-                if (querySettings.withPointHints) {
-                    EdgeIterator iter = edgeExplorer.setBaseNode(from);
-                    if (!iter.next())
-                        throw new IllegalArgumentException("wrong 'from' when adding point hint");
-                    EdgeIterator iter2 = edgeExplorer.setBaseNode(to);
-                    if (!iter2.next())
-                        throw new IllegalArgumentException("wrong 'to' when adding point hint");
-                    req.setPointHints(Arrays.asList(iter.getName(), iter2.getName()));
-                }
-
                 // put(algo + ".approximation", "BeelineSimplification").
                 // put(algo + ".epsilon", 2);
 
@@ -776,8 +787,7 @@ public class Measurement {
                     rsp = hopper.route(req);
                 } catch (Exception ex) {
                     // 'not found' can happen if import creates more than one subnetwork
-                    throw new RuntimeException("Error while calculating route! "
-                            + "nodes:" + from + " -> " + to + ", request:" + req, ex);
+                    throw new RuntimeException("Error while calculating route! nodes: " + nodes + ", request:" + req, ex);
                 }
 
                 if (rsp.hasErrors()) {
@@ -803,7 +813,11 @@ public class Measurement {
                     long dist = (long) responsePath.getDistance();
                     distSum.addAndGet(dist);
 
-                    airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
+                    GHPoint prev = req.getPoints().get(0);
+                    for (GHPoint point : req.getPoints()) {
+                        airDistSum.addAndGet((long) distCalc.calcDist(prev.getLat(), prev.getLon(), point.getLat(), point.getLon()));
+                        prev = point;
+                    }
 
                     if (dist > maxDistance.get())
                         maxDistance.set(dist);
