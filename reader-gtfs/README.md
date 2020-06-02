@@ -22,7 +22,9 @@ mvn clean package -DskipTests
 java -Xmx8g -jar web/target/graphhopper-web-*.jar server reader-gtfs/config-example-pt.yml
 
 # Point your browser to
-# http://localhost:8989/maps/pt/
+# http://localhost:8989
+#
+# Alternatively, for a more specialized but more minimal demo of transit routing, to http://localhost:8989/maps/pt/
 # (make sure to include the trailing slash)
 ```
 
