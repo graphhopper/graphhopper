@@ -16,24 +16,20 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.template;
-
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
+package com.graphhopper.routing;
 
 import java.util.List;
 
-/**
- * Implementations of this class allows repeatedly calculating paths for different start/target nodes and edge restrictions
- */
-public interface PathCalculator {
-    List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions);
+public class MultiException extends RuntimeException {
 
-    String getDebugString();
+    private final List<Throwable> errors;
 
-    int getVisitedNodes();
+    public MultiException(List<Throwable> errors) {
+        this.errors = errors;
+    }
 
-    AlgorithmOptions getAlgoOpts();
+    public List<Throwable> getErrors() {
+        return errors;
+    }
 
-    void setAlgoOpts(AlgorithmOptions algoOpts);
 }

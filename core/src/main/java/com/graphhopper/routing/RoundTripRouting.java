@@ -15,10 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.template;
+package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntHashSet;
-import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.tour.MultiPointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;

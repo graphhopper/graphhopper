@@ -15,13 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.template;
+package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.AlternativeRouteTest;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;

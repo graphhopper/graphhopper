@@ -16,11 +16,9 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.template;
+package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntSet;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.util.Parameters;
 

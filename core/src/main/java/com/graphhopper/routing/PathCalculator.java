@@ -16,34 +16,21 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.template;
+package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
+import java.util.List;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+/**
+ * Implementations of this class allows repeatedly calculating paths for different start/target nodes and edge restrictions
+ */
+public interface PathCalculator {
+    List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions);
 
-public class EdgeRestrictions {
-    private int sourceOutEdge = ANY_EDGE;
-    private int targetInEdge = ANY_EDGE;
-    private final IntArrayList unfavoredEdges = IntArrayList.from();
+    String getDebugString();
 
-    public int getSourceOutEdge() {
-        return sourceOutEdge;
-    }
+    int getVisitedNodes();
 
-    public void setSourceOutEdge(int sourceOutEdge) {
-        this.sourceOutEdge = sourceOutEdge;
-    }
+    AlgorithmOptions getAlgoOpts();
 
-    public int getTargetInEdge() {
-        return targetInEdge;
-    }
-
-    public void setTargetInEdge(int targetInEdge) {
-        this.targetInEdge = targetInEdge;
-    }
-
-    public IntArrayList getUnfavoredEdges() {
-        return unfavoredEdges;
-    }
+    void setAlgoOpts(AlgorithmOptions algoOpts);
 }

@@ -15,14 +15,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.template;
+package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.routing.DirectionResolver;
-import com.graphhopper.routing.DirectionResolverResult;
-import com.graphhopper.routing.HeadingResolver;
-import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;

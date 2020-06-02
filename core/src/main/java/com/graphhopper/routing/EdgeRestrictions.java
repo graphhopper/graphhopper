@@ -16,20 +16,34 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.template;
+package com.graphhopper.routing;
 
-import java.util.List;
+import com.carrotsearch.hppc.IntArrayList;
 
-public class MultiException extends RuntimeException {
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
-    private final List<Throwable> errors;
+public class EdgeRestrictions {
+    private int sourceOutEdge = ANY_EDGE;
+    private int targetInEdge = ANY_EDGE;
+    private final IntArrayList unfavoredEdges = IntArrayList.from();
 
-    public MultiException(List<Throwable> errors) {
-        this.errors = errors;
+    public int getSourceOutEdge() {
+        return sourceOutEdge;
     }
 
-    public List<Throwable> getErrors() {
-        return errors;
+    public void setSourceOutEdge(int sourceOutEdge) {
+        this.sourceOutEdge = sourceOutEdge;
     }
 
+    public int getTargetInEdge() {
+        return targetInEdge;
+    }
+
+    public void setTargetInEdge(int targetInEdge) {
+        this.targetInEdge = targetInEdge;
+    }
+
+    public IntArrayList getUnfavoredEdges() {
+        return unfavoredEdges;
+    }
 }

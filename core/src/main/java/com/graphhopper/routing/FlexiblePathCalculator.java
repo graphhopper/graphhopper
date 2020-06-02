@@ -16,11 +16,9 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.template;
-// todonow: rename this package?
+package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.routing.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
