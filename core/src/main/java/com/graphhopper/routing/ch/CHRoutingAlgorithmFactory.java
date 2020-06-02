@@ -21,6 +21,7 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.Helper;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
 
@@ -37,7 +38,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         // graph we have to use: the CH graph. Same with  opts.weighting: The CHConfig already contains a weighting
         // and we cannot really use it here. The real reason we do this the way its done atm is that graph might be
         // a QueryGraph that wraps (our) CHGraph.
-        RoutingAlgorithm algo = doCreateAlgo(graph, opts);
+        RoutingAlgorithm algo = doCreateAlgo(graph, AlgorithmOptions.start(opts).weighting(getWeighting()).build());
         algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
         return algo;
     }
@@ -50,16 +51,16 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
             }
-            RoutingCHGraph g = new RoutingCHGraphImpl(graph, graph.wrapWeighting(getWeighting()));
+            RoutingCHGraph g = new RoutingCHGraphImpl(graph, graph.wrapWeighting(opts.getWeighting()));
             return createAlgoEdgeBased(g, opts);
         } else {
-            RoutingCHGraph g = new RoutingCHGraphImpl(graph, chConfig.getWeighting());
+            RoutingCHGraph g = new RoutingCHGraphImpl(graph, opts.getWeighting());
             return createAlgoNodeBased(g, opts);
         }
     }
 
     private RoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, AlgorithmOptions opts) {
-        if (ASTAR_BI.equals(opts.getAlgorithm())) {
+        if (ASTAR_BI.equals(opts.getAlgorithm()) || Helper.isEmpty(opts.getAlgorithm())) {
             return new AStarBidirectionEdgeCHNoSOD(g)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
@@ -75,7 +76,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
             return new AStarBidirectionCH(g)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
-        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
+        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm()) || Helper.isEmpty(opts.getAlgorithm())) {
             if (opts.getHints().getBool("stall_on_demand", true)) {
                 return new DijkstraBidirectionCH(g);
             } else {
