@@ -175,15 +175,19 @@ public class Helper {
     }
 
     public static int getUsedMBAfterGC() {
+        gcAndWait();
+        long result = (ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed() +
+                ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage().getUsed()) / (1024 * 1024);
+        return (int) result;
+    }
+
+    public static void gcAndWait() {
         long before = getTotalGcCount();
         // trigger gc
         System.gc();
         while (getTotalGcCount() == before) {
             // wait for the gc to have completed
         }
-        long result = (ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed() +
-                ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage().getUsed()) / (1024 * 1024);
-        return (int) result;
     }
 
     private static long getTotalGcCount() {
