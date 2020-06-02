@@ -136,7 +136,7 @@ public class Router {
                 RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
                 List<QueryResult> qResults = RoundTripRouting.lookup(request.getPoints(), weighting, locationIndex, params);
                 ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-                PathCalculator pathCalculator = createPathCalculator(qResults, profile, algoOpts, disableCH, disableLM);
+                FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(qResults, profile, algoOpts, disableLM);
                 QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
 
                 PathCalculatorWithAvoidedEdges roundTripPathCalculator = new PathCalculatorWithAvoidedEdges(pathCalculator);
@@ -159,6 +159,8 @@ public class Router {
 
                 if (passThrough)
                     throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
+                // todonow: what about this comment?
+                // todo: allow restricting source/target edges for alternative routes as well ?
                 ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
                 if (result.paths.isEmpty())
                     throw new RuntimeException("Empty paths for alternative route calculation not expected");
@@ -210,7 +212,6 @@ public class Router {
     }
 
     private Weighting createWeighting(Profile profile, PMap requestHints, List<GHPoint> points, boolean forCH) {
-        Weighting weighting;
         if (forCH) {
             // todonow: should we make this safe by comparing some hash of the weighting/profile that was used for
             // the preparation with the one of the weighting we create here?
@@ -221,47 +222,55 @@ public class Router {
             // the hashes are different (=the user specified some hints that changed the weighting in a CH-incompatible
             // way, but how to report which parameters caused the problem?
             // todonow: would be nice to get rid of the forCH flag here
-            weighting = weightingFactory.createWeighting(profile, new PMap(), false);
             if (requestHints.has(Parameters.Routing.BLOCK_AREA))
                 throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
+            return weightingFactory.createWeighting(profile, new PMap(), false);
         } else {
-            weighting = weightingFactory.createWeighting(profile, requestHints, false);
+            Weighting weighting = weightingFactory.createWeighting(profile, requestHints, false);
             if (requestHints.has(Parameters.Routing.BLOCK_AREA)) {
                 FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
                 GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
                         points, requestHints, DefaultEdgeFilter.allEdges(encoder));
                 weighting = new BlockAreaWeighting(weighting, blockArea);
             }
+            return weighting;
         }
-        return weighting;
     }
 
     private PathCalculator createPathCalculator(List<QueryResult> qResults, Profile profile, AlgorithmOptions algoOpts, boolean disableCH, boolean disableLM) {
         if (chEnabled && !disableCH) {
-            CHGraph chGraph = chGraphs.get(profile.getName());
-            if (chGraph == null)
-                throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile.getName() + "'" +
-                        "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
-                        "\navailable CH profiles: " + chGraphs.keySet());
-            QueryGraph chQueryGraph = QueryGraph.create(chGraph, qResults);
-            return new PathCalculator(chQueryGraph, new CHRoutingAlgorithmFactory(chGraph), algoOpts);
+            return createCHPathCalculator(qResults, profile, algoOpts);
         } else {
-            RoutingAlgorithmFactory algorithmFactory;
-            // for now do not allow mixing CH&LM #1082,#1889
-            if (lmEnabled && !disableLM) {
-                LandmarkStorage landmarkStorage = landmarks.get(profile.getName());
-                if (landmarkStorage == null)
-                    throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile.getName() + "'" +
-                            "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
-                            "\navailable LM profiles: " + landmarks.keySet());
-                algorithmFactory = new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routerConfig.getActiveLandmarkCount());
-            } else {
-                algorithmFactory = new RoutingAlgorithmFactorySimple();
-            }
-            checkNonChMaxWaypointDistance(qResults);
-            QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
-            return new PathCalculator(queryGraph, algorithmFactory, algoOpts);
+            return createFlexiblePathCalculator(qResults, profile, algoOpts, disableLM);
         }
+    }
+
+    private PathCalculator createCHPathCalculator(List<QueryResult> qResults, Profile profile, AlgorithmOptions algoOpts) {
+        CHGraph chGraph = chGraphs.get(profile.getName());
+        if (chGraph == null)
+            throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile.getName() + "'" +
+                    "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
+                    "\navailable CH profiles: " + chGraphs.keySet());
+        QueryGraph chQueryGraph = QueryGraph.create(chGraph, qResults);
+        return new CHPathCalculator(chQueryGraph, new CHRoutingAlgorithmFactory(chGraph), algoOpts);
+    }
+
+    private FlexiblePathCalculator createFlexiblePathCalculator(List<QueryResult> qResults, Profile profile, AlgorithmOptions algoOpts, boolean disableLM) {
+        RoutingAlgorithmFactory algorithmFactory;
+        // for now do not allow mixing CH&LM #1082,#1889
+        if (lmEnabled && !disableLM) {
+            LandmarkStorage landmarkStorage = landmarks.get(profile.getName());
+            if (landmarkStorage == null)
+                throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile.getName() + "'" +
+                        "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
+                        "\navailable LM profiles: " + landmarks.keySet());
+            algorithmFactory = new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routerConfig.getActiveLandmarkCount());
+        } else {
+            algorithmFactory = new RoutingAlgorithmFactorySimple();
+        }
+        checkNonChMaxWaypointDistance(qResults);
+        QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
+        return new FlexiblePathCalculator(queryGraph, algorithmFactory, algoOpts);
     }
 
     private PathMerger createPathMerger(GHRequest request, Weighting weighting, Graph graph) {

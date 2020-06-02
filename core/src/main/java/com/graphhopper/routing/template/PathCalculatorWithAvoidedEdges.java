@@ -28,11 +28,11 @@ import com.graphhopper.util.Parameters;
  * This path calculator allows calculating a path with a set of avoided edges. This does not work with CH.
  */
 public class PathCalculatorWithAvoidedEdges {
-    private final PathCalculator pathCalculator;
+    private final FlexiblePathCalculator pathCalculator;
     private final AvoidEdgesWeighting avoidPreviousPathsWeighting;
     private int visitedNodes;
 
-    public PathCalculatorWithAvoidedEdges(PathCalculator pathCalculator) {
+    public PathCalculatorWithAvoidedEdges(FlexiblePathCalculator pathCalculator) {
         this.pathCalculator = pathCalculator;
         // we make the path calculator use our avoid edges weighting
         avoidPreviousPathsWeighting = new AvoidEdgesWeighting(pathCalculator.getAlgoOpts().getWeighting())
