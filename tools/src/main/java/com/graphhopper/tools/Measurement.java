@@ -727,18 +727,17 @@ public class Measurement {
         MiniPerfTest miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
-                int numPoints = 2;
                 GHRequest req = new GHRequest(querySettings.points);
                 IntArrayList nodes = new IntArrayList(querySettings.points);
                 // we try a few times to find points that do not lie within our blocked area
                 for (int i = 0; i < 5; i++) {
                     List<GHPoint> points = new ArrayList<>();
                     List<String> pointHints = new ArrayList<>();
-                    for (int p = 0; p < numPoints; p++) {
+                    for (int p = 0; p < querySettings.points; p++) {
                         int node = rand.nextInt(maxNode);
                         nodes.add(node);
+                        points.add(new GHPoint(na.getLatitude(node), na.getLongitude(node)));
                         if (querySettings.withPointHints) {
-                            points.add(new GHPoint(na.getLatitude(node), na.getLongitude(node)));
                             EdgeIterator iter = edgeExplorer.setBaseNode(node);
                             iter.next();
                             pointHints.add(iter.getName());
