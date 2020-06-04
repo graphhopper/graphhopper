@@ -170,6 +170,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                                 t.transfer.min_transfer_time = (int) (t.time / 1000L);
                                 gtfsFeed.transfers.put(t.id, t.transfer);
                             });
+                    LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
                     gtfsReader.buildPtNetwork();
                     readers.put(id, gtfsReader);
                 });
@@ -217,7 +218,6 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 }
             }
         });
-        LOGGER.info("Finished looking for inter-feed transfers");
     }
 
     private Stream<TransferWithTime> getType0TransferWithTimes(String id, GTFSFeed gtfsFeed) {
