@@ -117,7 +117,6 @@ public class GtfsStorage implements GtfsStorageI {
 	private Directory dir;
 	private Set<String> gtfsFeedIds;
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
-	private Map<String, Transfers> transfers = new HashMap<>();
 	private HTreeMap<Validity, Integer> operatingDayPatterns;
 	private Bind.MapWithModificationListener<FeedIdWithTimezone, Integer> timeZones;
 	private Map<Integer, FeedIdWithTimezone> readableTimeZones;
@@ -160,7 +159,6 @@ public class GtfsStorage implements GtfsStorageI {
 
 			GTFSFeed feed = new GTFSFeed(dbFile);
 			this.gtfsFeeds.put(gtfsFeedId, feed);
-			this.transfers.put(gtfsFeedId, new Transfers(feed));
 		}
 
 		LocalDate latestStartDate = LocalDate.ofEpochDay(this.gtfsFeeds.values().stream().mapToLong(f -> f.getStartDate().toEpochDay()).max().getAsLong());
@@ -270,11 +268,6 @@ public class GtfsStorage implements GtfsStorageI {
 
 	public Map<String, GTFSFeed> getGtfsFeeds() {
 		return Collections.unmodifiableMap(gtfsFeeds);
-	}
-
-	@Override
-	public Map<String, Transfers> getTransfers() {
-		return transfers;
 	}
 
 	@Override

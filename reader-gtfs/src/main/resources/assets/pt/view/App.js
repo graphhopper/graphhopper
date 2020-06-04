@@ -18,8 +18,7 @@
 
 import Sidebar from "./sidebar/Sidebar.js";
 import Map from "./map/Map.js";
-import {TimeOption} from "../data/Search.js";
-import {CreateQuery, ParseQuery} from "../data/Query.js";
+import {CreateQuery, ParseQuery, TimeOption} from "../data/Query.js";
 import Path from "../data/Path.js";
 
 export default class App extends React.Component {
@@ -30,7 +29,10 @@ export default class App extends React.Component {
             from: null,
             to: null,
             departureDateTime: new moment(),
-            limitSolutions: 5,
+            rangeQuery: false,
+            rangeQueryDuration: "PT120M",
+            limitStreetTime: "PT30M",
+            ignoreTransfers: false,
             timeOption: TimeOption.DEPARTURE,
             routes: {
                 query: null,

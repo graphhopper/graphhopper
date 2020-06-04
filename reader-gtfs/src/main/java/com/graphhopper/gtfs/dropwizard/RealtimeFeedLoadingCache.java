@@ -18,6 +18,7 @@
 
 package com.graphhopper.gtfs.dropwizard;
 
+import com.conveyal.gtfs.GTFSFeed;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -26,7 +27,9 @@ import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.RealtimeFeed;
+import com.graphhopper.reader.gtfs.Transfers;
 import com.graphhopper.storage.GraphHopperStorage;
+import io.dropwizard.lifecycle.Managed;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.glassfish.hk2.api.Factory;
@@ -41,14 +44,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed> {
+public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed {
 
     private final HttpClient httpClient;
     private final GraphHopperStorage graphHopperStorage;
     private final GtfsStorage gtfsStorage;
     private final RealtimeBundleConfiguration bundleConfiguration;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final LoadingCache<String, RealtimeFeed> cache;
+    private ExecutorService executor;
+    private LoadingCache<String, RealtimeFeed> cache;
+    private Map<String, Transfers> transfers;
 
     @Inject
     RealtimeFeedLoadingCache(GraphHopperStorage graphHopperStorage, GtfsStorage gtfsStorage, HttpClient httpClient, RealtimeBundleConfiguration bundleConfiguration) {
@@ -56,6 +60,15 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed> {
         this.gtfsStorage = gtfsStorage;
         this.bundleConfiguration = bundleConfiguration;
         this.httpClient = httpClient;
+    }
+
+    @Override
+    public void start() {
+        this.transfers = new HashMap<>();
+        for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
+            this.transfers.put(entry.getKey(), new Transfers(entry.getValue()));
+        }
+        this.executor = Executors.newSingleThreadExecutor();
         this.cache = CacheBuilder.newBuilder()
                 .maximumSize(1)
                 .refreshAfterWrite(1, TimeUnit.MINUTES)
@@ -85,7 +98,11 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed> {
 
     @Override
     public void dispose(RealtimeFeed instance) {
+        this.executor.shutdown();
+    }
 
+    @Override
+    public void stop() {
     }
 
     private RealtimeFeed fetchFeedsAndCreateGraph() {
@@ -98,7 +115,7 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed> {
                 throw new RuntimeException(e);
             }
         }
-        return RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, feedMessageMap);
+        return RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, feedMessageMap);
     }
 
 }

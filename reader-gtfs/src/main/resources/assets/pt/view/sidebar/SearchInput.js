@@ -1,6 +1,6 @@
-import { SearchActionType, TimeOption } from "../../data/Search.js";
 import { DateInput, Select, TextInput, TimeInput } from "../components/Inputs.js";
 import Point from "../../data/Point.js";
+import {TimeOption} from "../../data/Query.js";
 export default (({
                      search,
                      onSearchChange
@@ -17,11 +17,26 @@ const options = [{
     value: TimeOption.ARRIVAL,
     label: "Arrival at"
 }];
+const trueFalse = [{
+    value: "true",
+    label: "true"
+}, {
+    value: "false",
+    label: "false"
+}];
+const SearchActionType = {
+    FROM: "SearchActionType_FROM",
+    TO: "SearchActionType_TO",
+    DEPARTURE_TIME: "SearchActionType_DEPARTURE_TIME",
+    DEPARTURE_DATE: "SearchActionType_DEPARTURE_DATE",
+    TIME_OPTION: "SearchActionType_TIME_OPTION",
+};
 
 class SearchInput extends React.Component {
     constructor(props) {
         super(props);
         this.onChange = this.onChange.bind(this);
+        this.handleInputChange = this.handleInputChange.bind(this);
         this.state = {
             isShowingOptions: false
         };
@@ -65,12 +80,46 @@ class SearchInput extends React.Component {
             onClick: e => this.setState(prevState => ({
                 isShowingOptions: !prevState.isShowingOptions
             }))
-        }, "Options"), this.state.isShowingOptions ? React.createElement("div", null, React.createElement(TextInput, {
-            value: this.props.search.limitSolutions,
-            label: "# Alternatives",
-            actionType: SearchActionType.LIMIT_SOLUTIONS,
-            onChange: this.onChange
-        })) : ""));
+        }, "Options"), this.state.isShowingOptions ? React.createElement(
+            "div",
+            null,
+            React.createElement(Select, {
+                value: this.props.search.rangeQuery,
+                label: "Range query",
+                options: trueFalse,
+                onChange: this.handleInputChange,
+                actionType: "rangeQuery"
+            }),
+            React.createElement(
+                TextInput,
+                {
+                    actionType: "rangeQueryDuration",
+                    value: this.props.search.rangeQueryDuration,
+                    label: "Range (ISO duration)",
+                    onChange: this.handleInputChange
+                }
+            ),
+            React.createElement(
+                TextInput,
+                {
+                    actionType: "limitStreetTime",
+                    value: this.props.search.limitStreetTime,
+                    label: "Maximum access/egress time (ISO duration)",
+                    onChange: this.handleInputChange
+                }
+            ),
+            React.createElement(Select, {
+                value: this.props.search.ignoreTransfers,
+                label: "Ignore # transfers as criterion",
+                options: trueFalse,
+                onChange: this.handleInputChange,
+                actionType: "ignoreTransfers"
+            })
+        ) : ""));
+    }
+
+    handleInputChange(action) {
+        this.props.onSearchChange({[action.type]: action.value})
     }
 
     onChange(action) {
@@ -114,12 +163,6 @@ class SearchInput extends React.Component {
                     });
                 }
 
-                break;
-
-            case SearchActionType.LIMIT_SOLUTIONS:
-                this.props.onSearchChange({
-                    limitSolutions: action.value
-                });
                 break;
 
             case SearchActionType.TIME_OPTION:

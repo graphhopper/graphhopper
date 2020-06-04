@@ -68,7 +68,7 @@ public class HeadingResolver {
     }
 
     private static double deg2Rad(double deg) {
-        return 2 * Math.PI / 360 * deg;
+        return Math.toRadians(deg);
     }
 
 }

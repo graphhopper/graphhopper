@@ -24,13 +24,13 @@ import com.conveyal.gtfs.model.Transfer;
 import java.util.*;
 import java.util.stream.Collectors;
 
-class Transfers {
+public class Transfers {
 
     private final Map<String, List<Transfer>> transfersFromStop;
     private final Map<String, List<Transfer>> transfersToStop;
     private final Map<String, Set<String>> routesByStop;
 
-    Transfers(GTFSFeed feed) {
+    public Transfers(GTFSFeed feed) {
         this.transfersToStop = feed.transfers.values().stream().collect(Collectors.groupingBy(t -> t.to_stop_id));
         this.transfersFromStop = feed.transfers.values().stream().collect(Collectors.groupingBy(t -> t.from_stop_id));
         this.routesByStop = feed.stop_times.values().stream()
