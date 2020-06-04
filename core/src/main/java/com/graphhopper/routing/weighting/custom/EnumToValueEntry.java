@@ -37,7 +37,7 @@ final class EnumToValueEntry implements EdgeToValueEntry {
 
     @Override
     public double getValue(EdgeIteratorState iter, boolean reverse) {
-        int enumOrdinal = iter.get(eev);
+        int enumOrdinal = reverse ? iter.getReverse(eev) : iter.get(eev);
         return values[enumOrdinal];
     }
 
