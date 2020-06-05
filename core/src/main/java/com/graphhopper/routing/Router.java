@@ -49,7 +49,8 @@ import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.DIST_EARTH;
-import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
+import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
 import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 import static com.graphhopper.util.Parameters.Routing.POINT_HINT;
 
@@ -133,10 +134,7 @@ public class Router {
             }
             ghRsp.addDebugInfo("tmode:" + tMode.toString());
 
-            String algoStr = request.getAlgorithm();
-            if (algoStr.isEmpty())
-                algoStr = chEnabled && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
-            RoutingTemplate routingTemplate = createRoutingTemplate(request, ghRsp, algoStr, weighting);
+            RoutingTemplate routingTemplate = createRoutingTemplate(request, ghRsp, request.getAlgorithm(), weighting);
 
             StopWatch sw = new StopWatch().start();
             List<QueryResult> qResults = routingTemplate.lookup(request.getPoints());
@@ -150,7 +148,7 @@ public class Router {
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routerConfig.getMaxVisitedNodes());
 
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                    algorithm(algoStr).
+                    algorithm(request.getAlgorithm()).
                     traversalMode(tMode).
                     weighting(weighting).
                     maxVisitedNodes(maxVisitedNodesForRequest).
