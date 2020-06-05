@@ -136,10 +136,11 @@ public class DijkstraBidirectionCHTest {
         RoutingAlgorithmTest.initFootVsCar(carEncoder, footEncoder, g);
 
         // do CH preparation for car
-        RoutingAlgorithmFactory contractedFactory = prepareCH(g, carConfig);
+        prepareCH(g, carConfig);
 
         // use contracted graph for car
-        Path p1 = contractedFactory.createAlgo(g.getCHGraph(carConfig.getName()), carOptions).calcPath(0, 7);
+        CHGraph chGraph = g.getCHGraph(carConfig.getName());
+        Path p1 = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, carOptions).calcPath(0, 7);
         assertEquals(IntArrayList.from(0, 4, 6, 7), p1.calcNodes());
         assertEquals(p1.toString(), 15000, p1.getDistance(), 1e-6);
 
@@ -250,11 +251,10 @@ public class DijkstraBidirectionCHTest {
         return new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased(weighting.getName(), weighting)).create();
     }
 
-    private RoutingAlgorithmFactory prepareCH(GraphHopperStorage graphHopperStorage, CHConfig chConfig) {
+    private void prepareCH(GraphHopperStorage graphHopperStorage, CHConfig chConfig) {
         graphHopperStorage.freeze();
         PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graphHopperStorage, chConfig);
         pch.doWork();
-        return pch.getRoutingAlgorithmFactory();
     }
 
     private RoutingAlgorithm createCHAlgo(CHGraph chGraph, boolean withSOD, AlgorithmOptions algorithmOptions) {

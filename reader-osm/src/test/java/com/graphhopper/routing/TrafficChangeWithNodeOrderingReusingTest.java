@@ -1,6 +1,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.osm.OSMReader;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -40,8 +41,8 @@ import static org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class TrafficChangeWithNodeOrderingReusingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrafficChangeWithNodeOrderingReusingTest.class);
-    // make sure to increase xmx/xms for the JVM created by the surefire plugin in parent pom.xml
-    private static final String OSM_FILE = "../local/maps/berlin-latest.osm.pbf";
+    // make sure to increase xmx/xms for the JVM created by the surefire plugin in parent pom.xml when using bigger maps
+    private static final String OSM_FILE = "../core/files/monaco.osm.gz";
 
     private final GraphHopperStorage ghStorage;
     private final int maxDeviationPercentage;
@@ -80,8 +81,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         CHGraph baseCHGraph = ghStorage.getCHGraph(baseCHConfig.getName());
 
         // check correctness & performance
-        checkCorrectness(ghStorage, baseCHGraph, basePch, seed, 100);
-        runPerformanceTest(ghStorage, baseCHGraph, basePch, seed, numQueries);
+        checkCorrectness(ghStorage, baseCHConfig, seed, 100);
+        runPerformanceTest(ghStorage, baseCHConfig, seed, numQueries);
 
         // now we re-use the contraction order from the previous contraction and re-run it with the traffic weighting
         PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, trafficCHConfig)
@@ -90,17 +91,18 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         CHGraph trafficCHGraph = ghStorage.getCHGraph(trafficCHConfig.getName());
 
         // check correctness & performance
-        checkCorrectness(ghStorage, trafficCHGraph, trafficPch, seed, 100);
-        runPerformanceTest(ghStorage, trafficCHGraph, trafficPch, seed, numQueries);
+        checkCorrectness(ghStorage, trafficCHConfig, seed, 100);
+        runPerformanceTest(ghStorage, trafficCHConfig, seed, numQueries);
     }
 
-    private static void checkCorrectness(GraphHopperStorage ghStorage, CHGraph chGraph, PrepareContractionHierarchies pch, long seed, long numQueries) {
+    private static void checkCorrectness(GraphHopperStorage ghStorage, CHConfig chConfig, long seed, long numQueries) {
         LOGGER.info("checking correctness");
+        CHGraph chGraph = ghStorage.getCHGraph(chConfig.getName());
         Random rnd = new Random(seed);
         int numFails = 0;
         for (int i = 0; i < numQueries; ++i) {
-            Dijkstra dijkstra = new Dijkstra(ghStorage, pch.getWeighting(), TraversalMode.NODE_BASED);
-            RoutingAlgorithm chAlgo = pch.getRoutingAlgorithmFactory().createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
+            Dijkstra dijkstra = new Dijkstra(ghStorage, chConfig.getWeighting(), TraversalMode.NODE_BASED);
+            RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, AlgorithmOptions.start().build());
 
             int from = rnd.nextInt(ghStorage.getNodes());
             int to = rnd.nextInt(ghStorage.getNodes());
@@ -116,9 +118,9 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         assertEquals(0, numFails);
     }
 
-    private static void runPerformanceTest(final GraphHopperStorage ghStorage, final CHGraph chGraph, final PrepareContractionHierarchies pch,
-                                           long seed, final int iterations) {
+    private static void runPerformanceTest(final GraphHopperStorage ghStorage, CHConfig chConfig, long seed, final int iterations) {
         final int numNodes = ghStorage.getNodes();
+        final CHGraph chGraph = ghStorage.getCHGraph(chConfig.getName());
         final Random random = new Random(seed);
 
         LOGGER.info("Running performance test, seed = {}", seed);
@@ -139,7 +141,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                 int from = random.nextInt(numNodes);
                 int to = random.nextInt(numNodes);
                 long start = nanoTime();
-                RoutingAlgorithm algo = pch.getRoutingAlgorithmFactory().createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
+                RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, AlgorithmOptions.start().build());
                 Path path = algo.calcPath(from, to);
                 if (!warmup && !path.isFound())
                     return 1;

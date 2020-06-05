@@ -18,7 +18,10 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.ResponsePath;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
@@ -48,9 +51,8 @@ public class TestAlgoCollector {
                                             OneRun oneRun) {
         List<Path> altPaths = new ArrayList<>();
         QueryGraph queryGraph = QueryGraph.create(algoEntry.getForQueryGraph(), queryList);
-        RoutingAlgorithmFactory factory = algoEntry.createRoutingFactory();
         for (int i = 0; i < queryList.size() - 1; i++) {
-            RoutingAlgorithm algo = factory.createAlgo(queryGraph, algoEntry.getAlgorithmOptions());
+            RoutingAlgorithm algo = algoEntry.createAlgo(queryGraph);
 
 //            if (!algoEntry.getExpectedAlgo().equals(algo.toString())) {
 //                errors.add("Algorithm expected " + algoEntry.getExpectedAlgo() + " but was " + algo.toString());
@@ -153,8 +155,8 @@ public class TestAlgoCollector {
             this.opts = opts;
         }
 
-        public RoutingAlgorithmFactory createRoutingFactory() {
-            return new RoutingAlgorithmFactorySimple();
+        public RoutingAlgorithm createAlgo(Graph graph) {
+            return new RoutingAlgorithmFactorySimple().createAlgo(graph, opts);
         }
 
         public AlgorithmOptions getAlgorithmOptions() {

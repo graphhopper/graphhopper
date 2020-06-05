@@ -20,7 +20,6 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHTreeMapComposed;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -436,10 +435,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         CHGraphImpl cg = (CHGraphImpl) chGraph;
         cg.flush();
         cg.close();
-    }
-
-    public RoutingAlgorithmFactory getRoutingAlgorithmFactory() {
-        return new CHRoutingAlgorithmFactory(chGraph);
     }
 
     private static class Params {
