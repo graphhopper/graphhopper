@@ -38,7 +38,7 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         // graph we have to use: the CH graph. Same with  opts.weighting: The CHConfig already contains a weighting
         // and we cannot really use it here. The real reason we do this the way its done atm is that graph might be
         // a QueryGraph that wraps (our) CHGraph.
-        RoutingAlgorithm algo = doCreateAlgo(graph, opts);
+        RoutingAlgorithm algo = doCreateAlgo(graph, AlgorithmOptions.start(opts).weighting(getWeighting()).build());
         algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
         return algo;
     }
@@ -51,10 +51,10 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
             }
-            RoutingCHGraph g = new RoutingCHGraphImpl(graph, graph.wrapWeighting(getWeighting()));
+            RoutingCHGraph g = new RoutingCHGraphImpl(graph, graph.wrapWeighting(opts.getWeighting()));
             return createAlgoEdgeBased(g, opts);
         } else {
-            RoutingCHGraph g = new RoutingCHGraphImpl(graph, chConfig.getWeighting());
+            RoutingCHGraph g = new RoutingCHGraphImpl(graph, opts.getWeighting());
             return createAlgoNodeBased(g, opts);
         }
     }
