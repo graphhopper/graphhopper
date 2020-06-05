@@ -1,5 +1,6 @@
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -166,7 +167,7 @@ public class RandomCHRoutingTest {
                     continue;
                 }
 
-                RoutingAlgorithm algo = pch.getRoutingAlgorithmFactory().createAlgo(chQueryGraph, AlgorithmOptions.start().
+                RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chQueryGraph, AlgorithmOptions.start().
                         hints(new PMap().putObject("stall_on_demand", true)).build());
                 Path path = algo.calcPath(from, to);
                 if (!path.isFound()) {
