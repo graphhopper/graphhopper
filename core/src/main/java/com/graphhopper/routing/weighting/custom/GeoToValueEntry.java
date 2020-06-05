@@ -43,6 +43,8 @@ final class GeoToValueEntry implements EdgeToValueEntry {
         JsonFeature feature = customModel.getAreas().get(id);
         if (feature == null)
             throw new IllegalArgumentException("Cannot find area " + id);
+        if (feature.getGeometry() == null)
+            throw new IllegalArgumentException("Cannot find coordinates of area " + id);
         return feature.getGeometry();
     }
 
