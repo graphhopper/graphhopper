@@ -43,7 +43,7 @@ final class DecimalToValueEntry implements EdgeToValueEntry {
 
     @Override
     public double getValue(EdgeIteratorState iter, boolean reverse) {
-        double edgeValue = iter.get(dev);
+        double edgeValue = reverse ? iter.getReverse(dev) : iter.get(dev);
         return edgeValue < maxExclusive && edgeValue > minExclusive ? rangeValue : fallback;
     }
 

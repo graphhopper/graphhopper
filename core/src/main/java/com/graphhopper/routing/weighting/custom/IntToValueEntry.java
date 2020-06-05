@@ -44,7 +44,7 @@ final class IntToValueEntry implements EdgeToValueEntry {
 
     @Override
     public double getValue(EdgeIteratorState iter, boolean reverse) {
-        double edgeValue = iter.get(iev);
+        double edgeValue = reverse ? iter.getReverse(iev) : iter.get(iev);
         return edgeValue < maxExclusive && edgeValue > minExclusive ? rangeValue : fallback;
     }
 
