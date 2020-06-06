@@ -21,6 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 
@@ -28,15 +29,16 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
 
 public class CHPathCalculator implements PathCalculator {
     private final QueryGraph queryGraph;
     private final CHRoutingAlgorithmFactory algoFactory;
-    private final AlgorithmOptions algoOpts;
+    private final PMap algoOpts;
     private String debug;
     private int visitedNodes;
 
-    public CHPathCalculator(QueryGraph queryGraph, CHRoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
+    public CHPathCalculator(QueryGraph queryGraph, CHRoutingAlgorithmFactory algoFactory, PMap algoOpts) {
         this.queryGraph = queryGraph;
         this.algoFactory = algoFactory;
         this.algoOpts = algoOpts;
@@ -69,8 +71,9 @@ public class CHPathCalculator implements PathCalculator {
         }
         if (paths.isEmpty())
             throw new IllegalStateException("Path list was empty for " + from + " -> " + to);
-        if (algo.getVisitedNodes() >= algoOpts.getMaxVisitedNodes())
-            throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + algoOpts.getMaxVisitedNodes());
+        int maxVisitedNodes = algoOpts.getInt(MAX_VISITED_NODES, Integer.MAX_VALUE);
+        if (algo.getVisitedNodes() >= maxVisitedNodes)
+            throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + maxVisitedNodes);
         visitedNodes = algo.getVisitedNodes();
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getMillis() + " ms";
         return paths;

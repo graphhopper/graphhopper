@@ -32,10 +32,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Rule;
@@ -51,6 +48,7 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
 import static org.junit.Assert.fail;
 
 /**
@@ -156,9 +154,9 @@ public class DirectedRoutingTest {
             case ASTAR:
                 return new AStarBidirection(graph, graph.wrapWeighting(weighting), TraversalMode.EDGE_BASED);
             case CH_DIJKSTRA:
-                return (BidirRoutingAlgorithm) new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
+                return (BidirRoutingAlgorithm) new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph, new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
             case CH_ASTAR:
-                return (BidirRoutingAlgorithm) new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
+                return (BidirRoutingAlgorithm) new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph, new PMap().putObject(ALGORITHM, ASTAR_BI));
             case LM:
                 return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(TraversalMode.EDGE_BASED).build());
             default:

@@ -35,6 +35,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
@@ -48,6 +49,7 @@ import java.util.*;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -166,9 +168,9 @@ public class RandomizedRoutingTest {
             case ASTAR_BIDIR:
                 return new AStarBidirection(graph, graph.wrapWeighting(weighting), traversalMode);
             case CH_DIJKSTRA:
-                return new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph instanceof QueryGraph ? graph : chGraph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
+                return new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph instanceof QueryGraph ? graph : chGraph, new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
             case CH_ASTAR:
-                return new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph instanceof QueryGraph ? graph : chGraph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
+                return new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph instanceof QueryGraph ? graph : chGraph, new PMap().putObject(ALGORITHM, ASTAR_BI));
             case LM_BIDIR:
                 return lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(traversalMode).build());
             case LM_UNIDIR:

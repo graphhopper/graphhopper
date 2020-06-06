@@ -240,20 +240,23 @@ public class Router {
 
     private PathCalculator createPathCalculator(List<QueryResult> qResults, Profile profile, AlgorithmOptions algoOpts, boolean disableCH, boolean disableLM) {
         if (chEnabled && !disableCH) {
-            return createCHPathCalculator(qResults, profile, algoOpts);
+            PMap opts = new PMap(algoOpts.getHints());
+            opts.putObject(ALGORITHM, algoOpts.getAlgorithm());
+            opts.putObject(MAX_VISITED_NODES, algoOpts.getMaxVisitedNodes());
+            return createCHPathCalculator(qResults, profile, opts);
         } else {
             return createFlexiblePathCalculator(qResults, profile, algoOpts, disableLM);
         }
     }
 
-    private PathCalculator createCHPathCalculator(List<QueryResult> qResults, Profile profile, AlgorithmOptions algoOpts) {
+    private PathCalculator createCHPathCalculator(List<QueryResult> qResults, Profile profile, PMap opts) {
         CHGraph chGraph = chGraphs.get(profile.getName());
         if (chGraph == null)
             throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile.getName() + "'" +
                     "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
                     "\navailable CH profiles: " + chGraphs.keySet());
         QueryGraph chQueryGraph = QueryGraph.create(chGraph, qResults);
-        return new CHPathCalculator(chQueryGraph, new CHRoutingAlgorithmFactory(chGraph), algoOpts);
+        return new CHPathCalculator(chQueryGraph, new CHRoutingAlgorithmFactory(chGraph), opts);
     }
 
     private FlexiblePathCalculator createFlexiblePathCalculator(List<QueryResult> qResults, Profile profile, AlgorithmOptions algoOpts, boolean disableLM) {
