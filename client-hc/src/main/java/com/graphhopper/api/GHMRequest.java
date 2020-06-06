@@ -120,12 +120,6 @@ public class GHMRequest extends GHRequest {
         throw new IllegalStateException("Use getFromPointHints or getToPointHints");
     }
 
-    @Override
-    public boolean hasPointHints() {
-        return this.fromPointHints.size() == this.fromPoints.size() && !fromPoints.isEmpty() &&
-                this.toPointHints.size() == this.toPoints.size() && !toPoints.isEmpty();
-    }
-
     public GHRequest addFromPointHint(String pointHint) {
         this.fromPointHints.add(pointHint);
         return this;
@@ -196,12 +190,6 @@ public class GHMRequest extends GHRequest {
         throw new IllegalStateException("Use getFromCurbsides or getToCurbsides");
     }
 
-    @Override
-    public boolean hasCurbsides() {
-        return fromCurbsides.size() == fromPoints.size() && !fromPoints.isEmpty() &&
-                toCurbsides.size() == toPoints.size() && !toPoints.isEmpty();
-    }
-
     /**
      * @param failFast if false the matrix calculation will be continued even when some points are not connected
      */
@@ -215,7 +203,7 @@ public class GHMRequest extends GHRequest {
     }
 
     /**
-     * This method makes it more likely that hasPointHints returns true as often point hints are added although the
+     * This method clears the point hint lists if they only contain empty values. Often point hints are added although the
      * strings are empty. But because they could be used as placeholder we do not know earlier if they are meaningless.
      */
     void compactPointHints() {

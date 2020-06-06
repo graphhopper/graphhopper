@@ -319,7 +319,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testUnpackingOrder() {
         initUnpackingGraph(g, lg, weighting);
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
+        createPrepareContractionHierarchies(g);
         // do not call prepare.doWork() here
         RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(lg).createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);

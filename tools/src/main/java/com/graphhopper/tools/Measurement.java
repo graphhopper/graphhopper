@@ -260,7 +260,7 @@ public class Measurement {
                             sod());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
                             withInstructions().withPointHints().sod().simplify());
-                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_full...
+                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_full... see #2056
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
                             withPoints(100).sod());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
@@ -273,7 +273,7 @@ public class Measurement {
                             edgeBased());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
                             edgeBased().withInstructions().withPointHints().simplify());
-                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_edge_full...
+                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_edge_full... see #2056
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100", count / 100, isCH, isLM).
                             withPoints(100).edgeBased().sod());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100_full", count / 100, isCH, isLM).
@@ -837,6 +837,8 @@ public class Measurement {
         }.setIterations(querySettings.count).start();
 
         int count = querySettings.count - failedCount.get();
+        if (count == 0)
+            throw new RuntimeException("All requests failed, something must be wrong: " + failedCount.get());
 
         // if using non-bidirectional algorithm make sure you exclude CH routing
         String algoStr = (querySettings.ch && !querySettings.edgeBased) ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;

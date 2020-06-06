@@ -59,7 +59,7 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
             algo.setApproximation(getApproximator(g, activeLM, epsilon));
             algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
             return algo;
-        } else if (ASTAR_BI.equalsIgnoreCase(algoStr) || Helper.isEmpty(opts.getAlgorithm())) {
+        } else if (ASTAR_BI.equalsIgnoreCase(algoStr) || Helper.isEmpty(algoStr)) {
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AStarBidirection algo = new AStarBidirection(g, weighting, opts.getTraversalMode());
             algo.setApproximation(getApproximator(g, activeLM, epsilon));

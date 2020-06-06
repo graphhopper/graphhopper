@@ -67,7 +67,7 @@ public class GraphHopperAPITest {
                 loadGraph(graph);
         // 3 -> 0
         GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10).setProfile(profile));
-        assertFalse(rsp.hasErrors());
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         ResponsePath responsePath = rsp.getBest();
         assertEquals(80, responsePath.getDistance(), 1e-6);
 
