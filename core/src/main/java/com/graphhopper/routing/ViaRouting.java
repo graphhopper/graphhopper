@@ -42,9 +42,11 @@ import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_ANY;
 import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 
 /**
- * Implementation of calculating a route with multiple via points.
+ * The methods here can be used to calculate routes with or without via points and implement possible restrictions
+ * like snap preventions, headings and curbsides.
  *
  * @author Peter Karich
+ * @author easbar
  */
 public class ViaRouting {
 

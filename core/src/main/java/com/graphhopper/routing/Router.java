@@ -219,9 +219,6 @@ public class Router {
         if (forCH) {
             // todo: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled
             // and only under certain conditions for LM
-            // todo: maybe create the weighting *with* the request hints and only throw an error if some hash value we
-            // calculate from it is different (=the user specified some hints that changed the weighting in a
-            // CH-incompatible way). but how to report which parameters caused the problem?
 
             // the request hints are ignored for CH as we cannot change the profile after the preparation like this.
             // the weighting here has to be created the same way as we did when we created the weighting for the preparation
