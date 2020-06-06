@@ -135,7 +135,14 @@ public class Router {
                 RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
                 List<QueryResult> qResults = RoundTripRouting.lookup(request.getPoints(), weighting, locationIndex, params);
                 ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-                FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(qResults, profile, algoOpts, disableLM);
+
+                // use A* for round trips
+                AlgorithmOptions roundTripAlgoOpts = AlgorithmOptions
+                        .start(algoOpts)
+                        .algorithm(Parameters.Algorithms.ASTAR_BI)
+                        .build();
+                roundTripAlgoOpts.getHints().putObject(Parameters.Algorithms.AStarBi.EPSILON, 2);
+                FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(qResults, profile, roundTripAlgoOpts, disableLM);
                 QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
 
                 PathCalculatorWithAvoidedEdges roundTripPathCalculator = new PathCalculatorWithAvoidedEdges(pathCalculator);

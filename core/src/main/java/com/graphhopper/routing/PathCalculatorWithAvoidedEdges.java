@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
-import com.graphhopper.util.Parameters;
 
 /**
  * This path calculator allows calculating a path with a set of avoided edges
@@ -36,9 +35,7 @@ public class PathCalculatorWithAvoidedEdges {
         avoidPreviousPathsWeighting = new AvoidEdgesWeighting(pathCalculator.getAlgoOpts().getWeighting())
                 .setEdgePenaltyFactor(5);
         AlgorithmOptions algoOpts = AlgorithmOptions.start(pathCalculator.getAlgoOpts()).
-                algorithm(Parameters.Algorithms.ASTAR_BI).
                 weighting(avoidPreviousPathsWeighting).build();
-        algoOpts.getHints().putObject(Parameters.Algorithms.AStarBi.EPSILON, 2);
         pathCalculator.setAlgoOpts(algoOpts);
     }
 
