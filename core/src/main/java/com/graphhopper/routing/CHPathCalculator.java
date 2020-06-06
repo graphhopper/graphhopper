@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.Parameters;
@@ -30,12 +31,12 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
 public class CHPathCalculator implements PathCalculator {
     private final QueryGraph queryGraph;
-    private final RoutingAlgorithmFactory algoFactory;
+    private final CHRoutingAlgorithmFactory algoFactory;
     private final AlgorithmOptions algoOpts;
     private String debug;
     private int visitedNodes;
 
-    public CHPathCalculator(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
+    public CHPathCalculator(QueryGraph queryGraph, CHRoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
         this.queryGraph = queryGraph;
         this.algoFactory = algoFactory;
         this.algoOpts = algoOpts;

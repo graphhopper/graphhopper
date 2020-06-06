@@ -25,14 +25,13 @@ import com.graphhopper.util.Helper;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
 
-public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
+public class CHRoutingAlgorithmFactory {
     private final CHConfig chConfig;
 
     public CHRoutingAlgorithmFactory(CHGraph chGraph) {
         this.chConfig = chGraph.getCHConfig();
     }
 
-    @Override
     public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
         // todo: This method does not really fit for CH: We get a graph, but really we already know which
         // graph we have to use: the CH graph. Same with  opts.weighting: The CHConfig already contains a weighting
