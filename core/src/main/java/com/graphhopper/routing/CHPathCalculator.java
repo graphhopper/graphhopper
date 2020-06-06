@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
@@ -65,7 +64,7 @@ public class CHPathCalculator implements PathCalculator {
         if (edgeRestrictions.getSourceOutEdge() != ANY_EDGE || edgeRestrictions.getTargetInEdge() != ANY_EDGE) {
             if (!(algo instanceof BidirRoutingAlgorithm))
                 throw new IllegalArgumentException("To make use of the " + Parameters.Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
-            paths = Collections.singletonList(((BidirRoutingAlgorithm) algo).calcPath(from, to, shiftEdgeId(edgeRestrictions.getSourceOutEdge()), shiftEdgeId(edgeRestrictions.getTargetInEdge())));
+            paths = Collections.singletonList(((BidirRoutingAlgorithm) algo).calcPath(from, to, queryGraph.shiftEdgeId(edgeRestrictions.getSourceOutEdge()), queryGraph.shiftEdgeId(edgeRestrictions.getTargetInEdge())));
         } else {
             paths = algo.calcPaths(from, to);
         }
@@ -89,17 +88,4 @@ public class CHPathCalculator implements PathCalculator {
         return visitedNodes;
     }
 
-    private int shiftEdgeId(int edgeId) {
-        // the restricted edge ids are determined on the (base) query graph and to use them with CH we need to shift
-        // them if they are virtual (the virtual edge ids start after the shortcut ids).
-        if (edgeId < 0)
-            return edgeId;
-        Graph mainGraph = queryGraph.getMainGraph();
-        Graph baseGraph = mainGraph.getBaseGraph();
-        if (edgeId >= baseGraph.getEdges()) {
-            // this is a virtual edge on the base graph
-            return edgeId + (mainGraph.getEdges() - baseGraph.getEdges());
-        }
-        return edgeId;
-    }
 }
