@@ -79,6 +79,7 @@
         <module>web-api</module>
         <module>web</module>
         <module>client-hc</module>
+        <module>core-plus-api</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -172,7 +173,7 @@
                         <compilerArgument>-Xlint:unchecked</compilerArgument>
                         <compilerArgument>-Xlint:deprecation</compilerArgument>
                         -->
-                        <fork>true</fork>
+                        <!--<fork>true</fork>-->
                         <source>1.8</source>
                         <target>1.8</target>
                     </configuration>
