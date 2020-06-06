@@ -23,7 +23,7 @@ import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.util.Parameters;
 
 /**
- * This path calculator allows calculating a path with a set of avoided edges. This does not work with CH.
+ * This path calculator allows calculating a path with a set of avoided edges
  */
 public class PathCalculatorWithAvoidedEdges {
     private final FlexiblePathCalculator pathCalculator;

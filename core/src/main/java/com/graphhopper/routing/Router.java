@@ -183,7 +183,6 @@ public class Router {
                 PathCalculator pathCalculator = createPathCalculator(qResults, profile, algoOpts, disableCH, disableLM);
                 // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
                 // the (possibly implementation specific) query graph used by PathCalculator
-                // todonow: check performance of this for long via routes
                 QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
                 ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
 
@@ -217,9 +216,8 @@ public class Router {
             // calculate from it is different (=the user specified some hints that changed the weighting in a
             // CH-incompatible way). but how to report which parameters caused the problem?
 
-            // the request hints are ignored for CH as we cannot change the profile after the preparation like this
+            // the request hints are ignored for CH as we cannot change the profile after the preparation like this.
             // the weighting here has to be created the same way as we did when we created the weighting for the preparation
-            // todonow: should we make this safer somehow?
             return weightingFactory.createWeighting(profile, new PMap(), false);
         } else {
             Weighting weighting = weightingFactory.createWeighting(profile, requestHints, false);
