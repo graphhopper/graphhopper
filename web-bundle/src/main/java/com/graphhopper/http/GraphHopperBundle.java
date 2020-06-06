@@ -50,6 +50,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
@@ -206,7 +207,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             if (k instanceof String && ((String) k).startsWith("graphhopper."))
                 throw new IllegalArgumentException("You need to prefix system parameters with '-Ddw.graphhopper.' instead of '-Dgraphhopper.' see #1879 and #1897");
         }
-
+        // Make sure Jersey's Error Messages are in english
+        Locale.setDefault( new Locale("en"));
         // When Dropwizard's Hibernate Validation misvalidates a query parameter,
         // a JerseyViolationException is thrown.
         // With this mapper, we use our custom format for that (backwards compatibility),
