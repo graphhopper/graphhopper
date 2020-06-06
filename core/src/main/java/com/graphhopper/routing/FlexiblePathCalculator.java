@@ -97,12 +97,10 @@ public class FlexiblePathCalculator implements PathCalculator {
         return visitedNodes;
     }
 
-    @Override
     public AlgorithmOptions getAlgoOpts() {
         return algoOpts;
     }
 
-    @Override
     public void setAlgoOpts(AlgorithmOptions algoOpts) {
         this.algoOpts = algoOpts;
     }

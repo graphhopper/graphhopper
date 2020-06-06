@@ -31,7 +31,7 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 public class CHPathCalculator implements PathCalculator {
     private final QueryGraph queryGraph;
     private final RoutingAlgorithmFactory algoFactory;
-    private AlgorithmOptions algoOpts;
+    private final AlgorithmOptions algoOpts;
     private String debug;
     private int visitedNodes;
 
@@ -83,16 +83,6 @@ public class CHPathCalculator implements PathCalculator {
     @Override
     public int getVisitedNodes() {
         return visitedNodes;
-    }
-
-    @Override
-    public AlgorithmOptions getAlgoOpts() {
-        return algoOpts;
-    }
-
-    @Override
-    public void setAlgoOpts(AlgorithmOptions algoOpts) {
-        this.algoOpts = algoOpts;
     }
 
     private int shiftEdgeId(int edgeId) {

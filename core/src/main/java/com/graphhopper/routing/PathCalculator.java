@@ -30,7 +30,4 @@ public interface PathCalculator {
 
     int getVisitedNodes();
 
-    AlgorithmOptions getAlgoOpts();
-
-    void setAlgoOpts(AlgorithmOptions algoOpts);
 }
