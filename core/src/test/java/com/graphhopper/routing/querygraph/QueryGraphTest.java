@@ -601,8 +601,8 @@ public class QueryGraphTest {
         queryGraph.unfavorVirtualEdges(unfavoredEdges);
         // test penalized south
         expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph.getVirtualEdges().get(QueryGraph.VE_ADJ)));
-        assertEquals(expect, isAvoidEdge(queryGraph.getVirtualEdges().get(QueryGraph.VE_ADJ_REV)));
+        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(2, 1)));
+        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(2, 2)));
 
         queryGraph.clearUnfavoredStatus();
         // enforce south
@@ -611,8 +611,8 @@ public class QueryGraphTest {
 
         // test penalized north
         expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph.getVirtualEdges().get(QueryGraph.VE_BASE)));
-        assertEquals(expect, isAvoidEdge(queryGraph.getVirtualEdges().get(QueryGraph.VE_BASE_REV)));
+        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(1, 0)));
+        assertEquals(expect, isAvoidEdge(queryGraph.getEdgeIteratorState(1, 2)));
     }
 
     @Test
