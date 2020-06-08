@@ -1547,7 +1547,8 @@ public class GraphHopperTest {
         hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
-        long seed = System.nanoTime();
+        long seed = 187880442030L;
+        // distances do not match for i=92 ==> expected: <1664.5477030011616> but was: <1803.4207030011612>
         Random rnd = new Random(seed);
         for (int i = 0; i < 100; i++) {
             BBox bounds = hopper.getGraphHopperStorage().getBounds();
