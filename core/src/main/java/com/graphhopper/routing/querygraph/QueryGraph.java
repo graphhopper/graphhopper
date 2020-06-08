@@ -219,7 +219,7 @@ public class QueryGraph implements Graph {
     }
 
     private int getInternalVirtualEdgeId(int origEdgeId) {
-        return origEdgeId - mainEdges;
+        return 2 * (origEdgeId - mainEdges);
     }
 
     @Override
