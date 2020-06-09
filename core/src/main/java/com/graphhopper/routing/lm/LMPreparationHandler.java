@@ -17,14 +17,14 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.LMProfile;
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.config.LMProfile;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.Parameters.Landmark;
+import com.graphhopper.api.util.Parameters;
+import com.graphhopper.api.util.Parameters.Landmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +34,8 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.graphhopper.util.Helper.createFormatter;
-import static com.graphhopper.util.Helper.getMemInfo;
+import static com.graphhopper.api.util.Helper.createFormatter;
+import static com.graphhopper.api.util.Helper.getMemInfo;
 
 /**
  * This class deals with the A*, landmark and triangulation (ALT) preparations.

@@ -17,8 +17,8 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PointList;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -18,16 +18,16 @@
 
 package com.graphhopper.http.resources;
 
-import com.graphhopper.GHRequest;
+import com.graphhopper.api.GHRequest;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.ResponsePath;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.util.gpx.GPXEntry;
 import com.graphhopper.util.gpx.GpxFromInstructions;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 

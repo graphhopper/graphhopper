@@ -17,10 +17,9 @@
  */
 package com.graphhopper.routing.template;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
-import com.graphhopper.routing.*;
+import com.graphhopper.api.GHRequest;
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.ResponsePath;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
@@ -32,13 +31,13 @@ import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Parameters.Routing;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.Translation;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.exceptions.PointNotFoundException;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,8 +45,16 @@ import java.util.List;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_ANY;
-import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
+import static com.graphhopper.api.util.Parameters.Curbsides.CURBSIDE_ANY;
+import static com.graphhopper.api.util.Parameters.Routing.CURBSIDE;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.BidirRoutingAlgorithm;
+import com.graphhopper.routing.DirectionResolver;
+import com.graphhopper.routing.DirectionResolverResult;
+import com.graphhopper.routing.HeadingResolver;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
 
 /**
  * Implementation of calculating a route with multiple via points.

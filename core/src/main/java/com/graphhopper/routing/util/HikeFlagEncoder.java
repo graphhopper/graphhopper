@@ -17,15 +17,19 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PMap;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.*;
 
 import java.util.TreeMap;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 
 /**
  * Defines bit layout for hiking

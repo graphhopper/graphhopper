@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 
 import java.util.TreeMap;
 

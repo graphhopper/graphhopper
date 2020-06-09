@@ -25,7 +25,7 @@ import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 

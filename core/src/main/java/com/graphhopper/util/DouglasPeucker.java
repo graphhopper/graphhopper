@@ -17,6 +17,10 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.DistanceCalc;
+
 /**
  * Simplifies a list of 2D points which are not too far away.
  * http://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm

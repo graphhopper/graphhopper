@@ -1,5 +1,6 @@
 package com.graphhopper.util;
 
+import com.graphhopper.api.util.Helper;
 import org.junit.Test;
 
 import java.io.File;

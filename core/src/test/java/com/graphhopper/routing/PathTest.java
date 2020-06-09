@@ -17,15 +17,18 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.api.util.RoundaboutInstruction;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.InstructionList;
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.api.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.junit.Test;
@@ -33,7 +36,15 @@ import org.junit.Test;
 import java.util.*;
 
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
-import static com.graphhopper.util.Parameters.Details.*;
+import static com.graphhopper.api.util.Parameters.Details.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.TranslationMapTest;
 import static org.junit.Assert.*;
 
 /**

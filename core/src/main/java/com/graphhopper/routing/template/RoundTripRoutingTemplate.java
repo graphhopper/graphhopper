@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing.template;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.api.GHRequest;
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.ResponsePath;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
@@ -33,14 +33,14 @@ import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.Parameters.Algorithms;
-import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Parameters;
+import com.graphhopper.api.util.Parameters.Algorithms;
+import com.graphhopper.api.util.Parameters.Algorithms.RoundTrip;
 import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.Translation;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.exceptions.PointNotFoundException;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.Collections;

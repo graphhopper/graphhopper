@@ -19,8 +19,8 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PointList;
 import org.junit.Before;
 import org.junit.Test;
 

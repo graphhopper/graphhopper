@@ -32,7 +32,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

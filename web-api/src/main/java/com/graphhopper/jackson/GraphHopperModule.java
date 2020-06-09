@@ -17,14 +17,18 @@
  */
 package com.graphhopper.jackson;
 
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.GHRequest;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.graphhopper.*;
-import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.config.LMProfile;
+import com.graphhopper.api.config.Profile;
+import com.graphhopper.api.util.InstructionList;
+import com.graphhopper.api.util.details.PathDetail;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 public class GraphHopperModule extends SimpleModule {
 

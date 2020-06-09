@@ -23,8 +23,8 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.shapes.GHPoint;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;

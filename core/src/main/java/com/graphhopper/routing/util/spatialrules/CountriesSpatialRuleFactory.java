@@ -7,7 +7,7 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.util.List;
 
-import static com.graphhopper.util.Helper.toUpperCase;
+import static com.graphhopper.api.util.Helper.toUpperCase;
 
 public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.SpatialRuleFactory {
 

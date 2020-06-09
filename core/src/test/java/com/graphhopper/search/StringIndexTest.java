@@ -3,7 +3,7 @@ package com.graphhopper.search;
 import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.Repeat;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import org.junit.Test;
 
 import java.io.File;

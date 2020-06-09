@@ -21,7 +21,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 import java.util.Arrays;
 

@@ -24,7 +24,7 @@ import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 /**
  * @see AStarBidirection

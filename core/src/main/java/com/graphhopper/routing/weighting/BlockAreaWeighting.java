@@ -1,6 +1,5 @@
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.util.EdgeIteratorState;
 

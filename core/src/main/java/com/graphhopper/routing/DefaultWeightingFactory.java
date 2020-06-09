@@ -18,20 +18,20 @@
 
 package com.graphhopper.routing;
 
-import com.graphhopper.config.Profile;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.api.config.Profile;
+import com.graphhopper.api.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Parameters;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
-import static com.graphhopper.util.Helper.toLowerCase;
+import static com.graphhopper.api.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
     private final GraphHopperStorage ghStorage;

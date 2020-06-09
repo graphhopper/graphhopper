@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.util.PointList;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

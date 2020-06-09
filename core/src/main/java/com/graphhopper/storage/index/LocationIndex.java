@@ -23,7 +23,7 @@ import com.graphhopper.storage.Storable;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.BBox;
 
 /**
  * Provides a way to map real world data "lat,lon" to internal ids/indices of a memory efficient graph

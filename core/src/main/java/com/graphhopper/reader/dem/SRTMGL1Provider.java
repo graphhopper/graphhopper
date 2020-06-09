@@ -17,11 +17,11 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 import java.io.*;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.api.util.Helper.*;
 
 /**
  * SRTMGL1 contains elevation data for most of the world with 1 arc second (~30m) accuracy.

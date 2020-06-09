@@ -18,12 +18,16 @@
 package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.api.util.DistanceCalc;
+import com.graphhopper.api.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

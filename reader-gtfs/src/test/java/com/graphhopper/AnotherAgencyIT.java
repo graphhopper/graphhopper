@@ -18,12 +18,16 @@
 
 package com.graphhopper;
 
+import com.graphhopper.api.Trip;
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.GHResponse;
 import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

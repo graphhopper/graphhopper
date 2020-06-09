@@ -17,11 +17,12 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.api.util.Translation;
 import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.api.util.Helper.*;
 
 /**
  * A class which manages the translations in-memory. See here for more information:

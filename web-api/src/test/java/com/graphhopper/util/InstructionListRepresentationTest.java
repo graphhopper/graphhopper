@@ -1,5 +1,11 @@
 package com.graphhopper.util;
 
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.RoundaboutInstruction;
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.InstructionList;
+import com.graphhopper.api.util.InstructionAnnotation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.jackson.Jackson;
 import org.junit.Test;

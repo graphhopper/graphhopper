@@ -19,9 +19,9 @@
 package com.graphhopper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.CHProfile;
+import com.graphhopper.api.config.LMProfile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ProfileMixIn;
 import com.graphhopper.routing.util.EncodingManager;

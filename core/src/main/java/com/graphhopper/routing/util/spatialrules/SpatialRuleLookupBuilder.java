@@ -1,8 +1,8 @@
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.json.geo.JsonFeature;
+import com.graphhopper.api.json.geo.JsonFeatureCollection;
+import com.graphhopper.api.util.Helper;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static com.graphhopper.util.Helper.toLowerCase;
+import static com.graphhopper.api.util.Helper.toLowerCase;
 
 public class SpatialRuleLookupBuilder {
 

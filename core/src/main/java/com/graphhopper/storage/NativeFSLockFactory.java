@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 import java.io.File;
 import java.io.IOException;

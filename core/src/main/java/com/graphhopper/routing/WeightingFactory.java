@@ -18,9 +18,9 @@
 
 package com.graphhopper.routing;
 
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 
 public interface WeightingFactory {
     /**

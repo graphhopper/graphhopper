@@ -20,9 +20,9 @@ package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfile;
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.config.CHProfile;
+import com.graphhopper.api.config.LMProfile;
 
 import java.util.List;
 

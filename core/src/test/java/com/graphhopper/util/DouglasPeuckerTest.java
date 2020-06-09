@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.api.util.PointList;
 import org.junit.Test;
 
 import java.util.ArrayList;

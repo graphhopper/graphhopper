@@ -18,9 +18,13 @@
 
 package com.graphhopper.routing;
 
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.Helper;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.FetchMode;
 
 public class HeadingResolver {
     private final EdgeExplorer edgeExplorer;

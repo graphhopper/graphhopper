@@ -17,10 +17,12 @@
  */
 package com.graphhopper.json.geo;
 
+import com.graphhopper.api.json.geo.JsonFeatureCollection;
+import com.graphhopper.api.json.geo.JsonFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.shapes.BBox;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;

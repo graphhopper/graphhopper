@@ -17,13 +17,16 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.CHProfile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Test;
 
 import java.io.File;
@@ -32,6 +35,7 @@ import java.util.Collections;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.FetchMode.*;
+import com.graphhopper.util.GHUtility;
 import static org.junit.Assert.*;
 
 /**

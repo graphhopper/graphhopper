@@ -18,8 +18,12 @@
 
 package com.graphhopper.util.gpx;
 
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.api.util.InstructionList;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.RoundaboutInstruction;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.shapes.GHPoint3D;
 
 import java.text.DateFormat;
 import java.text.DecimalFormat;

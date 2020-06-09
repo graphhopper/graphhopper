@@ -17,10 +17,11 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.api.util.DistanceCalcEarth;
 import static java.lang.Math.sqrt;
 
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 /**
  * Calculates the distance of two points or one point and an edge in euclidean space.
@@ -52,7 +53,8 @@ public class DistanceCalcEuclidean extends DistanceCalcEarth {
         return dist * dist;
     }
 
-    double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
+    @Override
+    protected double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
         return 1.;
     }
 

@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.api.util.Helper.*;
 
 /**
  * Implements some common methods for the subclasses.

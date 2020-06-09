@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.coll.MapEntry;
+import com.graphhopper.api.coll.MapEntry;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.Weighting;
 
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.util.Parameters.Details.*;
+import static com.graphhopper.api.util.Parameters.Details.*;
 
 /**
  * Generates a list of PathDetailsBuilder from a List of PathDetail names

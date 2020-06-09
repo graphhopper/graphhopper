@@ -18,8 +18,8 @@
 package com.graphhopper.geohash;
 
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.DistanceCalcEarth;
+import com.graphhopper.api.util.shapes.GHPoint;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

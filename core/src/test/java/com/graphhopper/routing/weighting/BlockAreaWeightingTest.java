@@ -14,7 +14,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.shapes.Circle;
+import com.graphhopper.api.util.shapes.Circle;
 import org.junit.Before;
 import org.junit.Test;
 

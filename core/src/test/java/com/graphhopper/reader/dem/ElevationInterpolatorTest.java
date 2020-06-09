@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 /**
  * @author Alexey Valikov

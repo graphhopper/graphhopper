@@ -18,8 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PMap;
 import org.junit.Test;
 
 import java.text.DateFormat;

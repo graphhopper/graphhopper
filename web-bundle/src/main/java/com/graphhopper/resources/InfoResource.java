@@ -18,12 +18,12 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.BBox;
 
 import javax.inject.Inject;
 import javax.inject.Named;

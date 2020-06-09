@@ -1,7 +1,7 @@
 package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
 import org.junit.Test;
 
 import java.io.BufferedReader;

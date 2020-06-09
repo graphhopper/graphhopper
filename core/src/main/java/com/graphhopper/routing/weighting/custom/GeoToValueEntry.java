@@ -17,13 +17,13 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.api.json.geo.JsonFeature;
+import com.graphhopper.api.routing.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.Polygon;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.Polygon;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 

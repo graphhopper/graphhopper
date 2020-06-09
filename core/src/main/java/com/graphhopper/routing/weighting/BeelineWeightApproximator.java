@@ -18,8 +18,8 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.DistanceCalc;
+import com.graphhopper.api.util.Helper;
 
 /**
  * Approximates the distance to the goal node by weighting the beeline distance according to the

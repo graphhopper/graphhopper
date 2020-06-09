@@ -22,10 +22,9 @@ import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.Helper;
-
-import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
+import com.graphhopper.api.util.Helper;
+import static com.graphhopper.api.util.Parameters.Algorithms.*;
+import static com.graphhopper.api.util.Parameters.Algorithms.AltRoute.*;
 
 /**
  * A simple factory creating normal algorithms (RoutingAlgorithm) without preparation.

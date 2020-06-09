@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFImageDecoder;
 import org.apache.xmlgraphics.image.codec.util.SeekableStream;
@@ -27,7 +27,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.api.util.Helper.*;
 
 /**
  * Elevation data from Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010).

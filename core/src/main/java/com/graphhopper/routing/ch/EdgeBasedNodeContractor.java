@@ -20,7 +20,7 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.api.util.Helper.nf;
 
 /**
  * This class is used to calculate the priority of or contract a given node in edge-based Contraction Hierarchies as it

@@ -17,9 +17,21 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.GHRequest;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Parameters;
+import com.graphhopper.api.util.ShallowImmutablePointList;
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.util.RoundaboutInstruction;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.InstructionList;
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.config.CHProfile;
+import com.graphhopper.api.config.LMProfile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
@@ -31,15 +43,14 @@ import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.CH;
-import com.graphhopper.util.Parameters.Landmark;
-import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.exceptions.PointDistanceExceededException;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.api.util.Parameters.CH;
+import com.graphhopper.api.util.Parameters.Landmark;
+import com.graphhopper.api.util.Parameters.Routing;
+import com.graphhopper.api.util.details.PathDetail;
+import com.graphhopper.api.util.exceptions.PointDistanceExceededException;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint3D;
 import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,9 +63,9 @@ import java.io.File;
 import java.util.*;
 
 import static com.graphhopper.Junit4To5Assertions.*;
-import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Curbsides.*;
-import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
+import static com.graphhopper.api.util.Parameters.Algorithms.*;
+import static com.graphhopper.api.util.Parameters.Curbsides.*;
+import static com.graphhopper.api.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
 
 /**

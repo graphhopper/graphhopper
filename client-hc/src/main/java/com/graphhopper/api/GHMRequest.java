@@ -1,9 +1,8 @@
 package com.graphhopper.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.GHRequest;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.HashSet;

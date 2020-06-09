@@ -17,6 +17,10 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.InstructionList;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;

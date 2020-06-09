@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -26,7 +26,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-import static com.graphhopper.util.Helper.createFormatter;
+import static com.graphhopper.api.util.Helper.createFormatter;
 
 /**
  * Parses a DateRange from OpenStreetMap. Currently only DateRanges that last at least one day are

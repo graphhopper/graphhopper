@@ -18,18 +18,24 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.InstructionList;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.InstructionAnnotation;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.ResponsePath;
-import com.graphhopper.Trip;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;

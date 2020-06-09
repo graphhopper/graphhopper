@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 
 /**
  * Specifies the settings for cycletouring/trekking

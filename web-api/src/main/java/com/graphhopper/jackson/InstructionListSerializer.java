@@ -20,10 +20,10 @@ package com.graphhopper.jackson;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.InstructionAnnotation;
-import com.graphhopper.util.InstructionList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.InstructionAnnotation;
+import com.graphhopper.api.util.InstructionList;
 
 import java.io.IOException;
 import java.util.*;

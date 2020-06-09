@@ -2,9 +2,8 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.Helper;
-
-import static com.graphhopper.config.Profile.validateProfileName;
+import com.graphhopper.api.util.Helper;
+import static com.graphhopper.api.config.Profile.validateProfileName;
 
 /**
  * Container to hold properties used for CH preparation Specifies all properties of a CH routing profile.

@@ -18,9 +18,9 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;

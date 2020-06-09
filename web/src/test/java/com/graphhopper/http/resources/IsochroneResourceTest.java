@@ -19,12 +19,12 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.json.geo.JsonFeatureCollection;
+import com.graphhopper.api.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
@@ -41,7 +41,7 @@ import java.io.File;
 import java.util.Arrays;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
-import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
+import static com.graphhopper.api.util.Parameters.Routing.BLOCK_AREA;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)

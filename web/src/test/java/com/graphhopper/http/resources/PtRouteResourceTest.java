@@ -18,13 +18,13 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.GHResponse;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.resources.InfoResource;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;

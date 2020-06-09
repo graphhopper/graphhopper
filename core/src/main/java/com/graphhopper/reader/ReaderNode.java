@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.util.PointAccess;
+import com.graphhopper.api.util.PointAccess;
 
 /**
  * Represents a node received from the reader.

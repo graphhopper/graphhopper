@@ -22,19 +22,19 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.api.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.api.routing.util.CustomModel;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.api.util.Parameters;
+import com.graphhopper.api.util.shapes.BBox;
 import io.dropwizard.lifecycle.Managed;
 import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.graphhopper.util.Helper.UTF_CS;
+import static com.graphhopper.api.util.Helper.UTF_CS;
 
 public class GraphHopperManaged implements Managed {
 

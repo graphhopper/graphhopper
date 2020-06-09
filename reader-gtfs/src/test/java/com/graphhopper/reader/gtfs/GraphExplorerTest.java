@@ -28,7 +28,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalcEuclidean;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.util.PointList;
 import org.junit.Test;
 
 import java.util.ArrayList;

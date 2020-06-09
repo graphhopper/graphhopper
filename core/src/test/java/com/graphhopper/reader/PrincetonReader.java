@@ -18,7 +18,7 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

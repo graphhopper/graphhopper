@@ -18,9 +18,13 @@
 
 package com.graphhopper.routing;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Parameters;
+import com.graphhopper.api.util.DistanceCalc;
+import com.graphhopper.api.GHRequest;
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -38,21 +42,24 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.exceptions.PointDistanceExceededException;
-import com.graphhopper.util.exceptions.PointOutOfBoundsException;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.exceptions.PointDistanceExceededException;
+import com.graphhopper.api.util.exceptions.PointOutOfBoundsException;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
-import static com.graphhopper.util.Helper.DIST_EARTH;
-import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
-import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
-import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
-import static com.graphhopper.util.Parameters.Routing.POINT_HINT;
+import static com.graphhopper.api.util.Helper.DIST_EARTH;
+import static com.graphhopper.api.util.Parameters.Algorithms.ALT_ROUTE;
+import static com.graphhopper.api.util.Parameters.Algorithms.ROUND_TRIP;
+import static com.graphhopper.api.util.Parameters.Routing.CURBSIDE;
+import static com.graphhopper.api.util.Parameters.Routing.POINT_HINT;
+import com.graphhopper.util.DouglasPeucker;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.TranslationMap;
 
 public class Router {
     private final GraphHopperStorage ghStorage;

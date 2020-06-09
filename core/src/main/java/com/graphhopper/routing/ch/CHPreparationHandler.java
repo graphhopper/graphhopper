@@ -17,13 +17,13 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.CHProfile;
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.config.CHProfile;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters.CH;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +31,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 
-import static com.graphhopper.util.Helper.createFormatter;
-import static com.graphhopper.util.Helper.getMemInfo;
+import static com.graphhopper.api.util.Helper.createFormatter;
+import static com.graphhopper.api.util.Helper.getMemInfo;
 
 /**
  * This class handles the different CH preparations

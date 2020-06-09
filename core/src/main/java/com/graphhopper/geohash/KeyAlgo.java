@@ -17,7 +17,7 @@
  */
 package com.graphhopper.geohash;
 
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 /**
  * Defines the mapping between a one dimensional 'number' and a point (lat, lon) which is limited to

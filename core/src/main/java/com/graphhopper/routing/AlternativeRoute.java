@@ -28,7 +28,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.api.util.Parameters;
 
 import java.util.ArrayList;
 import java.util.Collections;

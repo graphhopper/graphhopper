@@ -21,7 +21,7 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.api.util.details.PathDetail;
 
 import java.io.IOException;
 

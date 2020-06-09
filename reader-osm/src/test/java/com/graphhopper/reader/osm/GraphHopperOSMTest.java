@@ -17,19 +17,26 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.graphhopper.api.GHRequest;
+import com.graphhopper.api.util.Parameters;
+import com.graphhopper.api.routing.util.CustomModel;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.GHResponse;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.CHProfile;
+import com.graphhopper.api.config.LMProfile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
@@ -38,10 +45,9 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.Parameters.Routing;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,8 +59,19 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.api.util.Parameters.Algorithms.DIJKSTRA;
+import static com.graphhopper.api.util.Parameters.Algorithms.DIJKSTRA_BI;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.util.MotorcycleFlagEncoder;
+import com.graphhopper.routing.util.MountainBikeFlagEncoder;
+import com.graphhopper.routing.util.RacingBikeFlagEncoder;
+import com.graphhopper.util.BreadthFirstSearch;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
 import static org.junit.Assert.*;
 
 /**

@@ -1,6 +1,6 @@
 package com.graphhopper.routing.util.parsers.helpers;
 
-import static com.graphhopper.util.Helper.toLowerCase;
+import static com.graphhopper.api.util.Helper.toLowerCase;
 
 import java.util.List;
 import java.util.regex.Pattern;

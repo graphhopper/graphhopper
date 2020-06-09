@@ -18,8 +18,8 @@
 
 package com.graphhopper.reader.gtfs;
 
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 import java.time.Duration;
 import java.time.Instant;

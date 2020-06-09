@@ -33,7 +33,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.api.util.Parameters;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

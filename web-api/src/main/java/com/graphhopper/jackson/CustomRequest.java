@@ -18,8 +18,8 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import com.graphhopper.GHRequest;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.api.GHRequest;
+import com.graphhopper.api.routing.util.CustomModel;
 
 public class CustomRequest extends GHRequest {
     private CustomModel model;

@@ -17,6 +17,16 @@
  */
 package com.graphhopper.tools;
 
+import com.graphhopper.api.util.DistanceCalcEarth;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.GHRequest;
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.util.Parameters;
+import com.graphhopper.api.routing.util.CustomModel;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.DistanceCalc;
+import com.graphhopper.api.util.PMap;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,15 +34,14 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.CHProfile;
+import com.graphhopper.api.config.LMProfile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.api.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
@@ -42,12 +51,11 @@ import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.Algorithms;
-import com.graphhopper.util.Parameters.CH;
-import com.graphhopper.util.Parameters.Landmark;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.Parameters.Algorithms;
+import com.graphhopper.api.util.Parameters.CH;
+import com.graphhopper.api.util.Parameters.Landmark;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,10 +74,24 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.graphhopper.util.Helper.*;
-import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
+import static com.graphhopper.api.util.Helper.*;
+import static com.graphhopper.api.util.Parameters.Algorithms.ALT_ROUTE;
+import static com.graphhopper.api.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.api.util.Parameters.Routing.BLOCK_AREA;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.LevelEdgeFilter;
+import com.graphhopper.util.CHEdgeExplorer;
+import com.graphhopper.util.CHEdgeIterator;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.MiniPerfTest;
+import com.graphhopper.util.StopWatch;
 
 /**
  * Used to run performance benchmarks for routing and other functionalities of GraphHopper

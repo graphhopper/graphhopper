@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 
 import java.util.Arrays;
 import java.util.Locale;

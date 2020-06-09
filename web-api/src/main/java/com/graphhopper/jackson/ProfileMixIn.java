@@ -20,7 +20,7 @@ package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 
 /**
  * @see GHRequestMixIn
