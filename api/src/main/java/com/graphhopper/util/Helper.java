@@ -174,13 +174,6 @@ public class Helper {
         return "totalMB:" + getTotalMB() + ", usedMB:" + getUsedMB();
     }
 
-    public static int getUsedMBAfterGC() {
-        gcAndWait();
-        long result = (ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed() +
-                ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage().getUsed()) / (1024 * 1024);
-        return (int) result;
-    }
-
     public static void gcAndWait() {
         long before = getTotalGcCount();
         // trigger gc
