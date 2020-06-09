@@ -56,6 +56,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -84,6 +86,26 @@ public class Measurement {
     private long seed;
     private int maxNode;
     private String vehicle;
+
+    private static void gcAndWait() {
+        long before = getTotalGcCount();
+        // trigger gc
+        System.gc();
+        while (getTotalGcCount() == before) {
+            // wait for the gc to have completed
+        }
+    }
+
+    private static long getTotalGcCount() {
+        long sum = 0;
+        for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
+            long count = b.getCollectionCount();
+            if (count != -1) {
+                sum += count;
+            }
+        }
+        return sum;
+    }
 
     public static void main(String[] strs) throws IOException {
         PMap args = PMap.read(strs);
