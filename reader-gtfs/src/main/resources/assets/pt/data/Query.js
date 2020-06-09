@@ -1,5 +1,9 @@
-import {TimeOption} from "./Search.js";
 import Point from "./Point.js";
+
+const TimeOption = {
+    ARRIVAL: 1,
+    DEPARTURE: 2
+};
 
 const CreateQuery = (baseUrl, search) => {
     let url = new URL(baseUrl);
@@ -16,10 +20,12 @@ const CreateQuery = (baseUrl, search) => {
     } else {
         url.searchParams.set("pt.arrive_by", false);
     }
-    url.searchParams.set("pt.limit_solutions", search.limitSolutions);
     url.searchParams.set("locale", "en-US");
     url.searchParams.set("profile", "pt");
-    url.searchParams.set("pt.profile", true);
+    url.searchParams.set("pt.profile", search.rangeQuery);
+    url.searchParams.set("pt.profile_duration", search.rangeQueryDuration);
+    url.searchParams.set("pt.limit_street_time", search.limitStreetTime);
+    url.searchParams.set("pt.ignore_transfers", search.ignoreTransfers);
     return url.toString();
 };
 
@@ -55,8 +61,11 @@ const ParseQuery = (search, searchParams) => {
 
     parsePoints(searchParams);
     parseDepartureTime(searchParams);
-    parse("pt.limit_solutions", "limitSolutions", searchParams);
+    parse("pt.profile", "rangeQuery", searchParams);
+    parse("pt.profile_duration", "rangeQueryDuration", searchParams);
+    parse("pt.limit_street_time", "limitStreetTime", searchParams);
+    parse("pt.ignore_transfers", "ignoreTransfers", searchParams);
     return search;
 };
 
-export {CreateQuery, ParseQuery};
+export {CreateQuery, ParseQuery, TimeOption};

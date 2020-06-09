@@ -77,17 +77,17 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         if (points.size() < 2)
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
-        EdgeFilter strictEdgeFilter = !ghRequest.hasSnapPreventions()
+        EdgeFilter strictEdgeFilter = ghRequest.getSnapPreventions().isEmpty()
                 ? edgeFilter
                 : new SnapPreventionEdgeFilter(edgeFilter, roadClassEnc, roadEnvEnc, ghRequest.getSnapPreventions());
         queryResults = new ArrayList<>(points.size());
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
             QueryResult qr = null;
-            if (ghRequest.hasPointHints())
+            if (!ghRequest.getPointHints().isEmpty())
                 qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
                         ghRequest.getPointHints().get(placeIndex), point, 100));
-            else if (ghRequest.hasSnapPreventions())
+            else if (!ghRequest.getSnapPreventions().isEmpty())
                 qr = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
             if (qr == null || !qr.isValid())
                 qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);

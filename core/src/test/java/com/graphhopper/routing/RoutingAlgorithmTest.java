@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -1170,11 +1171,10 @@ public class RoutingAlgorithmTest {
                 graph.freeze();
                 pch.doWork();
             }
-            RoutingAlgorithmFactory algoFactory = pch.getRoutingAlgorithmFactory();
             AlgorithmOptions opts = AlgorithmOptions.start()
                     .algorithm(getAlgorithm())
                     .weighting(weighting).traversalMode(traversalMode).maxVisitedNodes(maxVisitedNodes).build();
-            RoutingAlgorithm algo = algoFactory.createAlgo(chGraph, opts);
+            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, opts);
             return algo.calcPath(from, to);
         }
 
@@ -1197,11 +1197,10 @@ public class RoutingAlgorithmTest {
                 pch.doWork();
             }
             QueryGraph queryGraph = QueryGraph.create(chGraph, from, to);
-            RoutingAlgorithmFactory algoFactory = pch.getRoutingAlgorithmFactory();
             AlgorithmOptions opts = AlgorithmOptions.start()
                     .algorithm(getAlgorithm())
                     .weighting(weighting).traversalMode(traversalMode).maxVisitedNodes(maxVisitedNodes).build();
-            RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, opts);
+            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, opts);
             return algo.calcPath(from.getClosestNode(), to.getClosestNode());
 
         }

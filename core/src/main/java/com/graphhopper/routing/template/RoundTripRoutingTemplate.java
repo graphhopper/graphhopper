@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.template;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
@@ -33,12 +34,9 @@ import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
-import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.Translation;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -119,6 +117,8 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
 
         long visitedNodesSum = 0L;
         QueryResult start = queryResults.get(0);
+        IntHashSet previousEdges = new IntHashSet();
+        avoidPathWeighting.setAvoidedEdges(previousEdges);
         for (int qrIndex = 1; qrIndex < queryResults.size(); qrIndex++) {
             RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);
             // instead getClosestNode (which might be a virtual one and introducing unnecessary tails of the route)
@@ -134,8 +134,10 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
 
             pathList.add(path);
 
-            // it is important to avoid previously visited nodes for future paths
-            avoidPathWeighting.addEdges(path.calcEdges());
+            // add the edges of this path to the set of previous edges so they will be avoided from now, otherwise
+            // we do not get a nice 'round trip'. note that for this reason we cannot use CH for round-trips currently
+            for (EdgeIteratorState e : path.calcEdges())
+                previousEdges.add(e.getEdge());
         }
 
         ghResponse.getHints().putObject("visited_nodes.sum", visitedNodesSum);

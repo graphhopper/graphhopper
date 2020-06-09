@@ -18,6 +18,7 @@
 package com.graphhopper.tools;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.carrotsearch.hppc.IntArrayList;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -37,6 +38,7 @@ import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
@@ -199,7 +201,7 @@ public class Measurement {
 
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
-            printMiscUnitPerfTests(g, false, encoder, count * 100, allowedEdges);
+            printMiscUnitPerfTests(g, false, null, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
             if (runSlow) {
@@ -244,7 +246,8 @@ public class Measurement {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
                     CHGraph lg = g.getCHGraph(chConfig.getName());
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
-                    printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
+                    printMiscUnitPerfTests(lg, isCH, chConfig.getWeighting(), encoder, count * 100, allowedEdges);
+                    gcAndWait();
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_alt", count / 10, isCH, isLM).
@@ -257,6 +260,11 @@ public class Measurement {
                             sod());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
                             withInstructions().withPointHints().sod().simplify());
+                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_full... see #2056
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
+                            withPoints(100).sod());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
+                            withPoints(100).sod().withInstructions().simplify());
                 }
                 if (!hopper.getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
@@ -265,6 +273,11 @@ public class Measurement {
                             edgeBased());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
                             edgeBased().withInstructions().withPointHints().simplify());
+                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_edge_full... see #2056
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100", count / 100, isCH, isLM).
+                            withPoints(100).edgeBased().sod());
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100_full", count / 100, isCH, isLM).
+                            withPoints(100).edgeBased().sod().withInstructions().simplify());
                 }
             }
             if (!isEmpty(countryBordersDirectory)) {
@@ -349,6 +362,7 @@ public class Measurement {
         int activeLandmarks = -1;
         boolean withInstructions, withPointHints, sod, edgeBased, simplify, alternative;
         String blockArea;
+        int points = 2;
 
         QuerySettings(String prefix, int count, boolean isCH, boolean isLM) {
             this.prefix = prefix;
@@ -359,6 +373,11 @@ public class Measurement {
 
         QuerySettings withInstructions() {
             this.withInstructions = true;
+            return this;
+        }
+
+        QuerySettings withPoints(int points) {
+            this.points = points;
             return this;
         }
 
@@ -442,7 +461,7 @@ public class Measurement {
         print("location_index", miniPerf);
     }
 
-    private void printMiscUnitPerfTests(final Graph graph, boolean isCH, final FlagEncoder encoder,
+    private void printMiscUnitPerfTests(final Graph graph, boolean isCH, Weighting chWeighting, final FlagEncoder encoder,
                                         int count, final GHBitSet allowedEdges) {
         final Random rand = new Random(seed);
         String description = "";
@@ -473,6 +492,50 @@ public class Measurement {
                 }
             }.setIterations(count).start();
             print("unit_testsCH.get_weight", miniPerf);
+
+            // for some strange reason these tests affect the results for routingCH_xyz.mean for the 'very-custom' map
+            // no idea why, but disabling this for now...
+//            RoutingCHGraphImpl routingCHGraph = new RoutingCHGraphImpl(lg, chWeighting);
+//            final RoutingCHEdgeExplorer chOutEdgeExplorer = routingCHGraph.createOutEdgeExplorer();
+//            miniPerf = new MiniPerfTest() {
+//                @Override
+//                public int doCalc(boolean warmup, int run) {
+//                    int nodeId = rand.nextInt(maxNode);
+//                    RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
+//                    while (iter.next()) {
+//                        nodeId += iter.getAdjNode();
+//                    }
+//                    return nodeId;
+//                }
+//            }.setIterations(count).start();
+//            print("unit_testsCH.out_edge_next", miniPerf);
+//
+//            miniPerf = new MiniPerfTest() {
+//                @Override
+//                public int doCalc(boolean warmup, int run) {
+//                    int nodeId = rand.nextInt(maxNode);
+//                    RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
+//                    while (iter.next()) {
+//                        nodeId += iter.getWeight(false);
+//                    }
+//                    return nodeId;
+//                }
+//            }.setIterations(count).start();
+//            print("unit_testsCH.out_edge_get_weight", miniPerf);
+//
+//            final RoutingCHEdgeExplorer chOrigEdgeExplorer = routingCHGraph.createOriginalOutEdgeExplorer();
+//            miniPerf = new MiniPerfTest() {
+//                @Override
+//                public int doCalc(boolean warmup, int run) {
+//                    int nodeId = rand.nextInt(maxNode);
+//                    RoutingCHEdgeIterator iter = chOrigEdgeExplorer.setBaseNode(nodeId);
+//                    while (iter.next()) {
+//                        nodeId += iter.getAdjNode();
+//                    }
+//                    return nodeId;
+//                }
+//            }.setIterations(count).start();
+//            print("unit_testsCH.out_orig_edge_next", miniPerf);
         }
 
         EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder);
@@ -668,32 +731,37 @@ public class Measurement {
         MiniPerfTest miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
-                int from = -1, to = -1;
-                double fromLat = 0, fromLon = 0, toLat = 0, toLon = 0;
-                GHRequest req = null;
+                GHRequest req = new GHRequest(querySettings.points);
+                IntArrayList nodes = new IntArrayList(querySettings.points);
+                // we try a few times to find points that do not lie within our blocked area
                 for (int i = 0; i < 5; i++) {
-                    from = rand.nextInt(maxNode);
-                    to = rand.nextInt(maxNode);
-                    fromLat = na.getLatitude(from);
-                    fromLon = na.getLongitude(from);
-                    toLat = na.getLatitude(to);
-                    toLon = na.getLongitude(to);
-                    req = new GHRequest(fromLat, fromLon, toLat, toLon);
-                    req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
+                    List<GHPoint> points = new ArrayList<>();
+                    List<String> pointHints = new ArrayList<>();
+                    for (int p = 0; p < querySettings.points; p++) {
+                        int node = rand.nextInt(maxNode);
+                        nodes.add(node);
+                        points.add(new GHPoint(na.getLatitude(node), na.getLongitude(node)));
+                        if (querySettings.withPointHints) {
+                            EdgeIterator iter = edgeExplorer.setBaseNode(node);
+                            iter.next();
+                            pointHints.add(iter.getName());
+                        }
+                    }
+                    req.setPoints(points);
+                    req.setPointHints(pointHints);
                     if (querySettings.blockArea == null)
                         break;
-
                     try {
                         req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
                         GraphEdgeIdFinder.createBlockArea(hopper.getGraphHopperStorage(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
                         break;
                     } catch (IllegalArgumentException ex) {
                         if (i >= 4)
-                            throw new RuntimeException("Give up after 5 trials. Cannot find points outside of the block_area "
+                            throw new RuntimeException("Give up after 5 tries. Cannot find points outside of the block_area "
                                     + querySettings.blockArea + " - too big block_area or map too small? Request:" + req);
                     }
                 }
-
+                req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
                 req.getHints().
                         putObject(CH.DISABLE, !querySettings.ch).
                         putObject("stall_on_demand", querySettings.sod).
@@ -714,16 +782,6 @@ public class Measurement {
                     req.getHints().putObject(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
                 }
 
-                if (querySettings.withPointHints) {
-                    EdgeIterator iter = edgeExplorer.setBaseNode(from);
-                    if (!iter.next())
-                        throw new IllegalArgumentException("wrong 'from' when adding point hint");
-                    EdgeIterator iter2 = edgeExplorer.setBaseNode(to);
-                    if (!iter2.next())
-                        throw new IllegalArgumentException("wrong 'to' when adding point hint");
-                    req.setPointHints(Arrays.asList(iter.getName(), iter2.getName()));
-                }
-
                 // put(algo + ".approximation", "BeelineSimplification").
                 // put(algo + ".epsilon", 2);
 
@@ -732,8 +790,7 @@ public class Measurement {
                     rsp = hopper.route(req);
                 } catch (Exception ex) {
                     // 'not found' can happen if import creates more than one subnetwork
-                    throw new RuntimeException("Error while calculating route! "
-                            + "nodes:" + from + " -> " + to + ", request:" + req, ex);
+                    throw new RuntimeException("Error while calculating route! nodes: " + nodes + ", request:" + req, ex);
                 }
 
                 if (rsp.hasErrors()) {
@@ -759,7 +816,11 @@ public class Measurement {
                     long dist = (long) responsePath.getDistance();
                     distSum.addAndGet(dist);
 
-                    airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
+                    GHPoint prev = req.getPoints().get(0);
+                    for (GHPoint point : req.getPoints()) {
+                        airDistSum.addAndGet((long) distCalc.calcDist(prev.getLat(), prev.getLon(), point.getLat(), point.getLon()));
+                        prev = point;
+                    }
 
                     if (dist > maxDistance.get())
                         maxDistance.set(dist);
@@ -776,6 +837,8 @@ public class Measurement {
         }.setIterations(querySettings.count).start();
 
         int count = querySettings.count - failedCount.get();
+        if (count == 0)
+            throw new RuntimeException("All requests failed, something must be wrong: " + failedCount.get());
 
         // if using non-bidirectional algorithm make sure you exclude CH routing
         String algoStr = (querySettings.ch && !querySettings.edgeBased) ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;

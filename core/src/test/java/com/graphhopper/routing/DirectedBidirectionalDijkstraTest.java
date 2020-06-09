@@ -1,6 +1,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -22,7 +23,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 
@@ -455,7 +455,7 @@ public class DirectedBidirectionalDijkstraTest {
     private AvoidEdgesWeighting createAvoidEdgeWeighting(EdgeIteratorState edgeOut) {
         AvoidEdgesWeighting avoidEdgesWeighting = new AvoidEdgesWeighting(weighting);
         avoidEdgesWeighting.setEdgePenaltyFactor(Double.POSITIVE_INFINITY);
-        avoidEdgesWeighting.addEdges(Collections.singletonList(edgeOut));
+        avoidEdgesWeighting.setAvoidedEdges(IntHashSet.from(edgeOut.getEdge()));
         return avoidEdgesWeighting;
     }
 
