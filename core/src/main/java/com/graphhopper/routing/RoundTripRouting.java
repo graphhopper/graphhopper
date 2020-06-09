@@ -111,10 +111,9 @@ public class RoundTripRouting {
     }
 
     public static Result calcPaths(List<QueryResult> queryResults, FlexiblePathCalculator pathCalculator) {
-        PathCalculatorWithAvoidedEdges roundTripPathCalculator = new PathCalculatorWithAvoidedEdges(pathCalculator);
+        RoundTripCalculator roundTripCalculator = new RoundTripCalculator(pathCalculator);
         Result result = new Result(queryResults.size() - 1);
         QueryResult start = queryResults.get(0);
-        IntHashSet previousEdges = new IntHashSet();
         for (int qrIndex = 1; qrIndex < queryResults.size(); qrIndex++) {
             // instead getClosestNode (which might be a virtual one and introducing unnecessary tails of the route)
             // use next tower node -> getBaseNode or getAdjNode
@@ -125,11 +124,7 @@ public class RoundTripRouting {
             QueryResult endQR = queryResults.get(qrIndex);
             int endNode = (endQR == start) ? endQR.getClosestNode() : endQR.getClosestEdge().getBaseNode();
 
-            Path path = roundTripPathCalculator.calcPath(startNode, endNode, previousEdges);
-            // add the edges of this path to the set of previous edges so they will be avoided from now, otherwise
-            // we do not get a nice 'round trip'. note that for this reason we cannot use CH for round-trips currently
-            for (EdgeIteratorState e : path.calcEdges())
-                previousEdges.add(e.getEdge());
+            Path path = roundTripCalculator.calcPath(startNode, endNode);
             result.visitedNodes += pathCalculator.getVisitedNodes();
             result.paths.add(path);
         }
@@ -147,32 +142,31 @@ public class RoundTripRouting {
     }
 
     /**
-     * This path calculator allows calculating a path with a set of avoided edges
+     * Calculates paths and avoids edges of previous path calculations
      */
-    private static class PathCalculatorWithAvoidedEdges {
+    private static class RoundTripCalculator {
         private final FlexiblePathCalculator pathCalculator;
-        private final AvoidEdgesWeighting avoidPreviousPathsWeighting;
-        private int visitedNodes;
+        private final IntSet previousEdges = new IntHashSet();
 
-        public PathCalculatorWithAvoidedEdges(FlexiblePathCalculator pathCalculator) {
+        RoundTripCalculator(FlexiblePathCalculator pathCalculator) {
             this.pathCalculator = pathCalculator;
             // we make the path calculator use our avoid edges weighting
-            avoidPreviousPathsWeighting = new AvoidEdgesWeighting(pathCalculator.getAlgoOpts().getWeighting())
+            AvoidEdgesWeighting avoidPreviousPathsWeighting = new AvoidEdgesWeighting(pathCalculator.getAlgoOpts().getWeighting())
                     .setEdgePenaltyFactor(5);
+            avoidPreviousPathsWeighting.setAvoidedEdges(previousEdges);
             AlgorithmOptions algoOpts = AlgorithmOptions.start(pathCalculator.getAlgoOpts()).
                     weighting(avoidPreviousPathsWeighting).build();
             pathCalculator.setAlgoOpts(algoOpts);
         }
 
-        public Path calcPath(int from, int to, IntSet avoidedEdges) {
+        Path calcPath(int from, int to) {
             Path path = pathCalculator.calcPaths(from, to, new EdgeRestrictions()).get(0);
-            avoidPreviousPathsWeighting.setAvoidedEdges(avoidedEdges);
-            visitedNodes = pathCalculator.getVisitedNodes();
+            // add the edges of this path to the set of previous edges so they will be avoided from now, otherwise
+            // we do not get a nice 'round trip'. note that for this reason we cannot use CH for round-trips currently
+            for (EdgeIteratorState e : path.calcEdges())
+                previousEdges.add(e.getEdge());
             return path;
         }
 
-        public int getVisitedNodes() {
-            return visitedNodes;
-        }
     }
 }
