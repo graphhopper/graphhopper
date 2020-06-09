@@ -80,8 +80,8 @@ public class RoundTripRoutingTest {
         assertEquals(0, stagePoints.get(2).getClosestNode());
 
         QueryGraph queryGraph = QueryGraph.create(g, stagePoints);
-        List<Path> paths = RoundTripRouting.calcPaths(stagePoints, new PathCalculatorWithAvoidedEdges(new FlexiblePathCalculator(queryGraph,
-                new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode)))).paths;
+        List<Path> paths = RoundTripRouting.calcPaths(stagePoints, new FlexiblePathCalculator(queryGraph,
+                new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode))).paths;
         // make sure the resulting paths are connected and form a round trip starting and ending at the start node 0
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(0, 7, 6, 5), paths.get(0).calcNodes());
@@ -102,16 +102,16 @@ public class RoundTripRoutingTest {
 
         QueryGraph qGraph = QueryGraph.create(g, Arrays.asList(qr4, qr5));
 
-        PathCalculatorWithAvoidedEdges pathCalculator = new PathCalculatorWithAvoidedEdges(new FlexiblePathCalculator(
-                qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode)));
+        FlexiblePathCalculator pathCalculator = new FlexiblePathCalculator(
+                qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
         List<Path> paths = RoundTripRouting.calcPaths(Arrays.asList(qr5, qr4, qr5), pathCalculator).paths;
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(5, 6, 3, 4), paths.get(0).calcNodes());
         assertEquals(IntArrayList.from(4, 8, 7, 6, 5), paths.get(1).calcNodes());
 
         qGraph = QueryGraph.create(g, Arrays.asList(qr4, qr6));
-        pathCalculator = new PathCalculatorWithAvoidedEdges(new FlexiblePathCalculator(
-                qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode)));
+        pathCalculator = new FlexiblePathCalculator(
+                qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
         paths = RoundTripRouting.calcPaths(Arrays.asList(qr6, qr4, qr6), pathCalculator).paths;
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(6, 3, 4), paths.get(0).calcNodes());

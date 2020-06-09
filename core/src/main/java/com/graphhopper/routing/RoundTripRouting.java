@@ -18,9 +18,11 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.tour.MultiPointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;
+import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -108,7 +110,8 @@ public class RoundTripRouting {
         }
     }
 
-    public static Result calcPaths(List<QueryResult> queryResults, PathCalculatorWithAvoidedEdges pathCalculator) {
+    public static Result calcPaths(List<QueryResult> queryResults, FlexiblePathCalculator pathCalculator) {
+        PathCalculatorWithAvoidedEdges roundTripPathCalculator = new PathCalculatorWithAvoidedEdges(pathCalculator);
         Result result = new Result(queryResults.size() - 1);
         QueryResult start = queryResults.get(0);
         IntHashSet previousEdges = new IntHashSet();
@@ -122,7 +125,7 @@ public class RoundTripRouting {
             QueryResult endQR = queryResults.get(qrIndex);
             int endNode = (endQR == start) ? endQR.getClosestNode() : endQR.getClosestEdge().getBaseNode();
 
-            Path path = pathCalculator.calcPath(startNode, endNode, previousEdges);
+            Path path = roundTripPathCalculator.calcPath(startNode, endNode, previousEdges);
             // add the edges of this path to the set of previous edges so they will be avoided from now, otherwise
             // we do not get a nice 'round trip'. note that for this reason we cannot use CH for round-trips currently
             for (EdgeIteratorState e : path.calcEdges())
@@ -143,4 +146,33 @@ public class RoundTripRouting {
         }
     }
 
+    /**
+     * This path calculator allows calculating a path with a set of avoided edges
+     */
+    private static class PathCalculatorWithAvoidedEdges {
+        private final FlexiblePathCalculator pathCalculator;
+        private final AvoidEdgesWeighting avoidPreviousPathsWeighting;
+        private int visitedNodes;
+
+        public PathCalculatorWithAvoidedEdges(FlexiblePathCalculator pathCalculator) {
+            this.pathCalculator = pathCalculator;
+            // we make the path calculator use our avoid edges weighting
+            avoidPreviousPathsWeighting = new AvoidEdgesWeighting(pathCalculator.getAlgoOpts().getWeighting())
+                    .setEdgePenaltyFactor(5);
+            AlgorithmOptions algoOpts = AlgorithmOptions.start(pathCalculator.getAlgoOpts()).
+                    weighting(avoidPreviousPathsWeighting).build();
+            pathCalculator.setAlgoOpts(algoOpts);
+        }
+
+        public Path calcPath(int from, int to, IntSet avoidedEdges) {
+            Path path = pathCalculator.calcPaths(from, to, new EdgeRestrictions()).get(0);
+            avoidPreviousPathsWeighting.setAvoidedEdges(avoidedEdges);
+            visitedNodes = pathCalculator.getVisitedNodes();
+            return path;
+        }
+
+        public int getVisitedNodes() {
+            return visitedNodes;
+        }
+    }
 }

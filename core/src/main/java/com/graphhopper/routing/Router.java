@@ -145,8 +145,7 @@ public class Router {
                 FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(qResults, profile, roundTripAlgoOpts, disableLM);
                 QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
 
-                PathCalculatorWithAvoidedEdges roundTripPathCalculator = new PathCalculatorWithAvoidedEdges(pathCalculator);
-                RoundTripRouting.Result result = RoundTripRouting.calcPaths(qResults, roundTripPathCalculator);
+                RoundTripRouting.Result result = RoundTripRouting.calcPaths(qResults, pathCalculator);
                 // we merge the different legs of the roundtrip into one response path
                 ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
                 ghRsp.add(responsePath);
