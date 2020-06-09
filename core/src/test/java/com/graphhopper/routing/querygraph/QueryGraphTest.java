@@ -842,6 +842,13 @@ public class QueryGraphTest {
         assertSame(queryGraph.getVirtualEdges().get(1), queryGraph.getEdgeIteratorState(1, 0));
         assertSame(queryGraph.getVirtualEdges().get(2), queryGraph.getEdgeIteratorState(2, 1));
         assertSame(queryGraph.getVirtualEdges().get(3), queryGraph.getEdgeIteratorState(2, 2));
+
+        try {
+            queryGraph.getEdgeIteratorState(4, 0);
+            fail("there should be an error");
+        } catch (IndexOutOfBoundsException e) {
+            // ok
+        }
     }
 
     private QueryGraph lookup(QueryResult res) {
