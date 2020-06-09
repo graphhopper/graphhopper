@@ -844,7 +844,7 @@ public class QueryGraphTest {
         assertSame(queryGraph.getVirtualEdges().get(3), queryGraph.getEdgeIteratorState(2, 2));
 
         try {
-            queryGraph.getEdgeIteratorState(4, 0);
+            queryGraph.getEdgeIteratorState(3, 2);
             fail("there should be an error");
         } catch (IndexOutOfBoundsException e) {
             // ok
