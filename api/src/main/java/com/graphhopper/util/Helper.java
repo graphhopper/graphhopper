@@ -20,8 +20,6 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.*;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
@@ -172,26 +170,6 @@ public class Helper {
 
     public static String getMemInfo() {
         return "totalMB:" + getTotalMB() + ", usedMB:" + getUsedMB();
-    }
-
-    public static void gcAndWait() {
-        long before = getTotalGcCount();
-        // trigger gc
-        System.gc();
-        while (getTotalGcCount() == before) {
-            // wait for the gc to have completed
-        }
-    }
-
-    private static long getTotalGcCount() {
-        long sum = 0;
-        for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
-            long count = b.getCollectionCount();
-            if (count != -1) {
-                sum += count;
-            }
-        }
-        return sum;
     }
 
     public static int getSizeOfObjectRef(int factor) {
