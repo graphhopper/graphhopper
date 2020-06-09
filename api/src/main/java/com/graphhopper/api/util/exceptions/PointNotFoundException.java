@@ -30,8 +30,8 @@ public class PointNotFoundException extends IllegalArgumentException implements 
 
     protected final int pointIndex;
 
-    public PointNotFoundException(String var1, int pointIndex) {
-        super(var1);
+    public PointNotFoundException(String message, int pointIndex) {
+        super(message);
         this.pointIndex = pointIndex;
     }
 

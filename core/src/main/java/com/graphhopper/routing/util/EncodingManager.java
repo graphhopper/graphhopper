@@ -50,7 +50,6 @@ public class EncodingManager implements EncodedValueLookup {
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
     private final List<TagParser> edgeTagParsers = new ArrayList<>();
     private final Map<String, TurnCostParser> turnCostParsers = new LinkedHashMap<>();
-    private int nextNodeBit = 0;
     private boolean enableInstructions = true;
     private String preferredLanguage = "";
     private EncodedValue.InitializerConfig turnCostConfig;
@@ -459,9 +458,6 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         int encoderCount = edgeEncoders.size();
-        int usedBits = encoder.defineNodeBits(encoderCount, nextNodeBit);
-        encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
-        nextNodeBit = usedBits;
 
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();

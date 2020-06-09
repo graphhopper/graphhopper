@@ -217,10 +217,6 @@ public class GHRequest {
         return pointHints;
     }
 
-    public boolean hasPointHints() {
-        return pointHints.size() == points.size() && !points.isEmpty();
-    }
-
     public GHRequest setCurbsides(List<String> curbsides) {
         this.curbsides = curbsides;
         return this;
@@ -230,17 +226,9 @@ public class GHRequest {
         return curbsides;
     }
 
-    public boolean hasCurbsides() {
-        return curbsides.size() == points.size() && !points.isEmpty();
-    }
-
     public GHRequest setSnapPreventions(List<String> snapPreventions) {
         this.snapPreventions = snapPreventions;
         return this;
-    }
-
-    public boolean hasSnapPreventions() {
-        return !snapPreventions.isEmpty();
     }
 
     public List<String> getSnapPreventions() {

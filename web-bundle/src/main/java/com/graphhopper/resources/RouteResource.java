@@ -84,7 +84,7 @@ public class RouteResource {
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
             @QueryParam("profile") String profileName,
-            @QueryParam("algorithm") @DefaultValue("") String algoStr,
+            @QueryParam(ALGORITHM) @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(POINT_HINT) List<String> pointHints,
             @QueryParam(CURBSIDE) List<String> curbsides,

@@ -782,7 +782,7 @@ public class GraphHopperOSMTest {
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.getErrors().toString(), response.hasErrors());
-        assertArrayEquals(new int[]{9, 5, 8, 3, 10}, paths.get(0).calcNodes().toArray());
+        assertEquals(IntArrayList.from(9, 5, 8, 3, 10), paths.get(0).calcNodes());
     }
 
     @Test
@@ -801,14 +801,14 @@ public class GraphHopperOSMTest {
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{9, 5, 8, 1, 2, 10}, paths.get(0).calcNodes().toArray());
+        assertEquals(IntArrayList.from(9, 5, 8, 1, 2, 10), paths.get(0).calcNodes());
 
         // Test uni-directional case
         req.setAlgorithm(DIJKSTRA);
         response = new GHResponse();
         paths = instance.calcPaths(req, response);
         assertFalse(response.getErrors().toString(), response.hasErrors());
-        assertArrayEquals(new int[]{9, 5, 8, 1, 2, 10}, paths.get(0).calcNodes().toArray());
+        assertEquals(IntArrayList.from(9, 5, 8, 1, 2, 10), paths.get(0).calcNodes());
     }
 
     @Test
@@ -817,10 +817,10 @@ public class GraphHopperOSMTest {
 
         // Start in middle of edge 4-5 
         GHPoint start = new GHPoint(0.0015, 0.002);
+        // Via Point between 8-7
+        GHPoint via = new GHPoint(0.0005, 0.001);
         // End at middle of edge 2-3
         GHPoint end = new GHPoint(0.002, 0.0005);
-        // Via Point betweeen 8-7
-        GHPoint via = new GHPoint(0.0005, 0.001);
 
         GHRequest req = new GHRequest().
                 setPoints(Arrays.asList(start, via, end)).
