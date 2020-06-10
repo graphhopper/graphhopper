@@ -16,7 +16,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <gh.version>3ae62c4d59d9fb5b5c45645f7654aa290df39162</gh.version>
+        <gh.version>f738fdfc4371477dfe39f433b7802f9f6348627a</gh.version>
     </properties>
 
     <scm>
