@@ -50,7 +50,7 @@ public class FlexiblePathCalculator implements PathCalculator {
     private RoutingAlgorithm createAlgo() {
         StopWatch sw = new StopWatch().start();
         RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);
-        debug = ", algoInit:" + (sw.stop().getNanos() / 1000) + " micros";
+        debug = ", algoInit:" + (sw.stop().getNanos() / 1000) + " μs";
         return algo;
     }
 
