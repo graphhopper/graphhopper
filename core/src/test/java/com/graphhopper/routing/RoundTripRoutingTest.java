@@ -15,15 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.template;
+package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.AlternativeRouteTest;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -35,6 +29,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -50,7 +45,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Peter Karich
  */
-public class RoundTripRoutingTemplateTest {
+public class RoundTripRoutingTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = EncodingManager.create(carFE);
     private final Weighting fastestWeighting = new FastestWeighting(carFE);
@@ -60,17 +55,8 @@ public class RoundTripRoutingTemplateTest {
     private final GHPoint ghPoint2 = new GHPoint(1, 1);
 
     @Test(expected = IllegalArgumentException.class)
-    public void lookup_throwsIfNumberOfGivenPointsNotOne() {
-        RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
-                new GHRequest(Collections.singletonList(ghPoint1)), new GHResponse(), null, em, fastestWeighting, 1);
-        routingTemplate.lookup(Arrays.asList(ghPoint1, ghPoint2));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void lookup_throwsIfNumberOfPointsInRequestNotOne() {
-        RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
-                new GHRequest(Arrays.asList(ghPoint1, ghPoint2)), new GHResponse(), null, em, fastestWeighting, 1);
-        routingTemplate.lookup(Collections.singletonList(ghPoint1));
+    public void lookup_throwsIfNumberOfPointsNotOne() {
+        RoundTripRouting.lookup(Arrays.asList(ghPoint1, ghPoint2), fastestWeighting, null, new RoundTripRouting.Params());
     }
 
     @Test
@@ -82,22 +68,20 @@ public class RoundTripRoutingTemplateTest {
         int numPoints = 2;
         double roundTripDistance = 670000;
 
-        GHRequest ghRequest =
-                new GHRequest(Collections.singletonList(start), Collections.singletonList(heading));
-        ghRequest.putHint(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
-        ghRequest.putHint(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
+        PMap hints = new PMap();
+        hints.putObject(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
+        hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
-        RoundTripRoutingTemplate routingTemplate =
-                new RoundTripRoutingTemplate(ghRequest, new GHResponse(), locationIndex, em, fastestWeighting, 1);
-        List<QueryResult> stagePoints = routingTemplate.lookup(ghRequest.getPoints());
+        List<QueryResult> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start), fastestWeighting, locationIndex,
+                new RoundTripRouting.Params(hints, heading, 3));
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());
         assertEquals(6, stagePoints.get(1).getClosestNode());
         assertEquals(0, stagePoints.get(2).getClosestNode());
 
         QueryGraph queryGraph = QueryGraph.create(g, stagePoints);
-        List<Path> paths = routingTemplate.calcPaths(
-                queryGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
+        List<Path> paths = RoundTripRouting.calcPaths(stagePoints, new FlexiblePathCalculator(queryGraph,
+                new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode))).paths;
         // make sure the resulting paths are connected and form a round trip starting and ending at the start node 0
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(0, 7, 6, 5), paths.get(0).calcNodes());
@@ -108,9 +92,6 @@ public class RoundTripRoutingTemplateTest {
     public void testCalcRoundTrip() {
         Graph g = createTestGraph();
 
-        RoundTripRoutingTemplate rTripRouting =
-                new RoundTripRoutingTemplate(new GHRequest(), new GHResponse(), null, em, fastestWeighting, 1);
-
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         QueryResult qr4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
         assertEquals(4, qr4.getClosestNode());
@@ -120,17 +101,18 @@ public class RoundTripRoutingTemplateTest {
         assertEquals(6, qr6.getClosestNode());
 
         QueryGraph qGraph = QueryGraph.create(g, Arrays.asList(qr4, qr5));
-        rTripRouting.setQueryResults(Arrays.asList(qr5, qr4, qr5));
-        List<Path> paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(),
-                new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
+
+        FlexiblePathCalculator pathCalculator = new FlexiblePathCalculator(
+                qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
+        List<Path> paths = RoundTripRouting.calcPaths(Arrays.asList(qr5, qr4, qr5), pathCalculator).paths;
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(5, 6, 3, 4), paths.get(0).calcNodes());
         assertEquals(IntArrayList.from(4, 8, 7, 6, 5), paths.get(1).calcNodes());
 
         qGraph = QueryGraph.create(g, Arrays.asList(qr4, qr6));
-        rTripRouting.setQueryResults(Arrays.asList(qr6, qr4, qr6));
-        paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(),
-                new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
+        pathCalculator = new FlexiblePathCalculator(
+                qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
+        paths = RoundTripRouting.calcPaths(Arrays.asList(qr6, qr4, qr6), pathCalculator).paths;
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(6, 3, 4), paths.get(0).calcNodes());
         assertEquals(IntArrayList.from(4, 8, 7, 6), paths.get(1).calcNodes());

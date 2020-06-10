@@ -339,4 +339,16 @@ public class QueryGraph implements Graph {
     public Graph getMainGraph() {
         return mainGraph;
     }
+
+    public int shiftEdgeId(int edgeId) {
+        // the restricted edge ids are determined on the (base) query graph and to use them with CH we need to shift
+        // them if they are virtual (the virtual edge ids start after the shortcut ids).
+        if (edgeId < 0)
+            return edgeId;
+        if (edgeId >= mainGraph.getBaseGraph().getEdges()) {
+            // this is a virtual edge on the base graph
+            return edgeId + (mainGraph.getEdges() - mainGraph.getBaseGraph().getEdges());
+        }
+        return edgeId;
+    }
 }

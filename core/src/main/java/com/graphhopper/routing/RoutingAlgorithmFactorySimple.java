@@ -23,6 +23,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
@@ -47,7 +48,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
         } else if (ASTAR_BI.equalsIgnoreCase(algoStr) || Helper.isEmpty(algoStr)) {
             AStarBidirection aStarBi = new AStarBidirection(g, weighting,
                     opts.getTraversalMode());
-            aStarBi.setApproximation(getApproximation(ASTAR_BI, opts, g.getNodeAccess()));
+            aStarBi.setApproximation(getApproximation(ASTAR_BI, opts.getHints(), weighting, g.getNodeAccess()));
             ra = aStarBi;
 
         } else if (DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr)) {
@@ -55,7 +56,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
 
         } else if (ASTAR.equalsIgnoreCase(algoStr)) {
             AStar aStar = new AStar(g, weighting, opts.getTraversalMode());
-            aStar.setApproximation(getApproximation(ASTAR, opts, g.getNodeAccess()));
+            aStar.setApproximation(getApproximation(ASTAR, opts.getHints(), opts.getWeighting(), g.getNodeAccess()));
             ra = aStar;
 
         } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {
@@ -75,11 +76,11 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
         return ra;
     }
 
-    public static WeightApproximator getApproximation(String prop, AlgorithmOptions opts, NodeAccess na) {
-        String approxAsStr = opts.getHints().getString(prop + ".approximation", "BeelineSimplification");
-        double epsilon = opts.getHints().getDouble(prop + ".epsilon", 1);
+    public static WeightApproximator getApproximation(String prop, PMap opts, Weighting weighting, NodeAccess na) {
+        String approxAsStr = opts.getString(prop + ".approximation", "BeelineSimplification");
+        double epsilon = opts.getDouble(prop + ".epsilon", 1);
 
-        BeelineWeightApproximator approx = new BeelineWeightApproximator(na, opts.getWeighting());
+        BeelineWeightApproximator approx = new BeelineWeightApproximator(na, weighting);
         approx.setEpsilon(epsilon);
         if ("BeelineSimplification".equals(approxAsStr))
             approx.setDistanceCalc(Helper.DIST_PLANE);

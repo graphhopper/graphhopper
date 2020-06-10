@@ -36,10 +36,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -58,6 +55,8 @@ import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Helper.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
+import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
 import static org.junit.Assert.*;
 
 /**
@@ -1171,10 +1170,10 @@ public class RoutingAlgorithmTest {
                 graph.freeze();
                 pch.doWork();
             }
-            AlgorithmOptions opts = AlgorithmOptions.start()
-                    .algorithm(getAlgorithm())
-                    .weighting(weighting).traversalMode(traversalMode).maxVisitedNodes(maxVisitedNodes).build();
-            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, opts);
+            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, new PMap()
+                    .putObject(ALGORITHM, getAlgorithm())
+                    .putObject(MAX_VISITED_NODES, maxVisitedNodes)
+            );
             return algo.calcPath(from, to);
         }
 
@@ -1197,10 +1196,9 @@ public class RoutingAlgorithmTest {
                 pch.doWork();
             }
             QueryGraph queryGraph = QueryGraph.create(chGraph, from, to);
-            AlgorithmOptions opts = AlgorithmOptions.start()
-                    .algorithm(getAlgorithm())
-                    .weighting(weighting).traversalMode(traversalMode).maxVisitedNodes(maxVisitedNodes).build();
-            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, opts);
+            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, new PMap()
+                    .putObject(ALGORITHM, getAlgorithm())
+                    .putObject(MAX_VISITED_NODES, maxVisitedNodes));
             return algo.calcPath(from.getClosestNode(), to.getClosestNode());
 
         }

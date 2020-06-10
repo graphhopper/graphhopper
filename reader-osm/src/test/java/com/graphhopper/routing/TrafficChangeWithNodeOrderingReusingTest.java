@@ -17,6 +17,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
+import com.graphhopper.util.PMap;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -102,7 +103,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         int numFails = 0;
         for (int i = 0; i < numQueries; ++i) {
             Dijkstra dijkstra = new Dijkstra(ghStorage, chConfig.getWeighting(), TraversalMode.NODE_BASED);
-            RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, AlgorithmOptions.start().build());
+            RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, new PMap());
 
             int from = rnd.nextInt(ghStorage.getNodes());
             int to = rnd.nextInt(ghStorage.getNodes());
@@ -141,7 +142,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                 int from = random.nextInt(numNodes);
                 int to = random.nextInt(numNodes);
                 long start = nanoTime();
-                RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, AlgorithmOptions.start().build());
+                RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, new PMap());
                 Path path = algo.calcPath(from, to);
                 if (!warmup && !path.isFound())
                     return 1;

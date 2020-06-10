@@ -94,7 +94,7 @@ public class BidirPathExtractor {
     }
 
     protected void setExtractionTime(long nanos) {
-        path.setDebugInfo("path extraction: " + nanos / 1000 + " micros");
+        path.setDebugInfo("path extraction: " + nanos / 1000 + " μs");
     }
 
     protected int getIncEdge(SPTEntry entry) {
