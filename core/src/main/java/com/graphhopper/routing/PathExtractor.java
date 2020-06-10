@@ -72,7 +72,7 @@ public class PathExtractor {
     }
 
     private void setExtractionTime(long nanos) {
-        path.setDebugInfo("path extraction: " + nanos / 1000 + " micros");
+        path.setDebugInfo("path extraction: " + nanos / 1000 + " μs");
     }
 
     protected void onEdge(int edge, int adjNode, int prevEdge) {

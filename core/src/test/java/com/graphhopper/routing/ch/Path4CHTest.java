@@ -1,6 +1,5 @@
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -13,6 +12,7 @@ import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -146,7 +146,7 @@ public class Path4CHTest {
     }
 
     private RoutingAlgorithm createAlgo() {
-        return new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, AlgorithmOptions.start().build());
+        return new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, new PMap());
     }
 
 }

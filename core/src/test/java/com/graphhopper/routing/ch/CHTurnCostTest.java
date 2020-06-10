@@ -18,7 +18,10 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -46,6 +49,7 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
 import static org.junit.Assert.*;
 
 /**
@@ -834,7 +838,7 @@ public class CHTurnCostTest {
 
         automaticPrepareCH();
         QueryGraph queryGraph = QueryGraph.create(chGraph, queryResults);
-        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, AlgorithmOptions.start().algorithm(algo).build());
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(5, 6);
         // there should not be a path from 5 to 6, because first we cannot go directly 5-4-6, so we need to go left
         // to 8. then at 2 we cannot go on edge 1 because of another turn restriction, but we can go on edge 2 so we
@@ -881,7 +885,7 @@ public class CHTurnCostTest {
         QueryResult qr = index.findClosest(0.1, 0.15, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(chGraph, qr);
         assertEquals("expected one virtual node", 1, queryGraph.getNodes() - chGraph.getNodes());
-        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, AlgorithmOptions.start().algorithm(algo).build());
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(2, 1);
         assertFalse("no path should be found, but found " + path.calcNodes(), path.isFound());
     }
@@ -904,7 +908,7 @@ public class CHTurnCostTest {
         QueryGraph queryGraph = QueryGraph.create(chGraph, qr);
         assertEquals(3, qr.getClosestNode());
         assertEquals(0, qr.getClosestEdge().getEdge());
-        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, AlgorithmOptions.start().algorithm(algo).build());
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(0, 2);
         assertTrue("it should be possible to route via a virtual node, but no path found", path.isFound());
         assertEquals(IntArrayList.from(0, 3, 1, 2), path.calcNodes());
@@ -932,7 +936,7 @@ public class CHTurnCostTest {
         QueryGraph queryGraph = QueryGraph.create(chGraph, qr);
         assertEquals(3, qr.getClosestNode());
         assertEquals(0, qr.getClosestEdge().getEdge());
-        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, AlgorithmOptions.start().algorithm(algo).build());
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(1, 0);
         assertEquals(IntArrayList.from(1, 3, 0), path.calcNodes());
     }
@@ -969,7 +973,7 @@ public class CHTurnCostTest {
         QueryResult qr = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
         QueryGraph chQueryGraph = QueryGraph.create(chGraph, qr);
         assertEquals(3, qr.getClosestEdge().getEdge());
-        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chQueryGraph, AlgorithmOptions.start().algorithm(algo).build());
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chQueryGraph, new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(4, 6);
         assertTrue(path.isFound());
         assertEquals(IntArrayList.from(4, 3, 2, 1, 0, 1, 5, 6), path.calcNodes());
@@ -1171,7 +1175,7 @@ public class CHTurnCostTest {
 
     private RoutingAlgorithm createAlgo() {
         // use dijkstra since we do not have coordinates in most tests
-        return new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, AlgorithmOptions.start().algorithm(DIJKSTRA_BI).build());
+        return new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
     }
 
     private List<Integer> getRandomIntegerSequence(int nodes) {

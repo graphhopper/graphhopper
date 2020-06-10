@@ -47,6 +47,7 @@ import java.util.zip.GZIPInputStream;
 
 import static com.graphhopper.GraphHopperTest.DIR;
 import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -111,7 +112,7 @@ public class RoutingAlgorithmWithOSMTest {
                 public RoutingAlgorithm createAlgo(Graph g) {
                     PrepareContractionHierarchies pch = hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile");
                     CHGraph chGraph = ghStorage.getCHGraph(pch.getCHConfig().getName());
-                    return new CHRoutingAlgorithmFactory(chGraph).createAlgo(g, dijkstraOpts);
+                    return new CHRoutingAlgorithmFactory(chGraph).createAlgo(g, new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
                 }
             });
 
@@ -121,7 +122,7 @@ public class RoutingAlgorithmWithOSMTest {
                 public RoutingAlgorithm createAlgo(Graph g) {
                     PrepareContractionHierarchies pch = hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile");
                     CHGraph chGraph = ghStorage.getCHGraph(pch.getCHConfig().getName());
-                    return new CHRoutingAlgorithmFactory(chGraph).createAlgo(g, astarOpts);
+                    return new CHRoutingAlgorithmFactory(chGraph).createAlgo(g, new PMap().putObject(ALGORITHM, ASTAR_BI));
                 }
             });
         }
