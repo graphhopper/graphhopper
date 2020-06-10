@@ -87,7 +87,6 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean fullyLoaded = false;
     private boolean smoothElevation = false;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
-    private double elevationWayPointMaxDistance = Double.MAX_VALUE;
     // for routing
     private final RouterConfig routerConfig = new RouterConfig();
     // for index
@@ -342,7 +341,6 @@ public class GraphHopper implements GraphHopperAPI {
      * Sets the max elevation discrepancy between way points and the simplified polyline in meters
      */
     public GraphHopper setElevationWayPointMaxDistance(double elevationWayPointMaxDistance) {
-        this.elevationWayPointMaxDistance = elevationWayPointMaxDistance;
         this.routerConfig.setElevationWayPointMaxDistance(elevationWayPointMaxDistance);
         return this;
     }
@@ -711,7 +709,7 @@ public class GraphHopper implements GraphHopperAPI {
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
-                setWayPointElevationMaxDistance(elevationWayPointMaxDistance).
+                setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).
                 setSmoothElevation(smoothElevation).
                 setLongEdgeSamplingDistance(longEdgeSamplingDistance);
     }
