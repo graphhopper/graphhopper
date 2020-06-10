@@ -52,7 +52,7 @@ import java.util.*;
  * @author Peter Karich
  */
 public class QueryGraph implements Graph {
-    static final int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
+    static final int BASE_SNAP = 0, SNAP_BASE = 1, SNAP_ADJ = 2, ADJ_SNAP = 3;
     private final Graph mainGraph;
     private final int mainNodes;
     private final int mainEdges;
@@ -219,7 +219,7 @@ public class QueryGraph implements Graph {
     }
 
     private int getInternalVirtualEdgeId(int origEdgeId) {
-        return origEdgeId - mainEdges;
+        return 2 * (origEdgeId - mainEdges);
     }
 
     @Override
@@ -266,13 +266,12 @@ public class QueryGraph implements Graph {
 
     private List<List<EdgeIteratorState>> buildVirtualEdgesAtVirtualNodes() {
         final List<List<EdgeIteratorState>> virtualEdgesAtVirtualNodes = new ArrayList<>();
-        final int[] vEdges = {VE_BASE_REV, VE_ADJ};
         for (int i = 0; i < queryOverlay.getVirtualNodes().size(); i++) {
-            List<EdgeIteratorState> filteredEdges = new ArrayList<>(2);
-            for (int vEdge : vEdges) {
-                filteredEdges.add(queryOverlay.getVirtualEdge(i * 4 + vEdge));
-            }
-            virtualEdgesAtVirtualNodes.add(filteredEdges);
+            List<EdgeIteratorState> virtualEdges = Arrays.<EdgeIteratorState>asList(
+                    queryOverlay.getVirtualEdge(i * 4 + SNAP_BASE),
+                    queryOverlay.getVirtualEdge(i * 4 + SNAP_ADJ)
+            );
+            virtualEdgesAtVirtualNodes.add(virtualEdges);
         }
         return virtualEdgesAtVirtualNodes;
     }

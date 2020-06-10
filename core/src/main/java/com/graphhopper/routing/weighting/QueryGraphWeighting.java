@@ -115,7 +115,7 @@ public class QueryGraphWeighting implements Weighting {
     }
 
     private int getOriginalEdge(int edge) {
-        return closestEdges.get((edge - firstVirtualEdgeId) / 4);
+        return closestEdges.get((edge - firstVirtualEdgeId) / 2);
     }
 
     private boolean isVirtualNode(int node) {

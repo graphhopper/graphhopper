@@ -221,7 +221,7 @@ class QueryOverlayBuilder {
 
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(Helper.DIST_PLANE);
-        int virtEdgeId = firstVirtualEdgeId + queryOverlay.getNumVirtualEdges();
+        int virtEdgeId = firstVirtualEdgeId + queryOverlay.getNumVirtualEdges() / 2;
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
