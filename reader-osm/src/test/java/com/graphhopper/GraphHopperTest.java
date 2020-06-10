@@ -1589,6 +1589,36 @@ public class GraphHopperTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void testAStarCHBug(boolean turnCosts) {
+        // todo: this test fails when AStar is used for edge-based CH, see #2061
+        final String profile = "car";
+        final String vehicle = "car";
+        final String weighting = "fastest";
+        GraphHopper hopper = createGraphHopper("car|turn_costs=true").
+                setOSMFile(MOSCOW).
+                setProfiles(Collections.singletonList(
+                        new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(turnCosts)
+                ));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
+        hopper.getRouterConfig().setCHDisablingAllowed(true);
+        hopper.getRouterConfig().setLMDisablingAllowed(true);
+        hopper.importOrLoad();
+
+        GHRequest req = new GHRequest(55.821744463888116, 37.60380604129401, 55.82608197039734, 37.62055856655137);
+        req.setProfile(profile);
+        req.getHints().putObject(CH.DISABLE, false);
+        ResponsePath pathCH = hopper.route(req).getBest();
+        req.getHints().putObject(CH.DISABLE, true);
+        ResponsePath path = hopper.route(req).getBest();
+
+        assertFalse(path.hasErrors());
+        assertFalse(pathCH.hasErrors());
+        assertEquals(path.getDistance(), pathCH.getDistance(), 0.1);
+        assertEquals(path.getTime(), pathCH.getTime());
+    }
+
     @Test
     public void testIssue1960() {
         final String profile = "car";
