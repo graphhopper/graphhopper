@@ -18,18 +18,17 @@
 
 package com.graphhopper.routing;
 
-import java.util.List;
+import com.carrotsearch.hppc.IntArrayList;
 
-public class MultiException extends RuntimeException {
+public class MultiplePointsNotFoundException extends RuntimeException {
 
-    private final List<Throwable> errors;
+    private final IntArrayList pointsNotFound;
 
-    public MultiException(List<Throwable> errors) {
-        this.errors = errors;
+    public MultiplePointsNotFoundException(IntArrayList pointsNotFound) {
+        this.pointsNotFound = pointsNotFound;
     }
 
-    public List<Throwable> getErrors() {
-        return errors;
+    public IntArrayList getPointsNotFound() {
+        return pointsNotFound;
     }
-
 }

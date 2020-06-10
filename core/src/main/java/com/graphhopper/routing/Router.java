@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
@@ -41,6 +42,7 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
+import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -203,9 +205,9 @@ public class Router {
                 ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
                 return result.paths;
             }
-        } catch (MultiException ex) {
-            for (Throwable t : ex.getErrors()) {
-                ghRsp.addError(t);
+        } catch (MultiplePointsNotFoundException ex) {
+            for (IntCursor p : ex.getPointsNotFound()) {
+                ghRsp.addError(new PointNotFoundException("Cannot find point " + p.value + ": " + request.getPoints().get(p.index), p.value));
             }
             return emptyList();
         } catch (IllegalArgumentException ex) {

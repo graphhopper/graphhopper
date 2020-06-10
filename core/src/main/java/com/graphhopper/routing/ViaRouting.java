@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -30,7 +29,6 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
@@ -50,6 +48,9 @@ import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
  */
 public class ViaRouting {
 
+    /**
+     * @throws MultiplePointsNotFoundException in case one or more points could not be resolved
+     */
     public static List<QueryResult> lookup(EncodedValueLookup lookup, List<GHPoint> points, Weighting weighting, LocationIndex locationIndex, List<String> snapPreventions, List<String> pointHints) {
         if (points.size() < 2)
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
@@ -78,13 +79,9 @@ public class ViaRouting {
             queryResults.add(qr);
         }
 
-        if (!pointsNotFound.isEmpty()) {
-            MultiException multiException = new MultiException(new ArrayList<Throwable>());
-            for (IntCursor p : pointsNotFound) {
-                multiException.getErrors().add(new PointNotFoundException("Cannot find point " + p.value + ": " + points.get(p.index), p.value));
-            }
-            throw multiException;
-        }
+        if (!pointsNotFound.isEmpty())
+            throw new MultiplePointsNotFoundException(pointsNotFound);
+
         return queryResults;
     }
 
