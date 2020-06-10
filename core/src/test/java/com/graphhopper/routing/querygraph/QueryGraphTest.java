@@ -819,11 +819,17 @@ public class QueryGraphTest {
         // virtual nodes:     2
         //                0 - x - 1
         // virtual edges:   1   2
+        FlagEncoder encoder = new CarFlagEncoder().setSpeedTwoDirections(true);
+        EncodingManager encodingManager = EncodingManager.create(encoder);
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        Graph g = new GraphBuilder(encodingManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 50.00, 10.10);
         na.setNode(1, 50.00, 10.20);
         double dist = Helper.DIST_EARTH.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1));
         EdgeIteratorState edge = g.edge(0, 1, dist, true);
+        edge.set(speedEnc, 50);
+        edge.setReverse(speedEnc, 100);
 
         // query graph
         QueryResult qr = createLocationResult(50.00, 10.15, edge, 0, EDGE);
@@ -832,16 +838,37 @@ public class QueryGraphTest {
         assertEquals(5, queryGraph.getEdges());
         assertEquals(4, queryGraph.getVirtualEdges().size());
 
-        // virtual edge IDs are 1 and 2, but internally each edge is represented by two edge states for the two directions
-        assertEquals(1, queryGraph.getVirtualEdges().get(0).getEdge());
-        assertEquals(1, queryGraph.getVirtualEdges().get(1).getEdge());
-        assertEquals(2, queryGraph.getVirtualEdges().get(2).getEdge());
-        assertEquals(2, queryGraph.getVirtualEdges().get(3).getEdge());
+        EdgeIteratorState edge_0x = queryGraph.getEdgeIteratorState(1, 2);
+        EdgeIteratorState edge_x0 = queryGraph.getEdgeIteratorState(1, 0);
+        EdgeIteratorState edge_x1 = queryGraph.getEdgeIteratorState(2, 1);
+        EdgeIteratorState edge_1x = queryGraph.getEdgeIteratorState(2, 2);
 
-        assertSame(queryGraph.getVirtualEdges().get(0), queryGraph.getEdgeIteratorState(1, 2));
-        assertSame(queryGraph.getVirtualEdges().get(1), queryGraph.getEdgeIteratorState(1, 0));
-        assertSame(queryGraph.getVirtualEdges().get(2), queryGraph.getEdgeIteratorState(2, 1));
-        assertSame(queryGraph.getVirtualEdges().get(3), queryGraph.getEdgeIteratorState(2, 2));
+        assertNodes(edge_0x, 0, 2);
+        assertNodes(edge_x0, 2, 0);
+        assertNodes(edge_x1, 2, 1);
+        assertNodes(edge_1x, 1, 2);
+
+        // virtual edge IDs are 1 and 2
+        assertEquals(1, edge_0x.getEdge());
+        assertEquals(1, edge_x0.getEdge());
+        assertEquals(2, edge_x1.getEdge());
+        assertEquals(2, edge_1x.getEdge());
+
+        // internally each edge is represented by two edge states for the two directions
+        assertSame(queryGraph.getVirtualEdges().get(0), edge_0x);
+        assertSame(queryGraph.getVirtualEdges().get(1), edge_x0);
+        assertSame(queryGraph.getVirtualEdges().get(2), edge_x1);
+        assertSame(queryGraph.getVirtualEdges().get(3), edge_1x);
+
+        for (EdgeIteratorState e : Arrays.asList(edge_0x, edge_x1)) {
+            assertEquals(50, e.get(speedEnc), 1.e-6);
+            assertEquals(100, e.getReverse(speedEnc), 1.e-6);
+        }
+
+        for (EdgeIteratorState e : Arrays.asList(edge_x0, edge_1x)) {
+            assertEquals(100, e.get(speedEnc), 1.e-6);
+            assertEquals(50, e.getReverse(speedEnc), 1.e-6);
+        }
 
         try {
             queryGraph.getEdgeIteratorState(3, 2);
@@ -849,6 +876,11 @@ public class QueryGraphTest {
         } catch (IndexOutOfBoundsException e) {
             // ok
         }
+    }
+
+    private void assertNodes(EdgeIteratorState edge, int base, int adj) {
+        assertEquals(base, edge.getBaseNode());
+        assertEquals(adj, edge.getAdjNode());
     }
 
     private QueryGraph lookup(QueryResult res) {
