@@ -60,10 +60,10 @@ public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     }
 
     private RoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, AlgorithmOptions opts) {
-        if (ASTAR_BI.equals(opts.getAlgorithm()) || Helper.isEmpty(opts.getAlgorithm())) {
+        if (ASTAR_BI.equals(opts.getAlgorithm())) {
             return new AStarBidirectionEdgeCHNoSOD(g)
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
-        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
+        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm()) || Helper.isEmpty(opts.getAlgorithm())) {
             return new DijkstraBidirectionEdgeCHNoSOD(g);
         } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
             return new AlternativeRouteEdgeCH(g, opts.getHints());

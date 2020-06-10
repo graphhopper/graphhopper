@@ -32,6 +32,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
+import com.graphhopper.jackson.GraphHopperConfigModule;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
@@ -178,6 +179,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         bootstrap.getObjectMapper().registerModule(new Jdk8Module());
 
         Jackson.initObjectMapper(bootstrap.getObjectMapper());
+        bootstrap.getObjectMapper().registerModule(new GraphHopperConfigModule());
         bootstrap.getObjectMapper().setDateFormat(new StdDateFormat());
         // See https://github.com/dropwizard/dropwizard/issues/1558
         bootstrap.getObjectMapper().enable(MapperFeature.ALLOW_EXPLICIT_PROPERTY_RENAMING);
