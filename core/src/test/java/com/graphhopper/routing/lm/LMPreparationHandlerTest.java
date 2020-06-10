@@ -1,8 +1,8 @@
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.config.LMProfile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;

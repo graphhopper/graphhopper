@@ -21,7 +21,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import static com.graphhopper.util.Parameters.Details.TIME;
+import static com.graphhopper.api.util.Parameters.Details.TIME;
 
 /**
  * Calculate the time segments for a Path

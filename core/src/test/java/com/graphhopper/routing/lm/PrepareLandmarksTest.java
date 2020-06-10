@@ -24,7 +24,6 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
@@ -33,9 +32,9 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Parameters;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,8 +45,13 @@ import java.util.List;
 import java.util.Random;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
+import static com.graphhopper.api.util.Parameters.Algorithms.ASTAR;
+import static com.graphhopper.api.util.Parameters.Algorithms.ASTAR_BI;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

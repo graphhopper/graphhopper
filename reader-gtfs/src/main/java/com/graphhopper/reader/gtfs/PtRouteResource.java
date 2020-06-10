@@ -18,13 +18,16 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.PointList;
 import com.conveyal.gtfs.GTFSFeed;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.GHResponse;
+import com.graphhopper.api.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.ResponsePath;
-import com.graphhopper.Trip;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.Trip;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
@@ -36,9 +39,10 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.exceptions.PointNotFoundException;
+import com.graphhopper.api.util.shapes.GHPoint;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.TranslationMap;
 import io.dropwizard.jersey.params.AbstractParam;
 import io.dropwizard.jersey.params.InstantParam;
 

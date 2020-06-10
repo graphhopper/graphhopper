@@ -7,7 +7,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.util.PointList;
 
 import java.util.List;
 

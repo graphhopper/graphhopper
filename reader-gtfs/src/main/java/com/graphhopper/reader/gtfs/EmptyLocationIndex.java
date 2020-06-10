@@ -21,7 +21,7 @@ package com.graphhopper.reader.gtfs;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.BBox;
 
 class EmptyLocationIndex implements LocationIndex {
     @Override

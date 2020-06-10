@@ -4,7 +4,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
+import static com.graphhopper.api.util.Parameters.Details.AVERAGE_SPEED;
 
 public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 

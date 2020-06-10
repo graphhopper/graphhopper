@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.api.util.details.PathDetail;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.List;

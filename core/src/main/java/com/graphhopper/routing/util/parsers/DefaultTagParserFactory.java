@@ -18,9 +18,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.util.PMap;
-
-import static com.graphhopper.util.Helper.toLowerCase;
+import com.graphhopper.api.util.PMap;
+import static com.graphhopper.api.util.Helper.toLowerCase;
 
 public class DefaultTagParserFactory implements TagParserFactory {
     @Override

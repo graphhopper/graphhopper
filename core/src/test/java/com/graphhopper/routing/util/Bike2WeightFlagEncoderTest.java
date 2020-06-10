@@ -17,10 +17,15 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

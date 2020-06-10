@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
@@ -29,14 +31,24 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.BBox;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Locale;
 
-import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.api.util.Helper.nf;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import static com.graphhopper.util.FetchMode.ALL;
+import static com.graphhopper.util.FetchMode.BASE_AND_PILLAR;
+import static com.graphhopper.util.FetchMode.PILLAR_AND_ADJ;
+import static com.graphhopper.util.FetchMode.PILLAR_ONLY;
+import static com.graphhopper.util.FetchMode.TOWER_ONLY;
+import com.graphhopper.util.GHUtility;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory

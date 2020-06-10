@@ -17,9 +17,11 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.DistanceCalc;
 import com.carrotsearch.hppc.*;
 import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
@@ -27,8 +29,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.api.util.Helper.nf;
+import com.graphhopper.coll.GHIntLongHashMap;
+import com.graphhopper.coll.GHLongHashSet;
+import com.graphhopper.coll.GHLongIntBTree;
+import com.graphhopper.coll.GHLongLongHashMap;
+import com.graphhopper.util.DouglasPeucker;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.StopWatch;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase

@@ -17,12 +17,16 @@
  */
 package com.graphhopper.routing.querygraph;
 
+import com.graphhopper.api.util.PointList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.

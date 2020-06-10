@@ -1,7 +1,7 @@
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.api.json.geo.JsonFeature;
+import com.graphhopper.api.json.geo.JsonFeatureCollection;
 import org.junit.Test;
 
 import java.util.*;

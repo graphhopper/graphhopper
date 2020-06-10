@@ -22,7 +22,7 @@ import com.graphhopper.util.GHUtility;
 
 import java.util.Arrays;
 
-import static com.graphhopper.util.Helper.toUpperCase;
+import static com.graphhopper.api.util.Helper.toUpperCase;
 
 /**
  * Defines how the graph can be traversed while Dijkstra or similar RoutingAlgorithm is in progress.

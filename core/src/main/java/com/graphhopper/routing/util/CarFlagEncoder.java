@@ -22,8 +22,8 @@ import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.UnsignedDecimalEncodedValue;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PMap;
 
 import java.util.*;
 

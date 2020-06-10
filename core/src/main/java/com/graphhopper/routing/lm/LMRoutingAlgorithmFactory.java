@@ -19,14 +19,17 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.AStar;
-import com.graphhopper.routing.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
-
-import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Parameters;
+import static com.graphhopper.api.util.Parameters.Algorithms.*;
+import static com.graphhopper.api.util.Parameters.Algorithms.AltRoute.*;
+import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.AlternativeRoute;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
 
 public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final LandmarkStorage lms;

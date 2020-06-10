@@ -18,7 +18,7 @@
 
 package com.graphhopper.storage;
 
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.util.PointList;
 
 /**
  * {@link NodeAccess} that allows adding additional points

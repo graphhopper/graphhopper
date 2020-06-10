@@ -17,17 +17,27 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.api.util.DistanceCalc;
+import com.graphhopper.api.util.DistancePlaneProjection;
+import com.graphhopper.api.util.Helper;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.GHPoint;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.BikeFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.Test;
 
 import java.util.ArrayList;

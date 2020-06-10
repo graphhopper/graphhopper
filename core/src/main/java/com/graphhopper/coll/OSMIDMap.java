@@ -20,7 +20,7 @@ package com.graphhopper.coll;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 /**
  * This is a special purpose map for writing increasing OSM IDs with consecutive values. It stores

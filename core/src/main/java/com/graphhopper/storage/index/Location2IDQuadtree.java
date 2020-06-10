@@ -25,11 +25,11 @@ import com.graphhopper.geohash.LinearKeyAlgo;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.BreadthFirstSearch;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.DistanceCalc;
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

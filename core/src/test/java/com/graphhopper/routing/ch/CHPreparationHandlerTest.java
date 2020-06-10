@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.config.CHProfile;
+import com.graphhopper.api.config.CHProfile;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;

@@ -17,16 +17,18 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Parameters;
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.CHProfile;
+import com.graphhopper.api.config.LMProfile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.reader.PrincetonReader;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -35,7 +37,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,7 +47,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 
 import static com.graphhopper.GraphHopperTest.DIR;
-import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.api.util.Parameters.Algorithms.*;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TestAlgoCollector;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.StopWatch;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

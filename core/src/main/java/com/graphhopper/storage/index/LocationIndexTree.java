@@ -17,6 +17,10 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.DistanceCalcEarth;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.DistanceCalc;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
@@ -27,10 +31,16 @@ import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.Shape;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.Shape;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.BreadthFirstSearch;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

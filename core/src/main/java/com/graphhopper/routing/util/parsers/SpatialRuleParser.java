@@ -24,7 +24,7 @@ import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 import java.util.List;
 

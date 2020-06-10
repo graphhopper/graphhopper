@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 import java.util.Calendar;
 

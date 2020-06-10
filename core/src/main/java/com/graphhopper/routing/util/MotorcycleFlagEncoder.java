@@ -25,7 +25,7 @@ import com.graphhopper.routing.weighting.CurvatureWeighting;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 
 import java.util.HashSet;
 import java.util.List;

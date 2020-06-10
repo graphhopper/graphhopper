@@ -18,12 +18,12 @@
 
 package com.graphhopper.routing;
 
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.CHProfile;
+import com.graphhopper.api.config.LMProfile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Parameters;
 
 import java.util.ArrayList;
 import java.util.HashMap;

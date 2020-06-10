@@ -17,7 +17,10 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.ResponsePath;
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.InstructionList;
+import com.graphhopper.api.ResponsePath;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
@@ -31,7 +34,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.api.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.junit.Before;
@@ -39,7 +42,7 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
+import static com.graphhopper.api.util.Parameters.Details.AVERAGE_SPEED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

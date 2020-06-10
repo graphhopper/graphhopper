@@ -23,7 +23,7 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Surface;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 import java.util.List;
 

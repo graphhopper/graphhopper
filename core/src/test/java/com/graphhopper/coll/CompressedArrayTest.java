@@ -17,7 +17,7 @@
  */
 package com.graphhopper.coll;
 
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
 import org.junit.Test;
 
 import java.util.Random;

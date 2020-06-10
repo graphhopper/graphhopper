@@ -17,15 +17,15 @@
  */
 package com.graphhopper.routing.template;
 
-import com.graphhopper.GHResponse;
+import com.graphhopper.api.GHResponse;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.Translation;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 import java.util.List;
 

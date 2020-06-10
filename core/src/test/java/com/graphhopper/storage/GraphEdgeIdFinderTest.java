@@ -17,7 +17,11 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import org.junit.Test;

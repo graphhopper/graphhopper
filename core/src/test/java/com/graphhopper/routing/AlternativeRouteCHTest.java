@@ -28,7 +28,7 @@ import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.RoutingCHGraphImpl;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 import org.junit.Test;
 
 import java.util.Arrays;

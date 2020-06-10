@@ -26,13 +26,13 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PMap;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static com.graphhopper.util.Helper.toLowerCase;
+import static com.graphhopper.api.util.Helper.toLowerCase;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders

@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.Helper;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
@@ -27,7 +29,11 @@ import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.BreadthFirstSearch;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 
 /**
  * Abstract base class for tunnel/bridge edge elevation interpolators. This

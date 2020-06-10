@@ -17,9 +17,13 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Instruction;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 
 /**
  * Simple helper class used during the instruction generation

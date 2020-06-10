@@ -22,10 +22,10 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.Circle;
+import com.graphhopper.api.util.DistanceCalc;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.Circle;
 
 /**
  * Very slow O(n) LocationIndex but no RAM/disc required.

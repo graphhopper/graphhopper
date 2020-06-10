@@ -18,9 +18,9 @@
 package com.graphhopper.routing.template;
 
 import com.carrotsearch.hppc.IntHashSet;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.api.GHRequest;
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.ResponsePath;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
@@ -35,10 +35,11 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.Algorithms;
-import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.*;
+import com.graphhopper.api.util.Parameters.Algorithms;
+import com.graphhopper.api.util.Parameters.Algorithms.RoundTrip;
+import com.graphhopper.api.util.exceptions.PointNotFoundException;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.Collections;

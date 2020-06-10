@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 import java.util.List;
 

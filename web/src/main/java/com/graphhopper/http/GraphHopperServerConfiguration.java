@@ -18,7 +18,7 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.api.GraphHopperConfig;
 import com.graphhopper.gtfs.dropwizard.RealtimeBundleConfiguration;
 import com.graphhopper.gtfs.dropwizard.RealtimeConfiguration;
 import io.dropwizard.Configuration;

@@ -20,7 +20,7 @@ package com.graphhopper.api.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.BBox;
 
 /**
  * Contains the results of a geocoding request.

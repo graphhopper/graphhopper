@@ -24,8 +24,8 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PointList;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

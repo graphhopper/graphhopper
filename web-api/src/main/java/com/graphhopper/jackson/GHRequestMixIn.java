@@ -19,7 +19,7 @@ package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.GHRequest;
+import com.graphhopper.api.GHRequest;
 
 import java.util.List;
 

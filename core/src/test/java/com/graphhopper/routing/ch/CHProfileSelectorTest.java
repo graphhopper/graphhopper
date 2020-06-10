@@ -18,16 +18,16 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.CHProfile;
+import com.graphhopper.api.config.LMProfile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Parameters;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -22,10 +22,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.api.util.DistanceCalc;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint3D;
 
 import javax.inject.Inject;
 import javax.inject.Named;

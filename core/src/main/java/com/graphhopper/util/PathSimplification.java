@@ -17,8 +17,13 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.ResponsePath;
-import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.FinishInstruction;
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.ViaInstruction;
+import com.graphhopper.api.util.InstructionList;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.util.details.PathDetail;
 
 import java.util.ArrayList;
 import java.util.List;

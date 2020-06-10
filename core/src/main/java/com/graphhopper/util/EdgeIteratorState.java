@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.api.util.PointList;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 

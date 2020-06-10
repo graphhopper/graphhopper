@@ -18,6 +18,7 @@
 
 package com.graphhopper.util;
 
+import com.graphhopper.api.util.Helper;
 import java.util.Arrays;
 
 public class GitInfo {

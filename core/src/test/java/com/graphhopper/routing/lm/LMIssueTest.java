@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -31,8 +30,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
+import static com.graphhopper.api.util.Parameters.Algorithms.ASTAR;
+import static com.graphhopper.api.util.Parameters.Algorithms.ASTAR_BI;
+import com.graphhopper.routing.AStar;
+import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LMIssueTest {

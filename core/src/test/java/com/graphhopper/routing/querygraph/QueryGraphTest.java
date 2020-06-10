@@ -17,13 +17,16 @@
  */
 package com.graphhopper.routing.querygraph;
 
+import com.graphhopper.api.util.DistanceCalc;
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.DistanceCalcEarth;
+import com.graphhopper.api.util.Helper;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.HeadingResolver;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -31,8 +34,12 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,7 +50,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
+import com.graphhopper.util.DistanceCalcEuclidean;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import static com.graphhopper.util.EdgeIteratorState.UNFAVORED_EDGE;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
 

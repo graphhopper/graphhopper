@@ -18,6 +18,12 @@
 
 package com.graphhopper.util.gpx;
 
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.RoundaboutInstruction;
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.InstructionList;
+import com.graphhopper.api.util.FinishInstruction;
+import com.graphhopper.api.util.InstructionAnnotation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
@@ -31,7 +37,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.TranslationMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;

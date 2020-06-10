@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.api.util.Parameters;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
@@ -25,8 +28,9 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.api.util.Parameters.Routing;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.Test;
 
 import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;

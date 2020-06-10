@@ -17,11 +17,11 @@
  */
 package com.graphhopper.http.resources;
 
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.MvtReader;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.TagKeyValueMapConverter;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.model.JtsLayer;

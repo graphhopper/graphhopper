@@ -21,8 +21,8 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.PointList;
 
 import java.util.HashSet;
 import java.util.Set;

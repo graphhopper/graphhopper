@@ -22,8 +22,8 @@ import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Parameters.Routing;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 

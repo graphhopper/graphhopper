@@ -18,6 +18,7 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.graphhopper.api.util.PointList;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.google.common.collect.ArrayListMultimap;
@@ -33,8 +34,11 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 
 import java.util.ArrayList;
 import java.util.Iterator;

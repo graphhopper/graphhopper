@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.subnetwork;
 
+import com.graphhopper.api.util.Helper;
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.BitSetIterator;
 import com.carrotsearch.hppc.IntArrayList;
@@ -26,7 +27,10 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

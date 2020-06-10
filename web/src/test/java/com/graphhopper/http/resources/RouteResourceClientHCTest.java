@@ -17,24 +17,24 @@
  */
 package com.graphhopper.http.resources;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.api.GHRequest;
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.ResponsePath;
 import com.graphhopper.api.GraphHopperWeb;
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.CHProfile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.http.util.TestUtils;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.RoundaboutInstruction;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.exceptions.PointOutOfBoundsException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.InstructionList;
+import com.graphhopper.api.util.RoundaboutInstruction;
+import com.graphhopper.api.util.details.PathDetail;
+import com.graphhopper.api.util.exceptions.PointNotFoundException;
+import com.graphhopper.api.util.exceptions.PointOutOfBoundsException;
+import com.graphhopper.api.util.shapes.GHPoint;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;

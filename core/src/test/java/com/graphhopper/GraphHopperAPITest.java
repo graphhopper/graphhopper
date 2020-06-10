@@ -17,13 +17,16 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.GHRequest;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PointList;
 import org.junit.Test;
 
 import java.io.File;

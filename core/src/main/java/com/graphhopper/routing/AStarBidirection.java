@@ -26,8 +26,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Parameters;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a

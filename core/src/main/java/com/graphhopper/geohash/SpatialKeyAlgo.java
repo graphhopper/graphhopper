@@ -17,8 +17,8 @@
  */
 package com.graphhopper.geohash;
 
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.BBox;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 /**
  * This class implements the idea of a geohash but in 'binary form' - to avoid confusion this is

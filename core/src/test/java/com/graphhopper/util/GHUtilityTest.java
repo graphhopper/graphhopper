@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.api.util.DistanceCalc;
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;

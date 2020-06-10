@@ -15,7 +15,7 @@
  */
 package com.graphhopper.coll;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 /**
  * Copied from Android project. android.util.SparseArray.java

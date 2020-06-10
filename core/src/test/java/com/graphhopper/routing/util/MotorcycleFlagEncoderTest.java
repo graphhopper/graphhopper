@@ -23,7 +23,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import org.junit.Test;
 
 import java.text.DateFormat;

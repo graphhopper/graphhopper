@@ -21,7 +21,7 @@ import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Storable;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 import java.util.*;
 

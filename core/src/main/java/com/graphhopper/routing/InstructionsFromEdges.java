@@ -17,6 +17,14 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.api.util.PointList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.FinishInstruction;
+import com.graphhopper.api.util.Translation;
+import com.graphhopper.api.util.RoundaboutInstruction;
+import com.graphhopper.api.util.Instruction;
+import com.graphhopper.api.util.InstructionAnnotation;
+import com.graphhopper.api.util.InstructionList;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -24,10 +32,13 @@ import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 
 /**
  * This class calculates instructions from the edges in a Path.

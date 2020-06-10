@@ -17,13 +17,14 @@
  */
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.api.util.Helper;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
-import com.graphhopper.coll.MapEntry;
+import com.graphhopper.api.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
@@ -40,9 +41,12 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
-import com.graphhopper.util.exceptions.ConnectionNotFoundException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.api.util.shapes.GHPoint;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

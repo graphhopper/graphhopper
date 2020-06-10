@@ -19,8 +19,8 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.api.util.PMap;
+import com.graphhopper.api.util.Parameters;
 
 /**
  * The algorithm options. Create an immutable object via:

@@ -21,7 +21,7 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import org.junit.Test;
 
 import java.util.Random;

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 
 /**
  * This enum defines the toll value like NO (default), ALL (all vehicles) and HGV (toll for heavy goods vehicles)

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 
 /**
  * Defines bit layout for cars with four wheel drive

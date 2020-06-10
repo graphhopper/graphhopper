@@ -1,7 +1,7 @@
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PointList;
 
 /**
  * This class smooths the elevation data of a PointList by calculating the average elevation over

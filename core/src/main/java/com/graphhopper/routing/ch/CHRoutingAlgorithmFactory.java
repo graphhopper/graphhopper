@@ -18,12 +18,21 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.Helper;
-
-import static com.graphhopper.util.Parameters.Algorithms.*;
+import com.graphhopper.api.util.Helper;
+import static com.graphhopper.api.util.Parameters.Algorithms.*;
+import com.graphhopper.routing.AStarBidirectionCH;
+import com.graphhopper.routing.AStarBidirectionEdgeCHNoSOD;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.AlternativeRouteCH;
+import com.graphhopper.routing.AlternativeRouteEdgeCH;
+import com.graphhopper.routing.DijkstraBidirectionCH;
+import com.graphhopper.routing.DijkstraBidirectionCHNoSOD;
+import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 
 public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final CHConfig chConfig;

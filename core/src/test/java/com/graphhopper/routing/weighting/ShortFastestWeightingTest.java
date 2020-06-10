@@ -21,7 +21,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 import org.junit.Test;
 
 import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;

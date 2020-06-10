@@ -17,16 +17,16 @@
  */
 package com.graphhopper.resources;
 
-import com.graphhopper.GHResponse;
+import com.graphhopper.api.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.MultiException;
-import com.graphhopper.config.Profile;
+import com.graphhopper.api.config.Profile;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.CustomRequest;
-import com.graphhopper.routing.util.CustomModel;
+import com.graphhopper.api.routing.util.CustomModel;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import static com.graphhopper.util.Parameters.Routing.*;
+import static com.graphhopper.api.util.Parameters.Routing.*;
 
 /**
  * Routing resource to use GraphHopper in a remote client application like mobile or browser. This endpoint allows

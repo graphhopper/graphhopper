@@ -18,11 +18,14 @@
 
 package com.graphhopper;
 
+import com.graphhopper.api.GraphHopperConfig;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.GHResponse;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.Request;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

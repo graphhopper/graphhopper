@@ -21,7 +21,7 @@ package com.graphhopper.util;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 public class DistanceCalcEuclideanTest {
 

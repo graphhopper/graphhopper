@@ -29,7 +29,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import org.junit.After;
 import org.junit.Before;
 

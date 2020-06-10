@@ -27,7 +27,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalcEuclidean;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.api.util.Helper;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

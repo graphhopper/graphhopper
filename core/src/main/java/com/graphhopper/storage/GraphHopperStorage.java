@@ -23,8 +23,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.shapes.BBox;
 
 import java.util.ArrayList;
 import java.util.Collection;

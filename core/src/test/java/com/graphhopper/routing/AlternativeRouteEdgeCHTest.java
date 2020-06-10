@@ -29,7 +29,7 @@ import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 import org.junit.Test;
 
 import java.util.List;

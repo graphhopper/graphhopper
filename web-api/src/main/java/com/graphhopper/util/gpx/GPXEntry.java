@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util.gpx;
 
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.api.util.shapes.GHPoint;
 
 import java.util.Objects;
 

@@ -20,10 +20,10 @@ package com.graphhopper.http;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.api.GHResponse;
+import com.graphhopper.api.ResponsePath;
+import com.graphhopper.api.util.Helper;
+import com.graphhopper.api.util.PointList;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;

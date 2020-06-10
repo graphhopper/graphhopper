@@ -19,7 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
+import com.graphhopper.api.util.PMap;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
