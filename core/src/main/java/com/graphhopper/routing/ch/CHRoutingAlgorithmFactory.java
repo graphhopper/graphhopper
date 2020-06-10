@@ -63,8 +63,9 @@ public class CHRoutingAlgorithmFactory {
     }
 
     private RoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, PMap opts) {
-        // use astar by default for edge-based (its faster)
-        String defaultAlgo = ASTAR_BI;
+        // todo: AStar is much faster for edge-based but currently we cannot make it the default because
+        //       of #2061
+        String defaultAlgo = DIJKSTRA_BI;
         String algo = opts.getString(ALGORITHM, defaultAlgo);
         if (Helper.isEmpty(algo))
             algo = defaultAlgo;
