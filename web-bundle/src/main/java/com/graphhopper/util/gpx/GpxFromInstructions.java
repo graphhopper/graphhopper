@@ -30,6 +30,8 @@ import java.util.Locale;
 
 public class GpxFromInstructions {
 
+    private static final AngleCalc AC = AngleCalc.ANGLE_CALC;
+
     static String simpleXMLEscape(String str) {
         // We could even use the 'more flexible' CDATA section but for now do the following. The 'and' could be important sometimes:
         return str.replaceAll("&", "&amp;").
@@ -151,11 +153,11 @@ public class GpxFromInstructions {
         output.append("<gh:distance>").append(Helper.round(instruction.getDistance(), 1)).append("</gh:distance>");
         output.append("<gh:time>").append(instruction.getTime()).append("</gh:time>");
 
-        String direction = instruction.calcDirection(nextI);
+        String direction = calcDirection(instruction, nextI);
         if (!direction.isEmpty())
             output.append("<gh:direction>").append(direction).append("</gh:direction>");
 
-        double azimuth = instruction.calcAzimuth(nextI);
+        double azimuth = calcAzimuth(instruction, nextI);
         if (!Double.isNaN(azimuth))
             output.append("<gh:azimuth>").append(Helper.round2(azimuth)).append("</gh:azimuth>");
 
@@ -170,4 +172,39 @@ public class GpxFromInstructions {
         output.append("</rtept>");
     }
 
+    /**
+     * Return the direction like 'NE' based on the first tracksegment of the instruction. If
+     * Instruction does not contain enough coordinate points, an empty string will be returned.
+     */
+    public static String calcDirection(Instruction instruction, Instruction nextI) {
+        double azimuth = calcAzimuth(instruction, nextI);
+        if (Double.isNaN(azimuth))
+            return "";
+
+        return AC.azimuth2compassPoint(azimuth);
+    }
+
+    /**
+     * Return the azimuth in degree based on the first tracksegment of this instruction. If this
+     * instruction contains less than 2 points then NaN will be returned or the specified
+     * instruction will be used if that is the finish instruction.
+     */
+    public static double calcAzimuth(Instruction instruction, Instruction nextI) {
+        double nextLat;
+        double nextLon;
+
+        if (instruction.getPoints().getSize() >= 2) {
+            nextLat = instruction.getPoints().getLatitude(1);
+            nextLon = instruction.getPoints().getLongitude(1);
+        } else if (nextI != null && instruction.getPoints().getSize() == 1) {
+            nextLat = nextI.getPoints().getLatitude(0);
+            nextLon = nextI.getPoints().getLongitude(0);
+        } else {
+            return Double.NaN;
+        }
+
+        double lat = instruction.getPoints().getLatitude(0);
+        double lon = instruction.getPoints().getLongitude(0);
+        return AC.calcAzimuth(lat, lon, nextLat, nextLon);
+    }
 }

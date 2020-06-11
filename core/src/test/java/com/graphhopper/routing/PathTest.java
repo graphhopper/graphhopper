@@ -1101,9 +1101,9 @@ public class PathTest {
         }
 
         private double getAngle(int n1, int n2, int n3, int n4) {
-            double inOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
-            double outOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
-            outOrientation = Helper.ANGLE_CALC.alignOrientation(inOrientation, outOrientation);
+            double inOrientation = AngleCalc.ANGLE_CALC.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
+            double outOrientation = AngleCalc.ANGLE_CALC.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
+            outOrientation = AngleCalc.ANGLE_CALC.alignOrientation(inOrientation, outOrientation);
             double delta = (inOrientation - outOrientation);
             delta = clockwise ? (Math.PI + delta) : -1 * (Math.PI - delta);
             return delta;

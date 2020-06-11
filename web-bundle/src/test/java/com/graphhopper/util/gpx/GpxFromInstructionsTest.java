@@ -240,4 +240,49 @@ public class GpxFromInstructionsTest {
         return val;
     }
 
+    @Test
+    public void testCalcAzimuthAndGetDirection() {
+        InstructionAnnotation ea = InstructionAnnotation.EMPTY;
+        PointList pl = new PointList();
+        pl.add(49.942, 11.584);
+
+        PointList nextPl = new PointList();
+        nextPl.add(49.942, 11.582);
+        Instruction currI = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl);
+        Instruction nextI = new Instruction(Instruction.CONTINUE_ON_STREET, "next", ea, nextPl);
+
+        assertEquals(270, GpxFromInstructions.calcAzimuth(currI, nextI), .1);
+        assertEquals("W", GpxFromInstructions.calcDirection(currI, nextI));
+
+        PointList p2 = new PointList();
+        p2.add(49.942, 11.580);
+        p2.add(49.944, 11.582);
+        Instruction i2 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p2);
+
+        assertEquals(32.76, GpxFromInstructions.calcAzimuth(i2, null), .1);
+        assertEquals("NE", GpxFromInstructions.calcDirection(i2, null));
+
+        PointList p3 = new PointList();
+        p3.add(49.942, 11.580);
+        p3.add(49.944, 11.580);
+        Instruction i3 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p3);
+
+        assertEquals(0, GpxFromInstructions.calcAzimuth(i3, null), .1);
+        assertEquals("N", GpxFromInstructions.calcDirection(i3, null));
+
+        PointList p4 = new PointList();
+        p4.add(49.940, 11.580);
+        p4.add(49.920, 11.586);
+        Instruction i4 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p4);
+
+        assertEquals("S", GpxFromInstructions.calcDirection(i4, null));
+
+        PointList p5 = new PointList();
+        p5.add(49.940, 11.580);
+        Instruction i5 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, p5);
+
+        assertTrue(Double.isNaN(GpxFromInstructions.calcAzimuth(i5, null)));
+        assertEquals("", GpxFromInstructions.calcDirection(i5, null));
+    }
+
 }

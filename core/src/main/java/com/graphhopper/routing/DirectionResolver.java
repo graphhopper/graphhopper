@@ -158,7 +158,7 @@ public class DirectionResolver {
         double iY = diffLat(snappedPoint, inPoint);
         double oX = diffLon(snappedPoint, outPoint);
         double oY = diffLat(snappedPoint, outPoint);
-        return !Helper.ANGLE_CALC.isClockwise(iX, iY, oX, oY, qX, qY);
+        return !AngleCalc.ANGLE_CALC.isClockwise(iX, iY, oX, oY, qX, qY);
     }
 
     private double diffLon(GHPoint p, GHPoint q) {

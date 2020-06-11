@@ -27,7 +27,7 @@ import static org.junit.Assert.assertFalse;
  * @author Peter Karich
  */
 public class AngleCalcTest {
-    private final AngleCalc AC = Helper.ANGLE_CALC;
+    private final AngleCalc AC = AngleCalc.ANGLE_CALC;
 
     @Test
     public void testOrientationExact() {

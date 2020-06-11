@@ -35,7 +35,6 @@ import java.util.Map.Entry;
 public class Helper {
     public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
     public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
-    public static final AngleCalc ANGLE_CALC = new AngleCalc();
     public static final Charset UTF_CS = Charset.forName("UTF-8");
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;

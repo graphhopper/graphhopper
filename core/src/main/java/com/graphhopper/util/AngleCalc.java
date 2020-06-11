@@ -29,6 +29,7 @@ import static java.lang.Math.toRadians;
  * @author Peter Karich
  */
 public class AngleCalc {
+    public static final AngleCalc ANGLE_CALC = new AngleCalc();
     private final static double PI_4 = Math.PI / 4.0;
     private final static double PI_2 = Math.PI / 2.0;
     private final static double PI3_4 = 3.0 * Math.PI / 4.0;
@@ -118,7 +119,7 @@ public class AngleCalc {
         return Math.toDegrees(Helper.round4(orientation)) % 360;
     }
 
-    String azimuth2compassPoint(double azimuth) {
+    public String azimuth2compassPoint(double azimuth) {
 
         String cp;
         double slice = 360.0 / 16;

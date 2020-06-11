@@ -204,7 +204,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
             double startLat = nodeAccess.getLat(baseNode);
             double startLon = nodeAccess.getLon(baseNode);
-            double heading = Helper.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
+            double heading = AngleCalc.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
             prevInstruction.setExtraInfo("heading", Helper.round(heading, 2));
             ways.add(prevInstruction);
             prevName = name;
@@ -229,18 +229,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     }
 
                     // previous orientation is last orientation before entering roundabout
-                    prevOrientation = Helper.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
+                    prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
 
                     // calculate direction of entrance turn to determine direction of rotation
                     // right turn == counterclockwise and vice versa
-                    double orientation = Helper.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
-                    orientation = Helper.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
+                    double orientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
+                    orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
                     double delta = (orientation - prevOrientation);
                     roundaboutInstruction.setDirOfRotation(delta);
 
                 } else // first instructions is roundabout instruction
                 {
-                    prevOrientation = Helper.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
+                    prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
                     prevName = name;
                     prevAnnotation = annotation;
                 }
@@ -264,14 +264,14 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction.setName(name);
 
             // calc angle between roundabout entrance and exit
-            double orientation = Helper.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
-            orientation = Helper.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
+            double orientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
+            orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
             double deltaInOut = (orientation - prevOrientation);
 
             // calculate direction of exit turn to determine direction of rotation
             // right turn == counterclockwise and vice versa
-            double recentOrientation = Helper.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
-            orientation = Helper.ANGLE_CALC.alignOrientation(recentOrientation, orientation);
+            double recentOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
+            orientation = AngleCalc.ANGLE_CALC.alignOrientation(recentOrientation, orientation);
             double deltaOut = (orientation - recentOrientation);
 
             prevInstruction = ((RoundaboutInstruction) prevInstruction)
@@ -312,7 +312,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
                     double lat = point.getLat();
                     double lon = point.getLon();
-                    double currentOrientation = Helper.ANGLE_CALC.calcOrientation(prevLat, prevLon, lat, lon, false);
+                    double currentOrientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, lat, lon, false);
 
                     double diff = Math.abs(prevInstructionPrevOrientation - currentOrientation);
                     if (diff > (Math.PI * .9) && diff < (Math.PI * 1.1)) {
@@ -365,8 +365,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     public void finish() {
         if (prevInRoundabout) {
             // calc angle between roundabout entrance and finish
-            double orientation = Helper.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
-            orientation = Helper.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
+            double orientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
+            orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
             double delta = (orientation - prevOrientation);
             ((RoundaboutInstruction) prevInstruction).setRadian(delta);
 
@@ -374,7 +374,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         Instruction finishInstruction = new FinishInstruction(nodeAccess, prevEdge.getAdjNode());
         // This is the heading how the edge ended
-        finishInstruction.setExtraInfo("last_heading", Helper.ANGLE_CALC.calcAzimuth(doublePrevLat, doublePrevLon, prevLat, prevLon));
+        finishInstruction.setExtraInfo("last_heading", AngleCalc.ANGLE_CALC.calcAzimuth(doublePrevLat, doublePrevLon, prevLat, prevLon));
         ways.add(finishInstruction);
     }
 
@@ -382,7 +382,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
         double lat = point.getLat();
         double lon = point.getLon();
-        prevOrientation = Helper.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
+        prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
 
         boolean forceInstruction = false;
