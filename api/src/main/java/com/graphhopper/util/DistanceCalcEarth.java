@@ -206,7 +206,7 @@ public class DistanceCalcEarth implements DistanceCalc {
         return calcNormalizedDist(c_lat, c_lon / shrinkFactor, r_lat_deg, r_lon_deg);
     }
 
-    double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
+    protected double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
         return cos(toRadians((a_lat_deg + b_lat_deg) / 2));
     }
 

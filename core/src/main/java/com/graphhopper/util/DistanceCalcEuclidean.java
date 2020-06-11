@@ -52,7 +52,8 @@ public class DistanceCalcEuclidean extends DistanceCalcEarth {
         return dist * dist;
     }
 
-    double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
+    @Override
+    protected double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
         return 1.;
     }
 

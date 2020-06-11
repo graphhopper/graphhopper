@@ -28,7 +28,7 @@ public class PathDetail {
     private int last;
 
     // unprotected constructor used only in AbstractPathDetailsBuilder
-    PathDetail(Object value) {
+    public PathDetail(Object value) { // needs to be public since the api module will put in a separate package com.graphhopper.api
         this.value = value;
     }
 
