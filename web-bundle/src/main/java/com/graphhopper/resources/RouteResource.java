@@ -73,6 +73,7 @@ public class RouteResource {
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
+            @QueryParam(ELEVATION_WAY_POINT_MAX_DISTANCE) Double minPathElevationPrecision,
             @QueryParam("point") @NotNull List<GHPointParam> pointParams,
             @QueryParam("type") @DefaultValue("json") String type,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
@@ -121,6 +122,10 @@ public class RouteResource {
                 putObject(CALC_POINTS, calcPoints).
                 putObject(INSTRUCTIONS, instructions).
                 putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+
+        if (minPathElevationPrecision != null) {
+            request.getHints().putObject(ELEVATION_WAY_POINT_MAX_DISTANCE, minPathElevationPrecision);
+        }
 
         GHResponse ghResponse = graphHopper.route(request);
 

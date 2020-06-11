@@ -113,6 +113,12 @@ public interface DistanceCalc {
     GHPoint projectCoordinate(double lat, double lon,
                               double distanceInMeter, double headingClockwiseFromNorth);
 
+    /**
+     * This methods creates a point (lat, lon in degrees) a fraction of the distance along the path from (lat1, lon1)
+     * to (lat2, lon2).
+     */
+    GHPoint intermediatePoint(double f, double lat1, double lon1, double lat2, double lon2);
+
     /*
      * Simple heuristic to detect if the specified two points are crossing the boundary +-180°. See
      * #667

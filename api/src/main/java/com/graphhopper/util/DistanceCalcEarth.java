@@ -119,7 +119,35 @@ public class DistanceCalcEarth implements DistanceCalc {
     public double calcNormalizedEdgeDistance(double r_lat_deg, double r_lon_deg,
                                              double a_lat_deg, double a_lon_deg,
                                              double b_lat_deg, double b_lon_deg) {
-        return calcNormalizedEdgeDistanceNew(r_lat_deg, r_lon_deg, a_lat_deg, a_lon_deg, b_lat_deg, b_lon_deg, false);
+        double shrinkFactor = calcShrinkFactor(a_lat_deg, b_lat_deg);
+
+        double a_lat = a_lat_deg;
+        double a_lon = a_lon_deg * shrinkFactor;
+
+        double b_lat = b_lat_deg;
+        double b_lon = b_lon_deg * shrinkFactor;
+
+        double r_lat = r_lat_deg;
+        double r_lon = r_lon_deg * shrinkFactor;
+
+        double delta_lon = b_lon - a_lon;
+        double delta_lat = b_lat - a_lat;
+
+        if (delta_lat == 0)
+            // special case: horizontal edge
+            return calcNormalizedDist(a_lat_deg, r_lon_deg, r_lat_deg, r_lon_deg);
+
+        if (delta_lon == 0)
+            // special case: vertical edge
+            return calcNormalizedDist(r_lat_deg, a_lon_deg, r_lat_deg, r_lon_deg);
+
+        double norm = delta_lon * delta_lon + delta_lat * delta_lat;
+        double factor = ((r_lon - a_lon) * delta_lon + (r_lat - a_lat) * delta_lat) / norm;
+
+        // x,y is projection of r onto segment a-b
+        double c_lon = a_lon + factor * delta_lon;
+        double c_lat = a_lat + factor * delta_lat;
+        return calcNormalizedDist(c_lat, c_lon / shrinkFactor, r_lat_deg, r_lon_deg);
     }
 
     @Override
@@ -149,61 +177,13 @@ public class DistanceCalcEarth implements DistanceCalc {
 
         double norm = delta_lon * delta_lon + delta_lat * delta_lat + delta_ele * delta_ele;
         double factor = ((r_lon - a_lon) * delta_lon + (r_lat - a_lat) * delta_lat + (r_ele - a_ele) * delta_ele) / norm;
+        if (Double.isNaN(factor)) factor = 0;
 
         // x,y,z is projection of r onto segment a-b
         double c_lon = a_lon + factor * delta_lon;
         double c_lat = a_lat + factor * delta_lat;
         double c_ele_m = (a_ele + factor * delta_ele) * METERS_PER_DEGREE;
         return calcNormalizedDist(c_lat, c_lon / shrinkFactor, r_lat_deg, r_lon_deg) + calcNormalizedDist(r_ele_m - c_ele_m);
-    }
-
-    /**
-     * New edge distance calculation where no validEdgeDistance check would be necessary
-     * <p>
-     *
-     * @return the normalized distance of the query point "r" to the project point "c" onto the line
-     * segment a-b
-     */
-    public double calcNormalizedEdgeDistanceNew(double r_lat_deg, double r_lon_deg,
-                                                double a_lat_deg, double a_lon_deg,
-                                                double b_lat_deg, double b_lon_deg,
-                                                boolean reduceToSegment) {
-        double shrinkFactor = calcShrinkFactor(a_lat_deg, b_lat_deg);
-
-        double a_lat = a_lat_deg;
-        double a_lon = a_lon_deg * shrinkFactor;
-
-        double b_lat = b_lat_deg;
-        double b_lon = b_lon_deg * shrinkFactor;
-
-        double r_lat = r_lat_deg;
-        double r_lon = r_lon_deg * shrinkFactor;
-
-        double delta_lon = b_lon - a_lon;
-        double delta_lat = b_lat - a_lat;
-
-        if (delta_lat == 0)
-            // special case: horizontal edge
-            return calcNormalizedDist(a_lat_deg, r_lon_deg, r_lat_deg, r_lon_deg);
-
-        if (delta_lon == 0)
-            // special case: vertical edge
-            return calcNormalizedDist(r_lat_deg, a_lon_deg, r_lat_deg, r_lon_deg);
-
-        double norm = delta_lon * delta_lon + delta_lat * delta_lat;
-        double factor = ((r_lon - a_lon) * delta_lon + (r_lat - a_lat) * delta_lat) / norm;
-
-        // make new calculation compatible to old
-        if (reduceToSegment) {
-            if (factor > 1)
-                factor = 1;
-            else if (factor < 0)
-                factor = 0;
-        }
-        // x,y is projection of r onto segment a-b
-        double c_lon = a_lon + factor * delta_lon;
-        double c_lat = a_lat + factor * delta_lat;
-        return calcNormalizedDist(c_lat, c_lon / shrinkFactor, r_lat_deg, r_lon_deg);
     }
 
     double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
@@ -298,6 +278,41 @@ public class DistanceCalcEarth implements DistanceCalc {
         projectedLon = Math.toDegrees(projectedLon);
 
         return new GHPoint(projectedLat, projectedLon);
+    }
+
+    @Override
+    public GHPoint intermediatePoint(double f, double lat1, double lon1, double lat2, double lon2) {
+        double lat1radians = Math.toRadians(lat1);
+        double lon1radians = Math.toRadians(lon1);
+        double lat2radians = Math.toRadians(lat2);
+        double lon2radians = Math.toRadians(lon2);
+
+        // This formula is taken from: (http://www.movable-type.co.uk/scripts/latlong.html -> https://github.com/chrisveness/geodesy MIT)
+
+        double deltaLat = lat2radians - lat1radians;
+        double deltaLon = lon2radians - lon1radians;
+        double cosLat1 = cos(lat1radians);
+        double cosLat2 = cos(lat2radians);
+        double sinHalfDeltaLat = sin(deltaLat / 2);
+        double sinHalfDeltaLon = sin(deltaLon / 2);
+
+        double a = sinHalfDeltaLat * sinHalfDeltaLat + cosLat1 * cosLat2 * sinHalfDeltaLon * sinHalfDeltaLon;
+        double angularDistance =  2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        double sinDistance = sin(angularDistance);
+
+        if (angularDistance == 0) return new GHPoint(lat1, lon1);
+
+        double A = Math.sin((1-f)*angularDistance) / sinDistance;
+        double B = Math.sin(f*angularDistance) / sinDistance;
+
+        double x = A * cosLat1 * cos(lon1radians) + B * cosLat2 * cos(lon2radians);
+        double y = A * cosLat1 * sin(lon1radians) + B * cosLat2 * sin(lon2radians);
+        double z = A * sin(lat1radians) + B * sin(lat2radians);
+
+        double midLat = Math.toDegrees(Math.atan2(z, Math.sqrt(x*x + y*y)));
+        double midLon = Math.toDegrees(Math.atan2(y, x));
+
+        return new GHPoint(midLat, midLon);
     }
 
     @Override

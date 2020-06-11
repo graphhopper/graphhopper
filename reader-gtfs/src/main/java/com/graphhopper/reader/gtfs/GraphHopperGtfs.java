@@ -93,7 +93,17 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 }
 
                 @Override
+                public DataReader setWayPointElevationMaxDistance(double elevationWayPointMaxDistance) {
+                    return this;
+                }
+
+                @Override
                 public DataReader setSmoothElevation(boolean smoothElevation) {
+                    return this;
+                }
+
+                @Override
+                public DataReader setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
                     return this;
                 }
 
