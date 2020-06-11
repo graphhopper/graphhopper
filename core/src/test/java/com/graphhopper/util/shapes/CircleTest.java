@@ -36,10 +36,8 @@ public class CircleTest {
     @Test
     public void testIntersectCircleBBox() {
         assertTrue(new Circle(10, 10, 120000).intersects(new BBox(9, 11, 8, 9)));
-        assertTrue(new BBox(9, 11, 8, 9).intersects(new Circle(10, 10, 120000)));
 
         assertFalse(new Circle(10, 10, 110000).intersects(new BBox(9, 11, 8, 9)));
-        assertFalse(new BBox(9, 11, 8, 9).intersects(new Circle(10, 10, 110000)));
     }
 
     @Test

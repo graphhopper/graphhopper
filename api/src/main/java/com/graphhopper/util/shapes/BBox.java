@@ -146,8 +146,6 @@ public class BBox implements Shape, Cloneable {
     public boolean intersects(Shape s) {
         if (s instanceof BBox) {
             return intersects((BBox) s);
-        } else if (s instanceof Circle) {
-            return ((Circle) s).intersects(this);
         }
 
         throw new UnsupportedOperationException("unsupported shape");
@@ -157,8 +155,6 @@ public class BBox implements Shape, Cloneable {
     public boolean contains(Shape s) {
         if (s instanceof BBox) {
             return contains((BBox) s);
-        } else if (s instanceof Circle) {
-            return contains((Circle) s);
         }
 
         throw new UnsupportedOperationException("unsupported shape");
@@ -187,10 +183,6 @@ public class BBox implements Shape, Cloneable {
         return intersects(new RectangleLineIntersector(toEnvelope(this)), pointList);
     }
 
-    public boolean intersects(Circle s) {
-        return s.intersects(this);
-    }
-
     /**
      * This method calculates if this BBox intersects with the specified BBox
      */
@@ -214,10 +206,6 @@ public class BBox implements Shape, Cloneable {
 
     public boolean contains(BBox b) {
         return maxLat >= b.maxLat && minLat <= b.minLat && maxLon >= b.maxLon && minLon <= b.minLon;
-    }
-
-    public boolean contains(Circle c) {
-        return contains(c.getBounds());
     }
 
     @Override

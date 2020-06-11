@@ -47,10 +47,6 @@ public class BBoxTest {
         assertTrue(new BBox(1, 2, 0, 1).contains(new BBox(1, 2, 0, 1)));
         assertTrue(new BBox(1, 2, 0, 1).contains(new BBox(1.5, 2, 0.5, 1)));
         assertFalse(new BBox(1, 2, 0, 0.5).contains(new BBox(1.5, 2, 0.5, 1)));
-
-        Circle c = new Circle(10, 10, 120000);
-        assertTrue(c.getBounds().contains(c));
-        assertFalse(new BBox(8.9, 11.09, 8.9, 11.2).contains(c));
     }
 
     @Test
@@ -135,47 +131,6 @@ public class BBoxTest {
         b2 = new BBox(5.8524,17.1483,46.3786,55.0653);
 
         assertEquals(b1, b1.calculateIntersection(b2));
-    }
-
-    @Test
-    public void testBasicJavaOverload() {
-        new BBox(2, 4, 0, 1) {
-            @Override
-            public boolean intersects(Circle c) {
-                assertTrue(true);
-                return super.intersects(c);
-            }
-
-            @Override
-            public boolean intersects(Shape c) {
-                assertTrue(false);
-                return true;
-            }
-
-            @Override
-            public boolean intersects(BBox c) {
-                assertTrue(false);
-                return true;
-            }
-        }.intersects(new Circle(1, 2, 3) {
-            @Override
-            public boolean intersects(Circle c) {
-                assertTrue(false);
-                return true;
-            }
-
-            @Override
-            public boolean intersects(Shape b) {
-                assertTrue(false);
-                return true;
-            }
-
-            @Override
-            public boolean intersects(BBox b) {
-                assertTrue(true);
-                return true;
-            }
-        });
     }
 
     @Test

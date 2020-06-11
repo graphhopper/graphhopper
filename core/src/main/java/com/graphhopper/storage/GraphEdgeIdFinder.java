@@ -62,28 +62,6 @@ public class GraphEdgeIdFinder {
         });
     }
 
-    /**
-     * This method fills the edgeIds hash with edgeIds found inside the specified geometry
-     */
-    public void fillEdgeIDs(final GHIntHashSet edgeIds, final Geometry geometry, EdgeFilter filter) {
-        if (geometry instanceof Point) {
-            Point p = (Point) geometry;
-            findEdgesInShape(edgeIds, new Circle(p.getY(), p.getX(), P_RADIUS), filter);
-        } else if (geometry instanceof LineString) {
-            locationIndex.query(BBox.fromEnvelope(geometry.getEnvelopeInternal()), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer(filter)) {
-                @Override
-                public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
-                    if (geometry.intersects(edge.fetchWayGeometry(FetchMode.ALL).toLineString(false)))
-                        edgeIds.add(edge.getEdge());
-                }
-            });
-        } else if (geometry instanceof MultiPoint) {
-            for (Coordinate coordinate : geometry.getCoordinates()) {
-                findEdgesInShape(edgeIds, new Circle(coordinate.y, coordinate.x, P_RADIUS), filter);
-            }
-        }
-    }
-
     public static GraphEdgeIdFinder.BlockArea createBlockArea(Graph graph, LocationIndex locationIndex,
                                                               List<GHPoint> points, PMap hints, EdgeFilter edgeFilter) {
         String blockAreaStr = hints.getString(Parameters.Routing.BLOCK_AREA, "");
