@@ -27,11 +27,6 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class CircleTest {
-    @Test
-    public void testIntersectCircleCircle() {
-        assertTrue(new Circle(0, 0, 80000).intersects(new Circle(1, 1, 80000)));
-        assertFalse(new Circle(0, 0, 75000).intersects(new Circle(1, 1, 80000)));
-    }
 
     @Test
     public void testIntersectCircleBBox() {

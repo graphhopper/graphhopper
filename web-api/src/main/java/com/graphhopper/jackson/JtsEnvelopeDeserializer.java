@@ -17,21 +17,18 @@
  */
 package com.graphhopper.jackson;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.graphhopper.util.shapes.BBox;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import org.locationtech.jts.geom.Envelope;
 
 import java.io.IOException;
 
-class BBoxSerializer extends JsonSerializer<BBox> {
+class JtsEnvelopeDeserializer extends JsonDeserializer<Envelope> {
     @Override
-    public void serialize(BBox bBox, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
-        jsonGenerator.writeStartArray();
-        for (Double number : bBox.toGeoJson()) {
-            jsonGenerator.writeNumber(number);
-        }
-        jsonGenerator.writeEndArray();
+    public Envelope deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+        double[] bounds = jsonParser.readValueAs(double[].class);
+        return new Envelope(bounds[0], bounds[2], bounds[1], bounds[3]);
     }
 }

@@ -142,24 +142,6 @@ public class BBox implements Shape, Cloneable {
         return new BBox(minLon, maxLon, minLat, maxLat, minEle, maxEle, elevation);
     }
 
-    @Override
-    public boolean intersects(Shape s) {
-        if (s instanceof BBox) {
-            return intersects((BBox) s);
-        }
-
-        throw new UnsupportedOperationException("unsupported shape");
-    }
-
-    @Override
-    public boolean contains(Shape s) {
-        if (s instanceof BBox) {
-            return contains((BBox) s);
-        }
-
-        throw new UnsupportedOperationException("unsupported shape");
-    }
-
     public static boolean intersects(RectangleLineIntersector intersector, PointList pointList) {
         int len = pointList.getSize();
         if (len == 0)

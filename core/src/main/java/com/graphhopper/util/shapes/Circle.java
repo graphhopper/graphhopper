@@ -66,17 +66,6 @@ public class Circle implements Shape {
     }
 
     @Override
-    public boolean intersects(Shape o) {
-        if (o instanceof Circle) {
-            return intersects((Circle) o);
-        } else if (o instanceof BBox) {
-            return intersects((BBox) o);
-        }
-
-        return o.intersects(this);
-    }
-
-    @Override
     public boolean intersects(PointList pointList) {
         // similar code to LocationIndexTree.checkAdjacent
         int len = pointList.getSize();
@@ -104,17 +93,6 @@ public class Circle implements Shape {
             tmpLon = wayLon;
         }
         return false;
-    }
-
-    @Override
-    public boolean contains(Shape o) {
-        if (o instanceof Circle) {
-            return contains((Circle) o);
-        } else if (o instanceof BBox) {
-            return contains((BBox) o);
-        }
-
-        throw new UnsupportedOperationException("unsupported shape");
     }
 
     public boolean intersects(BBox b) {
@@ -148,15 +126,6 @@ public class Circle implements Shape {
             return b.maxLon - bbox.minLon > 0;
         }
         return true;
-    }
-
-    public boolean intersects(Circle c) {
-        // necessary to improve speed?
-        if (!getBounds().intersects(c.getBounds())) {
-            return false;
-        }
-
-        return normDist(c.lat, c.lon) <= calc.calcNormalizedDist(radiusInMeter + c.radiusInMeter);
     }
 
     public boolean contains(BBox b) {

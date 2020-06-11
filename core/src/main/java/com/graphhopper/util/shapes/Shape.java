@@ -25,23 +25,12 @@ import com.graphhopper.util.PointList;
  * @author Peter Karich
  */
 public interface Shape {
-    /**
-     * @return true if edges or areas of this and the specified shapes overlap
-     */
-    boolean intersects(Shape o);
-
     boolean intersects(PointList pointList);
 
     /**
      * @return true only if lat and lon are inside (or on the edge) of this shape
      */
     boolean contains(double lat, double lon);
-
-    /**
-     * @return true if the specified shape is fully contained in this shape. Only iff
-     * <pre> s1.contains(s2) &amp;&amp; s2.contains(s1) </pre> then s1 is equal to s2
-     */
-    boolean contains(Shape s);
 
     /**
      * @return the minimal rectangular bounding box of this shape

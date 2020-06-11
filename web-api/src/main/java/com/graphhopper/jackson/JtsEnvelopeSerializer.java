@@ -17,18 +17,23 @@
  */
 package com.graphhopper.jackson;
 
-import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.graphhopper.util.shapes.BBox;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.graphhopper.util.Helper;
+import org.locationtech.jts.geom.Envelope;
 
 import java.io.IOException;
 
-class BBoxDeserializer extends JsonDeserializer<BBox> {
+class JtsEnvelopeSerializer extends JsonSerializer<Envelope> {
     @Override
-    public BBox deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
-        double[] bounds = jsonParser.readValueAs(double[].class);
-        return new BBox(bounds);
+    public void serialize(Envelope bBox, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+        jsonGenerator.writeStartArray();
+        jsonGenerator.writeNumber(Helper.round6(bBox.getMinX()));
+        jsonGenerator.writeNumber(Helper.round6(bBox.getMinY()));
+        jsonGenerator.writeNumber(Helper.round6(bBox.getMaxX()));
+        jsonGenerator.writeNumber(Helper.round6(bBox.getMaxY()));
+        jsonGenerator.writeEndArray();
     }
 }

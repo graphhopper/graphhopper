@@ -20,7 +20,7 @@ package com.graphhopper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.geom.Envelope;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -210,11 +210,11 @@ public class ResponsePath {
     /**
      * Calculates the 2D bounding box of this route
      */
-    public BBox calcBBox2D() {
+    public Envelope calcBBox2D() {
         check("calcRouteBBox");
-        BBox bounds = BBox.createInverse(false);
+        Envelope bounds = new Envelope();
         for (int i = 0; i < pointList.getSize(); i++) {
-            bounds.update(pointList.getLatitude(i), pointList.getLongitude(i));
+            bounds.expandToInclude(pointList.getLongitude(i), pointList.getLatitude(i));
         }
         return bounds;
     }

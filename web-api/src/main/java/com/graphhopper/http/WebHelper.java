@@ -24,6 +24,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
+import org.locationtech.jts.geom.Envelope;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;

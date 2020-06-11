@@ -66,11 +66,6 @@ public class Polygon implements Shape {
         return new Polygon(new PreparedPolygon(polygon));
     }
 
-    @Override
-    public boolean intersects(Shape o) {
-        throw new IllegalArgumentException("Polygon.intersects: shape not supported");
-    }
-
     public boolean intersects(PointList pointList) {
         return prepPolygon.intersects(pointList.getCachedLineString(false));
     }
@@ -84,11 +79,6 @@ public class Polygon implements Shape {
      */
     public boolean contains(double lat, double lon) {
         return prepPolygon.contains(factory.createPoint(new Coordinate(lon, lat)));
-    }
-
-    @Override
-    public boolean contains(Shape s) {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override

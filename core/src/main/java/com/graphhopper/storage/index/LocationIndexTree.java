@@ -30,7 +30,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.Shape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -465,7 +464,7 @@ public class LocationIndexTree implements LocationIndex {
                 }, 0);
     }
 
-    final void query(int intPointer, Shape queryBBox,
+    final void query(int intPointer, BBox queryBBox,
                      double minLat, double minLon,
                      double deltaLatPerDepth, double deltaLonPerDepth,
                      Visitor function, int depth) {

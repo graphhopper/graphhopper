@@ -24,8 +24,8 @@ import com.graphhopper.MultiException;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import org.locationtech.jts.geom.Envelope;
 
 public class GraphHopperModule extends SimpleModule {
 
@@ -33,8 +33,8 @@ public class GraphHopperModule extends SimpleModule {
         setMixInAnnotation(GHRequest.class, GHRequestMixIn.class);
         addDeserializer(GHResponse.class, new GHResponseDeserializer());
         addDeserializer(ResponsePath.class, new ResponsePathDeserializer());
-        addDeserializer(BBox.class, new BBoxDeserializer());
-        addSerializer(BBox.class, new BBoxSerializer());
+        addDeserializer(Envelope.class, new JtsEnvelopeDeserializer());
+        addSerializer(Envelope.class, new JtsEnvelopeSerializer());
         addDeserializer(GHPoint.class, new GHPointDeserializer());
         addSerializer(GHPoint.class, new GHPointSerializer());
         addDeserializer(PathDetail.class, new PathDetailDeserializer());
