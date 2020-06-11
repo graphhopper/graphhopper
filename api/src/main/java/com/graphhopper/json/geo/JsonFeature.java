@@ -57,16 +57,8 @@ public class JsonFeature {
         return bbox;
     }
 
-    public boolean hasGeometry() {
-        return geometry != null;
-    }
-
     public Geometry getGeometry() {
         return geometry;
-    }
-
-    public boolean hasProperties() {
-        return properties != null;
     }
 
     public Map<String, Object> getProperties() {
