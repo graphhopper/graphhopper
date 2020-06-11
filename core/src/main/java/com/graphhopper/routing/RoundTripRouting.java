@@ -26,8 +26,8 @@ import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import com.graphhopper.util.exceptions.PointNotFoundException;
@@ -97,7 +97,7 @@ public class RoundTripRouting {
     private static QueryResult generateValidPoint(GHPoint lastPoint, double distanceInMeters, double heading, EdgeFilter edgeFilter, LocationIndex locationIndex, int maxRetries) {
         int tryCount = 0;
         while (true) {
-            GHPoint generatedPoint = Helper.DIST_EARTH.projectCoordinate(lastPoint.getLat(), lastPoint.getLon(), distanceInMeters, heading);
+            GHPoint generatedPoint = DistanceCalcEarth.DIST_EARTH.projectCoordinate(lastPoint.getLat(), lastPoint.getLon(), distanceInMeters, heading);
             QueryResult qr = locationIndex.findClosest(generatedPoint.getLat(), generatedPoint.getLon(), edgeFilter);
             if (qr.isValid())
                 return qr;

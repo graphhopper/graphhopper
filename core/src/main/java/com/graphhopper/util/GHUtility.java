@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.graphhopper.util.Helper.DIST_EARTH;
+import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
@@ -222,7 +222,7 @@ public class GHUtility {
         double fromLon = nodeAccess.getLon(from);
         double toLat = nodeAccess.getLat(to);
         double toLon = nodeAccess.getLon(to);
-        return Helper.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
+        return DistancePlaneProjection.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
     }
 
     public static void addRandomTurnCosts(Graph graph, long seed, EncodingManager em, FlagEncoder encoder, int maxTurnCost, TurnCostStorage turnCostStorage) {
@@ -639,7 +639,7 @@ public class GHUtility {
         na.setNode(node, lat, lon);
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
         while (iter.next()) {
-            iter.setDistance(iter.fetchWayGeometry(FetchMode.ALL).calcDistance(DIST_EARTH));
+            iter.setDistance(DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)));
             // System.out.println(node + "->" + adj + ": " + iter.getDistance());
         }
     }

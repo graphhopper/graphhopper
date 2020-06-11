@@ -17,16 +17,13 @@
  */
 package com.graphhopper.util.shapes;
 
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.NumHelper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 /**
  * @author Peter Karich
  */
 public class Circle implements Shape {
-    private final double radiusInMeter;
+    public final double radiusInMeter;
     private final double lat;
     private final double lon;
     private final double normedDist;
@@ -34,7 +31,7 @@ public class Circle implements Shape {
     private DistanceCalc calc;
 
     public Circle(double lat, double lon, double radiusInMeter) {
-        this(lat, lon, radiusInMeter, Helper.DIST_EARTH);
+        this(lat, lon, radiusInMeter, DistanceCalcEarth.DIST_EARTH);
     }
 
     public Circle(double lat, double lon, double radiusInMeter, DistanceCalc calc) {
@@ -183,11 +180,6 @@ public class Circle implements Shape {
         }
 
         return calc.calcDist(lat, lon, c.lat, c.lon) <= res;
-    }
-
-    @Override
-    public double calculateArea() {
-        return Math.PI * radiusInMeter * radiusInMeter;
     }
 
     @Override

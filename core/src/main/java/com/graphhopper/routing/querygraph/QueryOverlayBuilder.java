@@ -140,7 +140,7 @@ class QueryOverlayBuilder {
                         GHPoint snappedPoint = o.getSnappedPoint();
                         double fromLat = fullPL.getLatitude(o.getWayIndex());
                         double fromLon = fullPL.getLongitude(o.getWayIndex());
-                        return Helper.DIST_PLANE.calcNormalizedDist(fromLat, fromLon, snappedPoint.lat, snappedPoint.lon);
+                        return DistancePlaneProjection.DIST_PLANE.calcNormalizedDist(fromLat, fromLon, snappedPoint.lat, snappedPoint.lon);
                     }
                 });
 
@@ -220,7 +220,7 @@ class QueryOverlayBuilder {
         assert basePoints.size() >= 2 : "basePoints must have at least two points";
 
         PointList baseReversePoints = basePoints.clone(true);
-        double baseDistance = basePoints.calcDistance(Helper.DIST_PLANE);
+        double baseDistance = DistancePlaneProjection.DIST_PLANE.calcDistance(basePoints);
         int virtEdgeId = firstVirtualEdgeId + queryOverlay.getNumVirtualEdges() / 2;
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);

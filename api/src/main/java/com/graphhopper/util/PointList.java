@@ -92,11 +92,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
 
         @Override
-        public double calcDistance(DistanceCalc calc) {
-            throw new UnsupportedOperationException("cannot access EMPTY PointList");
-        }
-
-        @Override
         public PointList copy(int from, int end) {
             throw new RuntimeException("cannot copy EMPTY PointList");
         }
@@ -538,27 +533,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
         hash = 73 * hash + this.getSize();
         return hash;
-    }
-
-    public double calcDistance(DistanceCalc calc) {
-        double prevLat = Double.NaN;
-        double prevLon = Double.NaN;
-        double prevEle = Double.NaN;
-        double dist = 0;
-        for (int i = 0; i < size(); i++) {
-            if (i > 0) {
-                if (is3D())
-                    dist += calc.calcDist3D(prevLat, prevLon, prevEle, getLat(i), getLon(i), getEle(i));
-                else
-                    dist += calc.calcDist(prevLat, prevLon, getLat(i), getLon(i));
-            }
-
-            prevLat = getLat(i);
-            prevLon = getLon(i);
-            if (is3D())
-                prevEle = getEle(i);
-        }
-        return dist;
     }
 
     /**

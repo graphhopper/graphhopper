@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util.shapes;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 import org.junit.Test;
 
@@ -42,7 +42,7 @@ public class CircleTest {
 
     @Test
     public void testIntersectPointList() {
-        Circle circle = new Circle(1.5, 0.3, Helper.DIST_EARTH.calcDist(0, 0, 0, 0.7));
+        Circle circle = new Circle(1.5, 0.3, DistanceCalcEarth.DIST_EARTH.calcDist(0, 0, 0, 0.7));
         PointList pointList = new PointList();
         pointList.add(5, 5);
         pointList.add(5, 0);

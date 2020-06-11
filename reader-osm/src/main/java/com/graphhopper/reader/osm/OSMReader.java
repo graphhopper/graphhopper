@@ -75,7 +75,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private final Graph graph;
     private final NodeAccess nodeAccess;
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
-    private final DistanceCalc distCalc = Helper.DIST_EARTH;
+    private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean smoothElevation = false;
     private double longEdgeSamplingDistance = 0;
@@ -676,7 +676,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         if (this.longEdgeSamplingDistance < Double.MAX_VALUE && pointList.is3D())
             pointList = EdgeSampling.sample(wayOsmId, pointList, longEdgeSamplingDistance, distCalc, eleProvider);
 
-        double towerNodeDistance = pointList.calcDistance(distCalc);
+        double towerNodeDistance = distCalc.calcDistance(pointList);
 
         if (towerNodeDistance < 0.001) {
             // As investigation shows often two paths should have crossed via one identical point 

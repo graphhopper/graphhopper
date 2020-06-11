@@ -225,7 +225,7 @@ public class PointListTest {
 
         PointList shallowPl = pl.shallowCopy(1, 3, false);
         PointList clonedPl = shallowPl.clone(false);
-        assertEquals(clonedPl.calcDistance(Helper.DIST_EARTH), shallowPl.calcDistance(Helper.DIST_EARTH), .01);
+        assertEquals(DistanceCalcEarth.DIST_EARTH.calcDistance(clonedPl), DistanceCalcEarth.DIST_EARTH.calcDistance(shallowPl), .01);
     }
 
     @Test()

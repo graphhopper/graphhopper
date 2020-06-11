@@ -44,9 +44,9 @@ public class DouglasPeucker {
     public void setApproximation(boolean a) {
         approx = a;
         if (approx)
-            calc = Helper.DIST_PLANE;
+            calc = DistancePlaneProjection.DIST_PLANE;
         else
-            calc = Helper.DIST_EARTH;
+            calc = DistanceCalcEarth.DIST_EARTH;
     }
 
     /**

@@ -912,7 +912,7 @@ public class CHTurnCostTest {
         Path path = chAlgo.calcPath(0, 2);
         assertTrue("it should be possible to route via a virtual node, but no path found", path.isFound());
         assertEquals(IntArrayList.from(0, 3, 1, 2), path.calcNodes());
-        assertEquals(Helper.DIST_PLANE.calcDist(0.00, 0.00, 0.03, 0.03), path.getDistance(), 1.e-1);
+        assertEquals(DistancePlaneProjection.DIST_PLANE.calcDist(0.00, 0.00, 0.03, 0.03), path.getDistance(), 1.e-1);
     }
 
     @ParameterizedTest

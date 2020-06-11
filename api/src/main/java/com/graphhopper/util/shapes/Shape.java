@@ -53,8 +53,4 @@ public interface Shape {
      */
     GHPoint getCenter();
 
-    /**
-     * @return an estimated area in m^2
-     */
-    double calculateArea();
 }

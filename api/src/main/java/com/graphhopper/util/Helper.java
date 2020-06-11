@@ -17,8 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.shapes.BBox;
-
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -33,8 +31,6 @@ import java.util.Map.Entry;
  * @author Peter Karich
  */
 public class Helper {
-    public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
-    public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
     public static final Charset UTF_CS = Charset.forName("UTF-8");
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
@@ -211,17 +207,6 @@ public class Helper {
             }
         }
         return false;
-    }
-
-    public static int calcIndexSize(BBox graphBounds) {
-        if (!graphBounds.isValid())
-            throw new IllegalArgumentException("Bounding box is not valid to calculate index size: " + graphBounds);
-
-        double dist = DIST_EARTH.calcDist(graphBounds.maxLat, graphBounds.minLon,
-                graphBounds.minLat, graphBounds.maxLon);
-        // convert to km and maximum is 50000km => 1GB
-        dist = Math.min(dist / 1000, 50000);
-        return Math.max(2000, (int) (dist * dist));
     }
 
     public static String pruneFileEnd(String file) {

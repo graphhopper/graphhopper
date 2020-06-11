@@ -338,13 +338,13 @@ public class InstructionListTest {
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
 
         // query on first edge, get instruction for second edge
-        assertEquals("2-3", wayList.find(15.05, 10, 1000).getName());
+        assertEquals("2-3", Instructions.find(wayList, 15.05, 10, 1000).getName());
 
         // query east of first edge, get instruction for second edge
-        assertEquals("2-3", wayList.find(15.05, 10.001, 1000).getName());
+        assertEquals("2-3", Instructions.find(wayList, 15.05, 10.001, 1000).getName());
 
         // query south-west of node 3, get instruction for third edge
-        assertEquals("3-4", wayList.find(15.099, 9.9, 1000).getName());
+        assertEquals("3-4", Instructions.find(wayList, 15.099, 9.9, 1000).getName());
     }
 
     @Test

@@ -65,10 +65,10 @@ public class LocationIndexTree implements LocationIndex {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
     private final NodeAccess nodeAccess;
-    protected DistanceCalc distCalc = Helper.DIST_PLANE;
+    protected DistanceCalc distCalc = DistancePlaneProjection.DIST_PLANE;
     SpatialKeyAlgo keyAlgo;
     private int maxRegionSearch = 4;
-    private DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
+    private DistanceCalc preciseDistCalc = DistanceCalcEarth.DIST_EARTH;
     private int[] entries;
     private byte[] shifts;
     // convert spatial key to index for subentry of current depth
@@ -241,9 +241,9 @@ public class LocationIndexTree implements LocationIndex {
     @Override
     public LocationIndex setApproximation(boolean approx) {
         if (approx)
-            distCalc = Helper.DIST_PLANE;
+            distCalc = DistancePlaneProjection.DIST_PLANE;
         else
-            distCalc = Helper.DIST_EARTH;
+            distCalc = DistanceCalcEarth.DIST_EARTH;
         return this;
     }
 

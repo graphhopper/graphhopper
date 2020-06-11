@@ -34,10 +34,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +74,7 @@ class GtfsReader {
     private final LocationIndex walkNetworkIndex;
     private final GtfsStorageI gtfsStorage;
 
-    private final DistanceCalc distCalc = Helper.DIST_EARTH;
+    private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final Transfers transfers;
     private final NodeAccess nodeAccess;
     private final String id;

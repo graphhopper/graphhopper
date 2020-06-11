@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.util.PointList;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
@@ -37,8 +38,8 @@ import java.util.Arrays;
 public class Polygon implements Shape {
 
     private final GeometryFactory factory = new GeometryFactory();
-    private final PreparedGeometry prepPolygon;
-    private final Envelope envelope;
+    public final PreparedGeometry prepPolygon;
+    public final Envelope envelope;
 
     public Polygon(PreparedGeometry prepPolygon) {
         this.prepPolygon = prepPolygon;
@@ -99,12 +100,6 @@ public class Polygon implements Shape {
     public GHPoint getCenter() {
         Point centroid = prepPolygon.getGeometry().getCentroid();
         return new GHPoint(centroid.getY(), centroid.getX());
-    }
-
-    @Override
-    public double calculateArea() {
-        // for estimation use bounding box as reference:
-        return getBounds().calculateArea() * envelope.getArea() / prepPolygon.getGeometry().getArea();
     }
 
     public double getMinLat() {

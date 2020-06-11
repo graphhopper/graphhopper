@@ -34,6 +34,8 @@ import static java.lang.Math.*;
  * @author Peter Karich
  */
 public class DistancePlaneProjection extends DistanceCalcEarth {
+    public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
+
     @Override
     public double calcDist(double fromLat, double fromLon, double toLat, double toLon) {
         double normedDist = calcNormalizedDist(fromLat, fromLon, toLat, toLon);

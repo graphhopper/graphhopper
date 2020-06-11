@@ -52,7 +52,7 @@ import java.util.Random;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static com.graphhopper.util.Helper.DIST_EARTH;
+import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
@@ -641,12 +641,12 @@ public class RoutingAlgorithmTest {
         Path p = calcPath(graph, weighting, 4, 0);
         assertEquals(nodes(4, 1, 0), p.calcNodes());
         assertEquals(Helper.createPointList(0, 2, 1, 1.5, 1.5, 1, 1, 0.6), p.calcPoints());
-        assertEquals(274128, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
+        assertEquals(274128, new DistanceCalcEarth().calcDistance(p.calcPoints()), 1);
 
         p = calcPath(graph, weighting, 2, 1);
         assertEquals(nodes(2, 0, 1), p.calcNodes());
         assertEquals(Helper.createPointList(0, 0, 1, 0.6, 1.5, 1, 1, 1.5), p.calcPoints());
-        assertEquals(279482, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
+        assertEquals(279482, new DistanceCalcEarth().calcDistance(p.calcPoints()), 1);
     }
 
     @Test

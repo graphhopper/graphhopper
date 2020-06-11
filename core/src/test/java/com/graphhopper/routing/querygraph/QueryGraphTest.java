@@ -792,7 +792,7 @@ public class QueryGraphTest {
         na.setNode(1, 0, 1);
         // dummy node to make sure graph bounds are valid
         na.setNode(2, 2, 2);
-        DistanceCalc distCalc = Helper.DIST_PLANE;
+        DistanceCalc distCalc = DistancePlaneProjection.DIST_PLANE;
         double dist = 0;
         dist += distCalc.calcDist(0, 0, 1, 0);
         dist += distCalc.calcDist(1, 0, 1, 1);
@@ -826,7 +826,7 @@ public class QueryGraphTest {
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 50.00, 10.10);
         na.setNode(1, 50.00, 10.20);
-        double dist = Helper.DIST_EARTH.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1));
+        double dist = DistanceCalcEarth.DIST_EARTH.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1));
         EdgeIteratorState edge = g.edge(0, 1, dist, true);
         edge.set(speedEnc, 50);
         edge.setReverse(speedEnc, 100);

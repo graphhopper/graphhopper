@@ -124,4 +124,7 @@ public interface DistanceCalc {
      * #667
      */
     boolean isCrossBoundary(double lon1, double lon2);
+
+    double calcDistance(PointList pointList);
+
 }

@@ -23,8 +23,8 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
 
 /**
  * @see AStarBidirection
@@ -35,7 +35,7 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo {
     public AStarBidirectionCH(RoutingCHGraph graph) {
         super(graph, TraversalMode.NODE_BASED);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, graph.getWeighting());
-        defaultApprox.setDistanceCalc(Helper.DIST_PLANE);
+        defaultApprox.setDistanceCalc(DistancePlaneProjection.DIST_PLANE);
         setApproximation(defaultApprox);
     }
 

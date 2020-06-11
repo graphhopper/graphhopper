@@ -76,7 +76,7 @@ public class GHUtilityTest {
             // This is meant to verify that all of the same edges (including tower nodes)
             // are included in the copied graph. Can not use iter.getDistance() since it
             // does not verify new geometry. See #1732
-            distance += iter.fetchWayGeometry(FetchMode.ALL).calcDistance(calc);
+            distance += calc.calcDistance(iter.fetchWayGeometry(FetchMode.ALL));
         }
         return distance;
     }

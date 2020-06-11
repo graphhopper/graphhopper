@@ -25,7 +25,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.util.shapes.*;
 import org.locationtech.jts.algorithm.RectangleLineIntersector;
-import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,6 +46,26 @@ public class GraphEdgeIdFinder {
     public GraphEdgeIdFinder(Graph graph, LocationIndex locationIndex) {
         this.graph = graph;
         this.locationIndex = locationIndex;
+    }
+
+    /**
+     * @return an estimated area in m^2 using the mean value of latitudes for longitude distance
+     * @param bBox
+     */
+    static double calculateArea(BBox bBox) {
+        double meanLat = (bBox.maxLat + bBox.minLat) / 2;
+        return DistancePlaneProjection.DIST_PLANE.calcDist(meanLat, bBox.minLon, meanLat, bBox.maxLon)
+                // left side should be equal to right side no mean value necessary
+                * DistancePlaneProjection.DIST_PLANE.calcDist(bBox.minLat, bBox.minLon, bBox.maxLat, bBox.minLon);
+    }
+
+    static double calculateArea(Polygon polygon) {
+        // for estimation use bounding box as reference:
+        return calculateArea(polygon.getBounds()) * polygon.envelope.getArea() / polygon.prepPolygon.getGeometry().getArea();
+    }
+
+    static double calculateArea(Circle circle) {
+        return Math.PI * circle.radiusInMeter * circle.radiusInMeter;
     }
 
     /**
@@ -95,7 +114,7 @@ public class GraphEdgeIdFinder {
                 if (splittedObject.length > 4) {
                     final Polygon polygon = Polygon.parsePoints(objectAsString);
                     GHIntHashSet blockedEdges = blockArea.add(polygon);
-                    if (polygon.calculateArea() <= useEdgeIdsUntilAreaSize)
+                    if (calculateArea(polygon) <= useEdgeIdsUntilAreaSize)
                         findEdgesInShape(blockedEdges, polygon, filter);
                 } else if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);
@@ -107,7 +126,7 @@ public class GraphEdgeIdFinder {
                         }
                     };
                     GHIntHashSet blockedEdges = blockArea.add(preparedBBox);
-                    if (bbox.calculateArea() <= useEdgeIdsUntilAreaSize)
+                    if (calculateArea(bbox) <= useEdgeIdsUntilAreaSize)
                         findEdgesInShape(blockedEdges, preparedBBox, filter);
                 } else if (splittedObject.length == 3) {
                     double lat = Double.parseDouble(splittedObject[0]);
@@ -115,7 +134,7 @@ public class GraphEdgeIdFinder {
                     int radius = Integer.parseInt(splittedObject[2]);
                     Circle circle = new Circle(lat, lon, radius);
                     GHIntHashSet blockedEdges = blockArea.add(circle);
-                    if (circle.calculateArea() <= useEdgeIdsUntilAreaSize)
+                    if (calculateArea(circle) <= useEdgeIdsUntilAreaSize)
                         findEdgesInShape(blockedEdges, circle, filter);
 
                 } else if (splittedObject.length == 2) {

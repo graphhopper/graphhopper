@@ -24,10 +24,7 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
@@ -62,7 +59,7 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo {
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
-        defaultApprox.setDistanceCalc(Helper.DIST_PLANE);
+        defaultApprox.setDistanceCalc(DistancePlaneProjection.DIST_PLANE);
         setApproximation(defaultApprox);
     }
 

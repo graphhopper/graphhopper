@@ -40,7 +40,7 @@ import java.util.Locale;
 public class TestAlgoCollector {
     public final List<String> errors = new ArrayList<>();
     private final String name;
-    private final DistanceCalc distCalc = Helper.DIST_EARTH;
+    private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final TranslationMap trMap = new TranslationMap().doImport();
 
     public TestAlgoCollector(String name) {
@@ -77,7 +77,7 @@ public class TestAlgoCollector {
         }
 
         PointList pointList = responsePath.getPoints();
-        double tmpDist = pointList.calcDistance(distCalc);
+        double tmpDist = distCalc.calcDistance(pointList);
         if (Math.abs(responsePath.getDistance() - tmpDist) > 2) {
             errors.add(algoEntry + " path.getDistance was  " + responsePath.getDistance()
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + oneRun.getLocs()

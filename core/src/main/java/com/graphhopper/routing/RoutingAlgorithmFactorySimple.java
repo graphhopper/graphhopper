@@ -22,6 +22,8 @@ import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -83,9 +85,9 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
         BeelineWeightApproximator approx = new BeelineWeightApproximator(na, weighting);
         approx.setEpsilon(epsilon);
         if ("BeelineSimplification".equals(approxAsStr))
-            approx.setDistanceCalc(Helper.DIST_PLANE);
+            approx.setDistanceCalc(DistancePlaneProjection.DIST_PLANE);
         else if ("BeelineAccurate".equals(approxAsStr))
-            approx.setDistanceCalc(Helper.DIST_EARTH);
+            approx.setDistanceCalc(DistanceCalcEarth.DIST_EARTH);
         else
             throw new IllegalArgumentException("Approximation " + approxAsStr + " not found in " + RoutingAlgorithmFactorySimple.class.getName());
 

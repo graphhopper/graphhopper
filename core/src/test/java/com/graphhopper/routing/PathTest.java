@@ -196,24 +196,24 @@ public class PathTest {
         Path path = extractPath(g, weighting, e1);
 
         InstructionList il = InstructionsFromEdges.calcInstructions(path, path.graph, weighting, carManager, tr);
-        Instruction nextInstr0 = il.find(-0.001, 0.0, 1000);
+        Instruction nextInstr0 = Instructions.find(il, -0.001, 0.0, 1000);
         assertEquals(Instruction.CONTINUE_ON_STREET, nextInstr0.getSign());
 
-        Instruction nextInstr1 = il.find(0.001, 0.001, 1000);
+        Instruction nextInstr1 = Instructions.find(il, 0.001, 0.001, 1000);
         assertEquals(Instruction.TURN_RIGHT, nextInstr1.getSign());
 
-        Instruction nextInstr2 = il.find(5.0, 0.004, 1000);
+        Instruction nextInstr2 = Instructions.find(il, 5.0, 0.004, 1000);
         assertEquals(Instruction.TURN_LEFT, nextInstr2.getSign());
 
-        Instruction nextInstr3 = il.find(9.99, 0.503, 1000);
+        Instruction nextInstr3 = Instructions.find(il, 9.99, 0.503, 1000);
         assertEquals(Instruction.TURN_SHARP_LEFT, nextInstr3.getSign());
 
         // a bit far away ...
-        Instruction nextInstr4 = il.find(7.40, 0.25, 20000);
+        Instruction nextInstr4 = Instructions.find(il, 7.40, 0.25, 20000);
         assertEquals(Instruction.FINISH, nextInstr4.getSign());
 
         // too far away
-        assertNull(il.find(50.8, 50.25, 1000));
+        assertNull(Instructions.find(il, 50.8, 50.25, 1000));
     }
 
     /**

@@ -304,7 +304,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         res.setClosestEdge(edge);
         res.setWayIndex(wayIndex);
         res.setSnappedPosition(QueryResult.Position.EDGE);
-        res.calcSnappedPoint(Helper.DIST_PLANE);
+        res.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
         return res;
     }
 

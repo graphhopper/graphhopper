@@ -23,7 +23,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
@@ -40,7 +40,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public class NearestResource {
 
-    private final DistanceCalc calc = Helper.DIST_EARTH;
+    private final DistanceCalc calc = DistanceCalcEarth.DIST_EARTH;
     private final LocationIndex index;
     private final boolean hasElevation;
 
