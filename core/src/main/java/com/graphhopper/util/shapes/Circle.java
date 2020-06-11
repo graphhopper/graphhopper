@@ -61,11 +61,6 @@ public class Circle implements Shape {
         return bbox;
     }
 
-    @Override
-    public GHPoint getCenter() {
-        return new GHPoint(lat, lon);
-    }
-
     private double normDist(double lat1, double lon1) {
         return calc.calcNormalizedDist(lat, lon, lat1, lon1);
     }

@@ -96,12 +96,6 @@ public class Polygon implements Shape {
         return new BBox(envelope.getMinX(), envelope.getMaxX(), envelope.getMinY(), envelope.getMaxY());
     }
 
-    @Override
-    public GHPoint getCenter() {
-        Point centroid = prepPolygon.getGeometry().getCentroid();
-        return new GHPoint(centroid.getY(), centroid.getX());
-    }
-
     public double getMinLat() {
         return envelope.getMinY();
     }

@@ -81,14 +81,6 @@ public class CircleTest {
     }
 
     @Test
-    public void testGetCenter() {
-        Circle c = new Circle(10, 10, 10);
-        GHPoint center = c.getCenter();
-        assertEquals(10, center.getLat(), .00001);
-        assertEquals(10, center.getLon(), .00001);
-    }
-
-    @Test
     public void testContainsCircle() {
         Circle c = new Circle(10, 10, 120000);
         assertTrue(c.contains(new Circle(9.9, 10.2, 90000)));

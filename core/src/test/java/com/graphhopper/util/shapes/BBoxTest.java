@@ -50,14 +50,6 @@ public class BBoxTest {
     }
 
     @Test
-    public void testGetCenter() {
-        BBox bBox = new BBox(0, 2, 0, 2);
-        GHPoint center = bBox.getCenter();
-        assertEquals(1, center.getLat(), .00001);
-        assertEquals(1, center.getLon(), .00001);
-    }
-
-    @Test
     public void testIntersect() {
         //    ---
         //    | |
