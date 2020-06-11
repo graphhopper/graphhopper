@@ -68,20 +68,17 @@ import java.util.Random;
  * @author Peter Karich
  */
 public class MiniGraphUI {
-    //    private final Graph graph;
-    private final Graph routingGraph;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Graph graph;
     private final NodeAccess na;
     private final MapLayer pathLayer;
-    private final Weighting weighting;
     private final FlagEncoder encoder;
     private final DecimalEncodedValue avSpeedEnc;
     private final BooleanEncodedValue accessEnc;
-    private final RoutingAlgorithmFactory algoFactory;
-    private final AlgorithmOptions algoOpts;
+    private final boolean useCH;
     // for moving
     int currentPosX;
     int currentPosY;
-    private Logger logger = LoggerFactory.getLogger(getClass());
     private Path path;
     private LocationIndexTree index;
     private String latLon = "";
@@ -93,90 +90,43 @@ public class MiniGraphUI {
     private QueryResult fromRes;
     private QueryResult toRes;
 
-    public MiniGraphUI(GraphHopper hopper, boolean debug) {
-        final Graph graph = hopper.getGraphHopperStorage();
+    public static void main(String[] strs) {
+        PMap args = PMap.read(strs);
+        args.putObject("datareader.file", args.getString("datareader.file", "core/files/monaco.osm.gz"));
+        args.putObject("graph.location", args.getString("graph.location", "tools/target/mini-graph-ui-gh"));
+        args.putObject("graph.flag_encoders", args.getString("graph.flag_encoders", "car"));
+        GraphHopperConfig ghConfig = new GraphHopperConfig(args);
+        ghConfig.setProfiles(Arrays.asList(
+                new Profile("profile")
+                        .setVehicle("car")
+                        .setWeighting("fastest")
+        ));
+        ghConfig.setCHProfiles(Arrays.asList(
+                new CHProfile("profile")
+        ));
+        ghConfig.setLMProfiles(Arrays.asList(
+                new LMProfile("profile")
+        ));
+        GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
+        boolean debug = args.getBool("minigraphui.debug", false);
+        boolean useCH = args.getBool("minigraphui.useCH", false);
+        new MiniGraphUI(hopper, debug, useCH).visualize();
+    }
+
+    public MiniGraphUI(GraphHopper hopper, boolean debug, boolean useCH) {
+        this.graph = hopper.getGraphHopperStorage();
         this.na = graph.getNodeAccess();
         encoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
-        Profile profile = hopper.getProfiles().iterator().next();
-        boolean ch = true;
-        if (ch) {
-            CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
-            weighting = chConfig.getWeighting();
-            routingGraph = hopper.getGraphHopperStorage().getCHGraph(chConfig.getName());
+        this.useCH = useCH;
 
-            final PrepareContractionHierarchies preparation = hopper.getCHPreparationHandler().getPreparation(profile.getName());
-            algoFactory = new RoutingAlgorithmFactory() {
-
-                class TmpAlgo extends DijkstraBidirectionCH implements DebugAlgo {
-                    private final GraphicsWrapper mg;
-                    private Graphics2D g2;
-
-                    public TmpAlgo(RoutingCHGraph graph, GraphicsWrapper mg) {
-                        super(graph);
-                        this.mg = mg;
-                    }
-
-                    @Override
-                    public void setGraphics2D(Graphics2D g2) {
-                        this.g2 = g2;
-                    }
-
-                    @Override
-                    public void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
-                        if (g2 != null)
-                            mg.plotNode(g2, traversalId, Color.YELLOW, 6);
-
-                        super.updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
-                    }
-                }
-
-                @Override
-                public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                    // doable but ugly
-                    Weighting w = preparation.getCHConfig().getWeighting();
-                    return new TmpAlgo(new RoutingCHGraphImpl(g, g.wrapWeighting(w)), mg);
-                }
-            };
-            algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
-
-        } else {
-            routingGraph = graph;
-            weighting = hopper.createWeighting(profile, new PMap());
-            final PrepareLandmarks preparation = hopper.getLMPreparationHandler().getPreparation(profile.getName());
-            algoFactory = new RoutingAlgorithmFactory() {
-                @Override
-                public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                    RoutingAlgorithm algo = preparation.getRoutingAlgorithmFactory().createAlgo(g, opts);
-                    if (algo instanceof AStarBidirection) {
-                        return new DebugAStarBi(g, opts.getWeighting(), opts.getTraversalMode(), mg).
-                                setApproximation(((AStarBidirection) algo).getApproximation());
-                    } else if (algo instanceof AStar) {
-                        return new DebugAStar(g, opts.getWeighting(), opts.getTraversalMode(), mg);
-                    } else if (algo instanceof DijkstraBidirectionRef) {
-                        return new DebugDijkstraBidirection(g, opts.getWeighting(), opts.getTraversalMode(), mg);
-                    } else if (algo instanceof Dijkstra) {
-                        return new DebugDijkstraSimple(g, opts.getWeighting(), opts.getTraversalMode(), mg);
-                    }
-                    return algo;
-                }
-            };
-            algoOpts = new AlgorithmOptions(Algorithms.ASTAR_BI, weighting);
-        }
-
-        logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algoOpts:" + algoOpts);
+        logger.info("locations:" + graph.getNodes() + ", debug:" + debug);
         mg = new GraphicsWrapper(graph);
 
         // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
 //         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = (LocationIndexTree) hopper.getLocationIndex();
-//        this.algo = new DebugDijkstraBidirection(graph, mg);
-        // this.algo = new DijkstraBidirection(graph);
-//        this.algo = new DebugAStar(graph, mg);
-//        this.algo = new AStar(graph);
-//        this.algo = new DijkstraSimple(graph);
-//        this.algo = new DebugDijkstraSimple(graph, mg);
         infoPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -198,7 +148,7 @@ public class MiniGraphUI {
         // TODO make it correct with bitset-skipping too
         final GHBitSet bitset = new GHTBitSet(graph.getNodes());
         mainPanel.addLayer(roadsLayer = new DefaultMapLayer() {
-            Random rand = new Random();
+            final Random rand = new Random();
 
             @Override
             public void paintComponent(final Graphics2D g2) {
@@ -327,14 +277,14 @@ public class MiniGraphUI {
                     return;
 
                 makeTransparent(g2);
-                QueryGraph qGraph = QueryGraph.create(routingGraph, fromRes, toRes);
-                RoutingAlgorithm algo = algoFactory.createAlgo(qGraph, algoOpts);
+                QueryGraph qGraph = QueryGraph.create(graph, fromRes, toRes);
+                RoutingAlgorithm algo = createAlgo(hopper);
                 if (algo instanceof DebugAlgo) {
                     ((DebugAlgo) algo).setGraphics2D(g2);
                 }
 
                 StopWatch sw = new StopWatch().start();
-                logger.info("start searching with " + algo + " from:" + fromRes + " to:" + toRes + " " + weighting);
+                logger.info("start searching with " + algo + " from:" + fromRes + " to:" + toRes);
 
 //                GHPoint qp = fromRes.getQueryPoint();
 //                TIntHashSet set = index.findNetworkEntries(qp.lat, qp.lon, 1);
@@ -381,23 +331,76 @@ public class MiniGraphUI {
         }
     }
 
-    public static void main(String[] strs) {
-        PMap args = PMap.read(strs);
-        GraphHopperConfig ghConfig = new GraphHopperConfig(args);
-        ghConfig.setProfiles(Arrays.asList(
-                new Profile("profile")
-                        .setVehicle("car")
-                        .setWeighting("fastest")
-        ));
-        ghConfig.setCHProfiles(Arrays.asList(
-                new CHProfile("profile")
-        ));
-        ghConfig.setLMProfiles(Arrays.asList(
-                new LMProfile("profile")
-        ));
-        GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();
-        boolean debug = args.getBool("minigraphui.debug", false);
-        new MiniGraphUI(hopper, debug).visualize();
+    private RoutingAlgorithm createAlgo(GraphHopper hopper) {
+        Profile profile = hopper.getProfiles().iterator().next();
+        if (useCH) {
+            CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
+            Weighting weighting = chConfig.getWeighting();
+            Graph routingGraph = hopper.getGraphHopperStorage().getCHGraph(chConfig.getName());
+
+            final PrepareContractionHierarchies preparation = hopper.getCHPreparationHandler().getPreparation(profile.getName());
+            RoutingAlgorithmFactory algoFactory = new RoutingAlgorithmFactory() {
+
+                class TmpAlgo extends DijkstraBidirectionCH implements DebugAlgo {
+                    private final GraphicsWrapper mg;
+                    private Graphics2D g2;
+
+                    public TmpAlgo(RoutingCHGraph graph, GraphicsWrapper mg) {
+                        super(graph);
+                        this.mg = mg;
+                    }
+
+                    @Override
+                    public void setGraphics2D(Graphics2D g2) {
+                        this.g2 = g2;
+                    }
+
+                    @Override
+                    public void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
+                        if (g2 != null)
+                            mg.plotNode(g2, traversalId, Color.YELLOW, 6);
+
+                        super.updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
+                    }
+                }
+
+                @Override
+                public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
+                    // doable but ugly
+                    Weighting w = preparation.getCHConfig().getWeighting();
+                    return new TmpAlgo(new RoutingCHGraphImpl(g, g.wrapWeighting(w)), mg);
+                }
+            };
+            AlgorithmOptions algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
+            logger.info("algoOpts:" + algoOpts + ", weighting: " + weighting);
+            QueryGraph qGraph = QueryGraph.create(routingGraph, fromRes, toRes);
+            return algoFactory.createAlgo(qGraph, algoOpts);
+        } else {
+            Graph routingGraph = graph;
+            Weighting weighting = hopper.createWeighting(profile, new PMap());
+            final PrepareLandmarks preparation = hopper.getLMPreparationHandler().getPreparation(profile.getName());
+            RoutingAlgorithmFactory algoFactory = new RoutingAlgorithmFactory() {
+                @Override
+                public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
+                    RoutingAlgorithm algo = preparation.getRoutingAlgorithmFactory().createAlgo(g, opts);
+                    if (algo instanceof AStarBidirection) {
+                        return new DebugAStarBi(g, opts.getWeighting(), opts.getTraversalMode(), mg).
+                                setApproximation(((AStarBidirection) algo).getApproximation());
+                    } else if (algo instanceof AStar) {
+                        return new DebugAStar(g, opts.getWeighting(), opts.getTraversalMode(), mg);
+                    } else if (algo instanceof DijkstraBidirectionRef) {
+                        return new DebugDijkstraBidirection(g, opts.getWeighting(), opts.getTraversalMode(), mg);
+                    } else if (algo instanceof Dijkstra) {
+                        return new DebugDijkstraSimple(g, opts.getWeighting(), opts.getTraversalMode(), mg);
+                    }
+                    return algo;
+                }
+            };
+            AlgorithmOptions algoOpts = new AlgorithmOptions(Algorithms.ASTAR_BI, weighting);
+            logger.info("algoOpts:" + algoOpts + ", weighting: " + weighting);
+            QueryGraph qGraph = QueryGraph.create(routingGraph, fromRes, toRes);
+            return algoFactory.createAlgo(qGraph, algoOpts);
+        }
     }
 
     public Color[] generateColors(int n) {
