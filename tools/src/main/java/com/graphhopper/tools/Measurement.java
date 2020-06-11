@@ -87,26 +87,6 @@ public class Measurement {
     private int maxNode;
     private String vehicle;
 
-    private static void gcAndWait() {
-        long before = getTotalGcCount();
-        // trigger gc
-        System.gc();
-        while (getTotalGcCount() == before) {
-            // wait for the gc to have completed
-        }
-    }
-
-    private static long getTotalGcCount() {
-        long sum = 0;
-        for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
-            long count = b.getCollectionCount();
-            if (count != -1) {
-                sum += count;
-            }
-        }
-        return sum;
-    }
-
     public static void main(String[] strs) throws IOException {
         PMap args = PMap.read(strs);
         int repeats = args.getInt("measurement.repeats", 1);
@@ -223,7 +203,7 @@ public class Measurement {
 
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
-            printMiscUnitPerfTests(g, false, null, encoder, count * 100, allowedEdges);
+            printMiscUnitPerfTests(g, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
             if (runSlow) {
@@ -268,7 +248,7 @@ public class Measurement {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
                     CHGraph lg = g.getCHGraph(chConfig.getName());
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
-                    printMiscUnitPerfTests(lg, isCH, chConfig.getWeighting(), encoder, count * 100, allowedEdges);
+                    printMiscUnitPerfTestsCH(lg, chConfig.getWeighting(), encoder, count * 100, allowedEdges);
                     gcAndWait();
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
@@ -483,40 +463,74 @@ public class Measurement {
         print("location_index", miniPerf);
     }
 
-    private void printMiscUnitPerfTests(final Graph graph, boolean isCH, Weighting chWeighting, final FlagEncoder encoder,
-                                        int count, final GHBitSet allowedEdges) {
+    private void printMiscUnitPerfTests(final Graph graph, final FlagEncoder encoder, int count, final GHBitSet allowedEdges) {
         final Random rand = new Random(seed);
-        String description = "";
-        if (isCH) {
-            description = "CH";
-            CHGraph lg = (CHGraph) graph;
-            final CHEdgeExplorer chExplorer = lg.createEdgeExplorer(new LevelEdgeFilter(lg));
-            MiniPerfTest miniPerf = new MiniPerfTest() {
-                @Override
-                public int doCalc(boolean warmup, int run) {
-                    int nodeId = rand.nextInt(maxNode);
-                    return GHUtility.count(chExplorer.setBaseNode(nodeId));
-                }
-            }.setIterations(count).start();
-            print("unit_testsCH.level_edge_state_next", miniPerf);
 
-            final CHEdgeExplorer chExplorer2 = lg.createEdgeExplorer();
-            miniPerf = new MiniPerfTest() {
-                @Override
-                public int doCalc(boolean warmup, int run) {
-                    int nodeId = rand.nextInt(maxNode);
-                    CHEdgeIterator iter = chExplorer2.setBaseNode(nodeId);
-                    while (iter.next()) {
-                        if (iter.isShortcut())
-                            nodeId += (int) iter.getWeight();
-                    }
-                    return nodeId;
-                }
-            }.setIterations(count).start();
-            print("unit_testsCH.get_weight", miniPerf);
+        EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder);
+        final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
+        MiniPerfTest miniPerf = new MiniPerfTest() {
+            @Override
+            public int doCalc(boolean warmup, int run) {
+                int nodeId = rand.nextInt(maxNode);
+                return GHUtility.count(outExplorer.setBaseNode(nodeId));
+            }
+        }.setIterations(count).start();
+        print("unit_tests.out_edge_state_next", miniPerf);
 
-            // for some strange reason these tests affect the results for routingCH_xyz.mean for the 'very-custom' map
-            // no idea why, but disabling this for now...
+        final EdgeExplorer allExplorer = graph.createEdgeExplorer();
+        miniPerf = new MiniPerfTest() {
+            @Override
+            public int doCalc(boolean warmup, int run) {
+                int nodeId = rand.nextInt(maxNode);
+                return GHUtility.count(allExplorer.setBaseNode(nodeId));
+            }
+        }.setIterations(count).start();
+        print("unit_tests.all_edge_state_next", miniPerf);
+
+        final int maxEdgesId = graph.getAllEdges().length();
+        miniPerf = new MiniPerfTest() {
+            @Override
+            public int doCalc(boolean warmup, int run) {
+                while (true) {
+                    int edgeId = rand.nextInt(maxEdgesId);
+                    if (allowedEdges.contains(edgeId))
+                        return graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
+                }
+            }
+        }.setIterations(count).start();
+        print("unit_tests.get_edge_state", miniPerf);
+    }
+
+    private void printMiscUnitPerfTestsCH(final CHGraph lg, Weighting chWeighting, final FlagEncoder encoder,
+                                          int count, final GHBitSet allowedEdges) {
+        final Random rand = new Random(seed);
+        final CHEdgeExplorer chExplorer = lg.createEdgeExplorer(new LevelEdgeFilter(lg));
+        MiniPerfTest miniPerf = new MiniPerfTest() {
+            @Override
+            public int doCalc(boolean warmup, int run) {
+                int nodeId = rand.nextInt(maxNode);
+                return GHUtility.count(chExplorer.setBaseNode(nodeId));
+            }
+        }.setIterations(count).start();
+        print("unit_testsCH.level_edge_state_next", miniPerf);
+
+        final CHEdgeExplorer chExplorer2 = lg.createEdgeExplorer();
+        miniPerf = new MiniPerfTest() {
+            @Override
+            public int doCalc(boolean warmup, int run) {
+                int nodeId = rand.nextInt(maxNode);
+                CHEdgeIterator iter = chExplorer2.setBaseNode(nodeId);
+                while (iter.next()) {
+                    if (iter.isShortcut())
+                        nodeId += (int) iter.getWeight();
+                }
+                return nodeId;
+            }
+        }.setIterations(count).start();
+        print("unit_testsCH.get_weight", miniPerf);
+
+        // for some strange reason these tests affect the results for routingCH_xyz.mean for the 'very-custom' map
+        // no idea why, but disabling this for now...
 //            RoutingCHGraphImpl routingCHGraph = new RoutingCHGraphImpl(lg, chWeighting);
 //            final RoutingCHEdgeExplorer chOutEdgeExplorer = routingCHGraph.createOutEdgeExplorer();
 //            miniPerf = new MiniPerfTest() {
@@ -558,20 +572,19 @@ public class Measurement {
 //                }
 //            }.setIterations(count).start();
 //            print("unit_testsCH.out_orig_edge_next", miniPerf);
-        }
 
         EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder);
-        final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
-        MiniPerfTest miniPerf = new MiniPerfTest() {
+        final CHEdgeExplorer outExplorer = lg.createEdgeExplorer(outFilter);
+        miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
                 int nodeId = rand.nextInt(maxNode);
                 return GHUtility.count(outExplorer.setBaseNode(nodeId));
             }
         }.setIterations(count).start();
-        print("unit_tests" + description + ".out_edge_state_next", miniPerf);
+        print("unit_testsCH.out_edge_state_next", miniPerf);
 
-        final EdgeExplorer allExplorer = graph.createEdgeExplorer();
+        final CHEdgeExplorer allExplorer = lg.createEdgeExplorer();
         miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
@@ -579,20 +592,20 @@ public class Measurement {
                 return GHUtility.count(allExplorer.setBaseNode(nodeId));
             }
         }.setIterations(count).start();
-        print("unit_tests" + description + ".all_edge_state_next", miniPerf);
+        print("unit_testsCH.all_edge_state_next", miniPerf);
 
-        final int maxEdgesId = graph.getAllEdges().length();
+        final int maxEdgesId = lg.getAllEdges().length();
         miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
                 while (true) {
                     int edgeId = rand.nextInt(maxEdgesId);
                     if (allowedEdges.contains(edgeId))
-                        return graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
+                        return lg.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
                 }
             }
         }.setIterations(count).start();
-        print("unit_tests" + description + ".get_edge_state", miniPerf);
+        print("unit_testsCH.get_edge_state", miniPerf);
     }
 
     private void printSpatialRuleLookupTest(String countryBordersDirectory, int count) {
@@ -1039,5 +1052,25 @@ public class Measurement {
 
     private int getSummaryColumnWidth(String p) {
         return Math.max(10, p.length());
+    }
+
+    private static void gcAndWait() {
+        long before = getTotalGcCount();
+        // trigger gc
+        System.gc();
+        while (getTotalGcCount() == before) {
+            // wait for the gc to have completed
+        }
+    }
+
+    private static long getTotalGcCount() {
+        long sum = 0;
+        for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
+            long count = b.getCollectionCount();
+            if (count != -1) {
+                sum += count;
+            }
+        }
+        return sum;
     }
 }
