@@ -33,7 +33,7 @@ You should take the below steps to install your needed components:
 
 * In Eclipse, under _help_ menu, choose _Eclipse Marketplace_. 
 
-* In the opened window, search all _markets/all categories_ and in the _find_ dialoge box type the name of the needed component and click on _Go_ button:
+* In the opened window, search all _markets/all categories_ and in the _find_ dialog box type the name of the needed component and click on _Go_ button:
 
  * Search for “egit” if you need “EGIT” and “EGit – Git Team Provider” should be among first items to appear.
  

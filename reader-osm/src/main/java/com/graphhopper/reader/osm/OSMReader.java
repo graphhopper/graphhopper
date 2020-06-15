@@ -550,7 +550,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             // osmId is used exactly once
             getNodeMap().put(osmId, PILLAR_NODE);
         } else if (tmpGHNodeId > EMPTY_NODE) {
-            // mark node as tower node as it occured at least twice times
+            // mark node as tower node as it occurred at least twice times
             getNodeMap().put(osmId, TOWER_NODE);
         } else {
             // tmpIndex is already negative (already tower node)
@@ -729,7 +729,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         double lon = pillarInfo.getLongitude(tmpNode);
         double ele = pillarInfo.getElevation(tmpNode);
         if (lat == Double.MAX_VALUE || lon == Double.MAX_VALUE)
-            throw new RuntimeException("Conversion pillarNode to towerNode already happended!? "
+            throw new RuntimeException("Conversion pillarNode to towerNode already happened!? "
                     + "osmId:" + osmId + " pillarIndex:" + tmpNode);
 
         if (convertToTowerNode) {

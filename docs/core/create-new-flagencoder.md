@@ -5,7 +5,7 @@ different desired name.
 
 Make sure that it supports the required speed resolution via calling the appropriate (super) constructor. 
 E.g. speedBits means how many bits should reserved for the speed information, 
-the speedFactor means by which factor the speed should be devided before storing 
+the speedFactor means by which factor the speed should be divided before storing 
 (e.g. 5 for car and 1 for bikes for more precision).
 
 As a third step you need to tune the speeds for the different road types and surfaces. Maybe

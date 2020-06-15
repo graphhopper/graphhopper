@@ -24,7 +24,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
-import org.locationtech.jts.geom.Envelope;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -68,7 +67,7 @@ public class WebHelper {
             int deltaLatitude = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
             lat += deltaLatitude;
 
-            // longitute
+            // longitude
             shift = 0;
             result = 0;
             do {

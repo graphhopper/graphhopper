@@ -230,7 +230,7 @@ public class PbfBlobDecoder implements Runnable {
                 int valueIndex = keysValuesIterator.next();
 
                 if (tags == null) {
-                    // devide by 2 as key&value, multiple by 2 because of the better approximation
+                    // divide by 2 as key&value, multiple by 2 because of the better approximation
                     tags = new HashMap<>(Math.max(3, 2 * (nodes.getKeysValsList().size() / 2) / idList.size()));
                 }
 

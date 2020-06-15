@@ -228,7 +228,7 @@ public class OSMInputFile implements Sink, OSMInput {
         } finally {
             eof = true;
             bis.close();
-            // if exception happend on OSMInputFile-thread we need to shutdown the pbf handling
+            // if exception happened on OSMInputFile-thread we need to shutdown the pbf handling
             if (pbfReaderThread != null && pbfReaderThread.isAlive())
                 pbfReaderThread.interrupt();
         }

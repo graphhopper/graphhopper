@@ -252,7 +252,7 @@ public class RouteResource {
                 // TODO e.g. 'point' parameter occurs multiple times and we cannot throw an exception here
                 //  unknown parameters (hints) should be allowed to be multiparameters, too, or we shouldn't use them for
                 //  known parameters either, _or_ known parameters must be filtered before they come to this code point,
-                //  _or_ we stop passing unknown parameters alltogether.
+                //  _or_ we stop passing unknown parameters altogether.
                 // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
                 // see also #1976
             }

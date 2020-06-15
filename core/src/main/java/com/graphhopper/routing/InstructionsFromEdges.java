@@ -294,7 +294,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     --B-<--
                     Road A and Road B have to have the same name and roughly the same, but opposite orientation, otherwise we are assuming this is no u-turn.
 
-                    Note: This approach only works if there a turn instruction fro A->Connector and Connector->B.
+                    Note: This approach only works if there a turn instruction for A->Connector and Connector->B.
                     Currently we don't create a turn instruction if there is no other possible turn
                     We only create a u-turn if edge B is a one-way, see #1073 for more details.
                   */
@@ -437,7 +437,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // If not, we don't need a turn instruction
         EdgeIteratorState otherContinue = outgoingEdges.getOtherContinue(prevLat, prevLon, prevOrientation);
 
-        // Signs provide too less detail, so we use the delta for a precise comparision
+        // Signs provide too less detail, so we use the delta for a precise comparison
         double delta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, lat, lon, prevOrientation);
 
         // This state is bad! Two streets are going more or less straight

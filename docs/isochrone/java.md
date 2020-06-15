@@ -32,4 +32,4 @@ tree.search(qr.getClosestNode(),  label -> {
 ```
 
 See [IsochroneResource.java](https://github.com/graphhopper/graphhopper/blob/master/web-bundle/src/main/java/com/graphhopper/resources/IsochroneResource.java)
-to find out how to create an iso line polygone / isochrone from using the shortest path tree.
+to find out how to create an iso line polygon / isochrone from using the shortest path tree.

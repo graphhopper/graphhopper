@@ -89,7 +89,7 @@
     refactoring to Weighting class, see #807
     removed FlagEncoder from parameters as weighting.getFlagEncoder can and is used
     all properties with prefix "osmreader." changed to "datareader." and osmreader.osm changed to datareader.file
-    maven/gradle dependency graphhopper is now splitted into graphhopper-core and graphhopper-reader-osm, i.e. if you previouls depend on 'graphhopper' artificat you should now use graphhopper-reader-osm except environments like Android where you just load the graph and do no import
+    maven/gradle dependency graphhopper is now split into graphhopper-core and graphhopper-reader-osm, i.e. if you previouls depend on 'graphhopper' artificat you should now use graphhopper-reader-osm except environments like Android where you just load the graph and do no import
     use GraphHopperOSM as base class instead of GraphHopper
     OSM reader separated from core, use new graphhopper-core package
     moved subnetwork code into own package com.graphhopper.routing.subnetwork
@@ -158,8 +158,8 @@
     if start and end point are identical an algorithm will find the path consisting only of one node, one point and one instruction (finish instruction), but without edges
     astarbi has new default values for approximation (false) and approximation_factor (1.2) in RoutingAlgorithmFactorySimple
     instead of strings use the variables in AlgorithmOptions to specify an algorithm
-    use RoutingAlgorithmFactorySimple instead of RoutingAlgorithmFactory, also more constistent algorithm preparation handling due to new AlgorithmOptions, therefor removed NoOpAlgorithmPreparation
-    GHResponse.getXX methods now fail fast (throw an exception) if an error while route calculation occured. See #287
+    use RoutingAlgorithmFactorySimple instead of RoutingAlgorithmFactory, also more consistent algorithm preparation handling due to new AlgorithmOptions, therefor removed NoOpAlgorithmPreparation
+    GHResponse.getXX methods now fail fast (throw an exception) if an error while route calculation occurred. See #287
     renamed less often used URL parameter 'min_path_precision' to way_point_max_distance which makes it identical to the setWayPointMaxDistance method used for simplification at OSMImport
     removed douglas.minprecision from Java API ghRequest.hints => use wayPointMaxDistance instead
     encoder.supportTurnCost is replaced by encoder.supports(TurnWeighting.class)
@@ -222,7 +222,7 @@
         made DistanceCalc into interface (new DistanceCalcEarth implementation)
         made GraphStorage into interface (new GraphHopperStorage implementation) move some methods from Graph into GraphStorage -> optimize + node removal stuff -> not necessary in algorithms
     incompatible storage layout due to:
-        pluggable endianness (#103) -> changed default endianess to LITTLE
+        pluggable endianness (#103) -> changed default endianness to LITTLE
     add highly experimental UnsafeDataAccess to speed up search ~15%
     several small bug fixes and improvements
     different edge insert

@@ -161,7 +161,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         lg.shortcut(1, 2, PrepareEncoder.getScDirMask(), 0, 10, 11);
         lg.shortcut(1, 0, PrepareEncoder.getScFwdDir(), 0, 12, 13);
         lg.shortcut(3, 1, PrepareEncoder.getScFwdDir(), 0, 14, 15);
-        // create everytime a new independent iterator for disconnect method
+        // create every time a new independent iterator for disconnect method
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(1);
         iter.next();
         assertEquals(3, iter.getAdjNode());
@@ -653,7 +653,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
                                 CHConfig.nodeBased("a", weighting)
                         )
                         .create();
-                fail("creating mulitple profiles with the same name should be an error");
+                fail("creating multiple profiles with the same name should be an error");
             } catch (Exception e) {
                 assertTrue("unexpected error: " + e.getMessage(), e.getMessage().contains("a CHGraph already exists"));
             }

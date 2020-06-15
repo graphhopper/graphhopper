@@ -21,4 +21,4 @@ mean several additional GB per weighting.
 Furthermore this short value has the problem that smaller distances cannot be
 differentiated sometimes which could lead to very slightly suboptimal routes.
 If just small areas (country or city) are imported this can be avoided via setting a 
-the maximum weighting explicitely.
+the maximum weighting explicitly.

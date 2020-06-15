@@ -157,7 +157,7 @@
     </build>
     
     <repositories>        		
-        <!-- Android is in maven central! To install android sdk in a continuos integration environment see http://stackoverflow.com/q/4681697/194609
+        <!-- Android is in maven central! To install android sdk in a continuous integration environment see http://stackoverflow.com/q/4681697/194609
         For mapsforge see scripts/maven-install-mapsforge.sh  -->
     </repositories>
     

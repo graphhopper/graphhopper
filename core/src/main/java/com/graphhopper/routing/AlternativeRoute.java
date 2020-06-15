@@ -523,7 +523,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
                 int tid = traversalMode.createTraversalId(iterState, false);
                 set.add(tid);
                 if (startTID.get() < 0) {
-                    // for node based traversal we need to explicitely add base node as starting node and to list
+                    // for node based traversal we need to explicitly add base node as starting node and to list
                     if (!traversalMode.isEdgeBased()) {
                         tid = iterState.getBaseNode();
                         set.add(tid);

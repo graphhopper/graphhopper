@@ -16,7 +16,7 @@ The helper nodes between the junctions we call 'pillar nodes' which can be fetch
 routing a lot faster (~8 times).
 
 That splitting into pillar and tower nodes is also the reason why there can't be a unique mapping from 
-one OSM node ID to exactly one GraphHopper node ID. And as one OSM Way is often splitted into multiple 
+one OSM node ID to exactly one GraphHopper node ID. And as one OSM Way is often split into multiple 
 edges the same applies for edge IDs too.
 
 ### What are virtual edges and nodes?

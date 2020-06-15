@@ -2,21 +2,14 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
-
 import org.junit.Test;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LinearRing;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Robin Boldt
@@ -81,7 +74,7 @@ public class SpatialRuleLookupJTSTest {
         assertSame(null, getFirstRule(spatialRuleLookup, 51.694467, 15.209218));
         assertSame(null, getFirstRule(spatialRuleLookup, 47.283669, 11.167381));
 
-        // Close to the border of Germany, in Germany - Whereas the borders are defined by the GeoJson above and do not strictly follow the acutal border
+        // Close to the border of Germany, in Germany - Whereas the borders are defined by the GeoJson above and do not strictly follow the actual border
         assertSame(germanySpatialRule, getFirstRule(spatialRuleLookup, 50.017714, 12.356129));
         assertSame(germanySpatialRule, getFirstRule(spatialRuleLookup, 49.949930, 6.225853));
         assertSame(germanySpatialRule, getFirstRule(spatialRuleLookup, 47.580866, 9.707582));

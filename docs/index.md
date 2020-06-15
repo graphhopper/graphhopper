@@ -68,7 +68,7 @@ Various topics are explained in more detail separately:
 
 #### Other links
 
- * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search enginge in your browser.
+ * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search engine in your browser.
  * [Embed GraphHopper on your website](https://github.com/karussell/graphhopper-embed-form): A small code snippet on how to integrate GraphHopper Maps in your web site like a contact form
 
 #### Android

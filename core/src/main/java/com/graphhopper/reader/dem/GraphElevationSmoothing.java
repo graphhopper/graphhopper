@@ -42,7 +42,7 @@ public class GraphElevationSmoothing {
                 }
             }
 
-            // In this case we cannot find any points withing the max search distance, so we simply skip this point
+            // In this case we cannot find any points within the max search distance, so we simply skip this point
             if(start == end)
                 continue;
 

@@ -824,7 +824,7 @@ public class GraphHopperOSMTest {
         GHPoint start = new GHPoint(0.0015, 0.002);
         // End at middle of edge 2-3
         GHPoint end = new GHPoint(0.002, 0.0005);
-        // Via Point betweeen 8-3
+        // Via Point between 8-3
         GHPoint via = new GHPoint(0.0015, 0.001);
         GHRequest req = new GHRequest().
                 setPoints(Arrays.asList(start, via, end)).
@@ -840,7 +840,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testGetPathsDirectionEnforcement5() {
-        // Test independence of previous enforcement for subsequent pathes
+        // Test independence of previous enforcement for subsequent paths
         instance = createSquareGraphInstance();
 
         // Start in middle of edge 4-5 
