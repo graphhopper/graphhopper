@@ -35,18 +35,18 @@ public class CHRoutingAlgorithmFactory {
         this.chConfig = chGraph.getCHConfig();
     }
 
-    public RoutingAlgorithm createAlgo(Graph graph, PMap opts) {
+    public BidirRoutingAlgorithm createAlgo(Graph graph, PMap opts) {
         // todo: This method does not really fit for CH: We get a graph, but really we already know which
         // graph we have to use: the CH graph. Same with  opts.weighting: The CHConfig already contains a weighting
         // and we cannot really use it here. The real reason we do this the way its done atm is that graph might be
         // a QueryGraph that wraps (our) CHGraph.
-        RoutingAlgorithm algo = doCreateAlgo(graph, opts);
+        BidirRoutingAlgorithm algo = doCreateAlgo(graph, opts);
         if (opts.has(MAX_VISITED_NODES))
             algo.setMaxVisitedNodes(opts.getInt(MAX_VISITED_NODES, Integer.MAX_VALUE));
         return algo;
     }
 
-    private RoutingAlgorithm doCreateAlgo(Graph graph, PMap opts) {
+    private BidirRoutingAlgorithm doCreateAlgo(Graph graph, PMap opts) {
         if (chConfig.isEdgeBased()) {
             // important: do not simply take the turn cost storage from ghStorage, because we need the wrapped storage from
             // query graph!
@@ -62,7 +62,7 @@ public class CHRoutingAlgorithmFactory {
         }
     }
 
-    private RoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, PMap opts) {
+    private BidirRoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, PMap opts) {
         // todo: AStar is much faster for edge-based but currently we cannot make it the default because
         //       of #2061
         String defaultAlgo = DIJKSTRA_BI;
@@ -81,7 +81,7 @@ public class CHRoutingAlgorithmFactory {
         }
     }
 
-    private RoutingAlgorithm createAlgoNodeBased(RoutingCHGraph g, PMap opts) {
+    private BidirRoutingAlgorithm createAlgoNodeBased(RoutingCHGraph g, PMap opts) {
         // use dijkstra by default for node-based (its faster)
         String defaultAlgo = DIJKSTRA_BI;
         String algo = opts.getString(ALGORITHM, defaultAlgo);
