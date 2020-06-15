@@ -34,6 +34,9 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
 
     public AbstractBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
         super(graph, TraversalMode.EDGE_BASED);
+        if (!graph.isEdgeBased()) {
+            throw new IllegalArgumentException("Edge-based CH algorithms only work with edge-based CH graphs");
+        }
         // the inner explorers will run on the base-(or base-query-)graph edges only
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
         innerInExplorer = graph.createOriginalInEdgeExplorer();

@@ -84,11 +84,6 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     }
 
     @Override
-    public RoutingCHEdgeExplorer createAllEdgeExplorer() {
-        return RoutingCHEdgeIteratorImpl.allEdges(graph.createEdgeExplorer(), weighting);
-    }
-
-    @Override
     public RoutingCHEdgeExplorer createOriginalInEdgeExplorer() {
         return RoutingCHEdgeIteratorImpl.inEdges(graph.getBaseGraph().createEdgeExplorer(), weighting);
     }
@@ -127,6 +122,11 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     @Override
     public boolean hasTurnCosts() {
         return weighting.hasTurnCosts();
+    }
+
+    @Override
+    public boolean isEdgeBased() {
+        return chGraph.getCHConfig().isEdgeBased();
     }
 
     @Override

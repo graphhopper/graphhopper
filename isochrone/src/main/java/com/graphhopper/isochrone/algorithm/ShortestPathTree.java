@@ -146,7 +146,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
                     continue;
                 }
 
-                // todo: for #1776/#1835 move the access check into weighting
+                // todo: for #1835 move the access check into weighting
                 double nextWeight = !filter.accept(iter)
                         ? Double.POSITIVE_INFINITY
                         : (GHUtility.calcWeightWithTurnWeight(weighting, iter, reverseFlow, currentLabel.edge) + currentLabel.weight);

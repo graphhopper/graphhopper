@@ -36,7 +36,6 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  */
 public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected final RoutingCHGraph graph;
-    protected RoutingCHEdgeExplorer allEdgeExplorer;
     protected RoutingCHEdgeExplorer inEdgeExplorer;
     protected RoutingCHEdgeExplorer outEdgeExplorer;
     protected CHEdgeFilter levelEdgeFilter;
@@ -47,7 +46,6 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         if (graph.hasTurnCosts() && !tMode.isEdgeBased())
             throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
         this.nodeAccess = graph.getGraph().getNodeAccess();
-        allEdgeExplorer = graph.createAllEdgeExplorer();
         outEdgeExplorer = graph.createOutEdgeExplorer();
         inEdgeExplorer = graph.createInEdgeExplorer();
         levelEdgeFilter = new CHLevelEdgeFilter(graph);

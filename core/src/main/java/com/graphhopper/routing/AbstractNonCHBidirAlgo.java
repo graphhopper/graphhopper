@@ -215,7 +215,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     }
 
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
-        // todo: for #1776/#1835 move access flag checks into weighting
+        // todo: for #1835 move access flag checks into weighting
         final boolean access = reverse ? inEdgeFilter.accept(iter) : outEdgeFilter.accept(iter);
         if (!access) {
             return Double.POSITIVE_INFINITY;

@@ -96,7 +96,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
      *                   do the full computation)
      */
     double getOrigEdgeWeight(boolean reverse, boolean needWeight) {
-        // todo: for #1776 move the access check into the weighting
+        // todo: for #1835 move the access check into the weighting
         final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
         final boolean access = reverse
                 ? baseEdge.getReverse(accessEnc)

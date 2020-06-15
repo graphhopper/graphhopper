@@ -36,8 +36,6 @@ public interface RoutingCHGraph {
 
     RoutingCHEdgeExplorer createOutEdgeExplorer();
 
-    RoutingCHEdgeExplorer createAllEdgeExplorer();
-
     RoutingCHEdgeExplorer createOriginalInEdgeExplorer();
 
     RoutingCHEdgeExplorer createOriginalOutEdgeExplorer();
@@ -59,6 +57,8 @@ public interface RoutingCHGraph {
     Graph getBaseGraph();
 
     boolean hasTurnCosts();
+
+    boolean isEdgeBased();
 
     Weighting getWeighting();
 }

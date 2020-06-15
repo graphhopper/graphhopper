@@ -17,10 +17,10 @@
  */
 package com.graphhopper.util;
 
-import static java.lang.Math.*;
-
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+
+import static java.lang.Math.*;
 
 /**
  * @author Peter Karich
