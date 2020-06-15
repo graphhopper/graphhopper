@@ -320,7 +320,7 @@ public class NavigateResponseConverterTest {
         ObjectNode json = NavigateResponseConverter.convertFromGHResponseError(rsp);
 
         assertEquals("InvalidInput", json.get("code").asText());
-        assertEquals("Point 0 is out of bounds: 42.554851,111.536198", json.get("message").asText());
+        assertTrue(json.get("message").asText().startsWith("Point 0 is out of bounds: 42.554851,111.536198"));
     }
 
 }
