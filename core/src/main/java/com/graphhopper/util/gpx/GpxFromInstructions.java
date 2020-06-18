@@ -28,6 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+// todo: the code here does not really belong into core, but we moved it here for now so its available from
+// map-matching resource (it cannot be in the api module, because it uses AngleCalc). Probably we should separate the
+// actual gpx conversion (which belongs to the web module) from the angle calculations. Or at least move this code back
+// into web-bundle once MapMatchingResource is in core. Or we need another module for code that is used in different
+// modules like web, but does not really fit into core either.
 public class GpxFromInstructions {
 
     private static final AngleCalc AC = AngleCalc.ANGLE_CALC;
