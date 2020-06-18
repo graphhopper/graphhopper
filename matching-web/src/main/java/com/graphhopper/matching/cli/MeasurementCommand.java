@@ -173,7 +173,9 @@ public class MeasurementCommand extends Command {
                     double lon0 = bbox.minLon + rand.nextDouble() * lonDelta;
                     double lat1 = bbox.minLat + rand.nextDouble() * latDelta;
                     double lon1 = bbox.minLon + rand.nextDouble() * lonDelta;
-                    GHResponse r = hopper.route(new GHRequest(lat0, lon0, lat1, lon1));
+                    GHRequest request = new GHRequest(lat0, lon0, lat1, lon1);
+                    request.setProfile("fast_car");
+                    GHResponse r = hopper.route(request);
 
                     // if found, use it for map matching:
                     if (!r.hasErrors()) {
