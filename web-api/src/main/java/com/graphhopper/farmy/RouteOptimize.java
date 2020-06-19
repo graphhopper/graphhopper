@@ -24,6 +24,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -33,6 +34,8 @@ public class RouteOptimize {
     private Location depotLocation;
     private IdentifiedPointList pointList;
     private final GraphHopperAPI graphHopper;
+
+    public VehicleRoutingTransportCostsMatrix vrtcm;
 
 
     public RouteOptimize(GraphHopperAPI graphHopper, InputStream fileStream, GHPoint depotPoint) throws Exception {
@@ -63,23 +66,30 @@ public class RouteOptimize {
         build(routePlanReader.getIdentifiedPointList(), farmyCouriers);
     }
 
-    public HashMap<String, ArrayList<GHPoint>> getOptimizedRoutes() {
-        HashMap<String, ArrayList<GHPoint>> allMap = new HashMap<>();
+    public HashMap<String, HashMap<String, Object>> getOptimizedRoutes() {
+        HashMap<String, HashMap<String, Object>> allMap = new HashMap<>();
         for (VehicleRoute route : solution.getRoutes()) {
+            HashMap<String, Object> vehicleHashMap = new HashMap<>();
+            IdentifiedGHPoint3D firstPoint = null;
+            IdentifiedGHPoint3D lastPoint = null;
             ArrayList<GHPoint> waypoints = new ArrayList<>();
 //            waypoints.add(new IdentifiedGHPoint3D(depotLocation.getCoordinate().getX(), depotLocation.getCoordinate().getY(), 0, "DEPOT"));
             for (TourActivity activity : route.getActivities()) {
                 Service service = ((DeliverService) activity).getJob();
                 IdentifiedGHPoint3D idPoint = this.pointList.find(service.getId());
                 idPoint.setPlannedTime(activity.getArrTime());
+                if (lastPoint != null) idPoint.setDistance(this.vrtcm.getDistance(idPoint.getId(), lastPoint.getId()));
                 waypoints.add(idPoint);
+
+                if(firstPoint == null) firstPoint = idPoint;
+                lastPoint = idPoint;
             }
-            if (allMap.get(route.getVehicle().getId()) != null) {
-                allMap.get(route.getVehicle().getId()).addAll(waypoints);
-            }
-            else {
-                allMap.put(route.getVehicle().getId(), waypoints);
-            }
+//          allMap.get(route.getVehicle().getId()).put(allMap.get(route.getVehicle().getId()).get("waypoints"), waypoints);
+            vehicleHashMap.put("waypoints", waypoints.toArray());
+            if (this.vrtcm != null && firstPoint != null) vehicleHashMap.put("distance", this.vrtcm.getDistance(firstPoint.getId(), lastPoint.getId()));
+
+//          Set vehicle to all hashmap
+            allMap.put(route.getVehicle().getId(), vehicleHashMap);
         }
         return allMap;
     }
@@ -173,8 +183,9 @@ public class RouteOptimize {
             costMatrixBuilder.addTransportDistance(pointMatrix.getPoint1().getId(), pointMatrix.getPoint2().getId(), pointMatrix.getDistance());
             costMatrixBuilder.addTransportTime(pointMatrix.getPoint1().getId(), pointMatrix.getPoint2().getId(), pointMatrix.getTime());
         }
+        this.vrtcm = costMatrixBuilder.build();
 
-        vrpBuilder.setRoutingCost(costMatrixBuilder.build());
+        vrpBuilder.setRoutingCost(this.vrtcm);
 
 
         VehicleRoutingProblem vrp = vrpBuilder.build();
@@ -280,7 +291,8 @@ public class RouteOptimize {
             costMatrixBuilder.addTransportTime(pointMatrix.getPoint1().getId(), pointMatrix.getPoint2().getId(), pointMatrix.getTime());
         }
 
-        vrpBuilder.setRoutingCost(costMatrixBuilder.build());
+        this.vrtcm = costMatrixBuilder.build();
+        vrpBuilder.setRoutingCost(this.vrtcm);
 
 
         VehicleRoutingProblem vrp = vrpBuilder.build();

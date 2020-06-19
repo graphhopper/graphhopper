@@ -131,7 +131,7 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
                 getDirection(), // [7] // Direction
                 String.valueOf(getPlannedTime() / 1000), // [8] Planned time
                 String.valueOf(getWeight()), // [9] Weight
-                String.valueOf(getDistance()) // [9] Weight
+                String.valueOf(getDistance()) // [10] Distance
         };
     }
 }
