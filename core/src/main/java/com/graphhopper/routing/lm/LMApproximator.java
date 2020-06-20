@@ -49,6 +49,10 @@ public class LMApproximator implements WeightApproximator {
     private final WeightApproximator fallBackApproximation;
     private boolean fallback = false;
 
+    public static LMApproximator forLandmarks(Graph g, LandmarkStorage lms, int activeLM) {
+        return new LMApproximator(g, lms.getWeighting(), lms.getBaseNodes(), lms, activeLM, lms.getFactor(), false);
+    }
+
     public LMApproximator(Graph graph, Weighting weighting, int maxBaseNodes, LandmarkStorage lms, int activeCount,
                           double factor, boolean reverse) {
         this.reverse = reverse;
