@@ -36,10 +36,6 @@ public interface RoutingCHGraph {
 
     RoutingCHEdgeExplorer createOutEdgeExplorer();
 
-    RoutingCHEdgeExplorer createOriginalInEdgeExplorer();
-
-    RoutingCHEdgeExplorer createOriginalOutEdgeExplorer();
-
     RoutingCHEdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode);
 
     int getLevel(int node);

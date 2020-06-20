@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.storage.NodeAccess;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +41,6 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected SPTEntry bestFwdEntry;
     protected SPTEntry bestBwdEntry;
     protected double bestWeight = Double.MAX_VALUE;
-    protected NodeAccess nodeAccess;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
     PriorityQueue<SPTEntry> pqOpenSetFrom;
     PriorityQueue<SPTEntry> pqOpenSetTo;

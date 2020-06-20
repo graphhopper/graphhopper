@@ -20,7 +20,11 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.ch.CHEntry;
 import com.graphhopper.routing.ch.EdgeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHEdgeFilter;
+import com.graphhopper.storage.RoutingCHEdgeIteratorState;
+import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
@@ -29,18 +33,16 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  * @author easbar
  */
 public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo {
-    private final RoutingCHEdgeExplorer innerInExplorer;
-    private final RoutingCHEdgeExplorer innerOutExplorer;
+    private final EdgeExplorer innerExplorer;
 
     public AbstractBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
         super(graph, TraversalMode.EDGE_BASED);
         if (!graph.isEdgeBased()) {
             throw new IllegalArgumentException("Edge-based CH algorithms only work with edge-based CH graphs");
         }
-        // the inner explorers will run on the base-(or base-query-)graph edges only
-        // we need extra edge explorers, because they get called inside a loop that already iterates over edges
-        innerInExplorer = graph.createOriginalInEdgeExplorer();
-        innerOutExplorer = graph.createOriginalOutEdgeExplorer();
+        // the inner explorer will run on the base-(or base-query-)graph edges only
+        // we need an extra edge explorer, because it gets called inside a loop that already iterates over edges
+        innerExplorer = graph.getGraph().createEdgeExplorer();
     }
 
     @Override
@@ -92,14 +94,11 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
             }
         }
 
-        RoutingCHEdgeIterator iter = reverse ?
-                innerInExplorer.setBaseNode(entry.adjNode) :
-                innerOutExplorer.setBaseNode(entry.adjNode);
-
         // todo: for a-star it should be possible to skip bridge node check at the beginning of the search as long as
         // minimum source-target distance lies above total sum of fwd+bwd path candidates.
+        EdgeIterator iter = innerExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
-            final int edgeId = getOrigEdgeId(iter, !reverse);
+            final int edgeId = iter.getEdge();
             int key = GHUtility.createEdgeKey(getOtherNode(edgeId, iter.getBaseNode()), iter.getBaseNode(), edgeId, !reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {

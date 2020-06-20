@@ -84,16 +84,6 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     }
 
     @Override
-    public RoutingCHEdgeExplorer createOriginalInEdgeExplorer() {
-        return RoutingCHEdgeIteratorImpl.inEdges(graph.getBaseGraph().createEdgeExplorer(), weighting);
-    }
-
-    @Override
-    public RoutingCHEdgeExplorer createOriginalOutEdgeExplorer() {
-        return RoutingCHEdgeIteratorImpl.outEdges(graph.getBaseGraph().createEdgeExplorer(), weighting);
-    }
-
-    @Override
     public RoutingCHEdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edgeId, adjNode);
         return edgeState == null ? null : new RoutingCHEdgeIteratorStateImpl(edgeState, weighting);
