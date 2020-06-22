@@ -20,8 +20,8 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
-import com.graphhopper.routing.ch.ShortcutUnpacker;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
@@ -110,9 +110,11 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
                 if (preliminaryShare > maxShareFactor) {
                     return true;
                 }
+                assert fromSPTEntry.adjNode == toSPTEntry.adjNode;
                 PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
-                potentialAlternativeInfo.in = graph.getEdgeIteratorState(fromSPTEntry.edge, fromSPTEntry.adjNode); // TODO: real edge at end of shortcut
-                potentialAlternativeInfo.out = graph.getEdgeIteratorState(toSPTEntry.edge, toSPTEntry.adjNode); // TODO: real edge at end of shortcut
+                potentialAlternativeInfo.v = fromSPTEntry.adjNode;
+                potentialAlternativeInfo.edgeIn = getIncomingEdge(fromSPTEntry);
+                potentialAlternativeInfo.edgeOut = getIncomingEdge(toSPTEntry);
                 potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
                 potentialAlternativeInfos.add(potentialAlternativeInfo);
                 return true;
@@ -128,38 +130,19 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         });
 
         for (PotentialAlternativeInfo potentialAlternativeInfo : potentialAlternativeInfos) {
-            final List<EdgeIteratorState> ins = new ArrayList<>();
-            new ShortcutUnpacker(graph, new ShortcutUnpacker.Visitor() {
-                @Override
-                public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-                    EdgeIteratorState pups = edge.detach(false);
-                    ins.add(pups);
-                }
-            }, true).visitOriginalEdgesFwd(potentialAlternativeInfo.in.getEdge(), potentialAlternativeInfo.in.getAdjNode(), false, -1);
-            final List<EdgeIteratorState> outs = new ArrayList<>();
-            new ShortcutUnpacker(graph, new ShortcutUnpacker.Visitor() {
-                @Override
-                public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-                    EdgeIteratorState pups = edge.detach(true);
-                    outs.add(pups);
-                }
-            }, true).visitOriginalEdgesBwd(potentialAlternativeInfo.out.getEdge(), potentialAlternativeInfo.out.getAdjNode(), true, -1);
-
-            EdgeIteratorState tailSv = ins.get(ins.size()-1);
-            EdgeIteratorState headVt = outs.get(0);
-
-            int v = tailSv.getAdjNode();
-            assert (v == headVt.getBaseNode());
+            int v = potentialAlternativeInfo.v;
+            int tailSv = potentialAlternativeInfo.edgeIn;
+            int headVt = potentialAlternativeInfo.edgeOut;
 
             // Okay, now we want the s -> v -> t shortest via-path, so we route s -> v and v -> t
             // and glue them together.
             DijkstraBidirectionEdgeCHNoSOD svRouter = new DijkstraBidirectionEdgeCHNoSOD(graph);
-            final Path svPath = svRouter.calcPath(s, v, ANY_EDGE, tailSv.getEdge());
+            final Path svPath = svRouter.calcPath(s, v, ANY_EDGE, tailSv);
             extraVisitedNodes += svRouter.getVisitedNodes();
 
             DijkstraBidirectionEdgeCHNoSOD vtRouter = new DijkstraBidirectionEdgeCHNoSOD(graph);
-            final Path vtPath = vtRouter.calcPath(v, t, headVt.getEdge(), ANY_EDGE);
-            Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
+            final Path vtPath = vtRouter.calcPath(v, t, headVt, ANY_EDGE);
+            Path path = concat(graph.getBaseGraph(), svPath, vtPath);
             extraVisitedNodes += vtRouter.getVisitedNodes();
 
             double sharedDistanceWithShortest = sharedDistanceWithShortest(path);
@@ -298,8 +281,9 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
     }
 
     public static class PotentialAlternativeInfo {
-        public RoutingCHEdgeIteratorState in;
-        public RoutingCHEdgeIteratorState out;
+        public int v;
+        public int edgeIn;
+        public int edgeOut;
         double weight;
     }
 
