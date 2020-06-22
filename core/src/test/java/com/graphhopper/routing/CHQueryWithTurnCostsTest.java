@@ -25,7 +25,6 @@ import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -53,7 +52,6 @@ public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
     private final FlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost).setSpeedTwoDirections(true);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
-    private final Weighting weighting;
     private final GraphHopperStorage graph;
     private final CHGraph chGraph;
     private final String algoString;
@@ -68,7 +66,6 @@ public class CHQueryWithTurnCostsTest {
         graph = new GraphBuilder(encodingManager)
                 .setCHConfigStrings("profile|car|shortest|edge")
                 .create();
-        weighting = graph.getCHConfigs().get(0).getWeighting();
         chGraph = graph.getCHGraph();
     }
 
@@ -714,8 +711,8 @@ public class CHQueryWithTurnCostsTest {
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
         return "astar".equals(algoString) ?
-                new AStarBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting)) :
-                new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting));
+                new AStarBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph)) :
+                new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph));
     }
 
     private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {

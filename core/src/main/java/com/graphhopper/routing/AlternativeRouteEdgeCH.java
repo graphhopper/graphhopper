@@ -21,7 +21,9 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.routing.ch.ShortcutUnpacker;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.RoutingCHEdgeIteratorState;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
@@ -159,7 +161,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
 
             DijkstraBidirectionEdgeCHNoSOD vtRouter = new DijkstraBidirectionEdgeCHNoSOD(graph);
             final Path vtPath = vtRouter.calcPath(v, t, headVt.getEdge(), ANY_EDGE);
-            Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
+            Path path = concat(graph.getBaseGraph(), svPath, vtPath);
             extraVisitedNodes += vtRouter.getVisitedNodes();
 
             double sharedDistanceWithShortest = sharedDistanceWithShortest(path);

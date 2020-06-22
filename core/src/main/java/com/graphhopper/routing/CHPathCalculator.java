@@ -19,9 +19,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 
 import java.util.Collections;
@@ -31,14 +29,12 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
 
 public class CHPathCalculator implements PathCalculator {
-    private final QueryGraph queryGraph;
     private final CHRoutingAlgorithmFactory algoFactory;
     private final PMap algoOpts;
     private String debug;
     private int visitedNodes;
 
-    public CHPathCalculator(QueryGraph queryGraph, CHRoutingAlgorithmFactory algoFactory, PMap algoOpts) {
-        this.queryGraph = queryGraph;
+    public CHPathCalculator(CHRoutingAlgorithmFactory algoFactory, PMap algoOpts) {
         this.algoFactory = algoFactory;
         this.algoOpts = algoOpts;
     }
@@ -47,24 +43,24 @@ public class CHPathCalculator implements PathCalculator {
     public List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions) {
         if (!edgeRestrictions.getUnfavoredEdges().isEmpty())
             throw new IllegalArgumentException("Using unfavored edges is currently not supported for CH");
-        RoutingAlgorithm algo = createAlgo();
+        BidirRoutingAlgorithm algo = createAlgo();
         return calcPaths(from, to, edgeRestrictions, algo);
     }
 
-    private RoutingAlgorithm createAlgo() {
+    private BidirRoutingAlgorithm createAlgo() {
         StopWatch sw = new StopWatch().start();
-        RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);
+        BidirRoutingAlgorithm algo = algoFactory.createAlgo(algoOpts);
         debug = ", algoInit:" + (sw.stop().getNanos() / 1000) + " μs";
         return algo;
     }
 
-    private List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions, RoutingAlgorithm algo) {
+    private List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions, BidirRoutingAlgorithm algo) {
         StopWatch sw = new StopWatch().start();
         List<Path> paths;
         if (edgeRestrictions.getSourceOutEdge() != ANY_EDGE || edgeRestrictions.getTargetInEdge() != ANY_EDGE) {
-            if (!(algo instanceof BidirRoutingAlgorithm))
-                throw new IllegalArgumentException("To make use of the " + Parameters.Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
-            paths = Collections.singletonList(((BidirRoutingAlgorithm) algo).calcPath(from, to, queryGraph.shiftEdgeId(edgeRestrictions.getSourceOutEdge()), queryGraph.shiftEdgeId(edgeRestrictions.getTargetInEdge())));
+            paths = Collections.singletonList(algo.calcPath(from, to,
+                    edgeRestrictions.getSourceOutEdge(),
+                    edgeRestrictions.getTargetInEdge()));
         } else {
             paths = algo.calcPaths(from, to);
         }

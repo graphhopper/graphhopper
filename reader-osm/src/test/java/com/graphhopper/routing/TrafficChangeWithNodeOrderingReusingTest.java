@@ -10,10 +10,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
@@ -97,12 +94,12 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
     private static void checkCorrectness(GraphHopperStorage ghStorage, CHConfig chConfig, long seed, long numQueries) {
         LOGGER.info("checking correctness");
-        CHGraph chGraph = ghStorage.getCHGraph(chConfig.getName());
+        RoutingCHGraph chGraph = ghStorage.getRoutingCHGraph(chConfig.getName());
         Random rnd = new Random(seed);
         int numFails = 0;
         for (int i = 0; i < numQueries; ++i) {
             Dijkstra dijkstra = new Dijkstra(ghStorage, chConfig.getWeighting(), TraversalMode.NODE_BASED);
-            RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, new PMap());
+            RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(new PMap());
 
             int from = rnd.nextInt(ghStorage.getNodes());
             int to = rnd.nextInt(ghStorage.getNodes());
@@ -120,7 +117,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
     private static void runPerformanceTest(final GraphHopperStorage ghStorage, CHConfig chConfig, long seed, final int iterations) {
         final int numNodes = ghStorage.getNodes();
-        final CHGraph chGraph = ghStorage.getCHGraph(chConfig.getName());
+        final RoutingCHGraph chGraph = ghStorage.getRoutingCHGraph(chConfig.getName());
         final Random random = new Random(seed);
 
         LOGGER.info("Running performance test, seed = {}", seed);
@@ -141,7 +138,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                 int from = random.nextInt(numNodes);
                 int to = random.nextInt(numNodes);
                 long start = nanoTime();
-                RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, new PMap());
+                RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(new PMap());
                 Path path = algo.calcPath(from, to);
                 if (!warmup && !path.isFound())
                     return 1;

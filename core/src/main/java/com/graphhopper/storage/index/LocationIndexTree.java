@@ -93,9 +93,6 @@ public class LocationIndexTree implements LocationIndex {
      * @param g the graph for which this index should do the lookup based on latitude,longitude.
      */
     public LocationIndexTree(Graph g, Directory dir) {
-        if (g instanceof CHGraph)
-            throw new IllegalArgumentException("Use base graph for LocationIndexTree instead of CHGraph");
-
         MAGIC_INT = Integer.MAX_VALUE / 22317;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();

@@ -25,11 +25,9 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
 import com.graphhopper.storage.BaseGraph.EdgeIterable;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,22 +144,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
-        return edge(a, b).setDistance(distance).setFlags(baseGraph.encodingManager.flagsDefault(true, bothDirections));
-    }
-
-    @Override
-    public CHEdgeIteratorState edge(int a, int b) {
-        // increase edge array not for shortcuts
-        baseGraph.ensureNodeIndex(Math.max(a, b));
-        int edgeId = baseGraph.edgeAccess.internalEdgeAdd(baseGraph.nextEdgeId(), a, b);
-        CHEdgeIteratorImpl iter = new CHEdgeIteratorImpl(baseGraph, baseGraph.edgeAccess, EdgeFilter.ALL_EDGES);
-        boolean ret = iter.init(edgeId, b);
-        assert ret;
-        return iter;
-    }
-
-    @Override
     public CHEdgeExplorer createEdgeExplorer() {
         return createEdgeExplorer(EdgeFilter.ALL_EDGES);
     }
@@ -205,16 +187,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     @Override
     public int getOriginalEdges() {
         return baseGraph.getEdges();
-    }
-
-    @Override
-    public NodeAccess getNodeAccess() {
-        return baseGraph.getNodeAccess();
-    }
-
-    @Override
-    public BBox getBounds() {
-        return baseGraph.getBounds();
     }
 
     @Override
@@ -295,31 +267,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public TurnCostStorage getTurnCostStorage() {
-        return baseGraph.getTurnCostStorage();
-    }
-
-    @Override
-    public Weighting wrapWeighting(Weighting weighting) {
-        return baseGraph.wrapWeighting(weighting);
-    }
-
-    @Override
     public Graph getBaseGraph() {
         return baseGraph;
-    }
-
-    @Override
-    public Graph copyTo(Graph g) {
-        CHGraphImpl tmpG = ((CHGraphImpl) g);
-
-        nodesCH.copyTo(tmpG.nodesCH);
-        shortcuts.copyTo(tmpG.shortcuts);
-
-        tmpG.N_LEVEL = N_LEVEL;
-        tmpG.N_CH_REF = N_CH_REF;
-        tmpG.nodeCHEntryBytes = nodeCHEntryBytes;
-        return g;
     }
 
     void initStorage() {
@@ -635,7 +584,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             int weightInt;
 
             if (weight < MIN_WEIGHT) {
-                NodeAccess nodeAccess = getNodeAccess();
+                NodeAccess nodeAccess = baseGraph.getNodeAccess();
                 // todo: how to get edge id
                 int edgeId = -1;
                 LOGGER.warn("Setting weights smaller than " + MIN_WEIGHT + " is not allowed in CHGraphImpl#setWeight. " +

@@ -18,12 +18,11 @@
 
 package com.graphhopper.storage;
 
-import com.graphhopper.util.EdgeIteratorState;
-
 public interface RoutingCHEdgeIteratorState {
-    EdgeIteratorState getBaseGraphEdgeState();
-
+    // todonow: maybe rename?
     int getEdge();
+
+    int getOrigEdge();
 
     int getOrigEdgeFirst();
 

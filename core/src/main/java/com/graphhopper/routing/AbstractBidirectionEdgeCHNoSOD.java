@@ -42,7 +42,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         }
         // the inner explorer will run on the base-(or base-query-)graph edges only
         // we need an extra edge explorer, because it gets called inside a loop that already iterates over edges
-        innerExplorer = graph.getGraph().createEdgeExplorer();
+        innerExplorer = graph.getBaseGraph().createEdgeExplorer();
     }
 
     @Override
