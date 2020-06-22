@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
-import com.graphhopper.routing.ch.CHEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;
@@ -114,8 +113,8 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
                 assert fromSPTEntry.adjNode == toSPTEntry.adjNode;
                 PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
                 potentialAlternativeInfo.v = fromSPTEntry.adjNode;
-                potentialAlternativeInfo.edgeIn = ((CHEntry) fromSPTEntry).incEdge;
-                potentialAlternativeInfo.edgeOut = ((CHEntry) toSPTEntry).incEdge;
+                potentialAlternativeInfo.edgeIn = getIncomingEdge(fromSPTEntry);
+                potentialAlternativeInfo.edgeOut = getIncomingEdge(toSPTEntry);
                 potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
                 potentialAlternativeInfos.add(potentialAlternativeInfo);
                 return true;
