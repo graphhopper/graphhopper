@@ -694,7 +694,7 @@ public class GHUtility {
      * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
      * certain methods.
      */
-    public static class DisabledEdgeIterator implements CHEdgeIterator {
+    public static class DisabledEdgeIterator implements EdgeIterator {
         @Override
         public EdgeIterator detach(boolean reverse) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
@@ -846,36 +846,6 @@ public class GHUtility {
         }
 
         @Override
-        public boolean isShortcut() {
-            return false;
-        }
-
-        @Override
-        public boolean getFwdAccess() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public boolean getBwdAccess() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getSkippedEdge1() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getSkippedEdge2() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
         public int getOrigEdgeFirst() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -885,25 +855,6 @@ public class GHUtility {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-        @Override
-        public double getWeight() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public CHEdgeIteratorState setWeight(double weight) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public void setFlagsAndWeight(int flags, double weight) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty");
-        }
-
-        @Override
-        public int getMergeStatus(int flags) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
     }
 
     /**

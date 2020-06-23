@@ -229,8 +229,6 @@ public class RandomizedRoutingTest {
     @Repeat(times = 5)
     public void randomGraph_withQueryGraph() {
         final long seed = System.nanoTime();
-        // todonow: a (rare) failing seed, does this happen in master as well?
-//        final long seed = 347910018743711l;
         final int numQueries = 50;
 
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
