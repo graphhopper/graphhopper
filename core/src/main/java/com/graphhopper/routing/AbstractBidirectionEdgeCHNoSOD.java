@@ -19,6 +19,8 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHEntry;
 import com.graphhopper.routing.ch.EdgeBasedCHBidirPathExtractor;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.CHEdgeFilter;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
@@ -33,16 +35,19 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  * @author easbar
  */
 public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo {
-    private final EdgeExplorer innerExplorer;
+    private final EdgeExplorer innerInExplorer;
+    private final EdgeExplorer innerOutExplorer;
 
     public AbstractBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
         super(graph, TraversalMode.EDGE_BASED);
         if (!graph.isEdgeBased()) {
             throw new IllegalArgumentException("Edge-based CH algorithms only work with edge-based CH graphs");
         }
-        // the inner explorer will run on the base-(or base-query-)graph edges only
-        // we need an extra edge explorer, because it gets called inside a loop that already iterates over edges
-        innerExplorer = graph.getGraph().createEdgeExplorer();
+        // the inner explorers will run on the base-(or base-query-)graph edges only.
+        // we need extra edge explorers, because they get called inside a loop that already iterates over edges
+        BooleanEncodedValue accessEnc = graph.getWeighting().getFlagEncoder().getAccessEnc();
+        innerInExplorer = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc));
+        innerOutExplorer = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc));
     }
 
     @Override
@@ -95,8 +100,10 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         }
 
         // todo: for a-star it should be possible to skip bridge node check at the beginning of the search as long as
-        // minimum source-target distance lies above total sum of fwd+bwd path candidates.
-        EdgeIterator iter = innerExplorer.setBaseNode(entry.adjNode);
+        // the minimum source-target distance lies above total sum of fwd+bwd path candidates.
+        EdgeIterator iter = reverse
+                ? innerInExplorer.setBaseNode(entry.adjNode)
+                : innerOutExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
             final int edgeId = iter.getEdge();
             int key = GHUtility.createEdgeKey(getOtherNode(edgeId, iter.getBaseNode()), iter.getBaseNode(), edgeId, !reverse);
