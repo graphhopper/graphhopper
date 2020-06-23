@@ -131,6 +131,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return null;
     }
 
+    public RoutingCHGraph getRoutingCHGraph() {
+        return new RoutingCHGraphImpl(getCHGraph());
+    }
+
     public RoutingCHGraph getRoutingCHGraph(String chGraphName) {
         CHGraph chGraph = getCHGraph(chGraphName);
         return chGraph == null ? null : new RoutingCHGraphImpl(chGraph);

@@ -65,7 +65,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
      *
      * @param edge    the edge that is currently processed for the expansion
      * @param incEdge the id of the edge that is incoming to the node the edge is pointed at. usually this is the same as
-     *                edge.getEdge(), but for edge-based CH and in case edge is a shortcut incEdge is the original edge
+     *                edge.getCHEdge(), but for edge-based CH and in case edge is a shortcut incEdge is the original edge
      *                that is incoming to the node
      * @param weight  the weight the shortest path three entry should carry
      * @param parent  the parent entry of in the shortest path tree
@@ -219,7 +219,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     }
 
     protected void updateEntry(SPTEntry entry, RoutingCHEdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
+        entry.edge = edge.getCHEdge();
         entry.weight = weight;
         entry.parent = parent;
     }
@@ -229,7 +229,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     }
 
     protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return edge.getEdge();
+        return edge.getCHEdge();
     }
 
     protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, boolean reverse) {
@@ -237,7 +237,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     }
 
     protected int getTraversalId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return traversalMode.createTraversalId(edge.getBaseNode(), edge.getAdjNode(), edge.getEdge(), reverse);
+        return traversalMode.createTraversalId(edge.getBaseNode(), edge.getAdjNode(), edge.getCHEdge(), reverse);
     }
 
     @Override
@@ -265,7 +265,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     protected boolean accept(RoutingCHEdgeIteratorState iter, int prevOrNextEdgeId) {
         // for edge-based traversal we leave it for TurnWeighting to decide whether or not a u-turn is acceptable,
         // but for node-based traversal we exclude such a turn for performance reasons already here
-        if (!traversalMode.isEdgeBased() && iter.getEdge() == prevOrNextEdgeId)
+        if (!traversalMode.isEdgeBased() && iter.getCHEdge() == prevOrNextEdgeId)
             return false;
 
         return levelEdgeFilter == null || levelEdgeFilter.accept(iter);

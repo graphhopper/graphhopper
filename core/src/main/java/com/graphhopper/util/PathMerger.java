@@ -89,6 +89,7 @@ public class PathMerger {
     }
 
     public void doWork(ResponsePath responsePath, List<Path> paths, EncodedValueLookup evLookup, Translation tr) {
+        // todo: this method should return the/a new response path and not take it as a parameter
         int origPoints = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;

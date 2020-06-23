@@ -93,6 +93,8 @@ public class Router {
     }
 
     public List<Path> route(GHRequest request, GHResponse ghRsp) {
+        // todo: this method should just take a request and return a response, there should be no need to pass in a
+        // response object.
         try {
             validateRequest(request);
             final boolean disableCH = getDisableCH(request.getHints());

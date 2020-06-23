@@ -403,8 +403,8 @@ public class PrepareContractionHierarchiesTest {
         Weighting fastestWeighting = new FastestWeighting(carEncoder);
         CHConfig chConfig = CHConfig.nodeBased("c", fastestWeighting);
         g = createGHStorage(chConfig);
-        lg = g.getCHGraph();
-        routingCHGraph = new RoutingCHGraphImpl(lg);
+        lg = g.getCHGraph("c");
+        routingCHGraph = g.getRoutingCHGraph("c");
         // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
         // be a shortcut 3->2 visible at node 2 and another one 3->4 visible at node 3.
         // we will fine-tune the edge-speeds such that without the fix node 4 will be stalled and node 5 will not get

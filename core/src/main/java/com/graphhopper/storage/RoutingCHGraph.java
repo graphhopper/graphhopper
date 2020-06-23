@@ -26,15 +26,15 @@ public interface RoutingCHGraph {
 
     int getEdges();
 
-    int getOtherNode(int shortcut, int node);
+    int getOtherNode(int chEdge, int node);
 
-    boolean isAdjacentToNode(int shortcut, int node);
+    boolean isAdjacentToNode(int chEdge, int node);
 
     RoutingCHEdgeExplorer createInEdgeExplorer();
 
     RoutingCHEdgeExplorer createOutEdgeExplorer();
 
-    RoutingCHEdgeIteratorState getEdgeIteratorState(int shortcut, int adjNode);
+    RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode);
 
     int getLevel(int node);
 

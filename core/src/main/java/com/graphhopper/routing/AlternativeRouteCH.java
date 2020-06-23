@@ -129,6 +129,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
             DijkstraBidirectionCH vtRouter = new DijkstraBidirectionCH(graph);
             final Path vtPath = vtRouter.calcPath(v, t);
+            // todonow: check measurement/checksum
             Path path = concat(graph.getBaseGraph(), svPath, vtPath);
             extraVisitedNodes += vtRouter.getVisitedNodes();
 

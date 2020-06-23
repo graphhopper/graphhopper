@@ -189,7 +189,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
             double baseWeight = baseWeighting.calcEdgeWeight(edgeState, reverse);
             if (edgeState instanceof CHEdgeIteratorState) {
-                // important! we may not change weights of shortcuts (the deviations are already included in their weight)
+                // important! we must not change weights of shortcuts (the deviations are already included in their weight)
                 if (((CHEdgeIteratorState) edgeState).isShortcut()) {
                     return baseWeight;
                 }

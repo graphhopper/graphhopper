@@ -26,7 +26,6 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
@@ -106,7 +105,7 @@ public class AlternativeRouteCHTest {
         hints.putObject("alternative_route.max_weight_factor", 2.3);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
         hints.putObject("alternative_route.max_paths", 4);
-        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(new RoutingCHGraphImpl(g.getCHGraph()), hints);
+        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(g.getRoutingCHGraph(), hints);
         List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
         assertEquals(3, pathInfos.size());
         // 4 -> 11 -> 12 is shorter than 4 -> 10 -> 12 (11 is an admissible via node), BUT
@@ -120,7 +119,7 @@ public class AlternativeRouteCHTest {
         hints.putObject("alternative_route.max_weight_factor", 4);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
         hints.putObject("alternative_route.max_paths", 4);
-        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(new RoutingCHGraphImpl(g.getCHGraph()), hints);
+        AlternativeRouteCH altDijkstra = new AlternativeRouteCH(g.getRoutingCHGraph(), hints);
         List<AlternativeRouteCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
         assertEquals(4, pathInfos.size());
         // 4 -> 11 -> 12 is shorter than 4 -> 10 -> 12 (11 is an admissible via node), AND

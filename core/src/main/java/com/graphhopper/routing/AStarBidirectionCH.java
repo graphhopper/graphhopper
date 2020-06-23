@@ -55,14 +55,14 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo {
     protected SPTEntry createEntry(RoutingCHEdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
         int neighborNode = edge.getAdjNode();
         double heapWeight = weight + weightApprox.approximate(neighborNode, reverse);
-        AStar.AStarEntry entry = new AStar.AStarEntry(edge.getEdge(), neighborNode, heapWeight, weight);
+        AStar.AStarEntry entry = new AStar.AStarEntry(edge.getCHEdge(), neighborNode, heapWeight, weight);
         entry.parent = parent;
         return entry;
     }
 
     @Override
     protected void updateEntry(SPTEntry entry, RoutingCHEdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
+        entry.edge = edge.getCHEdge();
         entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
         ((AStar.AStarEntry) entry).weightOfVisitedPath = weight;
         entry.parent = parent;

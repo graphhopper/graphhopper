@@ -37,8 +37,8 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 /**
  * This class is used to allow routing between virtual nodes (snapped coordinates that lie between the nodes of the
- * original graph) when using CH. To use it first create a {@link QueryGraph} just as if you would not use CH and then
- * create an instance of this class on top of this.
+ * original graph) when using CH. To use it first create a {@link QueryGraph} just as if you were not using CH and then
+ * create an instance of the present class on top of this.
  */
 public class QueryRoutingCHGraph implements RoutingCHGraph {
     private final RoutingCHGraph routingCHGraph;
@@ -73,19 +73,19 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     @Override
-    public int getOtherNode(int shortcut, int node) {
-        if (isVirtualEdge(shortcut))
-            return getVirtualEdgeState(shortcut, node).getBaseNode();
-        return routingCHGraph.getOtherNode(shortcut, node);
+    public int getOtherNode(int chEdge, int node) {
+        if (isVirtualEdge(chEdge))
+            return getVirtualEdgeState(chEdge, node).getBaseNode();
+        return routingCHGraph.getOtherNode(chEdge, node);
     }
 
     @Override
-    public boolean isAdjacentToNode(int shortcut, int node) {
-        if (isVirtualEdge(shortcut)) {
-            VirtualEdgeIteratorState virtualEdge = getVirtualEdgeState(shortcut, node);
+    public boolean isAdjacentToNode(int chEdge, int node) {
+        if (isVirtualEdge(chEdge)) {
+            VirtualEdgeIteratorState virtualEdge = getVirtualEdgeState(chEdge, node);
             return virtualEdge.getBaseNode() == node || virtualEdge.getAdjNode() == node;
         }
-        return routingCHGraph.isAdjacentToNode(shortcut, node);
+        return routingCHGraph.isAdjacentToNode(chEdge, node);
     }
 
     @Override
@@ -121,21 +121,16 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     @Override
-    public RoutingCHEdgeIteratorState getEdgeIteratorState(int shortcut, int adjNode) {
-        if (!isVirtualEdge(shortcut))
-            return routingCHGraph.getEdgeIteratorState(shortcut, adjNode);
+    public RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode) {
+        if (!isVirtualEdge(chEdge))
+            return routingCHGraph.getEdgeIteratorState(chEdge, adjNode);
         // todo: possible optimization - instead of building a new virtual edge object use the ones we already
         // built for virtualEdgesAtReal/VirtualNodes
-        return buildVirtualCHEdgeState(getVirtualEdgeState(shortcut, adjNode));
-    }
-
-    private int shiftVirtualEdgeIDForCH(int edge) {
-        return edge + routingCHGraph.getEdges() - routingCHGraph.getBaseGraph().getEdges();
+        return buildVirtualCHEdgeState(getVirtualEdgeState(chEdge, adjNode));
     }
 
     @Override
     public int getLevel(int node) {
-        // todonow: is this a performance problem?
         if (isVirtualNode(node))
             return Integer.MAX_VALUE;
         return routingCHGraph.getLevel(node);
@@ -193,28 +188,21 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                 List<RoutingCHEdgeIteratorState> virtualEdges = new ArrayList<>();
                 for (EdgeIteratorState v : edgeChanges.getAdditionalEdges()) {
                     assert v.getBaseNode() == node;
-                    int origEdge = v.getEdge();
                     int edge = v.getEdge();
                     if (queryGraph.isVirtualEdge(edge)) {
                         edge = shiftVirtualEdgeIDForCH(edge);
                     }
-                    // todo: move access flag checks into weighting, #1835
-                    BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
-                    double fwdWeight = !v.get(accessEnc) ? Double.POSITIVE_INFINITY : weighting.calcEdgeWeight(v, false);
-                    double bwdWeight = !v.getReverse(accessEnc) ? Double.POSITIVE_INFINITY : weighting.calcEdgeWeight(v, true);
-                    VirtualCHEdgeIteratorState virtualCHEdgeIteratorState = new VirtualCHEdgeIteratorState(
-                            edge, origEdge, v.getBaseNode(), v.getAdjNode(), origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
-                    virtualEdges.add(virtualCHEdgeIteratorState);
+                    virtualEdges.add(buildVirtualCHEdgeState(v, edge));
                 }
                 RoutingCHEdgeIterator iter = explorer.setBaseNode(node);
                 while (iter.next()) {
                     // shortcuts cannot be in the removed edge set because this was determined on the (base) query graph
                     if (iter.isShortcut()) {
-                        virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), iter.getOrigEdge(),
+                        virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getCHEdge(), iter.getOrigEdge(),
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
                                 iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(false), iter.getWeight(true)));
-                    } else if (!edgeChanges.getRemovedEdges().contains(iter.getEdge())) {
-                        virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), iter.getOrigEdge(),
+                    } else if (!edgeChanges.getRemovedEdges().contains(iter.getCHEdge())) {
+                        virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getCHEdge(), iter.getOrigEdge(),
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
                                 NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true)));
                     }
@@ -240,15 +228,21 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
 
     private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(VirtualEdgeIteratorState virtualEdgeState) {
         int virtualCHEdge = shiftVirtualEdgeIDForCH(virtualEdgeState.getEdge());
-        int origEdge = virtualEdgeState.getEdge();
-        int base = virtualEdgeState.getBaseNode();
-        int adj = virtualEdgeState.getAdjNode();
+        return buildVirtualCHEdgeState(virtualEdgeState, virtualCHEdge);
+    }
+
+    private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(EdgeIteratorState edgeState, int edgeID) {
+        int origEdge = edgeState.getEdge();
         // todo: move access flag checks into weighting, #1835
         BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
-        double fwdWeight = !virtualEdgeState.get(accessEnc) ? Double.POSITIVE_INFINITY : weighting.calcEdgeWeight(virtualEdgeState, false);
-        double bwdWeight = !virtualEdgeState.getReverse(accessEnc) ? Double.POSITIVE_INFINITY : weighting.calcEdgeWeight(virtualEdgeState, true);
-        return new VirtualCHEdgeIteratorState(virtualCHEdge, origEdge, base, adj,
+        double fwdWeight = !edgeState.get(accessEnc) ? Double.POSITIVE_INFINITY : weighting.calcEdgeWeight(edgeState, false);
+        double bwdWeight = !edgeState.getReverse(accessEnc) ? Double.POSITIVE_INFINITY : weighting.calcEdgeWeight(edgeState, true);
+        return new VirtualCHEdgeIteratorState(edgeID, origEdge, edgeState.getBaseNode(), edgeState.getAdjNode(),
                 origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
+    }
+
+    private int shiftVirtualEdgeIDForCH(int edge) {
+        return edge + routingCHGraph.getEdges() - routingCHGraph.getBaseGraph().getEdges();
     }
 
     private int getInternalVirtualEdgeId(int edge) {
@@ -289,7 +283,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public int getEdge() {
+        public int getCHEdge() {
             return edge;
         }
 
@@ -346,7 +340,6 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     private static class VirtualCHEdgeIterator implements RoutingCHEdgeIterator {
-
         private List<RoutingCHEdgeIteratorState> edges;
         private int current = -1;
 
@@ -362,8 +355,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public int getEdge() {
-            return getCurrent().getEdge();
+        public int getCHEdge() {
+            return getCurrent().getCHEdge();
         }
 
         @Override

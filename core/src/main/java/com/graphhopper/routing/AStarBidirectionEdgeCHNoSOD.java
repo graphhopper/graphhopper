@@ -63,14 +63,14 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
     protected SPTEntry createEntry(RoutingCHEdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
         int neighborNode = edge.getAdjNode();
         double heapWeight = getHeapWeight(neighborNode, reverse, weight);
-        AStarCHEntry entry = new AStarCHEntry(edge.getEdge(), incEdge, neighborNode, heapWeight, weight);
+        AStarCHEntry entry = new AStarCHEntry(edge.getCHEdge(), incEdge, neighborNode, heapWeight, weight);
         entry.parent = parent;
         return entry;
     }
 
     @Override
     protected void updateEntry(SPTEntry entry, RoutingCHEdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
+        entry.edge = edge.getCHEdge();
         ((AStarCHEntry) entry).incEdge = edgeId;
         entry.weight = getHeapWeight(edge.getAdjNode(), reverse, weight);
         ((AStarCHEntry) entry).weightOfVisitedPath = weight;

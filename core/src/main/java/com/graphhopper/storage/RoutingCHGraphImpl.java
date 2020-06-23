@@ -18,7 +18,6 @@
 
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -28,8 +27,6 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     private final Weighting weighting;
 
     public RoutingCHGraphImpl(CHGraph chGraph) {
-        if (chGraph instanceof QueryGraph)
-            throw new IllegalArgumentException("Do not create RoutingCHGraphImpl with a QueryGraph, use QueryRoutingCHGraph instead");
         Weighting weighting = chGraph.getCHConfig().getWeighting();
         if (weighting.hasTurnCosts() && !chGraph.getCHConfig().isEdgeBased())
             throw new IllegalArgumentException("Weighting has turn costs, but CHGraph is node-based");
@@ -49,13 +46,13 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     }
 
     @Override
-    public int getOtherNode(int shortcut, int node) {
-        return chGraph.getOtherNode(shortcut, node);
+    public int getOtherNode(int chEdge, int node) {
+        return chGraph.getOtherNode(chEdge, node);
     }
 
     @Override
-    public boolean isAdjacentToNode(int shortcut, int node) {
-        return chGraph.isAdjacentToNode(shortcut, node);
+    public boolean isAdjacentToNode(int chEdge, int node) {
+        return chGraph.isAdjacentToNode(chEdge, node);
     }
 
     @Override
@@ -69,8 +66,8 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     }
 
     @Override
-    public RoutingCHEdgeIteratorState getEdgeIteratorState(int shortcut, int adjNode) {
-        EdgeIteratorState edgeState = chGraph.getEdgeIteratorState(shortcut, adjNode);
+    public RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode) {
+        EdgeIteratorState edgeState = chGraph.getEdgeIteratorState(chEdge, adjNode);
         return edgeState == null ? null : new RoutingCHEdgeIteratorStateImpl(edgeState, weighting);
     }
 

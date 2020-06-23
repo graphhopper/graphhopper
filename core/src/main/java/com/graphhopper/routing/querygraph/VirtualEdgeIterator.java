@@ -30,6 +30,7 @@ import java.util.List;
 /**
  * @author Peter Karich
  */
+// todonow: remove CHEdgeIteratorState? here and in other places?
 class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     private final EdgeFilter edgeFilter;
     private List<EdgeIteratorState> edges;
@@ -222,26 +223,22 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
 
     @Override
     public boolean isShortcut() {
-        EdgeIteratorState edge = getCurrentEdge();
-        return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).isShortcut();
+        return false;
     }
 
     @Override
     public boolean getFwdAccess() {
-        EdgeIteratorState edge = getCurrentEdge();
-        return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).getFwdAccess();
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override
     public boolean getBwdAccess() {
-        EdgeIteratorState edge = getCurrentEdge();
-        return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).getBwdAccess();
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override
     public double getWeight() {
-        // will be called only from CHWeighting and if isShortcut is true
-        return ((CHEdgeIteratorState) getCurrentEdge()).getWeight();
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override

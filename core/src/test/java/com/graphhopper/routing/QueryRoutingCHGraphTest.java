@@ -41,13 +41,13 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.jupiter.api.Assertions.*;
 
 class QueryRoutingCHGraphTest {
-
     private CarFlagEncoder encoder;
     private EncodingManager encodingManager;
     private FastestWeighting weighting;
     private GraphHopperStorage graph;
     private NodeAccess na;
     private CHGraph chGraph;
+    private RoutingCHGraph routingCHGraph;
 
     @BeforeEach
     public void setup() {
@@ -59,6 +59,7 @@ class QueryRoutingCHGraphTest {
         graph.create(100);
         na = graph.getNodeAccess();
         chGraph = graph.getCHGraph("x");
+        routingCHGraph = graph.getRoutingCHGraph("x");
     }
 
     @Test
@@ -70,7 +71,6 @@ class QueryRoutingCHGraphTest {
         assertEquals(2, graph.getEdges());
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<QueryResult>emptyList());
-        RoutingCHGraph routingCHGraph = new RoutingCHGraphImpl(chGraph);
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertEquals(3, queryCHGraph.getNodes());
@@ -106,7 +106,6 @@ class QueryRoutingCHGraphTest {
         chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<QueryResult>emptyList());
-        RoutingCHGraph routingCHGraph = new RoutingCHGraphImpl(chGraph);
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertEquals(3, queryCHGraph.getNodes());
@@ -147,7 +146,6 @@ class QueryRoutingCHGraphTest {
         qr.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(qr));
-        RoutingCHGraph routingCHGraph = new RoutingCHGraphImpl(chGraph);
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertEquals(4, queryCHGraph.getNodes());
@@ -213,7 +211,6 @@ class QueryRoutingCHGraphTest {
         qr.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(qr));
-        RoutingCHGraph routingCHGraph = new RoutingCHGraphImpl(chGraph);
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertEquals(4, queryCHGraph.getNodes());
@@ -252,7 +249,6 @@ class QueryRoutingCHGraphTest {
     public void getBaseGraph() {
         graph.edge(0, 1, 10, true);
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<QueryResult>emptyList());
-        RoutingCHGraph routingCHGraph = new RoutingCHGraphImpl(chGraph);
         assertSame(graph.getBaseGraph(), routingCHGraph.getBaseGraph());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
         assertSame(queryGraph, queryCHGraph.getBaseGraph());
@@ -278,7 +274,6 @@ class QueryRoutingCHGraphTest {
         qr.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(qr));
-        RoutingCHGraph routingCHGraph = new RoutingCHGraphImpl(chGraph);
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertGetEdgeIteratorState(queryCHGraph, 1, 2, 1);
@@ -293,7 +288,6 @@ class QueryRoutingCHGraphTest {
     @Test
     public void getWeighting() {
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.<QueryResult>emptyList());
-        RoutingCHGraph routingCHGraph = new RoutingCHGraphImpl(chGraph);
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
         // maybe query CH graph should return query graph weighting instead?
         assertSame(weighting, queryCHGraph.getWeighting());
@@ -316,7 +310,6 @@ class QueryRoutingCHGraphTest {
         qr.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
         QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(qr));
-        RoutingCHGraph routingCHGraph = new RoutingCHGraphImpl(chGraph);
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
         assertEquals(5, queryCHGraph.getLevel(0));
         assertEquals(7, queryCHGraph.getLevel(1));
@@ -338,7 +331,6 @@ class QueryRoutingCHGraphTest {
         addEdge(graph, 1, 2);
         graph.freeze();
         chGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1);
-        RoutingCHGraph routingCHGraph = new RoutingCHGraphImpl(chGraph);
 
         // without query graph
         RoutingCHEdgeIterator iter = routingCHGraph.createOutEdgeExplorer().setBaseNode(0);
@@ -434,7 +426,6 @@ class QueryRoutingCHGraphTest {
         edge.set(encoder.getAverageSpeedEnc(), 60);
         edge.setReverse(encoder.getAverageSpeedEnc(), 60);
         graph.freeze();
-        RoutingCHGraphImpl routingCHGraph = new RoutingCHGraphImpl(chGraph);
 
         // without query graph
         // 0->1
@@ -513,7 +504,6 @@ class QueryRoutingCHGraphTest {
         chGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 20, 0, 1);
 
         // without virtual nodes
-        RoutingCHGraph routingCHGraph = new RoutingCHGraphImpl(chGraph);
         assertEquals(5, routingCHGraph.getTurnWeight(0, 1, 1));
 
         // with virtual nodes
@@ -618,7 +608,7 @@ class QueryRoutingCHGraphTest {
         RoutingCHEdgeIterator iter = explorer.setBaseNode(base);
         while (iter.next())
             if (iter.getAdjNode() == adj)
-                return iter.getEdge();
+                return iter.getCHEdge();
         return NO_EDGE;
     }
 
