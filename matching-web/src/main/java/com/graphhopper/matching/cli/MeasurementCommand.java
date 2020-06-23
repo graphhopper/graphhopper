@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,7 @@ import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
@@ -54,7 +53,7 @@ public class MeasurementCommand extends Command {
     private static final Logger logger = LoggerFactory.getLogger(MeasurementCommand.class);
     private final Map<String, String> properties = new TreeMap<>();
     private BBox bbox;
-    private DistanceCalcEarth distCalc = new DistanceCalcEarth();
+    private final DistanceCalcEarth distCalc = new DistanceCalcEarth();
     private long seed;
     private int count;
 
@@ -92,13 +91,13 @@ public class MeasurementCommand extends Command {
         GraphHopper graphHopper = new GraphHopperOSM();
         graphHopper.init(graphHopperConfiguration).forDesktop();
         graphHopper.importOrLoad();
-        
+
         // and map-matching stuff
         GraphHopperStorage graph = graphHopper.getGraphHopperStorage();
         bbox = graph.getBounds();
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
         MapMatching mapMatching = new MapMatching(graphHopper, new PMap().putObject("profile", "fast_car"));
-        
+
         // start tests:
         StopWatch sw = new StopWatch().start();
         try {
@@ -134,7 +133,6 @@ public class MeasurementCommand extends Command {
     /**
      * Test the performance of finding candidate points for the index (which is run for every GPX
      * entry).
-     * 
      */
     private void printLocationIndexMatchQuery(final LocationIndexTree idx) {
         final double latDelta = bbox.maxLat - bbox.minLat;

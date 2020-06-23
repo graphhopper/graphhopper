@@ -21,7 +21,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -71,8 +71,8 @@ public class MapMatchingTest {
         graphHopper.setGraphHopperLocation(GH_LOCATION);
         graphHopper.setEncodingManager(EncodingManager.create(encoder));
         graphHopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
-        graphHopper.getCHPreparationHandler().setCHProfiles(new CHProfile("my_profile"));
-        graphHopper.getRouterConfig().setCHDisablingAllowed(true);
+        graphHopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
+        graphHopper.getRouterConfig().setLMDisablingAllowed(true);
         graphHopper.importOrLoad();
     }
 
@@ -84,8 +84,8 @@ public class MapMatchingTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> algoOptions() {
         return Arrays.asList(new Object[][]{
-                {"non-CH", new PMap().putObject(Parameters.CH.DISABLE, true)},
-                {"CH", new PMap().putObject(Parameters.CH.DISABLE, false)}
+                {"non-LM", new PMap().putObject(Parameters.Landmark.DISABLE, true)},
+                {"LM", new PMap().putObject(Parameters.Landmark.DISABLE, false)}
         });
     }
 
