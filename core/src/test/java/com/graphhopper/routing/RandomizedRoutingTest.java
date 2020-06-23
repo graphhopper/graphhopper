@@ -219,14 +219,17 @@ public class RandomizedRoutingTest {
     @Test
     @Repeat(times = 5)
     public void randomGraph_withQueryGraph() {
-        final long seed = System.nanoTime();
+//        final long seed = System.nanoTime();
+        // todo: a (rare) failing seed, does this happen in master as well?
+        final long seed = 347910018743711l;
+        System.out.println(seed);
         final int numQueries = 50;
 
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
+        GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, false, false, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
         GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
