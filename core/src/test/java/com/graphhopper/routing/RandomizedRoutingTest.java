@@ -220,9 +220,8 @@ public class RandomizedRoutingTest {
     @Repeat(times = 5)
     public void randomGraph_withQueryGraph() {
 //        final long seed = System.nanoTime();
-        // todo: a (rare) failing seed, does this happen in master as well?
+        // todo: fails for edge-based CH
         final long seed = 347910018743711l;
-        System.out.println(seed);
         final int numQueries = 50;
 
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
@@ -254,6 +253,7 @@ public class RandomizedRoutingTest {
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
         if (strictViolations.size() > 3) {
+            System.out.println(strictViolations);
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
     }
