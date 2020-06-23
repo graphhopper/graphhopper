@@ -46,6 +46,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     private final QueryOverlay queryOverlay;
     private final QueryGraph queryGraph;
     private final Weighting queryGraphWeighting;
+    private final int nodes;
 
     private final IntObjectMap<List<RoutingCHEdgeIteratorState>> virtualOutEdgesAtRealNodes;
     private final IntObjectMap<List<RoutingCHEdgeIteratorState>> virtualInEdgesAtRealNodes;
@@ -60,11 +61,12 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         virtualOutEdgesAtRealNodes = buildVirtualEdgesAtRealNodes(routingCHGraph.createOutEdgeExplorer());
         virtualInEdgesAtRealNodes = buildVirtualEdgesAtRealNodes(routingCHGraph.createInEdgeExplorer());
         virtualEdgesAtVirtualNodes = buildVirtualEdgesAtVirtualNodes();
+        nodes = queryGraph.getNodes();
     }
 
     @Override
     public int getNodes() {
-        return queryGraph.getNodes();
+        return nodes;
     }
 
     @Override
