@@ -101,7 +101,7 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
 
     @Override
     public Graph getBaseGraph() {
-        return chGraph.getBaseGraph();
+        return baseGraph;
     }
 
     @Override
