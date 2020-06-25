@@ -52,9 +52,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
 
     @Override
     protected void postInitFrom() {
-        // With CH the additionalEdgeFilter is the one that filters out edges leading or coming from higher rank nodes,
-        // i.e. LevelEdgeFilter, For the first step though we need all edges, so we need to ignore this filter.
-        // Using an arbitrary filter is not supported for CH anyway.
+        // We use the levelEdgeFilter to filter out edges leading or coming from lower rank nodes.
+        // For the first step though we need all edges, so we need to ignore this filter.
         if (fromOutEdge == ANY_EDGE) {
             fillEdgesFromUsingFilter(CHEdgeFilter.ALL_EDGES);
         } else {
