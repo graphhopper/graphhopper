@@ -384,7 +384,7 @@ public class CHQueryWithTurnCostsTest {
     @Test
     public void testFindPath_doNotMakeUTurn_toLowerLevelNode() {
         // in this case it would be forbidden to take the shortcut from A to B because B has lower level than A and
-        // because we can not do a shortcut at node A. The optimization to not check the node levels in LevelEdgeFilter
+        // because we cannot do a shortcut at node A. The optimization to not check the node levels in CHLevelEdgeFilter
         // that relies on shortcuts to lower level nodes being disconnected can 'hide' a u-turn bug here.
         checkUTurnNotBeingUsed(true);
     }

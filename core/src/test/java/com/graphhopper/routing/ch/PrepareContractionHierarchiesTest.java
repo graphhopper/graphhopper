@@ -395,7 +395,7 @@ public class PrepareContractionHierarchiesTest {
         // * shortcuts weight rounding
         // * via nodes/virtual edges and the associated weight precision (without virtual nodes between source and target
         //   there is no problem, but this can happen for via routes
-        // * the fact that the LevelEdgeFilter always accepts virtual nodes
+        // * the fact that the CHLevelEdgeFilter always accepts virtual nodes
         // here we will construct a special case where a connection is not found without the fix in #1574.
 
         // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
