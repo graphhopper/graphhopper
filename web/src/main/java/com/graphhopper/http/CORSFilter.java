@@ -30,7 +30,8 @@ public class CORSFilter implements Filter {
         HttpServletResponse rsp = (HttpServletResponse) response;
         rsp.setHeader("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS");
         rsp.setHeader("Access-Control-Allow-Headers", "*");
-        rsp.setHeader("Access-Control-Allow-Origin", "*");
+      rsp.setHeader("Access-Control-Expose-Headers", "X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-RateLimit-Credits");
+      rsp.setHeader("Access-Control-Allow-Origin", "*");
 
         chain.doFilter(request, response);
     }
