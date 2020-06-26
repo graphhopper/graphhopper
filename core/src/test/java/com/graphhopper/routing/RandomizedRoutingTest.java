@@ -28,6 +28,7 @@ import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PerfectApproximator;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -71,13 +72,12 @@ public class RandomizedRoutingTest {
     private GraphHopperStorage graph;
     private List<CHConfig> chConfigs;
     private LMConfig lmConfig;
-    private CHGraph chGraph;
+    private RoutingCHGraph routingCHGraph;
     private FlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private Weighting weighting;
     private EncodingManager encodingManager;
-    private PrepareContractionHierarchies pch;
     private PrepareLandmarks lm;
 
     @Rule
@@ -144,9 +144,9 @@ public class RandomizedRoutingTest {
         graph.freeze();
         if (prepareCH) {
             CHConfig chConfig = !traversalMode.isEdgeBased() ? chConfigs.get(0) : chConfigs.get(1);
-            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
             pch.doWork();
-            chGraph = graph.getCHGraph(chConfig.getName());
+            routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
@@ -167,18 +167,27 @@ public class RandomizedRoutingTest {
                 return new AStar(graph, graph.wrapWeighting(weighting), traversalMode);
             case ASTAR_BIDIR:
                 return new AStarBidirection(graph, graph.wrapWeighting(weighting), traversalMode);
-            case CH_DIJKSTRA:
-                return new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph instanceof QueryGraph ? graph : chGraph, new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
-            case CH_ASTAR:
-                return new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph instanceof QueryGraph ? graph : chGraph, new PMap().putObject(ALGORITHM, ASTAR_BI));
+            case CH_DIJKSTRA: {
+                CHRoutingAlgorithmFactory algoFactory = graph instanceof QueryGraph
+                        ? new CHRoutingAlgorithmFactory(new QueryRoutingCHGraph(routingCHGraph, (QueryGraph) graph))
+                        : new CHRoutingAlgorithmFactory(routingCHGraph);
+                return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
+            }
+            case CH_ASTAR: {
+                CHRoutingAlgorithmFactory algoFactory = graph instanceof QueryGraph
+                        ? new CHRoutingAlgorithmFactory(new QueryRoutingCHGraph(routingCHGraph, (QueryGraph) graph))
+                        : new CHRoutingAlgorithmFactory(routingCHGraph);
+                return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
+            }
             case LM_BIDIR:
                 return lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(traversalMode).build());
             case LM_UNIDIR:
                 return lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR).traversalMode(traversalMode).build());
-            case PERFECT_ASTAR:
-                AStarBidirection perfectastarbi = new AStarBidirection(graph, weighting, traversalMode);
-                perfectastarbi.setApproximation(new PerfectApproximator(graph, weighting, traversalMode, false));
-                return perfectastarbi;
+            case PERFECT_ASTAR: {
+                AStarBidirection perfectAStarBi = new AStarBidirection(graph, weighting, traversalMode);
+                perfectAStarBi.setApproximation(new PerfectApproximator(graph, weighting, traversalMode, false));
+                return perfectAStarBi;
+            }
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }
@@ -235,22 +244,20 @@ public class RandomizedRoutingTest {
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
-            List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
-
-            QueryGraph chQueryGraph = QueryGraph.create(prepareCH ? chGraph : graph, chQueryResults);
             QueryGraph queryGraph = QueryGraph.create(graph, queryResults);
 
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();
 
             Path refPath = new DijkstraBidirectionRef(queryGraph, queryGraph.wrapWeighting(weighting), traversalMode).calcPath(source, target);
-            Path path = createAlgo(chQueryGraph).calcPath(source, target);
+            Path path = createAlgo(queryGraph).calcPath(source, target);
             strictViolations.addAll(comparePaths(refPath, path, source, target, seed));
         }
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
         if (strictViolations.size() > 3) {
+            System.out.println(strictViolations);
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
     }

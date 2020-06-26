@@ -107,6 +107,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return this;
     }
 
+    /**
+     * If possible use {@link #getRoutingCHGraph(String)} instead, as CHGraph will be removed at some point.
+     */
     public CHGraph getCHGraph() {
         if (chGraphs.isEmpty()) {
             throw new IllegalStateException("There is no CHGraph");
@@ -126,6 +129,15 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 return cg;
         }
         return null;
+    }
+
+    public RoutingCHGraph getRoutingCHGraph() {
+        return new RoutingCHGraphImpl(getCHGraph());
+    }
+
+    public RoutingCHGraph getRoutingCHGraph(String chGraphName) {
+        CHGraph chGraph = getCHGraph(chGraphName);
+        return chGraph == null ? null : new RoutingCHGraphImpl(chGraph);
     }
 
     public List<String> getCHGraphNames() {

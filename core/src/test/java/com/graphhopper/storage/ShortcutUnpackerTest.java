@@ -52,7 +52,7 @@ public class ShortcutUnpackerTest {
                 .setCHConfigStrings("profile|car|fastest|" + (edgeBased ? "edge" : "node"))
                 .create();
         chGraph = graph.getCHGraph();
-        routingCHGraph = new RoutingCHGraphImpl(chGraph, chGraph.getCHConfig().getWeighting());
+        routingCHGraph = graph.getRoutingCHGraph("profile");
     }
 
     @Test

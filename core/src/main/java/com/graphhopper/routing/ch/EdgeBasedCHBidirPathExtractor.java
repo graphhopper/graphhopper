@@ -19,8 +19,10 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.BidirPathExtractor;
-import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.routing.SPTEntry;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
@@ -30,11 +32,13 @@ import com.graphhopper.util.GHUtility;
 public class EdgeBasedCHBidirPathExtractor extends BidirPathExtractor {
     private final RoutingCHGraph routingGraph;
     private final ShortcutUnpacker shortcutUnpacker;
+    private final Weighting weighting;
 
     public EdgeBasedCHBidirPathExtractor(RoutingCHGraph routingGraph) {
-        super(routingGraph.getGraph(), routingGraph.getWeighting());
+        super(routingGraph.getBaseGraph(), null);
         this.routingGraph = routingGraph;
         shortcutUnpacker = createShortcutUnpacker();
+        weighting = routingGraph.getBaseGraph().wrapWeighting(routingGraph.getWeighting());
     }
 
     @Override
@@ -46,12 +50,21 @@ public class EdgeBasedCHBidirPathExtractor extends BidirPathExtractor {
         }
     }
 
+    @Override
+    protected void onMeetingPoint(int inEdge, int viaNode, int outEdge) {
+        if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
+            return;
+        }
+        // its important to use the wrapped weighting here, otherwise turn costs involving virtual edges will be wrong
+        path.addTime(weighting.calcTurnMillis(inEdge, viaNode, outEdge));
+    }
+
     private ShortcutUnpacker createShortcutUnpacker() {
         return new ShortcutUnpacker(routingGraph, new ShortcutUnpacker.Visitor() {
             @Override
             public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
                 path.addDistance(edge.getDistance());
-                path.addTime(GHUtility.calcMillisWithTurnMillis(routingGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
+                path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, reverse, prevOrNextEdgeId));
                 path.addEdge(edge.getEdge());
             }
         }, true);

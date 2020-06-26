@@ -383,7 +383,7 @@ public class QueryGraphTest {
         EdgeIteratorState edgeState = GHUtility.getEdge(g, 0, 2);
         QueryResult res1 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
         QueryResult res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
-        QueryGraph queryGraph = lookup(Arrays.asList(res1, res2));
+        lookup(Arrays.asList(res1, res2));
         assertEquals(new GHPoint(0.5, 0), res1.getSnappedPoint());
         assertEquals(new GHPoint(0.5, 0), res2.getSnappedPoint());
         assertEquals(3, res1.getClosestNode());
@@ -395,7 +395,7 @@ public class QueryGraphTest {
         // now create virtual edges
         edgeState = GHUtility.getEdge(g, 0, 2);
         res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
-        queryGraph = lookup(Arrays.asList(res1, res2));
+        QueryGraph queryGraph = lookup(Arrays.asList(res1, res2));
         // make sure only one virtual node was created
         assertEquals(queryGraph.getNodes(), g.getNodes() + 1);
         EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(0);

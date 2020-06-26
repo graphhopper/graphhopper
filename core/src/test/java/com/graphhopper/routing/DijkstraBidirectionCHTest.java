@@ -27,10 +27,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -98,7 +95,7 @@ public class DijkstraBidirectionCHTest {
         lg.setLevel(7, 6);
         lg.setLevel(0, 7);
 
-        Path p = createCHAlgo(lg, true).calcPath(0, 7);
+        Path p = createCHAlgo(g.getRoutingCHGraph(lg.getCHConfig().getName()), true).calcPath(0, 7);
 
         assertEquals(IntArrayList.from(0, 2, 5, 7), p.calcNodes());
         assertEquals(1064, p.getTime());
@@ -140,7 +137,7 @@ public class DijkstraBidirectionCHTest {
         prepareCH(g, carConfig);
 
         // use contracted graph for car
-        CHGraph chGraph = g.getCHGraph(carConfig.getName());
+        RoutingCHGraph chGraph = g.getRoutingCHGraph(carConfig.getName());
         Path p1 = createCHAlgo(chGraph, true).calcPath(0, 7);
         assertEquals(IntArrayList.from(0, 4, 6, 7), p1.calcNodes());
         assertEquals(p1.toString(), 15000, p1.getDistance(), 1e-6);
@@ -191,7 +188,8 @@ public class DijkstraBidirectionCHTest {
             chGraph.setLevel(i, i);
         }
         graph.freeze();
-        RoutingAlgorithm algo = createCHAlgo(chGraph, true);
+        RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chGraph.getCHConfig().getName());
+        RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(1, 0);
         // node 3 will be stalled and nodes 4-7 won't be explored --> we visit 7 nodes
         // note that node 9 will be visited by both forward and backward searches
@@ -200,7 +198,7 @@ public class DijkstraBidirectionCHTest {
         assertEquals(p.toString(), IntArrayList.from(1, 8, 9, 0), p.calcNodes());
 
         // without stalling we visit 11 nodes
-        RoutingAlgorithm algoNoSod = createCHAlgo(chGraph, false);
+        RoutingAlgorithm algoNoSod = createCHAlgo(routingCHGraph, false);
         Path pNoSod = algoNoSod.calcPath(1, 0);
         assertEquals(11, algoNoSod.getVisitedNodes());
         assertEquals(102, pNoSod.getDistance(), 1.e-3);
@@ -241,8 +239,8 @@ public class DijkstraBidirectionCHTest {
             chGraph.setLevel(i, i);
         }
         graph.freeze();
-
-        RoutingAlgorithm algo = createCHAlgo(chGraph, true);
+        RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chGraph.getCHConfig().getName());
+        RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(from, to);
         assertEquals(3, p.getDistance(), 1.e-3);
         assertEquals(p.toString(), expectedPath, p.calcNodes());
@@ -258,12 +256,12 @@ public class DijkstraBidirectionCHTest {
         pch.doWork();
     }
 
-    private RoutingAlgorithm createCHAlgo(CHGraph chGraph, boolean withSOD) {
+    private RoutingAlgorithm createCHAlgo(RoutingCHGraph chGraph, boolean withSOD) {
         PMap opts = new PMap();
         if (!withSOD) {
             opts.putObject("stall_on_demand", false);
         }
         opts.putObject(ALGORITHM, DIJKSTRA_BI);
-        return new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, opts);
+        return new CHRoutingAlgorithmFactory(chGraph).createAlgo(opts);
     }
 }
