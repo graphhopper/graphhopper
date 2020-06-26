@@ -73,7 +73,7 @@ public class RouteOptimize {
             IdentifiedGHPoint3D firstPoint = null;
             IdentifiedGHPoint3D lastPoint = null;
             ArrayList<GHPoint> waypoints = new ArrayList<>();
-//            waypoints.add(new IdentifiedGHPoint3D(depotLocation.getCoordinate().getX(), depotLocation.getCoordinate().getY(), 0, "DEPOT"));
+            waypoints.add(new IdentifiedGHPoint3D(depotLocation.getCoordinate().getX(), depotLocation.getCoordinate().getY(), 0, "DEPOT"));
             for (TourActivity activity : route.getActivities()) {
                 Service service = ((DeliverService) activity).getJob();
                 IdentifiedGHPoint3D idPoint = this.pointList.find(service.getId());
@@ -256,7 +256,7 @@ public class RouteOptimize {
             )
                     .setFixedCost(0)
                     .setCostPerDistance(0)
-                    .addCapacityDimension(0, 20)
+                    .addCapacityDimension(0, 80)
                     .setMaxVelocity(courier.getIsPlus() ? 13.0 : 20.8) // ~50km/h
     //                .setMaxVelocity(26.0) // ~100km/h
                     .build();
@@ -264,8 +264,8 @@ public class RouteOptimize {
                     String.format("%s#%s%s", courier.getName(), courier.getId(), courier.getIsPlus() ? " (" + courier.getFarmyVehicle().getName() + ")" : "")
             )
                     .setStartLocation(depotLocation)
+                    .setEndLocation(depotLocation)
                     .setType(type)
-                    .setReturnToDepot(true)
                     .build());
         }
 
@@ -323,6 +323,9 @@ public class RouteOptimize {
         System.out.println("service: " + analyser.getServiceTime());
         System.out.println("#picks: " + analyser.getNumberOfPickups());
         System.out.println("#deliveries: " + analyser.getNumberOfDeliveries());
+        System.out.println("#load_delivered: " + analyser.getLoadDelivered());
+        System.out.println("#capacity_violation: " + analyser.getCapacityViolation());
+        System.out.println("#time_window_violation: " + analyser.getTimeWindowViolation());
 
 //        for (VehicleRoute route : solution.getRoutes()) {
 //            StringBuilder urlStr = new StringBuilder("http://localhost:8989/maps/");
