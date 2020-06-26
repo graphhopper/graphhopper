@@ -79,20 +79,26 @@ public class RouteOptimize {
 
             for (TourActivity activity : route.getActivities()) {
                 Shipment service;
-                if (activity instanceof PickupActivity) {
-                    service = (Shipment) ((PickupShipment) activity).getJob();
-                } else {
-                    service = (Shipment) ((DeliverShipment) activity).getJob();
-                }
-                // Get Job as DeliveryService
-                IdentifiedGHPoint3D idPoint = this.pointList.find(service.getId()); // Find point by service id
-                idPoint.setPlannedTime(activity.getArrTime()); // set arrtime from activity
-                waypoints.add(idPoint); // add the point to waypoints
+                try {
+                    if (activity instanceof PickupActivity) {
+                        service = (Shipment) ((PickupShipment) activity).getJob();
+                    } else {
+                        service = (Shipment) ((DeliverShipment) activity).getJob();
+                    }
+
+                    // Get Job as DeliveryService
+                    IdentifiedGHPoint3D idPoint = this.pointList.find(service.getId()); // Find point by service id
+                    idPoint.setPlannedTime(activity.getArrTime()); // set arrtime from activity
+                    waypoints.add(idPoint); // add the point to waypoints
 
 //              Calc for distance
-                if (lastPoint != null) idPoint.setDistance(this.vrtcm.getDistance(idPoint.getId(), lastPoint.getId()));
-                if (firstPoint == null) firstPoint = idPoint;
-                lastPoint = idPoint;
+                    if (lastPoint != null)
+                        idPoint.setDistance(this.vrtcm.getDistance(idPoint.getId(), lastPoint.getId()));
+                    if (firstPoint == null) firstPoint = idPoint;
+                    lastPoint = idPoint;
+                } catch (Exception e) {
+                    System.out.println(activity);
+                }
             }
 
 //          allMap.get(route.getVehicle().getId()).put(allMap.get(route.getVehicle().getId()).get("waypoints"), waypoints);
