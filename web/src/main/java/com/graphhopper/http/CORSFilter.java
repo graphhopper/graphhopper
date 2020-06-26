@@ -27,13 +27,13 @@ import java.io.IOException;
 public class CORSFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        HttpServletResponse rsp = (HttpServletResponse) response;
-        rsp.setHeader("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS");
-        rsp.setHeader("Access-Control-Allow-Headers", "*");
+      HttpServletResponse rsp = (HttpServletResponse) response;
+      rsp.setHeader("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS");
+      rsp.setHeader("Access-Control-Allow-Headers", "*");
       rsp.setHeader("Access-Control-Expose-Headers", "X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-RateLimit-Credits");
       rsp.setHeader("Access-Control-Allow-Origin", "*");
 
-        chain.doFilter(request, response);
+      chain.doFilter(request, response);
     }
 
     @Override

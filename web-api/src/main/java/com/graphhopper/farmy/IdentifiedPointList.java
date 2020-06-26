@@ -43,7 +43,7 @@ public class IdentifiedPointList extends AbstractList<IdentifiedGHPoint3D> {
         return this.identifiedPointList.stream()
                 .filter(point -> point.getId().equals(id))
                 .findFirst()
-                .orElse(new IdentifiedGHPoint3D(new GHPoint(0, 0), "BAD_POINT"));
+                .orElse(new IdentifiedGHPoint3D(new GHPoint(0, 0), "NOT_FOUND_POINT"));
     }
 
     public int size() {

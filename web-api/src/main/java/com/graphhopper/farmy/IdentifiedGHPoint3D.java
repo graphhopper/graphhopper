@@ -5,6 +5,8 @@ import com.graphhopper.jsprit.core.problem.solution.route.activity.TimeWindow;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
+import java.util.HashMap;
+
 public class IdentifiedGHPoint3D extends GHPoint3D {
 
     public String id;
@@ -119,19 +121,19 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
     }
 
 
-    public String[] toGeoJsonWithId() {
-        return new String[]{
-                String.valueOf(lat), // [0] Latitude
-                String.valueOf(lon), // [1] Longitude
-                String.valueOf(ele), // [2] Elevation
-                id, // [3] // ID
-                getTimeWindow() != null ? String.valueOf(getTimeWindow().getStart() / 1000) : "", // [4] Time window start
-                getTimeWindow() != null ? String.valueOf(getTimeWindow().getEnd() / 1000) : "", // [5] Time window end
-                String.valueOf(getServiceTime() / 1000), // [6] Service time
-                getDirection(), // [7] // Direction
-                String.valueOf(getPlannedTime() / 1000), // [8] Planned time
-                String.valueOf(getWeight()), // [9] Weight
-                String.valueOf(getDistance()) // [10] Distance
-        };
+    public HashMap<String, Object> toGeoJsonWithId() {
+        return new HashMap<String, Object>() {{
+            put("id", id);
+            put("latitude", String.valueOf(lat));
+            put("longitude", String.valueOf(lon));
+            put("elevation", String.valueOf(ele));
+            put("time_window_start", getTimeWindow() != null ? String.valueOf(getTimeWindow().getStart() / 1000) : "");
+            put("time_window_endZ", getTimeWindow() != null ? String.valueOf(getTimeWindow().getEnd() / 1000) : "");
+            put("service_time", String.valueOf(getServiceTime() / 1000));
+            put("direction", getDirection());
+            put("planned_time", String.valueOf(getPlannedTime() / 1000));
+            put("weight", String.valueOf(getWeight()));
+            put("distance", String.valueOf(getDistance()));
+        }};
     }
 }

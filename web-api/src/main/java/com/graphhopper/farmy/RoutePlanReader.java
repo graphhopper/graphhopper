@@ -86,7 +86,7 @@ public class RoutePlanReader {
         for (FarmyOrder farmyOrder : farmyOrders) {
             NumberFormat nf = NumberFormat.getInstance(Locale.GERMAN);
             System.out.println(farmyOrder);
-            if(farmyOrder.latitude != null && farmyOrder.longitude != null) {
+            if (farmyOrder.latitude != null && farmyOrder.longitude != null && identifiedPointList.find(farmyOrder.getNumber()).getId().equals("NOT_FOUND_POINT")) {
                 identifiedPointList.add(new IdentifiedGHPoint3D(new GHPoint(farmyOrder.latitude, farmyOrder.longitude), farmyOrder.number)
                         .setWeight(farmyOrder.weight)
                         .setServiceTime(farmyOrder.serviceTime)

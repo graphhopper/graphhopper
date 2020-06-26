@@ -9,10 +9,10 @@ import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.job.Delivery;
 import com.graphhopper.jsprit.core.problem.job.Pickup;
 import com.graphhopper.jsprit.core.problem.job.Service;
+import com.graphhopper.jsprit.core.problem.job.Shipment;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
-import com.graphhopper.jsprit.core.problem.solution.route.activity.DeliverService;
-import com.graphhopper.jsprit.core.problem.solution.route.activity.TourActivity;
+import com.graphhopper.jsprit.core.problem.solution.route.activity.*;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleType;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleTypeImpl;
@@ -38,10 +38,10 @@ public class RouteOptimize {
     public VehicleRoutingTransportCostsMatrix vrtcm;
 
 
-    public RouteOptimize(GraphHopperAPI graphHopper, InputStream fileStream, GHPoint depotPoint) throws Exception {
-        this.graphHopper = graphHopper;
-        buildSolution(fileStream, depotPoint);
-    }
+//    public RouteOptimize(GraphHopperAPI graphHopper, InputStream fileStream, GHPoint depotPoint) throws Exception {
+//        this.graphHopper = graphHopper;
+//        buildSolution(fileStream, depotPoint);
+//    }
 
 //    public RouteOptimize(GraphHopperAPI graphHopper, FarmyOrder[] farmyOrders) throws Exception {
 //        this.graphHopper = graphHopper;
@@ -54,11 +54,11 @@ public class RouteOptimize {
     }
 
 
-    public void buildSolution(InputStream fileStream, GHPoint depotPointParms) throws Exception {
-        RoutePlanReader routePlanReader = new RoutePlanReader(fileStream);
-        this.depotLocation = Location.newInstance(depotPointParms.getLat(), depotPointParms.getLon());
-        build(routePlanReader.getIdentifiedPointList());
-    }
+//    public void buildSolution(InputStream fileStream, GHPoint depotPointParms) throws Exception {
+//        RoutePlanReader routePlanReader = new RoutePlanReader(fileStream);
+//        this.depotLocation = Location.newInstance(depotPointParms.getLat(), depotPointParms.getLon());
+//        build(routePlanReader.getIdentifiedPointList());
+//    }
 
     public void buildSolution(FarmyOrder[] farmyOrders, FarmyCourier[] farmyCouriers) throws Exception {
         RoutePlanReader routePlanReader = new RoutePlanReader(farmyOrders);
@@ -73,23 +73,38 @@ public class RouteOptimize {
             IdentifiedGHPoint3D firstPoint = null;
             IdentifiedGHPoint3D lastPoint = null;
             ArrayList<GHPoint> waypoints = new ArrayList<>();
-            waypoints.add(new IdentifiedGHPoint3D(depotLocation.getCoordinate().getX(), depotLocation.getCoordinate().getY(), 0, "DEPOT"));
-            for (TourActivity activity : route.getActivities()) {
-                Service service = ((DeliverService) activity).getJob();
-                IdentifiedGHPoint3D idPoint = this.pointList.find(service.getId());
-                idPoint.setPlannedTime(activity.getArrTime());
-                if (lastPoint != null) idPoint.setDistance(this.vrtcm.getDistance(idPoint.getId(), lastPoint.getId()));
-                waypoints.add(idPoint);
 
-                if(firstPoint == null) firstPoint = idPoint;
+            // Add depot location
+            waypoints.add(new IdentifiedGHPoint3D(depotLocation.getCoordinate().getX(), depotLocation.getCoordinate().getY(), 0, "DEPOT"));
+
+            for (TourActivity activity : route.getActivities()) {
+                Shipment service;
+                if (activity instanceof PickupActivity) {
+                    service = (Shipment) ((PickupShipment) activity).getJob();
+                } else {
+                    service = (Shipment) ((DeliverShipment) activity).getJob();
+                }
+                // Get Job as DeliveryService
+                IdentifiedGHPoint3D idPoint = this.pointList.find(service.getId()); // Find point by service id
+                idPoint.setPlannedTime(activity.getArrTime()); // set arrtime from activity
+                waypoints.add(idPoint); // add the point to waypoints
+
+//              Calc for distance
+                if (lastPoint != null) idPoint.setDistance(this.vrtcm.getDistance(idPoint.getId(), lastPoint.getId()));
+                if (firstPoint == null) firstPoint = idPoint;
                 lastPoint = idPoint;
             }
+
 //          allMap.get(route.getVehicle().getId()).put(allMap.get(route.getVehicle().getId()).get("waypoints"), waypoints);
             vehicleHashMap.put("waypoints", waypoints.toArray());
-            if (this.vrtcm != null && firstPoint != null) vehicleHashMap.put("distance", this.vrtcm.getDistance(firstPoint.getId(), lastPoint.getId()));
 
-//          Set vehicle to all hashmap
-            allMap.put(route.getVehicle().getId(), vehicleHashMap);
+            // Calc add add route distance
+            if (this.vrtcm != null && firstPoint != null)
+                vehicleHashMap.put("distance", this.vrtcm.getDistance(firstPoint.getId(), lastPoint.getId()));
+
+
+//          Set vehicle route to all hashmap
+            allMap.put(routeVehicleId(route, allMap, 0), vehicleHashMap);
         }
         return allMap;
     }
@@ -110,116 +125,116 @@ public class RouteOptimize {
         return graphHopper;
     }
 
-    private void build(IdentifiedPointList pointList) throws Exception {
-
-        //        Load the map
-        this.pointList = pointList;
-
-        if (this.pointList.size() == 0) {
-            System.out.println(this.pointList);
-            throw new Exception("Point List is Empty");
-        }
-
-
-        IdentifiedGHPoint3D depotPoint = new IdentifiedGHPoint3D(this.getDepotLocation(), "DEPOT");
-
-        PointMatrixList pointMatrixList = new PointMatrixList(graphHopper, this.pointList, depotPoint);
-
-        this.depotLocation = Location.Builder.newInstance().setId(depotPoint.getId()).setCoordinate(Coordinate.newInstance(depotPoint.getLat(), depotPoint.getLon())).build();
-
-        VehicleRoutingProblem.Builder vrpBuilder = VehicleRoutingProblem.Builder.newInstance()
-                .setFleetSize(VehicleRoutingProblem.FleetSize.INFINITE);
-        /*
-         * Adding Vehicles
-         */
-
-        vrpBuilder.addJob(Pickup.Builder.newInstance("DEPOT")
-                .setLocation(depotLocation)
-                .addSizeDimension(0, 416).build());
-
-
-        for (int i = 0; i < 1; i++) {
-            VehicleType type = VehicleTypeImpl.Builder.newInstance("vt1" + i)
-                    .setFixedCost(0)
-                    .setCostPerDistance(0)
-                    .addCapacityDimension(0, 200)
-                    .build();
-            vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance("vt1" + i + "-vehicle" + i)
-                    .setStartLocation(depotLocation)
-                    .setType(type)
-                    .setReturnToDepot(true)
-                    .build());
-        }
-
-        for (int i = 0; i < 2; i++) {
-            VehicleType type = VehicleTypeImpl.Builder.newInstance("vt2" + i)
-                    .setFixedCost(0)
-                    .setCostPerDistance(0)
-                    .addCapacityDimension(0, 200)
-                    .build();
-            vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance("vt2" + i + "-vehicle" + i)
-                    .setStartLocation(depotLocation)
-                    .setType(type)
-                    .setReturnToDepot(true)
-                    .build());
-        }
-
-        /*
-         * Adding Services
-         */
-
-        VehicleRoutingTransportCostsMatrix.Builder costMatrixBuilder = VehicleRoutingTransportCostsMatrix.Builder.newInstance(true);
-
-        for (IdentifiedGHPoint3D point : this.pointList) {
-            if (point.getId().equals(depotPoint.getId())) continue;
-            vrpBuilder.addJob(Delivery.Builder.newInstance(point.getId())
-                    .addSizeDimension(0, (int) point.getWeight())
-                    .setLocation(Location.Builder.newInstance().setId(point.getId()).setCoordinate(Coordinate.newInstance(point.getLat(), point.getLon())).build())
-//                    .addTimeWindow(point.getTimeWindow())
-                    .setServiceTime(point.getServiceTime())
-                    .build());
-        }
-        for (PointMatrix pointMatrix : pointMatrixList) {
-            costMatrixBuilder.addTransportDistance(pointMatrix.getPoint1().getId(), pointMatrix.getPoint2().getId(), pointMatrix.getDistance());
-            costMatrixBuilder.addTransportTime(pointMatrix.getPoint1().getId(), pointMatrix.getPoint2().getId(), pointMatrix.getTime());
-        }
-        this.vrtcm = costMatrixBuilder.build();
-
-        vrpBuilder.setRoutingCost(this.vrtcm);
-
-
-        VehicleRoutingProblem vrp = vrpBuilder.build();
-
-
-        VehicleRoutingAlgorithm vra = Jsprit.createAlgorithm(vrp);
-
-        Collection<VehicleRoutingProblemSolution> solutions = vra.searchSolutions();
-        this.solution = Solutions.bestOf(solutions);
-
-
-//        new Plotter(vrp).plot("./output/main2_problem2.png", "p01");
-//        new Plotter(vrp, Solutions.bestOf(solutions)).plot("./output/main2_sol2.png", "po");
-//        new GraphStreamViewer(vrp, Solutions.bestOf(solutions)).labelWith(GraphStreamViewer.Label.ID).setRenderDelay(200).display();
-//        SolutionPrinter.print(vrp, Solutions.bestOf(solutions), SolutionPrinter.Print.VERBOSE);
-
-        SolutionAnalyser analyser = new SolutionAnalyser(vrp, Solutions.bestOf(solutions), vrp.getTransportCosts());
-        System.out.println("tp_distance: " + analyser.getDistance());
-        System.out.println("tp_time: " + analyser.getTransportTime());
-        System.out.println("waiting: " + analyser.getWaitingTime());
-        System.out.println("service: " + analyser.getServiceTime());
-        System.out.println("#picks: " + analyser.getNumberOfPickups());
-        System.out.println("#deliveries: " + analyser.getNumberOfDeliveries());
-
-//        for (VehicleRoute route : solution.getRoutes()) {
-//            StringBuilder urlStr = new StringBuilder("http://localhost:8989/maps/");
-//            urlStr.append("?point=").append(depotLocation.getCoordinate().getX()).append(",").append(depotLocation.getCoordinate().getY());
-//            for (TourActivity activity : route.getActivities()) {
-//                Coordinate coordinate = activity.getLocation().getCoordinate();
-//                urlStr.append("&point=").append(coordinate.getX()).append(",").append(coordinate.getY());
-//            }
-//            System.out.println(urlStr);
+//    private void build(IdentifiedPointList pointList) throws Exception {
+//
+//        //        Load the map
+//        this.pointList = pointList;
+//
+//        if (this.pointList.size() == 0) {
+//            System.out.println(this.pointList);
+//            throw new Exception("Point List is Empty");
 //        }
-    }
+//
+//
+//        IdentifiedGHPoint3D depotPoint = new IdentifiedGHPoint3D(this.getDepotLocation(), "DEPOT");
+//
+//        PointMatrixList pointMatrixList = new PointMatrixList(graphHopper, this.pointList, depotPoint);
+//
+//        this.depotLocation = Location.Builder.newInstance().setId(depotPoint.getId()).setCoordinate(Coordinate.newInstance(depotPoint.getLat(), depotPoint.getLon())).build();
+//
+//        VehicleRoutingProblem.Builder vrpBuilder = VehicleRoutingProblem.Builder.newInstance()
+//                .setFleetSize(VehicleRoutingProblem.FleetSize.INFINITE);
+//        /*
+//         * Adding Vehicles
+//         */
+//
+//        vrpBuilder.addJob(Pickup.Builder.newInstance("DEPOT")
+//                .setLocation(depotLocation)
+//                .addSizeDimension(0, 416).build());
+//
+//
+//        for (int i = 0; i < 1; i++) {
+//            VehicleType type = VehicleTypeImpl.Builder.newInstance("vt1" + i)
+//                    .setFixedCost(0)
+//                    .setCostPerDistance(0)
+//                    .addCapacityDimension(0, 200)
+//                    .build();
+//            vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance("vt1" + i + "-vehicle" + i)
+//                    .setStartLocation(depotLocation)
+//                    .setType(type)
+//                    .setReturnToDepot(true)
+//                    .build());
+//        }
+//
+//        for (int i = 0; i < 2; i++) {
+//            VehicleType type = VehicleTypeImpl.Builder.newInstance("vt2" + i)
+//                    .setFixedCost(0)
+//                    .setCostPerDistance(0)
+//                    .addCapacityDimension(0, 200)
+//                    .build();
+//            vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance("vt2" + i + "-vehicle" + i)
+//                    .setStartLocation(depotLocation)
+//                    .setType(type)
+//                    .setReturnToDepot(true)
+//                    .build());
+//        }
+//
+//        /*
+//         * Adding Services
+//         */
+//
+//        VehicleRoutingTransportCostsMatrix.Builder costMatrixBuilder = VehicleRoutingTransportCostsMatrix.Builder.newInstance(true);
+//
+//        for (IdentifiedGHPoint3D point : this.pointList) {
+//            if (point.getId().equals(depotPoint.getId())) continue;
+//            vrpBuilder.addJob(Shipment.Builder.newInstance(point.getId())
+//                    .addSizeDimension(0, (int) point.getWeight())
+//                    .setDeliveryLocation(Location.Builder.newInstance().setId(point.getId()).setCoordinate(Coordinate.newInstance(point.getLat(), point.getLon())).build())
+////                    .addTimeWindow(point.getTimeWindow())
+//                    .setDeliveryServiceTime(point.getServiceTime())
+//                    .build());
+//        }
+//        for (PointMatrix pointMatrix : pointMatrixList) {
+//            costMatrixBuilder.addTransportDistance(pointMatrix.getPoint1().getId(), pointMatrix.getPoint2().getId(), pointMatrix.getDistance());
+//            costMatrixBuilder.addTransportTime(pointMatrix.getPoint1().getId(), pointMatrix.getPoint2().getId(), pointMatrix.getTime());
+//        }
+//        this.vrtcm = costMatrixBuilder.build();
+//
+//        vrpBuilder.setRoutingCost(this.vrtcm);
+//
+//
+//        VehicleRoutingProblem vrp = vrpBuilder.build();
+//
+//
+//        VehicleRoutingAlgorithm vra = Jsprit.createAlgorithm(vrp);
+//
+//        Collection<VehicleRoutingProblemSolution> solutions = vra.searchSolutions();
+//        this.solution = Solutions.bestOf(solutions);
+//
+//
+////        new Plotter(vrp).plot("./output/main2_problem2.png", "p01");
+////        new Plotter(vrp, Solutions.bestOf(solutions)).plot("./output/main2_sol2.png", "po");
+////        new GraphStreamViewer(vrp, Solutions.bestOf(solutions)).labelWith(GraphStreamViewer.Label.ID).setRenderDelay(200).display();
+////        SolutionPrinter.print(vrp, Solutions.bestOf(solutions), SolutionPrinter.Print.VERBOSE);
+//
+//        SolutionAnalyser analyser = new SolutionAnalyser(vrp, Solutions.bestOf(solutions), vrp.getTransportCosts());
+//        System.out.println("tp_distance: " + analyser.getDistance());
+//        System.out.println("tp_time: " + analyser.getTransportTime());
+//        System.out.println("waiting: " + analyser.getWaitingTime());
+//        System.out.println("service: " + analyser.getServiceTime());
+//        System.out.println("#picks: " + analyser.getNumberOfPickups());
+//        System.out.println("#deliveries: " + analyser.getNumberOfDeliveries());
+//
+////        for (VehicleRoute route : solution.getRoutes()) {
+////            StringBuilder urlStr = new StringBuilder("http://localhost:8989/maps/");
+////            urlStr.append("?point=").append(depotLocation.getCoordinate().getX()).append(",").append(depotLocation.getCoordinate().getY());
+////            for (TourActivity activity : route.getActivities()) {
+////                Coordinate coordinate = activity.getLocation().getCoordinate();
+////                urlStr.append("&point=").append(coordinate.getX()).append(",").append(coordinate.getY());
+////            }
+////            System.out.println(urlStr);
+////        }
+//    }
 
     private void build(IdentifiedPointList pointList, FarmyCourier[] farmyCouriers) throws Exception {
 
@@ -256,7 +271,7 @@ public class RouteOptimize {
             )
                     .setFixedCost(0)
                     .setCostPerDistance(0)
-                    .addCapacityDimension(0, 80)
+                    .addCapacityDimension(0, 90)
                     .setMaxVelocity(courier.getIsPlus() ? 13.0 : 20.8) // ~50km/h
     //                .setMaxVelocity(26.0) // ~100km/h
                     .build();
@@ -279,11 +294,12 @@ public class RouteOptimize {
 
         for (IdentifiedGHPoint3D point : this.pointList) {
             if (point.getId().equals(depotPoint.getId())) continue;
-            vrpBuilder.addJob(Delivery.Builder.newInstance(point.getId())
+            vrpBuilder.addJob(Shipment.Builder.newInstance(point.getId())
                     .addSizeDimension(0, (int) point.getWeight())
-                    .setLocation(Location.Builder.newInstance().setId(point.getId()).setCoordinate(Coordinate.newInstance(point.getLat(), point.getLon())).build())
-                    .addTimeWindow(point.getTimeWindow())
-                    .setServiceTime(point.getServiceTime())
+                    .setPickupLocation(depotLocation)
+                    .setDeliveryLocation(Location.Builder.newInstance().setId(point.getId()).setCoordinate(Coordinate.newInstance(point.getLat(), point.getLon())).build())
+                    .setDeliveryTimeWindow(point.getTimeWindow())
+                    .setDeliveryServiceTime(point.getServiceTime())
                     .build());
         }
         for (PointMatrix pointMatrix : pointMatrixList) {
@@ -306,6 +322,7 @@ public class RouteOptimize {
         UnassignedJobReasonTracker reasonTracker = new UnassignedJobReasonTracker();
 
         vra.addListener(reasonTracker);
+        vra.setMaxIterations(64); // Fast iterations for testing
 
         Collection<VehicleRoutingProblemSolution> solutions = vra.searchSolutions();
         this.solution = Solutions.bestOf(solutions);
@@ -326,6 +343,7 @@ public class RouteOptimize {
         System.out.println("#load_delivered: " + analyser.getLoadDelivered());
         System.out.println("#capacity_violation: " + analyser.getCapacityViolation());
         System.out.println("#time_window_violation: " + analyser.getTimeWindowViolation());
+        System.out.println("#number_of_deliveries: " + analyser.getNumberOfDeliveriesAtEnd());
 
 //        for (VehicleRoute route : solution.getRoutes()) {
 //            StringBuilder urlStr = new StringBuilder("http://localhost:8989/maps/");
@@ -336,5 +354,16 @@ public class RouteOptimize {
 //            }
 //            System.out.println(urlStr);
 //        }
+    }
+
+    private String routeVehicleId(VehicleRoute route, HashMap<String, HashMap<String, Object>> allMap, int routeNumber) {
+//          Check if vehicle is already added
+        String vehicleId = route.getVehicle().getId().replaceAll("\\s+", "");
+        if (allMap.containsKey(String.format("%s#%s", vehicleId, routeNumber))) {
+            routeNumber++;
+            return routeVehicleId(route, allMap, routeNumber);
+        } else {
+            return String.format("%s#%s", vehicleId, routeNumber);
+        }
     }
 }

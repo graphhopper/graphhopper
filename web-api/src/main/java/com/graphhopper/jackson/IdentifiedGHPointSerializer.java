@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.graphhopper.farmy.IdentifiedGHPoint3D;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 ;
 
@@ -31,10 +32,11 @@ class IdentifiedGHPointSerializer extends JsonSerializer<IdentifiedGHPoint3D> {
 
     @Override
     public void serialize(IdentifiedGHPoint3D ghPoint, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
-        jsonGenerator.writeStartArray();
-        for (String number : ghPoint.toGeoJsonWithId()) {
-            jsonGenerator.writeString(number);
+        jsonGenerator.writeStartObject();
+        HashMap<String, Object> map = ghPoint.toGeoJsonWithId();
+        for (Object key : map.keySet()) {
+            jsonGenerator.writeStringField((String) key, (String) map.get(key));
         }
-        jsonGenerator.writeEndArray();
+        jsonGenerator.writeEndObject();
     }
 }
