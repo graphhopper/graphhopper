@@ -24,7 +24,7 @@ public interface RoutingCHEdgeIteratorState {
     /**
      * The CH edge ID of this edge state. This is generally not the same as {@link #getOrigEdge()}
      */
-    int getCHEdge();
+    int getEdge();
 
     /**
      * The original/base/query graph edge ID of the edge this CH edge state represents or {@link EdgeIterator#NO_EDGE}

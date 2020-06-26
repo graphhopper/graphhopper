@@ -608,7 +608,7 @@ class QueryRoutingCHGraphTest {
         RoutingCHEdgeIterator iter = explorer.setBaseNode(base);
         while (iter.next())
             if (iter.getAdjNode() == adj)
-                return iter.getCHEdge();
+                return iter.getEdge();
         return NO_EDGE;
     }
 

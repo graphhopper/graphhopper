@@ -37,7 +37,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     }
 
     @Override
-    public int getCHEdge() {
+    public int getEdge() {
         return edgeState().getEdge();
     }
 

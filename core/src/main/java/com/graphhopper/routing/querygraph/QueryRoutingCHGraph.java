@@ -200,11 +200,11 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                 while (iter.next()) {
                     // shortcuts cannot be in the removed edge set because this was determined on the (base) query graph
                     if (iter.isShortcut()) {
-                        virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getCHEdge(), iter.getOrigEdge(),
+                        virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), iter.getOrigEdge(),
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
                                 iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(false), iter.getWeight(true)));
-                    } else if (!edgeChanges.getRemovedEdges().contains(iter.getCHEdge())) {
-                        virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getCHEdge(), iter.getOrigEdge(),
+                    } else if (!edgeChanges.getRemovedEdges().contains(iter.getEdge())) {
+                        virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), iter.getOrigEdge(),
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
                                 NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true)));
                     }
@@ -285,7 +285,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public int getCHEdge() {
+        public int getEdge() {
             return edge;
         }
 
@@ -357,8 +357,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public int getCHEdge() {
-            return getCurrent().getCHEdge();
+        public int getEdge() {
+            return getCurrent().getEdge();
         }
 
         @Override

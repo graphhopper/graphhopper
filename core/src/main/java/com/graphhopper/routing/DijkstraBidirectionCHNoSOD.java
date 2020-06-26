@@ -33,7 +33,7 @@ public class DijkstraBidirectionCHNoSOD extends AbstractBidirCHAlgo {
 
     @Override
     protected SPTEntry createEntry(RoutingCHEdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
-        SPTEntry entry = new SPTEntry(edge.getCHEdge(), edge.getAdjNode(), weight);
+        SPTEntry entry = new SPTEntry(edge.getEdge(), edge.getAdjNode(), weight);
         entry.parent = parent;
         return entry;
     }

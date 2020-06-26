@@ -72,7 +72,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
      *
      * @param edge    the edge that is currently processed for the expansion
      * @param incEdge the id of the edge that is incoming to the node the edge is pointed at. usually this is the same as
-     *                edge.getCHEdge(), but for edge-based CH and in case edge is a shortcut incEdge is the original edge
+     *                edge.getEdge(), but for edge-based CH and in case edge is a shortcut incEdge is the original edge
      *                that is incoming to the node
      * @param weight  the weight the shortest path three entry should carry
      * @param parent  the parent entry of in the shortest path tree

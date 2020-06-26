@@ -20,7 +20,7 @@ package com.graphhopper.util;
 /**
  * Iterates through all edges of one node. Avoids object creation in-between via direct access
  * methods. If you want to access some properties of an 'edge' (i.e. the current state) for later
- * usage store it via edgeIterator.detach() or edgeIterator.getCHEdge() instead of the iterator
+ * usage store it via edgeIterator.detach() or edgeIterator.getEdge() instead of the iterator
  * itself. Usage:
  * <pre>
  * EdgeExplorer explorer = graph.createEdgeExplorer();
