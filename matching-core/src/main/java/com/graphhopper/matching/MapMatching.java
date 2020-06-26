@@ -548,7 +548,7 @@ public class MapMatching {
                 edges.addAll(state.transitionDescriptor.calcEdges());
             }
         }
-        Path mergedPath = new MapMatchedPath(queryGraph.getBaseGraph(), weighting, edges);
+        Path mergedPath = new MapMatchedPath(queryGraph, weighting, edges);
 
         List<EdgeMatch> edgeMatches = computeEdgeMatches(seq, virtualEdgesMap);
         MatchResult matchResult = new MatchResult(edgeMatches);
@@ -556,7 +556,7 @@ public class MapMatching {
         matchResult.setMatchMillis(time);
         matchResult.setMatchLength(distance);
         matchResult.setGPXEntriesLength(gpxLength(gpxList));
-        matchResult.setGraph(queryGraph.getBaseGraph());
+        matchResult.setGraph(queryGraph);
         matchResult.setWeighting(weighting);
         return matchResult;
     }
