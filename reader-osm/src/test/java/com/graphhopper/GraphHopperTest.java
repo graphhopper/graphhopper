@@ -1031,9 +1031,9 @@ public class GraphHopperTest {
         assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.82900047302246), arsp.getPoints().get(0));
         assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 12.274499893188477), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
-        assertEquals(55.83, arsp.getPoints().get(0).getElevation(), 1e-2);
-        assertEquals(57.78, arsp.getPoints().get(1).getElevation(), 1e-2);
-        assertEquals(52.43, arsp.getPoints().get(10).getElevation(), 1e-2);
+        assertEquals(55.83, arsp.getPoints().get(0).getElevation(), .1);
+        assertEquals(57.78, arsp.getPoints().get(1).getElevation(), .1);
+        assertEquals(52.43, arsp.getPoints().get(10).getElevation(), .1);
     }
 
     @Ignore

@@ -899,8 +899,7 @@ class BaseGraph implements Graph {
             int len = pillarNodes.getSize();
             int dim = nodeAccess.getDimension();
             if (existingGeoRef > 0) {
-                // TODO NOW
-                final int count = wayGeometry.getInt(existingGeoRef * 4L);
+                final int count = DataHandler.readVInt(wayGeometry, existingGeoRef * 4L);
                 if (len <= count) {
                     // we can reuse existing space
                     setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
@@ -917,9 +916,13 @@ class BaseGraph implements Graph {
 
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
         int len = pillarNodes.getSize();
+        if (len >= 2_097_152) // 2^(7*3)
+            throw new IllegalArgumentException("PointList too large " + len);
+
         int dim = nodeAccess.getDimension();
         long geoRefPosition = geoRef * 4;
-        // maximum for VInt is 5 bytes, so maximum would be len * dim * 5 + 5, but then we just write multiple times
+        // maximum for VInt is 5 bytes and len is forcefully reduced to 4 bytes
+        // and so maximum would be len * dim * 5 + 4, but then we just write multiple times
         int totalLen = len * dim * 3 + 3;
         ensureGeometry(geoRefPosition, totalLen);
 

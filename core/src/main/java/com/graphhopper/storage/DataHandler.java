@@ -14,8 +14,8 @@ final class DataHandler {
         this.dataAccess = dataAccess;
         this.dataAccessPointer = dataAccessPointer;
         this.bytes = bytes;
-        if (bytes.length < 15)
-            throw new IllegalArgumentException("Too small bytes array");
+        if (bytes.length < 9)
+            throw new IllegalArgumentException("Too small bytes array " + bytes.length);
     }
 
     /**
@@ -67,6 +67,30 @@ final class DataHandler {
 
     public int readZInt() {
         return zigZagDecode(readVInt());
+    }
+
+    public static int readVInt(DataAccess dataAccess, long pointer) {
+        byte valueByte = dataAccess.getByte(pointer++);
+        if (valueByte >= 0) return valueByte;
+
+        int valueInt = valueByte & 0x7F;
+        valueByte = dataAccess.getByte(pointer++);
+        valueInt |= (valueByte & 0x7F) << 7;
+        if (valueByte >= 0) return valueInt;
+
+        valueByte = dataAccess.getByte(pointer++);
+        valueInt |= (valueByte & 0x7F) << 14;
+        if (valueByte >= 0) return valueInt;
+
+        valueByte = dataAccess.getByte(pointer++);
+        valueInt |= (valueByte & 0x7F) << 21;
+        if (valueByte >= 0) return valueInt;
+
+        valueByte = dataAccess.getByte(pointer);
+        // Warning: the next ands use 0x0F / 0xF0 - beware copy/paste errors:
+        valueInt |= (valueByte & 0x0F) << 28;
+        if ((valueByte & 0xF0) == 0) return valueInt;
+        throw new IllegalStateException("Invalid vInt detected (too many bits)");
     }
 
     int readVInt() {
