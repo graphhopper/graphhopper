@@ -36,8 +36,8 @@ public class Helper {
     public static final long MB = 1L << 20;
     // +- 180 and +-90 => let use use 400
     private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
-    // milli meter is a bit extreme but we have integers
-    private static final float ELE_FACTOR = 1000f;
+    // use 0.1 meter precision
+    private static final float ELE_FACTOR = 10f;
 
     private Helper() {
     }

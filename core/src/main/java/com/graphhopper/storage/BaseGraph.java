@@ -899,8 +899,10 @@ class BaseGraph implements Graph {
             int len = pillarNodes.getSize();
             int dim = nodeAccess.getDimension();
             if (existingGeoRef > 0) {
+                // TODO NOW
                 final int count = wayGeometry.getInt(existingGeoRef * 4L);
                 if (len <= count) {
+                    // we can reuse existing space
                     setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
                     return;
                 }
@@ -917,37 +919,44 @@ class BaseGraph implements Graph {
         int len = pillarNodes.getSize();
         int dim = nodeAccess.getDimension();
         long geoRefPosition = geoRef * 4;
-        int totalLen = len * dim * 4 + 4;
+        // maximum for VInt is 5 bytes, so maximum would be len * dim * 5 + 5, but then we just write multiple times
+        int totalLen = len * dim * 3 + 3;
         ensureGeometry(geoRefPosition, totalLen);
-        byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
-        wayGeometry.setBytes(geoRefPosition, wayGeometryBytes, wayGeometryBytes.length);
-        edges.setInt(edgePointer + E_GEO, Helper.toSignedInt(geoRef));
-    }
 
-    private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
-        int len = pillarNodes.getSize();
-        int dim = nodeAccess.getDimension();
-        int totalLen = len * dim * 4 + 4;
-        byte[] bytes = new byte[totalLen];
-        bitUtil.fromInt(bytes, len, 0);
+        DataHandler handler = new DataHandler(new byte[totalLen], wayGeometry, geoRefPosition);
         if (reverse)
             pillarNodes.reverse();
 
-        int tmpOffset = 4;
+        handler.writeVInt(len);
         boolean is3D = nodeAccess.is3D();
+        // 3 temporary copies of initial value, we could also write all lats, then all lons and last all elevation
+        // but the reading would require to store them in some temporary variable before we could add them to PointList
+        int deltaLat = 0, deltaLon = 0, deltaEle = 0;
         for (int i = 0; i < len; i++) {
-            double lat = pillarNodes.getLatitude(i);
-            bitUtil.fromInt(bytes, Helper.degreeToInt(lat), tmpOffset);
-            tmpOffset += 4;
-            bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLongitude(i)), tmpOffset);
-            tmpOffset += 4;
+            // for VInt we make first number >=0. After that use ZInt
+            int latInt = Helper.degreeToInt(pillarNodes.getLatitude(i) + 90);
+            int lonInt = Helper.degreeToInt(pillarNodes.getLongitude(i) + 180);
+            if (i == 0) {
+                handler.writeVInt(deltaLat = latInt);
+                handler.writeVInt(deltaLon = lonInt);
+            } else {
+                handler.writeZInt(latInt - deltaLat);
+                handler.writeZInt(lonInt - deltaLon);
+            }
 
             if (is3D) {
-                bitUtil.fromInt(bytes, Helper.eleToInt(pillarNodes.getElevation(i)), tmpOffset);
-                tmpOffset += 4;
+                int eleInt = Helper.eleToInt(pillarNodes.getElevation(i));
+                if (i == 0)
+                    // TODO MEM try VInt here too! (we use Zint here as value could be negative and "+500" means for most cases 2 bytes where only 1 could be sufficient)
+                    handler.writeZInt(deltaEle = eleInt);
+                else
+                    handler.writeZInt(eleInt - deltaEle);
             }
         }
-        return bytes;
+
+        // write automatically before if too many bytes, but finally write at least once
+        handler.writeToDataAccess();
+        edges.setInt(edgePointer + E_GEO, Helper.toSignedInt(geoRef));
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, int baseNode, int adjNode) {
@@ -960,14 +969,13 @@ class BaseGraph implements Graph {
         }
         long geoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
         int count = 0;
-        byte[] bytes = null;
+        // TODO NOW instead of the handler directly write/read into/from DataAccess instead of byte array.
+        DataHandler handler = null;
         if (geoRef > 0) {
-            geoRef *= 4L;
-            count = wayGeometry.getInt(geoRef);
-
-            geoRef += 4L;
-            bytes = new byte[count * nodeAccess.getDimension() * 4];
-            wayGeometry.getBytes(geoRef, bytes, bytes.length);
+            // for initial array size expect 3 bytes and 3 points on average
+            handler = new DataHandler(new byte[3 * 3 * nodeAccess.getDimension()], wayGeometry, geoRef * 4L);
+            handler.readFromDataAccess();
+            count = handler.readVInt();
         } else if (mode == FetchMode.PILLAR_ONLY)
             return PointList.EMPTY;
 
@@ -978,15 +986,13 @@ class BaseGraph implements Graph {
         } else if (mode == FetchMode.ALL || mode == FetchMode.BASE_AND_PILLAR)
             pillarNodes.add(nodeAccess, baseNode);
 
-        int index = 0;
+        int deltaLat = 0, deltaLon = 0, deltaEle = 0;
         for (int i = 0; i < count; i++) {
-            double lat = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
+            double lat = Helper.intToDegree(i == 0 ? (deltaLat = handler.readVInt()) : (handler.readZInt() + deltaLat)) - 90;
+            double lon = Helper.intToDegree(i == 0 ? (deltaLon = handler.readVInt()) : (handler.readZInt() + deltaLon)) - 180;
             if (nodeAccess.is3D()) {
-                pillarNodes.add(lat, lon, Helper.intToEle(bitUtil.toInt(bytes, index)));
-                index += 4;
+                double ele = Helper.intToEle(i == 0 ? (deltaEle = handler.readZInt()) : (handler.readZInt() + deltaEle));
+                pillarNodes.add(lat, lon, ele);
             } else {
                 pillarNodes.add(lat, lon);
             }
