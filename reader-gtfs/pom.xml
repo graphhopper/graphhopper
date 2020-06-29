@@ -79,28 +79,6 @@
             <version>2.3.0</version>
         </dependency>
 
-        <!-- Web client dependencies-->
-        <dependency>
-            <groupId>org.webjars.npm</groupId>
-            <artifactId>react</artifactId>
-            <version>16.10.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.npm</groupId>
-            <artifactId>react-dom</artifactId>
-            <version>16.10.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>leaflet</artifactId>
-            <version>1.5.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>momentjs</artifactId>
-            <version>2.24.0</version>
-        </dependency>
-
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-core</artifactId>
