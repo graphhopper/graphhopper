@@ -18,10 +18,10 @@
 
 package com.graphhopper.resources;
 
+import com.graphhopper.gtfs.*;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;

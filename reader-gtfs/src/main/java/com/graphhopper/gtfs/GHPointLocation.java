@@ -16,12 +16,19 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.gtfs;
+package com.graphhopper.gtfs;
 
-public class GHStationLocation extends GHLocation {
-    public final String stop_id;
+import com.graphhopper.util.shapes.GHPoint;
 
-    public GHStationLocation(String ghPoint) {
-        this.stop_id = ghPoint;
+public class GHPointLocation extends GHLocation {
+    public final GHPoint ghPoint;
+
+    public GHPointLocation(GHPoint ghPoint) {
+        this.ghPoint = ghPoint;
+    }
+
+    @Override
+    public String toString() {
+        return ghPoint.toString();
     }
 }

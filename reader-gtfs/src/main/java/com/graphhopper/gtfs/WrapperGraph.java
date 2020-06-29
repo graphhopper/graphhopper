@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.gtfs;
+package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;

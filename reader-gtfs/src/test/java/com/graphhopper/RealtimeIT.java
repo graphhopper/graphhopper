@@ -19,9 +19,9 @@
 package com.graphhopper;
 
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtRouter;
-import com.graphhopper.reader.gtfs.Request;
+import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.PtRouter;
+import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
@@ -35,7 +35,7 @@ import java.time.*;
 import static com.google.transit.realtime.GtfsRealtime.TripDescriptor.ScheduleRelationship.ADDED;
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SCHEDULED;
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED;
-import static com.graphhopper.reader.gtfs.GtfsHelper.time;
+import static com.graphhopper.gtfs.GtfsHelper.time;
 import static org.junit.Assert.*;
 
 public class RealtimeIT {

@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.gtfs;
+package com.graphhopper.gtfs;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;

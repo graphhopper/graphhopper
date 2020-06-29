@@ -16,19 +16,23 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.gtfs;
+package com.graphhopper.gtfs;
 
 import com.graphhopper.util.shapes.GHPoint;
 
-public class GHPointLocation extends GHLocation {
-    public final GHPoint ghPoint;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    public GHPointLocation(GHPoint ghPoint) {
-        this.ghPoint = ghPoint;
-    }
+public class GHLocation {
 
-    @Override
-    public String toString() {
-        return ghPoint.toString();
+    private static final Pattern PATTERN = Pattern.compile("^Stop\\((.*)\\)$");
+
+    public static GHLocation fromString(String s) {
+        final Matcher matcher = PATTERN.matcher(s);
+        if (matcher.find()) {
+            return new GHStationLocation(matcher.group(1));
+        } else {
+            return new GHPointLocation(GHPoint.fromString(s));
+        }
     }
 }

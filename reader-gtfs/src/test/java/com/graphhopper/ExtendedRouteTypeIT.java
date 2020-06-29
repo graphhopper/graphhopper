@@ -18,9 +18,9 @@
 
 package com.graphhopper;
 
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtRouter;
-import com.graphhopper.reader.gtfs.Request;
+import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.PtRouter;
+import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
@@ -31,7 +31,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-import static com.graphhopper.reader.gtfs.GtfsHelper.time;
+import static com.graphhopper.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 

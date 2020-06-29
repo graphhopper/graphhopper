@@ -18,7 +18,7 @@
 
 package com.graphhopper.http;
 
-import com.graphhopper.reader.gtfs.GHLocation;
+import com.graphhopper.gtfs.GHLocation;
 import io.dropwizard.jersey.params.AbstractParam;
 
 import javax.annotation.Nullable;

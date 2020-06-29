@@ -18,9 +18,9 @@
 
 package com.graphhopper;
 
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtRouter;
-import com.graphhopper.reader.gtfs.Request;
+import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.PtRouter;
+import com.graphhopper.gtfs.Request;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;

@@ -18,8 +18,8 @@
 
 package com.graphhopper.http;
 
-import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.RealtimeFeed;
+import com.graphhopper.gtfs.GtfsStorage;
+import com.graphhopper.gtfs.RealtimeFeed;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.client.HttpClientBuilder;
 import io.dropwizard.setup.Bootstrap;

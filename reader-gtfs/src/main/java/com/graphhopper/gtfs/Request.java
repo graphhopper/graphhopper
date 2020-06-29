@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.gtfs;
+package com.graphhopper.gtfs;
 
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
