@@ -1,3 +1,6 @@
+2.0
+    added navigation repo #2071
+
 1.0
     changes to config.yml:
       properties have to follow the snake_case, #1918, easy convert via https://github.com/karussell/snake_case
