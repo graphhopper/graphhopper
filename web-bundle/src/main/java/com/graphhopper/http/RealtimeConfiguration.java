@@ -16,26 +16,31 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.gtfs;
+package com.graphhopper.http;
 
-import io.dropwizard.jersey.params.AbstractParam;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.dropwizard.client.HttpClientConfiguration;
 
-import javax.annotation.Nullable;
-import java.time.Duration;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 
-public class DurationParam extends AbstractParam<Duration> {
-    public DurationParam(@Nullable String input) {
-        super(input);
+public class RealtimeConfiguration {
+
+    @Valid
+    @NotNull
+    @JsonProperty
+    private HttpClientConfiguration httpClient = new HttpClientConfiguration();
+
+    @JsonProperty
+    private List<FeedConfiguration> feeds = new ArrayList<>();
+
+    public List<FeedConfiguration> getFeeds() {
+        return feeds;
     }
 
-    public DurationParam(@Nullable String input, String parameterName) {
-        super(input, parameterName);
-    }
-
-    @Override
-    protected Duration parse(@Nullable String input) throws Exception {
-        if (input == null)
-            return null;
-        return Duration.parse(input);
+    public HttpClientConfiguration getHttpClientConfiguration() {
+        return httpClient;
     }
 }

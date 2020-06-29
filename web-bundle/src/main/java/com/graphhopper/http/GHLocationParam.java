@@ -16,12 +16,27 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.gtfs.dropwizard;
+package com.graphhopper.http;
 
-import java.util.List;
+import com.graphhopper.reader.gtfs.GHLocation;
+import io.dropwizard.jersey.params.AbstractParam;
 
-public interface RealtimeBundleConfiguration {
+import javax.annotation.Nullable;
 
-    RealtimeConfiguration gtfsrealtime();
+public class GHLocationParam extends AbstractParam<GHLocation> {
 
+    public GHLocationParam(@Nullable String input) {
+        super(input);
+    }
+
+    public GHLocationParam(@Nullable String input, String parameterName) {
+        super(input, parameterName);
+    }
+
+    @Override
+    protected GHLocation parse(@Nullable String input) throws Exception {
+        if (input == null)
+            return null;
+        return GHLocation.fromString(input);
+    }
 }

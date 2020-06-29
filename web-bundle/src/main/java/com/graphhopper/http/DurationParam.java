@@ -16,48 +16,26 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.gtfs.dropwizard;
+package com.graphhopper.http;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.transit.realtime.GtfsRealtime;
+import io.dropwizard.jersey.params.AbstractParam;
 
-import java.io.IOException;
-import java.net.URL;
+import javax.annotation.Nullable;
+import java.time.Duration;
 
-public class FeedConfiguration {
-
-    private URL url;
-    private String agencyId;
-    private String feedId;
-
-    @JsonProperty
-    public URL getUrl() {
-        return url;
+public class DurationParam extends AbstractParam<Duration> {
+    public DurationParam(@Nullable String input) {
+        super(input);
     }
 
-    @JsonProperty
-    public void setUrl(URL url) {
-        this.url = url;
+    public DurationParam(@Nullable String input, String parameterName) {
+        super(input, parameterName);
     }
 
-    @JsonProperty
-    public String getAgencyId() {
-        return agencyId;
+    @Override
+    protected Duration parse(@Nullable String input) throws Exception {
+        if (input == null)
+            return null;
+        return Duration.parse(input);
     }
-
-    @JsonProperty
-    public void setAgencyId(String agencyId) {
-        this.agencyId = agencyId;
-    }
-
-    @JsonProperty
-    public String getFeedId() {
-        return feedId;
-    }
-
-    @JsonProperty
-    public void setFeedId(String feedId) {
-        this.feedId = feedId;
-    }
-
 }

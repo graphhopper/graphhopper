@@ -16,34 +16,10 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.gtfs.dropwizard;
+package com.graphhopper.http;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.transit.realtime.GtfsRealtime;
-import io.dropwizard.client.HttpClientConfiguration;
+public interface RealtimeBundleConfiguration {
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+    RealtimeConfiguration gtfsrealtime();
 
-public class RealtimeConfiguration {
-
-    @Valid
-    @NotNull
-    @JsonProperty
-    private HttpClientConfiguration httpClient = new HttpClientConfiguration();
-
-    @JsonProperty
-    private List<FeedConfiguration> feeds = new ArrayList<>();
-
-    public List<FeedConfiguration> getFeeds() {
-        return feeds;
-    }
-
-    public HttpClientConfiguration getHttpClientConfiguration() {
-        return httpClient;
-    }
 }

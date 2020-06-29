@@ -16,26 +16,48 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.gtfs;
+package com.graphhopper.http;
 
-import io.dropwizard.jersey.params.AbstractParam;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.transit.realtime.GtfsRealtime;
 
-import javax.annotation.Nullable;
+import java.io.IOException;
+import java.net.URL;
 
-public class GHLocationParam extends AbstractParam<GHLocation> {
+public class FeedConfiguration {
 
-    public GHLocationParam(@Nullable String input) {
-        super(input);
+    private URL url;
+    private String agencyId;
+    private String feedId;
+
+    @JsonProperty
+    public URL getUrl() {
+        return url;
     }
 
-    public GHLocationParam(@Nullable String input, String parameterName) {
-        super(input, parameterName);
+    @JsonProperty
+    public void setUrl(URL url) {
+        this.url = url;
     }
 
-    @Override
-    protected GHLocation parse(@Nullable String input) throws Exception {
-        if (input == null)
-            return null;
-        return GHLocation.fromString(input);
+    @JsonProperty
+    public String getAgencyId() {
+        return agencyId;
     }
+
+    @JsonProperty
+    public void setAgencyId(String agencyId) {
+        this.agencyId = agencyId;
+    }
+
+    @JsonProperty
+    public String getFeedId() {
+        return feedId;
+    }
+
+    @JsonProperty
+    public void setFeedId(String feedId) {
+        this.feedId = feedId;
+    }
+
 }

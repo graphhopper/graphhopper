@@ -20,6 +20,8 @@ package com.graphhopper.resources;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
+import com.graphhopper.http.DurationParam;
+import com.graphhopper.http.GHLocationParam;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.util.Helper;

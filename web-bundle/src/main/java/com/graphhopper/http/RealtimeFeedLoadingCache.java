@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.gtfs.dropwizard;
+package com.graphhopper.http;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.google.common.cache.CacheBuilder;

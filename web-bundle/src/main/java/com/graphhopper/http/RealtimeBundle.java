@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.gtfs.dropwizard;
+package com.graphhopper.http;
 
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.RealtimeFeed;
