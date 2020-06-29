@@ -19,7 +19,7 @@
 package com.graphhopper;
 
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtRouteResource;
+import com.graphhopper.reader.gtfs.PtRouter;
 import com.graphhopper.reader.gtfs.Request;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class GraphHopperMultimodalIT {
 
     private static final String GRAPH_LOC = "target/GraphHopperMultimodalIT";
-    private static PtRouteResource graphHopper;
+    private static PtRouter graphHopper;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperGtfs graphHopperGtfs;
     private static LocationIndex locationIndex;
@@ -55,7 +55,7 @@ public class GraphHopperMultimodalIT {
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
         locationIndex = graphHopperGtfs.getLocationIndex();
-        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, locationIndex, graphHopperGtfs.getGtfsStorage())
+        graphHopper = PtRouter.createFactory(new TranslationMap().doImport(), graphHopperGtfs, locationIndex, graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 

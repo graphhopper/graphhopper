@@ -19,13 +19,11 @@
 package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.Trip;
-import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -36,26 +34,21 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.Translation;
+import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
-import io.dropwizard.jersey.params.AbstractParam;
-import io.dropwizard.jersey.params.InstantParam;
 
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingLong;
-import static java.util.stream.Collectors.toList;
 
-@Path("route-pt")
-public final class PtRouteResource {
+public final class PtRouter {
 
     private final TranslationMap translationMap;
     private final PtEncodedValues ptEncodedValues;
@@ -67,7 +60,7 @@ public final class PtRouteResource {
     private final TripFromLabel tripFromLabel;
 
     @Inject
-    public PtRouteResource(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
+    public PtRouter(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
         this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         this.accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
         this.translationMap = translationMap;
@@ -80,34 +73,6 @@ public final class PtRouteResource {
 
     public static Factory createFactory(TranslationMap translationMap, GraphHopper graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
         return new Factory(translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public ObjectNode route(@QueryParam("point") @Size(min=2,max=2) List<GHLocationParam> requestPoints,
-                            @QueryParam("pt.earliest_departure_time") @NotNull InstantParam departureTimeParam,
-                            @QueryParam("pt.profile_duration") DurationParam profileDuration,
-                            @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
-                            @QueryParam("locale") String localeStr,
-                            @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
-                            @QueryParam("pt.profile") Boolean profileQuery,
-                            @QueryParam("pt.limit_solutions") Integer limitSolutions,
-                            @QueryParam("pt.limit_street_time") DurationParam limitStreetTime) {
-        StopWatch stopWatch = new StopWatch().start();
-        List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
-        Instant departureTime = departureTimeParam.get();
-
-        Request request = new Request(points, departureTime);
-        request.setArriveBy(arriveBy);
-        Optional.ofNullable(profileQuery).ifPresent(request::setProfileQuery);
-        Optional.ofNullable(profileDuration.get()).ifPresent(request::setMaxProfileDuration);
-        Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
-        Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
-        Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
-        Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
-
-        GHResponse route = new RequestHandler(request).route();
-        return WebHelper.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
     }
 
     public GHResponse route(Request request) {
@@ -132,14 +97,14 @@ public final class PtRouteResource {
             }
         }
 
-        public PtRouteResource createWith(GtfsRealtime.FeedMessage realtimeFeed) {
+        public PtRouter createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouteResource(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds));
+            return new PtRouter(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds));
         }
 
-        public PtRouteResource createWithoutRealtimeFeed() {
-            return new PtRouteResource(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
+        public PtRouter createWithoutRealtimeFeed() {
+            return new PtRouter(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
         }
     }
 

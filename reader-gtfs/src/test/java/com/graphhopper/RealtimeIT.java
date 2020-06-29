@@ -20,7 +20,7 @@ package com.graphhopper;
 
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtRouteResource;
+import com.graphhopper.reader.gtfs.PtRouter;
 import com.graphhopper.reader.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -42,7 +42,7 @@ public class RealtimeIT {
 
     private static final String GRAPH_LOC = "target/RealtimeIT";
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static PtRouteResource.Factory graphHopperFactory;
+    private static PtRouter.Factory graphHopperFactory;
     private static GraphHopperGtfs graphHopperGtfs;
 
     @BeforeClass
@@ -60,7 +60,7 @@ public class RealtimeIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        graphHopperFactory = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
+        graphHopperFactory = PtRouter.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
     }
 
     @AfterClass
@@ -674,7 +674,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SCHEDULED)
                 .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
 
-        PtRouteResource graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
+        PtRouter graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
         GHResponse response = graphHopper.route(ghRequest);
         assertEquals(2, response.getAll().size());
 
@@ -716,7 +716,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SCHEDULED)
                 .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
 
-        PtRouteResource graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
+        PtRouter graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());

@@ -18,11 +18,7 @@
 
 package com.graphhopper;
 
-import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.reader.gtfs.*;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
@@ -35,7 +31,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
-import java.util.Collections;
 
 import static com.graphhopper.reader.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
@@ -44,7 +39,7 @@ import static org.junit.Assert.assertFalse;
 public class AnotherAgencyIT {
 
     private static final String GRAPH_LOC = "target/AnotherAgencyIT";
-    private static PtRouteResource ptRouteResource;
+    private static PtRouter ptRouter;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperGtfs graphHopperGtfs;
 
@@ -59,7 +54,7 @@ public class AnotherAgencyIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouteResource = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = PtRouter.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -79,7 +74,7 @@ public class AnotherAgencyIT {
         );
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
-        GHResponse route = ptRouteResource.route(ghRequest);
+        GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
@@ -98,7 +93,7 @@ public class AnotherAgencyIT {
         );
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
-        GHResponse route = ptRouteResource.route(ghRequest);
+        GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
@@ -130,7 +125,7 @@ public class AnotherAgencyIT {
         );
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
-        ResponsePath route = ptRouteResource.route(ghRequest).getBest();
+        ResponsePath route = ptRouter.route(ghRequest).getBest();
         LocalTime arrivalTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(route.getLegs().get(1).getArrivalTime().getTime()), zoneId).toLocalTime();
         assertEquals("14:10", arrivalTime.toString());
     }

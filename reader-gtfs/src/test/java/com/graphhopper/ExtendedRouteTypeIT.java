@@ -19,7 +19,7 @@
 package com.graphhopper;
 
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtRouteResource;
+import com.graphhopper.reader.gtfs.PtRouter;
 import com.graphhopper.reader.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -38,7 +38,7 @@ import static org.junit.Assert.assertFalse;
 public class ExtendedRouteTypeIT {
 
     private static final String GRAPH_LOC = "target/ExtendedRouteType";
-    private static PtRouteResource ptRouteResource;
+    private static PtRouter ptRouter;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperGtfs graphHopperGtfs;
 
@@ -52,7 +52,7 @@ public class ExtendedRouteTypeIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouteResource = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = PtRouter.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -71,7 +71,7 @@ public class ExtendedRouteTypeIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 9, 0, 0).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
-        GHResponse route = ptRouteResource.route(ghRequest);
+        GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
