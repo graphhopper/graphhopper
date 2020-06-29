@@ -388,6 +388,7 @@ public class QueryGraphTest {
         assertEquals(new GHPoint(0.5, 0), res2.getSnappedPoint());
         assertEquals(3, res1.getClosestNode());
         assertEquals(3, res2.getClosestNode());
+        assertEquals(queryGraph.getNodes(), g.getNodes() + 1);
 
         // force skip due to **tower** node snapping in phase 2, but no virtual edges should be created for res1
         edgeState = GHUtility.getEdge(g, 0, 1);

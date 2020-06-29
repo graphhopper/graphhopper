@@ -1058,18 +1058,18 @@ public abstract class AbstractGraphStorageTester {
         final BaseGraph baseGraph = (BaseGraph) graph.getBaseGraph();
         assertEquals(4, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5, 5, 6, 7, 7, 8, 9));
-        assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+        assertEquals(4 + 11, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5, 5, 6, 7));
-        assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+        assertEquals(4 + 11, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5));
-        assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+        assertEquals(4 + 11, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3));
-        assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+        assertEquals(4 + 11, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
-        assertEquals(4 + (1 + 12) + (1 + 6), baseGraph.getMaxGeoRef());
+        assertEquals(4 + 11 + 6, baseGraph.getMaxGeoRef());
         EdgeIteratorState iter1 = graph.edge(0, 2, 200, true);
         iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
-        assertEquals(4 + (1 + 12) + (1 + 6) + (1 + 6), baseGraph.getMaxGeoRef());
+        assertEquals(4 + 11 + 6 + 6, baseGraph.getMaxGeoRef());
     }
 
     @Test

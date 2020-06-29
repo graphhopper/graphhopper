@@ -894,39 +894,39 @@ class BaseGraph implements Graph {
                 throw new IllegalArgumentException("Cannot use pointlist which is " + pillarNodes.getDimension()
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
-            long existingGeoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
+            // pointer is 4-byte aligned
+//            long existingGeoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
+//            int len = pillarNodes.getSize();
+            // TODO NOW even if lower count the used bytes could be more!
+//            if (existingGeoRef > 0) {
+//                final int count = DataHandler.readVInt(wayGeometry, existingGeoRef * 4);
+//                if (len <= count) {
+//                    // we can reuse existing space
+//                    long newGeoPointer = setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
+//                    if(newGeoPointer / 4 + (newGeoPointer % 4 == 0 ? 0 : 1) > existingGeoRef)
+//                    return;
+//                }
+//            }
 
-            int len = pillarNodes.getSize();
-            int dim = nodeAccess.getDimension();
-            if (existingGeoRef > 0) {
-                final int count = DataHandler.readVInt(wayGeometry, existingGeoRef * 4L);
-                if (len <= count) {
-                    // we can reuse existing space
-                    setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
-                    return;
-                }
-            }
-
-            long nextGeoRef = nextGeoRef(len * dim);
-            setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
+            long newGeoPointer = setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, maxGeoRef);
+            setNextGeoRef(newGeoPointer / 4 + (newGeoPointer % 4 == 0 ? 0 : 1));
         } else {
             edges.setInt(edgePointer + E_GEO, 0);
         }
     }
 
-    private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
+    /**
+     * @return new edgePointer
+     */
+    private long setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
         int len = pillarNodes.getSize();
         if (len >= 2_097_152) // 2^(7*3)
             throw new IllegalArgumentException("PointList too large " + len);
 
         int dim = nodeAccess.getDimension();
-        long geoRefPosition = geoRef * 4;
-        // maximum for VInt is 5 bytes and len is forcefully reduced to 4 bytes
-        // and so maximum would be len * dim * 5 + 4, but then we just write multiple times
-        int totalLen = len * dim * 3 + 3;
-        ensureGeometry(geoRefPosition, totalLen);
-
-        DataHandler handler = new DataHandler(new byte[totalLen], wayGeometry, geoRefPosition);
+        long geoBytesPointer = geoRef * 4;
+        int totalLenApprox = Math.max(10, len * dim * 3 + 1);
+        DataHandler handler = new DataHandler(new byte[totalLenApprox], wayGeometry, geoBytesPointer);
         if (reverse)
             pillarNodes.reverse();
 
@@ -957,9 +957,10 @@ class BaseGraph implements Graph {
             }
         }
 
-        // write automatically before if too many bytes, but finally write at least once
+        // write automatically before if certain threshold of bytes is reached, but finally write at least once
         handler.writeToDataAccess();
         edges.setInt(edgePointer + E_GEO, Helper.toSignedInt(geoRef));
+        return handler.getDataAccessPointer();
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, int baseNode, int adjNode) {
@@ -972,7 +973,7 @@ class BaseGraph implements Graph {
         }
         long geoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
         int count = 0;
-        // TODO NOW instead of the handler directly write/read into/from DataAccess instead of byte array.
+        // TODO NOW try perf: instead of the handler directly write/read into/from DataAccess instead of byte array.
         DataHandler handler = null;
         if (geoRef > 0) {
             // for initial array size expect 3 bytes and 3 points on average
@@ -1042,17 +1043,10 @@ class BaseGraph implements Graph {
         return removedNodes;
     }
 
-    private void ensureGeometry(long bytePos, int byteLength) {
-        wayGeometry.ensureCapacity(bytePos + byteLength);
-    }
-
-    private long nextGeoRef(int arrayLength) {
-        long tmp = maxGeoRef;
-        maxGeoRef += arrayLength + 1L;
-        if (maxGeoRef >= 0xFFFFffffL)
+    private void setNextGeoRef(long nextPointer) {
+        if (nextPointer >= 0xFFFFffffL)
             throw new IllegalStateException("Geometry too large, does not fit in 32 bits " + maxGeoRef);
-
-        return tmp;
+        maxGeoRef = nextPointer;
     }
 
     protected static class EdgeIterable extends CommonEdgeIterator implements EdgeExplorer, EdgeIterator {

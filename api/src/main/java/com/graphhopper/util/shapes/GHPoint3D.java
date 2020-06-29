@@ -53,7 +53,7 @@ public class GHPoint3D extends GHPoint {
         @SuppressWarnings("unchecked")
         final GHPoint3D other = (GHPoint3D) obj;
             return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon)
-                    && !Double.isNaN(ele) && NumHelper.equalsEps(ele, other.ele, 1e-2);
+                    && (Double.isNaN(ele) || NumHelper.equalsEps(ele, other.ele, 1e-2));
     }
 
     @Override

@@ -14,7 +14,7 @@ final class DataHandler {
         this.dataAccess = dataAccess;
         this.dataAccessPointer = dataAccessPointer;
         this.bytes = bytes;
-        if (bytes.length < 9)
+        if (bytes.length < 10)
             throw new IllegalArgumentException("Too small bytes array " + bytes.length);
     }
 
@@ -29,8 +29,15 @@ final class DataHandler {
      * This method is automatically called whenever bytes is "nearly" filled up.
      */
     void writeToDataAccess() {
-        if (writeOffset > 0)
+        if (writeOffset > 0) {
+            dataAccess.ensureCapacity(dataAccessPointer + writeOffset);
             dataAccess.setBytes(dataAccessPointer, bytes, writeOffset);
+            dataAccessPointer += writeOffset;
+        }
+    }
+
+    public long getDataAccessPointer() {
+        return dataAccessPointer;
     }
 
     public final void writeZInt(int i) {
@@ -40,7 +47,6 @@ final class DataHandler {
     final void writeVInt(int i) {
         if (writeOffset + 5 >= bytes.length) {
             writeToDataAccess();
-            dataAccessPointer += writeOffset;
             writeOffset = 0;
         }
 
