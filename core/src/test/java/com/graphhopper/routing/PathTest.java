@@ -382,6 +382,40 @@ public class PathTest {
     }
 
     @Test
+    public void testCalcEdgeKeyDetailsForward() {
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(EDGE_KEY), new PathDetailsBuilderFactory(), 0);
+        List<PathDetail> edgeKeyDetails = details.get(EDGE_KEY);
+
+        assertEquals(4, edgeKeyDetails.size());
+        assertEquals(0, edgeKeyDetails.get(0).getValue());
+        assertEquals(4, edgeKeyDetails.get(1).getValue());
+        assertEquals(6, edgeKeyDetails.get(2).getValue());
+        assertEquals(2, edgeKeyDetails.get(3).getValue());
+    }
+
+    @Test
+    public void testCalcEdgeKeyDetailsBackward() {
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(5, 1);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(EDGE_KEY), new PathDetailsBuilderFactory(), 0);
+        List<PathDetail> edgeKeyDetails = details.get(EDGE_KEY);
+
+        assertEquals(4, edgeKeyDetails.size());
+        assertEquals(3, edgeKeyDetails.get(0).getValue());
+        assertEquals(7, edgeKeyDetails.get(1).getValue());
+        assertEquals(5, edgeKeyDetails.get(2).getValue());
+        assertEquals(1, edgeKeyDetails.get(3).getValue());
+    }
+
+    @Test
     public void testCalcTimeDetails() {
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
