@@ -48,6 +48,9 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(EDGE_ID))
             builders.add(new EdgeIdDetails());
 
+        if (requestedPathDetails.contains(EDGE_KEY))
+            builders.add(new EdgeKeyDetails());
+
         if (requestedPathDetails.contains(TIME))
             builders.add(new TimeDetails(weighting));
 

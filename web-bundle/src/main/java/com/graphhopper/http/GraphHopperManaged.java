@@ -26,7 +26,7 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.CustomModel;
