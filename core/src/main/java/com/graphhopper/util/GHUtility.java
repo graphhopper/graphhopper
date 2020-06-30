@@ -274,7 +274,7 @@ public class GHUtility {
     public static String getNodeInfo(CHGraph g, int nodeId, EdgeFilter filter) {
         CHEdgeExplorer ex = g.createEdgeExplorer(filter);
         CHEdgeIterator iter = ex.setBaseNode(nodeId);
-        NodeAccess na = g.getNodeAccess();
+        NodeAccess na = g.getBaseGraph().getNodeAccess();
         String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
@@ -555,6 +555,15 @@ public class GHUtility {
         return null;
     }
 
+    public static CHEdgeIteratorState getEdge(CHGraph graph, int base, int adj) {
+        CHEdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
+        while (iter.next()) {
+            if (iter.getAdjNode() == adj)
+                return iter;
+        }
+        return null;
+    }
+
     /**
      * Creates unique positive number for specified edgeId taking into account the direction defined
      * by nodeA, nodeB and reverse.
@@ -673,6 +682,7 @@ public class GHUtility {
         }
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
         // todo: why no first/last orig edge here as in calcWeight ?
+//        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
         final int origEdgeId = edgeState.getEdge();
         long turnMillis = reverse
                 ? weighting.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
@@ -684,7 +694,7 @@ public class GHUtility {
      * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
      * certain methods.
      */
-    public static class DisabledEdgeIterator implements CHEdgeIterator {
+    public static class DisabledEdgeIterator implements EdgeIterator {
         @Override
         public EdgeIterator detach(boolean reverse) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
@@ -836,36 +846,6 @@ public class GHUtility {
         }
 
         @Override
-        public boolean isShortcut() {
-            return false;
-        }
-
-        @Override
-        public boolean getFwdAccess() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public boolean getBwdAccess() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getSkippedEdge1() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getSkippedEdge2() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
         public int getOrigEdgeFirst() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -875,25 +855,6 @@ public class GHUtility {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-        @Override
-        public double getWeight() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public CHEdgeIteratorState setWeight(double weight) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public void setFlagsAndWeight(int flags, double weight) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty");
-        }
-
-        @Override
-        public int getMergeStatus(int flags) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
     }
 
     /**

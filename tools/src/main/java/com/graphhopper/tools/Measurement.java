@@ -506,22 +506,12 @@ public class Measurement {
     private void printMiscUnitPerfTestsCH(final CHGraph lg, Weighting chWeighting, final FlagEncoder encoder,
                                           int count, final GHBitSet allowedEdges) {
         final Random rand = new Random(seed);
-        final CHEdgeExplorer chExplorer = lg.createEdgeExplorer(new LevelEdgeFilter(lg));
+        final CHEdgeExplorer chExplorer = lg.createEdgeExplorer();
         MiniPerfTest miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
                 int nodeId = rand.nextInt(maxNode);
-                return GHUtility.count(chExplorer.setBaseNode(nodeId));
-            }
-        }.setIterations(count).start();
-        print("unit_testsCH.level_edge_state_next", miniPerf);
-
-        final CHEdgeExplorer chExplorer2 = lg.createEdgeExplorer();
-        miniPerf = new MiniPerfTest() {
-            @Override
-            public int doCalc(boolean warmup, int run) {
-                int nodeId = rand.nextInt(maxNode);
-                CHEdgeIterator iter = chExplorer2.setBaseNode(nodeId);
+                CHEdgeIterator iter = chExplorer.setBaseNode(nodeId);
                 while (iter.next()) {
                     if (iter.isShortcut())
                         nodeId += (int) iter.getWeight();

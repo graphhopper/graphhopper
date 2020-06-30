@@ -27,16 +27,19 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHConfig;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.FetchMode;
@@ -336,70 +339,55 @@ public class MiniGraphUI {
         if (useCH) {
             CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
             Weighting weighting = chConfig.getWeighting();
-            Graph routingGraph = hopper.getGraphHopperStorage().getCHGraph(chConfig.getName());
-
-            final PrepareContractionHierarchies preparation = hopper.getCHPreparationHandler().getPreparation(profile.getName());
-            RoutingAlgorithmFactory algoFactory = new RoutingAlgorithmFactory() {
-
-                class TmpAlgo extends DijkstraBidirectionCH implements DebugAlgo {
-                    private final GraphicsWrapper mg;
-                    private Graphics2D g2;
-
-                    public TmpAlgo(RoutingCHGraph graph, GraphicsWrapper mg) {
-                        super(graph);
-                        this.mg = mg;
-                    }
-
-                    @Override
-                    public void setGraphics2D(Graphics2D g2) {
-                        this.g2 = g2;
-                    }
-
-                    @Override
-                    public void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
-                        if (g2 != null)
-                            mg.plotNode(g2, traversalId, Color.YELLOW, 6);
-
-                        super.updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
-                    }
-                }
-
-                @Override
-                public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                    // doable but ugly
-                    Weighting w = preparation.getCHConfig().getWeighting();
-                    return new TmpAlgo(new RoutingCHGraphImpl(g, g.wrapWeighting(w)), mg);
-                }
-            };
-            AlgorithmOptions algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
-            logger.info("algoOpts:" + algoOpts + ", weighting: " + weighting);
-            QueryGraph qGraph = QueryGraph.create(routingGraph, fromRes, toRes);
-            return algoFactory.createAlgo(qGraph, algoOpts);
+            RoutingCHGraph chGraph = hopper.getGraphHopperStorage().getRoutingCHGraph(chConfig.getName());
+            logger.info("CH algo, weighting: " + weighting);
+            QueryGraph qGraph = QueryGraph.create(hopper.getGraphHopperStorage(), fromRes, toRes);
+            QueryRoutingCHGraph queryRoutingCHGraph = new QueryRoutingCHGraph(chGraph, qGraph);
+            return new CHDebugAlgo(queryRoutingCHGraph, mg);
         } else {
-            Graph routingGraph = graph;
             Weighting weighting = hopper.createWeighting(profile, new PMap());
             final PrepareLandmarks preparation = hopper.getLMPreparationHandler().getPreparation(profile.getName());
-            RoutingAlgorithmFactory algoFactory = new RoutingAlgorithmFactory() {
-                @Override
-                public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                    RoutingAlgorithm algo = preparation.getRoutingAlgorithmFactory().createAlgo(g, opts);
-                    if (algo instanceof AStarBidirection) {
-                        return new DebugAStarBi(g, opts.getWeighting(), opts.getTraversalMode(), mg).
-                                setApproximation(((AStarBidirection) algo).getApproximation());
-                    } else if (algo instanceof AStar) {
-                        return new DebugAStar(g, opts.getWeighting(), opts.getTraversalMode(), mg);
-                    } else if (algo instanceof DijkstraBidirectionRef) {
-                        return new DebugDijkstraBidirection(g, opts.getWeighting(), opts.getTraversalMode(), mg);
-                    } else if (algo instanceof Dijkstra) {
-                        return new DebugDijkstraSimple(g, opts.getWeighting(), opts.getTraversalMode(), mg);
-                    }
-                    return algo;
+            RoutingAlgorithmFactory algoFactory = (g, opts) -> {
+                RoutingAlgorithm algo = preparation.getRoutingAlgorithmFactory().createAlgo(g, opts);
+                if (algo instanceof AStarBidirection) {
+                    return new DebugAStarBi(g, opts.getWeighting(), opts.getTraversalMode(), mg).
+                            setApproximation(((AStarBidirection) algo).getApproximation());
+                } else if (algo instanceof AStar) {
+                    return new DebugAStar(g, opts.getWeighting(), opts.getTraversalMode(), mg);
+                } else if (algo instanceof DijkstraBidirectionRef) {
+                    return new DebugDijkstraBidirection(g, opts.getWeighting(), opts.getTraversalMode(), mg);
+                } else if (algo instanceof Dijkstra) {
+                    return new DebugDijkstraSimple(g, opts.getWeighting(), opts.getTraversalMode(), mg);
                 }
+                return algo;
             };
             AlgorithmOptions algoOpts = new AlgorithmOptions(Algorithms.ASTAR_BI, weighting);
             logger.info("algoOpts:" + algoOpts + ", weighting: " + weighting);
-            QueryGraph qGraph = QueryGraph.create(routingGraph, fromRes, toRes);
+            QueryGraph qGraph = QueryGraph.create(graph, fromRes, toRes);
             return algoFactory.createAlgo(qGraph, algoOpts);
+        }
+    }
+
+    private static class CHDebugAlgo extends DijkstraBidirectionCH implements DebugAlgo {
+        private final GraphicsWrapper mg;
+        private Graphics2D g2;
+
+        public CHDebugAlgo(RoutingCHGraph graph, GraphicsWrapper mg) {
+            super(graph);
+            this.mg = mg;
+        }
+
+        @Override
+        public void setGraphics2D(Graphics2D g2) {
+            this.g2 = g2;
+        }
+
+        @Override
+        public void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
+            if (g2 != null)
+                mg.plotNode(g2, traversalId, Color.YELLOW, 6);
+
+            super.updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
         }
     }
 

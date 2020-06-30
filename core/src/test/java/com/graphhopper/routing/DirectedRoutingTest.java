@@ -25,6 +25,7 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -32,7 +33,10 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Rule;
@@ -69,13 +73,12 @@ public class DirectedRoutingTest {
     private GraphHopperStorage graph;
     private CHConfig chConfig;
     private LMConfig lmConfig;
-    private CHGraph chGraph;
+    private RoutingCHGraph routingCHGraph;
     private FlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private Weighting weighting;
     private EncodingManager encodingManager;
-    private PrepareContractionHierarchies pch;
     private PrepareLandmarks lm;
 
     @Rule
@@ -134,9 +137,9 @@ public class DirectedRoutingTest {
             return;
         }
         if (prepareCH) {
-            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
             pch.doWork();
-            chGraph = graph.getCHGraph(chConfig.getName());
+            routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
@@ -146,17 +149,25 @@ public class DirectedRoutingTest {
     }
 
     private BidirRoutingAlgorithm createAlgo() {
-        return createAlgo(prepareCH ? chGraph : graph);
+        return createAlgo(graph);
     }
 
     private BidirRoutingAlgorithm createAlgo(Graph graph) {
         switch (algo) {
             case ASTAR:
                 return new AStarBidirection(graph, graph.wrapWeighting(weighting), TraversalMode.EDGE_BASED);
-            case CH_DIJKSTRA:
-                return (BidirRoutingAlgorithm) new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph, new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
-            case CH_ASTAR:
-                return (BidirRoutingAlgorithm) new CHRoutingAlgorithmFactory(chGraph).createAlgo(graph, new PMap().putObject(ALGORITHM, ASTAR_BI));
+            case CH_DIJKSTRA: {
+                CHRoutingAlgorithmFactory algoFactory = graph instanceof QueryGraph
+                        ? new CHRoutingAlgorithmFactory(new QueryRoutingCHGraph(routingCHGraph, (QueryGraph) graph))
+                        : new CHRoutingAlgorithmFactory(routingCHGraph);
+                return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
+            }
+            case CH_ASTAR: {
+                CHRoutingAlgorithmFactory algoFactory = graph instanceof QueryGraph
+                        ? new CHRoutingAlgorithmFactory(new QueryRoutingCHGraph(routingCHGraph, (QueryGraph) graph))
+                        : new CHRoutingAlgorithmFactory(routingCHGraph);
+                return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
+            }
             case LM:
                 return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(TraversalMode.EDGE_BASED).build());
             default:
@@ -220,11 +231,7 @@ public class DirectedRoutingTest {
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
-
-            List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
-
-            QueryGraph chQueryGraph = QueryGraph.create(prepareCH ? chGraph : graph, chQueryResults);
             QueryGraph queryGraph = QueryGraph.create(graph, queryResults);
 
             int source = queryResults.get(0).getClosestNode();
@@ -233,12 +240,12 @@ public class DirectedRoutingTest {
             int sourceOutEdge = getSourceOutEdge(tmpRnd1, source, queryGraph);
             int targetInEdge = getTargetInEdge(tmpRnd1, target, queryGraph);
             Random tmpRnd2 = new Random(seed);
-            int chSourceOutEdge = getSourceOutEdge(tmpRnd2, source, chQueryGraph);
-            int chTargetInEdge = getTargetInEdge(tmpRnd2, target, chQueryGraph);
+            int chSourceOutEdge = getSourceOutEdge(tmpRnd2, source, queryGraph);
+            int chTargetInEdge = getTargetInEdge(tmpRnd2, target, queryGraph);
 
             Path refPath = new DijkstraBidirectionRef(queryGraph, ((Graph) queryGraph).wrapWeighting(weighting), TraversalMode.EDGE_BASED)
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
-            Path path = createAlgo(chQueryGraph)
+            Path path = createAlgo(queryGraph)
                     .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
 
             // do not check nodes, because there can be ambiguity when there are zero weight loops
@@ -302,12 +309,6 @@ public class DirectedRoutingTest {
         EdgeIterator iter = explorer.setBaseNode(node);
         List<Integer> edgeIds = new ArrayList<>();
         while (iter.next()) {
-            if (iter instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) iter).isShortcut()) {
-                // skip shortcuts here so we get the same restricted edges for a normal query graph and a
-                // query graph that wraps a CH graph (provided that the rnd number generator is in the same
-                // state)!
-                continue;
-            }
             edgeIds.add(iter.getOrigEdgeFirst());
             edgeIds.add(iter.getOrigEdgeLast());
         }

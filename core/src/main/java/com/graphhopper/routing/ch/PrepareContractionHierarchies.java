@@ -85,7 +85,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         params = Params.forTraversalMode(chConfig.getTraversalMode());
         updatedNeighbors = new IntHashSet(50);
         if (chConfig.getTraversalMode().isEdgeBased()) {
-            TurnCostStorage turnCostStorage = chGraph.getTurnCostStorage();
+            TurnCostStorage turnCostStorage = chGraph.getBaseGraph().getTurnCostStorage();
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
             }

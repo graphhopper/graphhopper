@@ -23,14 +23,17 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.PointList;
 
 import java.util.List;
 
 /**
  * @author Peter Karich
  */
-class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
+class VirtualEdgeIterator implements EdgeIterator {
     private final EdgeFilter edgeFilter;
     private List<EdgeIteratorState> edges;
     private int current;
@@ -221,55 +224,6 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public boolean isShortcut() {
-        EdgeIteratorState edge = getCurrentEdge();
-        return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).isShortcut();
-    }
-
-    @Override
-    public boolean getFwdAccess() {
-        EdgeIteratorState edge = getCurrentEdge();
-        return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).getFwdAccess();
-    }
-
-    @Override
-    public boolean getBwdAccess() {
-        EdgeIteratorState edge = getCurrentEdge();
-        return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).getBwdAccess();
-    }
-
-    @Override
-    public double getWeight() {
-        // will be called only from CHWeighting and if isShortcut is true
-        return ((CHEdgeIteratorState) getCurrentEdge()).getWeight();
-    }
-
-    @Override
-    public CHEdgeIteratorState setWeight(double weight) {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public void setFlagsAndWeight(int flags, double weight) {
-        throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public int getSkippedEdge1() {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public int getSkippedEdge2() {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
     public int getOrigEdgeFirst() {
         return getCurrentEdge().getOrigEdgeFirst();
     }
@@ -277,11 +231,6 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     @Override
     public int getOrigEdgeLast() {
         return getCurrentEdge().getOrigEdgeLast();
-    }
-
-    @Override
-    public int getMergeStatus(int flags) {
-        throw new UnsupportedOperationException("Not supported.");
     }
 
     private EdgeIteratorState getCurrentEdge() {

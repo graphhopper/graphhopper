@@ -33,10 +33,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphEdgeIdFinder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -67,7 +64,7 @@ public class Router {
     private final WeightingFactory weightingFactory;
     // todo: these should not be necessary anymore as soon as GraphHopperStorage (or something that replaces) it acts
     // like a 'graph database'
-    private final Map<String, CHGraph> chGraphs;
+    private final Map<String, RoutingCHGraph> chGraphs;
     private final Map<String, LandmarkStorage> landmarks;
     private final boolean chEnabled;
     private final boolean lmEnabled;
@@ -84,16 +81,20 @@ public class Router {
         this.translationMap = translationMap;
         this.routerConfig = routerConfig;
         this.weightingFactory = weightingFactory;
-        this.chGraphs = chGraphs;
+        this.chGraphs = new LinkedHashMap<>(chGraphs.size());
+        for (Map.Entry<String, CHGraph> e : chGraphs.entrySet()) {
+            this.chGraphs.put(e.getKey(), new RoutingCHGraphImpl(e.getValue()));
+        }
         this.landmarks = landmarks;
         // note that his is not the same as !ghStorage.getCHConfigs().isEmpty(), because the GHStorage might have some
-        // CHGraphs that were not built yet (and possibly no CH profiles were configured). If this wasn't so we would
-        // not need the chGraphs map at all here, because we could get the CHGraphs from GHStorage
+        // CHGraphs that were not built yet (and possibly no CH profiles were configured).
         this.chEnabled = !chGraphs.isEmpty();
         this.lmEnabled = !landmarks.isEmpty();
     }
 
     public List<Path> route(GHRequest request, GHResponse ghRsp) {
+        // todo: this method should just take a request and return a response, there should be no need to pass in a
+        // response object.
         try {
             validateRequest(request);
             final boolean disableCH = getDisableCH(request.getHints());
@@ -144,8 +145,8 @@ public class Router {
                         .algorithm(Parameters.Algorithms.ASTAR_BI)
                         .build();
                 roundTripAlgoOpts.getHints().putObject(Parameters.Algorithms.AStarBi.EPSILON, 2);
-                FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(qResults, profile, roundTripAlgoOpts, disableLM);
                 QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
+                FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(queryGraph, profile, roundTripAlgoOpts, disableLM);
 
                 RoundTripRouting.Result result = RoundTripRouting.calcPaths(qResults, pathCalculator);
                 // we merge the different legs of the roundtrip into one response path
@@ -161,8 +162,8 @@ public class Router {
                 StopWatch sw = new StopWatch().start();
                 List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
                 ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-                PathCalculator pathCalculator = createPathCalculator(qResults, profile, algoOpts, disableCH, disableLM);
                 QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
+                PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
 
                 if (passThrough)
                     throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
@@ -185,13 +186,14 @@ public class Router {
                 ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
                 return result.paths;
             } else {
+                // STANDARD/VIA ROUTING
                 StopWatch sw = new StopWatch().start();
                 List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
                 ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-                PathCalculator pathCalculator = createPathCalculator(qResults, profile, algoOpts, disableCH, disableLM);
                 // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
                 // the (possibly implementation specific) query graph used by PathCalculator
                 QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
+                PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
                 ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
 
                 if (request.getPoints().size() != result.paths.size() + 1)
@@ -236,28 +238,27 @@ public class Router {
         }
     }
 
-    private PathCalculator createPathCalculator(List<QueryResult> qResults, Profile profile, AlgorithmOptions algoOpts, boolean disableCH, boolean disableLM) {
+    private PathCalculator createPathCalculator(QueryGraph queryGraph, Profile profile, AlgorithmOptions algoOpts, boolean disableCH, boolean disableLM) {
         if (chEnabled && !disableCH) {
             PMap opts = new PMap(algoOpts.getHints());
             opts.putObject(ALGORITHM, algoOpts.getAlgorithm());
             opts.putObject(MAX_VISITED_NODES, algoOpts.getMaxVisitedNodes());
-            return createCHPathCalculator(qResults, profile, opts);
+            return createCHPathCalculator(queryGraph, profile, opts);
         } else {
-            return createFlexiblePathCalculator(qResults, profile, algoOpts, disableLM);
+            return createFlexiblePathCalculator(queryGraph, profile, algoOpts, disableLM);
         }
     }
 
-    private PathCalculator createCHPathCalculator(List<QueryResult> qResults, Profile profile, PMap opts) {
-        CHGraph chGraph = chGraphs.get(profile.getName());
+    private PathCalculator createCHPathCalculator(QueryGraph queryGraph, Profile profile, PMap opts) {
+        RoutingCHGraph chGraph = chGraphs.get(profile.getName());
         if (chGraph == null)
             throw new IllegalArgumentException("Cannot find CH preparation for the requested profile: '" + profile.getName() + "'" +
                     "\nYou can try disabling CH using " + Parameters.CH.DISABLE + "=true" +
                     "\navailable CH profiles: " + chGraphs.keySet());
-        QueryGraph chQueryGraph = QueryGraph.create(chGraph, qResults);
-        return new CHPathCalculator(chQueryGraph, new CHRoutingAlgorithmFactory(chGraph), opts);
+        return new CHPathCalculator(new CHRoutingAlgorithmFactory(chGraph, queryGraph), opts);
     }
 
-    private FlexiblePathCalculator createFlexiblePathCalculator(List<QueryResult> qResults, Profile profile, AlgorithmOptions algoOpts, boolean disableLM) {
+    private FlexiblePathCalculator createFlexiblePathCalculator(QueryGraph queryGraph, Profile profile, AlgorithmOptions algoOpts, boolean disableLM) {
         RoutingAlgorithmFactory algorithmFactory;
         // for now do not allow mixing CH&LM #1082,#1889
         if (lmEnabled && !disableLM) {
@@ -270,8 +271,6 @@ public class Router {
         } else {
             algorithmFactory = new RoutingAlgorithmFactorySimple();
         }
-        checkNonChMaxWaypointDistance(qResults);
-        QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
         return new FlexiblePathCalculator(queryGraph, algorithmFactory, algoOpts);
     }
 
@@ -358,6 +357,8 @@ public class Router {
 
             if (request.getHints().has(Parameters.Routing.BLOCK_AREA))
                 throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
+        } else {
+            checkNonChMaxWaypointDistance(request.getPoints());
         }
     }
 
@@ -393,15 +394,15 @@ public class Router {
         }
     }
 
-    private void checkNonChMaxWaypointDistance(List<QueryResult> points) {
+    private void checkNonChMaxWaypointDistance(List<GHPoint> points) {
         if (routerConfig.getNonChMaxWaypointDistance() == Integer.MAX_VALUE) {
             return;
         }
-        GHPoint lastPoint = points.get(0).getQueryPoint();
+        GHPoint lastPoint = points.get(0);
         GHPoint point;
         double dist;
         for (int i = 1; i < points.size(); i++) {
-            point = points.get(i).getQueryPoint();
+            point = points.get(i);
             dist = DIST_EARTH.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
             if (dist > routerConfig.getNonChMaxWaypointDistance()) {
                 Map<String, Object> detailMap = new HashMap<>(2);

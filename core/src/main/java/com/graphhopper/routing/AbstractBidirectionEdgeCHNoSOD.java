@@ -46,15 +46,14 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         // the inner explorers will run on the base-(or base-query-)graph edges only.
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
         BooleanEncodedValue accessEnc = graph.getWeighting().getFlagEncoder().getAccessEnc();
-        innerInExplorer = graph.getGraph().getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc));
-        innerOutExplorer = graph.getGraph().getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc));
+        innerInExplorer = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc));
+        innerOutExplorer = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc));
     }
 
     @Override
     protected void postInitFrom() {
-        // With CH the additionalEdgeFilter is the one that filters out edges leading or coming from higher rank nodes,
-        // i.e. LevelEdgeFilter, For the first step though we need all edges, so we need to ignore this filter.
-        // Using an arbitrary filter is not supported for CH anyway.
+        // We use the levelEdgeFilter to filter out edges leading or coming from lower rank nodes.
+        // For the first step though we need all edges, so we need to ignore this filter.
         if (fromOutEdge == ANY_EDGE) {
             fillEdgesFromUsingFilter(CHEdgeFilter.ALL_EDGES);
         } else {

@@ -19,12 +19,10 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
@@ -109,7 +107,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void testPrios() {
         graph = createGHStorage();
         CHGraph g = getGraph(graph);
-        g.getNodeAccess().ensureNode(30);
+        g.getBaseGraph().getNodeAccess().ensureNode(30);
         graph.freeze();
 
         assertEquals(0, g.getLevel(10));
@@ -119,32 +117,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         g.setLevel(30, 100);
         assertEquals(100, g.getLevel(30));
-    }
-
-    @Test
-    public void testEdgeFilter() {
-        graph = createGHStorage();
-        graph.edge(0, 1, 10, true);
-        graph.edge(0, 2, 20, true);
-        graph.edge(2, 3, 30, true);
-        graph.edge(10, 11, 1, true);
-        graph.freeze();
-
-        CHGraph lg = getGraph(graph);
-        lg.shortcut(3, 4, PrepareEncoder.getScDirMask(), 0, NO_EDGE, NO_EDGE);
-        lg.shortcut(0, 4, PrepareEncoder.getScDirMask(), 0, NO_EDGE, NO_EDGE);
-        lg.setLevel(0, 1);
-        lg.setLevel(4, 1);
-
-        EdgeIterator iter = lg.createEdgeExplorer(new LevelEdgeFilter(lg)).setBaseNode(0);
-        assertEquals(1, GHUtility.count(iter));
-        iter = lg.createEdgeExplorer().setBaseNode(2);
-        assertEquals(2, GHUtility.count(iter));
-
-        int sc = lg.shortcut(5, 6, PrepareEncoder.getScDirMask(), 0, 1, 2);
-        CHEdgeIteratorState tmpIter = lg.getEdgeIteratorState(sc, 6);
-        assertEquals(1, tmpIter.getSkippedEdge1());
-        assertEquals(2, tmpIter.getSkippedEdge2());
     }
 
     @Test
@@ -241,8 +213,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 1).getWeight(), 1e-3);
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 0).getWeight(), 1e-3);
-        assertEquals(100.123, ((CHEdgeIteratorState) GHUtility.getEdge(lg, 0, 1)).getWeight(), 1e-3);
-        assertEquals(100.123, ((CHEdgeIteratorState) GHUtility.getEdge(lg, 1, 0)).getWeight(), 1e-3);
+        assertEquals(100.123, GHUtility.getEdge(lg, 0, 1).getWeight(), 1e-3);
+        assertEquals(100.123, GHUtility.getEdge(lg, 1, 0).getWeight(), 1e-3);
 
         int sc2 = lg.shortcut(1, 0, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
         assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 0).getWeight(), 1e-3);
@@ -264,48 +236,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, 0, 1);
         CHEdgeIteratorState sc = chGraph.getEdgeIteratorState(2, 2);
         assertEquals(2.01, sc.getWeight(), 1.e-6);
-    }
-
-    @Test
-    public void testQueryGraph() {
-        graph = createGHStorage();
-        CHGraph chGraph = getGraph(graph);
-        NodeAccess na = chGraph.getNodeAccess();
-        na.setNode(0, 1.00, 1.00);
-        na.setNode(1, 1.02, 1.00);
-        na.setNode(2, 1.04, 1.00);
-
-        EdgeIteratorState edge1 = graph.edge(0, 1);
-        graph.edge(1, 2);
-        graph.freeze();
-        chGraph.shortcut(0, 1, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
-
-        QueryResult fromRes = createQR(1.004, 1.01, 0, edge1);
-        QueryResult toRes = createQR(1.019, 1.00, 0, edge1);
-        QueryGraph qGraph = QueryGraph.create(chGraph, fromRes, toRes);
-
-        Graph baseGraph = qGraph.getBaseGraph();
-        EdgeExplorer explorer = baseGraph.createEdgeExplorer();
-
-        assertTrue(chGraph.getNodes() < qGraph.getNodes());
-        assertEquals(baseGraph.getNodes(), qGraph.getNodes());
-
-        // traverse virtual edges and normal edges but no shortcuts!
-        assertEquals(GHUtility.asSet(fromRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(toRes.getClosestNode(), 2), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-
-        // get neighbors from virtual nodes
-        assertEquals(GHUtility.asSet(0, toRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(fromRes.getClosestNode())));
-        assertEquals(GHUtility.asSet(1, fromRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(toRes.getClosestNode())));
-    }
-
-    QueryResult createQR(double lat, double lon, int wayIndex, EdgeIteratorState edge) {
-        QueryResult res = new QueryResult(lat, lon);
-        res.setClosestEdge(edge);
-        res.setWayIndex(wayIndex);
-        res.setSnappedPosition(QueryResult.Position.EDGE);
-        res.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
-        return res;
     }
 
     @Test

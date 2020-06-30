@@ -129,7 +129,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
             DijkstraBidirectionCH vtRouter = new DijkstraBidirectionCH(graph);
             final Path vtPath = vtRouter.calcPath(v, t);
-            Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
+            Path path = concat(graph.getBaseGraph(), svPath, vtPath);
             extraVisitedNodes += vtRouter.getVisitedNodes();
 
             double sharedDistanceWithShortest = sharedDistanceWithShortest(path);

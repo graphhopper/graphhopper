@@ -24,6 +24,7 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -51,8 +52,8 @@ import java.util.Random;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
-import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
@@ -1165,12 +1166,12 @@ public class RoutingAlgorithmTest {
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, int from, int to) {
             CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
             PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-            CHGraph chGraph = graph.getCHGraph(chConfig.getName());
-            if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
+            RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
+            if (routingCHGraph.getEdges() == routingCHGraph.getBaseGraph().getEdges()) {
                 graph.freeze();
                 pch.doWork();
             }
-            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, new PMap()
+            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap()
                     .putObject(ALGORITHM, getAlgorithm())
                     .putObject(MAX_VISITED_NODES, maxVisitedNodes)
             );
@@ -1190,13 +1191,14 @@ public class RoutingAlgorithmTest {
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
             CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
             PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-            CHGraph chGraph = graph.getCHGraph(chConfig.getName());
-            if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
+            RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
+            if (routingCHGraph.getEdges() == routingCHGraph.getBaseGraph().getEdges()) {
                 graph.freeze();
                 pch.doWork();
             }
-            QueryGraph queryGraph = QueryGraph.create(chGraph, from, to);
-            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(queryGraph, new PMap()
+            QueryGraph queryGraph = QueryGraph.create(graph, Arrays.asList(from, to));
+            QueryRoutingCHGraph queryRoutingCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
+            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(queryRoutingCHGraph).createAlgo(new PMap()
                     .putObject(ALGORITHM, getAlgorithm())
                     .putObject(MAX_VISITED_NODES, maxVisitedNodes));
             return algo.calcPath(from.getClosestNode(), to.getClosestNode());
