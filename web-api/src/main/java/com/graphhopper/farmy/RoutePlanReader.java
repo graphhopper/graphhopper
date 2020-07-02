@@ -1,5 +1,7 @@
 package com.graphhopper.farmy;
 
+import com.graphhopper.jsprit.core.problem.Location;
+import com.graphhopper.jsprit.core.problem.solution.route.activity.TimeWindow;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.*;
@@ -82,9 +84,8 @@ public class RoutePlanReader {
 
     public RoutePlanReader(FarmyOrder[] farmyOrders) throws IOException, ParseException {
         this.identifiedPointList = new IdentifiedPointList();
-        String row;
+        identifiedPointList.add(depotPoint());
         for (FarmyOrder farmyOrder : farmyOrders) {
-            NumberFormat nf = NumberFormat.getInstance(Locale.GERMAN);
             System.out.println(farmyOrder);
             if (farmyOrder.latitude != null && farmyOrder.longitude != null && identifiedPointList.find(farmyOrder.getNumber()).getId().equals("NOT_FOUND_POINT")) {
                 identifiedPointList.add(new IdentifiedGHPoint3D(new GHPoint(farmyOrder.latitude, farmyOrder.longitude), farmyOrder.number)
@@ -100,5 +101,11 @@ public class RoutePlanReader {
         return identifiedPointList;
     }
 
+    public IdentifiedGHPoint3D depotPoint() {
+        return new IdentifiedGHPoint3D(new GHPoint(47.4133906, 8.5170937), "DEPOT")
+                .setWeight(0)
+                .setServiceTime(900 * 1000)
+                .setTimeWindow(TimeWindow.newInstance(50400 * 1000, 54000 * 1000)); // Test timewindow, between 14:00 and 15:00
+    }
 
 }

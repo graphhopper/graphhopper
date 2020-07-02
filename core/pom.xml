@@ -78,10 +78,6 @@
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>jsprit-core</artifactId>
-        </dependency>
     </dependencies>
 
     <build>

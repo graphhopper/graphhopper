@@ -120,6 +120,9 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
         return super.toString() + "," + id;
     }
 
+    public Location getLocation() {
+        return Location.newInstance(this.getLat(), this.getLon());
+    }
 
     public HashMap<String, Object> toGeoJsonWithId() {
         return new HashMap<String, Object>() {{
@@ -128,7 +131,7 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
             put("longitude", String.valueOf(lon));
             put("elevation", String.valueOf(ele));
             put("time_window_start", getTimeWindow() != null ? String.valueOf(getTimeWindow().getStart() / 1000) : "");
-            put("time_window_endZ", getTimeWindow() != null ? String.valueOf(getTimeWindow().getEnd() / 1000) : "");
+            put("time_window_end", getTimeWindow() != null ? String.valueOf(getTimeWindow().getEnd() / 1000) : "");
             put("service_time", String.valueOf(getServiceTime() / 1000));
             put("direction", getDirection());
             put("planned_time", String.valueOf(getPlannedTime() / 1000));

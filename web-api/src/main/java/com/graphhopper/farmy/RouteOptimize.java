@@ -3,13 +3,16 @@ package com.graphhopper.farmy;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
+import com.graphhopper.jsprit.core.algorithm.state.StateId;
+import com.graphhopper.jsprit.core.algorithm.state.StateManager;
+import com.graphhopper.jsprit.core.algorithm.state.StateUpdater;
 import com.graphhopper.jsprit.core.analysis.SolutionAnalyser;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
-import com.graphhopper.jsprit.core.problem.job.Delivery;
-import com.graphhopper.jsprit.core.problem.job.Pickup;
-import com.graphhopper.jsprit.core.problem.job.Service;
-import com.graphhopper.jsprit.core.problem.job.Shipment;
+import com.graphhopper.jsprit.core.problem.constraint.ConstraintManager;
+import com.graphhopper.jsprit.core.problem.constraint.HardActivityConstraint;
+import com.graphhopper.jsprit.core.problem.job.*;
+import com.graphhopper.jsprit.core.problem.misc.JobInsertionContext;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.*;
@@ -38,6 +41,7 @@ public class RouteOptimize {
     public VehicleRoutingTransportCostsMatrix vrtcm;
 
 
+
 //    public RouteOptimize(GraphHopperAPI graphHopper, InputStream fileStream, GHPoint depotPoint) throws Exception {
 //        this.graphHopper = graphHopper;
 //        buildSolution(fileStream, depotPoint);
@@ -62,7 +66,6 @@ public class RouteOptimize {
 
     public void buildSolution(FarmyOrder[] farmyOrders, FarmyCourier[] farmyCouriers) throws Exception {
         RoutePlanReader routePlanReader = new RoutePlanReader(farmyOrders);
-        this.depotLocation = Location.newInstance(47.4133906, 8.5170937);
         build(routePlanReader.getIdentifiedPointList(), farmyCouriers);
     }
 
@@ -78,27 +81,27 @@ public class RouteOptimize {
             waypoints.add(new IdentifiedGHPoint3D(depotLocation.getCoordinate().getX(), depotLocation.getCoordinate().getY(), 0, "DEPOT"));
 
             for (TourActivity activity : route.getActivities()) {
-                Shipment service;
+                Job service;
                 try {
-                    if (activity instanceof PickupActivity) {
-                        service = (Shipment) ((PickupShipment) activity).getJob();
+                    if (activity instanceof DeliveryActivity) {
+                        service = ((DeliveryActivity) activity).getJob();
                     } else {
-                        service = (Shipment) ((DeliverShipment) activity).getJob();
+                        service = ((PickupService) activity).getJob();
                     }
+                } catch (Exception e) {
+                    service = ((PickupShipment) activity).getJob();
+                }
 
-                    // Get Job as DeliveryService
-                    IdentifiedGHPoint3D idPoint = this.pointList.find(service.getId()); // Find point by service id
-                    idPoint.setPlannedTime(activity.getArrTime()); // set arrtime from activity
-                    waypoints.add(idPoint); // add the point to waypoints
+                // Get Job as DeliveryService
+                IdentifiedGHPoint3D idPoint = this.pointList.find(service.getId()); // Find point by service id
+                idPoint.setPlannedTime(activity.getArrTime()); // set arrtime from activity
+                waypoints.add(idPoint); // add the point to waypoints
 
 //              Calc for distance
-                    if (lastPoint != null)
-                        idPoint.setDistance(this.vrtcm.getDistance(idPoint.getId(), lastPoint.getId()));
-                    if (firstPoint == null) firstPoint = idPoint;
-                    lastPoint = idPoint;
-                } catch (Exception e) {
-                    System.out.println(activity);
-                }
+                if (lastPoint != null)
+                    idPoint.setDistance(this.vrtcm.getDistance(idPoint.getId(), lastPoint.getId()));
+                if (firstPoint == null) firstPoint = idPoint;
+                lastPoint = idPoint;
             }
 
 //          allMap.get(route.getVehicle().getId()).put(allMap.get(route.getVehicle().getId()).get("waypoints"), waypoints);
@@ -253,11 +256,15 @@ public class RouteOptimize {
         }
 
 
-        IdentifiedGHPoint3D depotPoint = new IdentifiedGHPoint3D(this.getDepotLocation(), "DEPOT");
+        IdentifiedGHPoint3D depotPoint = this.pointList.findDepot();
 
         PointMatrixList pointMatrixList = new PointMatrixList(graphHopper, this.pointList, depotPoint);
 
-        this.depotLocation = Location.Builder.newInstance().setId(depotPoint.getId()).setCoordinate(Coordinate.newInstance(depotPoint.getLat(), depotPoint.getLon())).build();
+        this.depotLocation = Location.Builder.newInstance()
+                .setId(depotPoint.getId())
+                .setCoordinate(Coordinate.newInstance(depotPoint.getLat(), depotPoint.getLon()))
+                .build();
+
 
         VehicleRoutingProblem.Builder vrpBuilder = VehicleRoutingProblem.Builder.newInstance()
                 .setFleetSize(VehicleRoutingProblem.FleetSize.INFINITE);
@@ -275,11 +282,10 @@ public class RouteOptimize {
             VehicleType type = VehicleTypeImpl.Builder.newInstance(
                     String.format("[TYPE] #%s", courier.getId())
             )
-                    .setFixedCost(0)
-                    .setCostPerDistance(0)
+                    .setFixedCost(1)
+                    .setCostPerDistance(1)
                     .addCapacityDimension(0, 90)
-                    .setMaxVelocity(courier.getIsPlus() ? 13.0 : 20.8) // ~50km/h
-    //                .setMaxVelocity(26.0) // ~100km/h
+                    .setMaxVelocity(courier.getIsPlus() ? 13.0 : 20.8) // ~50km/h // ~80km/h // 26.0 =~ 100km/h
                     .build();
             vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance(
                     String.format("%s#%s%s", courier.getName(), courier.getId(), courier.getIsPlus() ? " (" + courier.getFarmyVehicle().getName() + ")" : "")
@@ -319,8 +325,18 @@ public class RouteOptimize {
 
         VehicleRoutingProblem vrp = vrpBuilder.build();
 
+//      Test Constraint
+
+
+        StateManager stateManager = new StateManager(vrp);
+        ConstraintManager constraintManager = new ConstraintManager(vrp, stateManager);
+        constraintManager.addConstraint(new FarmyWorkHoursConstraint(), ConstraintManager.Priority.CRITICAL);
+
+//      End test constraint
+
         VehicleRoutingAlgorithm vra = Jsprit.Builder.newInstance(vrp)
-                .setProperty(Jsprit.Parameter.FAST_REGRET, "true")
+//                .setStateAndConstraintManager(stateManager, constraintManager)
+//                .setProperty(Jsprit.Parameter.FAST_REGRET, "true")
                 .setProperty(Jsprit.Parameter.THREADS, "5")
                 .setProperty(Jsprit.Parameter.FIXED_COST_PARAM, "1.")
                 .buildAlgorithm();

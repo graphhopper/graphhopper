@@ -46,6 +46,10 @@ public class IdentifiedPointList extends AbstractList<IdentifiedGHPoint3D> {
                 .orElse(new IdentifiedGHPoint3D(new GHPoint(0, 0), "NOT_FOUND_POINT"));
     }
 
+    public IdentifiedGHPoint3D findDepot() {
+        return this.find("DEPOT");
+    }
+
     public int size() {
         return identifiedPointList.size();
     }
@@ -53,7 +57,7 @@ public class IdentifiedPointList extends AbstractList<IdentifiedGHPoint3D> {
     private IdentifiedPointList pointListToIdentifiedPointList(PointList pointList) {
         IdentifiedPointList tempIdentifiedPL = new IdentifiedPointList();
         int index = 0;
-        for (GHPoint3D point: pointList) {
+        for (GHPoint3D point : pointList) {
             tempIdentifiedPL.add(new IdentifiedGHPoint3D(point, index));
         }
 

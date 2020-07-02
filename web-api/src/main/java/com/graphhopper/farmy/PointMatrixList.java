@@ -41,7 +41,7 @@ public class PointMatrixList extends AbstractList<PointMatrix> {
     }
 
     private List<PointMatrix> Build() {
-        List<PointMatrix> pointMatrixList = new LinkedList<PointMatrix>();
+        List<PointMatrix> pointMatrixList = new LinkedList<>();
         for(IdentifiedGHPoint3D point: this.pointList) {
             for (IdentifiedGHPoint3D point2: this.pointList) {
                 if (point.equals(point2) && point.getId().equals(point2.getId())) continue;
