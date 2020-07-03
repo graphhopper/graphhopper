@@ -974,10 +974,11 @@ class BaseGraph implements Graph {
         long geoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
         int count = 0;
         // TODO NOW try perf: instead of the handler directly write/read into/from DataAccess instead of byte array.
+        // try also https://docs.oracle.com/en/java/javase/14/docs/api/jdk.incubator.foreign/jdk/incubator/foreign/MemorySegment.html#mapFromPath(java.nio.file.Path,long,java.nio.channels.FileChannel.MapMode)
         DataHandler handler = null;
         if (geoRef > 0) {
-            // for initial array size expect 3 bytes and 3 points on average
-            handler = new DataHandler(new byte[3 * 3 * nodeAccess.getDimension()], wayGeometry, geoRef * 4L);
+            // in micro benchmarks this gave the best size (maybe if too large it doesn't fit into cache and too small => then multiple reads)
+            handler = new DataHandler(new byte[64], wayGeometry, geoRef * 4L);
             handler.readFromDataAccess();
             count = handler.readVInt();
         } else if (mode == FetchMode.PILLAR_ONLY)
