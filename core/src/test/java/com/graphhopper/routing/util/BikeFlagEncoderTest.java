@@ -274,6 +274,27 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "primary");
         way.setTag("surface", "paved");
         assertEquals(18, encoder.getSpeed(way));
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        assertEquals(18, encoder.getSpeed(way));
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("surface", "asphalt");
+        assertEquals(18, encoder.getSpeed(way));
+
+        way.clearTags();
+        way.setTag("highway", "motorway");
+        way.setTag("bicycle", "yes");
+        assertEquals(18, encoder.getSpeed(way));
+    }
+
+    @Test
+    public void testCycleway() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("surface", "paved");
         assertPriority(REACH_DEST.getValue(), way);
         way.setTag("cycleway", "track");
         assertPriority(PREFER.getValue(), way);
@@ -293,20 +314,6 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("oneway", "yes");
         way.setTag("cycleway:left", "opposite_lane");
         assertPriority(REACH_DEST.getValue(), way);
-
-        way.clearTags();
-        way.setTag("highway", "primary");
-        assertEquals(18, encoder.getSpeed(way));
-
-        way.clearTags();
-        way.setTag("highway", "residential");
-        way.setTag("surface", "asphalt");
-        assertEquals(18, encoder.getSpeed(way));
-
-        way.clearTags();
-        way.setTag("highway", "motorway");
-        way.setTag("bicycle", "yes");
-        assertEquals(18, encoder.getSpeed(way));
     }
 
     @Test
