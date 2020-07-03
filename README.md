@@ -73,7 +73,7 @@ where the default is [Omniscale](http://omniscale.com/). All of these are availa
 
 ### Offline
 
-There are subprojects to make GraphHopper working offline on [Android](./android/README.md) and [iOS](http://github.com/graphhopper/graphhopper-ios)
+There are subprojects to make GraphHopper work offline on Android and [iOS](http://github.com/graphhopper/graphhopper-ios)
 
 [![simple routing](https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png)](./android/README.md)
 
@@ -127,14 +127,14 @@ but of course this is not necessary.
 
 ## OpenStreetMap Support
 
-OpenStreetMap is directly supported from GraphHopper. Without the amazing data from
+OpenStreetMap is directly supported by GraphHopper. Without the amazing data from
 OpenStreetMap, GraphHopper wouldn't be possible at all.
 Other map data will need a custom import procedure, see e.g. <a href="https://github.com/graphhopper/graphhopper/issues/277">Ordnance Survey</a>,
 <a href="https://github.com/graphhopper/graphhopper-reader-shp">Shapefile like ESRI</a> or <a href="https://github.com/knowname/morituri">Navteq</a>.
 
 ## Written in Java
 
-GraphHopper is written in Java and runs on Linux, Mac OS X,
+GraphHopper is written in Java and has been known to run on Linux, Mac OS X,
 Windows, BSD, Solaris, Raspberry Pi, Android, Blackberry, and even iOS.
 
 ### Maven
@@ -149,8 +149,7 @@ Embed GraphHopper with OpenStreetMap support into your Java application via the 
 </dependency>
 ```
 
-If you want to write your own import procedure or you don't need OSM import like
-on [Android](../stable/docs/android/index.md), then use:
+If you want to write your own import procedure, then use:
 
 ```xml
 <dependency>
@@ -165,14 +164,6 @@ on [Android](../stable/docs/android/index.md), then use:
 We've built the GraphHopper class which makes simple things easy and complex things like multi-modal routing possible. 
 Still, you can use the low level API of GraphHopper and you'll see that
 it was created to allow fast and memory efficient use of the underlying data structures and algorithms.
-
-### Android / Blackberry
-
-On Android and Blackberry (since 10.2.1), we provide an integration with Mapsforge which makes offline navigation one step closer.
-Due to the usage of memory mapped files and Contraction Hierarchies,
-we avoid allocating too much memory. This makes it possible to run Germany-wide queries with only 
-32MB in a few seconds. We provide an Android studio project as well as the Maven-Android integration to be 
-used in other IDEs.
 
 ### Web UI and API
 
