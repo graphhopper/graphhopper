@@ -8,6 +8,9 @@ import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class QuadEdgeSubdivisionTest {
@@ -65,7 +68,8 @@ public class QuadEdgeSubdivisionTest {
         assertVertex(e41, e2, e1.sym());
         assertVertex(e3, e2.sym(), e4.sym(), e6);
 
-        ContourBuilder contourBuilder = new ContourBuilder(quadEdgeSubdivision.getEdges());
+        Stream<ReadableQuadEdge> stream = quadEdgeSubdivision.getEdges().stream().map(e -> ReadableQuadEdge.wrap((QuadEdge) e));
+        ContourBuilder contourBuilder = new ContourBuilder(stream.collect(Collectors.toList()));
 
         Geometry geometry = contourBuilder.computeIsoline(0.5);
         assertEquals("MULTIPOLYGON (((1 0, 0.5 -0.5, 1 -2, 1.5 -0.5, 1 0)))", geometry.toString());

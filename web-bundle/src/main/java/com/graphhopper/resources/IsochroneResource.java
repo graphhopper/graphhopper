@@ -7,6 +7,8 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
+import com.graphhopper.isochrone.algorithm.QuadEdgeAsReadableQuadEdge;
+import com.graphhopper.isochrone.algorithm.ReadableQuadEdge;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ProfileResolver;
@@ -29,6 +31,7 @@ import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
+import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 import org.slf4j.Logger;
@@ -45,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
@@ -196,7 +200,8 @@ public class IsochroneResource {
             }
         }
         ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
-        ContourBuilder contourBuilder = new ContourBuilder(tin.getEdges());
+        Collection<QuadEdge> tinEdges = tin.getEdges();
+        ContourBuilder contourBuilder = new ContourBuilder(tinEdges.stream().map(ReadableQuadEdge::wrap).collect(Collectors.toList()));
 
         for (Double z : zs) {
             MultiPolygon multiPolygon = contourBuilder.computeIsoline(z);

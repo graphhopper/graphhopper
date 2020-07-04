@@ -21,6 +21,8 @@ package com.graphhopper.resources;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
+import com.graphhopper.isochrone.algorithm.QuadEdgeAsReadableQuadEdge;
+import com.graphhopper.isochrone.algorithm.ReadableQuadEdge;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -47,6 +49,7 @@ import javax.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Path("isochrone-pt")
 public class PtIsochroneResource {
@@ -160,7 +163,8 @@ public class PtIsochroneResource {
                 }
             }
 
-            ContourBuilder contourBuilder = new ContourBuilder(tin.getEdges());
+            Collection<QuadEdge> tinEdges = tin.getEdges();
+            ContourBuilder contourBuilder = new ContourBuilder(tinEdges.stream().map(ReadableQuadEdge::wrap).collect(Collectors.toList()));
             MultiPolygon isoline = contourBuilder.computeIsoline(targetZ);
 
             // debugging tool
