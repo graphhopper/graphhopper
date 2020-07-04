@@ -33,17 +33,17 @@ public class ContourBuilder {
     private static final double EPSILON = 0.000001;
 
     private GeometryFactory geometryFactory = new GeometryFactory();
-    private Collection<ReadableQuadEdge> edges;
+    private final ReadableTriangulation triangulation;
 
-    public ContourBuilder(Collection<ReadableQuadEdge> edges) {
-        this.edges = edges;
+    public ContourBuilder(ReadableTriangulation triangulation) {
+        this.triangulation = triangulation;
     }
 
     public MultiPolygon computeIsoline(double z0) {
         Set<ReadableQuadEdge> processed = new HashSet<>();
         List<LinearRing> rings = new ArrayList<>();
 
-        for (ReadableQuadEdge f : edges) {
+        for (ReadableQuadEdge f : triangulation.getEdges()) {
             ReadableQuadEdge e = f.getPrimary();
             if (processed.contains(e))
                 continue;

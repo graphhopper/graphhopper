@@ -68,8 +68,7 @@ public class QuadEdgeSubdivisionTest {
         assertVertex(e41, e2, e1.sym());
         assertVertex(e3, e2.sym(), e4.sym(), e6);
 
-        Stream<ReadableQuadEdge> stream = quadEdgeSubdivision.getEdges().stream().map(e -> ReadableQuadEdge.wrap((QuadEdge) e));
-        ContourBuilder contourBuilder = new ContourBuilder(stream.collect(Collectors.toList()));
+        ContourBuilder contourBuilder = new ContourBuilder(ReadableTriangulation.wrap(quadEdgeSubdivision));
 
         Geometry geometry = contourBuilder.computeIsoline(0.5);
         assertEquals("MULTIPOLYGON (((1 0, 0.5 -0.5, 1 -2, 1.5 -0.5, 1 0)))", geometry.toString());
@@ -110,7 +109,7 @@ public class QuadEdgeSubdivisionTest {
         assertVertex(e41, e2, e1.sym());
         assertVertex(e3, e2.sym(), e4.sym(), e6);
 
-        ContourBuilder contourBuilder = new ContourBuilder(triangulation.getEdges());
+        ContourBuilder contourBuilder = new ContourBuilder(triangulation);
 
         Geometry geometry = contourBuilder.computeIsoline(0.5);
         assertEquals("MULTIPOLYGON (((0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 0.5 -0.5)))", geometry.toString());
@@ -155,7 +154,7 @@ public class QuadEdgeSubdivisionTest {
         assertVertex(e41, e2, e1.sym(), e00);
         assertVertex(e3, e2.sym(), e4.sym(), e6);
 
-        ContourBuilder contourBuilder = new ContourBuilder(triangulation.getEdges());
+        ContourBuilder contourBuilder = new ContourBuilder(triangulation);
 
         Geometry geometry = contourBuilder.computeIsoline(0.5);
         assertEquals("MULTIPOLYGON (((0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 0.5 -0.5)))", geometry.toString());

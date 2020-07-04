@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class Triangulation {
+public class Triangulation implements ReadableTriangulation {
 
     Map<String, QuadEdge> edges = new HashMap<>();
     IntObjectHashMap<Vertex> vertices = new IntObjectHashMap<>();
