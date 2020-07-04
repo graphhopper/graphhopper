@@ -44,9 +44,8 @@ public class ContourBuilder {
         Set<QuadEdge> processed = new HashSet<>();
         List<LinearRing> rings = new ArrayList<>();
 
-        Queue<QuadEdge> processQ = new ArrayDeque<>(edges);
-        while (!processQ.isEmpty()) {
-            QuadEdge e = processQ.remove();
+        for (QuadEdge f : edges) {
+            QuadEdge e = f.getPrimary();
             if (processed.contains(e))
                 continue;
             processed.add(e);

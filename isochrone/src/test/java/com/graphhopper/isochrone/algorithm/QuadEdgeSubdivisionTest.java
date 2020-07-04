@@ -68,7 +68,7 @@ public class QuadEdgeSubdivisionTest {
         ContourBuilder contourBuilder = new ContourBuilder(quadEdgeSubdivision.getEdges());
 
         Geometry geometry = contourBuilder.computeIsoline(0.5);
-        assertEquals("MULTIPOLYGON (((1 0, 0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 1 0)))", geometry.toString());
+        assertEquals("MULTIPOLYGON (((1 0, 0.5 -0.5, 1 -2, 1.5 -0.5, 1 0)))", geometry.toString());
     }
 
     @Test
