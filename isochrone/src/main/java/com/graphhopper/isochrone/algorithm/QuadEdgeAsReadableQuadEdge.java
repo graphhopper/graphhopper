@@ -59,6 +59,16 @@ public class QuadEdgeAsReadableQuadEdge implements ReadableQuadEdge {
     }
 
     @Override
+    public ReadableQuadEdge lNext() {
+        return new QuadEdgeAsReadableQuadEdge(delegate.lNext());
+    }
+
+    @Override
+    public ReadableQuadEdge sym() {
+        return new QuadEdgeAsReadableQuadEdge(delegate.sym());
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

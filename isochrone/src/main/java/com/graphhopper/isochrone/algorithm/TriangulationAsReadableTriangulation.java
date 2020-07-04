@@ -2,13 +2,13 @@
  *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- *
+ *  
  *  GraphHopper GmbH licenses this file to you under the Apache License,
  *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- *
+ *  
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ *  
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,28 +18,24 @@
 
 package com.graphhopper.isochrone.algorithm;
 
-import org.locationtech.jts.triangulate.quadedge.QuadEdge;
-import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
-
 import java.util.Collection;
-import java.util.stream.Collectors;
 
-class QuadEdgeSubdivisionAsReadableTriangulation implements ReadableTriangulation {
+class TriangulationAsReadableTriangulation implements ReadableTriangulation {
 
-    private final QuadEdgeSubdivision delegate;
+    private final Triangulation triangulation;
 
-    QuadEdgeSubdivisionAsReadableTriangulation(QuadEdgeSubdivision quadEdgeSubdivision) {
-        this.delegate = quadEdgeSubdivision;
+    TriangulationAsReadableTriangulation(Triangulation triangulation) {
+        this.triangulation = triangulation;
     }
 
     @Override
     public Collection<ReadableQuadEdge> getEdges() {
-        Collection<QuadEdge> delegateEdges = delegate.getEdges();
-        return delegateEdges.stream().map(ReadableQuadEdge::wrap).collect(Collectors.toList());
+        return triangulation.getEdges();
     }
 
     @Override
-    public ReadableQuadEdge getEdge(int v1, int v2) {
-        throw new UnsupportedOperationException();
+    public ReadableQuadEdge getEdge(int o, int d) {
+        return ReadableQuadEdge.wrap(triangulation.getEdge(o, d));
     }
+
 }

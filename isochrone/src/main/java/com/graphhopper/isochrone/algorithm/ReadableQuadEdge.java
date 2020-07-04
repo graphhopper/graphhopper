@@ -36,6 +36,10 @@ public interface ReadableQuadEdge {
 
     ReadableQuadEdge dNext();
 
+    ReadableQuadEdge lNext();
+
+    ReadableQuadEdge sym();
+
     static QuadEdgeAsReadableQuadEdge wrap(org.locationtech.jts.triangulate.quadedge.QuadEdge edge) {
         return new QuadEdgeAsReadableQuadEdge(edge);
     }

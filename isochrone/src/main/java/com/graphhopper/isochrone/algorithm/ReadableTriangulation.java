@@ -26,8 +26,13 @@ public interface ReadableTriangulation {
 
     Collection<ReadableQuadEdge> getEdges();
 
+    static ReadableTriangulation wrap(Triangulation triangulation) {
+        return new TriangulationAsReadableTriangulation(triangulation);
+    }
+
     static ReadableTriangulation wrap(QuadEdgeSubdivision quadEdgeSubdivision) {
         return new QuadEdgeSubdivisionAsReadableTriangulation(quadEdgeSubdivision);
     }
 
+    ReadableQuadEdge getEdge(int v1, int v2);
 }
