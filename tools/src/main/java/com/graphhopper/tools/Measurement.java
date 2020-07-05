@@ -88,10 +88,42 @@ public class Measurement {
     private String vehicle;
 
     public static void main(String[] strs) throws IOException {
+//        main2();
         PMap args = PMap.read(strs);
         int repeats = args.getInt("measurement.repeats", 1);
         for (int i = 0; i < repeats; ++i)
             new Measurement().start(args);
+    }
+
+    static void main2() {
+        GraphHopperStorage storage = new GraphHopperStorage(new RAMDirectory(), EncodingManager.create(new CarFlagEncoder()), true).create(1000);
+        PointList shortList = new PointList(2, true);
+        shortList.add(53.124433, 47.38738, 10);
+        shortList.add(53.124433, 47.38838, 12);
+
+        PointList longList = new PointList(6, true);
+        longList.add(53.124433, 47.38738, 10);
+        longList.add(53.124433, 47.38838, 12);
+        longList.add(53.124433, 47.38888, 20);
+        longList.add(53.124433, 47.38938, 5);
+        longList.add(53.124433, 47.38988, -10);
+        longList.add(53.124433, 47.39038, -20);
+
+        final EdgeIteratorState edge0 = storage.edge(0, 1).setWayGeometry(longList);
+        final EdgeIteratorState edge1 = storage.edge(1, 2).setWayGeometry(shortList);
+        Random random = new Random(123);
+
+        for (int i = 0; i < 5; i++) {
+            MiniPerfTest miniPerf = new MiniPerfTest() {
+                @Override
+                public int doCalc(boolean warmup, int run) {
+                    EdgeIteratorState state = random.nextBoolean() ? edge0 : edge1;
+                    PointList list = state.fetchWayGeometry(random.nextBoolean() ? FetchMode.ALL : FetchMode.PILLAR_ONLY);
+                    return list.size();
+                }
+            }.setIterations(15_000_000).start();
+            System.out.println(i + " -> " + miniPerf.getReport());
+        }
     }
 
     // creates properties file in the format key=value
@@ -223,7 +255,7 @@ public class Measurement {
                 System.gc();
                 boolean isCH = false;
                 boolean isLM = true;
-                Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
+                Helper.parseList(args.getString("measurement.lm.active_counts", "[8]")).stream()
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
@@ -252,36 +284,36 @@ public class Measurement {
                     gcAndWait();
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_alt", count / 10, isCH, isLM).
-                            withInstructions().sod().alternative());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
-                            withInstructions().sod().withPointHints());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_sod", count, isCH, isLM).
-                            withInstructions());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_instr", count, isCH, isLM).
-                            sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
-                            withInstructions().withPointHints().sod().simplify());
-                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_full... see #2056
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
-                            withPoints(100).sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
-                            withPoints(100).sod().withInstructions().simplify());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_alt", count / 10, isCH, isLM).
+//                            withInstructions().sod().alternative());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
+//                            withInstructions().sod().withPointHints());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_sod", count, isCH, isLM).
+//                            withInstructions());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_instr", count, isCH, isLM).
+//                            sod());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
+//                            withInstructions().withPointHints().sod().simplify());
+//                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_full... see #2056
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
+//                            withPoints(100).sod());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
+//                            withPoints(100).sod().withInstructions().simplify());
                 }
                 if (!hopper.getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
                             edgeBased().withInstructions());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_alt", count / 10, isCH, isLM).
                             edgeBased().withInstructions().alternative());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
-                            edgeBased());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
-                            edgeBased().withInstructions().withPointHints().simplify());
-                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_edge_full... see #2056
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100", count / 100, isCH, isLM).
-                            withPoints(100).edgeBased().sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100_full", count / 100, isCH, isLM).
-                            withPoints(100).edgeBased().sod().withInstructions().simplify());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
+//                            edgeBased());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
+//                            edgeBased().withInstructions().withPointHints().simplify());
+//                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_edge_full... see #2056
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100", count / 100, isCH, isLM).
+//                            withPoints(100).edgeBased().sod());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100_full", count / 100, isCH, isLM).
+//                            withPoints(100).edgeBased().sod().withInstructions().simplify());
                 }
             }
             if (!isEmpty(countryBordersDirectory)) {

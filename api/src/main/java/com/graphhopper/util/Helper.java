@@ -34,9 +34,9 @@ public class Helper {
     public static final Charset UTF_CS = Charset.forName("UTF-8");
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
-    // +- 180 and +-90 => let use use 400
+    // +- 180 and +-90 => use 400
     private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
-    // use 0.01 meter precision so
+    // use 0.01 meter precision
     private static final float ELE_FACTOR = 100f;
 
     private Helper() {
