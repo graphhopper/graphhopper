@@ -38,7 +38,7 @@ mkdir -p ${RESULTS_DIR}
 mkdir -p ${TMP_DIR}
 mkdir -p ${SINGLE_RESULTS_DIR}
 
-JAVA_OPTS="-XX:-TieredCompilation"
+JAVA_OPTS="-XX:+UseTransparentHugePages -XX:+AlwaysPreTouch"
 # actually run the benchmarks:
 echo "1 - small map: node- and edge-based CH + slow routing"
 java $JAVA_OPTS -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
