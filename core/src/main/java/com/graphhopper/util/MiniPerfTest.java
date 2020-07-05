@@ -105,7 +105,7 @@ public abstract class MiniPerfTest {
             unit = "ms";
         } else {
             divisor = NS_PER_US;
-            unit = "us";
+            unit = "µs";
         }
         return nf(durationNs / divisor) + unit;
     }
