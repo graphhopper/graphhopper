@@ -38,7 +38,6 @@ import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
@@ -248,7 +247,7 @@ public class Measurement {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
                     CHGraph lg = g.getCHGraph(chConfig.getName());
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
-                    printMiscUnitPerfTestsCH(lg, chConfig.getWeighting(), encoder, count * 100, allowedEdges);
+                    printMiscUnitPerfTestsCH(lg, encoder, count * 100, allowedEdges);
                     gcAndWait();
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
@@ -503,8 +502,7 @@ public class Measurement {
         print("unit_tests.get_edge_state", miniPerf);
     }
 
-    private void printMiscUnitPerfTestsCH(final CHGraph lg, Weighting chWeighting, final FlagEncoder encoder,
-                                          int count, final GHBitSet allowedEdges) {
+    private void printMiscUnitPerfTestsCH(final CHGraph lg, final FlagEncoder encoder, int count, final GHBitSet allowedEdges) {
         final Random rand = new Random(seed);
         final CHEdgeExplorer chExplorer = lg.createEdgeExplorer();
         MiniPerfTest miniPerf = new MiniPerfTest() {
@@ -520,50 +518,6 @@ public class Measurement {
             }
         }.setIterations(count).start();
         print("unit_testsCH.get_weight", miniPerf);
-
-        // for some strange reason these tests affect the results for routingCH_xyz.mean for the 'very-custom' map
-        // no idea why, but disabling this for now...
-//            RoutingCHGraphImpl routingCHGraph = new RoutingCHGraphImpl(lg, chWeighting);
-//            final RoutingCHEdgeExplorer chOutEdgeExplorer = routingCHGraph.createOutEdgeExplorer();
-//            miniPerf = new MiniPerfTest() {
-//                @Override
-//                public int doCalc(boolean warmup, int run) {
-//                    int nodeId = rand.nextInt(maxNode);
-//                    RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
-//                    while (iter.next()) {
-//                        nodeId += iter.getAdjNode();
-//                    }
-//                    return nodeId;
-//                }
-//            }.setIterations(count).start();
-//            print("unit_testsCH.out_edge_next", miniPerf);
-//
-//            miniPerf = new MiniPerfTest() {
-//                @Override
-//                public int doCalc(boolean warmup, int run) {
-//                    int nodeId = rand.nextInt(maxNode);
-//                    RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
-//                    while (iter.next()) {
-//                        nodeId += iter.getWeight(false);
-//                    }
-//                    return nodeId;
-//                }
-//            }.setIterations(count).start();
-//            print("unit_testsCH.out_edge_get_weight", miniPerf);
-//
-//            final RoutingCHEdgeExplorer chOrigEdgeExplorer = routingCHGraph.createOriginalOutEdgeExplorer();
-//            miniPerf = new MiniPerfTest() {
-//                @Override
-//                public int doCalc(boolean warmup, int run) {
-//                    int nodeId = rand.nextInt(maxNode);
-//                    RoutingCHEdgeIterator iter = chOrigEdgeExplorer.setBaseNode(nodeId);
-//                    while (iter.next()) {
-//                        nodeId += iter.getAdjNode();
-//                    }
-//                    return nodeId;
-//                }
-//            }.setIterations(count).start();
-//            print("unit_testsCH.out_orig_edge_next", miniPerf);
 
         EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder);
         final CHEdgeExplorer outExplorer = lg.createEdgeExplorer(outFilter);
@@ -598,6 +552,34 @@ public class Measurement {
             }
         }.setIterations(count).start();
         print("unit_testsCH.get_edge_state", miniPerf);
+
+        RoutingCHGraphImpl routingCHGraph = new RoutingCHGraphImpl(lg);
+        final RoutingCHEdgeExplorer chOutEdgeExplorer = routingCHGraph.createOutEdgeExplorer();
+        miniPerf = new MiniPerfTest() {
+            @Override
+            public int doCalc(boolean warmup, int run) {
+                int nodeId = rand.nextInt(maxNode);
+                RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
+                while (iter.next()) {
+                    nodeId += iter.getAdjNode();
+                }
+                return nodeId;
+            }
+        }.setIterations(count).start();
+        print("unit_testsCH.out_edge_next", miniPerf);
+
+        miniPerf = new MiniPerfTest() {
+            @Override
+            public int doCalc(boolean warmup, int run) {
+                int nodeId = rand.nextInt(maxNode);
+                RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
+                while (iter.next()) {
+                    nodeId += iter.getWeight(false);
+                }
+                return nodeId;
+            }
+        }.setIterations(count).start();
+        print("unit_testsCH.out_edge_get_weight", miniPerf);
     }
 
     private void printSpatialRuleLookupTest(String countryBordersDirectory, int count) {
