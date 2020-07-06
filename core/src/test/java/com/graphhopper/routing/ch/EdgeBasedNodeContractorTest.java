@@ -27,7 +27,6 @@ import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.CHConfig;
-import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
@@ -49,7 +48,7 @@ import static org.junit.Assert.*;
  */
 public class EdgeBasedNodeContractorTest {
     private final int maxCost = 10;
-    private CHGraph chGraph;
+    private PrepareCHGraph chGraph;
     private CarFlagEncoder encoder;
     private GraphHopperStorage graph;
 
@@ -73,7 +72,7 @@ public class EdgeBasedNodeContractorTest {
                 )
                 .create();
         chConfigs = graph.getCHConfigs();
-        chGraph = graph.getCHGraph(chConfigs.get(0).getName());
+        chGraph = PrepareCHGraph.edgeBased(graph.getCHGraph(chConfigs.get(0).getName()), chConfigs.get(0).getWeighting());
     }
 
     @Test
@@ -1119,7 +1118,7 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     public void testFindPath_finiteUTurnCost() {
-        chGraph = graph.getCHGraph(chConfigs.get(1).getName());
+        chGraph = PrepareCHGraph.edgeBased(graph.getCHGraph(chConfigs.get(1).getName()), chConfigs.get(1).getWeighting());
         // turning to 1 at node 3 when coming from 0 is forbidden, but taking the full loop 3-4-2-3 is very
         // expensive, so the best solution is to go straight to 4 and take a u-turn there
         //   1
@@ -1381,8 +1380,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor() {
-        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, chGraph.getCHConfig().getWeighting());
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, new PMap());
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

@@ -23,6 +23,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+
 public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorState {
     private final EdgeIteratorState edgeState;
     private final Weighting weighting;
@@ -35,16 +37,13 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     }
 
     @Override
-    public EdgeIteratorState getBaseGraphEdgeState() {
-        if (isShortcut()) {
-            throw new IllegalStateException("Base edge can only be obtained for original edges, was: " + edgeState());
-        }
-        return edgeState();
+    public int getEdge() {
+        return edgeState().getEdge();
     }
 
     @Override
-    public int getEdge() {
-        return edgeState().getEdge();
+    public int getOrigEdge() {
+        return isShortcut() ? NO_EDGE : edgeState().getEdge();
     }
 
     @Override
@@ -96,7 +95,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
      *                   do the full computation)
      */
     double getOrigEdgeWeight(boolean reverse, boolean needWeight) {
-        // todo: for #1776 move the access check into the weighting
+        // todo: for #1835 move the access check into the weighting
         final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
         final boolean access = reverse
                 ? baseEdge.getReverse(accessEnc)
@@ -108,6 +107,13 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
             return 0;
         }
         return weighting.calcEdgeWeight(baseEdge, reverse);
+    }
+
+    private EdgeIteratorState getBaseGraphEdgeState() {
+        if (isShortcut()) {
+            throw new IllegalStateException("Base edge can only be obtained for original edges, was: " + edgeState());
+        }
+        return edgeState();
     }
 
     EdgeIteratorState edgeState() {

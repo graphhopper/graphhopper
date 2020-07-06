@@ -518,7 +518,7 @@ public abstract class AbstractGraphStorageTester {
 
         graph.markNodeRemoved(0);
         graph.markNodeRemoved(2);
-        // no deletion happend
+        // no deletion happened
         assertEquals(fillToSize, graph.getNodes());
 
         assertTrue(GHUtility.getProblems(graph).isEmpty());

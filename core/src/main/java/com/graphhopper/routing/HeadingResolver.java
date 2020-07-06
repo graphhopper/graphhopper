@@ -40,17 +40,17 @@ public class HeadingResolver {
      * @see #setTolerance
      */
     public IntArrayList getEdgesWithDifferentHeading(int baseNode, double heading) {
-        double xAxisAngle = Helper.ANGLE_CALC.convertAzimuth2xaxisAngle(heading);
+        double xAxisAngle = AngleCalc.ANGLE_CALC.convertAzimuth2xaxisAngle(heading);
         IntArrayList edges = new IntArrayList(1);
         EdgeIterator iter = edgeExplorer.setBaseNode(baseNode);
         while (iter.next()) {
             PointList points = iter.fetchWayGeometry(FetchMode.ALL);
-            double orientation = Helper.ANGLE_CALC.calcOrientation(
+            double orientation = AngleCalc.ANGLE_CALC.calcOrientation(
                     points.getLat(0), points.getLon(0),
                     points.getLat(1), points.getLon(1)
             );
 
-            orientation = Helper.ANGLE_CALC.alignOrientation(xAxisAngle, orientation);
+            orientation = AngleCalc.ANGLE_CALC.alignOrientation(xAxisAngle, orientation);
             double diff = Math.abs(orientation - xAxisAngle);
 
             if (diff > toleranceRad)

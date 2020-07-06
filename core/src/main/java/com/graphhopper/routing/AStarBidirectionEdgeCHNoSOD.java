@@ -23,7 +23,7 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.DistancePlaneProjection;
 
 /**
  * @author easbar
@@ -34,7 +34,7 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
 
     public AStarBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
         super(graph);
-        setApproximation(new BeelineWeightApproximator(nodeAccess, graph.getWeighting()).setDistanceCalc(Helper.DIST_PLANE));
+        setApproximation(new BeelineWeightApproximator(nodeAccess, graph.getWeighting()).setDistanceCalc(DistancePlaneProjection.DIST_PLANE));
     }
 
     @Override

@@ -67,7 +67,7 @@ public class WebHelper {
             int deltaLatitude = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
             lat += deltaLatitude;
 
-            // longitute
+            // longitude
             shift = 0;
             result = 0;
             do {

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.json.geo;
 
-import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 
 import java.util.Map;
@@ -30,14 +30,14 @@ import java.util.Map;
 public class JsonFeature {
     private String id;
     private String type = "Feature";
-    private BBox bbox;
+    private Envelope bbox;
     private Geometry geometry;
     private Map<String, Object> properties;
 
     public JsonFeature() {
     }
 
-    public JsonFeature(String id, String type, BBox bbox, Geometry geometry, Map<String, Object> properties) {
+    public JsonFeature(String id, String type, Envelope bbox, Geometry geometry, Map<String, Object> properties) {
         this.id = id;
         this.type = type;
         this.bbox = bbox;
@@ -53,20 +53,12 @@ public class JsonFeature {
         return type;
     }
 
-    public BBox getBBox() {
+    public Envelope getBBox() {
         return bbox;
-    }
-
-    public boolean hasGeometry() {
-        return geometry != null;
     }
 
     public Geometry getGeometry() {
         return geometry;
-    }
-
-    public boolean hasProperties() {
-        return properties != null;
     }
 
     public Map<String, Object> getProperties() {
@@ -81,7 +73,7 @@ public class JsonFeature {
         this.id = id;
     }
 
-    public void setBbox(BBox bbox) {
+    public void setBbox(Envelope bbox) {
         this.bbox = bbox;
     }
 

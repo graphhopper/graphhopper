@@ -23,7 +23,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Constants;
-import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.geom.Envelope;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -65,7 +65,7 @@ public class InfoResource {
             public String vehicle;
         }
 
-        public BBox bbox;
+        public Envelope bbox;
         public final List<ProfileData> profiles = new ArrayList<>();
         public List<String> supported_vehicles;
         public String version = Constants.VERSION;
@@ -78,8 +78,7 @@ public class InfoResource {
     @GET
     public Info getInfo() {
         final Info info = new Info();
-        // use bbox always without elevation (for backward compatibility)
-        info.bbox = new BBox(storage.getBounds().minLon, storage.getBounds().maxLon, storage.getBounds().minLat, storage.getBounds().maxLat);
+        info.bbox = new Envelope(storage.getBounds().minLon, storage.getBounds().maxLon, storage.getBounds().minLat, storage.getBounds().maxLat);
         for (Profile p : config.getProfiles()) {
             Info.ProfileData profileData = new Info.ProfileData(p.getName(), p.getVehicle());
             info.profiles.add(profileData);

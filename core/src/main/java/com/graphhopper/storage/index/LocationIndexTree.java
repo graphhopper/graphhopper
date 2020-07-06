@@ -30,7 +30,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.Shape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,10 +64,10 @@ public class LocationIndexTree implements LocationIndex {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
     private final NodeAccess nodeAccess;
-    protected DistanceCalc distCalc = Helper.DIST_PLANE;
+    protected DistanceCalc distCalc = DistancePlaneProjection.DIST_PLANE;
     SpatialKeyAlgo keyAlgo;
     private int maxRegionSearch = 4;
-    private DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
+    private DistanceCalc preciseDistCalc = DistanceCalcEarth.DIST_EARTH;
     private int[] entries;
     private byte[] shifts;
     // convert spatial key to index for subentry of current depth
@@ -94,9 +93,6 @@ public class LocationIndexTree implements LocationIndex {
      * @param g the graph for which this index should do the lookup based on latitude,longitude.
      */
     public LocationIndexTree(Graph g, Directory dir) {
-        if (g instanceof CHGraph)
-            throw new IllegalArgumentException("Use base graph for LocationIndexTree instead of CHGraph");
-
         MAGIC_INT = Integer.MAX_VALUE / 22317;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
@@ -241,9 +237,9 @@ public class LocationIndexTree implements LocationIndex {
     @Override
     public LocationIndex setApproximation(boolean approx) {
         if (approx)
-            distCalc = Helper.DIST_PLANE;
+            distCalc = DistancePlaneProjection.DIST_PLANE;
         else
-            distCalc = Helper.DIST_EARTH;
+            distCalc = DistanceCalcEarth.DIST_EARTH;
         return this;
     }
 
@@ -465,7 +461,7 @@ public class LocationIndexTree implements LocationIndex {
                 }, 0);
     }
 
-    final void query(int intPointer, Shape queryBBox,
+    final void query(int intPointer, BBox queryBBox,
                      double minLat, double minLon,
                      double deltaLatPerDepth, double deltaLonPerDepth,
                      Visitor function, int depth) {

@@ -36,7 +36,7 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  */
 public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected final RoutingCHGraph graph;
-    protected RoutingCHEdgeExplorer allEdgeExplorer;
+    protected final NodeAccess nodeAccess;
     protected RoutingCHEdgeExplorer inEdgeExplorer;
     protected RoutingCHEdgeExplorer outEdgeExplorer;
     protected CHEdgeFilter levelEdgeFilter;
@@ -46,8 +46,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         this.graph = graph;
         if (graph.hasTurnCosts() && !tMode.isEdgeBased())
             throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
-        this.nodeAccess = graph.getGraph().getNodeAccess();
-        allEdgeExplorer = graph.createAllEdgeExplorer();
+        this.nodeAccess = graph.getBaseGraph().getNodeAccess();
         outEdgeExplorer = graph.createOutEdgeExplorer();
         inEdgeExplorer = graph.createInEdgeExplorer();
         levelEdgeFilter = new CHLevelEdgeFilter(graph);
@@ -243,7 +242,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     @Override
     protected int getOtherNode(int edge, int node) {
-        return graph.getOtherNode(edge, node);
+        return graph.getBaseGraph().getOtherNode(edge, node);
     }
 
     protected double calcWeight(RoutingCHEdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
@@ -273,7 +272,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     }
 
     protected Path createEmptyPath() {
-        return new Path(graph.getGraph());
+        return new Path(graph.getBaseGraph());
     }
 
     @Override
@@ -287,7 +286,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
         public CHLevelEdgeFilter(RoutingCHGraph graph) {
             this.graph = graph;
-            maxNodes = graph.getBaseGraph().getNodes();
+            maxNodes = graph.getBaseGraph().getBaseGraph().getNodes();
         }
 
         @Override

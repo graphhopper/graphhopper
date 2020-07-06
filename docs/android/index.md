@@ -73,7 +73,7 @@ The [OSMBonusPack](https://github.com/MKergall/osmbonuspack) supports the GraphH
 
  * You have to create the graphhopper folder on your desktop and copy it to the Android storage.
 
- * [A memory bound a* algoritm](http://en.wikipedia.org/wiki/SMA*) is not yet implemented so you can use disableShortcuts only for small routes.
+ * [A memory bound a* algorithm](http://en.wikipedia.org/wiki/SMA*) is not yet implemented so you can use disableShortcuts only for small routes.
 
 ## Problems
 

@@ -59,9 +59,6 @@ class GHNodeAccess implements NodeAccess {
         } else {
             baseGraph.bounds.update(lat, lon);
         }
-
-        if (baseGraph.supportsTurnCosts())
-            baseGraph.nodes.setInt(tmp + baseGraph.N_TC, TurnCostStorage.NO_TURN_ENTRY);
     }
 
     @Override

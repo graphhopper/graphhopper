@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.*;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
+import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
@@ -74,9 +75,10 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private final Graph graph;
     private final NodeAccess nodeAccess;
     private final LongIndexedContainer barrierNodeIds = new LongArrayList();
-    private final DistanceCalc distCalc = Helper.DIST_EARTH;
+    private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean smoothElevation = false;
+    private double longEdgeSamplingDistance = 0;
     private final boolean exitOnlyPillarNodeException = true;
     private final Map<String, EdgeExplorer> outExplorerMap = new HashMap<>();
     private final Map<String, EdgeExplorer> inExplorerMap = new HashMap<>();
@@ -548,7 +550,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             // osmId is used exactly once
             getNodeMap().put(osmId, PILLAR_NODE);
         } else if (tmpGHNodeId > EMPTY_NODE) {
-            // mark node as tower node as it occured at least twice times
+            // mark node as tower node as it occurred at least twice times
             getNodeMap().put(osmId, TOWER_NODE);
         } else {
             // tmpIndex is already negative (already tower node)
@@ -670,7 +672,11 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         if (this.smoothElevation)
             pointList = GraphElevationSmoothing.smoothElevation(pointList);
 
-        double towerNodeDistance = pointList.calcDistance(distCalc);
+        // sample points along long edges
+        if (this.longEdgeSamplingDistance < Double.MAX_VALUE && pointList.is3D())
+            pointList = EdgeSampling.sample(wayOsmId, pointList, longEdgeSamplingDistance, distCalc, eleProvider);
+
+        double towerNodeDistance = distCalc.calcDistance(pointList);
 
         if (towerNodeDistance < 0.001) {
             // As investigation shows often two paths should have crossed via one identical point 
@@ -723,7 +729,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         double lon = pillarInfo.getLongitude(tmpNode);
         double ele = pillarInfo.getElevation(tmpNode);
         if (lat == Double.MAX_VALUE || lon == Double.MAX_VALUE)
-            throw new RuntimeException("Conversion pillarNode to towerNode already happended!? "
+            throw new RuntimeException("Conversion pillarNode to towerNode already happened!? "
                     + "osmId:" + osmId + " pillarIndex:" + tmpNode);
 
         if (convertToTowerNode) {
@@ -897,8 +903,20 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     }
 
     @Override
+    public DataReader setWayPointElevationMaxDistance(double elevationWayPointMaxDistance) {
+        simplifyAlgo.setElevationMaxDistance(elevationWayPointMaxDistance);
+        return this;
+    }
+
+    @Override
     public DataReader setSmoothElevation(boolean smoothElevation) {
         this.smoothElevation = smoothElevation;
+        return this;
+    }
+
+    @Override
+    public DataReader setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
+        this.longEdgeSamplingDistance = longEdgeSamplingDistance;
         return this;
     }
 

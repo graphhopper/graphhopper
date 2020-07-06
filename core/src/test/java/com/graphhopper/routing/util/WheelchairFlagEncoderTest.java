@@ -225,7 +225,7 @@ public class WheelchairFlagEncoderTest {
         assertTrue(wheelchairEncoder.getAccess(way).canSkip());
 
         way.clearTags();
-        // allow pathes as they are used as generic path
+        // allow paths as they are used as generic path
         way.setTag("highway", "path");
         assertTrue(wheelchairEncoder.getAccess(way).isWay());
 

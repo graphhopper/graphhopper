@@ -110,6 +110,7 @@ public class Parameters {
          */
         public static final String WAY_POINT_MAX_DISTANCE = "way_point_max_distance";
         public static final String INIT_WAY_POINT_MAX_DISTANCE = ROUTING_INIT_PREFIX + "way_point_max_distance";
+        public static final String ELEVATION_WAY_POINT_MAX_DISTANCE = "elevation_way_point_max_distance";
         /**
          * true or false. If routes at via points should avoid u-turns. (not for CH) See related
          * 'heading' parameter:
@@ -206,6 +207,7 @@ public class Parameters {
         public static final String AVERAGE_SPEED = "average_speed";
         public static final String STREET_NAME = "street_name";
         public static final String EDGE_ID = "edge_id";
+        public static final String EDGE_KEY = "edge_key";
         public static final String TIME = "time";
         public static final String WEIGHT = "weight";
         public static final String DISTANCE = "distance";

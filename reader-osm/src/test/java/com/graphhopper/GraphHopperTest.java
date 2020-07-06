@@ -21,6 +21,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -991,6 +992,50 @@ public class GraphHopperTest {
         assertEquals(31.32, pointList.getEle(5), .1);
     }
 
+    @Test
+    public void testSRTMWithLongEdgeSampling() {
+        final String profile = "profile";
+        final String vehicle = "foot";
+        final String weighting = "shortest";
+
+        GraphHopper hopper = createGraphHopper(vehicle).
+                setOSMFile(MONACO).
+                setStoreOnFlush(true).
+                setElevationWayPointMaxDistance(1).
+                setProfiles(new Profile("profile").setVehicle(vehicle).setWeighting(weighting)).
+                setLongEdgeSamplingDistance(30);
+
+        ElevationProvider elevationProvider = new SRTMProvider(DIR);
+        elevationProvider.setInterpolate(true);
+        hopper.setElevationProvider(elevationProvider);
+        hopper.importOrLoad();
+
+        GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
+                setAlgorithm(ASTAR).setProfile(profile));
+
+        ResponsePath arsp = rsp.getBest();
+        assertEquals(1570.4, arsp.getDistance(), .1);
+        assertEquals(60, arsp.getPoints().getSize());
+        assertTrue(arsp.getPoints().is3D());
+
+        InstructionList il = arsp.getInstructions();
+        assertEquals(12, il.size());
+        assertTrue(il.get(0).getPoints().is3D());
+
+        String str = arsp.getPoints().toString();
+
+        assertEquals(23.8, arsp.getAscend(), 1e-1);
+        assertEquals(67.4, arsp.getDescend(), 1e-1);
+
+        assertEquals(60, arsp.getPoints().size());
+        assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.82900047302246), arsp.getPoints().get(0));
+        assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 12.274499893188477), arsp.getPoints().get(arsp.getPoints().size() - 1));
+
+        assertEquals(55.83, arsp.getPoints().get(0).getElevation(), 1e-2);
+        assertEquals(57.78, arsp.getPoints().get(1).getElevation(), 1e-2);
+        assertEquals(52.43, arsp.getPoints().get(10).getElevation(), 1e-2);
+    }
+
     @Ignore
     public void testSkadiElevationProvider() {
         final String profile = "profile";
@@ -1576,6 +1621,36 @@ public class GraphHopperTest {
                 assertEquals(path.getTime(), pathLM.getTime(), failMessage);
             }
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void testAStarCHBug(boolean turnCosts) {
+        // todo: this test fails when AStar is used for edge-based CH, see #2061
+        final String profile = "car";
+        final String vehicle = "car";
+        final String weighting = "fastest";
+        GraphHopper hopper = createGraphHopper("car|turn_costs=true").
+                setOSMFile(MOSCOW).
+                setProfiles(Collections.singletonList(
+                        new Profile(profile).setVehicle(vehicle).setWeighting(weighting).setTurnCosts(turnCosts)
+                ));
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
+        hopper.getRouterConfig().setCHDisablingAllowed(true);
+        hopper.getRouterConfig().setLMDisablingAllowed(true);
+        hopper.importOrLoad();
+
+        GHRequest req = new GHRequest(55.821744463888116, 37.60380604129401, 55.82608197039734, 37.62055856655137);
+        req.setProfile(profile);
+        req.getHints().putObject(CH.DISABLE, false);
+        ResponsePath pathCH = hopper.route(req).getBest();
+        req.getHints().putObject(CH.DISABLE, true);
+        ResponsePath path = hopper.route(req).getBest();
+
+        assertFalse(path.hasErrors());
+        assertFalse(pathCH.hasErrors());
+        assertEquals(path.getDistance(), pathCH.getDistance(), 0.1);
+        assertEquals(path.getTime(), pathCH.getTime());
     }
 
     @Test

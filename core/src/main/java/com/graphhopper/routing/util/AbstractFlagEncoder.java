@@ -61,8 +61,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
-    /* Edge Flag Encoder fields */
-    private long nodeBitMask;
     private boolean blockByDefault = true;
     private boolean blockFords = true;
     private boolean registered;
@@ -141,22 +139,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     /**
-     * Defines the bits for the node flags, which are currently used for barriers only.
-     * <p>
-     *
-     * @return incremented shift value pointing behind the last used bit
-     */
-    public int defineNodeBits(int index, int shift) {
-        return shift;
-    }
-
-    /**
      * Defines bits used for edge flags used for access, speed etc.
-     *
-     * @return incremented shift value pointing behind the last used bit
      */
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
-        // define the first 2 speedBits in flags for routing
+        // define the first 2 bits in flags for access
         registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true));
         roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
         encoderBit = 1L << index;
@@ -387,15 +373,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         } else {
             return SHORT_TRIP_FERRY_SPEED;
         }
-    }
-
-    void setNodeBitMask(int usedBits, int shift) {
-        nodeBitMask = (1L << usedBits) - 1;
-        nodeBitMask <<= shift;
-    }
-
-    long getNodeBitMask() {
-        return nodeBitMask;
     }
 
     public final DecimalEncodedValue getAverageSpeedEnc() {

@@ -20,10 +20,10 @@ package com.graphhopper.json.geo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 
@@ -78,7 +78,7 @@ public class JsonFeatureCollectionTest {
             prop1.put("test", "a");
             properties.put("prop1", prop1);
             jsonFeature.setProperties(properties);
-            jsonFeature.setBbox(new BBox(102.0, 103.0, 0.0, 1));
+            jsonFeature.setBbox(new Envelope(102.0, 103.0, 0.0, 1));
             jsonFeatureCollection.getFeatures().add(jsonFeature);
         }
 
@@ -108,10 +108,10 @@ public class JsonFeatureCollectionTest {
         assertEquals(103.0, PointList.fromLineString((LineString) f2.getGeometry()).getLon(1), .1);
 
         JsonFeature f3 = data.getFeatures().get(2);
-        assertEquals(0.0, f3.getBBox().minLat, 0.0);
-        assertEquals(102.0, f3.getBBox().minLon, 0.0);
-        assertEquals(1.0, f3.getBBox().maxLat, 0.0);
-        assertEquals(103.0, f3.getBBox().maxLon, 0.0);
+        assertEquals(0.0, f3.getBBox().getMinY(), 0.0);
+        assertEquals(102.0, f3.getBBox().getMinX(), 0.0);
+        assertEquals(1.0, f3.getBBox().getMaxY(), 0.0);
+        assertEquals(103.0, f3.getBBox().getMaxX(), 0.0);
 
         assertEquals("a", ((Map) f3.getProperty("prop1")).get("test"));
     }

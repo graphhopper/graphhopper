@@ -153,7 +153,7 @@ public class GHRequest {
     }
 
     public static boolean isAzimuthValue(double heading) {
-        // heading must be in [0, 360) oder NaN
+        // heading must be in [0, 360) or NaN
         return Double.isNaN(heading) || (Double.compare(heading, 360) < 0 && Double.compare(heading, 0) >= 0);
     }
 

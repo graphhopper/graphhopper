@@ -73,6 +73,7 @@ public class RouteResource {
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
+            @QueryParam(ELEVATION_WAY_POINT_MAX_DISTANCE) Double minPathElevationPrecision,
             @QueryParam("point") @NotNull List<GHPointParam> pointParams,
             @QueryParam("type") @DefaultValue("json") String type,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
@@ -121,6 +122,10 @@ public class RouteResource {
                 putObject(CALC_POINTS, calcPoints).
                 putObject(INSTRUCTIONS, instructions).
                 putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+
+        if (minPathElevationPrecision != null) {
+            request.getHints().putObject(ELEVATION_WAY_POINT_MAX_DISTANCE, minPathElevationPrecision);
+        }
 
         GHResponse ghResponse = graphHopper.route(request);
 
@@ -247,7 +252,7 @@ public class RouteResource {
                 // TODO e.g. 'point' parameter occurs multiple times and we cannot throw an exception here
                 //  unknown parameters (hints) should be allowed to be multiparameters, too, or we shouldn't use them for
                 //  known parameters either, _or_ known parameters must be filtered before they come to this code point,
-                //  _or_ we stop passing unknown parameters alltogether.
+                //  _or_ we stop passing unknown parameters altogether.
                 // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
                 // see also #1976
             }

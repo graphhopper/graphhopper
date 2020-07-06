@@ -27,7 +27,7 @@ public class NodeBasedCHBidirPathExtractor extends BidirPathExtractor {
     private final RoutingCHGraph routingGraph;
 
     public NodeBasedCHBidirPathExtractor(RoutingCHGraph routingGraph) {
-        super(routingGraph.getGraph(), routingGraph.getWeighting());
+        super(routingGraph.getBaseGraph(), routingGraph.getWeighting());
         this.routingGraph = routingGraph;
         shortcutUnpacker = createShortcutUnpacker();
     }

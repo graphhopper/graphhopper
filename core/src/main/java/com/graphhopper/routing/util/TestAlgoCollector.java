@@ -23,7 +23,6 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -40,7 +39,7 @@ import java.util.Locale;
 public class TestAlgoCollector {
     public final List<String> errors = new ArrayList<>();
     private final String name;
-    private final DistanceCalc distCalc = Helper.DIST_EARTH;
+    private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final TranslationMap trMap = new TranslationMap().doImport();
 
     public TestAlgoCollector(String name) {
@@ -50,7 +49,7 @@ public class TestAlgoCollector {
     public TestAlgoCollector assertDistance(EncodingManager encodingManager, AlgoHelperEntry algoEntry, List<QueryResult> queryList,
                                             OneRun oneRun) {
         List<Path> altPaths = new ArrayList<>();
-        QueryGraph queryGraph = QueryGraph.create(algoEntry.getForQueryGraph(), queryList);
+        QueryGraph queryGraph = QueryGraph.create(algoEntry.graph, queryList);
         for (int i = 0; i < queryList.size() - 1; i++) {
             RoutingAlgorithm algo = algoEntry.createAlgo(queryGraph);
 
@@ -77,7 +76,7 @@ public class TestAlgoCollector {
         }
 
         PointList pointList = responsePath.getPoints();
-        double tmpDist = pointList.calcDistance(distCalc);
+        double tmpDist = distCalc.calcDistance(pointList);
         if (Math.abs(responsePath.getDistance() - tmpDist) > 2) {
             errors.add(algoEntry + " path.getDistance was  " + responsePath.getDistance()
                     + "\t pointList.calcDistance was " + tmpDist + "\t (expected points " + oneRun.getLocs()
@@ -136,19 +135,17 @@ public class TestAlgoCollector {
 
     public static class AlgoHelperEntry {
         private final LocationIndex idx;
-        private Graph forQueryGraph;
+        private Graph graph;
+        private boolean ch;
         private String expectedAlgo;
         private AlgorithmOptions opts;
 
-        public AlgoHelperEntry(Graph g, AlgorithmOptions opts, LocationIndex idx, String expectedAlgo) {
-            this.forQueryGraph = g;
+        public AlgoHelperEntry(Graph g, boolean ch, AlgorithmOptions opts, LocationIndex idx, String expectedAlgo) {
+            this.graph = g;
+            this.ch = ch;
             this.opts = opts;
             this.idx = idx;
             this.expectedAlgo = expectedAlgo;
-        }
-
-        public Graph getForQueryGraph() {
-            return forQueryGraph;
         }
 
         public void setAlgorithmOptions(AlgorithmOptions opts) {
@@ -176,7 +173,7 @@ public class TestAlgoCollector {
             String algo = opts.getAlgorithm();
             if (getExpectedAlgo().contains("landmarks"))
                 algo += "|landmarks";
-            if (forQueryGraph instanceof CHGraph)
+            if (ch)
                 algo += "|ch";
 
             return "algoEntry(" + algo + ")";

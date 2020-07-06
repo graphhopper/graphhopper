@@ -196,24 +196,24 @@ public class PathTest {
         Path path = extractPath(g, weighting, e1);
 
         InstructionList il = InstructionsFromEdges.calcInstructions(path, path.graph, weighting, carManager, tr);
-        Instruction nextInstr0 = il.find(-0.001, 0.0, 1000);
+        Instruction nextInstr0 = Instructions.find(il, -0.001, 0.0, 1000);
         assertEquals(Instruction.CONTINUE_ON_STREET, nextInstr0.getSign());
 
-        Instruction nextInstr1 = il.find(0.001, 0.001, 1000);
+        Instruction nextInstr1 = Instructions.find(il, 0.001, 0.001, 1000);
         assertEquals(Instruction.TURN_RIGHT, nextInstr1.getSign());
 
-        Instruction nextInstr2 = il.find(5.0, 0.004, 1000);
+        Instruction nextInstr2 = Instructions.find(il, 5.0, 0.004, 1000);
         assertEquals(Instruction.TURN_LEFT, nextInstr2.getSign());
 
-        Instruction nextInstr3 = il.find(9.99, 0.503, 1000);
+        Instruction nextInstr3 = Instructions.find(il, 9.99, 0.503, 1000);
         assertEquals(Instruction.TURN_SHARP_LEFT, nextInstr3.getSign());
 
         // a bit far away ...
-        Instruction nextInstr4 = il.find(7.40, 0.25, 20000);
+        Instruction nextInstr4 = Instructions.find(il, 7.40, 0.25, 20000);
         assertEquals(Instruction.FINISH, nextInstr4.getSign());
 
         // too far away
-        assertNull(il.find(50.8, 50.25, 1000));
+        assertNull(Instructions.find(il, 50.8, 50.25, 1000));
     }
 
     /**
@@ -379,6 +379,40 @@ public class PathTest {
         assertEquals(2, edgeIdDetails.get(2).getFirst());
         assertEquals(3, edgeIdDetails.get(3).getFirst());
         assertEquals(4, edgeIdDetails.get(3).getLast());
+    }
+
+    @Test
+    public void testCalcEdgeKeyDetailsForward() {
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(EDGE_KEY), new PathDetailsBuilderFactory(), 0);
+        List<PathDetail> edgeKeyDetails = details.get(EDGE_KEY);
+
+        assertEquals(4, edgeKeyDetails.size());
+        assertEquals(0, edgeKeyDetails.get(0).getValue());
+        assertEquals(4, edgeKeyDetails.get(1).getValue());
+        assertEquals(6, edgeKeyDetails.get(2).getValue());
+        assertEquals(2, edgeKeyDetails.get(3).getValue());
+    }
+
+    @Test
+    public void testCalcEdgeKeyDetailsBackward() {
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(5, 1);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(EDGE_KEY), new PathDetailsBuilderFactory(), 0);
+        List<PathDetail> edgeKeyDetails = details.get(EDGE_KEY);
+
+        assertEquals(4, edgeKeyDetails.size());
+        assertEquals(3, edgeKeyDetails.get(0).getValue());
+        assertEquals(7, edgeKeyDetails.get(1).getValue());
+        assertEquals(5, edgeKeyDetails.get(2).getValue());
+        assertEquals(1, edgeKeyDetails.get(3).getValue());
     }
 
     @Test
@@ -1101,9 +1135,9 @@ public class PathTest {
         }
 
         private double getAngle(int n1, int n2, int n3, int n4) {
-            double inOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
-            double outOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
-            outOrientation = Helper.ANGLE_CALC.alignOrientation(inOrientation, outOrientation);
+            double inOrientation = AngleCalc.ANGLE_CALC.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
+            double outOrientation = AngleCalc.ANGLE_CALC.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
+            outOrientation = AngleCalc.ANGLE_CALC.alignOrientation(inOrientation, outOrientation);
             double delta = (inOrientation - outOrientation);
             delta = clockwise ? (Math.PI + delta) : -1 * (Math.PI - delta);
             return delta;

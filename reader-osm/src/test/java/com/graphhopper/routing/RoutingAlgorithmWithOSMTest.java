@@ -26,6 +26,8 @@ import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
@@ -41,12 +43,16 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 
 import static com.graphhopper.GraphHopperTest.DIR;
 import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -77,21 +83,21 @@ public class RoutingAlgorithmWithOSMTest {
 
         AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
         List<AlgoHelperEntry> algos = new ArrayList<>();
-        algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(), idx, "astar|beeline|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, false, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(), idx, "astar|beeline|" + addStr + weighting));
         // later: include dijkstraOneToMany
-        algos.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, false, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
 
         AlgorithmOptions astarbiOpts = AlgorithmOptions.start(defaultOpts).algorithm(ASTAR_BI).build();
         astarbiOpts.getHints().putObject(ASTAR_BI + ".approximation", "BeelineSimplification");
         AlgorithmOptions dijkstrabiOpts = AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA_BI).build();
-        algos.add(new AlgoHelperEntry(ghStorage, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
-        algos.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, false, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
+        algos.add(new AlgoHelperEntry(ghStorage, false, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
 
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMPreparationHandler().isEnabled()) {
             final PMap lmHints = new PMap(defaultHints).putObject(Parameters.Landmark.DISABLE, false);
             final AlgorithmOptions opts = AlgorithmOptions.start(astarbiOpts).hints(lmHints).build();
-            algos.add(new AlgoHelperEntry(ghStorage, opts, idx, "astarbi|landmarks|" + weighting) {
+            algos.add(new AlgoHelperEntry(ghStorage, false, opts, idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithm createAlgo(Graph graph) {
                     return hopper.getLMPreparationHandler().getPreparation(vehicleStr + "_profile").getRoutingAlgorithmFactory().createAlgo(graph, opts);
@@ -103,25 +109,26 @@ public class RoutingAlgorithmWithOSMTest {
             final PMap chHints = new PMap(defaultHints);
             chHints.putObject(Parameters.CH.DISABLE, false);
             chHints.putObject(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
-            Profile pickedProfile = new ProfileResolver(hopper.getEncodingManager(), hopper.getProfiles(), hopper.getCHPreparationHandler().getCHProfiles(), Collections.<LMProfile>emptyList()).selectProfileCH(chHints);
             final AlgorithmOptions dijkstraOpts = AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build();
-            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
-                    dijkstraOpts, idx, "dijkstrabi|ch|prepare|" + weightingStr) {
+            algos.add(new AlgoHelperEntry(ghStorage, true, dijkstraOpts, idx, "dijkstrabi|ch|prepare|" + weightingStr) {
                 @Override
                 public RoutingAlgorithm createAlgo(Graph g) {
                     PrepareContractionHierarchies pch = hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile");
-                    CHGraph chGraph = ghStorage.getCHGraph(pch.getCHConfig().getName());
-                    return new CHRoutingAlgorithmFactory(chGraph).createAlgo(g, dijkstraOpts);
+                    RoutingCHGraph routingCHGraph = ghStorage.getRoutingCHGraph(pch.getCHConfig().getName());
+                    if (g instanceof QueryGraph)
+                        routingCHGraph = new QueryRoutingCHGraph(routingCHGraph, (QueryGraph) g);
+                    return new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
                 }
             });
 
             final AlgorithmOptions astarOpts = AlgorithmOptions.start(astarbiOpts).hints(chHints).build();
-            algos.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedProfile.getName()),
-                    astarOpts, idx, "astarbi|ch|prepare|" + weightingStr) {
+            algos.add(new AlgoHelperEntry(ghStorage, true, astarOpts, idx, "astarbi|ch|prepare|" + weightingStr) {
                 public RoutingAlgorithm createAlgo(Graph g) {
                     PrepareContractionHierarchies pch = hopper.getCHPreparationHandler().getPreparation(vehicleStr + "_profile");
-                    CHGraph chGraph = ghStorage.getCHGraph(pch.getCHConfig().getName());
-                    return new CHRoutingAlgorithmFactory(chGraph).createAlgo(g, astarOpts);
+                    RoutingCHGraph routingCHGraph = ghStorage.getRoutingCHGraph(pch.getCHConfig().getName());
+                    if (g instanceof QueryGraph)
+                        routingCHGraph = new QueryRoutingCHGraph(routingCHGraph, (QueryGraph) g);
+                    return new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
                 }
             });
         }
@@ -617,7 +624,7 @@ public class RoutingAlgorithmWithOSMTest {
                   boolean withCH, String vehicle, String weightStr, boolean is3D) {
 
         // for different weightings we need a different storage, otherwise we would need to remove the graph folder
-        // everytime we come with a different weighting
+        // every time we come with a different weighting
         // graphFile += weightStr;
 
         AlgoHelperEntry algoEntry = null;
@@ -733,7 +740,7 @@ public class RoutingAlgorithmWithOSMTest {
                         public void run() {
                             OneRun oneRun = instances.get(instanceIndex);
                             AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).algorithm(algoStr).build();
-                            testCollector.assertDistance(encodingManager, new AlgoHelperEntry(g, opts, idx, algoStr + "|" + weighting),
+                            testCollector.assertDistance(encodingManager, new AlgoHelperEntry(g, false, opts, idx, algoStr + "|" + weighting),
                                     oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }

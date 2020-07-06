@@ -66,7 +66,7 @@ class EdgeChangeBuilder {
         //    these adjacent real nodes so we can use them in the next step
         for (int i = 0; i < getNumVirtualNodes(); i++) {
             // base node
-            EdgeIteratorState baseRevEdge = getVirtualEdge(i * 4 + VE_BASE_REV);
+            EdgeIteratorState baseRevEdge = getVirtualEdge(i * 4 + SNAP_BASE);
             int towerNode = baseRevEdge.getAdjNode();
             if (!isVirtualNode(towerNode)) {
                 towerNodesToChange.add(towerNode);
@@ -74,7 +74,7 @@ class EdgeChangeBuilder {
             }
 
             // adj node
-            EdgeIteratorState adjEdge = getVirtualEdge(i * 4 + VE_ADJ);
+            EdgeIteratorState adjEdge = getVirtualEdge(i * 4 + SNAP_ADJ);
             towerNode = adjEdge.getAdjNode();
             if (!isVirtualNode(towerNode)) {
                 towerNodesToChange.add(towerNode);
@@ -101,8 +101,8 @@ class EdgeChangeBuilder {
             edgeChangesAtRealNodes.put(node, edgeChanges);
         }
         EdgeIteratorState edge = base
-                ? getVirtualEdge(virtNode * 4 + VE_BASE)
-                : getVirtualEdge(virtNode * 4 + VE_ADJ_REV);
+                ? getVirtualEdge(virtNode * 4 + BASE_SNAP)
+                : getVirtualEdge(virtNode * 4 + ADJ_SNAP);
         edgeChanges.getAdditionalEdges().add(edge);
     }
 

@@ -27,8 +27,8 @@ import com.graphhopper.util.shapes.GHPoint;
 class InstructionsHelper {
 
     static double calculateOrientationDelta(double prevLatitude, double prevLongitude, double latitude, double longitude, double prevOrientation) {
-        double orientation = Helper.ANGLE_CALC.calcOrientation(prevLatitude, prevLongitude, latitude, longitude, false);
-        orientation = Helper.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
+        double orientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLatitude, prevLongitude, latitude, longitude, false);
+        orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
         return orientation - prevOrientation;
     }
 

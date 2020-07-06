@@ -17,14 +17,11 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.storage.CHGraph;
-
 /**
  * The edge explorer for CHGraph
  * <p>
  *
  * @author Peter Karich
- * @see CHGraph
  */
 public interface CHEdgeExplorer extends EdgeExplorer {
     @Override

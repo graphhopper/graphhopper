@@ -19,10 +19,7 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
@@ -118,8 +115,8 @@ public class QueryResult {
         return closestEdge;
     }
 
-    public void setClosestEdge(EdgeIteratorState detach) {
-        closestEdge = detach;
+    public void setClosestEdge(EdgeIteratorState edge) {
+        closestEdge = edge;
     }
 
     public GHPoint getQueryPoint() {
@@ -168,7 +165,9 @@ public class QueryResult {
     @Override
     public String toString() {
         if (closestEdge != null)
-            return closestEdge.getBaseNode() + "-" + closestEdge.getAdjNode() + "  " + snappedPoint + ", " + queryPoint;
+            return snappedPosition + ", " + closestNode + " " + closestEdge.getEdge() + ":" + closestEdge.getBaseNode() + "-" + closestEdge.getAdjNode() +
+                    " snap: [" + Helper.round6(snappedPoint.getLat()) + ", " + Helper.round6(snappedPoint.getLon()) + "]," +
+                    " query: [" + Helper.round6(queryPoint.getLat()) + "," + Helper.round6(queryPoint.getLon()) + "]";
         return closestNode + ", " + queryPoint + ", " + wayIndex;
     }
 

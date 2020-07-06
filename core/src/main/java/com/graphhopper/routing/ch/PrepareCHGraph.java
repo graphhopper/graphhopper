@@ -103,7 +103,7 @@ public class PrepareCHGraph {
     }
 
     public NodeAccess getNodeAccess() {
-        return chGraph.getNodeAccess();
+        return chGraph.getBaseGraph().getNodeAccess();
     }
 
     double getTurnWeight(int inEdge, int viaNode, int outEdge) {

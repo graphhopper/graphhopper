@@ -25,13 +25,13 @@ import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
 
 /**
- * Extended graph interface which supports Contraction Hierarchies. Ie. storing and retrieving the
+ * Graph structure used for Contraction Hierarchies. It allows storing and retrieving the
  * levels for a node and creating shortcuts, which are additional 'artificial' edges to speedup
  * traversal in certain cases.
  *
  * @author Peter Karich
  */
-public interface CHGraph extends Graph {
+public interface CHGraph {
 
     /**
      * This methods sets the level of the specified node.
@@ -67,20 +67,16 @@ public interface CHGraph extends Graph {
      */
     int shortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2, int origFirst, int origLast);
 
-    @Override
     CHEdgeIteratorState getEdgeIteratorState(int edgeId, int endNode);
 
-    @Override
     CHEdgeExplorer createEdgeExplorer();
 
-    @Override
     CHEdgeExplorer createEdgeExplorer(EdgeFilter filter);
 
     EdgeExplorer createOriginalEdgeExplorer();
 
     EdgeExplorer createOriginalEdgeExplorer(EdgeFilter filter);
 
-    @Override
     AllCHEdgesIterator getAllEdges();
 
     void disconnectEdge(int edge, int adjNode, int prevEdge);
@@ -96,5 +92,24 @@ public interface CHGraph extends Graph {
      * @return true if contraction can be started (add shortcuts and set levels), false otherwise
      */
     boolean isReadyForContraction();
+
+    Graph getBaseGraph();
+
+    int getNodes();
+
+    /**
+     * @return the number of edges (including shortcuts) in this graph. Equivalent to getAllEdges().length().
+     */
+    int getEdges();
+
+    /**
+     * @return the 'opposite' node of a given edge, so if there is an edge 3-2 and node =2 this returns 3
+     */
+    int getOtherNode(int edge, int node);
+
+    /**
+     * @return true if the edge with id edge is adjacent to node, false otherwise
+     */
+    boolean isAdjacentToNode(int edge, int node);
 
 }

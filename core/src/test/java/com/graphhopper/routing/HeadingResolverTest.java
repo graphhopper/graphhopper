@@ -118,8 +118,8 @@ class HeadingResolverTest {
         assertEquals(IntArrayList.from(1), resolver.getEdgesWithDifferentHeading(2, 90));
 
         // if the heading points West we get the Eastern edge 2->1
-        assertEquals("2->1", queryGraph.getEdgeIteratorState(3, Integer.MIN_VALUE).toString());
-        assertEquals(IntArrayList.from(3), resolver.getEdgesWithDifferentHeading(2, 270));
+        assertEquals("2->1", queryGraph.getEdgeIteratorState(2, Integer.MIN_VALUE).toString());
+        assertEquals(IntArrayList.from(2), resolver.getEdgesWithDifferentHeading(2, 270));
     }
 
     private QueryResult createQR(EdgeIteratorState closestEdge, double lat, double lon, int wayIndex) {

@@ -38,10 +38,6 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
         return new RoutingCHEdgeIteratorImpl(edgeExplorer, weighting, ShortcutFilter.outEdges());
     }
 
-    public static RoutingCHEdgeIteratorImpl allEdges(EdgeExplorer edgeExplorer, Weighting weighting) {
-        return new RoutingCHEdgeIteratorImpl(edgeExplorer, weighting, ShortcutFilter.allEdges());
-    }
-
     public RoutingCHEdgeIteratorImpl(EdgeExplorer edgeExplorer, Weighting weighting, ShortcutFilter shortcutFilter) {
         super(null, weighting);
         this.edgeExplorer = edgeExplorer;
@@ -69,6 +65,11 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
                 return true;
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return edgeIterator.toString();
     }
 
     private boolean hasAccess() {

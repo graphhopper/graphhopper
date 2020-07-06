@@ -136,6 +136,22 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         assertEquals(112, turnCostStorage.getCapacity() / 16);
     }
 
+    @Test
+    public void testInitializeTurnCost() {
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, false), true).create(defaultSize);
+        NodeAccess na = graph.getNodeAccess();
+
+        // turn cost index is initialized in BaseGraph.initNodeRefs
+        na.setNode(4001, 10, 11, 10);
+        assertEquals(TurnCostStorage.NO_TURN_ENTRY, na.getTurnCostIndex(4001));
+
+        na.setNode(4000, 10, 11, 10);
+        na.setTurnCostIndex(4000, 12);
+        // updating elevation from node 4000 should not alter turn cost index
+        na.setNode(4000, 10, 11, 11);
+        assertEquals(12, na.getTurnCostIndex(4000));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     @Override
     public void testClone() {

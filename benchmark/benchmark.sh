@@ -40,7 +40,9 @@ mkdir -p ${SINGLE_RESULTS_DIR}
 
 # actually run the benchmarks:
 echo "1 - small map: node- and edge-based CH + slow routing"
-java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
+java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
+-Xmx20g -Xms20g \
+com.graphhopper.tools.Measurement \
 datareader.file=${SMALL_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=small_map \
@@ -63,7 +65,9 @@ measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 "measurement.block_area=49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512"
 
 echo "2 - big map: node-based CH + landmarks (edge- & node-based for LM)"
-java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
+java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
+-Xmx20g -Xms20g \
+com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=big_map \
@@ -89,7 +93,9 @@ measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "3 - big map with a custom model that is 'a little customized', i.e. similar to the standard fastest-car profile"
 echo "node-based CH + LM"
-java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
+java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
+-Xmx20g -Xms20g \
+com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=big_map_little_custom \
@@ -117,7 +123,9 @@ measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "4 - big map with a custom model that is 'very customized', i.e. has many custom weighting rules"
 echo "node-based CH + LM"
-java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
+java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
+-Xmx20g -Xms20g \
+com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=big_map_very_custom \

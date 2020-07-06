@@ -26,7 +26,10 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHConfig;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -96,16 +99,14 @@ public class AlternativeRouteEdgeCHTest {
     @Test
     public void testAssumptions() {
         GraphHopperStorage g = createTestGraph(em);
-        TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, g.getTurnCostStorage());
-        FastestWeighting weighting = new FastestWeighting(carFE, turnCostProvider);
-        DijkstraBidirectionEdgeCHNoSOD router = new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(g.getCHGraph(), weighting));
+        DijkstraBidirectionEdgeCHNoSOD router = new DijkstraBidirectionEdgeCHNoSOD(g.getRoutingCHGraph());
         Path path = router.calcPath(5, 10);
         assertTrue(path.isFound());
         assertArrayEquals(new int[]{5, 6, 7, 8, 4, 10}, path.calcNodes().toArray());
         assertEquals(50000.0, path.getDistance(), 0.0);
         // 6 -> 3 -> 4 is forbidden
 
-        router = new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(g.getCHGraph(), weighting));
+        router = new DijkstraBidirectionEdgeCHNoSOD(g.getRoutingCHGraph());
         path = router.calcPath(5, 3, ANY_EDGE, GHUtility.getEdge(g, 2, 3).getEdge());
         assertArrayEquals(new int[]{5, 1, 9, 2, 3}, path.calcNodes().toArray());
         assertEquals(40000.0, path.getDistance(), 0.0);
@@ -116,13 +117,11 @@ public class AlternativeRouteEdgeCHTest {
     @Test
     public void testCalcAlternatives() {
         GraphHopperStorage g = createTestGraph(em);
-        TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, g.getTurnCostStorage());
-        FastestWeighting weighting = new FastestWeighting(carFE, turnCostProvider);
         PMap hints = new PMap();
         hints.putObject("alternative_route.max_weight_factor", 4);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
         hints.putObject("alternative_route.max_paths", 4);
-        AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(new RoutingCHGraphImpl(g.getCHGraph(), weighting), hints);
+        AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(g.getRoutingCHGraph(), hints);
         List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
         assertEquals(2, pathInfos.size());
         assertArrayEquals(new int[]{5, 6, 7, 8, 4, 10}, pathInfos.get(0).path.calcNodes().toArray());
@@ -134,13 +133,11 @@ public class AlternativeRouteEdgeCHTest {
     @Test
     public void testCalcOtherAlternatives() {
         GraphHopperStorage g = createTestGraph(em);
-        TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, g.getTurnCostStorage());
-        FastestWeighting weighting = new FastestWeighting(carFE, turnCostProvider);
         PMap hints = new PMap();
         hints.putObject("alternative_route.max_weight_factor", 4);
         hints.putObject("alternative_route.local_optimality_factor", 0.5);
         hints.putObject("alternative_route.max_paths", 4);
-        AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(new RoutingCHGraphImpl(g.getCHGraph(), weighting), hints);
+        AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(g.getRoutingCHGraph(), hints);
         List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(10, 5);
         assertEquals(2, pathInfos.size());
         assertArrayEquals(new int[]{10, 4, 3, 6, 5}, pathInfos.get(0).path.calcNodes().toArray());

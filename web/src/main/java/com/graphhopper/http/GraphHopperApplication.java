@@ -17,7 +17,6 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.gtfs.dropwizard.RealtimeBundle;
 import com.graphhopper.http.cli.ImportCommand;
 import com.graphhopper.http.resources.RootResource;
 import io.dropwizard.Application;

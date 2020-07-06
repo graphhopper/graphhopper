@@ -29,6 +29,7 @@ public class RouterConfig {
     private boolean lmDisablingAllowed = true;
     private boolean calcPoints = true;
     private boolean simplifyResponse = true;
+    private double elevationWayPointMaxDistance = Double.MAX_VALUE;
     private int activeLandmarkCount = 8;
 
     public int getMaxVisitedNodes() {
@@ -104,5 +105,13 @@ public class RouterConfig {
 
     public void setActiveLandmarkCount(int activeLandmarkCount) {
         this.activeLandmarkCount = activeLandmarkCount;
+    }
+
+    public double getElevationWayPointMaxDistance() {
+        return elevationWayPointMaxDistance;
+    }
+
+    public void setElevationWayPointMaxDistance(double elevationWayPointMaxDistance) {
+        this.elevationWayPointMaxDistance = elevationWayPointMaxDistance;
     }
 }

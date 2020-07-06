@@ -158,7 +158,7 @@ public class DirectionResolver {
         double iY = diffLat(snappedPoint, inPoint);
         double oX = diffLon(snappedPoint, outPoint);
         double oY = diffLat(snappedPoint, outPoint);
-        return !Helper.ANGLE_CALC.isClockwise(iX, iY, oX, oY, qX, qY);
+        return !AngleCalc.ANGLE_CALC.isClockwise(iX, iY, oX, oY, qX, qY);
     }
 
     private double diffLon(GHPoint p, GHPoint q) {
@@ -173,11 +173,6 @@ public class DirectionResolver {
         AdjacentEdges adjacentEdges = new AdjacentEdges();
         EdgeIterator iter = edgeExplorer.setBaseNode(node);
         while (iter.next()) {
-            // we are not interested in shortcuts here, even if there are shortcuts it is still sufficient to look
-            // at the original edges they begin with
-            if (iter instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) iter).isShortcut()) {
-                continue;
-            }
             boolean isIn = iter.getReverse(accessEnc);
             boolean isOut = iter.get(accessEnc);
             if (!isIn && !isOut) {
