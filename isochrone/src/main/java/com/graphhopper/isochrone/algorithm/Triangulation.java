@@ -26,6 +26,7 @@ import org.locationtech.jts.util.Assert;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Triangulation {
 
@@ -105,8 +106,8 @@ public class Triangulation {
         return vertices;
     }
 
-    public Collection<QuadEdge> getEdges() {
-        return edges.values();
+    public Collection<ReadableQuadEdge> getEdges() {
+        return edges.values().stream().map(QuadEdgeAsReadableQuadEdge::new).collect(Collectors.toList());
     }
 
     public void assertTriangle(QuadEdge e1, QuadEdge e2, QuadEdge e3) {

@@ -7,6 +7,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
+import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ProfileResolver;
@@ -196,7 +197,7 @@ public class IsochroneResource {
             }
         }
         ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
-        ContourBuilder contourBuilder = new ContourBuilder(tin.getEdges());
+        ContourBuilder contourBuilder = new ContourBuilder(ReadableTriangulation.wrap(tin));
 
         for (Double z : zs) {
             MultiPolygon multiPolygon = contourBuilder.computeIsoline(z);
