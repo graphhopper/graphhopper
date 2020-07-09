@@ -21,6 +21,7 @@ package com.graphhopper.resources;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
+import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -160,7 +161,7 @@ public class PtIsochroneResource {
                 }
             }
 
-            ContourBuilder contourBuilder = new ContourBuilder(tin.getEdges());
+            ContourBuilder contourBuilder = new ContourBuilder(ReadableTriangulation.wrap(tin));
             MultiPolygon isoline = contourBuilder.computeIsoline(targetZ);
 
             // debugging tool

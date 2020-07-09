@@ -1,3 +1,10 @@
+2.0
+    use Java 8 also for core, client-hc and reader-osm modules. all modules use Java 8 now
+    removed android demo, #1940
+    added edge key path detail, #2073
+    fixed bug for turn restrictions on bridges/tunnels, #2070
+    improved resolution of elevation profiles, 3D Douglas-Peucker and long edge sampling, #1953
+
 1.0
     changes to config.yml:
       properties have to follow the snake_case, #1918, easy convert via https://github.com/karussell/snake_case

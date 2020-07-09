@@ -15,7 +15,6 @@ package com.graphhopper.isochrone.algorithm;
 
 import org.locationtech.jts.algorithm.CGAlgorithms;
 import org.locationtech.jts.geom.*;
-import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.*;
@@ -34,19 +33,18 @@ public class ContourBuilder {
     private static final double EPSILON = 0.000001;
 
     private GeometryFactory geometryFactory = new GeometryFactory();
-    private Collection<QuadEdge> edges;
+    private final ReadableTriangulation triangulation;
 
-    public ContourBuilder(Collection<QuadEdge> edges) {
-        this.edges = edges;
+    public ContourBuilder(ReadableTriangulation triangulation) {
+        this.triangulation = triangulation;
     }
 
     public MultiPolygon computeIsoline(double z0) {
-        Set<QuadEdge> processed = new HashSet<>();
+        Set<ReadableQuadEdge> processed = new HashSet<>();
         List<LinearRing> rings = new ArrayList<>();
 
-        Queue<QuadEdge> processQ = new ArrayDeque<>(edges);
-        while (!processQ.isEmpty()) {
-            QuadEdge e = processQ.remove();
+        for (ReadableQuadEdge f : triangulation.getEdges()) {
+            ReadableQuadEdge e = f.getPrimary();
             if (processed.contains(e))
                 continue;
             processed.add(e);
@@ -68,8 +66,8 @@ public class ContourBuilder {
                 }
                 polyPoints.add(new Coordinate(cC.x, cC.y)); // Strip z coordinate
                 processed.add(e);
-                QuadEdge E1 = ccw ? e.oNext().getPrimary() : e.oPrev().getPrimary();
-                QuadEdge E2 = ccw ? e.dPrev().getPrimary() : e.dNext().getPrimary();
+                ReadableQuadEdge E1 = ccw ? e.oNext().getPrimary() : e.oPrev().getPrimary();
+                ReadableQuadEdge E2 = ccw ? e.dPrev().getPrimary() : e.dNext().getPrimary();
                 int cut1 = E1 == null ? 0 : cut(E1.orig().getZ(), E1.dest().getZ(), z0);
                 int cut2 = E2 == null ? 0 : cut(E2.orig().getZ(), E2.dest().getZ(), z0);
                 boolean ok1 = cut1 != 0 && !processed.contains(E1);
