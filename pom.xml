@@ -79,6 +79,7 @@
         <module>web-api</module>
         <module>web</module>
         <module>client-hc</module>
+        <module>navigation</module>
     </modules>
     <dependencyManagement>
         <dependencies>
