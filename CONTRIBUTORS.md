@@ -65,6 +65,7 @@ Here is an overview:
  * rodo, more descriptions
  * seeebiii, motorcycle improvements
  * sguill, fixes like #1683
+ * skienzl, imperial units for /navigate, related to #2071
  * stefanholder, Stefan Holder, BMW AG, refactored unfavoring of virtual edges #885
  * stevensnoeijen, fixes like #1568
  * Svantulden, improved documentation and nearest API
