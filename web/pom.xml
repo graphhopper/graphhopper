@@ -36,7 +36,7 @@
         </dependency>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-navigation</artifactId>
+            <artifactId>graphhopper-navigationtmp</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
