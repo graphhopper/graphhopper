@@ -260,12 +260,12 @@ public class Measurement {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_instr", count, isCH, isLM).
                             sod());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
-                            withInstructions().withPointHints().sod().simplifyAndPD());
+                            withInstructions().withPointHints().sod().simplify().pathDetails());
                     // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_full... see #2056
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
                             withPoints(100).sod());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
-                            withPoints(100).sod().withInstructions().simplifyAndPD());
+                            withPoints(100).sod().withInstructions().simplify().pathDetails());
                 }
                 if (!hopper.getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
@@ -275,12 +275,12 @@ public class Measurement {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
                             edgeBased());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
-                            edgeBased().withInstructions().withPointHints().simplifyAndPD());
+                            edgeBased().withInstructions().withPointHints().simplify().pathDetails());
                     // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_edge_full... see #2056
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100", count / 100, isCH, isLM).
                             withPoints(100).edgeBased().sod());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100_full", count / 100, isCH, isLM).
-                            withPoints(100).edgeBased().sod().withInstructions().simplifyAndPD());
+                            withPoints(100).edgeBased().sod().withInstructions().simplify().pathDetails());
                 }
             }
             if (!isEmpty(countryBordersDirectory)) {
@@ -363,7 +363,7 @@ public class Measurement {
         private final int count;
         final boolean ch, lm;
         int activeLandmarks = -1;
-        boolean withInstructions, withPointHints, sod, edgeBased, simplifyAndPD, alternative;
+        boolean withInstructions, withPointHints, sod, edgeBased, simplify, pathDetails, alternative;
         String blockArea;
         int points = 2;
 
@@ -404,11 +404,13 @@ public class Measurement {
             return this;
         }
 
-        /**
-         * simplify and get path details
-         */
-        QuerySettings simplifyAndPD() {
-            this.simplifyAndPD = true;
+        QuerySettings simplify() {
+            this.simplify = true;
+            return this;
+        }
+
+        QuerySettings pathDetails() {
+            this.pathDetails = true;
             return this;
         }
 
@@ -784,15 +786,11 @@ public class Measurement {
                 if (querySettings.alternative)
                     req.setAlgorithm(ALT_ROUTE);
 
-                if (querySettings.simplifyAndPD) {
+                if (querySettings.pathDetails)
                     req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED, Parameters.Details.EDGE_ID, Parameters.Details.STREET_NAME));
-                } else {
-                    // disable path simplification by setting the distance to zero
-                    req.getHints().putObject(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
-                }
 
-                // put(algo + ".approximation", "BeelineSimplification").
-                // put(algo + ".epsilon", 2);
+                if (!querySettings.simplify)
+                    req.getHints().putObject(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
 
                 GHResponse rsp;
                 try {
