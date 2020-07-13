@@ -61,7 +61,6 @@ public class NavigateResource {
     private final GraphHopperAPI graphHopper;
     private final TranslationMap translationMap;
     private final Map<String, String> resolverMap;
-    private static final TranslationMap navigateResponseConverterTranslationMap = new NavigateResponseConverterTranslationMap().doImport();
 
     @Inject
     public NavigateResource(GraphHopperAPI graphHopper, TranslationMap translationMap, GraphHopperConfig config) {
@@ -146,7 +145,7 @@ public class NavigateResource {
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
                 + took + ", " + ghProfile;
         Locale locale = Helper.getLocale(localeStr);
-        DistanceConfig config = new DistanceConfig(unit, translationMap, navigateResponseConverterTranslationMap, locale);
+        DistanceConfig config = new DistanceConfig(unit, translationMap, locale);
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
@@ -156,7 +155,7 @@ public class NavigateResource {
                     build();
         } else {
             logger.info(logStr);
-            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, navigateResponseConverterTranslationMap, locale, config)).
+            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, locale, config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }

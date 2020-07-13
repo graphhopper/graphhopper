@@ -13,17 +13,16 @@ import static org.junit.Assert.assertNull;
 public class VoiceInstructionConfigTest {
 
     private final TranslationMap trMap = new TranslationMap().doImport();
-    private final TranslationMap mtrMap = new NavigateResponseConverterTranslationMap().doImport();
     private final Locale locale = Locale.ENGLISH;
 
     @Test(expected = IllegalArgumentException.class)
     public void conditionalDistanceVICShouldHaveSameImportValueSize() {
-        new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, mtrMap, locale, new int[]{400, 200}, new int[]{400});
+        new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, trMap, locale, new int[]{400, 200}, new int[]{400});
     }
 
     @Test
     public void conditionalDistanceVICShouldReturnFirstFittingMetricValues() {
-        ConditionalDistanceVoiceInstructionConfig config = new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, mtrMap, locale, new int[]{400, 200}, new int[]{400, 200});
+        ConditionalDistanceVoiceInstructionConfig config = new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, trMap, locale, new int[]{400, 200}, new int[]{400, 200});
 
         compareVoiceInstructionValues(
                 400,
@@ -55,12 +54,13 @@ public class VoiceInstructionConfigTest {
                 config.getConfigForDistance(200, "turn", " then")
         );
 
-        assertNull( config.getConfigForDistance(190, "turn", " then"));
+        assertNull(config.getConfigForDistance(190, "turn", " then"));
     }
 
     @Test
     public void conditionalDistanceVICShouldReturnFirstFittingImperialValues() {
-        ConditionalDistanceVoiceInstructionConfig config = new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, mtrMap, locale, new int[]{400, 200}, new int[]{600, 500});
+        ConditionalDistanceVoiceInstructionConfig config = new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial,
+                trMap, locale, new int[]{400, 200}, new int[]{600, 500});
 
         compareVoiceInstructionValues(
                 400,
@@ -92,12 +92,13 @@ public class VoiceInstructionConfigTest {
                 config.getConfigForDistance(200, "turn", " then")
         );
 
-        assertNull( config.getConfigForDistance(190, "turn", " then"));
+        assertNull(config.getConfigForDistance(190, "turn", " then"));
     }
 
     @Test
     public void initialVICMetricTest() {
-        InitialVoiceInstructionConfig configMetric = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, trMap, mtrMap, locale, 4250, 250, DistanceUtils.Unit.METRIC);
+        InitialVoiceInstructionConfig configMetric = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, trMap,
+                locale, 4250, 250, DistanceUtils.Unit.METRIC);
 
         compareVoiceInstructionValues(
                 4000,
@@ -114,7 +115,8 @@ public class VoiceInstructionConfigTest {
 
     @Test
     public void germanInitialVICMetricTest() {
-        InitialVoiceInstructionConfig configMetric = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, trMap, mtrMap, Locale.GERMAN, 4250, 250, DistanceUtils.Unit.METRIC);
+        InitialVoiceInstructionConfig configMetric = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, trMap,
+                Locale.GERMAN, 4250, 250, DistanceUtils.Unit.METRIC);
 
         compareVoiceInstructionValues(
                 4000,
@@ -131,7 +133,8 @@ public class VoiceInstructionConfigTest {
 
     @Test
     public void initialVICImperialTest() {
-        InitialVoiceInstructionConfig configImperial = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.imperial, trMap, mtrMap, locale, 4250, 250, DistanceUtils.Unit.IMPERIAL);
+        InitialVoiceInstructionConfig configImperial = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.imperial, trMap,
+                locale, 4250, 250, DistanceUtils.Unit.IMPERIAL);
 
         compareVoiceInstructionValues(
                 3219,
@@ -147,8 +150,9 @@ public class VoiceInstructionConfigTest {
     }
 
     @Test
-    public void fixedDistanceInitialVICMetricTest(){
-        FixedDistanceVoiceInstructionConfig configMetric = new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric,  mtrMap, locale, 2000, 2);
+    public void fixedDistanceInitialVICMetricTest() {
+        FixedDistanceVoiceInstructionConfig configMetric = new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric,
+                trMap, locale, 2000, 2);
 
         compareVoiceInstructionValues(
                 2000,
@@ -162,12 +166,13 @@ public class VoiceInstructionConfigTest {
                 configMetric.getConfigForDistance(2000, "turn", " then")
         );
 
-        assertNull( configMetric.getConfigForDistance(1999, "turn", " then"));
+        assertNull(configMetric.getConfigForDistance(1999, "turn", " then"));
     }
 
     @Test
-    public void germanFixedDistanceInitialVICMetricTest(){
-        FixedDistanceVoiceInstructionConfig configMetric = new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric,  mtrMap, Locale.GERMAN, 2000, 2);
+    public void germanFixedDistanceInitialVICMetricTest() {
+        FixedDistanceVoiceInstructionConfig configMetric = new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric,
+                trMap, Locale.GERMAN, 2000, 2);
 
         compareVoiceInstructionValues(
                 2000,
@@ -181,12 +186,13 @@ public class VoiceInstructionConfigTest {
                 configMetric.getConfigForDistance(2000, "abbiegen", " dann")
         );
 
-        assertNull( configMetric.getConfigForDistance(1999, "abbiegen", " dann"));
+        assertNull(configMetric.getConfigForDistance(1999, "abbiegen", " dann"));
     }
 
     @Test
-    public void fixedDistanceInitialVICImperialTest(){
-        FixedDistanceVoiceInstructionConfig configImperial = new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.imperial,  mtrMap, locale, 2000, 2);
+    public void fixedDistanceInitialVICImperialTest() {
+        FixedDistanceVoiceInstructionConfig configImperial = new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.imperial,
+                trMap, locale, 2000, 2);
 
         compareVoiceInstructionValues(
                 2000,
@@ -199,11 +205,8 @@ public class VoiceInstructionConfigTest {
                 "In 2 miles turn",
                 configImperial.getConfigForDistance(2000, "turn", " then")
         );
-        assertNull( configImperial.getConfigForDistance(1999, "turn", " then"));
+        assertNull(configImperial.getConfigForDistance(1999, "turn", " then"));
     }
-
-
-    // Helper
 
     private void compareVoiceInstructionValues(int expectedSpokenDistance,
                                                String expectedInstruction,
@@ -212,5 +215,4 @@ public class VoiceInstructionConfigTest {
         assertEquals(expectedInstruction, values.turnDescription);
 
     }
-
 }

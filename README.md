@@ -79,8 +79,7 @@ There are subprojects to make GraphHopper work offline on Android and [iOS](http
 
 ### Online
 
-There is an extension that creates a [navigation endpoint](https://github.com/graphhopper/graphhopper-navigation) to feed a 
-[lightweight navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
+There is a [server-side endpoint](./navigation) that is usable by an [online navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
 
 [![android navigation demo app](https://raw.githubusercontent.com/graphhopper/graphhopper-navigation-example/master/files/graphhopper-navigation-example.png)](https://github.com/graphhopper/graphhopper-navigation-example)
 

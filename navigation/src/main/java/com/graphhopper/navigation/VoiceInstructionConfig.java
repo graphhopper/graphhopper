@@ -9,13 +9,13 @@ import static com.graphhopper.navigation.DistanceUtils.meterToKilometer;
 import static com.graphhopper.navigation.DistanceUtils.meterToMiles;
 
 abstract class VoiceInstructionConfig {
-    protected final String key; // TranslationMap key
-    protected final TranslationMap navigateResponseConverterTranslationMap;
+    protected final String translationKey;
+    protected final TranslationMap translationMap;
     protected final Locale locale;
 
-    public VoiceInstructionConfig(String key, TranslationMap navigateResponseConverterTranslationMap, Locale locale) {
-        this.key = key;
-        this.navigateResponseConverterTranslationMap = navigateResponseConverterTranslationMap;
+    public VoiceInstructionConfig(String translationKey, TranslationMap translationMap, Locale locale) {
+        this.translationKey = translationKey;
+        this.translationMap = translationMap;
         this.locale = locale;
     }
 
@@ -39,8 +39,9 @@ class ConditionalDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
     private final int[] distanceAlongGeometry; // distances in meter in which the instruction should be spoken
     private final int[] distanceVoiceValue; // distances in required unit. f.e: 1km, 300m or 2mi
 
-    public ConditionalDistanceVoiceInstructionConfig(String key, TranslationMap navigateResponseConverterTranslationMap, Locale locale, int[] distanceAlongGeometry, int[] distanceVoiceValue) {
-        super(key, navigateResponseConverterTranslationMap, locale);
+    public ConditionalDistanceVoiceInstructionConfig(String key, TranslationMap translationMap, Locale locale,
+                                                     int[] distanceAlongGeometry, int[] distanceVoiceValue) {
+        super(key, translationMap, locale);
         this.distanceAlongGeometry = distanceAlongGeometry;
         this.distanceVoiceValue = distanceVoiceValue;
         if (distanceAlongGeometry.length != distanceVoiceValue.length) {
@@ -63,7 +64,7 @@ class ConditionalDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
         if (instructionIndex < 0) {
             return null;
         }
-        String totalDescription = navigateResponseConverterTranslationMap.getWithFallBack(locale).tr(key, distanceVoiceValue[instructionIndex]) + " " + turnDescription + thenVoiceInstruction;
+        String totalDescription = translationMap.getWithFallBack(locale).tr("navigate." + translationKey, distanceVoiceValue[instructionIndex]) + " " + turnDescription + thenVoiceInstruction;
         int spokenDistance = distanceAlongGeometry[instructionIndex];
         return new VoiceInstructionValue(spokenDistance, totalDescription);
     }
@@ -82,7 +83,7 @@ class FixedDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
     @Override
     public VoiceInstructionValue getConfigForDistance(double distance, String turnDescription, String thenVoiceInstruction) {
         if (distance >= distanceAlongGeometry) {
-            String totalDescription = navigateResponseConverterTranslationMap.getWithFallBack(locale).tr(key, distanceVoiceValue) + " " + turnDescription;
+            String totalDescription = translationMap.getWithFallBack(locale).tr("navigate." + translationKey, distanceVoiceValue) + " " + turnDescription;
             return new VoiceInstructionValue(distanceAlongGeometry, totalDescription);
         }
         return null;
@@ -97,8 +98,8 @@ class InitialVoiceInstructionConfig extends VoiceInstructionConfig {
     private final DistanceUtils.Unit unit;
     private final TranslationMap translationMap;
 
-    public InitialVoiceInstructionConfig(String key, TranslationMap translationMap, TranslationMap navigateResponseConverterTranslationMap, Locale locale, int distanceForInitialStayInstruction, int distanceDelay, DistanceUtils.Unit unit) {
-        super(key, navigateResponseConverterTranslationMap, locale);
+    public InitialVoiceInstructionConfig(String key, TranslationMap translationMap, Locale locale, int distanceForInitialStayInstruction, int distanceDelay, DistanceUtils.Unit unit) {
+        super(key, translationMap, locale);
         this.distanceForInitialStayInstruction = distanceForInitialStayInstruction;
         this.distanceDelay = distanceDelay;
         this.unit = unit;
@@ -129,7 +130,8 @@ class InitialVoiceInstructionConfig extends VoiceInstructionConfig {
         if (distance > distanceForInitialStayInstruction) {
             int spokenDistance = distanceAlongGeometry(distance);
             int distanceVoiceValue = distanceVoiceValue(distance);
-            String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " " + navigateResponseConverterTranslationMap.getWithFallBack(locale).tr(key, distanceVoiceValue);
+            String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " " +
+                    this.translationMap.getWithFallBack(locale).tr("navigate." + translationKey, distanceVoiceValue);
             continueDescription = Helper.firstBig(continueDescription);
             return new VoiceInstructionValue(spokenDistance, continueDescription);
         }
