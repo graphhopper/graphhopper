@@ -77,12 +77,12 @@ public class MapMatchingResource {
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
+            @QueryParam("profile") String profile,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
             @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy,
-            @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
             @QueryParam(MAX_VISITED_NODES) @DefaultValue("3000") int maxVisitedNodes) {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
@@ -99,13 +99,17 @@ public class MapMatchingResource {
 
         PMap hints = createHintsMap(uriInfo.getQueryParameters());
         // add values that are not in hints because they were explicitly listed in query params
-        hints.putObject("vehicle", vehicleStr);
         hints.putObject(MAX_VISITED_NODES, maxVisitedNodes);
-        // resolve profile and remove legacy vehicle/weighting parameters
-        String profile = profileResolver.resolveProfile(hints).getName();
-        hints.remove("vehicle");
-        hints.remove("weighting");
+        String weightingVehicleLogStr = "weighting: " + hints.getString("weighting", "") + ", vehicle: " + hints.getString("vehicle", "");
+        if (Helper.isEmpty(profile)) {
+            // resolve profile and remove legacy vehicle/weighting parameters
+            // we need to explicitly disable CH here because map matching does not use it
+            PMap pMap = new PMap(hints).putObject(Parameters.CH.DISABLE, true);
+            profile = profileResolver.resolveProfile(pMap).getName();
+            removeLegacyParameters(hints);
+        }
         hints.putObject("profile", profile);
+        errorIfLegacyParameters(hints);
 
         MapMatching matching = new MapMatching(graphHopper, hints);
         matching.setMeasurementErrorSigma(gpsAccuracy);
@@ -116,7 +120,8 @@ public class MapMatchingResource {
         // TODO: Request logging and timing should perhaps be done somewhere outside
         float took = sw.stop().getSeconds();
         String infoStr = request.getRemoteAddr() + " " + request.getLocale() + " " + request.getHeader("User-Agent");
-        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + measurements.size();
+        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + took + "s, entries:" + measurements.size() +
+                ", profile: " + profile + ", " + weightingVehicleLogStr;
         logger.info(logStr);
 
         if ("extended_json".equals(outType)) {
@@ -170,6 +175,20 @@ public class MapMatchingResource {
                         build();
             }
         }
+    }
+
+    private void removeLegacyParameters(PMap hints) {
+        hints.remove("vehicle");
+        hints.remove("weighting");
+    }
+
+    private static void errorIfLegacyParameters(PMap hints) {
+        if (hints.has("weighting"))
+            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'weighting' parameter." +
+                    " You used 'weighting=" + hints.getString("weighting", "") + "'");
+        if (hints.has("vehicle"))
+            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'vehicle' parameter." +
+                    " You used 'vehicle=" + hints.getString("vehicle", "") + "'");
     }
 
     private PMap createHintsMap(MultivaluedMap<String, String> queryParameters) {
