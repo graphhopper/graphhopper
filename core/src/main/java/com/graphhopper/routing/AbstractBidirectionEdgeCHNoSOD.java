@@ -105,7 +105,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
                 : innerOutExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
             final int edgeId = iter.getEdge();
-            int key = GHUtility.createEdgeKey(getOtherNode(edgeId, iter.getBaseNode()), iter.getBaseNode(), edgeId, !reverse);
+            int key = GHUtility.createEdgeKey(iter.getAdjNode(), iter.getBaseNode(), edgeId, !reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {
                 continue;
