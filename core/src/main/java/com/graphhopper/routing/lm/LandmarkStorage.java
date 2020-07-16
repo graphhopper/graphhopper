@@ -573,7 +573,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             return false;
         if (subnetworkFrom != subnetworkTo) {
             throw new ConnectionNotFoundException("Connection between locations not found. Different subnetworks " + subnetworkFrom
-                    + " vs. " + subnetworkTo, new HashMap<String, Object>());
+                    + " vs. " + subnetworkTo, new HashMap<>());
         }
 
         int[] tmpIDs = landmarkIDs.get(subnetworkFrom);
