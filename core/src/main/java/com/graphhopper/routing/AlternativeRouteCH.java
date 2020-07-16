@@ -39,13 +39,12 @@ import java.util.List;
  * @author michaz
  */
 public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
-
     private final double maxWeightFactor;
     private final double maxShareFactor;
     private final double localOptimalityFactor;
     private final int maxPaths;
+    private final List<AlternativeInfo> alternatives = new ArrayList<>();
     private int extraVisitedNodes = 0;
-    private List<AlternativeInfo> alternatives = new ArrayList<>();
 
     public AlternativeRouteCH(RoutingCHGraph graph, PMap hints) {
         super(graph);
@@ -83,40 +82,31 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
 
         final ArrayList<PotentialAlternativeInfo> potentialAlternativeInfos = new ArrayList<>();
 
-        bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
-            @Override
-            public boolean apply(final int v, final SPTEntry fromSPTEntry) {
-                SPTEntry toSPTEntry = bestWeightMapTo.get(v);
-                if (toSPTEntry == null)
-                    return true;
+        bestWeightMapFrom.forEach((IntObjectPredicate<SPTEntry>) (v, fromSPTEntry) -> {
+            SPTEntry toSPTEntry = bestWeightMapTo.get(v);
+            if (toSPTEntry == null)
+                return true;
 
-                if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > bestPath.getWeight() * maxWeightFactor)
-                    return true;
+            if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > bestPath.getWeight() * maxWeightFactor)
+                return true;
 
-                // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
-                // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
-                // We still use this preliminary path to filter for shared path length with other alternatives,
-                // so we don't have to work so much.
-                Path preliminaryRoute = createPathExtractor(graph).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
-                double preliminaryShare = calculateShare(preliminaryRoute);
-                if (preliminaryShare > maxShareFactor) {
-                    return true;
-                }
-                PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
-                potentialAlternativeInfo.v = v;
-                potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
-                potentialAlternativeInfos.add(potentialAlternativeInfo);
+            // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
+            // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
+            // We still use this preliminary path to filter for shared path length with other alternatives,
+            // so we don't have to work so much.
+            Path preliminaryRoute = createPathExtractor(graph).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
+            double preliminaryShare = calculateShare(preliminaryRoute);
+            if (preliminaryShare > maxShareFactor) {
                 return true;
             }
-
+            PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
+            potentialAlternativeInfo.v = v;
+            potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
+            potentialAlternativeInfos.add(potentialAlternativeInfo);
+            return true;
         });
 
-        Collections.sort(potentialAlternativeInfos, new Comparator<PotentialAlternativeInfo>() {
-            @Override
-            public int compare(PotentialAlternativeInfo o1, PotentialAlternativeInfo o2) {
-                return Double.compare(o1.weight, o2.weight);
-            }
-        });
+        potentialAlternativeInfos.sort(Comparator.comparingDouble(o -> o.weight));
 
         for (PotentialAlternativeInfo potentialAlternativeInfo : potentialAlternativeInfos) {
             int v = potentialAlternativeInfo.v;

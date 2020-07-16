@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
@@ -38,7 +39,8 @@ import org.junit.Test;
 import java.util.List;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class AlternativeRouteEdgeCHTest {
     private final FlagEncoder carFE = new CarFlagEncoder(new PMap().putObject("turn_costs", true));
@@ -102,13 +104,13 @@ public class AlternativeRouteEdgeCHTest {
         DijkstraBidirectionEdgeCHNoSOD router = new DijkstraBidirectionEdgeCHNoSOD(g.getRoutingCHGraph());
         Path path = router.calcPath(5, 10);
         assertTrue(path.isFound());
-        assertArrayEquals(new int[]{5, 6, 7, 8, 4, 10}, path.calcNodes().toArray());
+        assertEquals(IntArrayList.from(5, 6, 7, 8, 4, 10), path.calcNodes());
         assertEquals(50000.0, path.getDistance(), 0.0);
         // 6 -> 3 -> 4 is forbidden
 
         router = new DijkstraBidirectionEdgeCHNoSOD(g.getRoutingCHGraph());
         path = router.calcPath(5, 3, ANY_EDGE, GHUtility.getEdge(g, 2, 3).getEdge());
-        assertArrayEquals(new int[]{5, 1, 9, 2, 3}, path.calcNodes().toArray());
+        assertEquals(IntArrayList.from(5, 1, 9, 2, 3), path.calcNodes());
         assertEquals(40000.0, path.getDistance(), 0.0);
         // We can specifically route to the desired in-edge at node 3
         // which does not lie upstream of the turn-restriction.
@@ -124,8 +126,8 @@ public class AlternativeRouteEdgeCHTest {
         AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(g.getRoutingCHGraph(), hints);
         List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 10);
         assertEquals(2, pathInfos.size());
-        assertArrayEquals(new int[]{5, 6, 7, 8, 4, 10}, pathInfos.get(0).path.calcNodes().toArray());
-        assertArrayEquals(new int[]{5, 1, 9, 2, 3, 4, 10}, pathInfos.get(1).path.calcNodes().toArray());
+        assertEquals(IntArrayList.from(5, 6, 7, 8, 4, 10), pathInfos.get(0).path.calcNodes());
+        assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4, 10), pathInfos.get(1).path.calcNodes());
         // 3 -> 4 -> 11 is forbidden
         // 6 -> 3 -> 4 is forbidden
     }
@@ -140,8 +142,8 @@ public class AlternativeRouteEdgeCHTest {
         AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(g.getRoutingCHGraph(), hints);
         List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(10, 5);
         assertEquals(2, pathInfos.size());
-        assertArrayEquals(new int[]{10, 4, 3, 6, 5}, pathInfos.get(0).path.calcNodes().toArray());
-        assertArrayEquals(new int[]{10, 4, 3, 2, 9, 1, 5}, pathInfos.get(1).path.calcNodes().toArray());
+        assertEquals(IntArrayList.from(10, 4, 3, 6, 5), pathInfos.get(0).path.calcNodes());
+        assertEquals(IntArrayList.from(10, 4, 3, 2, 9, 1, 5), pathInfos.get(1).path.calcNodes());
         // The shortest path works (no restrictions on the way back
     }
 

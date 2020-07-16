@@ -57,12 +57,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         if (fromOutEdge == ANY_EDGE) {
             fillEdgesFromUsingFilter(CHEdgeFilter.ALL_EDGES);
         } else {
-            fillEdgesFromUsingFilter(new CHEdgeFilter() {
-                @Override
-                public boolean accept(RoutingCHEdgeIteratorState edgeState) {
-                    return edgeState.getOrigEdgeFirst() == fromOutEdge;
-                }
-            });
+            fillEdgesFromUsingFilter(edgeState -> edgeState.getOrigEdgeFirst() == fromOutEdge);
         }
     }
 
@@ -71,12 +66,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         if (toInEdge == ANY_EDGE) {
             fillEdgesToUsingFilter(CHEdgeFilter.ALL_EDGES);
         } else {
-            fillEdgesToUsingFilter(new CHEdgeFilter() {
-                @Override
-                public boolean accept(RoutingCHEdgeIteratorState edgeState) {
-                    return edgeState.getOrigEdgeLast() == toInEdge;
-                }
-            });
+            fillEdgesToUsingFilter(edgeState -> edgeState.getOrigEdgeLast() == toInEdge);
         }
     }
 
@@ -105,7 +95,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
                 : innerOutExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
             final int edgeId = iter.getEdge();
-            int key = GHUtility.createEdgeKey(getOtherNode(edgeId, iter.getBaseNode()), iter.getBaseNode(), edgeId, !reverse);
+            int key = GHUtility.createEdgeKey(iter.getAdjNode(), iter.getBaseNode(), edgeId, !reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {
                 continue;
@@ -147,14 +137,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
 
     @Override
     protected boolean accept(RoutingCHEdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        final int incEdge = getIncomingEdge(currEdge);
-        final int prevOrNextEdgeId = getOrigEdgeId(edge, !reverse);
-        double turnWeight = reverse
-                ? graph.getTurnWeight(prevOrNextEdgeId, edge.getBaseNode(), incEdge)
-                : graph.getTurnWeight(incEdge, edge.getBaseNode(), prevOrNextEdgeId);
-        if (Double.isInfinite(turnWeight)) {
-            return false;
-        }
         return levelEdgeFilter == null || levelEdgeFilter.accept(edge);
     }
 

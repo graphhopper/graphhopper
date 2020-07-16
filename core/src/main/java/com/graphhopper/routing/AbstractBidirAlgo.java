@@ -71,6 +71,11 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected abstract SPTEntry createStartEntry(int node, double weight, boolean reverse);
 
     @Override
+    public List<Path> calcPaths(int from, int to) {
+        return Collections.singletonList(calcPath(from, to));
+    }
+
+    @Override
     public Path calcPath(int from, int to) {
         return calcPath(from, to, ANY_EDGE, ANY_EDGE);
     }
@@ -264,11 +269,6 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
             throw new IllegalStateException("Create a new instance per call");
 
         alreadyRun = true;
-    }
-
-    @Override
-    public List<Path> calcPaths(int from, int to) {
-        return Collections.singletonList(calcPath(from, to));
     }
 
     @Override

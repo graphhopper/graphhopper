@@ -50,10 +50,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static com.graphhopper.http.util.TestUtils.clientUrl;
@@ -65,12 +62,22 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceTest {
+
+    // for this test we use a non-standard profile name
+    private static final Map<String, String> mapboxResolver = new HashMap<String, String>() {
+        {
+            put("driving", "my_car");
+            put("driving-traffic", "my_car");
+        }
+    };
+
     private static final String DIR = "./target/andorra-gh/";
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
+                putObject("profiles_mapbox", mapboxResolver).
                 putObject("graph.flag_encoders", "car").
                 putObject("routing.ch.disabling_allowed", true).
                 putObject("prepare.min_network_size", 0).
@@ -123,6 +130,17 @@ public class RouteResourceTest {
         response = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         assertFalse(response.readEntity(JsonNode.class).get("info").has("errors"));
+    }
+
+    @Test
+    public void testBasicNavigationQuery() {
+        Response response = clientTarget(app, "/navigate/directions/v5/gh/driving/1.537174,42.507145;1.539116,42.511368?" +
+                "access_token=pk.my_api_key&alternatives=true&geometries=polyline6&overview=full&steps=true&continue_straight=true&" +
+                "annotations=congestion%2Cdistance&language=en&roundabout_exits=true&voice_instructions=true&banner_instructions=true&voice_units=metric").
+                request().get();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(1256, json.get("routes").get(0).get("distance").asDouble(), 20);
     }
 
     @Test

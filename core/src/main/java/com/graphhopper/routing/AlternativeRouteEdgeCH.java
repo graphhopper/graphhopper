@@ -43,8 +43,8 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
     private final double maxShareFactor;
     private final double localOptimalityFactor;
     private final int maxPaths;
+    private final List<AlternativeInfo> alternatives = new ArrayList<>();
     private int extraVisitedNodes = 0;
-    private List<AlternativeInfo> alternatives = new ArrayList<>();
 
     public AlternativeRouteEdgeCH(RoutingCHGraph graph, PMap hints) {
         super(graph);
@@ -83,51 +83,39 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         final ArrayList<PotentialAlternativeInfo> potentialAlternativeInfos = new ArrayList<>();
 
         final Map<Integer, SPTEntry> bestWeightMapByNode = new HashMap<>();
-        bestWeightMapTo.forEach(new IntObjectPredicate<SPTEntry>() {
-            @Override
-            public boolean apply(int key, SPTEntry value) {
-                bestWeightMapByNode.put(value.adjNode, value);
+        bestWeightMapTo.forEach((IntObjectPredicate<SPTEntry>) (key, value) -> {
+            bestWeightMapByNode.put(value.adjNode, value);
+            return true;
+        });
+
+        bestWeightMapFrom.forEach((IntObjectPredicate<SPTEntry>) (wurst, fromSPTEntry) -> {
+            SPTEntry toSPTEntry = bestWeightMapByNode.get(fromSPTEntry.adjNode);
+            if (toSPTEntry == null)
+                return true;
+
+            if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > bestPath.getWeight() * maxWeightFactor)
+                return true;
+
+            // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
+            // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
+            // We still use this preliminary path to filter for shared path length with other alternatives,
+            // so we don't have to work so much.
+            Path preliminaryRoute = createPathExtractor(graph).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
+            double preliminaryShare = calculateShare(preliminaryRoute);
+            if (preliminaryShare > maxShareFactor) {
                 return true;
             }
+            assert fromSPTEntry.adjNode == toSPTEntry.adjNode;
+            PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
+            potentialAlternativeInfo.v = fromSPTEntry.adjNode;
+            potentialAlternativeInfo.edgeIn = getIncomingEdge(fromSPTEntry);
+            potentialAlternativeInfo.edgeOut = getIncomingEdge(toSPTEntry);
+            potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
+            potentialAlternativeInfos.add(potentialAlternativeInfo);
+            return true;
         });
 
-        bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
-            @Override
-            public boolean apply(final int wurst, final SPTEntry fromSPTEntry) {
-                SPTEntry toSPTEntry = bestWeightMapByNode.get(fromSPTEntry.adjNode);
-                if (toSPTEntry == null)
-                    return true;
-
-                if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > bestPath.getWeight() * maxWeightFactor)
-                    return true;
-
-                // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
-                // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
-                // We still use this preliminary path to filter for shared path length with other alternatives,
-                // so we don't have to work so much.
-                Path preliminaryRoute = createPathExtractor(graph).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
-                double preliminaryShare = calculateShare(preliminaryRoute);
-                if (preliminaryShare > maxShareFactor) {
-                    return true;
-                }
-                assert fromSPTEntry.adjNode == toSPTEntry.adjNode;
-                PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
-                potentialAlternativeInfo.v = fromSPTEntry.adjNode;
-                potentialAlternativeInfo.edgeIn = getIncomingEdge(fromSPTEntry);
-                potentialAlternativeInfo.edgeOut = getIncomingEdge(toSPTEntry);
-                potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
-                potentialAlternativeInfos.add(potentialAlternativeInfo);
-                return true;
-            }
-
-        });
-
-        Collections.sort(potentialAlternativeInfos, new Comparator<PotentialAlternativeInfo>() {
-            @Override
-            public int compare(PotentialAlternativeInfo o1, PotentialAlternativeInfo o2) {
-                return Double.compare(o1.weight, o2.weight);
-            }
-        });
+        potentialAlternativeInfos.sort(Comparator.comparingDouble(o -> o.weight));
 
         for (PotentialAlternativeInfo potentialAlternativeInfo : potentialAlternativeInfos) {
             int v = potentialAlternativeInfo.v;

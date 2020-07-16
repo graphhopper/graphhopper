@@ -446,6 +446,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             return iter;
         }
 
+        @Override
+        public String toString() {
+            return edgeIterable.toString();
+        }
+
         private void selectEdgeAccess(int edgeId) {
             // iterate over edges or shortcuts
             edgeIterable.edgeAccess = edgeId < edgeIterable.baseGraph.edgeCount ? edgeIterable.baseGraph.edgeAccess : chEdgeAccess;
