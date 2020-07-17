@@ -24,6 +24,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.SingleEdgeExplorer;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.ArrayList;
@@ -435,6 +436,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public EdgeExplorer createEdgeExplorer() {
         return baseGraph.createEdgeExplorer();
+    }
+
+    public SingleEdgeExplorer createSingleEdgeExplorer() {
+        return baseGraph.createSingleEdgeExplorer();
     }
 
     @Override

@@ -34,6 +34,7 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.SingleEdgeExplorer;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.*;
@@ -188,6 +189,20 @@ public class QueryGraph implements Graph {
             return eis2;
         throw new IllegalStateException("Edge " + origEdgeId + " not found with adjNode:" + adjNode
                 + ". found edges were:" + eis + ", " + eis2);
+    }
+
+    @Override
+    public SingleEdgeExplorer createSingleEdgeExplorer() {
+        return new SingleEdgeExplorer() {
+            private final SingleEdgeExplorer baseExplorer = baseGraph.createSingleEdgeExplorer();
+
+            @Override
+            public EdgeIteratorState setEdge(int edge, int adjNode) {
+                if (!isVirtualEdge(edge))
+                    return baseExplorer.setEdge(edge, adjNode);
+                return getEdgeIteratorState(edge, adjNode);
+            }
+        };
     }
 
     private VirtualEdgeIteratorState getVirtualEdge(int edgeId) {

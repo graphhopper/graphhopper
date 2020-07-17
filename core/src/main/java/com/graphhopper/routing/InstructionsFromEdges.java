@@ -90,7 +90,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private String prevInstructionName;
     private InstructionAnnotation prevAnnotation;
 
-    private final int MAX_U_TURN_DISTANCE = 35;
+    private final static int MAX_U_TURN_DISTANCE = 35;
 
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
                                  Translation tr, InstructionList ways) {
@@ -358,7 +358,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevNode = baseNode;
         prevLat = adjLat;
         prevLon = adjLon;
-        prevEdge = edge;
+        // todo: get rid of this detach call
+        prevEdge = edge.detach(false);
     }
 
     @Override

@@ -95,6 +95,7 @@ class InstructionsOutgoingEdges {
         EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
         while (edgeIter.next()) {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
+                // todo: detaching these edges is expensive and probably not necessary
                 tmpEdge = edgeIter.detach(false);
                 visibleAlternativeTurns.add(tmpEdge);
                 if (tmpEdge.get(accessEnc)) {

@@ -113,6 +113,11 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
+    public SingleEdgeExplorer createSingleEdgeExplorer() {
+        throw new UnsupportedOperationException("implement if needed");
+    }
+
+    @Override
     public AllEdgesIterator getAllEdges() {
         return new AllEdgesIterator() {
             @Override

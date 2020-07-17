@@ -39,6 +39,7 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.SingleEdgeExplorer;
 import com.graphhopper.util.shapes.BBox;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
@@ -234,6 +235,11 @@ public class RealtimeFeed {
             @Override
             public EdgeExplorer createEdgeExplorer() {
                 return graphHopperStorage.createEdgeExplorer();
+            }
+
+            @Override
+            public SingleEdgeExplorer createSingleEdgeExplorer() {
+                return null;
             }
 
             @Override

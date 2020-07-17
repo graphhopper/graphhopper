@@ -22,10 +22,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -196,18 +193,17 @@ public class Path {
         int tmpNode = getFromNode();
         int len = edgeIds.size();
         int prevEdgeId = EdgeIterator.NO_EDGE;
+        SingleEdgeExplorer singleEdgeExplorer = graph.createSingleEdgeExplorer();
         for (int i = 0; i < len; i++) {
-            EdgeIteratorState edgeBase = graph.getEdgeIteratorState(edgeIds.get(i), tmpNode);
+            EdgeIteratorState edgeBase = singleEdgeExplorer.setEdge(edgeIds.get(i), tmpNode);
             if (edgeBase == null)
                 throw new IllegalStateException("Edge " + edgeIds.get(i) + " was empty when requested with node " + tmpNode
                         + ", array index:" + i + ", edges:" + edgeIds.size());
 
             tmpNode = edgeBase.getBaseNode();
             // more efficient swap, currently not implemented for virtual edges: visitor.next(edgeBase.detach(true), i);
-            edgeBase = graph.getEdgeIteratorState(edgeBase.getEdge(), tmpNode);
+            edgeBase = singleEdgeExplorer.setEdge(edgeBase.getEdge(), tmpNode);
             visitor.next(edgeBase, i, prevEdgeId);
-
-            prevEdgeId = edgeBase.getEdge();
         }
         visitor.finish();
     }
@@ -223,7 +219,7 @@ public class Path {
         forEveryEdge(new EdgeVisitor() {
             @Override
             public void next(EdgeIteratorState eb, int index, int prevEdgeId) {
-                edges.add(eb);
+                edges.add(eb.detach(false));
             }
 
             @Override
@@ -309,6 +305,10 @@ public class Path {
      * The callback used in forEveryEdge.
      */
     public interface EdgeVisitor {
+        /**
+         * @param edge a temporary reference to an edge state. the underlying object is subject to change on the next
+         *             call to next(), so if you need to store it or otherwise use it later call edge.detach(false)
+         */
         void next(EdgeIteratorState edge, int index, int prevEdgeId);
 
         void finish();
