@@ -576,11 +576,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     + " vs. " + subnetworkTo, new HashMap<>());
         }
 
-        int[] tmpIDs = landmarkIDs.get(subnetworkFrom);
-
-        // kind of code duplication to approximate
-        List<Map.Entry<Integer, Integer>> list = new ArrayList<>(tmpIDs.length);
-        for (int lmIndex = 0; lmIndex < tmpIDs.length; lmIndex++) {
+        // See the similar formula in LMApproximator.approximateForLandmark
+        List<Map.Entry<Integer, Integer>> list = new ArrayList<>(landmarks);
+        for (int lmIndex = 0; lmIndex < landmarks; lmIndex++) {
             int fromWeight = getFromWeight(lmIndex, toNode) - getFromWeight(lmIndex, fromNode);
             int toWeight = getToWeight(lmIndex, fromNode) - getToWeight(lmIndex, toNode);
 
