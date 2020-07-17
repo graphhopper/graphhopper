@@ -209,9 +209,7 @@ public class IsochroneResourceTest {
                 .queryParam("turn_costs", "false")
                 .queryParam("type", "geojson")
                 .request().buildGet().invoke();
-        JsonFeatureCollection featureCollection = rsp.readEntity(JsonFeatureCollection.class);
-        Geometry polygon0 = featureCollection.getFeatures().get(0).getGeometry();
-        assertEquals(330, polygon0.getCoordinates().length, 20);
+        assertEquals(200, rsp.getStatus());
     }
 
     @Test
