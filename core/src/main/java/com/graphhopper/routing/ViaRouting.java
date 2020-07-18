@@ -122,7 +122,7 @@ public class ViaRouting {
                 // enforce straight start after via stop
                 Path prevRoute = result.paths.get(leg - 1);
                 if (prevRoute.getEdgeCount() > 0)
-                    incomingEdge = prevRoute.getFinalEdge().getEdge();
+                    incomingEdge = prevRoute.getFinalEdge();
             }
 
             // enforce curbsides

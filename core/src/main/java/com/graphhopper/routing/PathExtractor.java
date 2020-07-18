@@ -20,13 +20,10 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 
 public class PathExtractor {
-    private final Graph graph;
+    private final SingleEdgeExplorer singleEdgeExplorer;
     private final Weighting weighting;
     protected final Path path;
 
@@ -35,7 +32,7 @@ public class PathExtractor {
     }
 
     protected PathExtractor(Graph graph, Weighting weighting) {
-        this.graph = graph;
+        this.singleEdgeExplorer = graph.createSingleEdgeExplorer();
         this.weighting = weighting;
         path = new Path(graph);
     }
@@ -76,7 +73,7 @@ public class PathExtractor {
     }
 
     protected void onEdge(int edge, int adjNode, int prevEdge) {
-        EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
+        EdgeIteratorState edgeState = singleEdgeExplorer.setEdge(edge, adjNode);
         path.addDistance(edgeState.getDistance());
         path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edgeState, false, prevEdge));
         path.addEdge(edge);

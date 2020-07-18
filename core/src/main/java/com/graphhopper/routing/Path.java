@@ -38,7 +38,9 @@ import java.util.List;
  * @author easbar
  */
 public class Path {
-    Graph graph;
+    final Graph graph;
+    private final SingleEdgeExplorer singleEdgeExplorer;
+    private final NodeAccess nodeAccess;
     double distance;
     long time;
     int endNode = -1;
@@ -48,12 +50,12 @@ public class Path {
     private int fromNode = -1;
     private GHIntArrayList edgeIds;
     private double weight;
-    private NodeAccess nodeAccess;
     private String debugInfo = "";
 
     public Path(Graph graph) {
-        this.weight = Double.MAX_VALUE;
         this.graph = graph;
+        this.singleEdgeExplorer = graph.createSingleEdgeExplorer();
+        this.weight = Double.MAX_VALUE;
         this.nodeAccess = graph.getNodeAccess();
         this.edgeIds = new GHIntArrayList();
     }
@@ -169,8 +171,8 @@ public class Path {
     /**
      * Yields the final edge of the path
      */
-    public EdgeIteratorState getFinalEdge() {
-        return graph.getEdgeIteratorState(edgeIds.get(edgeIds.size() - 1), endNode);
+    public int getFinalEdge() {
+        return singleEdgeExplorer.setEdge(edgeIds.get(edgeIds.size() - 1), endNode).getEdge();
     }
 
     public void setDebugInfo(String debugInfo) {
@@ -193,7 +195,6 @@ public class Path {
         int tmpNode = getFromNode();
         int len = edgeIds.size();
         int prevEdgeId = EdgeIterator.NO_EDGE;
-        SingleEdgeExplorer singleEdgeExplorer = graph.createSingleEdgeExplorer();
         for (int i = 0; i < len; i++) {
             EdgeIteratorState edgeBase = singleEdgeExplorer.setEdge(edgeIds.get(i), tmpNode);
             if (edgeBase == null)
@@ -268,7 +269,7 @@ public class Path {
         final PointList points = new PointList(edgeIds.size() + 1, nodeAccess.is3D());
         if (edgeIds.isEmpty()) {
             if (isFound()) {
-                points.add(graph.getNodeAccess(), endNode);
+                points.add(nodeAccess, endNode);
             }
             return points;
         }

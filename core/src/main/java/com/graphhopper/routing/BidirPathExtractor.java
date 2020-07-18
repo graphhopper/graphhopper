@@ -20,10 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 
 /**
  * Builds a {@link Path} from the two fwd- and bwd-shortest path tree entries of a bidirectional search
@@ -32,7 +29,7 @@ import com.graphhopper.util.StopWatch;
  * @author easbar
  */
 public class BidirPathExtractor {
-    private final Graph graph;
+    private final SingleEdgeExplorer singleEdgeExplorer;
     private final Weighting weighting;
     protected final Path path;
 
@@ -41,7 +38,7 @@ public class BidirPathExtractor {
     }
 
     protected BidirPathExtractor(Graph graph, Weighting weighting) {
-        this.graph = graph;
+        this.singleEdgeExplorer = graph.createSingleEdgeExplorer();
         this.weighting = weighting;
         this.path = new Path(graph);
     }
@@ -110,7 +107,7 @@ public class BidirPathExtractor {
     }
 
     protected void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
-        EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
+        EdgeIteratorState edgeState = singleEdgeExplorer.setEdge(edge, adjNode);
         path.addDistance(edgeState.getDistance());
         path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edgeState, reverse, prevOrNextEdge));
         path.addEdge(edge);
