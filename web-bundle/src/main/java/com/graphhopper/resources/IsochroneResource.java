@@ -9,6 +9,7 @@ import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
+import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -25,10 +26,6 @@ import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.jersey.params.LongParam;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
-import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
-import org.locationtech.jts.triangulate.ConstraintVertex;
-import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
-import org.locationtech.jts.triangulate.quadedge.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -131,7 +128,7 @@ public class IsochroneResource {
         }
 
         final NodeAccess na = queryGraph.getNodeAccess();
-        Collection<ConstraintVertex> sites = new ArrayList<>();
+        Collection<Coordinate> sites = new ArrayList<>();
         shortestPathTree.search(qr.getClosestNode(), label -> {
             double exploreValue;
             if (weightLimit.get() > 0) {
@@ -143,8 +140,8 @@ public class IsochroneResource {
             }
             double lat = na.getLatitude(label.node);
             double lon = na.getLongitude(label.node);
-            ConstraintVertex site = new ConstraintVertex(new Coordinate(lon, lat));
-            site.setZ(exploreValue);
+            Coordinate site = new Coordinate(lon, lat);
+            site.z = exploreValue;
             sites.add(site);
 
             // add a pillar node to increase precision a bit for longer roads
@@ -155,8 +152,8 @@ public class IsochroneResource {
                     int midIndex = innerPoints.getSize() / 2;
                     double lat2 = innerPoints.getLat(midIndex);
                     double lon2 = innerPoints.getLon(midIndex);
-                    ConstraintVertex site2 = new ConstraintVertex(new Coordinate(lon2, lat2));
-                    site2.setZ(exploreValue);
+                    Coordinate site2 = new Coordinate(lon2, lat2);
+                    site2.z = exploreValue;
                     sites.add(site2);
                 }
             }
@@ -170,42 +167,15 @@ public class IsochroneResource {
         // But that's okay, the triangulator de-dupes by itself, and it keeps the first z-value it sees, which is
         // what we want.
 
-        ArrayList<JsonFeature> features = new ArrayList<>();
-        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
-        conformingDelaunayTriangulator.setConstraints(new ArrayList<>(), new ArrayList<>());
-        conformingDelaunayTriangulator.formInitialDelaunay();
-        conformingDelaunayTriangulator.enforceConstraints();
-        Geometry convexHull = conformingDelaunayTriangulator.getConvexHull();
-
-        // If there's only one site (and presumably also if the convex hull is otherwise degenerated),
-        // the triangulation only contains the frame, and not the site within the frame. Not sure if I agree with that.
-        // See ConformingDelaunayTriangulator, it does include a buffer for the frame, but that buffer is zero
-        // in these cases.
-        // It leads to the following follow-up defect:
-        // computeIsoline fails (returns an empty Multipolygon). This is clearly wrong, since
-        // the idea is that every real (non-frame) vertex has positive-length-edges around it that can be traversed
-        // to get a non-empty polygon.
-        // So we exclude this case for now (it is indeed only a corner-case).
-
-        if (!(convexHull instanceof Polygon)) {
-            throw new IllegalArgumentException("Too few points found. "
-                    + "Please try a different 'point' or a larger 'time_limit'.");
-        }
-
-        QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
-        for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
-            if (tin.isFrameVertex(vertex)) {
-                vertex.setZ(Double.MAX_VALUE);
-            }
-        }
+        ReadableTriangulation triangulation = Triangulator.getTriangulation(sites);
+        ContourBuilder contourBuilder = new ContourBuilder(triangulation);
         ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
-        ContourBuilder contourBuilder = new ContourBuilder(ReadableTriangulation.wrap(tin));
-
         for (Double z : zs) {
             MultiPolygon multiPolygon = contourBuilder.computeIsoline(z);
             Polygon maxPolygon = heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.get().lon, point.get().lat)));
             polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
         }
+        ArrayList<JsonFeature> features = new ArrayList<>();
         for (Coordinate[] polygonShell : polygonShells) {
             JsonFeature feature = new JsonFeature();
             HashMap<String, Object> properties = new HashMap<>();
