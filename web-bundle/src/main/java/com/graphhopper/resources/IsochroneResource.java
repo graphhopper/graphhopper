@@ -20,10 +20,7 @@ import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.jersey.params.LongParam;
 import org.hibernate.validator.constraints.Range;
@@ -150,13 +147,18 @@ public class IsochroneResource {
             site.setZ(exploreValue);
             sites.add(site);
 
-            // guess center of road to increase precision a bit for longer roads
+            // add a pillar node to increase precision a bit for longer roads
             if (label.parent != null) {
-                double lat2 = na.getLatitude(label.parent.node);
-                double lon2 = na.getLongitude(label.parent.node);
-                ConstraintVertex site2 = new ConstraintVertex(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
-                site2.setZ(exploreValue);
-                sites.add(site2);
+                EdgeIteratorState edge = queryGraph.getEdgeIteratorState(label.edge, label.node);
+                PointList innerPoints = edge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
+                if (innerPoints.getSize() > 0) {
+                    int midIndex = innerPoints.getSize() / 2;
+                    double lat2 = innerPoints.getLat(midIndex);
+                    double lon2 = innerPoints.getLon(midIndex);
+                    ConstraintVertex site2 = new ConstraintVertex(new Coordinate(lon2, lat2));
+                    site2.setZ(exploreValue);
+                    sites.add(site2);
+                }
             }
         });
         int consumedNodes = sites.size();
