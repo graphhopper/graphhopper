@@ -63,6 +63,8 @@ public class GTFSFeed implements Cloneable, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(GTFSFeed.class);
 
+    public static final double METERS_PER_DEGREE_LATITUDE = 111111.111;
+
     private DB db;
 
     public String feedId = null;
@@ -248,11 +250,53 @@ public class GTFSFeed implements Cloneable, Closeable {
                 startOfInterpolatedBlock = stopTime;
             }
             else if (stopTimes[stopTime].departure_time != Entity.INT_MISSING && startOfInterpolatedBlock != -1) {
-                throw new RuntimeException("Missing stop times not supported.");
+                // we have found the end of the interpolated section
+                int nInterpolatedStops = stopTime - startOfInterpolatedBlock;
+                double totalLengthOfInterpolatedSection = 0;
+                double[] lengthOfInterpolatedSections = new double[nInterpolatedStops];
+
+                for (int stopTimeToInterpolate = startOfInterpolatedBlock, i = 0; stopTimeToInterpolate < stopTime; stopTimeToInterpolate++, i++) {
+                    Stop start = stops.get(stopTimes[stopTimeToInterpolate - 1].stop_id);
+                    Stop end = stops.get(stopTimes[stopTimeToInterpolate].stop_id);
+                    double segLen = fastDistance(start.stop_lat, start.stop_lon, end.stop_lat, end.stop_lon);
+                    totalLengthOfInterpolatedSection += segLen;
+                    lengthOfInterpolatedSections[i] = segLen;
+                }
+
+                // add the segment post-last-interpolated-stop
+                Stop start = stops.get(stopTimes[stopTime - 1].stop_id);
+                Stop end = stops.get(stopTimes[stopTime].stop_id);
+                totalLengthOfInterpolatedSection += fastDistance(start.stop_lat, start.stop_lon, end.stop_lat, end.stop_lon);
+
+                int departureBeforeInterpolation = stopTimes[startOfInterpolatedBlock - 1].departure_time;
+                int arrivalAfterInterpolation = stopTimes[stopTime].arrival_time;
+                int totalTime = arrivalAfterInterpolation - departureBeforeInterpolation;
+
+                double lengthSoFar = 0;
+                for (int stopTimeToInterpolate = startOfInterpolatedBlock, i = 0; stopTimeToInterpolate < stopTime; stopTimeToInterpolate++, i++) {
+                    lengthSoFar += lengthOfInterpolatedSections[i];
+
+                    int time = (int) (departureBeforeInterpolation + totalTime * (lengthSoFar / totalLengthOfInterpolatedSection));
+                    stopTimes[stopTimeToInterpolate].arrival_time = stopTimes[stopTimeToInterpolate].departure_time = time;
+                }
+
+                // we're done with this block
+                startOfInterpolatedBlock = -1;
             }
         }
 
         return Arrays.asList(stopTimes);
+    }
+
+    /**
+     * @return Equirectangular approximation to distance.
+     */
+    public static double fastDistance (double lat0, double lon0, double lat1, double lon1) {
+        double midLat = (lat0 + lat1) / 2;
+        double xscale = Math.cos(Math.toRadians(midLat));
+        double dx = xscale * (lon1 - lon0);
+        double dy = (lat1 - lat0);
+        return Math.sqrt(dx * dx + dy * dy) * METERS_PER_DEGREE_LATITUDE;
     }
 
     public Collection<Frequency> getFrequencies (String trip_id) {
