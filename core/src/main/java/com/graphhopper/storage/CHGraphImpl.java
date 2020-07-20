@@ -170,8 +170,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                 throw new IllegalStateException("shortcutId " + edgeId + " out of bounds");
         } else if (!baseGraph.edgeAccess.isInBounds(edgeId))
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds");
-
-        return (CHEdgeIteratorState) chEdgeAccess.getEdgeProps(edgeId, endNode);
+        CHEdgeIteratorStateImpl edge = new CHEdgeIteratorStateImpl(new BaseGraph.EdgeIteratorStateImpl(chEdgeAccess, baseGraph));
+        if (edge.init(edgeId, endNode))
+            return edge;
+        // if edgeId exists but adjacent nodes do not match
+        return null;
     }
 
     @Override
@@ -514,19 +517,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        EdgeIteratorState getEdgeProps(int edgeId, int adjNode) {
-            if (edgeId <= EdgeIterator.NO_EDGE)
-                throw new IllegalStateException("edgeId invalid " + edgeId + ", " + this);
-
-            CHEdgeIteratorStateImpl edge = new CHEdgeIteratorStateImpl(new BaseGraph.EdgeIteratorStateImpl(this, baseGraph));
-            if (edge.init(edgeId, adjNode))
-                return edge;
-
-            // if edgeId exists but adjacent nodes do not match
-            return null;
-        }
-
-        @Override
         final int getEdgeRef(int nodeId) {
             return nodesCH.getInt((long) nodeId * nodeCHEntryBytes + N_CH_REF);
         }
@@ -635,9 +625,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             this.edgeIterable = edgeIterable;
         }
 
-        boolean init(int tmpEdgeId, int expectedAdjNode) {
-            selectEdgeAccess(tmpEdgeId);
-            return edgeIterable.init(tmpEdgeId, expectedAdjNode);
+        boolean init(int edgeId, int expectedAdjNode) {
+            selectEdgeAccess(edgeId);
+            return edgeIterable.init(edgeId, expectedAdjNode);
         }
 
         void selectEdgeAccess(int edgeId) {

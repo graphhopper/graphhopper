@@ -113,19 +113,6 @@ class BaseGraph implements Graph {
         this.listener = listener;
         this.edgeAccess = new EdgeAccess(edges) {
             @Override
-            EdgeIteratorState getEdgeProps(int edgeId, int adjNode) {
-                if (edgeId <= EdgeIterator.NO_EDGE)
-                    throw new IllegalStateException("edgeId invalid " + edgeId + ", " + this);
-
-                EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(this, BaseGraph.this);
-                if (edge.init(edgeId, adjNode))
-                    return edge;
-
-                // if edgeId exists but adjacent nodes do not match
-                return null;
-            }
-
-            @Override
             final int getEdgeRef(int nodeId) {
                 return nodes.getInt((long) nodeId * nodeEntryBytes + N_EDGE_REF);
             }
@@ -553,10 +540,10 @@ class BaseGraph implements Graph {
 
         ensureNodeIndex(Math.max(nodeA, nodeB));
         int edgeId = edgeAccess.internalEdgeAdd(nextEdgeId(), nodeA, nodeB);
-        EdgeIteratorStateImpl iter = new EdgeIteratorStateImpl(edgeAccess, this);
-        boolean ret = iter.init(edgeId, nodeB);
-        assert ret;
-        return iter;
+        EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, this);
+        boolean valid = edge.init(edgeId, nodeB);
+        assert valid;
+        return edge;
     }
 
     // for test only
@@ -584,7 +571,11 @@ class BaseGraph implements Graph {
         if (!edgeAccess.isInBounds(edgeId))
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds");
         checkAdjNodeBounds(adjNode);
-        return edgeAccess.getEdgeProps(edgeId, adjNode);
+        EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, this);
+        if (edge.init(edgeId, adjNode))
+            return edge;
+        // if edgeId exists but adjacent nodes do not match
+        return null;
     }
 
     final void checkAdjNodeBounds(int adjNode) {
@@ -609,6 +600,9 @@ class BaseGraph implements Graph {
 
             @Override
             public EdgeIteratorState setEdge(int edge, int adjNode) {
+                if (!edgeAccess.isInBounds(edge))
+                    throw new IllegalStateException("edgeId " + edge + " out of bounds");
+                checkAdjNodeBounds(adjNode);
                 return edgeState.init(edge, adjNode) ? edgeState : null;
             }
         };
@@ -1138,10 +1132,10 @@ class BaseGraph implements Graph {
         public boolean next() {
             while (true) {
                 edgeId++;
-                edgePointer = (long) edgeId * edgeAccess.getEntryBytes();
                 if (edgeId >= baseGraph.edgeCount)
                     return false;
 
+                edgePointer = edgeAccess.toPointer(edgeId);
                 adjNode = edgeAccess.getNodeB(edgePointer);
                 // some edges are deleted and are marked via a negative node
                 if (EdgeAccess.isInvalidNodeB(adjNode))
@@ -1196,16 +1190,16 @@ class BaseGraph implements Graph {
         /**
          * @return false if the edge has not a node equal to expectedAdjNode
          */
-        final boolean init(int tmpEdgeId, int expectedAdjNode) {
-            if (!EdgeIterator.Edge.isValid(tmpEdgeId))
-                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + tmpEdgeId);
-            edgeId = tmpEdgeId;
-            edgePointer = edgeAccess.toPointer(tmpEdgeId);
+        final boolean init(int edgeId, int expectedAdjNode) {
+            if (!EdgeIterator.Edge.isValid(edgeId))
+                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + edgeId);
+            this.edgeId = edgeId;
+            edgePointer = edgeAccess.toPointer(edgeId);
             baseNode = edgeAccess.getNodeA(edgePointer);
             adjNode = edgeAccess.getNodeB(edgePointer);
             freshFlags = false;
             if (EdgeAccess.isInvalidNodeB(adjNode))
-                throw new IllegalStateException("content of edgeId " + edgeId + " is marked as invalid - ie. the edge is already removed!");
+                throw new IllegalStateException("content of edgeId " + this.edgeId + " is marked as invalid - ie. the edge is already removed!");
 
             if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE) {
                 reverse = false;
@@ -1405,14 +1399,14 @@ class BaseGraph implements Graph {
         public EdgeIteratorState detach(boolean reverseArg) {
             if (!EdgeIterator.Edge.isValid(edgeId))
                 throw new IllegalStateException("call setEdgeId before detaching (edgeId:" + edgeId + ")");
-
-            EdgeIteratorState iter = edgeAccess.getEdgeProps(edgeId, reverseArg ? baseNode : adjNode);
-            assert iter != null;
+            EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, baseGraph);
+            boolean valid = edge.init(edgeId, reverseArg ? baseNode : adjNode);
+            assert valid;
             if (reverseArg) {
                 // for #162
-                ((EdgeIteratorStateImpl) iter).reverse = !reverse;
+                edge.reverse = !reverse;
             }
-            return iter;
+            return edge;
         }
 
         @Override

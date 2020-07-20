@@ -32,7 +32,7 @@ public class PathExtractor {
     }
 
     protected PathExtractor(Graph graph, Weighting weighting) {
-        this.singleEdgeExplorer = graph.createSingleEdgeExplorer();
+        singleEdgeExplorer = graph.createSingleEdgeExplorer();
         this.weighting = weighting;
         path = new Path(graph);
     }
