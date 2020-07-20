@@ -26,7 +26,7 @@ import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
-import com.graphhopper.storage.BaseGraph.EdgeIterable;
+import com.graphhopper.storage.BaseGraph.EdgeIteratorImpl;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,8 +170,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                 throw new IllegalStateException("shortcutId " + edgeId + " out of bounds");
         } else if (!baseGraph.edgeAccess.isInBounds(edgeId))
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds");
-
-        return (CHEdgeIteratorState) chEdgeAccess.getEdgeProps(edgeId, endNode, EdgeFilter.ALL_EDGES);
+        CHEdgeIteratorStateImpl edge = new CHEdgeIteratorStateImpl(new BaseGraph.EdgeIteratorStateImpl(chEdgeAccess, baseGraph));
+        if (edge.init(edgeId, endNode))
+            return edge;
+        // if edgeId exists but adjacent nodes do not match
+        return null;
     }
 
     @Override
@@ -402,63 +405,44 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         };
     }
 
-    class CHEdgeIteratorImpl extends CommonCHEdgeIteratorState implements CHEdgeExplorer, CHEdgeIterator {
-        private final EdgeIterable edgeIterable;
+    class CHEdgeIteratorImpl extends CHEdgeIteratorStateImpl implements CHEdgeExplorer, CHEdgeIterator {
+        private final EdgeIteratorImpl baseIterator;
 
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
-            super(new EdgeIterable(baseGraph, edgeAccess, filter));
-            this.edgeIterable = (EdgeIterable) super.edgeIterable;
+            super(new EdgeIteratorImpl(baseGraph, edgeAccess, filter));
+            this.baseIterator = (EdgeIteratorImpl) super.edgeIterable;
         }
 
         public final CHEdgeIterator setBaseNode(int baseNode) {
-            assert edgeIterable.baseGraph.isFrozen() : "Traversing CHGraph is only possible if BaseGraph is frozen";
+            assert baseIterator.baseGraph.isFrozen() : "Traversing CHGraph is only possible if BaseGraph is frozen";
 
             // always use ch edge access
-            edgeIterable.setEdgeId(chEdgeAccess.getEdgeRef(baseNode));
-            edgeIterable._setBaseNode(baseNode);
+            baseIterator.setEdgeId(chEdgeAccess.getEdgeRef(baseNode));
+            baseIterator._setBaseNode(baseNode);
             return this;
         }
 
         @Override
         public boolean next() {
             while (true) {
-                if (!EdgeIterator.Edge.isValid(edgeIterable.nextEdgeId))
+                if (!EdgeIterator.Edge.isValid(baseIterator.nextEdgeId))
                     return false;
-                selectEdgeAccess(edgeIterable.nextEdgeId);
-                edgeIterable.goToNext();
-                if (edgeIterable.filter.accept(this)) {
+                selectEdgeAccess(baseIterator.nextEdgeId);
+                baseIterator.goToNext();
+                if (baseIterator.filter.accept(this)) {
                     return true;
                 }
             }
         }
 
-        boolean init(int tmpEdgeId, int expectedAdjNode) {
-            selectEdgeAccess(tmpEdgeId);
-            return edgeIterable.init(tmpEdgeId, expectedAdjNode);
-        }
-
-        @Override
-        public EdgeIteratorState detach(boolean reverseArg) {
-            if (edgeIterable.edgeId == edgeIterable.nextEdgeId || !EdgeIterator.Edge.isValid(edgeIterable.edgeId))
-                throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeIterable.edgeId + " vs. next " + edgeIterable.nextEdgeId + ")");
-            EdgeIteratorState iter = edgeIterable.edgeAccess.getEdgeProps(edgeIterable.edgeId, reverseArg ? edgeIterable.baseNode : edgeIterable.adjNode, edgeIterable.filter);
-            assert iter != null;
-            return iter;
-        }
-
         @Override
         public String toString() {
-            return edgeIterable.toString();
-        }
-
-        private void selectEdgeAccess(int edgeId) {
-            // iterate over edges or shortcuts
-            edgeIterable.edgeAccess = edgeId < edgeIterable.baseGraph.edgeCount ? edgeIterable.baseGraph.edgeAccess : chEdgeAccess;
+            return baseIterator.toString();
         }
 
     }
 
-    class AllCHEdgesIteratorImpl extends CommonCHEdgeIteratorState implements AllCHEdgesIterator {
+    class AllCHEdgesIteratorImpl extends CHEdgeIteratorStateImpl implements AllCHEdgesIterator {
         private final AllEdgeIterator allEdgeIterator;
 
         public AllCHEdgesIteratorImpl(BaseGraph baseGraph) {
@@ -530,23 +514,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public CHEdgeAccess(String name) {
             super(shortcuts);
             this.name = name;
-        }
-
-        @Override
-        EdgeIteratorState getEdgeProps(int edgeId, int adjNode, EdgeFilter edgeFilter) {
-            if (edgeId <= EdgeIterator.NO_EDGE)
-                throw new IllegalStateException("edgeId invalid " + edgeId + ", " + this);
-
-            CHEdgeIteratorImpl edge = createSingleEdge(edgeFilter);
-            if (edge.init(edgeId, adjNode))
-                return edge;
-
-            // if edgeId exists but adjacent nodes do not match
-            return null;
-        }
-
-        private CHEdgeIteratorImpl createSingleEdge(EdgeFilter edgeFilter) {
-            return new CHEdgeIteratorImpl(baseGraph, this, edgeFilter);
         }
 
         @Override
@@ -650,11 +617,22 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
     }
 
-    private abstract class CommonCHEdgeIteratorState implements CHEdgeIteratorState {
-        final BaseGraph.CommonEdgeIterator edgeIterable;
+    private class CHEdgeIteratorStateImpl implements CHEdgeIteratorState {
+        final BaseGraph.EdgeIteratorStateImpl edgeIterable;
+        private int chFlags;
 
-        private CommonCHEdgeIteratorState(BaseGraph.CommonEdgeIterator edgeIterable) {
+        private CHEdgeIteratorStateImpl(BaseGraph.EdgeIteratorStateImpl edgeIterable) {
             this.edgeIterable = edgeIterable;
+        }
+
+        boolean init(int edgeId, int expectedAdjNode) {
+            selectEdgeAccess(edgeId);
+            return edgeIterable.init(edgeId, expectedAdjNode);
+        }
+
+        void selectEdgeAccess(int edgeId) {
+            // iterate over edges or shortcuts
+            edgeIterable.edgeAccess = edgeId < edgeIterable.baseGraph.edgeCount ? edgeIterable.baseGraph.edgeAccess : chEdgeAccess;
         }
 
         @Override
@@ -779,7 +757,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public void setFlagsAndWeight(int flags, double weight) {
             checkShortcut(true, "setFlagsAndWeight");
             chEdgeAccess.setAccessAndWeight(edgeIterable.edgePointer, flags, weight);
-            edgeIterable.chFlags = flags;
+            chFlags = flags;
             edgeIterable.freshFlags = true;
         }
 
@@ -896,14 +874,17 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             return PrepareEncoder.getScMergeStatus(getShortcutFlags(), flags);
         }
 
-        public abstract EdgeIteratorState detach(boolean reverseArg);
+        @Override
+        public EdgeIteratorState detach(boolean reverseArg) {
+            return edgeIterable.detach(reverseArg);
+        }
 
         int getShortcutFlags() {
             if (!edgeIterable.freshFlags) {
-                edgeIterable.chFlags = chEdgeAccess.getShortcutFlags(edgeIterable.edgePointer);
+                chFlags = chEdgeAccess.getShortcutFlags(edgeIterable.edgePointer);
                 edgeIterable.freshFlags = true;
             }
-            return edgeIterable.chFlags;
+            return chFlags;
         }
     }
 }

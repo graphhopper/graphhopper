@@ -1082,7 +1082,7 @@ public abstract class AbstractGraphStorageTester {
 
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(0);
         try {
-            // currently not possible to detach without next, without introducing a new property inside EdgeIterable
+            // currently not possible to detach without next, without introducing a new property inside EdgeIteratorImpl
             iter.detach(false);
             fail();
         } catch (Exception ex) {
