@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.SingleEdgeExplorer;
 
 public class RoutingCHGraphImpl implements RoutingCHGraph {
     private final Graph baseGraph;
@@ -69,6 +70,23 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     public RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode) {
         EdgeIteratorState edgeState = chGraph.getEdgeIteratorState(chEdge, adjNode);
         return edgeState == null ? null : new RoutingCHEdgeIteratorStateImpl(edgeState, weighting);
+    }
+
+    @Override
+    public RoutingCHSingleEdgeExplorer createSingleEdgeExplorer() {
+        return new RoutingCHSingleEdgeExplorer() {
+            private final SingleEdgeExplorer singleExp = chGraph.createSingleEdgeExplorer();
+            private final RoutingCHEdgeIteratorStateImpl chEdge = new RoutingCHEdgeIteratorStateImpl(null, weighting);
+
+            @Override
+            public RoutingCHEdgeIteratorState setEdge(int edgeId, int adjNode) {
+                EdgeIteratorState edgeState = singleExp.setEdge(edgeId, adjNode);
+                if (edgeState == null)
+                    return null;
+                chEdge.setEdgeState(edgeState);
+                return chEdge;
+            }
+        };
     }
 
     @Override

@@ -26,7 +26,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorState {
-    private final EdgeIteratorState edgeState;
+    private EdgeIteratorState edgeState;
     private final Weighting weighting;
     private final BooleanEncodedValue accessEnc;
 
@@ -34,6 +34,10 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         this.edgeState = edgeState;
         this.weighting = weighting;
         this.accessEnc = weighting.getFlagEncoder().getAccessEnc();
+    }
+
+    void setEdgeState(EdgeIteratorState edgeState) {
+        this.edgeState = edgeState;
     }
 
     @Override

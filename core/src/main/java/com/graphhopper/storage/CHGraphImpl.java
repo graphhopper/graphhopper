@@ -178,6 +178,25 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
+    public SingleCHEdgeExplorer createSingleEdgeExplorer() {
+        return new SingleCHEdgeExplorer() {
+            private final CHEdgeIteratorStateImpl chEdge = new CHEdgeIteratorStateImpl(new BaseGraph.EdgeIteratorStateImpl(chEdgeAccess, baseGraph));
+
+            @Override
+            public CHEdgeIteratorState setEdge(int edgeId, int adjNode) {
+                if (isShortcut(edgeId)) {
+                    if (!chEdgeAccess.isInBounds(edgeId))
+                        throw new IllegalStateException("shortcutId " + edgeId + " out of bounds");
+                } else if (!baseGraph.edgeAccess.isInBounds(edgeId))
+                    throw new IllegalStateException("edgeId " + edgeId + " out of bounds");
+                if (chEdge.init(edgeId, adjNode))
+                    return chEdge;
+                return null;
+            }
+        };
+    }
+
+    @Override
     public int getNodes() {
         return baseGraph.getNodes();
     }

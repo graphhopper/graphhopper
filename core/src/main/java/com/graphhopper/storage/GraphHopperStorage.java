@@ -438,6 +438,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return baseGraph.createEdgeExplorer();
     }
 
+    @Override
     public SingleEdgeExplorer createSingleEdgeExplorer() {
         return baseGraph.createSingleEdgeExplorer();
     }

@@ -123,6 +123,20 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     @Override
+    public RoutingCHSingleEdgeExplorer createSingleEdgeExplorer() {
+        return new RoutingCHSingleEdgeExplorer() {
+            private final RoutingCHSingleEdgeExplorer mainExplorer = routingCHGraph.createSingleEdgeExplorer();
+
+            @Override
+            public RoutingCHEdgeIteratorState setEdge(int edge, int adjNode) {
+                if (!isVirtualEdge(edge))
+                    return mainExplorer.setEdge(edge, adjNode);
+                return getEdgeIteratorState(edge, adjNode);
+            }
+        };
+    }
+
+    @Override
     public RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode) {
         if (!isVirtualEdge(chEdge))
             return routingCHGraph.getEdgeIteratorState(chEdge, adjNode);

@@ -204,9 +204,8 @@ public class Path {
             tmpNode = edgeBase.getBaseNode();
             // more efficient swap, currently not implemented for virtual edges: visitor.next(edgeBase.detach(true), i);
             edgeBase = singleEdgeExplorer.setEdge(edgeBase.getEdge(), tmpNode);
-            int prev = edgeBase.getEdge();
             visitor.next(edgeBase, i, prevEdgeId);
-            prevEdgeId = prev;
+            prevEdgeId = edgeBase.getEdge();
         }
         visitor.finish();
     }

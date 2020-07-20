@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.SingleCHEdgeExplorer;
 
 /**
  * Graph structure used for Contraction Hierarchies. It allows storing and retrieving the
@@ -76,6 +77,8 @@ public interface CHGraph {
     EdgeExplorer createOriginalEdgeExplorer();
 
     EdgeExplorer createOriginalEdgeExplorer(EdgeFilter filter);
+
+    SingleCHEdgeExplorer createSingleEdgeExplorer();
 
     AllCHEdgesIterator getAllEdges();
 

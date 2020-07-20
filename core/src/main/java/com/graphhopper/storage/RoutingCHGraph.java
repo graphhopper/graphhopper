@@ -36,6 +36,8 @@ public interface RoutingCHGraph {
 
     RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode);
 
+    RoutingCHSingleEdgeExplorer createSingleEdgeExplorer();
+
     int getLevel(int node);
 
     double getTurnWeight(int inEdge, int viaNode, int outEdge);

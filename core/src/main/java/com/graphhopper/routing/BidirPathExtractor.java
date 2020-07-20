@@ -38,7 +38,7 @@ public class BidirPathExtractor {
     }
 
     protected BidirPathExtractor(Graph graph, Weighting weighting) {
-        this.singleEdgeExplorer = graph.createSingleEdgeExplorer();
+        singleEdgeExplorer = graph.createSingleEdgeExplorer();
         this.weighting = weighting;
         this.path = new Path(graph);
     }
