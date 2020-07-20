@@ -77,8 +77,7 @@ public class GraphHopperOSM extends GraphHopper {
                     Collections.singletonList(landmarkSplittingFeatureCollection), "area",
                     new SpatialRuleLookupBuilder.SpatialRuleFactory() {
                         @Override
-                        public SpatialRule createSpatialRule(final String id,
-                                        List<Polygon> polygons) {
+                        public SpatialRule createSpatialRule(final String id, List<Polygon> polygons) {
                             return new AbstractSpatialRule(polygons) {
                                 @Override
                                 public String getId() {

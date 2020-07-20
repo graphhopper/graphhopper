@@ -31,6 +31,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
@@ -88,10 +89,171 @@ public class Measurement {
     private String vehicle;
 
     public static void main(String[] strs) throws IOException {
+        // main3();
         PMap args = PMap.read(strs);
         int repeats = args.getInt("measurement.repeats", 1);
         for (int i = 0; i < repeats; ++i)
             new Measurement().start(args);
+    }
+
+    static void tryNewGraphStorageFormat() {
+        GraphHopper hopper = new GraphHopperOSM().setOSMFile("/home/peter/Downloads/germany-latest.osm.pbf").
+                setGraphHopperLocation("/home/peter/Downloads/germany-gh").
+                setElevationProvider(new SRTMProvider("/tmp/srtm-provider")).
+                setEncodingManager(EncodingManager.create(new CarFlagEncoder(), new BikeFlagEncoder(), new FootFlagEncoder()));
+        hopper.importOrLoad();
+
+        GraphHopperStorage storage = hopper.getGraphHopperStorage();
+        Directory dir = storage.getDirectory();
+        DataAccess nodeRefs = dir.find("x_node_refs").create(100);
+        DataAccess edgeRefs = dir.find("x_edge_refs").create(100);
+        DataAccess edgeAreaDA = dir.find("x_edge_area").create(100);
+        final double INT_DIST_FACTOR = 1000d;
+        final double MAX_DIST = Integer.MAX_VALUE / INT_DIST_FACTOR;
+
+        EdgeExplorer explorer = storage.createEdgeExplorer();
+        DataHandler edgeArea = new DataHandler(edgeAreaDA);
+        int flagLength = storage.getEncodingManager().getIntsForFlags();
+        Random random = new Random(0);
+
+        // current status: 1.4 GB vs. 0.94 GB for old
+        // problem: vint is not really helpful for global scale when "pointers (links/refs)" are close to 4 bytes
+        // tiled solution: divide pointers into global part (tilenumber: valhalla uses 22 bits => 4 mio) and local part (valhalla uses 21 bits => 2mio)
+        //   problem graph ids are no longer adjacent. we cannot even keep one kind (node IDs or edge IDs) adjacent as dividing means defining a certain gap up-front
+        BitSet embeddedEdges = new BitSet(storage.getEdges());
+        long edgeRef = 0;
+        long allNodes = 0;
+        long allBytes = 0;
+
+        try {
+            for (int baseNode = 0; baseNode < storage.getNodes(); baseNode++) {
+                edgeArea.resetWriteOffset();
+                int nodeRef = (int) edgeArea.getReadPointer();
+                if (nodeRef < 0)
+                    throw new IllegalStateException("nodeRef is too large " + edgeArea.getReadPointer());
+
+                // edges segment
+                long edgeRefOld = edgeRef;
+                nodeRefs.ensureCapacity((baseNode + 1) * 4L);
+                nodeRefs.setInt(baseNode * 4L, nodeRef);
+                double baseLat = storage.getNodeAccess().getLatitude(baseNode);
+                double baseLon = storage.getNodeAccess().getLongitude(baseNode);
+                double baseEle = storage.getNodeAccess().getElevation(baseNode);
+                // skip first two ints for lat,lon as vint will very likely create 5 bytes
+                edgeRef += 8;
+//                edgeArea.writeVInt(Helper.degreeToInt(baseLat) + 90);
+//                edgeArea.writeVInt(Helper.degreeToInt(baseLon) + 180);
+                edgeArea.writeZInt(Helper.eleToInt(baseEle));
+
+                EdgeIterator iter = explorer.setBaseNode(baseNode);
+                int nodes = 0;
+                while (iter.next()) {
+                    nodes++;
+                    EdgeIteratorState edge = storage.getEdgeIteratorState(iter.getEdge(), Integer.MIN_VALUE);
+                    long currentEdgeRef = iter.getEdge() * 4L;
+                    if (embeddedEdges.get(edge.getEdge())) {
+                        int edgeEmbeddedRef = edgeRefs.getInt(currentEdgeRef);
+                        edgeArea.writeVInt(0);
+                        edgeArea.writeVInt(edgeEmbeddedRef);
+                        int offset = edgeArea.writeToDataAccess(edgeRef);
+                        edgeRef += offset;
+                        continue;
+                    }
+
+                    embeddedEdges.set(edge.getEdge());
+                    int knownValues = 5; // base, adj, edgeId, distance, nameRef, geoRef
+                    int dynKeyValuePairs = 1;
+
+                    // TODO we need the edgeId as graph traversal via node entry (in theory we only need the first and the other edgeIds are +1)
+//                    edgeArea.writeVInt(edge.getEdge());
+                    edgeArea.writeVInt(flagLength + knownValues + dynKeyValuePairs * 2);
+                    for (int fi = 0; fi < flagLength; fi++) {
+                        // TODO vint very likely used 5 bytes for the first int
+                        edgeArea.writeVInt(edge.getFlags().ints[fi]);
+                    }
+
+                    // TODO try alternative where base node is in edgeRefs
+//                    edgeArea.writeVInt(edge.getBaseNode());
+                    edgeArea.writeVInt(edge.getAdjNode());
+                    edgeArea.writeVInt((int) Math.round((Math.min(edge.getDistance(), MAX_DIST)) * INT_DIST_FACTOR));
+                    // nameRef and geoRef -> limit to
+                    edgeArea.writeVInt(random.nextInt(1 << 27));
+                    edgeArea.writeVInt(random.nextInt(1 << 27));
+
+//                    // one k-v pair like some osm tag (try later: multiple, but not important for size comparison)
+//                    edgeArea.writeVInt(random.nextInt(10));
+//                    edgeArea.writeVInt(random.nextInt(1000));
+                    // TODO write connectedAreaRef
+
+                    edgeRefs.ensureCapacity(currentEdgeRef + 4L);
+                    int edgeRefIntVal = (int) edgeRef;
+                    if (edgeRefIntVal < 0)
+                        throw new IllegalStateException("edgeRef too large"); // we need unsigned or even 5 bytes
+                    edgeRefs.setInt(currentEdgeRef, edgeRefIntVal);
+                    int offset = edgeArea.writeToDataAccess(edgeRef);
+                    edgeRef += offset;
+                }
+
+                allNodes += nodes;
+                allBytes += (edgeRef - edgeRefOld);
+
+//                System.out.println("nodes: " + nodes);
+//                System.out.println("bytes: " + (edgeRef - edgeRefOld));
+
+                // TODO turn cost
+            }
+
+            // 2.6
+            System.out.println("average neighbor count " + (float) allNodes / storage.getNodes());
+            // 83
+            System.out.println("average byte count per edge list " + (float) allBytes / storage.getNodes());
+            // 31.5
+            System.out.println("average bytes per neighbor " + (float) allBytes / allNodes);
+            // 15 343 513 nodes
+            // 20 283 401 edges
+            // 20 082 447 embedded edges <- why is it different!?
+            System.out.printf(storage.getNodes() + " nodes vs " + storage.getEdges() + " edge vs " + embeddedEdges.cardinality() + " written edges");
+
+            nodeRefs.flush();
+            edgeRefs.flush();
+            edgeAreaDA.flush();
+        } catch (OutOfMemoryError error) {
+            error.printStackTrace();
+            System.out.println(nodeRefs.getCapacity() / 1024.0 / 1024.0);
+            System.out.println(edgeRefs.getCapacity() / 1024.0 / 1024.0);
+            System.out.println(edgeAreaDA.getCapacity() / 1024.0 / 1024.0);
+        }
+    }
+
+    static void main2() {
+        GraphHopperStorage storage = new GraphHopperStorage(new RAMDirectory(), EncodingManager.create(new CarFlagEncoder()), true).create(1000);
+        PointList shortList = new PointList(2, true);
+        shortList.add(53.124433, 47.38738, 10);
+        shortList.add(53.124433, 47.38838, 12);
+
+        PointList longList = new PointList(6, true);
+        longList.add(53.124433, 47.38738, 10);
+        longList.add(53.124433, 47.38838, 12);
+        longList.add(53.124433, 47.38888, 20);
+        longList.add(53.124433, 47.38938, 5);
+        longList.add(53.124433, 47.38988, -10);
+        longList.add(53.124433, 47.39038, -20);
+
+        final EdgeIteratorState edge0 = storage.edge(0, 1).setWayGeometry(longList);
+        final EdgeIteratorState edge1 = storage.edge(1, 2).setWayGeometry(shortList);
+        Random random = new Random(123);
+
+        for (int i = 0; i < 5; i++) {
+            MiniPerfTest miniPerf = new MiniPerfTest() {
+                @Override
+                public int doCalc(boolean warmup, int run) {
+                    EdgeIteratorState state = random.nextBoolean() ? edge0 : edge1;
+                    PointList list = state.fetchWayGeometry(random.nextBoolean() ? FetchMode.ALL : FetchMode.PILLAR_ONLY);
+                    return list.size();
+                }
+            }.setIterations(15_000_000).start();
+            System.out.println(i + " -> " + miniPerf.getReport());
+        }
     }
 
     // creates properties file in the format key=value
@@ -223,7 +385,7 @@ public class Measurement {
                 System.gc();
                 boolean isCH = false;
                 boolean isLM = true;
-                Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
+                Helper.parseList(args.getString("measurement.lm.active_counts", "[8]")).stream()
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
@@ -252,36 +414,36 @@ public class Measurement {
                     gcAndWait();
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_alt", count / 10, isCH, isLM).
-                            withInstructions().sod().alternative());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
-                            withInstructions().sod().withPointHints());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_sod", count, isCH, isLM).
-                            withInstructions());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_instr", count, isCH, isLM).
-                            sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
-                            withInstructions().withPointHints().sod().simplify());
-                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_full... see #2056
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
-                            withPoints(100).sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
-                            withPoints(100).sod().withInstructions().simplify());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_alt", count / 10, isCH, isLM).
+//                            withInstructions().sod().alternative());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
+//                            withInstructions().sod().withPointHints());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_sod", count, isCH, isLM).
+//                            withInstructions());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_no_instr", count, isCH, isLM).
+//                            sod());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
+//                            withInstructions().withPointHints().sod().simplify());
+//                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_full... see #2056
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
+//                            withPoints(100).sod());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
+//                            withPoints(100).sod().withInstructions().simplify());
                 }
                 if (!hopper.getCHPreparationHandler().getEdgeBasedCHConfigs().isEmpty()) {
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
                             edgeBased().withInstructions());
                     printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_alt", count / 10, isCH, isLM).
                             edgeBased().withInstructions().alternative());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
-                            edgeBased());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
-                            edgeBased().withInstructions().withPointHints().simplify());
-                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_edge_full... see #2056
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100", count / 100, isCH, isLM).
-                            withPoints(100).edgeBased().sod());
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100_full", count / 100, isCH, isLM).
-                            withPoints(100).edgeBased().sod().withInstructions().simplify());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
+//                            edgeBased());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
+//                            edgeBased().withInstructions().withPointHints().simplify());
+//                    // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_edge_full... see #2056
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100", count / 100, isCH, isLM).
+//                            withPoints(100).edgeBased().sod());
+//                    printTimeOfRouteQuery(hopper, new QuerySettings("routingCH_edge_via_100_full", count / 100, isCH, isLM).
+//                            withPoints(100).edgeBased().sod().withInstructions().simplify());
                 }
             }
             if (!isEmpty(countryBordersDirectory)) {

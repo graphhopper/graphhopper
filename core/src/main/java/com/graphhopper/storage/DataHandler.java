@@ -1,60 +1,66 @@
 package com.graphhopper.storage;
 
-// Source: Lucene core. Licensed to the Apache Software Foundation (ASF) under one or more
+import java.util.Arrays;
+
+// Partially taken from Lucene core. Licensed to the Apache Software Foundation (ASF) under one or more
 // contributor license agreements.
-final class DataHandler {
+public final class DataHandler {
     // TODO do we need two separate offsets? Or should we better separate read+write into separate classes like Lucene does?
-    int readOffset = 0;
-    int writeOffset = 0;
-    byte[] bytes;
-    long dataAccessPointer;
+    int readOffset;
+    int writeOffset;
+    byte[] writeBytes;
+    long readPointer;
     DataAccess dataAccess;
 
-    public DataHandler(byte[] bytes, DataAccess dataAccess, long dataAccessPointer) {
+    public DataHandler(DataAccess dataAccess) {
         this.dataAccess = dataAccess;
-        this.dataAccessPointer = dataAccessPointer;
-        this.bytes = bytes;
-        if (bytes.length < 10)
-            throw new IllegalArgumentException("Too small bytes array " + bytes.length);
+    }
+
+    public void resetWriteOffset() {
+        this.writeOffset = 0;
+        if (this.writeBytes == null)
+            this.writeBytes = new byte[64];
+    }
+
+    public void resetReadOffset() {
+        this.readOffset = 0;
+    }
+
+    public void setReadPointer(long readPointer) {
+        this.readPointer = readPointer;
+    }
+
+    public long getReadPointer() {
+        return readPointer;
+    }
+
+    public int writeToDataAccess(long writePointer) {
+        dataAccess.ensureCapacity(writePointer + writeOffset);
+        dataAccess.setBytes(writePointer, writeBytes, writeOffset);
+        return writeOffset;
     }
 
     /**
-     * To use the readXY method you have to call this method first
+     * This method is automatically called to check if bytes array size needs to be increased
      */
-    void readFromDataAccess() {
-        dataAccess.getBytes(dataAccessPointer, bytes, bytes.length);
-    }
-
-    /**
-     * This method is automatically called whenever bytes is "nearly" filled up.
-     */
-    void writeToDataAccess() {
-        if (writeOffset > 0) {
-            dataAccess.ensureCapacity(dataAccessPointer + writeOffset);
-            dataAccess.setBytes(dataAccessPointer, bytes, writeOffset);
-            dataAccessPointer += writeOffset;
-        }
-    }
-
-    public long getDataAccessPointer() {
-        return dataAccessPointer;
+    void ensureCapacity() {
+        if (writeOffset >= writeBytes.length)
+            writeBytes = Arrays.copyOf(writeBytes, Math.round(writeBytes.length * 1.5f));
     }
 
     public final void writeZInt(int i) {
         writeVInt(zigZagEncode(i));
     }
 
-    final void writeVInt(int i) {
-        if (writeOffset + 5 >= bytes.length) {
-            writeToDataAccess();
-            writeOffset = 0;
-        }
-
+    public final void writeVInt(int i) {
         while ((i & ~0x7F) != 0) {
-            bytes[writeOffset++] = (byte) ((i & 0x7F) | 0x80);
+            ensureCapacity();
+            writeBytes[writeOffset++] = (byte) ((i & 0x7F) | 0x80);
             i >>>= 7;
         }
-        bytes[writeOffset++] = (byte) i;
+
+        ensureCapacity();
+        writeBytes[writeOffset++] = (byte) i;
     }
 
     /**
@@ -64,6 +70,7 @@ final class DataHandler {
      * be an unsigned long that can be stored on <code>n+1</code> bits.
      */
     static int zigZagEncode(int i) {
+        // store sign as first bit instead of last.
         return (i >> 31) ^ (i << 1);
     }
 
@@ -75,57 +82,21 @@ final class DataHandler {
         return zigZagDecode(readVInt());
     }
 
-    public static int readVInt(DataAccess dataAccess, long pointer) {
-        byte valueByte = dataAccess.getByte(pointer++);
-        if (valueByte >= 0) return valueByte;
-
-        int valueInt = valueByte & 0x7F;
-        valueByte = dataAccess.getByte(pointer++);
-        valueInt |= (valueByte & 0x7F) << 7;
-        if (valueByte >= 0) return valueInt;
-
-        valueByte = dataAccess.getByte(pointer++);
-        valueInt |= (valueByte & 0x7F) << 14;
-        if (valueByte >= 0) return valueInt;
-
-        valueByte = dataAccess.getByte(pointer++);
-        valueInt |= (valueByte & 0x7F) << 21;
-        if (valueByte >= 0) return valueInt;
-
-        valueByte = dataAccess.getByte(pointer);
-        // Warning: the next ands use 0x0F / 0xF0 - beware copy/paste errors:
-        valueInt |= (valueByte & 0x0F) << 28;
-        if ((valueByte & 0xF0) == 0) return valueInt;
-        throw new IllegalStateException("Invalid vInt detected (too many bits)");
-    }
-
     int readVInt() {
-        if (readOffset + 3 >= bytes.length) { // refresh but check only twice per readVInt => 3+2=5 (5 is maximum)
-            // the first action is readFromDataAccess so increase it before the next call (unlike write)
-            dataAccessPointer += readOffset;
-            readFromDataAccess();
-            readOffset = 0;
-        }
         // unrolled loop because of a JVM bug, see LUCENE-2975
-        byte b = bytes[readOffset++];
+        byte b = dataAccess.getByte(readPointer + readOffset++);
         if (b >= 0) return b;
         int i = b & 0x7F;
-        b = bytes[readOffset++];
+        b = dataAccess.getByte(readPointer + readOffset++);
         i |= (b & 0x7F) << 7;
         if (b >= 0) return i;
-        b = bytes[readOffset++];
+        b = dataAccess.getByte(readPointer + readOffset++);
         i |= (b & 0x7F) << 14;
         if (b >= 0) return i;
-
-        if (readOffset + 2 >= bytes.length) {
-            dataAccessPointer += readOffset;
-            readFromDataAccess();
-            readOffset = 0;
-        }
-        b = bytes[readOffset++];
+        b = dataAccess.getByte(readPointer + readOffset++);
         i |= (b & 0x7F) << 21;
         if (b >= 0) return i;
-        b = bytes[readOffset++];
+        b = dataAccess.getByte(readPointer + readOffset++);
         // Warning: the next ands use 0x0F / 0xF0 - beware copy/paste errors:
         i |= (b & 0x0F) << 28;
         if ((b & 0xF0) == 0) return i;
