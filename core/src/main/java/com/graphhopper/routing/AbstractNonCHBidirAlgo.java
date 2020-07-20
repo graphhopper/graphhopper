@@ -25,10 +25,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 
 import java.util.PriorityQueue;
 
@@ -47,6 +44,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     protected EdgeExplorer edgeExplorer;
+    protected SingleEdgeExplorer singleEdgeExplorer;
     protected EdgeFilter inEdgeFilter;
     protected EdgeFilter outEdgeFilter;
     protected EdgeFilter additionalEdgeFilter;
@@ -60,6 +58,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
         edgeExplorer = graph.createEdgeExplorer();
+        singleEdgeExplorer = graph.createSingleEdgeExplorer();
         outEdgeFilter = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
         inEdgeFilter = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
@@ -229,7 +228,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     @Override
     protected double getInEdgeWeight(SPTEntry entry) {
-        return weighting.calcEdgeWeight(graph.getEdgeIteratorState(getIncomingEdge(entry), entry.adjNode), false);
+        return weighting.calcEdgeWeight(singleEdgeExplorer.setEdge(getIncomingEdge(entry), entry.adjNode), false);
     }
 
     @Override
