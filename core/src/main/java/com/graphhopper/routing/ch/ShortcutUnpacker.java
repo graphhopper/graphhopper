@@ -2,9 +2,12 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.storage.RoutingCHSingleEdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.SingleEdgeExplorer;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Locale;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -18,8 +21,10 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
  * @see PrepareContractionHierarchies
  */
 public class ShortcutUnpacker {
+    private final Deque<StackItem> stack = new ArrayDeque<>();
     private final RoutingCHGraph graph;
     private final SingleEdgeExplorer singleBaseEdgeExplorer;
+    private final RoutingCHSingleEdgeExplorer singleEdgeExplorer;
     private final Visitor visitor;
     private final boolean edgeBased;
     private boolean reverseOrder;
@@ -27,6 +32,7 @@ public class ShortcutUnpacker {
     public ShortcutUnpacker(RoutingCHGraph graph, Visitor visitor, boolean edgeBased) {
         this.graph = graph;
         this.singleBaseEdgeExplorer = graph.getBaseGraph().createSingleEdgeExplorer();
+        this.singleEdgeExplorer = graph.createSingleEdgeExplorer();
         this.visitor = visitor;
         this.edgeBased = edgeBased;
     }
@@ -47,14 +53,19 @@ public class ShortcutUnpacker {
 
     private void doVisitOriginalEdges(int edgeId, int adjNode, boolean reverseOrder, boolean reverse, int prevOrNextEdgeId) {
         this.reverseOrder = reverseOrder;
+        stack.clear();
+        stack.push(new StackItem(edgeId, adjNode, reverse, prevOrNextEdgeId));
+        while (!stack.isEmpty()) {
+            StackItem item = stack.pop();
+            expandEdge(item.edgeId, item.adjNode, item.reverse, item.prevOrNextEdgeId);
+        }
+    }
+
+    private void expandEdge(int edgeId, int adjNode, boolean reverse, int prevOrNextEdgeId) {
         RoutingCHEdgeIteratorState edge = getEdge(edgeId, adjNode);
         if (edge == null) {
             throw new IllegalArgumentException("Edge with id: " + edgeId + " does not exist or does not touch node " + adjNode);
         }
-        expandEdge(edge, reverse, prevOrNextEdgeId);
-    }
-
-    private void expandEdge(RoutingCHEdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         if (!edge.isShortcut()) {
             visitor.visit(singleBaseEdgeExplorer.setEdge(edge.getOrigEdge(), edge.getAdjNode()), reverse, prevOrNextEdgeId);
             return;
@@ -72,40 +83,43 @@ public class ShortcutUnpacker {
             skippedEdge1 = skippedEdge2;
             skippedEdge2 = tmp;
         }
+
         RoutingCHEdgeIteratorState sk2 = getEdge(skippedEdge2, adj);
         assert sk2 != null : "skipped edge " + skippedEdge2 + " + is not attached to adjNode " + adj + ". this should " +
                 "never happen because edge-based CH does not use bidirectional shortcuts at the moment";
-        RoutingCHEdgeIteratorState sk1 = getEdge(skippedEdge1, sk2.getBaseNode());
-        if (base == adj && (sk1.getAdjNode() == sk1.getBaseNode() || sk2.getAdjNode() == sk2.getBaseNode())) {
+        int sk2AdjNode = sk2.getAdjNode();
+        int sk2BaseNode = sk2.getBaseNode();
+        RoutingCHEdgeIteratorState sk1 = getEdge(skippedEdge1, graph.getOtherNode(skippedEdge2, adj));
+        if (base == adj && (sk1.getAdjNode() == sk1.getBaseNode() || sk2AdjNode == sk2BaseNode)) {
             throw new IllegalStateException(String.format(Locale.ROOT,
                     "error: detected edge where a skipped edges is a loop. this should never happen. base: %d, adj: %d, " +
                             "skip-edge1: %d, skip-edge2: %d, reverse: %b", base, adj, skippedEdge1, skippedEdge2, reverse));
         }
         int adjEdge = getOppositeEdge(sk1, base);
         if (reverseOrder) {
-            expandEdge(sk2, reverse, adjEdge);
-            expandEdge(sk1, reverse, prevOrNextEdgeId);
+            stack.push(new StackItem(skippedEdge1, graph.getOtherNode(skippedEdge2, adj), reverse, prevOrNextEdgeId));
+            stack.push(new StackItem(skippedEdge2, adj, reverse, adjEdge));
         } else {
-            expandEdge(sk1, reverse, prevOrNextEdgeId);
-            expandEdge(sk2, reverse, adjEdge);
+            stack.push(new StackItem(skippedEdge2, adj, reverse, adjEdge));
+            stack.push(new StackItem(skippedEdge1, graph.getOtherNode(skippedEdge2, adj), reverse, prevOrNextEdgeId));
         }
     }
 
     private void expandSkippedEdgesNodeBased(int skippedEdge1, int skippedEdge2, int base, int adj, boolean reverse) {
         RoutingCHEdgeIteratorState sk2 = getEdge(skippedEdge2, adj);
-        RoutingCHEdgeIteratorState sk1;
         if (sk2 == null) {
             sk2 = getEdge(skippedEdge1, adj);
-            sk1 = getEdge(skippedEdge2, sk2.getBaseNode());
-        } else {
-            sk1 = getEdge(skippedEdge1, sk2.getBaseNode());
+            int tmp = skippedEdge2;
+            skippedEdge2 = skippedEdge1;
+            skippedEdge1 = tmp;
         }
+        int sk2BaseNode = sk2.getBaseNode();
         if (reverseOrder) {
-            expandEdge(sk2, reverse, NO_EDGE);
-            expandEdge(sk1, reverse, NO_EDGE);
+            stack.push(new StackItem(skippedEdge1, sk2BaseNode, reverse, NO_EDGE));
+            stack.push(new StackItem(skippedEdge2, adj, reverse, NO_EDGE));
         } else {
-            expandEdge(sk1, reverse, NO_EDGE);
-            expandEdge(sk2, reverse, NO_EDGE);
+            stack.push(new StackItem(skippedEdge2, adj, reverse, NO_EDGE));
+            stack.push(new StackItem(skippedEdge1, sk2BaseNode, reverse, NO_EDGE));
         }
     }
 
@@ -119,10 +133,24 @@ public class ShortcutUnpacker {
     }
 
     private RoutingCHEdgeIteratorState getEdge(int edgeId, int adjNode) {
-        return graph.getEdgeIteratorState(edgeId, adjNode);
+        return singleEdgeExplorer.setEdge(edgeId, adjNode);
     }
 
     public interface Visitor {
         void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId);
+    }
+
+    private static class StackItem {
+        int edgeId;
+        int adjNode;
+        boolean reverse;
+        int prevOrNextEdgeId;
+
+        public StackItem(int edgeId, int adjNode, boolean reverse, int prevOrNextEdgeId) {
+            this.edgeId = edgeId;
+            this.adjNode = adjNode;
+            this.reverse = reverse;
+            this.prevOrNextEdgeId = prevOrNextEdgeId;
+        }
     }
 }
