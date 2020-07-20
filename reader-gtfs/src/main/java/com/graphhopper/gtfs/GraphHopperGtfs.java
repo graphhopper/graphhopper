@@ -162,6 +162,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                         throw new RuntimeException(e);
                     }
                 }
+                cleanUpFeeds();
 
                 //When set a transfer edge will be created between stops connected to same OSM node. This is to keep previous behavior before
                 //this commit https://github.com/graphhopper/graphhopper/commit/31ae1e1534849099f24e45d53c96340a7c6a5197.
@@ -192,6 +193,13 @@ public class GraphHopperGtfs extends GraphHopperOSM {
             LocationIndexTree locationIndex = new LocationIndexTree(getGraphHopperStorage(), getGraphHopperStorage().getDirectory());
             locationIndex.prepareIndex();
             setLocationIndex(locationIndex);
+        }
+    }
+
+    private void cleanUpFeeds() {
+        if (ghConfig.getBool("gtfs.cleanup.remove_missing_stop_times", false)) {
+            LOGGER.debug("Removing Stop Time missing departure and arrival times from GTFSFeeds");
+            getGtfsStorage().getGtfsFeeds().forEach((s, gtfsFeed) -> gtfsFeed.cleanMissingStopTimes());
         }
     }
 

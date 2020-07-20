@@ -333,6 +333,20 @@ public class GTFSFeed implements Cloneable, Closeable {
         db.close();
     }
 
+    /**
+     * Removes the stop times having no departure_time and arrival_time from the feed.
+     *
+     * As per @see <a href="https://developers.google.com/transit/gtfs/reference#stop_timestxt"></a>,
+     * stop_sequence values does not need to be consecutive, as long as they're sequential.
+     */
+    public void cleanMissingStopTimes() {
+        stop_times.forEach((key, stopTime) -> {
+            if (stopTime.departure_time == Entity.INT_MISSING && stopTime.arrival_time == Entity.INT_MISSING) {
+                stop_times.remove(key);
+            }
+        });
+    }
+
     /** Thrown when we cannot interpolate stop times because the first or last stops do not have times */
     public class FirstAndLastStopsDoNotHaveTimes extends RuntimeException {
         /** do nothing */
