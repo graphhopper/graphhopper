@@ -23,7 +23,7 @@ public class DistanceUtils {
     static float meterToMiles = 0.00062137f;
     static float meterToKilometer = 0.001f;
 
-    enum Unit {
+    public enum Unit {
         METRIC,
         IMPERIAL
     }
