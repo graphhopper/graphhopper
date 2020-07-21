@@ -1,5 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
+import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import org.junit.Test;
 
@@ -96,6 +97,7 @@ public class OSMValueExtractorTest {
         assertEquals(80, OSMValueExtractor.stringToKmh("RU:rural"), 1e-3);
 
         assertEquals(6, OSMValueExtractor.stringToKmh("walk"), 1e-3);
+        assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, OSMValueExtractor.stringToKmh("none"), 1e-3);
     }
 
     @Test
