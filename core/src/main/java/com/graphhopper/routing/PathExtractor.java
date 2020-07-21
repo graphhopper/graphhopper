@@ -23,7 +23,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 
 public class PathExtractor {
-    private final SingleEdgeExplorer singleEdgeExplorer;
+    private final SingleEdgeCursor singleEdgeCursor;
     private final Weighting weighting;
     protected final Path path;
 
@@ -32,7 +32,7 @@ public class PathExtractor {
     }
 
     protected PathExtractor(Graph graph, Weighting weighting) {
-        singleEdgeExplorer = graph.createSingleEdgeExplorer();
+        singleEdgeCursor = graph.createSingleEdgeCursor();
         this.weighting = weighting;
         path = new Path(graph);
     }
@@ -73,7 +73,7 @@ public class PathExtractor {
     }
 
     protected void onEdge(int edge, int adjNode, int prevEdge) {
-        EdgeIteratorState edgeState = singleEdgeExplorer.setEdge(edge, adjNode);
+        EdgeIteratorState edgeState = singleEdgeCursor.setEdge(edge, adjNode);
         path.addDistance(edgeState.getDistance());
         path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edgeState, false, prevEdge));
         path.addEdge(edge);

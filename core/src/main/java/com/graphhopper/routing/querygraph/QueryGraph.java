@@ -34,7 +34,7 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.SingleEdgeExplorer;
+import com.graphhopper.util.SingleEdgeCursor;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.*;
@@ -192,9 +192,9 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    public SingleEdgeExplorer createSingleEdgeExplorer() {
-        return new SingleEdgeExplorer() {
-            private final SingleEdgeExplorer baseExplorer = baseGraph.createSingleEdgeExplorer();
+    public SingleEdgeCursor createSingleEdgeCursor() {
+        return new SingleEdgeCursor() {
+            private final SingleEdgeCursor baseExplorer = baseGraph.createSingleEdgeCursor();
 
             @Override
             public EdgeIteratorState setEdge(int edge, int adjNode) {

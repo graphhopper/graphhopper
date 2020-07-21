@@ -2,9 +2,9 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.storage.RoutingCHSingleEdgeExplorer;
+import com.graphhopper.storage.RoutingCHSingleEdgeCursor;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.SingleEdgeExplorer;
+import com.graphhopper.util.SingleEdgeCursor;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -23,16 +23,16 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 public class ShortcutUnpacker {
     private final Deque<StackItem> stack = new ArrayDeque<>();
     private final RoutingCHGraph graph;
-    private final SingleEdgeExplorer singleBaseEdgeExplorer;
-    private final RoutingCHSingleEdgeExplorer singleEdgeExplorer;
+    private final SingleEdgeCursor singleBaseEdgeCursor;
+    private final RoutingCHSingleEdgeCursor singleEdgeCursor;
     private final Visitor visitor;
     private final boolean edgeBased;
     private boolean reverseOrder;
 
     public ShortcutUnpacker(RoutingCHGraph graph, Visitor visitor, boolean edgeBased) {
         this.graph = graph;
-        this.singleBaseEdgeExplorer = graph.getBaseGraph().createSingleEdgeExplorer();
-        this.singleEdgeExplorer = graph.createSingleEdgeExplorer();
+        this.singleBaseEdgeCursor = graph.getBaseGraph().createSingleEdgeCursor();
+        this.singleEdgeCursor = graph.createSingleEdgeCursor();
         this.visitor = visitor;
         this.edgeBased = edgeBased;
     }
@@ -67,7 +67,7 @@ public class ShortcutUnpacker {
             throw new IllegalArgumentException("Edge with id: " + edgeId + " does not exist or does not touch node " + adjNode);
         }
         if (!edge.isShortcut()) {
-            visitor.visit(singleBaseEdgeExplorer.setEdge(edge.getOrigEdge(), edge.getAdjNode()), reverse, prevOrNextEdgeId);
+            visitor.visit(singleBaseEdgeCursor.setEdge(edge.getOrigEdge(), edge.getAdjNode()), reverse, prevOrNextEdgeId);
             return;
         }
         if (edgeBased) {
@@ -133,7 +133,7 @@ public class ShortcutUnpacker {
     }
 
     private RoutingCHEdgeIteratorState getEdge(int edgeId, int adjNode) {
-        return singleEdgeExplorer.setEdge(edgeId, adjNode);
+        return singleEdgeCursor.setEdge(edgeId, adjNode);
     }
 
     public interface Visitor {

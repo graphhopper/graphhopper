@@ -587,14 +587,14 @@ public class Measurement {
         print("unit_testsCH.out_edge_get_weight", miniPerf);
 
         miniPerf = new MiniPerfTest() {
-            private final SingleEdgeExplorer singleEdgeExplorer = lg.createSingleEdgeExplorer();
+            private final SingleEdgeCursor singleEdgeCursor = lg.createSingleEdgeCursor();
 
             @Override
             public int doCalc(boolean warmup, int run) {
                 while (true) {
                     int edgeId = rand.nextInt(maxEdgesId);
                     if (allowedEdges.contains(edgeId))
-                        return singleEdgeExplorer.setEdge(edgeId, Integer.MIN_VALUE).getEdge();
+                        return singleEdgeCursor.setEdge(edgeId, Integer.MIN_VALUE).getEdge();
                 }
             }
         }.setIterations(count).start();

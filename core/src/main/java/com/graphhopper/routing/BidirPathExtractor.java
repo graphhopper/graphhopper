@@ -29,7 +29,7 @@ import com.graphhopper.util.*;
  * @author easbar
  */
 public class BidirPathExtractor {
-    private final SingleEdgeExplorer singleEdgeExplorer;
+    private final SingleEdgeCursor singleEdgeCursor;
     private final Weighting weighting;
     protected final Path path;
 
@@ -38,7 +38,7 @@ public class BidirPathExtractor {
     }
 
     protected BidirPathExtractor(Graph graph, Weighting weighting) {
-        singleEdgeExplorer = graph.createSingleEdgeExplorer();
+        singleEdgeCursor = graph.createSingleEdgeCursor();
         this.weighting = weighting;
         this.path = new Path(graph);
     }
@@ -107,7 +107,7 @@ public class BidirPathExtractor {
     }
 
     protected void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
-        EdgeIteratorState edgeState = singleEdgeExplorer.setEdge(edge, adjNode);
+        EdgeIteratorState edgeState = singleEdgeCursor.setEdge(edge, adjNode);
         path.addDistance(edgeState.getDistance());
         path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edgeState, reverse, prevOrNextEdge));
         path.addEdge(edge);

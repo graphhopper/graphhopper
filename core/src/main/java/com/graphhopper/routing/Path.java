@@ -39,7 +39,7 @@ import java.util.List;
  */
 public class Path {
     final Graph graph;
-    private final SingleEdgeExplorer singleEdgeExplorer;
+    private final SingleEdgeCursor singleEdgeCursor;
     private final NodeAccess nodeAccess;
     double distance;
     long time;
@@ -54,7 +54,7 @@ public class Path {
 
     public Path(Graph graph) {
         this.graph = graph;
-        this.singleEdgeExplorer = graph.createSingleEdgeExplorer();
+        this.singleEdgeCursor = graph.createSingleEdgeCursor();
         this.weight = Double.MAX_VALUE;
         this.nodeAccess = graph.getNodeAccess();
         this.edgeIds = new GHIntArrayList();
@@ -172,7 +172,7 @@ public class Path {
      * Yields the final edge of the path
      */
     public int getFinalEdge() {
-        return singleEdgeExplorer.setEdge(edgeIds.get(edgeIds.size() - 1), endNode).getEdge();
+        return singleEdgeCursor.setEdge(edgeIds.get(edgeIds.size() - 1), endNode).getEdge();
     }
 
     public void setDebugInfo(String debugInfo) {
@@ -196,14 +196,14 @@ public class Path {
         int len = edgeIds.size();
         int prevEdgeId = EdgeIterator.NO_EDGE;
         for (int i = 0; i < len; i++) {
-            EdgeIteratorState edgeBase = singleEdgeExplorer.setEdge(edgeIds.get(i), tmpNode);
+            EdgeIteratorState edgeBase = singleEdgeCursor.setEdge(edgeIds.get(i), tmpNode);
             if (edgeBase == null)
                 throw new IllegalStateException("Edge " + edgeIds.get(i) + " was empty when requested with node " + tmpNode
                         + ", array index:" + i + ", edges:" + edgeIds.size());
 
             tmpNode = edgeBase.getBaseNode();
             // more efficient swap, currently not implemented for virtual edges: visitor.next(edgeBase.detach(true), i);
-            edgeBase = singleEdgeExplorer.setEdge(edgeBase.getEdge(), tmpNode);
+            edgeBase = singleEdgeCursor.setEdge(edgeBase.getEdge(), tmpNode);
             visitor.next(edgeBase, i, prevEdgeId);
             prevEdgeId = edgeBase.getEdge();
         }

@@ -88,7 +88,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             if (!EdgeIterator.Edge.isValid(edge)) {
                 break;
             }
-            EdgeIteratorState edgeState = singleEdgeExplorer.setEdge(edge, node);
+            EdgeIteratorState edgeState = singleEdgeCursor.setEdge(edge, node);
             path.addDistance(edgeState.getDistance());
             // todo: we do not yet account for turn times here!
             path.addTime(weighting.calcEdgeMillis(edgeState, false));

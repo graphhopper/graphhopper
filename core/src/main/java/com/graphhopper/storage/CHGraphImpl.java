@@ -178,8 +178,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public SingleCHEdgeExplorer createSingleEdgeExplorer() {
-        return new SingleCHEdgeExplorer() {
+    public SingleCHEdgeCursor createSingleEdgeCursor() {
+        return new SingleCHEdgeCursor() {
             private final CHEdgeIteratorStateImpl chEdge = new CHEdgeIteratorStateImpl(new BaseGraph.EdgeIteratorStateImpl(chEdgeAccess, baseGraph));
 
             @Override

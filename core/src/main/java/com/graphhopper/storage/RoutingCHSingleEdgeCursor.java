@@ -18,15 +18,6 @@
 
 package com.graphhopper.storage;
 
-public class RoutingCHSingleEdgeExplorerImpl implements RoutingCHSingleEdgeExplorer {
-    private final RoutingCHGraph graph;
-
-    public RoutingCHSingleEdgeExplorerImpl(RoutingCHGraph graph) {
-        this.graph = graph;
-    }
-
-    @Override
-    public RoutingCHEdgeIteratorState setEdge(int edgeId, int adjNode) {
-        return graph.getEdgeIteratorState(edgeId, adjNode);
-    }
+public interface RoutingCHSingleEdgeCursor {
+    RoutingCHEdgeIteratorState setEdge(int edgeId, int adjNode);
 }

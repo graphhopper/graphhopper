@@ -22,7 +22,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.SingleEdgeExplorer;
+import com.graphhopper.util.SingleEdgeCursor;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -75,7 +75,7 @@ public interface Graph {
 
     /**
      * Returns a wrapper over the specified edgeId. Calling this method is expensive if it needs to be called
-     * repeatedly it is better to use {@link #createSingleEdgeExplorer()}
+     * repeatedly it is better to use {@link #createSingleEdgeCursor()}
      *
      * @param adjNode is the node that will be returned via getAdjNode(). If adjNode is
      *                Integer.MIN_VALUE then the edge will be returned in the direction of how it is stored
@@ -117,7 +117,7 @@ public interface Graph {
      * Returns an edge explorer that can be used to fetch single edges that are not necessarily adjacent to the same
      * node. Using this performs better than calling {@link #getEdgeIteratorState} repeatedly.
      */
-    SingleEdgeExplorer createSingleEdgeExplorer();
+    SingleEdgeCursor createSingleEdgeCursor();
 
     /**
      * Copy this Graph into the specified Graph g.

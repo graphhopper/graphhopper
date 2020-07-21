@@ -16,13 +16,17 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.util;
+package com.graphhopper.storage;
 
-public interface SingleEdgeExplorer {
-    /**
-     * Sets this explorer to the given edge id and chooses the orientation such that the adjacent node matches the given
-     * value of adjNode. If adjNode is not adjacent to the edge with this id this method returns null. You can pas
-     * adjNode = Integer.MIN_VALUE to obtain the edge in storage direction.
-     */
-    EdgeIteratorState setEdge(int edge, int adjNode);
+public class RoutingCHSingleEdgeCursorImpl implements RoutingCHSingleEdgeCursor {
+    private final RoutingCHGraph graph;
+
+    public RoutingCHSingleEdgeCursorImpl(RoutingCHGraph graph) {
+        this.graph = graph;
+    }
+
+    @Override
+    public RoutingCHEdgeIteratorState setEdge(int edgeId, int adjNode) {
+        return graph.getEdgeIteratorState(edgeId, adjNode);
+    }
 }

@@ -18,7 +18,7 @@
 
 package com.graphhopper.util;
 
-public interface SingleCHEdgeExplorer extends SingleEdgeExplorer {
+public interface SingleCHEdgeCursor extends SingleEdgeCursor {
     @Override
     CHEdgeIteratorState setEdge(int edgeId, int adjNode);
 }

@@ -26,7 +26,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.SingleEdgeExplorer;
+import com.graphhopper.util.SingleEdgeCursor;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +36,7 @@ import java.util.List;
  */
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected final Graph graph;
-    protected final SingleEdgeExplorer singleEdgeExplorer;
+    protected final SingleEdgeCursor singleEdgeCursor;
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
@@ -59,7 +59,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         this.flagEncoder = weighting.getFlagEncoder();
         this.traversalMode = traversalMode;
         this.graph = graph;
-        singleEdgeExplorer = graph.createSingleEdgeExplorer();
+        singleEdgeCursor = graph.createSingleEdgeCursor();
         this.nodeAccess = graph.getNodeAccess();
         inEdgeFilter = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
         outEdgeFilter = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());

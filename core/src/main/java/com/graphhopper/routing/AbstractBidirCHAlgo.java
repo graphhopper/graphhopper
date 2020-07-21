@@ -39,7 +39,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     protected final NodeAccess nodeAccess;
     protected RoutingCHEdgeExplorer inEdgeExplorer;
     protected RoutingCHEdgeExplorer outEdgeExplorer;
-    protected RoutingCHSingleEdgeExplorer singleEdgeExplorer;
+    protected RoutingCHSingleEdgeCursor singleEdgeCursor;
     protected CHEdgeFilter levelEdgeFilter;
 
     public AbstractBidirCHAlgo(RoutingCHGraph graph, TraversalMode tMode) {
@@ -50,7 +50,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         this.nodeAccess = graph.getBaseGraph().getNodeAccess();
         outEdgeExplorer = graph.createOutEdgeExplorer();
         inEdgeExplorer = graph.createInEdgeExplorer();
-        singleEdgeExplorer = graph.createSingleEdgeExplorer();
+        singleEdgeCursor = graph.createSingleEdgeCursor();
         levelEdgeFilter = new CHLevelEdgeFilter(graph);
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
         initCollections(size);
@@ -244,7 +244,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     @Override
     protected double getInEdgeWeight(SPTEntry entry) {
-        return singleEdgeExplorer.setEdge(getIncomingEdge(entry), entry.adjNode).getWeight(false);
+        return singleEdgeCursor.setEdge(getIncomingEdge(entry), entry.adjNode).getWeight(false);
     }
 
     @Override

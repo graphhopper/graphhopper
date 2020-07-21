@@ -594,8 +594,8 @@ class BaseGraph implements Graph {
     }
 
     @Override
-    public SingleEdgeExplorer createSingleEdgeExplorer() {
-        return new SingleEdgeExplorer() {
+    public SingleEdgeCursor createSingleEdgeCursor() {
+        return new SingleEdgeCursor() {
             private final EdgeIteratorStateImpl edgeState = new EdgeIteratorStateImpl(edgeAccess, BaseGraph.this);
 
             @Override

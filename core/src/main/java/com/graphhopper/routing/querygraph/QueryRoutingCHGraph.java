@@ -123,9 +123,9 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     @Override
-    public RoutingCHSingleEdgeExplorer createSingleEdgeExplorer() {
-        return new RoutingCHSingleEdgeExplorer() {
-            private final RoutingCHSingleEdgeExplorer mainExplorer = routingCHGraph.createSingleEdgeExplorer();
+    public RoutingCHSingleEdgeCursor createSingleEdgeCursor() {
+        return new RoutingCHSingleEdgeCursor() {
+            private final RoutingCHSingleEdgeCursor mainExplorer = routingCHGraph.createSingleEdgeCursor();
 
             @Override
             public RoutingCHEdgeIteratorState setEdge(int edge, int adjNode) {

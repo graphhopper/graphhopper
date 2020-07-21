@@ -44,7 +44,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     protected EdgeExplorer edgeExplorer;
-    protected SingleEdgeExplorer singleEdgeExplorer;
+    protected SingleEdgeCursor singleEdgeCursor;
     protected EdgeFilter inEdgeFilter;
     protected EdgeFilter outEdgeFilter;
     protected EdgeFilter additionalEdgeFilter;
@@ -58,7 +58,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
         edgeExplorer = graph.createEdgeExplorer();
-        singleEdgeExplorer = graph.createSingleEdgeExplorer();
+        singleEdgeCursor = graph.createSingleEdgeCursor();
         outEdgeFilter = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
         inEdgeFilter = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
@@ -228,7 +228,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     @Override
     protected double getInEdgeWeight(SPTEntry entry) {
-        return weighting.calcEdgeWeight(singleEdgeExplorer.setEdge(getIncomingEdge(entry), entry.adjNode), false);
+        return weighting.calcEdgeWeight(singleEdgeCursor.setEdge(getIncomingEdge(entry), entry.adjNode), false);
     }
 
     @Override

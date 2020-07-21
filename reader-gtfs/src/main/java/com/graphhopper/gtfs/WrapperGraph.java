@@ -113,7 +113,7 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
-    public SingleEdgeExplorer createSingleEdgeExplorer() {
+    public SingleEdgeCursor createSingleEdgeCursor() {
         throw new UnsupportedOperationException("implement if needed");
     }
 
