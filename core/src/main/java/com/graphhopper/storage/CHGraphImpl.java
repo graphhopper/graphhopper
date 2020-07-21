@@ -181,7 +181,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public int getEdges() {
-        return getAllEdges().length();
+        return baseGraph.getEdges() + shortcutCount;
     }
 
     @Override
