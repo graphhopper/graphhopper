@@ -21,6 +21,7 @@ public class OSMValueExtractorTest {
         assertEquals(3, OSMValueExtractor.stringToTons("3 T"), DELTA);
         assertEquals(3, OSMValueExtractor.stringToTons("3ton"), DELTA);
         assertEquals(10, OSMValueExtractor.stringToTons("10000 kg"), DELTA);
+        assertEquals(25.4, OSMValueExtractor.stringToTons("28 st"), DELTA);
 
         // maximum gross weight
         assertEquals(6, OSMValueExtractor.stringToTons("6t mgw"), DELTA);
