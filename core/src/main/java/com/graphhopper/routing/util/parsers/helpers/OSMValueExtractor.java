@@ -43,7 +43,10 @@ public class OSMValueExtractor {
             return Double.NaN;
 
         double factor = 1;
-        if (value.endsWith("t")) {
+        if (value.endsWith("st")) {
+            value = value.substring(0, value.length() - 2);
+            factor = 0.907194048807;
+        } else if (value.endsWith("t")) {
             value = value.substring(0, value.length() - 1);
         } else if (value.endsWith("lbs")) {
             value = value.substring(0, value.length() - 3);
