@@ -148,7 +148,7 @@ public class OSMValueExtractor {
      */
     public static double stringToKmh(String str) {
         if (Helper.isEmpty(str))
-            return -1;
+            return Double.NaN;
     
         // on some German autobahns and a very few other places
         if ("none".equals(str))
@@ -192,7 +192,7 @@ public class OSMValueExtractor {
     
             return Integer.parseInt(str);
         } catch (Exception ex) {
-            return -1;
+            return Double.NaN;
         }
     }
 }

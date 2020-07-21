@@ -87,7 +87,6 @@ public class OSMValueExtractorTest {
         assertEquals(40, OSMValueExtractor.stringToKmh("40kmh"), 1e-3);
         assertEquals(64.374, OSMValueExtractor.stringToKmh("40mph"), 1e-3);
         assertEquals(48.28, OSMValueExtractor.stringToKmh("30 mph"), 1e-3);
-        assertEquals(-1, OSMValueExtractor.stringToKmh(null), 1e-3);
         assertEquals(18.52, OSMValueExtractor.stringToKmh("10 knots"), 1e-3);
         assertEquals(19, OSMValueExtractor.stringToKmh("19 kph"), 1e-3);
         assertEquals(19, OSMValueExtractor.stringToKmh("19kph"), 1e-3);
@@ -97,5 +96,10 @@ public class OSMValueExtractorTest {
         assertEquals(80, OSMValueExtractor.stringToKmh("RU:rural"), 1e-3);
 
         assertEquals(6, OSMValueExtractor.stringToKmh("walk"), 1e-3);
+    }
+
+    @Test
+    public void stringToKmhNaN() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh(null)));
     }
 }

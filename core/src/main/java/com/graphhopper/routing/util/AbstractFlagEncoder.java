@@ -223,19 +223,34 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     /**
-     * @return -1 if no maxspeed found
+     * @return {@link Double#NaN} if no maxspeed found
      */
     protected double getMaxSpeed(ReaderWay way) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
         double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
-        if (fwdSpeed >= 0 && (maxSpeed < 0 || fwdSpeed < maxSpeed))
+        if (isValidSpeed(fwdSpeed) && (!isValidSpeed(maxSpeed) || fwdSpeed < maxSpeed))
             maxSpeed = fwdSpeed;
 
         double backSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:backward"));
-        if (backSpeed >= 0 && (maxSpeed < 0 || backSpeed < maxSpeed))
+        if (isValidSpeed(backSpeed) && (!isValidSpeed(maxSpeed) || backSpeed < maxSpeed))
             maxSpeed = backSpeed;
 
         return maxSpeed;
+    }
+    
+    /**
+     * @return <i>true</i> if the given speed is not {@link Double#NaN} or negative
+     */
+    protected boolean isValidSpeed(double speed) {
+        return !Double.isNaN(speed) && speed >= 0;
+    }
+
+    /**
+     * @return <i>true</i> if the given speed is not {@link Double#NaN} and is
+     *         bigger than zero
+     */
+    protected boolean isPositiveSpeed(double speed) {
+        return !Double.isNaN(speed) && speed > 0;
     }
 
     @Override
@@ -342,7 +357,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @Deprecated
      */
     protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
-        if (speed < 0 || Double.isNaN(speed))
+        if (!isValidSpeed(speed))
             throw new IllegalArgumentException("Speed cannot be negative or NaN: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(edgeFlags));
 
         if (speed < speedFactor / 2) {
@@ -377,7 +392,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected double applyMaxSpeed(ReaderWay way, double speed) {
         double maxSpeed = getMaxSpeed(way);
         // We obey speed limits
-        if (maxSpeed >= 0) {
+        if (isValidSpeed(maxSpeed)) {
             // We assume that the average speed is 90% of the allowed maximum
             return maxSpeed * 0.9;
         }
