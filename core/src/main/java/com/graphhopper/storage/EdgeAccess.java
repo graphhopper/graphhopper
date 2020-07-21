@@ -17,9 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * @author Peter Karich
@@ -155,5 +153,4 @@ abstract class EdgeAccess {
         return edgeToRemovePointer;
     }
 
-    abstract EdgeIteratorState getEdgeProps(int edgeId, int adjNode, EdgeFilter edgeFilter);
 }

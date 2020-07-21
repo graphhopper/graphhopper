@@ -41,7 +41,8 @@ import java.util.List;
  * @author easbar
  */
 public class Path {
-    Graph graph;
+    final Graph graph;
+    private final NodeAccess nodeAccess;
     double distance;
     long time;
     int endNode = -1;
@@ -51,12 +52,11 @@ public class Path {
     private int fromNode = -1;
     private GHIntArrayList edgeIds;
     private double weight;
-    private NodeAccess nodeAccess;
     private String debugInfo = "";
 
     public Path(Graph graph) {
-        this.weight = Double.MAX_VALUE;
         this.graph = graph;
+        this.weight = Double.MAX_VALUE;
         this.nodeAccess = graph.getNodeAccess();
         this.edgeIds = new GHIntArrayList();
     }
@@ -272,7 +272,7 @@ public class Path {
         final PointList points = new PointList(edgeIds.size() + 1, nodeAccess.is3D());
         if (edgeIds.isEmpty()) {
             if (isFound()) {
-                points.add(graph.getNodeAccess(), endNode);
+                points.add(nodeAccess, endNode);
             }
             return points;
         }
