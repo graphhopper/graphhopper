@@ -111,10 +111,10 @@ public class SPTResource {
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, reverseFlow, traversalMode);
 
         if (distanceInMeter.get() > 0) {
-            shortestPathTree.setDistanceLimit(distanceInMeter.get() + Math.max(distanceInMeter.get() * 0.14, 2_000));
+            shortestPathTree.setDistanceLimit(distanceInMeter.get());
         } else {
             double limit = timeLimitInSeconds.get() * 1000;
-            shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
+            shortestPathTree.setTimeLimit(limit);
         }
 
         final String COL_SEP = ",", LINE_SEP = "\n";

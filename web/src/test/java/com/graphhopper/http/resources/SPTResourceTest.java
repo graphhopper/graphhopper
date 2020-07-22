@@ -69,7 +69,6 @@ public class SPTResourceTest {
         Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
-        assertTrue(lines.length > 500);
         List<String> headers = Arrays.asList(lines[0].split(","));
         assertEquals("[longitude, latitude, time, distance]", headers.toString());
         String[] row = lines[166].split(",");
@@ -107,7 +106,6 @@ public class SPTResourceTest {
         Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
-        assertTrue(lines.length > 500);
 
         String[] row = lines[368].split(",");
         assertEquals("", row[0]);
