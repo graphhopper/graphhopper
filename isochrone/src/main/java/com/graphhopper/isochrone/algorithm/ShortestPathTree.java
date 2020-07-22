@@ -44,7 +44,9 @@ import static java.util.Comparator.comparingLong;
  *
  * IMPLEMENTATION NOTE:
  * util.PriorityQueue doesn't support efficient removes. We work around this by giving the labels
- * a deleted flag, not remove()ing them, k
+ * a deleted flag, not remove()ing them, and popping deleted elements off both queues.
+ * Not to self/others: If you think this optimization is not needed, please test it with a scenario
+ * where updates actually occur a lot, such as using finite, non-zero u-turn costs.
  *
  * @author Peter Karich
  * @author Michael Zilske
