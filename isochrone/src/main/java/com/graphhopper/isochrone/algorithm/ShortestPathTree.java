@@ -17,6 +17,7 @@
  */
 package com.graphhopper.isochrone.algorithm;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
@@ -41,6 +42,10 @@ import static java.util.Comparator.comparingLong;
  * is different from the function for search. This implementation uses a second queue to keep track of
  * the termination criterion.
  *
+ * IMPLEMENTATION NOTE:
+ * util.PriorityQueue doesn't support efficient removes. We work around this by giving the labels
+ * a deleted flag, not remove()ing them, k
+ *
  * @author Peter Karich
  * @author Michael Zilske
  */
@@ -59,6 +64,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
             this.parent = parent;
         }
 
+        public boolean deleted = false;
         public int node;
         public int edge;
         public double weight;
@@ -78,6 +84,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         }
     }
 
+    private IntHashSet queueDeleted = new IntHashSet();
     private IntObjectHashMap<IsoLabel> fromMap;
     private PriorityQueue<IsoLabel> queueByWeighting; // a.k.a. the Dijkstra queue
     private PriorityQueue<IsoLabel> queueByZ; // so we know when we are finished
@@ -134,10 +141,12 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         EdgeFilter filter = reverseFlow ? inEdgeFilter : outEdgeFilter;
         while (!finished()) {
             currentLabel = queueByWeighting.poll();
-            queueByZ.remove(currentLabel);
+            if (currentLabel.deleted)
+                continue;
             if (getExploreValue(currentLabel) <= limit) {
                 consumer.accept(currentLabel);
             }
+            currentLabel.deleted = true;
             visitedNodes++;
 
             EdgeIterator iter = edgeExplorer.setBaseNode(currentLabel.node);
@@ -163,13 +172,9 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
                     queueByWeighting.add(nextLabel);
                     queueByZ.add(nextLabel);
                 } else if (nextLabel.weight > nextWeight) {
-                    queueByWeighting.remove(nextLabel);
-                    queueByZ.remove(nextLabel);
-                    nextLabel.edge = iter.getEdge();
-                    nextLabel.weight = nextWeight;
-                    nextLabel.distance = nextDistance;
-                    nextLabel.time = nextTime;
-                    nextLabel.parent = currentLabel;
+                    nextLabel.deleted = true;
+                    nextLabel = new IsoLabel(iter.getAdjNode(), iter.getEdge(), nextWeight, nextTime, nextDistance, currentLabel);
+                    fromMap.put(nextTraversalId, nextLabel);
                     queueByWeighting.add(nextLabel);
                     queueByZ.add(nextLabel);
                 }
@@ -187,7 +192,11 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
 
     @Override
     protected boolean finished() {
-        return queueByZ.isEmpty() || getExploreValue(queueByZ.peek()) >= limit;
+        while (queueByZ.peek() != null && queueByZ.peek().deleted)
+            queueByZ.poll();
+        if (queueByZ.peek() == null)
+            return true;
+        return getExploreValue(queueByZ.peek()) >= limit;
     }
 
     @Override
