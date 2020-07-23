@@ -288,6 +288,7 @@ td img.pic {
     padding: 0;
     width: 32px;
     height: 32px;
+    border-width: 1px;
     -moz-border-radius: 0px;
     -webkit-border-radius: 0px;
     background-image: linear-gradient(to bottom, white, #e7e7e7);
