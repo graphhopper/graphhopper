@@ -28,6 +28,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class ShortestPathTreeTest {
 
+    private static class TimeBasedUTurnCost implements TurnCostProvider {
+
+        private final int turnMillis;
+
+        public TimeBasedUTurnCost(int turnMillis) {
+            this.turnMillis = turnMillis;
+        }
+
+        @Override
+        public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+            return calcTurnMillis(inEdge, viaNode, outEdge) / 1000.0;
+        }
+
+        @Override
+        public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+            return inEdge == outEdge ? turnMillis : 0;
+        }
+    }
+
     public static final TurnCostProvider FORBIDDEN_UTURNS = new TurnCostProvider() {
         @Override
         public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
@@ -44,6 +63,7 @@ public class ShortestPathTreeTest {
     private final EncodingManager encodingManager = EncodingManager.create("car");
     private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private GraphHopperStorage graph;
+
 
     @BeforeEach
     public void setUp() {
@@ -195,6 +215,76 @@ public class ShortestPathTreeTest {
                 () -> assertEquals(90000, result.get(17).time),
                 () -> assertEquals(97200, result.get(18).time),
                 () -> assertEquals(126000, result.get(19).time)
+        );
+    }
+
+    @Test
+    public void testEdgeBasedWithFinitePositiveUTurnCost() {
+        TimeBasedUTurnCost turnCost = new TimeBasedUTurnCost(80000);
+        FastestWeighting fastestWeighting = new FastestWeighting(carEncoder, new PMap(), turnCost);
+        List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
+        ShortestPathTree instance = new ShortestPathTree(graph, fastestWeighting, false, TraversalMode.EDGE_BASED);
+        instance.setTimeLimit(Double.MAX_VALUE);
+        instance.search(0, result::add);
+        // Just like with forbidden U-turns, but last thing is I can get out of the dead-end
+        assertEquals(countDirectedEdges(graph) + 1, result.size());
+        assertAll(
+                () -> assertEquals(0, result.get(0).time),
+                () -> assertEquals(9000, result.get(1).time),
+                () -> assertEquals(18000, result.get(2).time),
+                () -> assertEquals(25200, result.get(3).time),
+                () -> assertEquals(27000, result.get(4).time),
+                () -> assertEquals(34200, result.get(5).time),
+                () -> assertEquals(36000, result.get(6).time),
+                () -> assertEquals(50400, result.get(7).time),
+                () -> assertEquals(50400, result.get(8).time),
+                () -> assertEquals(54000, result.get(9).time),
+                () -> assertEquals(55800, result.get(10).time),
+                () -> assertEquals(60300, result.get(11).time),
+                () -> assertEquals(61200, result.get(12).time),
+                () -> assertEquals(61200, result.get(13).time),
+                () -> assertEquals(61200, result.get(14).time),
+                () -> assertEquals(72000, result.get(15).time),
+                () -> assertEquals(81000, result.get(16).time),
+                () -> assertEquals(90000, result.get(17).time),
+                () -> assertEquals(97200, result.get(18).time),
+                () -> assertEquals(126000, result.get(19).time),
+                () -> assertEquals(144800, result.get(20).time)
+        );
+    }
+
+    @Test
+    public void testEdgeBasedWithSmallerUTurnCost() {
+        TimeBasedUTurnCost turnCost = new TimeBasedUTurnCost(20000);
+        FastestWeighting fastestWeighting = new FastestWeighting(carEncoder, new PMap(), turnCost);
+        List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
+        ShortestPathTree instance = new ShortestPathTree(graph, fastestWeighting, false, TraversalMode.EDGE_BASED);
+        instance.setTimeLimit(Double.MAX_VALUE);
+        instance.search(0, result::add);
+        // Something in between
+        assertEquals(countDirectedEdges(graph) + 1, result.size());
+        assertAll(
+                () -> assertEquals(0, result.get(0).time),
+                () -> assertEquals(9000, result.get(1).time),
+                () -> assertEquals(18000, result.get(2).time),
+                () -> assertEquals(25200, result.get(3).time),
+                () -> assertEquals(27000, result.get(4).time),
+                () -> assertEquals(34200, result.get(5).time),
+                () -> assertEquals(36000, result.get(6).time),
+                () -> assertEquals(50400, result.get(7).time),
+                () -> assertEquals(50400, result.get(8).time),
+                () -> assertEquals(54000, result.get(9).time),
+                () -> assertEquals(55800, result.get(10).time),
+                () -> assertEquals(56000, result.get(11).time),
+                () -> assertEquals(60300, result.get(12).time),
+                () -> assertEquals(61200, result.get(13).time),
+                () -> assertEquals(61200, result.get(14).time),
+                () -> assertEquals(61200, result.get(15).time),
+                () -> assertEquals(72000, result.get(16).time),
+                () -> assertEquals(81000, result.get(17).time),
+                () -> assertEquals(84800, result.get(18).time),
+                () -> assertEquals(97200, result.get(19).time),
+                () -> assertEquals(126000, result.get(20).time)
         );
     }
 
