@@ -423,6 +423,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     @Override
+    public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
+        return baseGraph.getEdgeIteratorStateForKey(edgeKey);
+    }
+
+    @Override
     public AllEdgesIterator getAllEdges() {
         return baseGraph.getAllEdges();
     }

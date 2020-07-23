@@ -336,4 +336,34 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         Helper.removeDir(new File(defaultGraphLoc));
     }
 
+    @Test
+    public void testEdgeKey() {
+        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+        g.edge(0, 1, 10, true);
+        // storage direction
+        EdgeIteratorState e = g.getEdgeIteratorState(0, Integer.MIN_VALUE);
+        assertEquals(0, e.getBaseNode());
+        assertEquals(1, e.getAdjNode());
+        assertFalse(e.get(REVERSE_STATE));
+        assertEquals(0, e.getEdgeKey());
+        // reverse direction
+        e = g.getEdgeIteratorState(0, 0);
+        assertEquals(1, e.getBaseNode());
+        assertEquals(0, e.getAdjNode());
+        assertTrue(e.get(REVERSE_STATE));
+        assertEquals(1, e.getEdgeKey());
+
+        // now use the edge key to retrieve the edge
+        e = g.getEdgeIteratorStateForKey(0);
+        assertEquals(0, e.getEdge());
+        assertEquals(0, e.getBaseNode());
+        assertEquals(1, e.getAdjNode());
+        assertFalse(e.get(REVERSE_STATE));
+        // opposite direction
+        e = g.getEdgeIteratorStateForKey(1);
+        assertEquals(0, e.getEdge());
+        assertEquals(1, e.getBaseNode());
+        assertEquals(0, e.getAdjNode());
+        assertTrue(e.get(REVERSE_STATE));
+    }
 }

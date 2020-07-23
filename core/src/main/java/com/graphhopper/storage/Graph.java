@@ -83,6 +83,13 @@ public interface Graph {
     EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode);
 
     /**
+     * Returns the edge state for the given edge key
+     *
+     * @see EdgeIteratorState#getEdgeKey()
+     */
+    EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey);
+
+    /**
      * @return the 'opposite' node of a given edge, so if there is an edge 3-2 and node =2 this returns 3
      */
     int getOtherNode(int edge, int node);

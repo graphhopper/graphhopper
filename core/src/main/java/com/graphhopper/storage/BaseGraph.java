@@ -578,6 +578,13 @@ class BaseGraph implements Graph {
         return null;
     }
 
+    @Override
+    public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
+        EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, this);
+        edge.init(edgeKey);
+        return edge;
+    }
+
     final void checkAdjNodeBounds(int adjNode) {
         if (adjNode < 0 && adjNode != Integer.MIN_VALUE || adjNode >= nodeCount)
             throw new IllegalStateException("adjNode " + adjNode + " out of bounds [0," + nf(nodeCount) + ")");
@@ -1198,6 +1205,27 @@ class BaseGraph implements Graph {
             return false;
         }
 
+        final void init(int edgeKey) {
+            if (edgeKey < 0)
+                throw new IllegalArgumentException("edge keys must not be negative, given: " + edgeKey);
+            this.edgeId = GHUtility.getEdgeFromEdgeKey(edgeKey);
+            edgePointer = edgeAccess.toPointer(edgeId);
+            baseNode = edgeAccess.getNodeA(edgePointer);
+            adjNode = edgeAccess.getNodeB(edgePointer);
+            freshFlags = false;
+            if (EdgeAccess.isInvalidNodeB(adjNode))
+                throw new IllegalStateException("content of edgeId " + this.edgeId + " is marked as invalid - ie. the edge is already removed!");
+
+            if (edgeKey % 2 == 0) {
+                reverse = false;
+            } else {
+                reverse = true;
+                int tmp = baseNode;
+                baseNode = adjNode;
+                adjNode = tmp;
+            }
+        }
+
         @Override
         public final int getBaseNode() {
             return baseNode;
@@ -1354,6 +1382,13 @@ class BaseGraph implements Graph {
         @Override
         public int getEdge() {
             return edgeId;
+        }
+
+        @Override
+        public int getEdgeKey() {
+            // edge state in storage direction -> edge key is even
+            // edge state against storage direction -> edge key is odd
+            return (edgeId << 1) + (reverse ? 1 : 0);
         }
 
         @Override

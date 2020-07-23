@@ -33,9 +33,9 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,7 +45,7 @@ import java.util.List;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import static com.graphhopper.util.EdgeIteratorState.UNFAVORED_EDGE;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -55,14 +55,14 @@ public class QueryGraphTest {
     private FlagEncoder encoder;
     private GraphHopperStorage g;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         encoder = new CarFlagEncoder();
         encodingManager = EncodingManager.create(encoder);
         g = new GraphBuilder(encodingManager).create();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         g.close();
     }
@@ -353,12 +353,12 @@ public class QueryGraphTest {
         assertEquals(2, GHUtility.count(ee.setBaseNode(qr.getClosestNode())));
         EdgeIterator iter = ee.setBaseNode(qr.getClosestNode());
         iter.next();
-        assertTrue(iter.toString(), iter.get(accessEnc));
-        assertFalse(iter.toString(), iter.getReverse(accessEnc));
+        assertTrue(iter.get(accessEnc), iter.toString());
+        assertFalse(iter.getReverse(accessEnc), iter.toString());
 
         iter.next();
-        assertFalse(iter.toString(), iter.get(accessEnc));
-        assertTrue(iter.toString(), iter.getReverse(accessEnc));
+        assertFalse(iter.get(accessEnc), iter.toString());
+        assertTrue(iter.getReverse(accessEnc), iter.toString());
     }
 
     @Test
@@ -488,7 +488,7 @@ public class QueryGraphTest {
         it.next();
         assertEquals(endNode, it.getBaseNode());
         assertEquals(startNode, it.getAdjNode());
-        assertEquals("The edge id is not the same,", expectedEdgeId, it.getEdge());
+        assertEquals(expectedEdgeId, it.getEdge(), "The edge id is not the same,");
         assertFalse(it.next());
     }
 
@@ -717,7 +717,7 @@ public class QueryGraphTest {
         locationIndex.prepareIndex();
         QueryResult qr = locationIndex.findClosest(0.15, 0.15, DefaultEdgeFilter.allEdges(encoder));
         assertTrue(qr.isValid());
-        assertEquals("this test was supposed to test the Position.EDGE case", EDGE, qr.getSnappedPosition());
+        assertEquals(EDGE, qr.getSnappedPosition(), "this test was supposed to test the Position.EDGE case");
         QueryGraph queryGraph = lookup(qr);
         EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());
 
@@ -758,7 +758,7 @@ public class QueryGraphTest {
         locationIndex.prepareIndex();
         QueryResult qr = locationIndex.findClosest(0.2, 0.21, DefaultEdgeFilter.allEdges(encoder));
         assertTrue(qr.isValid());
-        assertEquals("this test was supposed to test the Position.PILLAR case", PILLAR, qr.getSnappedPosition());
+        assertEquals(PILLAR, qr.getSnappedPosition(), "this test was supposed to test the Position.PILLAR case");
         QueryGraph queryGraph = lookup(qr);
         EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());
 
@@ -853,6 +853,16 @@ public class QueryGraphTest {
         assertEquals(1, edge_x0.getEdge());
         assertEquals(2, edge_x1.getEdge());
         assertEquals(2, edge_1x.getEdge());
+
+        // edge keys
+        assertEquals(2, edge_0x.getEdgeKey());
+        assertEquals(3, edge_x0.getEdgeKey());
+        assertEquals(4, edge_x1.getEdgeKey());
+        assertEquals(5, edge_1x.getEdgeKey());
+        assertNodes(queryGraph.getEdgeIteratorStateForKey(2), 0, 2);
+        assertNodes(queryGraph.getEdgeIteratorStateForKey(3), 2, 0);
+        assertNodes(queryGraph.getEdgeIteratorStateForKey(4), 2, 1);
+        assertNodes(queryGraph.getEdgeIteratorStateForKey(5), 1, 2);
 
         // internally each edge is represented by two edge states for the two directions
         assertSame(queryGraph.getVirtualEdges().get(0), edge_0x);
