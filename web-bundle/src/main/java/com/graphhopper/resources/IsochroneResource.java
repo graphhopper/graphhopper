@@ -123,8 +123,9 @@ public class IsochroneResource {
             shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
         }
         ArrayList<Double> zs = new ArrayList<>();
+        double delta = limit / nBuckets.get();
         for (int i = 0; i < nBuckets.get(); i++) {
-            zs.add(limit / (nBuckets.get() - i));
+            zs.add((i + 1) * delta);
         }
 
         final NodeAccess na = queryGraph.getNodeAccess();
