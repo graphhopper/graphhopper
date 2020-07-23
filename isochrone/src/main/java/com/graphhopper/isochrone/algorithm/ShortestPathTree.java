@@ -17,7 +17,6 @@
  */
 package com.graphhopper.isochrone.algorithm;
 
-import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
@@ -86,7 +85,6 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         }
     }
 
-    private IntHashSet queueDeleted = new IntHashSet();
     private IntObjectHashMap<IsoLabel> fromMap;
     private PriorityQueue<IsoLabel> queueByWeighting; // a.k.a. the Dijkstra queue
     private PriorityQueue<IsoLabel> queueByZ; // so we know when we are finished
