@@ -20,13 +20,11 @@ import org.locationtech.jts.triangulate.quadedge.Vertex;
 import java.util.*;
 
 /**
- *
  * Adapted from org.opentripplanner.common.geometry.DelaunayIsolineBuilder,
  * which is under LGPL.
  *
  * @author laurent
  * @author michaz
- *
  */
 public class ContourBuilder {
 
@@ -132,7 +130,8 @@ public class ContourBuilder {
         }
         // 3. For each hole, determine which shell it fits in.
         for (LinearRing hole : holes) {
-            outer: {
+            outer:
+            {
                 // Probably most of the time, the first shell will be the one
                 for (Polygon shell : shells) {
                     if (shell.contains(hole)) {
@@ -151,5 +150,21 @@ public class ContourBuilder {
                     shellHoles.toArray(new LinearRing[shellHoles.size()])));
         }
         return punched;
+    }
+
+    public static Polygon heuristicallyFindMainConnectedComponent(MultiPolygon multiPolygon, Point point) {
+        int maxPoints = 0;
+        Polygon maxPolygon = null;
+        for (int j = 0; j < multiPolygon.getNumGeometries(); j++) {
+            Polygon polygon = (Polygon) multiPolygon.getGeometryN(j);
+            if (polygon.contains(point)) {
+                return polygon;
+            }
+            if (polygon.getNumPoints() > maxPoints) {
+                maxPoints = polygon.getNumPoints();
+                maxPolygon = polygon;
+            }
+        }
+        return maxPolygon;
     }
 }

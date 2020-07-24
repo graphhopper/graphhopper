@@ -21,13 +21,17 @@ import com.carrotsearch.hppc.IntObjectHashMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.*;
+import org.locationtech.jts.geom.Coordinate;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.PriorityQueue;
 import java.util.function.Consumer;
 
@@ -175,6 +179,41 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
                 }
             }
         }
+    }
+
+    public Collection<Coordinate> searchSites(int startNode) {
+        final NodeAccess na = graph.getNodeAccess();
+        Collection<Coordinate> sites = new ArrayList<>();
+        search(startNode, label -> {
+            double exploreValue;
+            if (exploreType == WEIGHT) {
+                exploreValue = label.weight;
+            } else if (exploreType == DISTANCE) {
+                exploreValue = label.distance;
+            } else {
+                exploreValue = label.time;
+            }
+            double lat = na.getLatitude(label.node);
+            double lon = na.getLongitude(label.node);
+            Coordinate site = new Coordinate(lon, lat);
+            site.z = exploreValue;
+            sites.add(site);
+
+            // add a pillar node to increase precision a bit for longer roads
+            if (label.parent != null) {
+                EdgeIteratorState edge = graph.getEdgeIteratorState(label.edge, label.node);
+                PointList innerPoints = edge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
+                if (innerPoints.getSize() > 0) {
+                    int midIndex = innerPoints.getSize() / 2;
+                    double lat2 = innerPoints.getLat(midIndex);
+                    double lon2 = innerPoints.getLon(midIndex);
+                    Coordinate site2 = new Coordinate(lon2, lat2);
+                    site2.z = exploreValue;
+                    sites.add(site2);
+                }
+            }
+        });
+        return sites;
     }
 
     private double getExploreValue(IsoLabel label) {
