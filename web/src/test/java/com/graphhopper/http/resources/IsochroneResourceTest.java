@@ -34,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Polygon;
 
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
@@ -363,4 +364,17 @@ public class IsochroneResourceTest {
         assertEquals(lastFeature.path("geometry").path("type").asText(), "Polygon");
     }
 
+    @Test
+    public void requestTenBucketsIssue2094() {
+        Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.510008,1.530018&time_limit=400&type=geojson&buckets=10")
+                .request().buildGet().invoke();
+        JsonFeatureCollection collection = response.readEntity(JsonFeatureCollection.class);
+        Polygon lastPolygon = (Polygon) collection.getFeatures().get(collection.getFeatures().size() - 1).getGeometry();
+        assertTrue(lastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.580229, 42.533161))));
+        assertFalse(lastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.584606, 42.535121))));
+
+        Polygon beforeLastPolygon = (Polygon) collection.getFeatures().get(collection.getFeatures().size() - 2).getGeometry();
+        assertTrue(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.564136, 42.524938))));
+        assertFalse(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.571474, 42.529176))));
+    }
 }
