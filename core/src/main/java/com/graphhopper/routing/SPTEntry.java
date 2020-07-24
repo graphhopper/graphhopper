@@ -26,6 +26,7 @@ import com.graphhopper.util.EdgeIterator;
  * @author Peter Karich
  */
 public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
+    public boolean deleted;
     public int edge;
     public int adjNode;
     public double weight;
