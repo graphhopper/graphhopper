@@ -1216,7 +1216,7 @@ class BaseGraph implements Graph {
             if (EdgeAccess.isInvalidNodeB(adjNode))
                 throw new IllegalStateException("content of edgeId " + this.edgeId + " is marked as invalid - ie. the edge is already removed!");
 
-            if (edgeKey % 2 == 0) {
+            if (edgeKey % 2 == 0 || baseNode == adjNode) {
                 reverse = false;
             } else {
                 reverse = true;

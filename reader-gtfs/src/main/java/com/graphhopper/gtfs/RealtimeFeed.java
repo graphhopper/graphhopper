@@ -222,6 +222,11 @@ public class RealtimeFeed {
             }
 
             @Override
+            public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
+                return null;
+            }
+
+            @Override
             public AllEdgesIterator getAllEdges() {
                 return null;
             }

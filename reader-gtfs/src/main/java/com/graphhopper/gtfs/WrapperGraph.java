@@ -113,6 +113,11 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
+    public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
+    @Override
     public AllEdgesIterator getAllEdges() {
         return new AllEdgesIterator() {
             @Override
@@ -130,6 +135,11 @@ public class WrapperGraph implements Graph {
 
             @Override
             public int getEdge() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int getEdgeKey() {
                 throw new UnsupportedOperationException();
             }
 
@@ -329,6 +339,11 @@ public class WrapperGraph implements Graph {
                     @Override
                     public int getEdge() {
                         return current.getEdge();
+                    }
+
+                    @Override
+                    public int getEdgeKey() {
+                        return current.getEdgeKey();
                     }
 
                     @Override

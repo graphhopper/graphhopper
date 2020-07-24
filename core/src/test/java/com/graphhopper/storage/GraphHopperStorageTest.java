@@ -341,29 +341,35 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
         g.edge(0, 1, 10, true);
         // storage direction
-        EdgeIteratorState e = g.getEdgeIteratorState(0, Integer.MIN_VALUE);
-        assertEquals(0, e.getBaseNode());
-        assertEquals(1, e.getAdjNode());
-        assertFalse(e.get(REVERSE_STATE));
-        assertEquals(0, e.getEdgeKey());
+        assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 1, false, 0, 0);
         // reverse direction
-        e = g.getEdgeIteratorState(0, 0);
-        assertEquals(1, e.getBaseNode());
-        assertEquals(0, e.getAdjNode());
-        assertTrue(e.get(REVERSE_STATE));
-        assertEquals(1, e.getEdgeKey());
-
+        assertEdge(g.getEdgeIteratorState(0, 0), 1, 0, true, 0, 1);
         // now use the edge key to retrieve the edge
-        e = g.getEdgeIteratorStateForKey(0);
-        assertEquals(0, e.getEdge());
-        assertEquals(0, e.getBaseNode());
-        assertEquals(1, e.getAdjNode());
-        assertFalse(e.get(REVERSE_STATE));
+        assertEdge(g.getEdgeIteratorStateForKey(0), 0, 1, false, 0, 0);
         // opposite direction
-        e = g.getEdgeIteratorStateForKey(1);
-        assertEquals(0, e.getEdge());
-        assertEquals(1, e.getBaseNode());
-        assertEquals(0, e.getAdjNode());
-        assertTrue(e.get(REVERSE_STATE));
+        assertEdge(g.getEdgeIteratorStateForKey(1), 1, 0, true, 0, 1);
+    }
+
+    @Test
+    public void testEdgeKey_loop() {
+        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+        g.edge(0, 0, 10, true);
+        // storage direction
+        assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 0, false, 0, 0);
+        // reverse direction cannot be retrieved, we get forward direction anyway
+        assertEdge(g.getEdgeIteratorState(0, 0), 0, 0, false, 0, 0);
+        // now use the edge key to retrieve the edge
+        assertEdge(g.getEdgeIteratorStateForKey(0), 0, 0, false, 0, 0);
+        // opposite direction could be retrieved like this but to be consistent with getEdgeIteratorState(edge,adj)
+        // we return the forward direction anyway! todo: is this really what we should do? probably related to #1631
+        assertEdge(g.getEdgeIteratorStateForKey(1), 0, 0, false, 0, 0);
+    }
+
+    private void assertEdge(EdgeIteratorState edge, int base, int adj, boolean reverse, int edgeId, int key) {
+        assertEquals(base, edge.getBaseNode());
+        assertEquals(adj, edge.getAdjNode());
+        assertEquals(reverse, edge.get(REVERSE_STATE));
+        assertEquals(edgeId, edge.getEdge());
+        assertEquals(key, edge.getEdgeKey());
     }
 }
