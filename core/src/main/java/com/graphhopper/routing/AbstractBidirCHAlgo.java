@@ -134,10 +134,12 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     @Override
     boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty()) {
-            return false;
-        }
-        currFrom = pqOpenSetFrom.poll();
+        do {
+            if (pqOpenSetFrom.isEmpty())
+                return false;
+            currFrom = pqOpenSetFrom.poll();
+        } while (currFrom.deleted);
+
         visitedCountFrom++;
         if (fromEntryCanBeSkipped()) {
             return true;
@@ -152,10 +154,12 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     @Override
     boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty()) {
-            return false;
-        }
-        currTo = pqOpenSetTo.poll();
+        do {
+            if (pqOpenSetTo.isEmpty())
+                return false;
+            currTo = pqOpenSetTo.poll();
+        } while (currTo.deleted);
+
         visitedCountTo++;
         if (toEntryCanBeSkipped()) {
             return true;
@@ -187,8 +191,9 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
-                updateEntry(entry, iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
+                entry.deleted = true;
+                entry = createEntry(iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
+                bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else
                 continue;

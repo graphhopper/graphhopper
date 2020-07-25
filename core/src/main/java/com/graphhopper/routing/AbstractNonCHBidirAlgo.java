@@ -188,7 +188,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             } else if (entry.getWeightOfVisitedPath() > weight) {
                 entry.deleted = true;
                 entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
-                bestWeightMap.put(traversalId, entry); // overwrite old
+                bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else
                 continue;
