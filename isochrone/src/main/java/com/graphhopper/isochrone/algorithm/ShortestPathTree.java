@@ -21,7 +21,6 @@ import com.carrotsearch.hppc.IntObjectHashMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -44,7 +43,7 @@ import static java.util.Comparator.comparingLong;
  * a given travel time or distance have been explored. The catch is that the function for termination
  * is different from the function for search. This implementation uses a second queue to keep track of
  * the termination criterion.
- *
+ * <p>
  * IMPLEMENTATION NOTE:
  * util.PriorityQueue doesn't support efficient removes. We work around this by giving the labels
  * a deleted flag, not remove()ing them, and popping deleted elements off both queues.
@@ -69,13 +68,13 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
             this.parent = parent;
         }
 
-        public boolean deleted = false;
         public int node;
         public int edge;
-        public double weight;
         public long time;
         public double distance;
+        public double weight;
         public IsoLabel parent;
+        public boolean deleted = false;
 
         @Override
         public String toString() {
