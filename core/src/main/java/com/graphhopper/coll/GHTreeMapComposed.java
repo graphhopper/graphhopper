@@ -106,6 +106,10 @@ public class GHTreeMapComposed {
         return map.size();
     }
 
+    public int size() {
+        return map.size();
+    }
+
     public boolean isEmpty() {
         return map.isEmpty();
     }

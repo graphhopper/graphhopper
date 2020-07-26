@@ -19,12 +19,11 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
-import com.graphhopper.lucene.LongPriorityQueue;
+import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
@@ -32,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
-import java.util.PriorityQueue;
 import java.util.Random;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
@@ -70,8 +68,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private PrepareCHEdgeExplorer disconnectExplorer;
     private int maxLevel;
     // nodes with highest priority come last
-    private LongPriorityQueue sortedNodes;
-    private BitUtil bitUtil = BitUtil.BIG;
+    private GHTreeMapComposed sortedNodes;
     private float[] oldPriorities;
     private PMap pMap = new PMap();
     private int checkCounter;
@@ -171,7 +168,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         //      Important because Graph is increasing until the end.
         //   2. is slightly faster
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
-        sortedNodes = new LongPriorityQueue(maxLevel, maxLevel, bitUtil.toLong(Float.floatToRawIntBits(0), -1));
+        sortedNodes = new GHTreeMapComposed();
         oldPriorities = new float[prepareGraph.getNodes()];
         nodeContractor.initFromGraph();
     }
@@ -191,7 +188,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             if (prepareGraph.getLevel(node) != maxLevel)
                 continue;
             float priority = oldPriorities[node] = calculatePriority(node);
-            sortedNodes.insert(bitUtil.toLong(Float.floatToRawIntBits(priority), node));
+            sortedNodes.insert(node, priority);
         }
         periodicUpdateSW.stop();
     }
@@ -245,15 +242,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             }
 
             checkCounter++;
-            int polledNode = bitUtil.getIntLow(sortedNodes.pop());
-
+            int polledNode = sortedNodes.pollKey();
             if (!sortedNodes.isEmpty() && sortedNodes.size() < lastNodesLazyUpdates) {
                 lazyUpdateSW.start();
-                float priority = oldPriorities[polledNode] = calculatePriority(polledNode);
-                float topPrio = Float.intBitsToFloat(bitUtil.getIntHigh(sortedNodes.top()));
-                if (priority > topPrio) {
+                float newPriority = oldPriorities[polledNode] = calculatePriority(polledNode);
+                float topPrio = sortedNodes.peekValue();
+                if (newPriority > topPrio) {
                     // polledNode got more important => insert as new value and contract it later
-                    sortedNodes.insert(bitUtil.toLong(Float.floatToRawIntBits(priority), polledNode));
+                    sortedNodes.insert(polledNode, newPriority);
                     lazyUpdateSW.stop();
                     continue;
                 }
@@ -281,8 +277,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
                     float oldPrio = oldPriorities[nn];
                     float priority = oldPriorities[nn] = calculatePriority(nn);
                     if (priority != oldPrio) {
-                        sortedNodes.update(bitUtil.toLong(Float.floatToRawIntBits(oldPrio), nn),
-                                bitUtil.toLong(Float.floatToRawIntBits(priority), nn));
+                        sortedNodes.update(nn, oldPrio, priority);
                         updatedNeighbors.add(nn);
                     }
                     neighborUpdateSW.stop();
