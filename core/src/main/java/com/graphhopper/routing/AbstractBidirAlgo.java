@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.TraversalMode;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.PriorityQueue;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
@@ -58,12 +57,14 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         toInEdge = ANY_EDGE;
     }
 
-    protected void initCollections(int size) {
-        pqOpenSetFrom = new GHPriorityQueue<>(size);
-        bestWeightMapFrom = new GHIntObjectHashMap<>(size);
+    protected void initCollections(int queueSize, int mapSize) {
+        mapSize = Math.max(mapSize, 50);
+        queueSize = Math.max(queueSize, 10);
+        pqOpenSetFrom = new GHPriorityQueue<>(queueSize);
+        bestWeightMapFrom = new GHIntObjectHashMap<>(mapSize);
 
-        pqOpenSetTo = new GHPriorityQueue<>(size);
-        bestWeightMapTo = new GHIntObjectHashMap<>(size);
+        pqOpenSetTo = new GHPriorityQueue<>(queueSize);
+        bestWeightMapTo = new GHIntObjectHashMap<>(mapSize);
     }
 
     /**

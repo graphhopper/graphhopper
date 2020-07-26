@@ -63,8 +63,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         edgeExplorer = graph.createEdgeExplorer();
         outEdgeFilter = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
         inEdgeFilter = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
-        initCollections(size);
+        int mapSize = Math.min(graph.getNodes() / 10, 250_000);
+        initCollections(mapSize / 50, mapSize);
     }
 
     /**

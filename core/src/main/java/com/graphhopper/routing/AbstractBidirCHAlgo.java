@@ -23,8 +23,6 @@ import com.graphhopper.routing.ch.NodeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
 
-import java.util.PriorityQueue;
-
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
 /**
@@ -51,13 +49,13 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         outEdgeExplorer = graph.createOutEdgeExplorer();
         inEdgeExplorer = graph.createInEdgeExplorer();
         levelEdgeFilter = new CHLevelEdgeFilter(graph);
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
-        initCollections(size);
+        int size = Math.min(graph.getNodes() / 10, 2_000);
+        initCollections(size / 10, size);
     }
 
     @Override
-    protected void initCollections(int size) {
-        super.initCollections(Math.min(size, 2000));
+    protected void initCollections(int queueSize, int mapSize) {
+        super.initCollections(Math.min(queueSize, 200), Math.min(mapSize, 2000));
     }
 
     /**
