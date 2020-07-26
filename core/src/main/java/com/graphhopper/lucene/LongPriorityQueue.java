@@ -87,6 +87,30 @@ public class LongPriorityQueue {
         return heap[1];
     }
 
+    /**
+     * Instead of remove(oldElement) and add(newElement) this method is slightly optimized and should preferred.
+     */
+    public boolean update(long oldElement, long newElement) {
+        for (int i = 1; i <= size; i++) {
+            if (heap[i] == oldElement) {
+                if (i < size) {
+                    // fill gap with the new element
+                    downHeap(i, newElement);
+                    // if it wasn't moved downwards try moving it upwards
+                    if (heap[i] == newElement)
+                        upHeap(i, newElement);
+
+                } else {
+                    // i == size
+                    heap[size] = newElement;
+                    upHeap();
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean remove(long element) {
         for (int i = 1; i <= size; i++) {
             if (heap[i] == element) {
@@ -100,8 +124,8 @@ public class LongPriorityQueue {
                         upHeap(i, lastElement);
 
                 } else {
-                    // it was the last element so no need to heapify
-                    heap[size] = sentinel;
+                    // it was the last element so no need to correct heap
+                    // heap[size] = sentinel;
                     size--;
                 }
                 return true;

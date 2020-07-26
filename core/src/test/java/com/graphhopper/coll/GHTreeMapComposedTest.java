@@ -40,6 +40,8 @@ public class GHTreeMapComposedTest {
         assertEquals(99.7, instance.peekValue(), 1.e-4);
 
         assertEquals(2, instance.pollKey());
+        assertEquals(1, instance.pollKey());
+        assertEquals(3, instance.pollKey());
     }
 
     @Test

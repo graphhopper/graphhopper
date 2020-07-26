@@ -23,9 +23,9 @@ import java.util.Comparator;
 import java.util.TreeMap;
 
 /**
- * A priority queue for integer-float key-value pairs implemented by a TreeMap. As the tree map does not allow multiple
- * values for the same key we store the value inside the key which is composed as value | key.
- * <p>
+ * A min priority queue for integer-float key-value pairs implemented by a TreeMap and sorted by the float value.
+ * As the tree map does not allow multiple values for the same key we store the value inside the key which is
+ * composed as value | key.
  *
  * @author Peter Karich
  */

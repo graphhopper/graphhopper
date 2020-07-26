@@ -61,4 +61,35 @@ class LongPriorityQueueTest {
             counter++;
         }
     }
+
+    @Test
+    public void testAddAndUpdateAndPoll() {
+        int N = 2000;
+        LongPriorityQueue queue = new LongPriorityQueue(10, N, Long.MAX_VALUE);
+        List<Long> list = new ArrayList<>();
+        long seed = System.currentTimeMillis();
+        Random rand = new Random(seed);
+        for (int i = 0; i < N; i++) {
+            long value = rand.nextInt();
+            queue.add(value);
+            list.add(value);
+        }
+        Collections.sort(list);
+        for (int i = 0; i < N / 20; i++) {
+            int removeAtIndex = rand.nextInt(list.size());
+            long value = list.remove(removeAtIndex);
+            long newElement = rand.nextInt();
+            list.add(newElement);
+            assertTrue(queue.update(value, newElement), "seed : " + seed);
+            assertEquals(queue.size(), list.size(), "seed: " + seed);
+        }
+        Collections.sort(list);
+
+        int counter = 0;
+        while (!queue.isEmpty()) {
+            long value = queue.pop();
+            assertEquals(list.get(counter), value, "seed: " + seed);
+            counter++;
+        }
+    }
 }
