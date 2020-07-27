@@ -25,8 +25,8 @@ public class LongPriorityQueue {
     protected int size;             // number of elements currently in the queue
     protected int currentCapacity;  // number of elements the queue can hold w/o expanding
     protected int maxSize;          // max number of elements allowed in the queue
-    protected long[] heap;
-    protected final long sentinel;   // represents a null return value
+    protected long[] heap;          // the first element is empty, so this collection is 1-based!?
+    protected final long sentinel;  // represents a null return value
 
     public LongPriorityQueue(int initialSize, int maxSize, long sentinel) {
         this.maxSize = maxSize;
