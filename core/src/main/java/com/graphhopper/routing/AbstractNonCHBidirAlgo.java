@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.coll.PairingHeap;
+import com.graphhopper.coll.GHPriorityQueue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -123,9 +123,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         additionalEdgeFilter = null;
     }
 
-    static StopWatch pollWatch = new StopWatch(), addWatch = new StopWatch(), updateWatch = new StopWatch();
-    static int counter = 0, poll = 0, update = 0, add = 0, fromMapSizeSum, toMapSizeSum, fromQueueSizeSum, toQueueSizeSum;
-
     @Override
     protected void runAlgo() {
         super.runAlgo();
@@ -134,8 +131,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 //        toMapSizeSum += bestWeightMapTo.size();
 //        fromQueueSizeSum += pqOpenSetFrom.size();
 //        toQueueSizeSum += pqOpenSetTo.size();
-        System.out.println("add: " + add + ", poll: " + poll);
-        System.out.println("addW: " + addWatch.getSeconds() + ", pollW: " + pollWatch.getSeconds());
+//        System.out.println("add: " + add + ", update: " + update + ", poll: " + poll);
+//        System.out.println("addW: " + addWatch.getSeconds() + ", updateW: " + updateWatch.getSeconds() + ", pollW: " + pollWatch.getSeconds());
 //        System.out.println("prio size from:" + fromQueueSizeSum / (float) counter + ", to:" + toQueueSizeSum / (float) counter);
 //        System.out.println("map  size from:" + fromMapSizeSum / (float) counter + ", to:" + toMapSizeSum / (float) counter);
 
@@ -151,11 +148,11 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (pqOpenSetFrom.isEmpty()) {
             return false;
         }
-        pollWatch.start();
+//        pollWatch.start();
         currFrom = pqOpenSetFrom.poll();
-        pollWatch.stop();
+//        pollWatch.stop();
         visitedCountFrom++;
-        poll++;
+//        poll++;
         if (fromEntryCanBeSkipped()) {
             return true;
         }
@@ -172,11 +169,11 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (pqOpenSetTo.isEmpty()) {
             return false;
         }
-        pollWatch.start();
+//        pollWatch.start();
         currTo = pqOpenSetTo.poll();
-        pollWatch.stop();
+//        pollWatch.stop();
         visitedCountTo++;
-        poll++;
+//        poll++;
         if (toEntryCanBeSkipped()) {
             return true;
         }
@@ -188,7 +185,10 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         return true;
     }
 
-    private void fillEdges(SPTEntry currEdge, PairingHeap prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
+//    static StopWatch pollWatch = new StopWatch(), addWatch = new StopWatch(), updateWatch = new StopWatch();
+//    static int counter = 0, poll = 0, update = 0, add = 0, fromMapSizeSum, toMapSizeSum, fromQueueSizeSum, toQueueSizeSum;
+
+    private void fillEdges(SPTEntry currEdge, GHPriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge, reverse))
@@ -204,18 +204,18 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             if (entry == null) {
                 entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
-                addWatch.start();
-                prioQueue.add(entry);
-                addWatch.stop();
-                add++;
+//                addWatch.start();
+                prioQueue.add(entry, entry.weight);
+//                addWatch.stop();
+//                add++;
             } else if (entry.getWeightOfVisitedPath() > weight) {
 //                updateWatch.start();
-                double old = entry.weight;
+                prioQueue.remove(entry, entry.weight);
 //                updateWatch.stop();
 //                update++;
                 updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
 //                updateWatch.start();
-                prioQueue.update(entry, old);
+                prioQueue.add(entry, entry.weight);
 //                updateWatch.stop();
             } else
                 continue;

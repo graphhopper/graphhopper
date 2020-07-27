@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.coll.PairingHeap;
+import com.graphhopper.coll.GHPriorityQueue;
 import com.graphhopper.routing.ch.NodeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
@@ -177,7 +177,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         return true;
     }
 
-    private void fillEdges(SPTEntry currEdge, PairingHeap prioQueue,
+    private void fillEdges(SPTEntry currEdge, GHPriorityQueue<SPTEntry> prioQueue,
                            IntObjectMap<SPTEntry> bestWeightMap, RoutingCHEdgeExplorer explorer, boolean reverse) {
         RoutingCHEdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
@@ -194,11 +194,11 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
             if (entry == null) {
                 entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
-                prioQueue.add(entry);
+                prioQueue.add(entry, entry.weight);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                double old = entry.weight;
+                prioQueue.remove(entry, entry.weight);
                 updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
-                prioQueue.update(entry, old);
+                prioQueue.add(entry, entry.weight);
             } else
                 continue;
 
