@@ -30,7 +30,8 @@ import java.util.Arrays;
  * i.e. its a Dijkstra search that allows re-using the shortest path tree for different searches with the same origin
  * node and uses large int/double arrays instead of hash maps to store the shortest path tree (higher memory consumption,
  * but faster query times -> better for CH preparation). Main reason we use this instead of {@link DijkstraOneToMany}
- * is that we can use this implementation with a {@link PrepareCHGraph}.
+ * is that we can use this implementation with a {@link PrepareCHGraph} and we do not need to find the actual shortest
+ * path but just want to check if there is a witness path.
  */
 public class NodeBasedWitnessPathSearcher {
     private static final int EMPTY_PARENT = -1;
@@ -84,6 +85,13 @@ public class NodeBasedWitnessPathSearcher {
         return weights[endNode];
     }
 
+    /**
+     * Searches for a path from node `from` to node `to` and returns as soon as *any* path with weight < `maxWeight`
+     * is found. For better performance we stop the search as soon as such a path is found and we do not wait until
+     * we found the actual shortest path.
+     *
+     * @return `to` if a path is found, NOT_FOUND otherwise
+     */
     public int findEndNode(int from, int to) {
         if (weights.length < 2)
             return NOT_FOUND;
@@ -116,7 +124,10 @@ public class NodeBasedWitnessPathSearcher {
             if (heap.isEmpty() || isMaxVisitedNodesExceeded())
                 return NOT_FOUND;
 
-            currNode = heap.poll_element();
+            currNode = heap.peek_element();
+            if (currNode == to && weights[to] <= weightLimit)
+                return to;
+            heap.poll_element();
         }
 
         visitedNodes = 0;
@@ -131,6 +142,7 @@ public class NodeBasedWitnessPathSearcher {
 
         while (true) {
             visitedNodes++;
+            boolean foundWitnessPath = false;
             PrepareCHEdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
                 int adjNode = iter.getAdjNode();
@@ -149,14 +161,22 @@ public class NodeBasedWitnessPathSearcher {
                     heap.insert_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
+                    if (adjNode == to && tmpWeight <= weightLimit)
+                        foundWitnessPath = true;
                 } else if (w > tmpWeight) {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
                     heap.update_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
+                    if (adjNode == to && tmpWeight <= weightLimit)
+                        foundWitnessPath = true;
                 }
             }
+            // we do not need to wait until we found the shortest path to `to`, but finding any witness path is good
+            // enough
+            if (foundWitnessPath)
+                return to;
 
             if (heap.isEmpty() || isMaxVisitedNodesExceeded() || isWeightLimitExceeded())
                 return NOT_FOUND;

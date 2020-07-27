@@ -100,7 +100,7 @@ public class NodeBasedNodeContractorTest {
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
 
         algo.clear();
-        algo.setMaxVisitedNodes(1);
+        algo.setMaxVisitedNodes(0);
         nodeEntry = algo.findEndNode(4, 2);
         assertEquals(-1, nodeEntry);
     }
