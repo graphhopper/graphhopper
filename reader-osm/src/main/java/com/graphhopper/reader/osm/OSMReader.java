@@ -479,7 +479,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             return Double.NaN;
     }
 
-    protected void processNode(ReaderNode node) {
+    public void processNode(ReaderNode node) {
         if (isInBounds(node)) {
             addNode(node);
 
