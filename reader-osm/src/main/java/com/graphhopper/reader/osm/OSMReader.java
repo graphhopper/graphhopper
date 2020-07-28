@@ -311,7 +311,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     /**
      * Process properties, encode flags and create edges for the way.
      */
-    void processWay(ReaderWay way) {
+    public void processWay(ReaderWay way) {
         if (way.getNodes().size() < 2)
             return;
 
@@ -479,7 +479,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             return Double.NaN;
     }
 
-    private void processNode(ReaderNode node) {
+    protected void processNode(ReaderNode node) {
         if (isInBounds(node)) {
             addNode(node);
 
