@@ -239,18 +239,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
     
     /**
-     * @return <i>true</i> if the given speed is not {@link Double#NaN} or negative
+     * @return <i>true</i> if the given speed is not {@link Double#NaN}
      */
     protected boolean isValidSpeed(double speed) {
-        return !Double.isNaN(speed) && speed >= 0;
-    }
-
-    /**
-     * @return <i>true</i> if the given speed is not {@link Double#NaN} and is
-     *         bigger than zero
-     */
-    protected boolean isPositiveSpeed(double speed) {
-        return !Double.isNaN(speed) && speed > 0;
+        return !Double.isNaN(speed);
     }
 
     @Override

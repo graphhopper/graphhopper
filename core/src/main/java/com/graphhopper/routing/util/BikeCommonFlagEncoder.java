@@ -290,7 +290,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected double applyMaxSpeed(ReaderWay way, double speed) {
         double maxSpeed = getMaxSpeed(way);
         // We strictly obey speed limits, see #600
-        if (isPositiveSpeed(maxSpeed) && speed > maxSpeed) {
+        if (isValidSpeed(maxSpeed) && speed > maxSpeed) {
             return maxSpeed;
         }
         if (isValidSpeed(speed) && speed > maxPossibleSpeed)
@@ -452,14 +452,14 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
 
         double maxSpeed = getMaxSpeed(way);
-        if (preferHighwayTags.contains(highway) || (isPositiveSpeed(maxSpeed) && maxSpeed <= 30)) {
+        if (preferHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 30)) {
             if (!isValidSpeed(maxSpeed) || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, PREFER.getValue());
                 if (way.hasTag("tunnel", intendedValues))
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
         } else if (avoidHighwayTags.contains(highway)
-                || isPositiveSpeed(maxSpeed) && maxSpeed >= avoidSpeedLimit && !"track".equals(highway)) {
+                || isValidSpeed(maxSpeed) && maxSpeed >= avoidSpeedLimit && !"track".equals(highway)) {
             weightToPrioMap.put(50d, REACH_DEST.getValue());
             if (way.hasTag("tunnel", intendedValues))
                 weightToPrioMap.put(50d, AVOID_AT_ALL_COSTS.getValue());

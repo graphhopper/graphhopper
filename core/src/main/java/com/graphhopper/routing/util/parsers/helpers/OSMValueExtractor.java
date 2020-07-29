@@ -163,36 +163,38 @@ public class OSMValueExtractor {
         if (str.equals("walk") || str.endsWith(":living_street"))
             return 6;
     
-        try {
-            int val;
-            // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
-            int mpInteger = str.indexOf("mp");
-            if (mpInteger > 0) {
-                str = str.substring(0, mpInteger).trim();
-                val = Integer.parseInt(str);
-                return val * DistanceCalcEarth.KM_MILE;
-            }
-    
-            int knotInteger = str.indexOf("knots");
-            if (knotInteger > 0) {
-                str = str.substring(0, knotInteger).trim();
-                val = Integer.parseInt(str);
-                return val * 1.852;
-            }
-    
-            int kmInteger = str.indexOf("km");
+        int mpInteger = str.indexOf("mp");
+        int knotInteger = str.indexOf("knots");
+        int kmInteger = str.indexOf("km");
+        int kphInteger = str.indexOf("kph");
+
+        double factor;
+        if (mpInteger > 0) {
+            str = str.substring(0, mpInteger).trim();
+            factor = DistanceCalcEarth.KM_MILE;
+        } else if (knotInteger > 0) {
+            str = str.substring(0, knotInteger).trim();
+            factor = 1.852; // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
+        } else {
             if (kmInteger > 0) {
                 str = str.substring(0, kmInteger).trim();
-            } else {
-                kmInteger = str.indexOf("kph");
-                if (kmInteger > 0) {
-                    str = str.substring(0, kmInteger).trim();
-                }
+            } else if (kphInteger > 0) {
+                str = str.substring(0, kphInteger).trim();
             }
-    
-            return Integer.parseInt(str);
+            factor = 1;
+        }
+            
+        double value;
+        try {
+            value = Integer.parseInt(str) * factor;
         } catch (Exception ex) {
             return Double.NaN;
         }
+        
+        if (value <= 0) {
+            return Double.NaN;
+        }
+        
+        return value;
     }
 }

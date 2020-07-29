@@ -63,40 +63,32 @@ public class OSMMaxSpeedParser implements TagParser {
         }
 
         double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
-        if (!isValidSpeed(fwdSpeed) && isPositiveSpeed(maxSpeed))
+        if (!isValidSpeed(fwdSpeed) && isValidSpeed(maxSpeed))
             fwdSpeed = maxSpeed;
         double maxPossibleSpeed = MaxSpeed.UNLIMITED_SIGN_SPEED;
         if (isValidSpeed(fwdSpeed) && fwdSpeed > maxPossibleSpeed)
             fwdSpeed = maxPossibleSpeed;
 
         double bwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:backward"));
-        if (!isValidSpeed(bwdSpeed) && isPositiveSpeed(maxSpeed))
+        if (!isValidSpeed(bwdSpeed) && isValidSpeed(maxSpeed))
             bwdSpeed = maxSpeed;
         if (isValidSpeed(bwdSpeed) && bwdSpeed > maxPossibleSpeed)
             bwdSpeed = maxPossibleSpeed;
 
-        if (!isPositiveSpeed(fwdSpeed))
+        if (!isValidSpeed(fwdSpeed))
             fwdSpeed = UNSET_SPEED;
         carMaxSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
 
-        if (!isPositiveSpeed(bwdSpeed))
+        if (!isValidSpeed(bwdSpeed))
             bwdSpeed = UNSET_SPEED;
         carMaxSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
         return edgeFlags;
     }
     
     /**
-     * @return <i>true</i> if the given speed is not {@link Double#NaN} or negative
+     * @return <i>true</i> if the given speed is not {@link Double#NaN}
      */
     private boolean isValidSpeed(double speed) {
-        return !Double.isNaN(speed) && speed >= 0;
-    }
-    
-    /**
-     * @return <i>true</i> if the given speed is not {@link Double#NaN} and is
-     *         bigger than zero
-     */
-    private boolean isPositiveSpeed(double speed) {
-        return !Double.isNaN(speed) && speed > 0;
+        return !Double.isNaN(speed);
     }
 }

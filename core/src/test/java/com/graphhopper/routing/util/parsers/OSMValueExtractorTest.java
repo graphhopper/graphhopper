@@ -103,5 +103,7 @@ public class OSMValueExtractorTest {
     @Test
     public void stringToKmhNaN() {
         assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh(null)));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("0")));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("-20")));
     }
 }
