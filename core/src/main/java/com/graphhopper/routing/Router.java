@@ -132,80 +132,11 @@ public class Router {
                     build();
 
             if (ROUND_TRIP.equalsIgnoreCase(request.getAlgorithm())) {
-                // ROUND TRIP
-                StopWatch sw = new StopWatch().start();
-                double startHeading = request.getHeadings().isEmpty() ? Double.NaN : request.getHeadings().get(0);
-                RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
-                List<QueryResult> qResults = RoundTripRouting.lookup(request.getPoints(), weighting, locationIndex, params);
-                ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-
-                // use A* for round trips
-                AlgorithmOptions roundTripAlgoOpts = AlgorithmOptions
-                        .start(algoOpts)
-                        .algorithm(Parameters.Algorithms.ASTAR_BI)
-                        .build();
-                roundTripAlgoOpts.getHints().putObject(Parameters.Algorithms.AStarBi.EPSILON, 2);
-                QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
-                FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(queryGraph, profile, roundTripAlgoOpts, disableLM);
-
-                RoundTripRouting.Result result = RoundTripRouting.calcPaths(qResults, pathCalculator);
-                // we merge the different legs of the roundtrip into one response path
-                ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
-                ghRsp.add(responsePath);
-                ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
-                ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
-                return result.paths;
+                return routeRoundTrip(request, ghRsp, algoOpts, weighting, profile, disableLM);
             } else if (ALT_ROUTE.equalsIgnoreCase(request.getAlgorithm())) {
-                // ALTERNATIVE ROUTES
-                if (request.getPoints().size() > 2)
-                    throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + request.getPoints().size() + " points");
-                StopWatch sw = new StopWatch().start();
-                List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
-                ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-                QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
-                PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
-
-                if (passThrough)
-                    throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
-                if (!request.getCurbsides().isEmpty())
-                    throw new IllegalArgumentException("Alternative paths do not support the " + CURBSIDE + " parameter yet");
-
-                ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
-                if (result.paths.isEmpty())
-                    throw new RuntimeException("Empty paths for alternative route calculation not expected");
-
-                // each path represents a different alternative and we do the path merging for each of them
-                PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
-                for (Path path : result.paths) {
-                    ResponsePath responsePath = new ResponsePath();
-                    responsePath.setWaypoints(getWaypoints(qResults));
-                    pathMerger.doWork(responsePath, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
-                    ghRsp.add(responsePath);
-                }
-                ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
-                ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
-                return result.paths;
+                return routeAlt(request, ghRsp, algoOpts, weighting, profile, passThrough, forceCurbsides, disableCH, disableLM);
             } else {
-                // STANDARD/VIA ROUTING
-                StopWatch sw = new StopWatch().start();
-                List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
-                ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-                // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
-                // the (possibly implementation specific) query graph used by PathCalculator
-                QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
-                PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
-                ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
-
-                if (request.getPoints().size() != result.paths.size() + 1)
-                    throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
-
-                // here each path represents one leg of the via-route and we merge them all together into one response path
-                ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
-                responsePath.addDebugInfo(result.debug);
-                ghRsp.add(responsePath);
-                ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
-                ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
-                return result.paths;
+                return routeVia(request, ghRsp, algoOpts, weighting, profile, passThrough, forceCurbsides, disableCH, disableLM);
             }
         } catch (MultiplePointsNotFoundException ex) {
             for (IntCursor p : ex.getPointsNotFound()) {
@@ -216,6 +147,84 @@ public class Router {
             ghRsp.addError(ex);
             return emptyList();
         }
+    }
+
+    protected List<Path> routeRoundTrip(GHRequest request, GHResponse ghRsp, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean disableLM) {
+        StopWatch sw = new StopWatch().start();
+        double startHeading = request.getHeadings().isEmpty() ? Double.NaN : request.getHeadings().get(0);
+        RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
+        List<QueryResult> qResults = RoundTripRouting.lookup(request.getPoints(), weighting, locationIndex, params);
+        ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+
+        // use A* for round trips
+        AlgorithmOptions roundTripAlgoOpts = AlgorithmOptions
+                .start(algoOpts)
+                .algorithm(Parameters.Algorithms.ASTAR_BI)
+                .build();
+        roundTripAlgoOpts.getHints().putObject(Parameters.Algorithms.AStarBi.EPSILON, 2);
+        QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
+        FlexiblePathCalculator pathCalculator = createFlexiblePathCalculator(queryGraph, profile, roundTripAlgoOpts, disableLM);
+
+        RoundTripRouting.Result result = RoundTripRouting.calcPaths(qResults, pathCalculator);
+        // we merge the different legs of the roundtrip into one response path
+        ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
+        ghRsp.add(responsePath);
+        ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
+        ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
+        return result.paths;
+    }
+
+    protected List<Path> routeAlt(GHRequest request, GHResponse ghRsp, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean passThrough, boolean forceCurbsides, boolean disableCH, boolean disableLM) {
+        if (request.getPoints().size() > 2)
+            throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + request.getPoints().size() + " points");
+        StopWatch sw = new StopWatch().start();
+        List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
+        ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+        QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
+        PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
+
+        if (passThrough)
+            throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
+        if (!request.getCurbsides().isEmpty())
+            throw new IllegalArgumentException("Alternative paths do not support the " + CURBSIDE + " parameter yet");
+
+        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+        if (result.paths.isEmpty())
+            throw new RuntimeException("Empty paths for alternative route calculation not expected");
+
+        // each path represents a different alternative and we do the path merging for each of them
+        PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
+        for (Path path : result.paths) {
+            ResponsePath responsePath = new ResponsePath();
+            responsePath.setWaypoints(getWaypoints(qResults));
+            pathMerger.doWork(responsePath, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
+            ghRsp.add(responsePath);
+        }
+        ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
+        ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
+        return result.paths;
+    }
+
+    protected List<Path> routeVia(GHRequest request, GHResponse ghRsp, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean passThrough, boolean forceCurbsides, boolean disableCH, boolean disableLM) {
+        StopWatch sw = new StopWatch().start();
+        List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
+        ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+        // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
+        // the (possibly implementation specific) query graph used by PathCalculator
+        QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
+        PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
+        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+
+        if (request.getPoints().size() != result.paths.size() + 1)
+            throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
+
+        // here each path represents one leg of the via-route and we merge them all together into one response path
+        ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
+        responsePath.addDebugInfo(result.debug);
+        ghRsp.add(responsePath);
+        ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
+        ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
+        return result.paths;
     }
 
     private Weighting createWeighting(Profile profile, PMap requestHints, List<GHPoint> points, boolean forCH) {
