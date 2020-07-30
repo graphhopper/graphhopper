@@ -970,8 +970,15 @@ public class GraphHopper implements GraphHopperAPI {
             float tunnel = sw.stop().getSeconds();
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.BRIDGE).execute();
+            float bridge = sw.stop().getSeconds();
+            float ferry = -1;
+            if (eleProvider instanceof SkadiProvider) {
+                sw = new StopWatch().start();
+                new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
+                ferry = sw.stop().getSeconds();
+            }
             ghStorage.getProperties().put(INTERPOLATION_KEY, true);
-            logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, " + "tunnel interpolation " + (int) tunnel + "s");
+            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) ferry);
         }
     }
 
