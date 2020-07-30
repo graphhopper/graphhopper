@@ -414,7 +414,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         }
     }
 
-    public void processRelation(ReaderRelation relation) {
+    protected void processRelation(ReaderRelation relation) {
         if (tcs != null && relation.hasTag("type", "restriction"))
             storeTurnRelation(createTurnRelations(relation));
     }
