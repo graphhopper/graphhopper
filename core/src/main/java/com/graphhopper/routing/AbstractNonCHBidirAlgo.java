@@ -177,10 +177,13 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
-            } else if (entry.getWeightOfVisitedPath() > weight) {
+            } else if (entry.getWeightOfVisitedPath() > weight + 1e-11) {
                 boolean removed = prioQueue.remove(entry);
-                if (!removed)
-                    throw new IllegalArgumentException("Cannot find element with object " + entry + " in queue: " + prioQueue.toString());
+                if (!removed) {
+                    // 114.44680963350199 vs 114.44680963350197 => delta==1.4e-14
+                    System.out.println(entry.getWeightOfVisitedPath() + " vs " + weight);
+                    throw new IllegalArgumentException("Cannot find element with object " + entry + " for " + traversalId + " in queue: " + prioQueue.toString());
+                }
                 updateEntry(entry, iter, weight, currEdge, reverse);
                 prioQueue.add(entry);
             } else
