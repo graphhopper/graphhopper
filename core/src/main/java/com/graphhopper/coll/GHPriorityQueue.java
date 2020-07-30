@@ -4,9 +4,9 @@ package com.graphhopper.coll;
  * A priority queue that uses double for comparison (and not Comparable or Comparator). A ~20% faster poll leads to 10% faster A*.
  */
 public class GHPriorityQueue<T> {
-    double[] priorities;
-    Object[] objects;
-    int size;
+    private double[] priorities;
+    private Object[] objects;
+    private int size;
 
     public GHPriorityQueue(int capacity) {
         int cap = Math.max(capacity, 64);
