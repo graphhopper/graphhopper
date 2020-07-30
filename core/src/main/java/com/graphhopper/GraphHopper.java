@@ -973,6 +973,8 @@ public class GraphHopper implements GraphHopperAPI {
             float bridge = sw.stop().getSeconds();
             float ferry = -1;
             if (eleProvider instanceof SkadiProvider) {
+                // The SkadiProvider contains bathymetric data. For ferries this can result in bigger elevation changes
+                // See #2098 for mor information
                 sw = new StopWatch().start();
                 new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
                 ferry = sw.stop().getSeconds();
