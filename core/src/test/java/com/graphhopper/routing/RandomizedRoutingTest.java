@@ -228,7 +228,8 @@ public class RandomizedRoutingTest {
     @Test
     @Repeat(times = 5)
     public void randomGraph_withQueryGraph() {
-        final long seed = System.nanoTime();
+//        final long seed = System.nanoTime();
+        final long seed = 511035375346997L;
         final int numQueries = 50;
 
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be

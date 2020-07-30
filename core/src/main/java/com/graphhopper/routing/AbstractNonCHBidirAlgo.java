@@ -178,7 +178,9 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
+                boolean removed = prioQueue.remove(entry);
+                if (!removed)
+                    throw new IllegalArgumentException("Cannot find element with object " + entry + " in queue: " + prioQueue.toString());
                 updateEntry(entry, iter, weight, currEdge, reverse);
                 prioQueue.add(entry);
             } else
