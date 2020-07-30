@@ -31,8 +31,6 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import java.util.PriorityQueue;
-
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
 /**
@@ -131,11 +129,9 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     @Override
     boolean fillEdgesFrom() {
-        do {
-            if (pqOpenSetFrom.isEmpty())
-                return false;
-            currFrom = pqOpenSetFrom.poll();
-        } while (currFrom.deleted);
+        if (pqOpenSetFrom.isEmpty())
+            return false;
+        currFrom = pqOpenSetFrom.poll();
 
         visitedCountFrom++;
         if (fromEntryCanBeSkipped()) {
@@ -151,11 +147,9 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     @Override
     boolean fillEdgesTo() {
-        do {
-            if (pqOpenSetTo.isEmpty())
-                return false;
-            currTo = pqOpenSetTo.poll();
-        } while (currTo.deleted);
+        if (pqOpenSetTo.isEmpty())
+            return false;
+        currTo = pqOpenSetTo.poll();
 
         visitedCountTo++;
         if (toEntryCanBeSkipped()) {
@@ -187,9 +181,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry, entry.weight);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                entry.deleted = true;
-                entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
-                bestWeightMap.put(traversalId, entry);
+                prioQueue.remove(entry, entry.weight);
+                updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
                 prioQueue.add(entry, entry.weight);
             } else
                 continue;
