@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.util.EdgeIterator;
 
 import java.util.Collections;
 import java.util.List;
@@ -121,7 +122,7 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         if (!traversalMode.isEdgeBased()) {
             if (updateBestPath) {
                 bestWeightMapOther = bestWeightMapFrom;
-                updateBestPath(Double.POSITIVE_INFINITY, currFrom, -1, to, true);
+                updateBestPath(Double.POSITIVE_INFINITY, currFrom, EdgeIterator.NO_EDGE, to, true);
             }
         } else if (from == to && fromOutEdge == ANY_EDGE && toInEdge == ANY_EDGE) {
             // special handling if start and end are the same and no directions are restricted
@@ -169,7 +170,7 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
 
     abstract boolean fillEdgesTo();
 
-    protected void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
+    protected void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeIdForCH, int traversalId, boolean reverse) {
         assert traversalMode.isEdgeBased() != Double.isInfinite(edgeWeight);
         SPTEntry entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
