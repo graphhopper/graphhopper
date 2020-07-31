@@ -553,6 +553,8 @@ public class RoutingAlgorithmWithOSMTest {
         //   | ./bin/osmosis --read-xml enableDateParsing=no file=- --bounding-box top=-20.4 left=-54.6 bottom=-20.6 right=-54.5 --write-xml file=- 
         //   | bzip2 > campo-grande.extracted.osm.bz2
         List<OneRun> list = new ArrayList<>();
+
+        list.add(new OneRun(-20.4183,-54.5937, -20.4232,-54.5869, 1148, 19));
         list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25516, 271));
         list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18009, 237));
         runAlgo(testCollector, DIR + "/campo-grande.osm.gz", "target/campo-grande-gh", list,

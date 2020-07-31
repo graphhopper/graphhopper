@@ -25,10 +25,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 
 import java.util.PriorityQueue;
 
@@ -162,6 +159,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     }
 
     private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
+//        System.out.println("*" + reverse + " " + currEdge.adjNode + " (" + currEdge.edge + "), " + currEdge.getWeightOfVisitedPath() + ", "
+//                + (currEdge.edge < 0 ? "--" : graph.getEdgeIteratorState(currEdge.edge, currEdge.adjNode).fetchWayGeometry(FetchMode.ALL)) + ", count:" + GHUtility.count(edgeExplorer.setBaseNode(currEdge.adjNode)));
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge, reverse))
@@ -173,6 +172,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             }
             final int traversalId = traversalMode.createTraversalId(iter, reverse);
             SPTEntry entry = bestWeightMap.get(traversalId);
+//            System.out.println("\t" + reverse + " " + iter.getBaseNode() + "->" + iter.getAdjNode() + " (" + iter.getEdge() + ") "
+//                    + ", " + weight + ", " + (entry == null ? "--" : entry.getWeightOfVisitedPath()) + ", " + iter.fetchWayGeometry(FetchMode.ALL));
             if (entry == null) {
                 entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
@@ -180,9 +181,9 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             } else if (entry.getWeightOfVisitedPath() > weight + 1e-11) {
                 boolean removed = prioQueue.remove(entry);
                 if (!removed) {
-                    // 114.44680963350199 vs 114.44680963350197 => delta==1.4e-14
-                    System.out.println(entry.getWeightOfVisitedPath() + " vs " + weight);
-                    throw new IllegalArgumentException("Cannot find element with object " + entry + " for " + traversalId + " in queue: " + prioQueue.toString());
+                    continue;
+                    // System.out.println(entry.getWeightOfVisitedPath() + " vs " + weight);
+                    // throw new IllegalStateException("Cannot find element with object " + entry + " for " + traversalId + " in queue: " + prioQueue.toString());
                 }
                 updateEntry(entry, iter, weight, currEdge, reverse);
                 prioQueue.add(entry);
