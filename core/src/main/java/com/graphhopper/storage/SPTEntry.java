@@ -30,6 +30,7 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
     public int adjNode;
     public double weight;
     public SPTEntry parent;
+    public boolean deleted;
 
     public SPTEntry(int edgeId, int adjNode, double weight) {
         this.edge = edgeId;

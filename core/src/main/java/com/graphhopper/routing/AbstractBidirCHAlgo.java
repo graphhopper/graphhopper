@@ -143,10 +143,11 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     @Override
     boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty()) {
-            return false;
-        }
-        currFrom = pqOpenSetFrom.poll();
+        do {
+            if (pqOpenSetFrom.isEmpty())
+                return false;
+            currFrom = pqOpenSetFrom.poll();
+        } while (currFrom.deleted);
         visitedCountFrom++;
         if (fromEntryCanBeSkipped()) {
             return true;
@@ -161,10 +162,11 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     @Override
     boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty()) {
-            return false;
-        }
-        currTo = pqOpenSetTo.poll();
+        do {
+            if (pqOpenSetTo.isEmpty())
+                return false;
+            currTo = pqOpenSetTo.poll();
+        } while (currTo.deleted);
         visitedCountTo++;
         if (toEntryCanBeSkipped()) {
             return true;
@@ -195,9 +197,13 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry, entry.weight);
+
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
-                prioQueue.update(entry, entry.weight, false);
+                entry.deleted = true;
+                entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
+                bestWeightMap.put(traversalId, entry);
+                prioQueue.add(entry, entry.weight);
+
             } else
                 continue;
 
@@ -215,12 +221,6 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 ? graph.getTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : graph.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
         return edgeWeight + turnCosts;
-    }
-
-    protected void updateEntry(SPTEntry entry, RoutingCHEdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
-        entry.weight = weight;
-        entry.parent = parent;
     }
 
     protected boolean accept(RoutingCHEdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
