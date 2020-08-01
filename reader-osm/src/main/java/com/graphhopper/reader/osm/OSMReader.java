@@ -79,9 +79,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private boolean smoothElevation = false;
     private double longEdgeSamplingDistance = 0;
-    private final boolean exitOnlyPillarNodeException = true;
-    private final Map<String, EdgeExplorer> outExplorerMap = new HashMap<>();
-    private final Map<String, EdgeExplorer> inExplorerMap = new HashMap<>();
     protected long zeroCounter = 0;
     protected PillarInfo pillarInfo;
     private long locations;
@@ -655,8 +652,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             }
         } catch (RuntimeException ex) {
             LOGGER.error("Couldn't properly add edge with osm ids:" + osmNodeIds, ex);
-            if (exitOnlyPillarNodeException)
-                throw ex;
+            throw ex;
         }
         return newEdges;
     }
