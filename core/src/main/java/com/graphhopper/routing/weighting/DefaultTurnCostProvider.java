@@ -66,7 +66,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             tCost = uTurnCosts;
         } else {
             if (turnCostEnc != null)
-                tCost = turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
+                tCost = 0; // turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
         }
         return tCost;
     }
