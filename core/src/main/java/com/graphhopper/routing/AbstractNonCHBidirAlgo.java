@@ -26,7 +26,10 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
@@ -204,19 +207,13 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             if (entry == null) {
                 entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
-//                addWatch.start();
                 prioQueue.add(entry, entry.weight);
-//                addWatch.stop();
-//                add++;
+
             } else if (entry.getWeightOfVisitedPath() > weight) {
-//                updateWatch.start();
                 prioQueue.remove(entry, entry.weight);
-//                updateWatch.stop();
-//                update++;
                 updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
-//                updateWatch.start();
                 prioQueue.add(entry, entry.weight);
-//                updateWatch.stop();
+
             } else
                 continue;
 

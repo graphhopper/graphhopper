@@ -1,5 +1,7 @@
 package com.graphhopper.coll;
 
+import java.util.Arrays;
+
 /**
  * A priority queue that uses double for comparison (and not Comparable or Comparator). A ~20% faster poll leads to 10% faster A*.
  */
@@ -16,13 +18,7 @@ public class GHPriorityQueue<T> {
 
     public void add(T object, double priority) {
         grow(++size);
-
-        if (size > 1) {
-            upHeap(size - 1, object, priority);
-        } else {
-            objects[0] = object;
-            priorities[0] = priority;
-        }
+        upHeap(size - 1, object, priority);
     }
 
     private void grow(int capacity) {
@@ -55,6 +51,11 @@ public class GHPriorityQueue<T> {
         priorities[index] = priority;
     }
 
+    private void check() {
+        if (size < objects.length && objects[size] != null)
+            throw new IllegalStateException("Forgot to remove element. Possible memory leak");
+    }
+
     void downHeap(int index, Object object, double priority) {
         int half = size >>> 1;
         while (index < half) {
@@ -81,18 +82,23 @@ public class GHPriorityQueue<T> {
 
     public T poll() {
         if (this.size == 0)
-            throw new IllegalArgumentException("Cannot pop from empty queue");
+            throw new IllegalArgumentException("Cannot poll from empty queue");
 
         size--;
         Object oldObject = objects[0];
-        if (size != 0)
+        if (size != 0) {
             // pick the last / large enough element and swap entries until it heap property is satisfied
             downHeap(0, objects[size], priorities[size]);
-
+        }
+        objects[size] = null;
+        check();
         return (T) oldObject;
     }
 
-    public void remove(T object, double priority) {
+    /**
+     * This method removes the specified object based on its reference equality i.e. == is used.
+     */
+    public boolean remove(T object, double priority) {
         // TODO for large queues it could be beneficial to somehow use the priority and the heap property
         int index = -1;
         for (int i = 0; i < objects.length; i++) {
@@ -101,8 +107,9 @@ public class GHPriorityQueue<T> {
                 break;
             }
         }
+
         if (index < 0)
-            throw new IllegalArgumentException("Cannot find element with object " + object + " in queue");
+            return false;
 
         if (--size == index) {
             // last element => nothing to do
@@ -110,9 +117,13 @@ public class GHPriorityQueue<T> {
             Object swappedObject = objects[size];
             double movedPrio = priorities[size];
             downHeap(index, swappedObject, movedPrio);
+            // if it couldn't move down try to move it up
             if (objects[index] == swappedObject)
                 upHeap(index, swappedObject, movedPrio);
         }
+        objects[size] = null;
+        check();
+        return true;
     }
 
     public T peek() {
@@ -129,5 +140,10 @@ public class GHPriorityQueue<T> {
 
     public int size() {
         return size;
+    }
+
+    @Override
+    public String toString() {
+        return "size=" + size + ", objects=" + Arrays.toString(Arrays.copyOf(objects, size));
     }
 }
