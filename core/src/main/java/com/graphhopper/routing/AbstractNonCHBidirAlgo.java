@@ -164,7 +164,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
-            if (!accept(iter, currEdge, reverse))
+            if (!accept(iter, currEdge.edge))
                 continue;
 
             final double weight = calcWeight(iter, currEdge, reverse);
@@ -200,10 +200,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         entry.parent = parent;
     }
 
-    protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        return accept(edge, getIncomingEdge(currEdge));
-    }
-
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
         // todo: for #1835 move access flag checks into weighting
         final boolean access = reverse ? inEdgeFilter.accept(iter) : outEdgeFilter.accept(iter);
@@ -212,12 +208,12 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         }
         // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
         // turn weights, see discussion in #1960
-        return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
+        return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
     }
 
     @Override
     protected double getInEdgeWeight(SPTEntry entry) {
-        return weighting.calcEdgeWeight(graph.getEdgeIteratorState(getIncomingEdge(entry), entry.adjNode), false);
+        return weighting.calcEdgeWeight(graph.getEdgeIteratorState(entry.edge, entry.adjNode), false);
     }
 
     @Override
