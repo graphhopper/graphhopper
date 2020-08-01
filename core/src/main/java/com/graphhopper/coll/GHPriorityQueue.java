@@ -3,7 +3,9 @@ package com.graphhopper.coll;
 import java.util.Arrays;
 
 /**
- * A priority queue that uses double for comparison (and not Comparable or Comparator). A ~20% faster poll leads to 10% faster A*.
+ * A priority queue that uses a double array for comparison and not via Comparable where we need to jump to the
+ * object (using the reference in the array) before every comparison. Although there is an overhead due to two
+ * arrays this leads to a ~20% faster poll which leads to ~10% faster A*.
  */
 public class GHPriorityQueue<T> {
     private double[] priorities;
@@ -96,10 +98,46 @@ public class GHPriorityQueue<T> {
     }
 
     /**
+     * This method is slightly more efficient compared to priorityQueue.remove(value) and
+     * priorityQueue.add(value, newPriority) but does the same.
+     *
+     * @return true if old entry was found
+     * @param skipInsertIfNotFound the default behaviour should be true, but sometimes it is necessary to always add
+     *                             the newPriority even if values wasn't found. See #2104
+     */
+    public boolean update(T value, double newPriority, boolean skipInsertIfNotFound) {
+        // TODO for large queues it could be beneficial to somehow use the priority and the heap property
+        int index = -1;
+        for (int i = 0; i < objects.length; i++) {
+            if (objects[i] == value) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index < 0) {
+            if (!skipInsertIfNotFound)
+                add(value, newPriority);
+            return false;
+        }
+
+        if (index - 1 == size) {
+            // now we can just insert and let the last element being overwritten from upHeap
+            upHeap(index, value, newPriority);
+        } else {
+            downHeap(index, value, newPriority);
+            // if it couldn't move down try to move it up
+            if (objects[index] == value)
+                upHeap(index, value, newPriority);
+        }
+
+        return true;
+    }
+
+    /**
      * This method removes the specified object based on its reference equality i.e. == is used.
      */
-    public boolean remove(T object, double priority) {
-        // TODO for large queues it could be beneficial to somehow use the priority and the heap property
+    public boolean remove(T object) {
         int index = -1;
         for (int i = 0; i < objects.length; i++) {
             if (objects[i] == object) {

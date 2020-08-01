@@ -3,7 +3,10 @@ package com.graphhopper.coll;
 import com.graphhopper.storage.SPTEntry;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -111,7 +114,7 @@ class GHPriorityQueueTest {
         for (int i = 0; i < N / 20; i++) {
             int removeAtIndex = rand.nextInt(list.size());
             SPTEntry value = list.remove(removeAtIndex);
-            assertTrue(queue.remove(value, value.weight), "seed : " + seed);
+            assertTrue(queue.remove(value), "seed: " + seed);
             assertEquals(queue.size(), list.size(), "seed: " + seed);
         }
 
@@ -124,42 +127,35 @@ class GHPriorityQueueTest {
     }
 
     @Test
-    public void duplicateObjects() {
-        PriorityQueue<SPTEntry> entry = new PriorityQueue<>();
+    public void testAddAndUpdateAndPoll() {
+        int N = 2000;
+        GHPriorityQueue<SPTEntry> queue = new GHPriorityQueue<>(10);
+        List<SPTEntry> list = new ArrayList<>();
+        long seed = System.currentTimeMillis();
+        Random rand = new Random(seed);
+        for (int i = 0; i < N; i++) {
+            long value = rand.nextInt();
+            SPTEntry entry = new SPTEntry(i, value);
+            queue.add(entry, value);
+            list.add(entry);
+        }
 
+        for (int i = 0; i < N / 20; i++) {
+            int updateAtIndex = rand.nextInt(list.size());
+            SPTEntry value = list.get(updateAtIndex);
+            double newPriority = rand.nextInt();
+            value.weight = newPriority;
+            assertTrue(queue.update(value, newPriority, true), "seed: " + seed);
+            assertEquals(list.size(), queue.size(), "seed: " + seed);
+        }
+        Collections.sort(list);
 
+        int counter = 0;
+        while (!queue.isEmpty()) {
+            SPTEntry value = queue.poll();
+            assertEquals(list.get(counter), value, "seed: " + seed);
+            counter++;
+        }
     }
-
-    // TODO NOW
-//    @Test
-//    public void testAddAndUpdateAndPoll() {
-//        int N = 2000;
-//        GHPriorityQueue queue = new GHPriorityQueue(10, N, Long.MAX_VALUE);
-//        List<Long> list = new ArrayList<>();
-//        long seed = System.currentTimeMillis();
-//        Random rand = new Random(seed);
-//        for (int i = 0; i < N; i++) {
-//            long value = rand.nextInt();
-//            queue.add(value);
-//            list.add(value);
-//        }
-//        Collections.sort(list);
-//        for (int i = 0; i < N / 20; i++) {
-//            int removeAtIndex = rand.nextInt(list.size());
-//            long value = list.remove(removeAtIndex);
-//            long newElement = rand.nextInt();
-//            list.add(newElement);
-//            assertTrue(queue.update(value, newElement), "seed : " + seed);
-//            assertEquals(queue.size(), list.size(), "seed: " + seed);
-//        }
-//        Collections.sort(list);
-//
-//        int counter = 0;
-//        while (!queue.isEmpty()) {
-//            long value = queue.pop();
-//            assertEquals(list.get(counter), value, "seed: " + seed);
-//            counter++;
-//        }
-//    }
 
 }

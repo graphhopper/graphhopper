@@ -196,9 +196,8 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry, entry.weight);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry, entry.weight);
                 updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
-                prioQueue.add(entry, entry.weight);
+                prioQueue.update(entry, entry.weight, false);
             } else
                 continue;
 

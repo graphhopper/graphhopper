@@ -210,9 +210,9 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 prioQueue.add(entry, entry.weight);
 
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry, entry.weight);
+                // use same entry object to avoid update in bestWeightMap
                 updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
-                prioQueue.add(entry, entry.weight);
+                prioQueue.update(entry, entry.weight, false);
 
             } else
                 continue;
