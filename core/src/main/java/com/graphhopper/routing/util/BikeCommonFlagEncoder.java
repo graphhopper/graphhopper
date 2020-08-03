@@ -172,6 +172,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         avoidHighwayTags.add("motorway");
         avoidHighwayTags.add("motorway_link");
 
+        setHighwaySpeed("bridleway", 6);
+        avoidHighwayTags.add("bridleway");
+
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
         routeMap.put(REGIONAL, VERY_NICE.getValue());
@@ -249,7 +252,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             return EncodingManager.Access.WAY;
 
         // accept only if explicitly tagged for bike usage
-        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue))
+        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue) || "bridleway".equals(highwayValue))
             return EncodingManager.Access.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
