@@ -267,7 +267,7 @@ public class Router {
         return new CHPathCalculator(new CHRoutingAlgorithmFactory(chGraph, queryGraph), opts);
     }
 
-    private FlexiblePathCalculator createFlexiblePathCalculator(QueryGraph queryGraph, Profile profile, AlgorithmOptions algoOpts, boolean disableLM) {
+    protected FlexiblePathCalculator createFlexiblePathCalculator(QueryGraph queryGraph, Profile profile, AlgorithmOptions algoOpts, boolean disableLM) {
         RoutingAlgorithmFactory algorithmFactory;
         // for now do not allow mixing CH&LM #1082,#1889
         if (lmEnabled && !disableLM) {
@@ -304,7 +304,7 @@ public class Router {
         return pathMerger;
     }
 
-    private ResponsePath concatenatePaths(GHRequest request, Weighting weighting, QueryGraph queryGraph, List<Path> paths, PointList waypoints) {
+    protected ResponsePath concatenatePaths(GHRequest request, Weighting weighting, QueryGraph queryGraph, List<Path> paths, PointList waypoints) {
         ResponsePath responsePath = new ResponsePath();
         responsePath.setWaypoints(waypoints);
         PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
