@@ -66,15 +66,6 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
         return entry;
     }
 
-    @Override
-    protected void updateEntry(SPTEntry entry, int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge;
-        ((AStarCHEntry) entry).incEdge = incEdge;
-        entry.weight = getHeapWeight(adjNode, reverse, weight);
-        ((AStarCHEntry) entry).weightOfVisitedPath = weight;
-        entry.parent = parent;
-    }
-
     public WeightApproximator getApproximation() {
         return weightApprox.getApproximation();
     }
