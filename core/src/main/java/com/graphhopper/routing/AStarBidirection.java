@@ -93,13 +93,6 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo {
         return entry;
     }
 
-    @Override
-    protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
-        // TODO performance: check if the node is already existent in the opposite direction
-        // then we could avoid the approximation as we already know the exact complete path!
-        return super.calcWeight(iter, currEdge, reverse);
-    }
-
     public WeightApproximator getApproximation() {
         return weightApprox.getApproximation();
     }
