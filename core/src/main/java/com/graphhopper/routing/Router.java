@@ -167,7 +167,7 @@ public class Router {
 
         RoundTripRouting.Result result = RoundTripRouting.calcPaths(qResults, pathCalculator);
         // we merge the different legs of the roundtrip into one response path
-        ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
+        ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, qResults);
         ghRsp.add(responsePath);
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
@@ -219,7 +219,7 @@ public class Router {
             throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
 
         // here each path represents one leg of the via-route and we merge them all together into one response path
-        ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
+        ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, qResults);
         responsePath.addDebugInfo(result.debug);
         ghRsp.add(responsePath);
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
@@ -304,9 +304,9 @@ public class Router {
         return pathMerger;
     }
 
-    protected ResponsePath concatenatePaths(GHRequest request, Weighting weighting, QueryGraph queryGraph, List<Path> paths, PointList waypoints) {
+    protected ResponsePath concatenatePaths(GHRequest request, Weighting weighting, QueryGraph queryGraph, List<Path> paths, List<QueryResult> queryResults) {
         ResponsePath responsePath = new ResponsePath();
-        responsePath.setWaypoints(waypoints);
+        responsePath.setWaypoints(getWaypoints(queryResults));
         PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
         pathMerger.doWork(responsePath, paths, encodingManager, translationMap.getWithFallBack(request.getLocale()));
         return responsePath;
