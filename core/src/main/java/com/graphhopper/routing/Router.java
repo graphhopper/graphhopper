@@ -195,9 +195,8 @@ public class Router {
         // each path represents a different alternative and we do the path merging for each of them
         PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
         for (Path path : result.paths) {
-            ResponsePath responsePath = new ResponsePath();
-            responsePath.setWaypoints(getWaypoints(qResults));
-            pathMerger.doWork(responsePath, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
+            PointList waypoints = getWaypoints(qResults);
+            ResponsePath responsePath = pathMerger.doWork(waypoints, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
             ghRsp.add(responsePath);
         }
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
@@ -305,11 +304,8 @@ public class Router {
     }
 
     private ResponsePath concatenatePaths(GHRequest request, Weighting weighting, QueryGraph queryGraph, List<Path> paths, PointList waypoints) {
-        ResponsePath responsePath = new ResponsePath();
-        responsePath.setWaypoints(waypoints);
         PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
-        pathMerger.doWork(responsePath, paths, encodingManager, translationMap.getWithFallBack(request.getLocale()));
-        return responsePath;
+        return pathMerger.doWork(waypoints, paths, encodingManager, translationMap.getWithFallBack(request.getLocale()));
     }
 
     private PointList getWaypoints(List<QueryResult> queryResults) {
