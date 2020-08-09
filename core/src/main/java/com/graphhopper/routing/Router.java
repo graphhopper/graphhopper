@@ -51,7 +51,6 @@ import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
 import static com.graphhopper.util.Parameters.Routing.*;
-import static java.util.Collections.emptyList;
 
 public class Router {
     private final GraphHopperStorage ghStorage;
@@ -92,9 +91,7 @@ public class Router {
         this.lmEnabled = !landmarks.isEmpty();
     }
 
-    public List<Path> route(GHRequest request, GHResponse ghRsp) {
-        // todo: this method should just take a request and return a response, there should be no need to pass in a
-        // response object.
+    public GHResponse route(GHRequest request) {
         try {
             validateRequest(request);
             final boolean disableCH = getDisableCH(request.getHints());
@@ -112,7 +109,6 @@ public class Router {
                 throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, you need to use a profile that" +
                         " supports turn costs. Currently the following profiles that support turn costs are available: " + getTurnCostProfiles());
             }
-            ghRsp.addDebugInfo("traversal-mode:" + traversalMode.toString());
             final boolean passThrough = getPassThrough(request.getHints());
             final boolean forceCurbsides = request.getHints().getBool(FORCE_CURBSIDE, true);
             int maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
@@ -132,24 +128,27 @@ public class Router {
                     build();
 
             if (ROUND_TRIP.equalsIgnoreCase(request.getAlgorithm())) {
-                return routeRoundTrip(request, ghRsp, algoOpts, weighting, profile, disableLM);
+                return routeRoundTrip(request, algoOpts, weighting, profile, disableLM);
             } else if (ALT_ROUTE.equalsIgnoreCase(request.getAlgorithm())) {
-                return routeAlt(request, ghRsp, algoOpts, weighting, profile, passThrough, forceCurbsides, disableCH, disableLM);
+                return routeAlt(request, algoOpts, weighting, profile, passThrough, forceCurbsides, disableCH, disableLM);
             } else {
-                return routeVia(request, ghRsp, algoOpts, weighting, profile, passThrough, forceCurbsides, disableCH, disableLM);
+                return routeVia(request, algoOpts, weighting, profile, passThrough, forceCurbsides, disableCH, disableLM);
             }
         } catch (MultiplePointsNotFoundException ex) {
+            GHResponse ghRsp = new GHResponse();
             for (IntCursor p : ex.getPointsNotFound()) {
                 ghRsp.addError(new PointNotFoundException("Cannot find point " + p.value + ": " + request.getPoints().get(p.index), p.value));
             }
-            return emptyList();
+            return ghRsp;
         } catch (IllegalArgumentException ex) {
+            GHResponse ghRsp = new GHResponse();
             ghRsp.addError(ex);
-            return emptyList();
+            return ghRsp;
         }
     }
 
-    protected List<Path> routeRoundTrip(GHRequest request, GHResponse ghRsp, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean disableLM) {
+    protected GHResponse routeRoundTrip(GHRequest request, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean disableLM) {
+        GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
         double startHeading = request.getHeadings().isEmpty() ? Double.NaN : request.getHeadings().get(0);
         RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
@@ -171,12 +170,13 @@ public class Router {
         ghRsp.add(responsePath);
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
-        return result.paths;
+        return ghRsp;
     }
 
-    protected List<Path> routeAlt(GHRequest request, GHResponse ghRsp, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean passThrough, boolean forceCurbsides, boolean disableCH, boolean disableLM) {
+    protected GHResponse routeAlt(GHRequest request, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean passThrough, boolean forceCurbsides, boolean disableCH, boolean disableLM) {
         if (request.getPoints().size() > 2)
             throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + request.getPoints().size() + " points");
+        GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
         List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
@@ -201,10 +201,11 @@ public class Router {
         }
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
-        return result.paths;
+        return ghRsp;
     }
 
-    protected List<Path> routeVia(GHRequest request, GHResponse ghRsp, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean passThrough, boolean forceCurbsides, boolean disableCH, boolean disableLM) {
+    protected GHResponse routeVia(GHRequest request, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean passThrough, boolean forceCurbsides, boolean disableCH, boolean disableLM) {
+        GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
         List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
@@ -223,7 +224,7 @@ public class Router {
         ghRsp.add(responsePath);
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
-        return result.paths;
+        return ghRsp;
     }
 
     private Weighting createWeighting(Profile profile, PMap requestHints, List<GHPoint> points, boolean forCH) {
