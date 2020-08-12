@@ -21,6 +21,7 @@ package com.graphhopper;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.PtRouter;
+import com.graphhopper.gtfs.PtRouterImpl;
 import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -42,7 +43,7 @@ public class RealtimeIT {
 
     private static final String GRAPH_LOC = "target/RealtimeIT";
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static PtRouter.Factory graphHopperFactory;
+    private static PtRouterImpl.Factory graphHopperFactory;
     private static GraphHopperGtfs graphHopperGtfs;
 
     @BeforeClass
@@ -60,7 +61,7 @@ public class RealtimeIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        graphHopperFactory = PtRouter.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
+        graphHopperFactory = PtRouterImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
     }
 
     @AfterClass

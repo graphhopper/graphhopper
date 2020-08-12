@@ -34,6 +34,7 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtRouter;
+import com.graphhopper.gtfs.PtRouterImpl;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.jackson.GraphHopperConfigModule;
 import com.graphhopper.jackson.Jackson;
@@ -288,9 +289,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             environment.jersey().register(new AbstractBinder() {
                 @Override
                 protected void configure() {
-                    // No, this binding is not redundant, even though the IDE says so.
-                    // Dropwizard/HK2 isn't satisfied with just the left hand term.
-                    bind(PtRouter.class).to(PtRouter.class);
+                    bind(PtRouterImpl.class).to(PtRouter.class);
                 }
             });
             environment.jersey().register(PtRouteResource.class);
