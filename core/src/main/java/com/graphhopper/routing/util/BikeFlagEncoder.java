@@ -62,6 +62,16 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
 
+        setSmoothnessSpeedFactor("excellent", 1.1d);
+        setSmoothnessSpeedFactor("good", 1.0d);
+        setSmoothnessSpeedFactor("intermediate", 0.9d);
+        setSmoothnessSpeedFactor("bad", 0.7d);
+        setSmoothnessSpeedFactor("very_bad", 0.6d);
+        setSmoothnessSpeedFactor("horrible", 0.5d);
+        setSmoothnessSpeedFactor("very_horrible", 0.4d);
+        // SmoothnessSpeed <= smoothnessFactorPushingSectionThreshold gets mapped to speed PUSHING_SECTION_SPEED
+        setSmoothnessSpeedFactor("impassable", smoothnessFactorPushingSectionThreshold);
+
         absoluteBarriers.add("kissing_gate");
         setSpecificClassBicycle("touring");
     }

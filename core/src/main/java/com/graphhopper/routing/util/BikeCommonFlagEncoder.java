@@ -48,6 +48,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
+    protected static final double smoothnessFactorPushingSectionThreshold = 0.3d;
+    private final Map<String, Double> smoothnessFactor = new HashMap<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     protected boolean speedTwoDirections;
     DecimalEncodedValue priorityEnc;
@@ -360,6 +362,17 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             }
         }
 
+        // smoothness handling: Multiply speed with smoothnessFactor
+        s = way.getTag("smoothness");
+        if (!Helper.isEmpty(s)) {
+            Double smoothnessSpeedFactor = smoothnessFactor.get(s);
+            if (smoothnessSpeedFactor != null) {
+                speed = (smoothnessSpeedFactor <= smoothnessFactorPushingSectionThreshold) ? PUSHING_SECTION_SPEED: (int)Math.round(smoothnessSpeedFactor * speed);
+            }
+            else  // According taginfo https://taginfo.openstreetmap.org/keys/?key=smoothness#values most unknown values are quite bad 
+                speed = (int)Math.round(0.7 * speed);
+        } 
+
         // Until now we assumed that the way is no pushing section
         // Now we check that, but only in case that our speed computed so far is bigger compared to the PUSHING_SECTION_SPEED
         if (speed > PUSHING_SECTION_SPEED
@@ -557,6 +570,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     void setSurfaceSpeed(String surface, int speed) {
         surfaceSpeeds.put(surface, speed);
+    }
+
+    void setSmoothnessSpeedFactor(String smoothness, double speedfactor) {
+        smoothnessFactor.put(smoothness, speedfactor);
     }
 
     void addPushingSection(String highway) {

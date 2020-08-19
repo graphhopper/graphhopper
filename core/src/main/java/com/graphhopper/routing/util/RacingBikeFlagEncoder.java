@@ -113,6 +113,15 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         addPushingSection("pedestrian");
         addPushingSection("steps");
 
+        setSmoothnessSpeedFactor("excellent", 1.2d);
+        setSmoothnessSpeedFactor("good", 1.0d);
+        setSmoothnessSpeedFactor("intermediate", 0.9d);
+        setSmoothnessSpeedFactor("bad", 0.7d);
+        setSmoothnessSpeedFactor("very_bad", smoothnessFactorPushingSectionThreshold);
+        setSmoothnessSpeedFactor("horrible", smoothnessFactorPushingSectionThreshold);
+        setSmoothnessSpeedFactor("very_horrible", smoothnessFactorPushingSectionThreshold);
+        setSmoothnessSpeedFactor("impassable", smoothnessFactorPushingSectionThreshold);
+
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
         routeMap.put(REGIONAL, VERY_NICE.getValue());

@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -81,6 +82,35 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("surface", "ground");
         assertEquals(16, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
+
+        // test smoothness
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("smoothness", "excellent");
+        assertEquals(18, encoder.getSpeed(way));
+        way.setTag("smoothness", "bad");
+        assertEquals(11, encoder.getSpeed(way));
+        way.setTag("smoothness", "impassable");
+        assertEquals(PUSHING_SECTION_SPEED , encoder.getSpeed(way));
+        way.setTag("smoothness", "unknown");
+        assertEquals(11, encoder.getSpeed(way));
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("surface", "ground");
+        assertEquals(16, encoder.getSpeed(way));
+        way.setTag("smoothness", "bad");
+        assertEquals(11, encoder.getSpeed(way));
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("tracktype", "grade5");
+        assertEquals(6, encoder.getSpeed(way));
+        way.setTag("smoothness", "bad");
+        assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(way));
+        way.setTag("smoothness", "impassable");
+        assertEquals(PUSHING_SECTION_SPEED , encoder.getSpeed(way));
+
     }
 
     @Test

@@ -288,6 +288,34 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "motorway");
         way.setTag("bicycle", "yes");
         assertEquals(18, encoder.getSpeed(way));
+
+        // test smoothness
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("smoothness", "excellent");
+        assertEquals(20, encoder.getSpeed(way));
+        way.setTag("smoothness", "bad");
+        assertEquals(13, encoder.getSpeed(way));
+        way.setTag("smoothness", "impassable");
+        assertEquals(PUSHING_SECTION_SPEED , encoder.getSpeed(way));
+        way.setTag("smoothness", "unknown");
+        assertEquals(13, encoder.getSpeed(way));
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("surface", "ground");
+        assertEquals(12, encoder.getSpeed(way));
+        way.setTag("smoothness", "bad");
+        assertEquals(8, encoder.getSpeed(way));
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("tracktype", "grade5");
+        assertEquals(4, encoder.getSpeed(way));
+        way.setTag("smoothness", "bad");
+        assertEquals(3, encoder.getSpeed(way));
+        way.setTag("smoothness", "impassable");
+        assertEquals(PUSHING_SECTION_SPEED , encoder.getSpeed(way));
     }
 
     @Test
