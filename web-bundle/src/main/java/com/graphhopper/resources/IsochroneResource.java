@@ -18,19 +18,14 @@ import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.jersey.params.LongParam;
 import org.hibernate.validator.constraints.Range;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,7 +128,37 @@ public class IsochroneResource {
             zs.add((i + 1) * delta);
         }
 
-        Collection<Coordinate> sites = shortestPathTree.searchSites(qr.getClosestNode());
+        final NodeAccess na = queryGraph.getNodeAccess();
+        Collection<Coordinate> sites = new ArrayList<>();
+        shortestPathTree.search(qr.getClosestNode(), label -> {
+            double exploreValue;
+            if (weightLimit.get() > 0) {
+                exploreValue = label.weight;
+            } else if (distanceLimitInMeter.get() > 0) {
+                exploreValue = label.distance;
+            } else {
+                exploreValue = label.time;
+            }
+            double lat = na.getLatitude(label.node);
+            double lon = na.getLongitude(label.node);
+            Coordinate site = new Coordinate(lon, lat);
+            site.z = exploreValue;
+            sites.add(site);
+
+            // add a pillar node to increase precision a bit for longer roads
+            if (label.parent != null) {
+                EdgeIteratorState edge = queryGraph.getEdgeIteratorState(label.edge, label.node);
+                PointList innerPoints = edge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
+                if (innerPoints.getSize() > 0) {
+                    int midIndex = innerPoints.getSize() / 2;
+                    double lat2 = innerPoints.getLat(midIndex);
+                    double lon2 = innerPoints.getLon(midIndex);
+                    Coordinate site2 = new Coordinate(lon2, lat2);
+                    site2.z = exploreValue;
+                    sites.add(site2);
+                }
+            }
+        });
         int consumedNodes = sites.size();
         if (consumedNodes > graphHopper.getRouterConfig().getMaxVisitedNodes() / 3)
             throw new IllegalArgumentException("Too many nodes would be included in post processing (" + consumedNodes + "). Let us know if you need this increased.");
@@ -148,7 +173,7 @@ public class IsochroneResource {
         ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
         for (Double z : zs) {
             MultiPolygon multiPolygon = contourBuilder.computeIsoline(z);
-            Polygon maxPolygon = ContourBuilder.heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.get().lon, point.get().lat)));
+            Polygon maxPolygon = heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.get().lon, point.get().lat)));
             polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
         }
         ArrayList<JsonFeature> features = new ArrayList<>();
@@ -180,6 +205,22 @@ public class IsochroneResource {
                 + ", consumed nodes:" + consumedNodes + ", " + uriInfo.getQueryParameters());
         return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
                 build();
+    }
+
+    private Polygon heuristicallyFindMainConnectedComponent(MultiPolygon multiPolygon, Point point) {
+        int maxPoints = 0;
+        Polygon maxPolygon = null;
+        for (int j = 0; j < multiPolygon.getNumGeometries(); j++) {
+            Polygon polygon = (Polygon) multiPolygon.getGeometryN(j);
+            if (polygon.contains(point)) {
+                return polygon;
+            }
+            if (polygon.getNumPoints() > maxPoints) {
+                maxPoints = polygon.getNumPoints();
+                maxPolygon = polygon;
+            }
+        }
+        return maxPolygon;
     }
 
 }

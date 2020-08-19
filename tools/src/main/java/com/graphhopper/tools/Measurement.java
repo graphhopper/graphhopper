@@ -28,37 +28,26 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.isochrone.algorithm.ContourBuilder;
-import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
-import com.graphhopper.isochrone.algorithm.ShortestPathTree;
-import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder.SpatialRuleFactory;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -210,19 +199,12 @@ public class Measurement {
         StopWatch sw = new StopWatch().start();
         try {
             maxNode = g.getNodes();
+
+            final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
-            final boolean runIsochrone = args.getBool("measurement.run_isochrone", false);
-            if (runIsochrone) {
-                runIsochrone(hopper, 40, 600, TraversalMode.NODE_BASED);
-                runIsochrone(hopper, 10, 1200, TraversalMode.NODE_BASED);
-                runIsochrone(hopper, 40, 600, TraversalMode.EDGE_BASED);
-                runIsochrone(hopper, 10, 1200, TraversalMode.EDGE_BASED);
-            }
-
-            final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             if (runSlow) {
                 boolean isCH = false;
                 boolean isLM = false;
@@ -326,81 +308,6 @@ public class Measurement {
                 storeProperties(propLocation);
             }
         }
-    }
-
-    private void runIsochrone(GraphHopper hopper, int count, double timeLimit, TraversalMode mode) {
-        Profile profile = mode == TraversalMode.NODE_BASED ? hopper.getProfile("profile_no_tc") : hopper.getProfile("profile_tc");
-        Weighting weighting = hopper.createWeighting(profile, new PMap());
-        Graph graph = hopper.getGraphHopperStorage();
-        LocationIndex idx = hopper.getLocationIndex();
-        NodeAccess na = graph.getNodeAccess();
-        Random rand = new Random(seed);
-        double timeLimitInMs = timeLimit * 1000;
-        int MAX = 5;
-        final EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle));
-        GeometryFactory geometryFactory = new GeometryFactory();
-        AtomicInteger invalid = new AtomicInteger();
-        AtomicLong visitedNodesSum = new AtomicLong();
-        AtomicLong consumedNodesSum = new AtomicLong();
-        AtomicLong hash = new AtomicLong();
-
-        MiniPerfTest miniPerf = new MiniPerfTest() {
-            @Override
-            public int doCalc(boolean warmup, int run) {
-                int node = rand.nextInt(maxNode);
-                double lat = na.getLatitude(node);
-                double lon = na.getLongitude(node);
-                QueryResult qr = null;
-
-                for (int i = 0; i < MAX; i++) {
-                    // do not always query exactly on tower nodes
-                    lat += rand.nextInt(5) * 0.01;
-                    lon += rand.nextInt(5) * 0.01;
-                    qr = idx.findClosest(lat, lon, edgeFilter);
-                    if (qr.isValid())
-                        break;
-
-                    if (i == MAX - 1) {
-                        invalid.incrementAndGet();
-                        return 0;
-                    }
-                }
-
-                hash.addAndGet((lat + "," + lon).hashCode());
-                QueryGraph queryGraph = QueryGraph.create(graph, qr);
-                ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, weighting, false, mode);
-                shortestPathTree.setTimeLimit(timeLimitInMs);
-                try {
-                    Collection<Coordinate> sites = shortestPathTree.searchSites(qr.getClosestNode());
-                    if (!warmup) {
-                        visitedNodesSum.addAndGet(shortestPathTree.getVisitedNodes());
-                        consumedNodesSum.addAndGet(sites.size());
-                    }
-                    ReadableTriangulation triangulation;
-                    try {
-                        triangulation = Triangulator.getTriangulation(sites);
-                    } catch (Exception ex) {
-                        invalid.incrementAndGet();
-                        return 0;
-                    }
-                    ContourBuilder contourBuilder = new ContourBuilder(triangulation);
-                    MultiPolygon multiPolygon = contourBuilder.computeIsoline(timeLimitInMs);
-                    Polygon maxPolygon = ContourBuilder.heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(lon, lat)));
-                    return maxPolygon.getExteriorRing().getCoordinates().length;
-                } catch (Exception ex) {
-                    throw new RuntimeException("point:" + lat + "," + lon + " time_limit:" + timeLimit + " mode:" + mode + ", run:" + run, ex);
-                }
-            }
-        }.setIterations(count).start();
-
-        if (invalid.get() >= count / 2)
-            throw new IllegalStateException("too many invalid: " + invalid.get());
-        String name = "isochrone." + mode.toString().toLowerCase() + "." + (long) timeLimit;
-        put(name + ".invalid", invalid.get());
-        put(name + ".coordinates_hash", hash.get());
-        put(name + ".visited_nodes.mean", (float) visitedNodesSum.get() / count);
-        put(name + ".consumed_nodes.mean", (float) consumedNodesSum.get() / count);
-        print(name, miniPerf);
     }
 
     private GraphHopperConfig createConfigFromArgs(PMap args) {

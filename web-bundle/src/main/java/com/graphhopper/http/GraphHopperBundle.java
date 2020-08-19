@@ -34,6 +34,7 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtRouter;
+import com.graphhopper.gtfs.PtRouterImpl;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.jackson.GraphHopperConfigModule;
 import com.graphhopper.jackson.Jackson;
@@ -43,6 +44,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -155,6 +157,22 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
+    static class PathDetailsBuilderFactoryFactory implements Factory<PathDetailsBuilderFactory> {
+
+        @Inject
+        GraphHopper graphHopper;
+
+        @Override
+        public PathDetailsBuilderFactory provide() {
+            return graphHopper.getPathDetailsBuilderFactory();
+        }
+
+        @Override
+        public void dispose(PathDetailsBuilderFactory profileResolver) {
+
+        }
+    }
+
     static class HasElevation implements Factory<Boolean> {
 
         @Inject
@@ -248,6 +266,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(graphHopper).to(GraphHopper.class);
                 bind(graphHopper).to(GraphHopperAPI.class);
 
+                bindFactory(PathDetailsBuilderFactoryFactory.class).to(PathDetailsBuilderFactory.class);
                 bindFactory(ProfileResolverFactory.class).to(ProfileResolver.class);
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
@@ -270,9 +289,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             environment.jersey().register(new AbstractBinder() {
                 @Override
                 protected void configure() {
-                    // No, this binding is not redundant, even though the IDE says so.
-                    // Dropwizard/HK2 isn't satisfied with just the left hand term.
-                    bind(PtRouter.class).to(PtRouter.class);
+                    bind(PtRouterImpl.class).to(PtRouter.class);
                 }
             });
             environment.jersey().register(PtRouteResource.class);

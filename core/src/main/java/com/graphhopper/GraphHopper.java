@@ -989,16 +989,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     @Override
     public GHResponse route(GHRequest request) {
-        GHResponse response = new GHResponse();
-        calcPaths(request, response);
-        return response;
-    }
-
-    /**
-     * This method calculates the alternative path list using the low level Path objects.
-     */
-    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
-        return createRouter().route(request, ghRsp);
+        return createRouter().route(request);
     }
 
     private Router createRouter() {
