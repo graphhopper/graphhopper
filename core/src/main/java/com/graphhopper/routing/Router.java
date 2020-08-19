@@ -51,7 +51,6 @@ import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
 import static com.graphhopper.util.Parameters.Routing.*;
-import static java.util.Collections.emptyList;
 
 public class Router {
     private final GraphHopperStorage ghStorage;
