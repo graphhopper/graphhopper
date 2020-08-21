@@ -1232,9 +1232,7 @@ class BaseGraph implements Graph {
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
             assert edgeId < baseGraph.edgeCount : "must be edge but was shortcut: " + edgeId + " >= " + baseGraph.edgeCount + ". Use setFlagsAndWeight";
             edgeAccess.writeFlags(edgePointer, edgeFlags);
-            for (int i = 0; i < edgeFlags.ints.length; i++) {
-                this.edgeFlags.ints[i] = edgeFlags.ints[i];
-            }
+            System.arraycopy(edgeFlags.ints, 0, this.edgeFlags.ints, 0, edgeFlags.ints.length);
             freshFlags = true;
             return this;
         }
