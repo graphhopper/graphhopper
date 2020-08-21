@@ -594,7 +594,7 @@ public class QueryGraphTest {
         //  |    |
         //  0    1
         qr = fakeEdgeQueryResult(edge, 1.5, 2, 2);
-        queryGraph = lookup(Arrays.asList(qr));
+        queryGraph = lookup(Collections.singletonList(qr));
 
         // enforce north
         unfavoredEdges = headingResolver.getEdgesWithDifferentHeading(qr.getClosestNode(), 180);

@@ -184,8 +184,8 @@ public final class IntsRef implements Comparable<IntsRef> {
     }
 
     public boolean isEmpty() {
-        for (int i = 0; i < ints.length; i++) {
-            if (ints[i] != 0)
+        for (int anInt : ints) {
+            if (anInt != 0)
                 return false;
         }
         return true;

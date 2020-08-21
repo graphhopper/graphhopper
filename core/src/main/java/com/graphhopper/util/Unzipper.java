@@ -50,8 +50,7 @@ public class Unzipper {
             toFolder.mkdirs();
 
         long sumBytes = 0;
-        ZipInputStream zis = new ZipInputStream(fromIs);
-        try {
+        try (ZipInputStream zis = new ZipInputStream(fromIs)) {
             ZipEntry ze = zis.getNextEntry();
             byte[] buffer = new byte[8 * 1024];
             while (ze != null) {
@@ -63,8 +62,7 @@ public class Unzipper {
                         factor = (double) ze.getCompressedSize() / ze.getSize();
 
                     File newFile = getVerifiedFile(toFolder, ze);
-                    FileOutputStream fos = new FileOutputStream(newFile);
-                    try {
+                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
                         int len;
                         while ((len = zis.read(buffer)) > 0) {
                             fos.write(buffer, 0, len);
@@ -72,16 +70,12 @@ public class Unzipper {
                             if (progressListener != null)
                                 progressListener.update(sumBytes);
                         }
-                    } finally {
-                        fos.close();
                     }
                 }
 
                 ze = zis.getNextEntry();
             }
             zis.closeEntry();
-        } finally {
-            zis.close();
         }
     }
 

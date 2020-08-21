@@ -21,6 +21,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -31,7 +32,7 @@ import java.util.Map.Entry;
  * @author Peter Karich
  */
 public class Helper {
-    public static final Charset UTF_CS = Charset.forName("UTF-8");
+    public static final Charset UTF_CS = StandardCharsets.UTF_8;
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
     // +- 180 and +-90 => let use use 400
@@ -80,16 +81,13 @@ public class Helper {
     }
 
     public static void saveProperties(Map<String, String> map, Writer tmpWriter) throws IOException {
-        BufferedWriter writer = new BufferedWriter(tmpWriter);
-        try {
+        try (BufferedWriter writer = new BufferedWriter(tmpWriter)) {
             for (Entry<String, String> e : map.entrySet()) {
                 writer.append(e.getKey());
                 writer.append('=');
                 writer.append(e.getValue());
                 writer.append('\n');
             }
-        } finally {
-            writer.close();
         }
     }
 
@@ -98,24 +96,20 @@ public class Helper {
     }
 
     public static List<String> readFile(Reader simpleReader) throws IOException {
-        BufferedReader reader = new BufferedReader(simpleReader);
-        try {
+        try (BufferedReader reader = new BufferedReader(simpleReader)) {
             List<String> res = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
                 res.add(line);
             }
             return res;
-        } finally {
-            reader.close();
         }
     }
 
     public static String isToString(InputStream inputStream) throws IOException {
         int size = 1024 * 8;
         String encoding = "UTF-8";
-        InputStream in = new BufferedInputStream(inputStream, size);
-        try {
+        try (InputStream in = new BufferedInputStream(inputStream, size)) {
             byte[] buffer = new byte[size];
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             int numRead;
@@ -123,8 +117,6 @@ public class Helper {
                 output.write(buffer, 0, numRead);
             }
             return output.toString(encoding);
-        } finally {
-            in.close();
         }
     }
 

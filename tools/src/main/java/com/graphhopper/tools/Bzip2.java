@@ -40,17 +40,12 @@ public class Bzip2 {
         String toFile = Helper.pruneFileEnd(fromFile);
 
         FileInputStream in = new FileInputStream(fromFile);
-        FileOutputStream out = new FileOutputStream(toFile);
-        BZip2CompressorInputStream bzIn = new BZip2CompressorInputStream(in);
-        try {
+        try (FileOutputStream out = new FileOutputStream(toFile); BZip2CompressorInputStream bzIn = new BZip2CompressorInputStream(in)) {
             final byte[] buffer = new byte[1024 * 8];
             int n = 0;
             while (-1 != (n = bzIn.read(buffer))) {
                 out.write(buffer, 0, n);
             }
-        } finally {
-            out.close();
-            bzIn.close();
         }
     }
 }

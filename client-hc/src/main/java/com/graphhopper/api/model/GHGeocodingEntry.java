@@ -205,7 +205,7 @@ public class GHGeocodingEntry {
         }
     }
 
-    public class Point {
+    public static class Point {
 
         private double lat;
         private double lng;

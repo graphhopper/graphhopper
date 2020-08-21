@@ -335,9 +335,9 @@ public class GHLongIntBTree implements LongIntMap {
             long cap = keys.length * (8 + 4) + 3 * 12 + 4 + 1;
             if (!isLeaf) {
                 cap += children.length * 4;
-                for (int i = 0; i < children.length; i++) {
-                    if (children[i] != null) {
-                        cap += children[i].getCapacity();
+                for (BTreeEntry child : children) {
+                    if (child != null) {
+                        cap += child.getCapacity();
                     }
                 }
             }
@@ -347,9 +347,9 @@ public class GHLongIntBTree implements LongIntMap {
         int getEntries() {
             int entries = 1;
             if (!isLeaf) {
-                for (int i = 0; i < children.length; i++) {
-                    if (children[i] != null) {
-                        entries += children[i].getEntries();
+                for (BTreeEntry child : children) {
+                    if (child != null) {
+                        entries += child.getEntries();
                     }
                 }
             }
@@ -379,9 +379,9 @@ public class GHLongIntBTree implements LongIntMap {
             }
 
             if (!isLeaf) {
-                for (int i = 0; i < children.length; i++) {
-                    if (children[i] != null) {
-                        children[i].compact();
+                for (BTreeEntry child : children) {
+                    if (child != null) {
+                        child.compact();
                     }
                 }
             }

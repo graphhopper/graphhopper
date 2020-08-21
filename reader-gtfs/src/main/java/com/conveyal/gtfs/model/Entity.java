@@ -34,6 +34,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -269,7 +270,7 @@ public abstract class Entity implements Serializable {
             // skip any byte order mark that may be present. Files must be UTF-8,
             // but the GTFS spec says that "files that include the UTF byte order mark are acceptable"
             InputStream bis = new BOMInputStream(zis);
-            CsvReader reader = new CsvReader(bis, ',', Charset.forName("UTF8"));
+            CsvReader reader = new CsvReader(bis, ',', StandardCharsets.UTF_8);
             this.reader = reader;
             reader.readHeaders();
             while (reader.readRecord()) {
@@ -355,7 +356,7 @@ public abstract class Entity implements Serializable {
 
             // don't let CSVWriter close the stream when it is garbage-collected
             OutputStream protectedOut = new UncloseableOutputStream(zip);
-            this.writer = new CsvWriter(protectedOut, ',', Charset.forName("UTF8"));
+            this.writer = new CsvWriter(protectedOut, ',', StandardCharsets.UTF_8);
 
             this.writeHeaders();
 

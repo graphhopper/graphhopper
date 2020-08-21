@@ -291,7 +291,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+                Collections.singletonList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
@@ -314,7 +314,7 @@ public class PathTest {
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 6);
         assertTrue(p.isFound());
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+                Collections.singletonList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
         List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
         assertEquals(4, averageSpeedDetails.size());
@@ -323,7 +323,7 @@ public class PathTest {
         p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(6, 1);
         assertTrue(p.isFound());
         details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+                Collections.singletonList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
         averageSpeedDetails = details.get(AVERAGE_SPEED);
         assertEquals(5, averageSpeedDetails.size());
@@ -337,7 +337,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(STREET_NAME), new PathDetailsBuilderFactory(), 0);
+                Collections.singletonList(STREET_NAME), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> streetNameDetails = details.get(STREET_NAME);
@@ -363,7 +363,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(EDGE_ID), new PathDetailsBuilderFactory(), 0);
+                Collections.singletonList(EDGE_ID), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> edgeIdDetails = details.get(EDGE_ID);
@@ -388,7 +388,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(EDGE_KEY), new PathDetailsBuilderFactory(), 0);
+                Collections.singletonList(EDGE_KEY), new PathDetailsBuilderFactory(), 0);
         List<PathDetail> edgeKeyDetails = details.get(EDGE_KEY);
 
         assertEquals(4, edgeKeyDetails.size());
@@ -405,7 +405,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(EDGE_KEY), new PathDetailsBuilderFactory(), 0);
+                Collections.singletonList(EDGE_KEY), new PathDetailsBuilderFactory(), 0);
         List<PathDetail> edgeKeyDetails = details.get(EDGE_KEY);
 
         assertEquals(4, edgeKeyDetails.size());
@@ -422,7 +422,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(TIME), new PathDetailsBuilderFactory(), 0);
+                Collections.singletonList(TIME), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> timeDetails = details.get(TIME);
@@ -446,7 +446,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(DISTANCE), new PathDetailsBuilderFactory(), 0);
+                Collections.singletonList(DISTANCE), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> distanceDetails = details.get(DISTANCE);

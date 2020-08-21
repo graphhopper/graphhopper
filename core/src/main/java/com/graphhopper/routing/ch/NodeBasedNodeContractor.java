@@ -355,7 +355,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         int getNode();
     }
 
-    private class CalcShortcutHandler implements ShortcutHandler {
+    private static class CalcShortcutHandler implements ShortcutHandler {
         int node;
         CalcShortcutsResult calcShortcutsResult = new CalcShortcutsResult();
 

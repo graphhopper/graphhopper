@@ -761,7 +761,7 @@ public class GraphHopperOSMTest {
                 setPoints(Arrays.asList(start, end)).
                 setHeadings(Arrays.asList(180., Double.NaN)).
                 setProfile("profile").
-                setPathDetails(Arrays.asList("edge_key"));
+                setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = instance.route(req);
         assertFalse(response.getErrors().toString(), response.hasErrors());
         assertArrayEquals(new int[]{4, 5, 8, 3, 2}, calcNodes(instance, response.getAll().get(0)));
@@ -780,7 +780,7 @@ public class GraphHopperOSMTest {
         GHRequest req = new GHRequest(start, end).
                 setHeadings(Arrays.asList(180.0, 90.0)).
                 setProfile("profile").
-                setPathDetails(Arrays.asList("edge_key"));
+                setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = instance.route(req);
         assertFalse(response.hasErrors());
         assertArrayEquals(new int[]{4, 5, 8, 1, 2, 3}, calcNodes(instance, response.getAll().get(0)));
@@ -807,7 +807,7 @@ public class GraphHopperOSMTest {
                 setPoints(Arrays.asList(start, via, end)).
                 setHeadings(Arrays.asList(Double.NaN, 0., Double.NaN)).
                 setProfile("profile").
-                setPathDetails(Arrays.asList("edge_key"));
+                setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = instance.route(req);
         assertFalse(response.hasErrors());
         assertArrayEquals(new int[]{4, 5, 6, 7, 8, 3, 2}, calcNodes(instance, response.getAll().get(0)));
@@ -827,7 +827,7 @@ public class GraphHopperOSMTest {
         GHRequest req = new GHRequest().
                 setPoints(Arrays.asList(start, via, end)).
                 setProfile("profile").
-                setPathDetails(Arrays.asList("edge_key"));
+                setPathDetails(Collections.singletonList("edge_key"));
         req.putHint(Routing.PASS_THROUGH, true);
         GHResponse response = instance.route(req);
         assertFalse(response.hasErrors());
@@ -850,7 +850,7 @@ public class GraphHopperOSMTest {
                 setPoints(Arrays.asList(start, via, end)).
                 setHeadings(Arrays.asList(0., 3.14 / 2, Double.NaN)).
                 setProfile("profile").
-                setPathDetails(Arrays.asList("edge_key"));
+                setPathDetails(Collections.singletonList("edge_key"));
         req.putHint(Routing.PASS_THROUGH, true);
         GHResponse response = instance.route(req);
         assertFalse(response.hasErrors());
@@ -871,7 +871,7 @@ public class GraphHopperOSMTest {
                 setPoints(Arrays.asList(start, via, end)).
                 setHeadings(Arrays.asList(90., 270., 270.)).
                 setProfile("profile").
-                setPathDetails(Arrays.asList("edge_key"));
+                setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = instance.route(req);
         assertFalse(response.hasErrors());
         assertArrayEquals(new int[]{0, 1, 2, 3, 4}, calcNodes(instance, response.getAll().get(0)));

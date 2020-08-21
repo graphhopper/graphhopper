@@ -196,8 +196,8 @@ public class NavigateResource {
         String[] pointStrings = url.split(";");
 
         List<GHPoint> points = new ArrayList<>(pointStrings.length);
-        for (int i = 0; i < pointStrings.length; i++) {
-            points.add(GHPoint.fromStringLonLat(pointStrings[i]));
+        for (String pointString : pointStrings) {
+            points.add(GHPoint.fromStringLonLat(pointString));
         }
 
         return points;
@@ -210,8 +210,7 @@ public class NavigateResource {
         String[] bearingArray = bearingString.split(";", -1);
         List<Double> bearings = new ArrayList<>(bearingArray.length);
 
-        for (int i = 0; i < bearingArray.length; i++) {
-            String singleBearing = bearingArray[i];
+        for (String singleBearing : bearingArray) {
             if (singleBearing.isEmpty()) {
                 bearings.add(Double.NaN);
             } else {

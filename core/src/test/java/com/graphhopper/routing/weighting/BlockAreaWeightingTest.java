@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
@@ -32,7 +33,7 @@ public class BlockAreaWeightingTest {
     @Before
     public void setUp() {
         encoder = new CarFlagEncoder();
-        em = EncodingManager.create(Arrays.asList(encoder));
+        em = EncodingManager.create(Collections.singletonList(encoder));
         graph = new GraphBuilder(em).create();
         // 0-1
         graph.edge(0, 1, 1, true);

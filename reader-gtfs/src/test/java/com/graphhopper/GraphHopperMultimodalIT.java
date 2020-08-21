@@ -35,6 +35,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -98,7 +99,7 @@ public class GraphHopperMultimodalIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
         ghRequest.setBetaWalkTime(2.0); // I somewhat dislike walking
-        ghRequest.setPathDetails(Arrays.asList("distance"));
+        ghRequest.setPathDetails(Collections.singletonList("distance"));
 
         GHResponse response = graphHopper.route(ghRequest);
         assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(129);

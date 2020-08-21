@@ -195,8 +195,8 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
             return 0;
         int len = vals.length;
         int val = 1;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + vals[idx];
+        for (int i : vals) {
+            val = 31 * val + i;
         }
 
         return val;
@@ -211,8 +211,8 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
             return 0;
         int len = vals.length;
         int val = 1;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + vals[idx].ordinal();
+        for (Enum anEnum : vals) {
+            val = 31 * val + anEnum.ordinal();
         }
 
         return val;

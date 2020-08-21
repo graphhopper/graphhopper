@@ -68,17 +68,17 @@ public class FareTest {
         tripWithOneSegment.segments.add(new Trip.Segment("Route_1", 0, "S1", "S2", new HashSet<>(Arrays.asList("1","2","3"))));
 
         tripWithTwoSegments = new Trip();
-        tripWithTwoSegments.segments.add(new Trip.Segment("Route_1", 0, "S1", "S4", new HashSet<>(Arrays.asList("1"))));
-        tripWithTwoSegments.segments.add(new Trip.Segment("Route_2", 6000, "S4", "S1", new HashSet<>(Arrays.asList("1"))));
+        tripWithTwoSegments.segments.add(new Trip.Segment("Route_1", 0, "S1", "S4", new HashSet<>(Collections.singletonList("1"))));
+        tripWithTwoSegments.segments.add(new Trip.Segment("Route_2", 6000, "S4", "S1", new HashSet<>(Collections.singletonList("1"))));
 
         shortTripWithTwoSegments = new Trip();
         shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_1",0, "S1", "S4", new HashSet<>(Arrays.asList("2", "3"))));
         shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_2",5000, "S4", "S1", new HashSet<>(Arrays.asList("2", "3"))));
 
         twoLegsWithDistinctZones = new Trip();
-        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_1",0, "S1", "S4", new HashSet<>(Arrays.asList("1"))));
-        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_2",5000, "S4", "S1", new HashSet<>(Arrays.asList("2"))));
-        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_1",6000, "S1", "S4", new HashSet<>(Arrays.asList("3"))));
+        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_1",0, "S1", "S4", new HashSet<>(Collections.singletonList("1"))));
+        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_2",5000, "S4", "S1", new HashSet<>(Collections.singletonList("2"))));
+        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_1",6000, "S1", "S4", new HashSet<>(Collections.singletonList("3"))));
     }
 
     @Theory

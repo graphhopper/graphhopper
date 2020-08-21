@@ -89,8 +89,7 @@ final class PriorityCalculator {
      */
     public double calcPriority(EdgeIteratorState edge, boolean reverse) {
         double priority = 1;
-        for (int i = 0; i < priorityList.size(); i++) {
-            EdgeToValueEntry entry = priorityList.get(i);
+        for (EdgeToValueEntry entry : priorityList) {
             double value = entry.getValue(edge, reverse);
             if (value == 0) return 0;
             priority *= value;

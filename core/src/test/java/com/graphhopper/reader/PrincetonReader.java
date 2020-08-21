@@ -62,17 +62,17 @@ public class PrincetonReader {
                 int to = -1;
                 double dist = -1;
                 int counter = 0;
-                for (int j = 0; j < args.length; j++) {
-                    if (Helper.isEmpty(args[j])) {
+                for (String arg : args) {
+                    if (Helper.isEmpty(arg)) {
                         continue;
                     }
 
                     if (counter == 0) {
-                        from = Integer.parseInt(args[j]);
+                        from = Integer.parseInt(arg);
                     } else if (counter == 1) {
-                        to = Integer.parseInt(args[j]);
+                        to = Integer.parseInt(arg);
                     } else {
-                        dist = Double.parseDouble(args[j]);
+                        dist = Double.parseDouble(arg);
                     }
 
                     counter++;

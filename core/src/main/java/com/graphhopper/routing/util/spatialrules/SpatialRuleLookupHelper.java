@@ -67,7 +67,7 @@ public class SpatialRuleLookupHelper {
         }
         JsonFeatureCollection coll = new JsonFeatureCollection();
         coll.getFeatures().addAll(newCollection);
-        return Arrays.asList(coll);
+        return Collections.singletonList(coll);
     }
 
     public static void buildAndInjectCountrySpatialRules(GraphHopper graphHopper, Envelope maxBounds, List<JsonFeatureCollection> jsonFeatureCollections) {

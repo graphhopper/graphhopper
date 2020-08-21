@@ -62,10 +62,10 @@ public class LMProfileSelectorTest {
 
     @Test
     public void singleProfile() {
-        List<Profile> profiles = Arrays.asList(
+        List<Profile> profiles = Collections.singletonList(
                 fastCar
         );
-        List<LMProfile> lmProfiles = Arrays.asList(
+        List<LMProfile> lmProfiles = Collections.singletonList(
                 new LMProfile("fast_car")
         );
         // as long as we do not request something that does not fit the existing profile we have a match

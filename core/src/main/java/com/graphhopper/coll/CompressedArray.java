@@ -178,8 +178,8 @@ public class CompressedArray {
 
     public float calcMemInMB() {
         long bytes = 0;
-        for (int i = 0; i < segments.size(); i++) {
-            bytes += segments.get(i).length;
+        for (byte[] segment : segments) {
+            bytes += segment.length;
         }
         return (float) (segments.size() * 4 + bytes) / Helper.MB;
     }

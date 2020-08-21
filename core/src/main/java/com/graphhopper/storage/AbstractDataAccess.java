@@ -93,8 +93,8 @@ public abstract class AbstractDataAccess implements DataAccess {
         file.writeUTF("GH");
         file.writeLong(length);
         file.writeInt(segmentSize);
-        for (int i = 0; i < header.length; i++) {
-            file.writeInt(header[i]);
+        for (int value : header) {
+            file.writeInt(value);
         }
     }
 

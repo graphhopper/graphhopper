@@ -361,8 +361,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                         continue;
 
                     // starting
-                    for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
-                        int lmNodeId = tmpLandmarkNodeIds[lmIdx];
+                    for (int lmNodeId : tmpLandmarkNodeIds) {
                         explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, true);
                         explorer.setStartNode(lmNodeId);
                         explorer.setFilter(blockedEdges, true, true);

@@ -39,7 +39,7 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
 
     public ConditionalOSMTagInspector(Calendar value, List<String> tagsToCheck,
                                       Set<String> restrictiveValues, Set<String> permittedValues) {
-        this(Arrays.asList(new DateRangeParser(value)), tagsToCheck, restrictiveValues, permittedValues, false);
+        this(Collections.singletonList(new DateRangeParser(value)), tagsToCheck, restrictiveValues, permittedValues, false);
     }
 
     public ConditionalOSMTagInspector(List<? extends ConditionalValueParser> valueParsers, List<String> tagsToCheck,
@@ -77,8 +77,7 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
     }
 
     protected boolean applies(ReaderWay way, boolean checkPermissiveValues) {
-        for (int index = 0; index < tagsToCheck.size(); index++) {
-            String tagToCheck = tagsToCheck.get(index);
+        for (String tagToCheck : tagsToCheck) {
             String val = way.getTag(tagToCheck);
             if (val == null || val.isEmpty())
                 continue;

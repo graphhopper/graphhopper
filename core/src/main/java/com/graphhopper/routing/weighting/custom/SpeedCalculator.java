@@ -134,16 +134,14 @@ final class SpeedCalculator {
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid estimated speed " + speed);
 
-        for (int i = 0; i < speedFactorList.size(); i++) {
-            EdgeToValueEntry entry = speedFactorList.get(i);
+        for (EdgeToValueEntry entry : speedFactorList) {
             double factorValue = entry.getValue(edge, reverse);
             speed *= factorValue;
             if (speed == 0) break;
         }
 
         boolean applied = false;
-        for (int i = 0; i < maxSpeedList.size(); i++) {
-            EdgeToValueEntry entry = maxSpeedList.get(i);
+        for (EdgeToValueEntry entry : maxSpeedList) {
             double maxValue = entry.getValue(edge, reverse);
             if (speed > maxValue) {
                 applied = true;

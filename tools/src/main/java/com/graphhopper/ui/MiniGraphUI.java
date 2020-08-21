@@ -58,6 +58,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Random;
 
 /**
@@ -99,15 +100,15 @@ public class MiniGraphUI {
         args.putObject("graph.location", args.getString("graph.location", "tools/target/mini-graph-ui-gh"));
         args.putObject("graph.flag_encoders", args.getString("graph.flag_encoders", "car"));
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
-        ghConfig.setProfiles(Arrays.asList(
+        ghConfig.setProfiles(Collections.singletonList(
                 new Profile("profile")
                         .setVehicle("car")
                         .setWeighting("fastest")
         ));
-        ghConfig.setCHProfiles(Arrays.asList(
+        ghConfig.setCHProfiles(Collections.singletonList(
                 new CHProfile("profile")
         ));
-        ghConfig.setLMProfiles(Arrays.asList(
+        ghConfig.setLMProfiles(Collections.singletonList(
                 new LMProfile("profile")
         ));
         GraphHopper hopper = new GraphHopperOSM().init(ghConfig).importOrLoad();

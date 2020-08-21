@@ -78,9 +78,8 @@ public class GHTBitSet implements GHBitSet {
         if (bs instanceof GHTBitSet) {
             ((GHTBitSet) bs).tHash.addAll(this.tHash);
         } else {
-            Iterator<IntCursor> iter = tHash.iterator();
-            while (iter.hasNext()) {
-                bs.add(iter.next().value);
+            for (IntCursor hash : tHash) {
+                bs.add(hash.value);
             }
         }
         return bs;

@@ -561,9 +561,8 @@ public class LocationIndexTree implements LocationIndex {
 
     final double calcMinDistance(double queryLat, double queryLon, GHIntHashSet pointset) {
         double min = Double.MAX_VALUE;
-        Iterator<IntCursor> itr = pointset.iterator();
-        while (itr.hasNext()) {
-            int node = itr.next().value;
+        for (IntCursor intCursor : pointset) {
+            int node = intCursor.value;
             double lat = nodeAccess.getLat(node);
             double lon = nodeAccess.getLon(node);
             double dist = distCalc.calcDist(queryLat, queryLon, lat, lon);
