@@ -18,6 +18,8 @@
 
 package com.graphhopper.isochrone.algorithm;
 
+import org.locationtech.jts.triangulate.quadedge.QuadEdge;
+
 import java.util.Collection;
 
 class TriangulationAsReadableTriangulation implements ReadableTriangulation {
@@ -36,6 +38,11 @@ class TriangulationAsReadableTriangulation implements ReadableTriangulation {
     @Override
     public ReadableQuadEdge getEdge(int o, int d) {
         return ReadableQuadEdge.wrap(triangulation.getEdge(o, d));
+    }
+
+    public ReadableQuadEdge getVertexQuadEdge(int v) {
+        QuadEdge edge = triangulation.vertexQuadEdges.get(v);
+        return edge != null ? ReadableQuadEdge.wrap(edge) : null;
     }
 
 }
