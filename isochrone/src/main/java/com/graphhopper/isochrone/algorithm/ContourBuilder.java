@@ -123,12 +123,9 @@ public class ContourBuilder {
         }
         // 2. Sort the shells based on number of points to optimize step 3.
         shells.sort((o1, o2) -> o2.getGeometry().getNumPoints() - o1.getGeometry().getNumPoints());
-
         for (PreparedPolygon shell : shells) {
             shell.getGeometry().setUserData(new ArrayList<LinearRing>());
         }
-        System.out.println("Shells: "+shells.size());
-        System.out.println("Holes: "+holes.size());
         // 3. For each hole, determine which shell it fits in.
         for (LinearRing hole : holes) {
             outer: {
