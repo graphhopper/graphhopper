@@ -21,8 +21,8 @@ package com.graphhopper.resources;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.gtfs.GHLocation;
+import com.graphhopper.gtfs.PTRequest;
 import com.graphhopper.gtfs.PtRouter;
-import com.graphhopper.gtfs.Request;
 import com.graphhopper.http.DurationParam;
 import com.graphhopper.http.GHLocationParam;
 import com.graphhopper.http.WebHelper;
@@ -67,7 +67,7 @@ public class PtRouteResource {
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get();
 
-        Request request = new Request(points, departureTime);
+        PTRequest request = new PTRequest(points, departureTime);
         request.setArriveBy(arriveBy);
         Optional.ofNullable(profileQuery).ifPresent(request::setProfileQuery);
         Optional.ofNullable(profileDuration.get()).ifPresent(request::setMaxProfileDuration);

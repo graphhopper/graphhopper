@@ -76,7 +76,7 @@ public final class PtRouterImpl implements PtRouter {
     }
 
     @Override
-    public GHResponse route(Request request) {
+    public GHResponse route(PTRequest request) {
         return new RequestHandler(request).route();
     }
 
@@ -133,7 +133,7 @@ public final class PtRouterImpl implements PtRouter {
         private QueryGraph queryGraph;
         private int visitedNodes;
 
-        RequestHandler(Request request) {
+        RequestHandler(PTRequest request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
             profileQuery = request.isProfileQuery();
             ignoreTransfers = Optional.ofNullable(request.getIgnoreTransfers()).orElse(request.isProfileQuery());

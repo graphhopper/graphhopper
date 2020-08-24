@@ -19,9 +19,9 @@
 package com.graphhopper;
 
 import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.PTRequest;
 import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.PtRouterImpl;
-import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.TranslationMap;
@@ -73,7 +73,7 @@ public class GraphHopperGtfsIT {
     public void testRoute1() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -90,7 +90,7 @@ public class GraphHopperGtfsIT {
     public void testRoute1DoesNotGoAt654() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -106,7 +106,7 @@ public class GraphHopperGtfsIT {
     public void testRoute1GoesAt744() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -124,7 +124,7 @@ public class GraphHopperGtfsIT {
     public void testNoSolutionIfIDontLikeBusses() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -140,7 +140,7 @@ public class GraphHopperGtfsIT {
     public void testRoute1ArriveBy() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -159,7 +159,7 @@ public class GraphHopperGtfsIT {
     public void testRoute1ArriveBy2() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -180,7 +180,7 @@ public class GraphHopperGtfsIT {
     public void testRoute1ProfileEarliestArrival() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -208,7 +208,7 @@ public class GraphHopperGtfsIT {
     public void testRoute1ProfileOvernight() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -233,7 +233,7 @@ public class GraphHopperGtfsIT {
     public void testRoute1ProfileLatestDeparture() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -279,7 +279,7 @@ public class GraphHopperGtfsIT {
     public void testRoute5() {
         final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
         final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -298,7 +298,7 @@ public class GraphHopperGtfsIT {
     public void testRoute5Arrival() {
         final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
         final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -325,7 +325,7 @@ public class GraphHopperGtfsIT {
         final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
         final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
         // Missed the bus at 10 by one minute, will have to use the 10:30 one.
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -341,7 +341,7 @@ public class GraphHopperGtfsIT {
     public void testWeekendRouteWorksOnlyOnWeekend() {
         final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
         final double TO_LAT = 36.641496, TO_LON = -116.40094; // AMV stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -353,7 +353,7 @@ public class GraphHopperGtfsIT {
         // On Mondays, there is only a complicated evening trip.
         assertEquals("Expected travel time == scheduled travel time", time(22, 0), route.getBest().getTime());
 
-        ghRequest = new Request(
+        ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -370,7 +370,7 @@ public class GraphHopperGtfsIT {
     public void testBlockTrips() {
         final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
         final double TO_LAT = 36.425288, TO_LON = -117.133162; // FUR_CREEK_RES stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -387,7 +387,7 @@ public class GraphHopperGtfsIT {
     public void testBlockWithComplicatedValidityIntersections() {
         final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
         final double TO_LAT = 36.641496, TO_LON = -116.40094; // AMV stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -423,37 +423,37 @@ public class GraphHopperGtfsIT {
         final double TO1_LAT = 36.641496, TO1_LON = -116.40094; // AMV stop
         final double TO2_LAT = 36.88108, TO2_LON = -116.81797; // BULLFROG stop
 
-        Request request = new Request(
+        PTRequest PTRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO1_LAT, TO1_LON
         );
-        request.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
+        PTRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
 
-        GHResponse response = ptRouter.route(request);
+        GHResponse response = ptRouter.route(PTRequest);
         assertEquals("Transfer rule: 11 minutes. Will miss connection, and be there at 14.", time(6, 30), response.getBest().getTime());
 
-        request = new Request(
+        PTRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO2_LAT, TO2_LON
         );
-        request.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
+        PTRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
 
-        response = ptRouter.route(request);
+        response = ptRouter.route(PTRequest);
         assertEquals("Will still be there at 8:10 because there is a route-specific exception for this route.", time(0, 40), response.getBest().getTime());
 
-        request = new Request(
+        PTRequest = new PTRequest(
                 TO2_LAT, TO2_LON,
                 FROM_LAT, FROM_LON
         );
-        request.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 12, 5).atZone(zoneId).toInstant());
+        PTRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 6, 12, 5).atZone(zoneId).toInstant());
 
-        response = ptRouter.route(request);
+        response = ptRouter.route(PTRequest);
         assertEquals("Will take 1:15 because of a 'from route' exception with a longer transfer time.", time(1, 15), response.getBest().getTime());
     }
 
 
     private void assertTravelTimeIs(PtRouter graphHopper, double FROM_LAT, double FROM_LON, double TO_LAT, double TO_LON, int expectedWeight) {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -466,7 +466,7 @@ public class GraphHopperGtfsIT {
     }
 
     private void assertNoRoute(PtRouter graphHopper, double from_lat, double from_lon, double to_lat, double to_lon) {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 from_lat, from_lon,
                 to_lat, to_lon
         );
@@ -480,7 +480,7 @@ public class GraphHopperGtfsIT {
     public void testTransferByArrival() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -498,7 +498,7 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testCustomObjectiveFunction() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 36.868446, -116.784582,  // BEATTY_AIRPORT stop
                 36.425288, -117.133162       // FUR_CREEK_RES stop
         );

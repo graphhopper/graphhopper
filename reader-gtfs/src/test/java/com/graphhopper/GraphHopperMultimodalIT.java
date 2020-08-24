@@ -19,9 +19,9 @@
 package com.graphhopper;
 
 import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.PTRequest;
 import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.PtRouterImpl;
-import com.graphhopper.gtfs.Request;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -71,7 +71,7 @@ public class GraphHopperMultimodalIT {
 
     @Test
     public void testDepartureTimeOfAccessLegInProfileQuery() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
         );
@@ -92,7 +92,7 @@ public class GraphHopperMultimodalIT {
 
     @Test
     public void testDepartureTimeOfAccessLeg() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
         );
@@ -139,7 +139,7 @@ public class GraphHopperMultimodalIT {
 
     @Test
     public void testArriveBy() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 36.92311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
         );
@@ -152,7 +152,7 @@ public class GraphHopperMultimodalIT {
 
     @Test
     public void testFastWalking() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
         );
@@ -172,7 +172,7 @@ public class GraphHopperMultimodalIT {
 
     @Test
     public void testFastWalkingInProfileQuery() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
         );
@@ -193,7 +193,7 @@ public class GraphHopperMultimodalIT {
 
     @Test
     public void testProfileQueryDoesntEndPrematurely() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
         );
@@ -218,7 +218,7 @@ public class GraphHopperMultimodalIT {
 
     @Test
     public void testHighDisutilityOfWalking() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
         );

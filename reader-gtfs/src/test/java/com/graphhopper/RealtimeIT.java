@@ -20,9 +20,9 @@ package com.graphhopper;
 
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.PTRequest;
 import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.PtRouterImpl;
-import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
@@ -73,7 +73,7 @@ public class RealtimeIT {
     public void testSkipDepartureStop() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -109,7 +109,7 @@ public class RealtimeIT {
     public void testHeavyDelayWhereWeShouldTakeOtherTripInstead() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -150,7 +150,7 @@ public class RealtimeIT {
     public void testCanUseDelayedTripWhenIAmLateToo() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -181,7 +181,7 @@ public class RealtimeIT {
     public void testSkipArrivalStop() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -216,7 +216,7 @@ public class RealtimeIT {
     public void testSkipTransferStop() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -251,7 +251,7 @@ public class RealtimeIT {
     public void testExtraTrip() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -310,7 +310,7 @@ public class RealtimeIT {
     public void testExtraTripWorksOnlyOnSpecifiedDay() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -353,7 +353,7 @@ public class RealtimeIT {
     public void testZeroDelay() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -392,7 +392,7 @@ public class RealtimeIT {
     public void testDelayWithoutTransfer() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -425,7 +425,7 @@ public class RealtimeIT {
     public void testDelayFromBeginningWithoutTransfer() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -461,7 +461,7 @@ public class RealtimeIT {
     public void testBlockTrips() {
         final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
         final double TO_LAT = 36.425288, TO_LON = -117.133162; // FUR_CREEK_RES stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -501,7 +501,7 @@ public class RealtimeIT {
 
         final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
         final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -523,7 +523,7 @@ public class RealtimeIT {
     public void testMissedTransferBecauseOfDelay() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -558,7 +558,7 @@ public class RealtimeIT {
     public void testMissedTransferButExtraTripOnFirstLeg() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -605,7 +605,7 @@ public class RealtimeIT {
     public void testMissedTransferButExtraTripOnSecondLeg() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -654,7 +654,7 @@ public class RealtimeIT {
     public void testMissedTransferBecauseOfDelayBackwards() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
@@ -700,7 +700,7 @@ public class RealtimeIT {
     public void testDelayAtEndForNonFrequencyBasedTrip() {
         final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
         final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );

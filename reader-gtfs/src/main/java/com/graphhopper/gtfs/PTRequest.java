@@ -17,7 +17,6 @@
  */
 
 package com.graphhopper.gtfs;
-
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -28,7 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-public class Request {
+public class PTRequest  {
     private List<GHLocation> points;
     private Instant earliestDepartureTime;
     private int maxVisitedNodes = 1_000_000;
@@ -45,13 +44,18 @@ public class Request {
     private Duration maxProfileDuration = Duration.ofHours(1);
     private List<String> pathDetails = new ArrayList<>();
 
-    public Request(List<GHLocation> points, Instant departureTime) {
+    public PTRequest(List<GHLocation> points, Instant departureTime) {
         this.points = points;
         this.earliestDepartureTime = departureTime;
     }
 
-    public Request(double from_lat, double from_lon, double to_lat, double to_lon) {
+    public PTRequest(double from_lat, double from_lon, double to_lat, double to_lon) {
         this.points = Arrays.asList(new GHPointLocation(new GHPoint(from_lat, from_lon)), new GHPointLocation(new GHPoint(to_lat, to_lon)));
+    }
+
+    public PTRequest(List<GHPoint> points){
+        this.points = new ArrayList<>(points.size());
+        points.forEach((point) -> this.points.add(new GHPointLocation(point)));
     }
 
     public int getMaxVisitedNodes() {

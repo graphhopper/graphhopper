@@ -65,7 +65,7 @@ public class AnotherAgencyIT {
 
     @Test
     public void testRoute1() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 Arrays.asList(
                         new GHStationLocation("JUSTICE_COURT"),
                         new GHStationLocation("MUSEUM")
@@ -84,7 +84,7 @@ public class AnotherAgencyIT {
 
     @Test
     public void testRoute2() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 Arrays.asList(
                         new GHStationLocation("JUSTICE_COURT"),
                         new GHStationLocation("AIRPORT")
@@ -116,7 +116,7 @@ public class AnotherAgencyIT {
 
     @Test
     public void testTransferBetweenFeeds() {
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 Arrays.asList(
                         new GHStationLocation("NEXT_TO_MUSEUM"),
                         new GHStationLocation("BULLFROG")

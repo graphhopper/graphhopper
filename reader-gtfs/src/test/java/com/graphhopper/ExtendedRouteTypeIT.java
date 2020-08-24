@@ -19,9 +19,9 @@
 package com.graphhopper;
 
 import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.PTRequest;
 import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.PtRouterImpl;
-import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
@@ -66,7 +66,7 @@ public class ExtendedRouteTypeIT {
     public void testRoute1() {
         final double FROM_LAT = 36.9010208, FROM_LON = -116.7659466;
         final double TO_LAT = 36.9059371, TO_LON = -116.7618071;
-        Request ghRequest = new Request(
+        PTRequest ghRequest = new PTRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );

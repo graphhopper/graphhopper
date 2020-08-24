@@ -31,7 +31,7 @@ import java.util.Locale;
  * @author Peter Karich
  * @author ratrun
  */
-public class GHRequest {
+public class GHRequest{
     private List<GHPoint> points;
     private String profile = "";
     private final PMap hints = new PMap();

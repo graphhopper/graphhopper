@@ -21,5 +21,5 @@ package com.graphhopper.gtfs;
 import com.graphhopper.GHResponse;
 
 public interface PtRouter {
-    GHResponse route(Request request);
+    GHResponse route(PTRequest request);
 }
