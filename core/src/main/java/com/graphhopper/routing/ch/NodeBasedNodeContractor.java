@@ -31,8 +31,6 @@ import static com.graphhopper.util.Helper.nf;
 
 class NodeBasedNodeContractor extends AbstractNodeContractor {
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
-    private final AddShortcutHandler addScHandler = new AddShortcutHandler();
-    private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
     private final Params params = new Params();
     private PrepareCHEdgeExplorer allEdgeExplorer;
     private NodeBasedWitnessPathSearcher prepareAlgo;
@@ -42,6 +40,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
     // each edge can exist in both directions
     private double meanDegree;
+    // temporary counters used for priority calculation
+    private int originalEdgesCount;
+    private int shortcutsCount;
 
     NodeBasedNodeContractor(PrepareCHGraph prepareGraph, PMap pMap) {
         super(prepareGraph);
@@ -78,16 +79,14 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     /**
-     * Warning: the calculated priority must NOT depend on priority(v) and therefore findShortcuts should also not
+     * Warning: the calculated priority must NOT depend on priority(v) and therefore handleShortcuts should also not
      * depend on the priority(v). Otherwise updating the priority before contracting in contractNodes() could lead to
      * a slowish or even endless loop.
      */
     @Override
     public float calculatePriority(int node) {
-        if (prepareGraph.getLevel(node) != maxLevel) {
+        if (prepareGraph.getLevel(node) != maxLevel)
             throw new IllegalArgumentException("Priority should only be calculated for not yet contracted nodes");
-        }
-        CalcShortcutsResult calcShortcutsResult = calcShortcutCount(node);
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
         //
@@ -95,7 +94,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         // when a new shortcut is introduced then r of the associated edges is summed up:
         // r(u,w)=r(u,v)+r(v,w) now we can define
         // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
-        int originalEdgesCount = calcShortcutsResult.originalEdgesCount;
+        shortcutsCount = 0;
+        originalEdgesCount = 0;
+        handleShortcuts(node, this::countShortcut);
 
         // # lowest influence on preparation speed or shortcut creation count
         // (but according to paper should speed up queries)
@@ -124,7 +125,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|
         // meanDegree is used instead of outDegree+inDegree as if one adjNode is in both directions
         // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
-        int edgeDifference = calcShortcutsResult.shortcutsCount - degree;
+        int edgeDifference = shortcutsCount - degree;
 
         // according to the paper do a simple linear combination of the properties to get the priority.
         return params.edgeDifferenceWeight * edgeDifference +
@@ -135,8 +136,8 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void contractNode(int node) {
         shortcuts.clear();
-        long degree = findShortcuts(addScHandler.setNode(node));
-        addedShortcutsCount += addShortcuts(shortcuts.keySet());
+        long degree = handleShortcuts(node, this::addOrUpdateShortcut);
+        addedShortcutsCount += writeShortcuts(shortcuts.keySet());
         // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
         meanDegree = (meanDegree * 2 + degree) / 3;
     }
@@ -153,15 +154,15 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
      * Returns the 'degree' of the handler's node (disregarding edges from/to already contracted nodes). Note that
      * here the degree is not the total number of adjacent edges, but only the number of incoming edges
      */
-    private long findShortcuts(ShortcutHandler sch) {
+    private long handleShortcuts(int node, ShortcutHandler handler) {
         int maxVisitedNodes = getMaxVisitedNodesEstimate();
         long degree = 0;
-        PrepareCHEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(sch.getNode());
+        PrepareCHEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         // collect outgoing nodes (goal-nodes) only once
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
             // accept only not-contracted nodes, do not consider loops at the node that is being contracted
-            if (fromNode == sch.getNode() || isContracted(fromNode))
+            if (fromNode == node || isContracted(fromNode))
                 continue;
 
             final double incomingEdgeWeight = incomingEdges.getWeight(true);
@@ -172,14 +173,14 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             int incomingEdge = incomingEdges.getEdge();
             int inOrigEdgeCount = getOrigEdgeCount(incomingEdge);
             // collect outgoing nodes (goal-nodes) only once
-            PrepareCHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(sch.getNode());
+            PrepareCHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
             // force fresh maps etc as this cannot be determined by from node alone (e.g. same from node but different avoidNode)
             prepareAlgo.clear();
             degree++;
             while (outgoingEdges.next()) {
                 int toNode = outgoingEdges.getAdjNode();
                 // add only not-contracted nodes, do not consider loops at the node that is being contracted
-                if (toNode == sch.getNode() || isContracted(toNode) || fromNode == toNode)
+                if (toNode == node || isContracted(toNode) || fromNode == toNode)
                     continue;
 
                 // Limit weight as ferries or forbidden edges can increase local search too much.
@@ -195,7 +196,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
 
                 prepareAlgo.setWeightLimit(existingDirectWeight);
                 prepareAlgo.setMaxVisitedNodes(maxVisitedNodes);
-                prepareAlgo.ignoreNode(sch.getNode());
+                prepareAlgo.ignoreNode(node);
 
                 dijkstraSW.start();
                 dijkstraCount++;
@@ -207,7 +208,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                     // FOUND witness path, so do not add shortcut
                     continue;
 
-                sch.foundShortcut(fromNode, toNode, existingDirectWeight,
+                handler.handleShortcut(fromNode, toNode, existingDirectWeight,
                         outgoingEdges.getEdge(), getOrigEdgeCount(outgoingEdges.getEdge()),
                         incomingEdge, inOrigEdgeCount);
             }
@@ -216,11 +217,11 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     /**
-     * Adds the given shortcuts to the graph.
+     * Actually writes the given shortcuts to the graph.
      *
      * @return the actual number of shortcuts that were added to the graph
      */
-    private int addShortcuts(Collection<Shortcut> shortcuts) {
+    private int writeShortcuts(Collection<Shortcut> shortcuts) {
         int tmpNewShortcuts = 0;
         NEXT_SC:
         for (Shortcut sc : shortcuts) {
@@ -265,11 +266,6 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             }
         }
         return tmpNewShortcuts;
-    }
-
-    private CalcShortcutsResult calcShortcutCount(int node) {
-        findShortcuts(calcScHandler.setNode(node));
-        return calcScHandler.calcShortcutsResult;
     }
 
     private String getCoords(PrepareCHEdgeIterator edge, NodeAccess na) {
@@ -347,87 +343,51 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         }
     }
 
+    @FunctionalInterface
     private interface ShortcutHandler {
-        void foundShortcut(int fromNode, int toNode, double existingDirectWeight,
-                           int outgoingEdge, int outOrigEdgeCount,
-                           int incomingEdge, int inOrigEdgeCount);
-
-        int getNode();
+        void handleShortcut(int fromNode, int toNode, double existingDirectWeight,
+                            int outgoingEdge, int outOrigEdgeCount,
+                            int incomingEdge, int inOrigEdgeCount);
     }
 
-    private class CalcShortcutHandler implements ShortcutHandler {
-        int node;
-        CalcShortcutsResult calcShortcutsResult = new CalcShortcutsResult();
-
-        @Override
-        public int getNode() {
-            return node;
-        }
-
-        public CalcShortcutHandler setNode(int node) {
-            this.node = node;
-            calcShortcutsResult.originalEdgesCount = 0;
-            calcShortcutsResult.shortcutsCount = 0;
-            return this;
-        }
-
-        @Override
-        public void foundShortcut(int fromNode, int toNode, double existingDirectWeight,
-                                  int outgoingEdge, int outOrigEdgeCount,
-                                  int incomingEdge, int inOrigEdgeCount) {
-            calcShortcutsResult.shortcutsCount++;
-            calcShortcutsResult.originalEdgesCount += inOrigEdgeCount + outOrigEdgeCount;
-        }
+    private void countShortcut(int fromNode, int toNode, double existingDirectWeight,
+                               int outgoingEdge, int outOrigEdgeCount,
+                               int incomingEdge, int inOrigEdgeCount) {
+        shortcutsCount++;
+        originalEdgesCount += inOrigEdgeCount + outOrigEdgeCount;
     }
 
-    private class AddShortcutHandler implements ShortcutHandler {
-        int node;
+    /**
+     * Adds a new shortcut to the temporary set of shortcuts or updates/merges it with an
+     * existing one.
+     */
+    private void addOrUpdateShortcut(int fromNode, int toNode, double existingDirectWeight,
+                                     int outgoingEdge, int outOrigEdgeCount,
+                                     int incomingEdge, int inOrigEdgeCount) {
+        // FOUND shortcut
+        // but be sure that it is the only shortcut in the collection
+        // and also in the graph for u->w. If existing AND identical weight => update setProperties.
+        // Hint: shortcuts are always one-way due to distinct level of every node but we don't
+        // know yet the levels so we need to determine the correct direction or if both directions
+        Shortcut sc = new Shortcut(fromNode, toNode, existingDirectWeight);
+        if (shortcuts.containsKey(sc))
+            return;
 
-        @Override
-        public int getNode() {
-            return node;
+        Shortcut tmpSc = new Shortcut(toNode, fromNode, existingDirectWeight);
+        Shortcut tmpRetSc = shortcuts.get(tmpSc);
+        // overwrite flags only if skipped edges are identical
+        if (tmpRetSc != null && tmpRetSc.skippedEdge2 == incomingEdge && tmpRetSc.skippedEdge1 == outgoingEdge) {
+            tmpRetSc.flags = PrepareEncoder.getScDirMask();
+            return;
         }
 
-        public AddShortcutHandler setNode(int node) {
-            shortcuts.clear();
-            this.node = node;
-            return this;
-        }
+        Shortcut old = shortcuts.put(sc, sc);
+        if (old != null)
+            throw new IllegalStateException("Shortcut did not exist (" + sc + ") but was overwriting another one? " + old);
 
-        @Override
-        public void foundShortcut(int fromNode, int toNode, double existingDirectWeight,
-                                  int outgoingEdge, int outOrigEdgeCount,
-                                  int incomingEdge, int inOrigEdgeCount) {
-            // FOUND shortcut
-            // but be sure that it is the only shortcut in the collection
-            // and also in the graph for u->w. If existing AND identical weight => update setProperties.
-            // Hint: shortcuts are always one-way due to distinct level of every node but we don't
-            // know yet the levels so we need to determine the correct direction or if both directions
-            Shortcut sc = new Shortcut(fromNode, toNode, existingDirectWeight);
-            if (shortcuts.containsKey(sc))
-                return;
-
-            Shortcut tmpSc = new Shortcut(toNode, fromNode, existingDirectWeight);
-            Shortcut tmpRetSc = shortcuts.get(tmpSc);
-            // overwrite flags only if skipped edges are identical
-            if (tmpRetSc != null && tmpRetSc.skippedEdge2 == incomingEdge && tmpRetSc.skippedEdge1 == outgoingEdge) {
-                tmpRetSc.flags = PrepareEncoder.getScDirMask();
-                return;
-            }
-
-            Shortcut old = shortcuts.put(sc, sc);
-            if (old != null)
-                throw new IllegalStateException("Shortcut did not exist (" + sc + ") but was overwriting another one? " + old);
-
-            sc.skippedEdge1 = incomingEdge;
-            sc.skippedEdge2 = outgoingEdge;
-            sc.originalEdges = inOrigEdgeCount + outOrigEdgeCount;
-        }
-    }
-
-    private static class CalcShortcutsResult {
-        int originalEdgesCount;
-        int shortcutsCount;
+        sc.skippedEdge1 = incomingEdge;
+        sc.skippedEdge2 = outgoingEdge;
+        sc.originalEdges = inOrigEdgeCount + outOrigEdgeCount;
     }
 
     public static class Params {
