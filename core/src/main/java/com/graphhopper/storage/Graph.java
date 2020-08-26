@@ -121,8 +121,9 @@ public interface Graph {
     default EdgeExplorer createOutEdgeExplorer(Weighting weighting) {
         final BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
         return createEdgeExplorer(edge -> {
-            boolean access = edge.get(accessEnc);
-            if (!access)
+            if (edge.getBaseNode() == edge.getAdjNode())
+                return edge.get(accessEnc) || edge.getReverse(accessEnc);
+            if (!edge.get(accessEnc))
                 return false;
             return Double.isFinite(weighting.calcEdgeWeight(edge, false));
         });
@@ -136,8 +137,9 @@ public interface Graph {
     default EdgeExplorer createInEdgeExplorer(Weighting weighting) {
         final BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
         return createEdgeExplorer(edge -> {
-            boolean access = edge.getReverse(accessEnc);
-            if (!access)
+            if (edge.getBaseNode() == edge.getAdjNode())
+                return edge.get(accessEnc) || edge.getReverse(accessEnc);
+            if (!edge.getReverse(accessEnc))
                 return false;
             return Double.isFinite(weighting.calcEdgeWeight(edge, true));
         });
