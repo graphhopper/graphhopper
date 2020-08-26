@@ -46,7 +46,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     protected final NodeAccess nodeAccess;
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
-    protected EdgeExplorer edgeExplorer;
+    protected EdgeExplorer outEdgeExplorer;
+    protected EdgeExplorer inEdgeExplorer;
     protected EdgeFilter inEdgeFilter;
     protected EdgeFilter outEdgeFilter;
     protected EdgeFilter additionalEdgeFilter;
@@ -59,7 +60,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         this.flagEncoder = weighting.getFlagEncoder();
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        edgeExplorer = graph.createEdgeExplorer();
+        outEdgeExplorer = graph.createOutEdgeExplorer(weighting);
+        inEdgeExplorer = graph.createInEdgeExplorer(weighting);
         outEdgeFilter = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
         inEdgeFilter = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
@@ -85,12 +87,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (fromOutEdge == ANY_EDGE) {
             fillEdgesFrom();
         } else {
-            fillEdgesFromUsingFilter(new EdgeFilter() {
-                @Override
-                public boolean accept(EdgeIteratorState edgeState) {
-                    return edgeState.getOrigEdgeFirst() == fromOutEdge;
-                }
-            });
+            fillEdgesFromUsingFilter(edgeState -> edgeState.getOrigEdgeFirst() == fromOutEdge);
         }
     }
 
@@ -98,12 +95,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (toInEdge == ANY_EDGE) {
             fillEdgesTo();
         } else {
-            fillEdgesToUsingFilter(new EdgeFilter() {
-                @Override
-                public boolean accept(EdgeIteratorState edgeState) {
-                    return edgeState.getOrigEdgeLast() == toInEdge;
-                }
-            });
+            fillEdgesToUsingFilter(edgeState -> edgeState.getOrigEdgeLast() == toInEdge);
         }
     }
 
@@ -139,7 +131,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             return false;
         }
         bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, false);
+        fillEdges(outEdgeExplorer, currFrom, pqOpenSetFrom, bestWeightMapFrom, false);
         return true;
     }
 
@@ -157,11 +149,11 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             return false;
         }
         bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, true);
+        fillEdges(inEdgeExplorer, currTo, pqOpenSetTo, bestWeightMapTo, true);
         return true;
     }
 
-    private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
+    private void fillEdges(EdgeExplorer edgeExplorer, SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge.edge))
@@ -202,10 +194,12 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
         // todo: for #1835 move access flag checks into weighting
-        final boolean access = reverse ? inEdgeFilter.accept(iter) : outEdgeFilter.accept(iter);
-        if (!access) {
-            return Double.POSITIVE_INFINITY;
-        }
+        // todonow: #2113 - no need to check access flags again here as this is done in in/out edge explorer
+        //          but if we move the access checks into weighting they will be checked again in below weight calculation...
+//        final boolean access = reverse ? inEdgeFilter.accept(iter) : outEdgeFilter.accept(iter);
+//        if (!access) {
+//            return Double.POSITIVE_INFINITY;
+//        }
         // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
         // turn weights, see discussion in #1960
         return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
