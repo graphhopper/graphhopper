@@ -22,6 +22,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
@@ -288,6 +289,38 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         assertEquals(44, iter.getFlags().ints[0]);
         assertEquals(13, edge1.getFlags().ints[0]);
+    }
+
+    @Test
+    public void testWeightedExplorer() {
+        GraphHopperStorage graph = createGHStorage();
+        graph.edge(0, 1, 10, true);
+        graph.edge(0, 3, 5, true);
+        graph.edge(4, 0, 7, false);
+        FastestWeighting fastestWeighting = new FastestWeighting(carEncoder);
+        FastestWeighting modifiedWeighting = new FastestWeighting(carEncoder) {
+            @Override
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                if (((int) edgeState.getDistance()) % 2 == 0) {
+                    return Double.POSITIVE_INFINITY;
+                } else {
+                    return edgeState.getDistance();
+                }
+            }
+        };
+        EdgeExplorer outExplorer = graph.createOutEdgeExplorer(fastestWeighting);
+        EdgeExplorer modifiedOutExplorer = graph.createOutEdgeExplorer(modifiedWeighting);
+        // we do not see node 4, because only 4->0 has access, but not 0->4
+        assertEquals(GHUtility.asSet(1, 3), GHUtility.getNeighbors(outExplorer.setBaseNode(0)));
+        // this time we do not see node one because the 0-1 distance is even
+        assertEquals(GHUtility.asSet(3), GHUtility.getNeighbors(modifiedOutExplorer.setBaseNode(0)));
+
+        EdgeExplorer inExplorer = graph.createInEdgeExplorer(fastestWeighting);
+        EdgeExplorer modifiedInExplorer = graph.createInEdgeExplorer(modifiedWeighting);
+        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(inExplorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(), GHUtility.getNeighbors(modifiedInExplorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(1, 3, 4), GHUtility.getNeighbors(inExplorer.setBaseNode(0)));
+        assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(modifiedInExplorer.setBaseNode(0)));
     }
 
     @Test

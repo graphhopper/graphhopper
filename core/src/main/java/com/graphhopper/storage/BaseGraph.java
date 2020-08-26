@@ -589,11 +589,6 @@ class BaseGraph implements Graph {
     }
 
     @Override
-    public EdgeExplorer createEdgeExplorer() {
-        return createEdgeExplorer(EdgeFilter.ALL_EDGES);
-    }
-
-    @Override
     public AllEdgesIterator getAllEdges() {
         return new AllEdgeIterator(this, edgeAccess);
     }

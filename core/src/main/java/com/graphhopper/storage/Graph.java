@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -100,16 +101,47 @@ public interface Graph {
     /**
      * Returns an EdgeExplorer which makes it possible to traverse all filtered edges of a specific
      * node. Calling this method might be expensive, so e.g. create an explorer before a for loop!
-     *
-     * @see EdgeExplorer
-     * @see Graph#createEdgeExplorer()
      */
     EdgeExplorer createEdgeExplorer(EdgeFilter filter);
 
     /**
-     * @see Graph#createEdgeExplorer(com.graphhopper.routing.util.EdgeFilter)
+     * Creates an EdgeExplorer that accepts all edges
+     *
+     * @see #createEdgeExplorer(EdgeFilter)
      */
-    EdgeExplorer createEdgeExplorer();
+    default EdgeExplorer createEdgeExplorer() {
+        return createEdgeExplorer(EdgeFilter.ALL_EDGES);
+    }
+
+    /**
+     * Returns an EdgeExplorer that accepts only outgoing edges with finite weight according to the given weighting.
+     *
+     * @see #createEdgeExplorer(EdgeFilter)
+     */
+    default EdgeExplorer createOutEdgeExplorer(Weighting weighting) {
+        final BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
+        return createEdgeExplorer(edge -> {
+            boolean access = edge.get(accessEnc);
+            if (!access)
+                return false;
+            return Double.isFinite(weighting.calcEdgeWeight(edge, false));
+        });
+    }
+
+    /**
+     * Returns an EdgeExplorer that accepts only incoming edges with finite weight according to the given weighting.
+     *
+     * @see #createEdgeExplorer(EdgeFilter)
+     */
+    default EdgeExplorer createInEdgeExplorer(Weighting weighting) {
+        final BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
+        return createEdgeExplorer(edge -> {
+            boolean access = edge.getReverse(accessEnc);
+            if (!access)
+                return false;
+            return Double.isFinite(weighting.calcEdgeWeight(edge, true));
+        });
+    }
 
     /**
      * Copy this Graph into the specified Graph g.
