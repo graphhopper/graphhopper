@@ -65,9 +65,10 @@ public class QuadEdgeSubdivisionTest {
         assertVertex(ReadableQuadEdge.wrap(e41), ReadableQuadEdge.wrap(e2), ReadableQuadEdge.wrap(e1.sym()));
         assertVertex(ReadableQuadEdge.wrap(e3), ReadableQuadEdge.wrap(e2.sym()), ReadableQuadEdge.wrap(e4.sym()), ReadableQuadEdge.wrap(e6));
 
-        ContourBuilder contourBuilder = new ContourBuilder(ReadableTriangulation.wrap(quadEdgeSubdivision));
+        ReadableTriangulation triangulation = ReadableTriangulation.wrap(quadEdgeSubdivision);
+        ContourBuilder contourBuilder = new ContourBuilder(triangulation);
 
-        Geometry geometry = contourBuilder.computeIsoline(0.5);
+        Geometry geometry = contourBuilder.computeIsoline(0.5, triangulation.getEdges());
         assertEquals("MULTIPOLYGON (((1 0, 0.5 -0.5, 1 -2, 1.5 -0.5, 1 0)))", geometry.toString());
     }
 
@@ -108,9 +109,10 @@ public class QuadEdgeSubdivisionTest {
         assertVertex(e41, e2, e1.sym());
         assertVertex(e3, e2.sym(), e4.sym(), e6);
 
-        ContourBuilder contourBuilder = new ContourBuilder(ReadableTriangulation.wrap(triangulation));
+        ReadableTriangulation triangulation1 = ReadableTriangulation.wrap(triangulation);
+        ContourBuilder contourBuilder = new ContourBuilder(triangulation1);
 
-        Geometry geometry = contourBuilder.computeIsoline(0.5);
+        Geometry geometry = contourBuilder.computeIsoline(0.5, triangulation1.getEdges());
         assertEquals("MULTIPOLYGON (((0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 0.5 -0.5)))", geometry.toString());
     }
 
@@ -155,9 +157,10 @@ public class QuadEdgeSubdivisionTest {
         assertVertex(e41, e2, e1.sym(), e00);
         assertVertex(e3, e2.sym(), e4.sym(), e6);
 
-        ContourBuilder contourBuilder = new ContourBuilder(ReadableTriangulation.wrap(triangulation));
+        ReadableTriangulation triangulation1 = ReadableTriangulation.wrap(triangulation);
+        ContourBuilder contourBuilder = new ContourBuilder(triangulation1);
 
-        Geometry geometry = contourBuilder.computeIsoline(0.5);
+        Geometry geometry = contourBuilder.computeIsoline(0.5, triangulation1.getEdges());
         assertEquals("MULTIPOLYGON (((0.5 -0.5, 1 -2, 1.5 -0.5, 1 0, 0.5 -0.5)))", geometry.toString());
     }
 

@@ -70,7 +70,7 @@ public class ShortcutUnpacker {
             skippedEdge2 = tmp;
         }
         RoutingCHEdgeIteratorState sk2 = getEdge(skippedEdge2, adj);
-        assert sk2 != null : "skipped edge " + skippedEdge2 + " + is not attached to adjNode " + adj + ". this should " +
+        assert sk2 != null : "skipped edge " + skippedEdge2 + " is not attached to adjNode " + adj + ". this should " +
                 "never happen because edge-based CH does not use bidirectional shortcuts at the moment";
         RoutingCHEdgeIteratorState sk1 = getEdge(skippedEdge1, sk2.getBaseNode());
         if (base == adj && (sk1.getAdjNode() == sk1.getBaseNode() || sk2.getAdjNode() == sk2.getBaseNode())) {

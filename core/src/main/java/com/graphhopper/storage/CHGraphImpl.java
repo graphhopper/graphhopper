@@ -354,7 +354,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         System.out.println("shortcuts:");
         String formatShortcutsBase = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s";
         String formatShortcutExt = " | %12s | %12s";
-        String header = String.format(Locale.ROOT, formatShortcutsBase, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2");
+        String header = String.format(Locale.ROOT, formatShortcutsBase, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2");
         if (chConfig.isEdgeBased()) {
             header += String.format(Locale.ROOT, formatShortcutExt, "S_ORIG_FIRST", "S_ORIG_LAST");
         }
