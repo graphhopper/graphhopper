@@ -47,23 +47,34 @@ create new virtual nodes or if close enough use the existing junction node.
 ```java
 FlagEncoder encoder = new CarFlagEncoder();
 EncodingManager em = EncodingManager.create(encoder);
-GraphBuilder gb = new GraphBuilder(em).setLocation("graphhopper_folder").setStore(true);
-GraphStorage graph = gb.create();
+GraphHopperStorage graph = new GraphBuilder(em).setRAM("graphhopper_folder", true).create();
 // Make a weighted edge between two nodes.
 EdgeIteratorState edge = graph.edge(fromId, toId);
 edge.setDistance(distance);
-edge.setFlags(encoder.setProperties(speed, true, true));
-// Flush to disc
+edge.set(encoder.getAverageSpeedEnc(), 50);
+
+// Set node coordinates and build location index
+NodeAccess na = graph.getNodeAccess();
+na.setNode(5, 15.15, 20.20);
+na.setNode(10, 15.25, 20.21);
+LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
+index.prepareIndex();
+
+// Flush the graph and location index to disk
 graph.flush();
+index.flush();
 ```
 
 ### Load the graph
 
 ```java
-...
-GraphStorage graph = gb.load();
-// Load index
-LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory("graphhopper_folder", true));
+FlagEncoder encoder = new CarFlagEncoder();
+EncodingManager em = EncodingManager.create(encoder);
+GraphHopperStorage graph = new GraphBuilder(em).setRAM("graphhopper_folder", true).build();
+graph.loadExisting();
+
+// Load the location index
+LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), graph.getDirectory());
 if (!index.loadExisting())
     throw new IllegalStateException("location index cannot be loaded!");
 ```
@@ -74,55 +85,51 @@ if (!index.loadExisting())
 QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
 QueryResult toQR = index.findClosest(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
 QueryGraph queryGraph = QueryGraph.create(graph, fromQR, toQR);
-Path path = new Dijkstra(queryGraph, encoder).calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
+Weighting weighting = new FastestWeighting(encoder);
+Path path = new Dijkstra(queryGraph, weighting).calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
 ```
 
 ### Calculate Path without LocationIndex
 
 ```java
 // get the fromId and toId nodes from other code parts
-Path path = new Dijkstra(graph, encoder).calcPath(fromId, toId);
+Path path = new Dijkstra(graph, weighting).calcPath(fromId, toId);
 ```
 
 ### Use Contraction Hierarchies to make queries faster
 
 ```java
 // Creating and saving the graph
-GraphBuilder gb = new GraphBuilder(em).
-    setLocation("graphhopper_folder").
-    setStore(true).
-    setCHGraph(true);
-GraphHopperStorage graph = gb.create();
-// Create a new edge between two nodes, set access, distance, speed, geometry, ..
-EdgeIteratorState edge = graph.edge(fromId, toId);
-...
+FlagEncoder encoder = new CarFlagEncoder();
+EncodingManager em = EncodingManager.create(encoder);
+Weighting weighting = new FastestWeighting(encoder);
+CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);
+GraphHopperStorage graph = new GraphBuilder(em)
+        .setRAM("graphhopper_folder", true)
+         // need to setup CH at time of graph creation here!
+        .setCHConfigs(chConfig)
+        .create();
+
+// ... (not shown) set edges and nodes/coordinates as above
 
 // Prepare the graph for fast querying ...
-TraversalMode tMode = TraversalMode.NODE_BASED;
-CHConfig chConfig = CHConfig.nodeBased("chGraphName", weighting);
-PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chConfig);
+PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
 pch.doWork();
 
 // flush after preparation!
 graph.flush();
 
-// Load and use the graph
-GraphStorage graph = gb.load();
+// get the CH graph
+RoutingCHGraph chGraph = graph.getRoutingCHGraph("my_profile");
 
- // Load index
-LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory("graphhopper_folder", true));
-if (!index.loadExisting())
-    throw new IllegalStateException("location index cannot be loaded!");
+// calculate a path without location index
+BidirRoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(new PMap());
+algo.calcPath(fromId, toId);
 
-// calculate path is identical
-QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
-QueryResult toQR = index.findClosest(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
-QueryGraph queryGraph = QueryGraph.create(graph, fromQR, toQR);
-
-// create the algorithm using the PrepareContractionHierarchies object
-AlgorithmOptions algoOpts = AlgorithmOptions.start().
-   algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(tMode).weighting(weighting).
-   build();
-RoutingAlgorithm algorithm = pch.getRoutingAlgorithmFactory().createAlgo(queryGraph, algoOpts);
-Path path = algorithm.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
+// calculate a path with location index
+QueryGraph queryGraph = QueryGraph.create(graph, fromQR, toQR); // use index as shown above
+BidirRoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap());
+algo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
 ```
+
+**See GraphHopper's many unit tests for up-to date and more detailed usage examples of the low level API!**

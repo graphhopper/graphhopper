@@ -15,6 +15,7 @@ package com.graphhopper.isochrone.algorithm;
 
 import org.locationtech.jts.algorithm.CGAlgorithms;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.*;
@@ -32,18 +33,18 @@ public class ContourBuilder {
 
     private static final double EPSILON = 0.000001;
 
-    private GeometryFactory geometryFactory = new GeometryFactory();
+    private final GeometryFactory geometryFactory = new GeometryFactory();
     private final ReadableTriangulation triangulation;
 
     public ContourBuilder(ReadableTriangulation triangulation) {
         this.triangulation = triangulation;
     }
 
-    public MultiPolygon computeIsoline(double z0) {
+    public MultiPolygon computeIsoline(double z0, Collection<ReadableQuadEdge> seedEdges) {
         Set<ReadableQuadEdge> processed = new HashSet<>();
         List<LinearRing> rings = new ArrayList<>();
 
-        for (ReadableQuadEdge f : triangulation.getEdges()) {
+        for (ReadableQuadEdge f : seedEdges) {
             ReadableQuadEdge e = f.getPrimary();
             if (processed.contains(e))
                 continue;
@@ -111,32 +112,27 @@ public class ContourBuilder {
 
     @SuppressWarnings("unchecked")
     private List<Polygon> punchHoles(List<LinearRing> rings) {
-        List<Polygon> shells = new ArrayList<>(rings.size());
+        List<PreparedPolygon> shells = new ArrayList<>(rings.size());
         List<LinearRing> holes = new ArrayList<>(rings.size() / 2);
         // 1. Split the polygon list in two: shells and holes (CCW and CW)
         for (LinearRing ring : rings) {
             if (CGAlgorithms.signedArea(ring.getCoordinateSequence()) > 0.0)
                 holes.add(ring);
             else
-                shells.add(geometryFactory.createPolygon(ring));
+                shells.add(new PreparedPolygon(geometryFactory.createPolygon(ring)));
         }
         // 2. Sort the shells based on number of points to optimize step 3.
-        Collections.sort(shells, new Comparator<Polygon>() {
-            @Override
-            public int compare(Polygon o1, Polygon o2) {
-                return o2.getNumPoints() - o1.getNumPoints();
-            }
-        });
-        for (Polygon shell : shells) {
-            shell.setUserData(new ArrayList<LinearRing>());
+        shells.sort((o1, o2) -> o2.getGeometry().getNumPoints() - o1.getGeometry().getNumPoints());
+        for (PreparedPolygon shell : shells) {
+            shell.getGeometry().setUserData(new ArrayList<LinearRing>());
         }
         // 3. For each hole, determine which shell it fits in.
         for (LinearRing hole : holes) {
             outer: {
                 // Probably most of the time, the first shell will be the one
-                for (Polygon shell : shells) {
+                for (PreparedPolygon shell : shells) {
                     if (shell.contains(hole)) {
-                        ((List<LinearRing>) shell.getUserData()).add(hole);
+                        ((List<LinearRing>) shell.getGeometry().getUserData()).add(hole);
                         break outer;
                     }
                 }
@@ -145,9 +141,9 @@ public class ContourBuilder {
         }
         // 4. Build the list of punched polygons
         List<Polygon> punched = new ArrayList<>(shells.size());
-        for (Polygon shell : shells) {
-            List<LinearRing> shellHoles = ((List<LinearRing>) shell.getUserData());
-            punched.add(geometryFactory.createPolygon((LinearRing) (shell.getExteriorRing()),
+        for (PreparedPolygon shell : shells) {
+            List<LinearRing> shellHoles = ((List<LinearRing>) shell.getGeometry().getUserData());
+            punched.add(geometryFactory.createPolygon((LinearRing) (((Polygon) shell.getGeometry()).getExteriorRing()),
                     shellHoles.toArray(new LinearRing[shellHoles.size()])));
         }
         return punched;
