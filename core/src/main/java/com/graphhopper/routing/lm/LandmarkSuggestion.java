@@ -46,7 +46,7 @@ public class LandmarkSuggestion {
         List<Integer> landmarkNodeIds = new ArrayList<>();
         BBox bbox = BBox.createInverse(false);
         int lmSuggestionIdx = 0;
-        String errors = "";
+        StringBuilder stringBuilder = new StringBuilder();
         for (String lmStr : lines) {
             if (lmStr.startsWith("#BBOX:")) {
                 bbox = BBox.parseTwoPoints(lmStr.substring("#BBOX:".length()));
@@ -62,7 +62,7 @@ public class LandmarkSuggestion {
             lmSuggestionIdx++;
             QueryResult result = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             if (!result.isValid()) {
-                errors += "Cannot find close node found for landmark suggestion[" + lmSuggestionIdx + "]=" + point + ".\n";
+                stringBuilder.append("Cannot find close node found for landmark suggestion[").append(lmSuggestionIdx).append("]=").append(point).append(".\n");
                 continue;
             }
 
@@ -70,8 +70,8 @@ public class LandmarkSuggestion {
             landmarkNodeIds.add(result.getClosestNode());
         }
 
-        if (!errors.isEmpty())
-            throw new RuntimeException(errors);
+        if (stringBuilder.length() > 0)
+            throw new RuntimeException(stringBuilder.toString());
 
         return new LandmarkSuggestion(landmarkNodeIds, bbox);
     }

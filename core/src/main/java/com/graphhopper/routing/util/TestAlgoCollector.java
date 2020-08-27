@@ -115,12 +115,12 @@ public class TestAlgoCollector {
 
     @Override
     public String toString() {
-        String str = "";
-        str += "FOUND " + errors.size() + " ERRORS.\n";
-        for (String s : errors) {
-            str += s + ".\n";
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("FOUND ").append(errors.size()).append(" ERRORS.\n");
+        for (String error : errors) {
+            stringBuilder.append(error).append(".\n");
         }
-        return str;
+        return stringBuilder.toString();
     }
 
     void printSummary() {

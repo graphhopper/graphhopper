@@ -388,26 +388,26 @@ public class GHLongIntBTree implements LongIntMap {
         }
 
         String toString(int height) {
-            String str = height + ": ";
+            StringBuilder stringBuilder = new StringBuilder(height + ": ");
             for (int i = 0; i < entrySize; i++) {
                 if (i > 0) {
-                    str += ",";
+                    stringBuilder.append(",");
                 }
                 if (keys[i] == noNumberValue) {
-                    str += "-";
+                    stringBuilder.append("-");
                 } else {
-                    str += keys[i];
+                    stringBuilder.append(keys[i]);
                 }
             }
-            str += "\n";
+            stringBuilder.append("\n");
             if (!isLeaf) {
                 for (int i = 0; i < entrySize + 1; i++) {
                     if (children[i] != null) {
-                        str += children[i].toString(height + 1) + "| ";
+                        stringBuilder.append(children[i].toString(height + 1)).append("| ");
                     }
                 }
             }
-            return str;
+            return stringBuilder.toString();
         }
     }
 }

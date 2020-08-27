@@ -77,11 +77,11 @@ final class PriorityCalculator {
     }
 
     private static String names(List<EncodedValue> allShared) {
-        String nameStr = "";
+        StringBuilder stringBuilder = new StringBuilder();
         for (EncodedValue ev : allShared) {
-            nameStr += ev.getName() + ",";
+            stringBuilder.append(ev.getName()).append(",");
         }
-        return nameStr;
+        return stringBuilder.toString();
     }
 
     /**

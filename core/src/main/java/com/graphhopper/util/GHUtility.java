@@ -275,24 +275,24 @@ public class GHUtility {
         CHEdgeExplorer ex = g.createEdgeExplorer(filter);
         CHEdgeIterator iter = ex.setBaseNode(nodeId);
         NodeAccess na = g.getBaseGraph().getNodeAccess();
-        String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
+        StringBuilder stringBuilder = new StringBuilder(nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n");
         while (iter.next()) {
-            str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
-                    + iter.getEdge() + " \t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
+            stringBuilder.append("  ->")
+                    .append(iter.getAdjNode())
+                    .append("(").append(iter.getSkippedEdge1()).append(",").append(iter.getSkippedEdge2()).append(") ")
+                    .append(iter.getEdge()).append(" \t").append(BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8)).append("\n");
         }
-        return str;
+        return stringBuilder.toString();
     }
 
     public static String getNodeInfo(Graph g, int nodeId, EdgeFilter filter) {
         EdgeIterator iter = g.createEdgeExplorer(filter).setBaseNode(nodeId);
         NodeAccess na = g.getNodeAccess();
-        String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
+        StringBuilder str = new StringBuilder(nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n");
         while (iter.next()) {
-            str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
-                    + iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).getSize() + ", edgeId:" + iter.getEdge()
-                    + "\t" + BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8) + "\n";
+            str.append("  ->").append(iter.getAdjNode()).append(" (").append(iter.getDistance()).append(") pillars:").append(iter.fetchWayGeometry(FetchMode.PILLAR_ONLY).getSize()).append(", edgeId:").append(iter.getEdge()).append("\t").append(BitUtil.BIG.toBitString(iter.getFlags().ints[0], 8)).append("\n");
         }
-        return str;
+        return str.toString();
     }
 
     public static Graph shuffle(Graph g, Graph sortedGraph) {

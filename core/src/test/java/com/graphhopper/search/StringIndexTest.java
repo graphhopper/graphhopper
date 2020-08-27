@@ -124,14 +124,14 @@ public class StringIndexTest {
     }
 
     @Test
-    public void testNoErrorOnLargeName() {
+    public void stringBuilder() {
         StringIndex index = create();
         // 127 => bytes.length == 254
-        String str = "";
+        StringBuilder str = new StringBuilder();
         for (int i = 0; i < 127; i++) {
-            str += "ß";
+            str.append("ß");
         }
-        long result = index.add(createMap("", str));
+        long result = index.add(createMap("", str.toString()));
         assertEquals(127, index.get(result, "").length());
     }
 
@@ -145,12 +145,12 @@ public class StringIndexTest {
         } catch (IllegalStateException ex) {
         }
 
-        String str = "sdfsdfds";
+        StringBuilder str = new StringBuilder("sdfsdfds");
         for (int i = 0; i < 256 * 3; i++) {
-            str += "Б";
+            str.append("Б");
         }
         try {
-            index.add(createMap("", str));
+            index.add(createMap("", str.toString()));
             fail();
         } catch (IllegalStateException ex) {
         }

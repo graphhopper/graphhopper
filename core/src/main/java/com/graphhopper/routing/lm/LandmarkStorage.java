@@ -634,13 +634,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
     @Override
     public String toString() {
-        String str = "";
+        StringBuilder stringBuilder = new StringBuilder();
         for (int[] ints : landmarkIDs) {
-            if (!str.isEmpty())
-                str += ", ";
-            str += Arrays.toString(ints);
+            if (stringBuilder.length() > 0)
+                stringBuilder.append(", ");
+            stringBuilder.append(Arrays.toString(ints));
         }
-        return str;
+        return stringBuilder.toString();
     }
 
     /**
@@ -648,20 +648,16 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      */
     String getLandmarksAsGeoJSON() {
         NodeAccess na = graph.getNodeAccess();
-        String str = "";
+        StringBuilder str = new StringBuilder();
         for (int subnetwork = 1; subnetwork < landmarkIDs.size(); subnetwork++) {
             int[] lmArray = landmarkIDs.get(subnetwork);
             for (int lmIdx = 0; lmIdx < lmArray.length; lmIdx++) {
                 int index = lmArray[lmIdx];
-                if (!str.isEmpty())
-                    str += ",";
+                if (str.length() > 0)
+                    str.append(",");
 
-                str += "{ \"type\": \"Feature\", \"geometry\": {\"type\": \"Point\", \"coordinates\": ["
-                        + na.getLon(index) + ", " + na.getLat(index) + "]},";
-                str += "  \"properties\":{\"node_index\":" + index + ","
-                        + "\"subnetwork\":" + subnetwork + ","
-                        + "\"lm_index\":" + lmIdx + "}"
-                        + "}";
+                str.append("{ \"type\": \"Feature\", \"geometry\": {\"type\": \"Point\", \"coordinates\": [").append(na.getLon(index)).append(", ").append(na.getLat(index)).append("]},");
+                str.append("  \"properties\":{\"node_index\":").append(index).append(",").append("\"subnetwork\":").append(subnetwork).append(",").append("\"lm_index\":").append(lmIdx).append("}").append("}");
             }
         }
 
