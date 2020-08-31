@@ -926,7 +926,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (!hasInterpolated() && hasElevation()) {
-            interpolateBridgesAndOrTunnels();
+            interpolateBridgesTunnelsAndFerries();
         }
 
         initLocationIndex();
@@ -962,7 +962,7 @@ public class GraphHopper implements GraphHopperAPI {
         return "true".equals(ghStorage.getProperties().get(INTERPOLATION_KEY));
     }
 
-    void interpolateBridgesAndOrTunnels() {
+    void interpolateBridgesTunnelsAndFerries() {
         if (ghStorage.getEncodingManager().hasEncodedValue(RoadEnvironment.KEY)) {
             EnumEncodedValue<RoadEnvironment> roadEnvEnc = ghStorage.getEncodingManager().getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
             StopWatch sw = new StopWatch().start();
@@ -972,13 +972,11 @@ public class GraphHopper implements GraphHopperAPI {
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.BRIDGE).execute();
             float bridge = sw.stop().getSeconds();
             float ferry = -1;
-            if (eleProvider instanceof SkadiProvider) {
-                // The SkadiProvider contains bathymetric data. For ferries this can result in bigger elevation changes
-                // See #2098 for mor information
-                sw = new StopWatch().start();
-                new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
-                ferry = sw.stop().getSeconds();
-            }
+            // The SkadiProvider contains bathymetric data. For ferries this can result in bigger elevation changes
+            // See #2098 for mor information
+            sw = new StopWatch().start();
+            new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
+            ferry = sw.stop().getSeconds();
             ghStorage.getProperties().put(INTERPOLATION_KEY, true);
             logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) ferry);
         }
