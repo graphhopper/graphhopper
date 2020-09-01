@@ -8,6 +8,8 @@ cache:
 
 run_measurement:
   stage: test
+  tags:
+    - openjdk11
   script:
     # make this script exit if a command fails, a variable is missing etc.
     - set -euo pipefail
