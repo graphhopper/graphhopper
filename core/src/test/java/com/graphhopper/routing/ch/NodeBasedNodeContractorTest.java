@@ -34,14 +34,14 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NodeBasedNodeContractorTest {
     // TODO integrate this into CHGraphImpl somehow
@@ -156,7 +156,7 @@ public class NodeBasedNodeContractorTest {
         //
         // where there are two roads from 1 to 2 and the directed road has a smaller weight
         // leading to two shortcuts sc1 (unidir) and sc2 (bidir) where the second should NOT be rejected due to the larger weight
-        final EdgeIteratorState edge1to2bidirected = graph.edge(1, 2, 1, true);
+        final EdgeIteratorState edge1to2bidirected = graph.edge(1, 2, 2, true);
         final EdgeIteratorState edge1to2directed = graph.edge(1, 2, 1, false);
         final EdgeIteratorState edge2to3 = graph.edge(2, 3, 1, true);
         graph.freeze();
@@ -164,7 +164,7 @@ public class NodeBasedNodeContractorTest {
         NodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(2);
         checkShortcuts(
-                expectedShortcut(3, 1, edge2to3, edge1to2bidirected, true, false),
+                expectedShortcut(3, 1, edge2to3, edge1to2bidirected, true, true),
                 expectedShortcut(1, 3, edge1to2directed, edge2to3, true, false)
         );
     }
@@ -217,7 +217,7 @@ public class NodeBasedNodeContractorTest {
 
     @Test
     public void testNodeContraction_shortcutDistanceRounding() {
-        assertTrue("this test was constructed assuming we are using the ShortestWeighting", weighting instanceof ShortestWeighting);
+        assertTrue(weighting instanceof ShortestWeighting, "this test was constructed assuming we are using the ShortestWeighting");
         // 0 ------------> 4
         //  \             /
         //   1 --> 2 --> 3
