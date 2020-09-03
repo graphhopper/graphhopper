@@ -46,13 +46,14 @@ import static com.graphhopper.util.Helper.nf;
  */
 class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
-    private final ShortcutHandler addingShortcutHandler = new AddingShortcutHandler();
-    private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
     private final Params params = new Params();
     private final PMap pMap;
-    private ShortcutHandler activeShortcutHandler;
     private final StopWatch dijkstraSW = new StopWatch();
-    private final SearchStrategy activeStrategy = new AggressiveStrategy();
+    private final IntSet sourceNodes = new IntHashSet(10);
+    private final IntSet toNodes = new IntHashSet(10);
+    private final Stats addingStats = new Stats();
+    private final Stats countingStats = new Stats();
+    private Stats activeStats;
     private int[] hierarchyDepths;
     private EdgeBasedWitnessPathSearcher witnessPathSearcher;
     private PrepareCHEdgeExplorer existingShortcutExplorer;
@@ -108,9 +109,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public float calculatePriority(int node) {
-        activeShortcutHandler = countingShortcutHandler;
+        activeStats = countingStats;
         stats().stopWatch.start();
-        findAndHandleShortcuts(node);
+        findAndHandleShortcuts(node, this::countShortcuts);
         stats().stopWatch.stop();
         countPreviousEdges(node);
         // the higher the priority the later (!) this node will be contracted
@@ -131,9 +132,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public void contractNode(int node) {
-        activeShortcutHandler = addingShortcutHandler;
+        activeStats = addingStats;
         stats().stopWatch.start();
-        findAndHandleShortcuts(node);
+        findAndHandleShortcuts(node, this::addShortcut);
         updateHierarchyDepthsOfNeighbors(node);
         stats().stopWatch.stop();
     }
@@ -155,11 +156,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public String getStatisticsString() {
-        String result =
-                "sc-handler-count: " + countingShortcutHandler.getStats() + ", " +
-                        "sc-handler-contract: " + addingShortcutHandler.getStats() + ", " +
-                        activeStrategy.getStatisticsString();
-        activeStrategy.resetStats();
+        String result = "sc-handler-count: " + countingStats + ", sc-handler-contract: " + addingStats + ", " +
+                witnessPathSearcher.getStatisticsString();
+        witnessPathSearcher.resetStats();
         return result;
     }
 
@@ -167,9 +166,77 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         return numPolledEdges;
     }
 
-    private void findAndHandleShortcuts(int node) {
+    private void findAndHandleShortcuts(int node, ShortcutHandler shortcutHandler) {
         numPolledEdges = 0;
-        activeStrategy.findAndHandleShortcuts(node);
+        stats().nodes++;
+        resetEdgeCounters();
+        Set<AddedShortcut> addedShortcuts = new HashSet<>();
+
+        // first we need to identify the possible source nodes from which we can reach the center node
+        sourceNodes.clear();
+        PrepareCHEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
+        while (incomingEdges.next()) {
+            int sourceNode = incomingEdges.getAdjNode();
+            if (isContracted(sourceNode) || sourceNode == node) {
+                continue;
+            }
+            boolean isNewSourceNode = sourceNodes.add(sourceNode);
+            if (!isNewSourceNode) {
+                continue;
+            }
+            // for each source node we need to look at every incoming original edge and find the initial entries
+            PrepareCHEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
+            while (origInIter.next()) {
+                int numInitialEntries = witnessPathSearcher.initSearch(node, sourceNode, origInIter.getOrigEdgeLast());
+                if (numInitialEntries < 1) {
+                    continue;
+                }
+
+                // now we need to identify all target nodes that can be reached from the center node
+                toNodes.clear();
+                PrepareCHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
+                while (outgoingEdges.next()) {
+                    int targetNode = outgoingEdges.getAdjNode();
+                    if (isContracted(targetNode) || targetNode == node) {
+                        continue;
+                    }
+                    boolean isNewTargetNode = toNodes.add(targetNode);
+                    if (!isNewTargetNode) {
+                        continue;
+                    }
+                    // for each target edge outgoing from a target node we need to check if reaching it requires
+                    // a 'bridge-path'
+                    PrepareCHEdgeIterator targetEdgeIter = targetNodeOrigOutEdgeExplorer.setBaseNode(targetNode);
+                    while (targetEdgeIter.next()) {
+                        int targetEdge = targetEdgeIter.getOrigEdgeFirst();
+                        dijkstraSW.start();
+                        CHEntry entry = witnessPathSearcher.runSearch(targetNode, targetEdge);
+                        dijkstraSW.stop();
+                        if (entry == null || Double.isInfinite(entry.weight)) {
+                            continue;
+                        }
+                        CHEntry root = entry.getParent();
+                        while (EdgeIterator.Edge.isValid(root.parent.edge)) {
+                            root = root.getParent();
+                        }
+                        // removing this 'optimization' improves contraction time, but introduces more
+                        // shortcuts (makes slower queries). note that 'duplicate' shortcuts get detected at time
+                        // of insertion when running with adding shortcut handler, but not when we are only counting.
+                        // only running this check while counting does not seem to improve contraction time a lot.
+                        AddedShortcut addedShortcut = new AddedShortcut(sourceNode, root.getParent().incEdge, targetNode, entry.incEdge);
+                        if (addedShortcuts.contains(addedShortcut)) {
+                            continue;
+                        }
+                        // root parent weight was misused to store initial turn cost here
+                        double initialTurnCost = root.getParent().weight;
+                        entry.weight -= initialTurnCost;
+                        handleShortcuts(entry, root, shortcutHandler);
+                        addedShortcuts.add(addedShortcut);
+                    }
+                }
+                numPolledEdges += witnessPathSearcher.getNumPolledEdges();
+            }
+        }
     }
 
     private void countPreviousEdges(int node) {
@@ -216,7 +283,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
     }
 
-    private void handleShortcuts(CHEntry chEntry, CHEntry root) {
+    private void handleShortcuts(CHEntry chEntry, CHEntry root, ShortcutHandler shortcutHandler) {
         LOGGER.trace("Adding shortcuts for target entry {}", chEntry);
         if (root.parent.adjNode == chEntry.adjNode &&
                 //here we misuse root.parent.incEdge as first orig edge of the potential shortcut
@@ -225,7 +292,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
             stats().loopsAvoided++;
             return;
         }
-        activeShortcutHandler.handleShortcut(root, chEntry);
+        shortcutHandler.handleShortcut(root, chEntry);
     }
 
     /**
@@ -320,71 +387,33 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private Stats stats() {
-        return activeShortcutHandler.getStats();
+        return activeStats;
     }
 
+    @FunctionalInterface
     private interface ShortcutHandler {
-
         void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo);
-
-        Stats getStats();
-
-        String getAction();
     }
 
-    private class AddingShortcutHandler implements ShortcutHandler {
-        private Stats stats = new Stats();
+    private void countShortcuts(CHEntry edgeFrom, CHEntry edgeTo) {
+        int fromNode = edgeFrom.parent.adjNode;
+        int toNode = edgeTo.adjNode;
+        int firstOrigEdge = edgeFrom.getParent().incEdge;
+        int lastOrigEdge = edgeTo.incEdge;
 
-        @Override
-        public void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
-            addShortcut(edgeFrom, edgeTo);
-        }
-
-        @Override
-        public Stats getStats() {
-            return stats;
-        }
-
-        @Override
-        public String getAction() {
-            return "add";
-        }
-    }
-
-    private class CountingShortcutHandler implements ShortcutHandler {
-        private Stats stats = new Stats();
-
-        @Override
-        public void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
-            int fromNode = edgeFrom.parent.adjNode;
-            int toNode = edgeTo.adjNode;
-            int firstOrigEdge = edgeFrom.getParent().incEdge;
-            int lastOrigEdge = edgeTo.incEdge;
-
-            // check if this shortcut already exists
-            final PrepareCHEdgeIterator iter = existingShortcutExplorer.setBaseNode(fromNode);
-            while (iter.next()) {
-                if (isSameShortcut(iter, toNode, firstOrigEdge, lastOrigEdge)) {
-                    // this shortcut exists already, maybe its weight will be updated but we should not count it as
-                    // a new edge
-                    return;
-                }
+        // check if this shortcut already exists
+        final PrepareCHEdgeIterator iter = existingShortcutExplorer.setBaseNode(fromNode);
+        while (iter.next()) {
+            if (isSameShortcut(iter, toNode, firstOrigEdge, lastOrigEdge)) {
+                // this shortcut exists already, maybe its weight will be updated but we should not count it as
+                // a new edge
+                return;
             }
-
-            // this shortcut is new --> increase counts
-            numShortcuts++;
-            numOrigEdges += getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
         }
 
-        @Override
-        public Stats getStats() {
-            return stats;
-        }
-
-        @Override
-        public String getAction() {
-            return "count";
-        }
+        // this shortcut is new --> increase counts
+        numShortcuts++;
+        numOrigEdges += getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
     }
 
     public static class Params {
@@ -404,104 +433,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
             return String.format(Locale.ROOT,
                     "time: %7.2fs, nodes-handled: %10s, loopsAvoided: %10s",
                     stopWatch.getCurrentSeconds(), nf(nodes), nf(loopsAvoided));
-        }
-    }
-
-    private interface SearchStrategy {
-        void findAndHandleShortcuts(int node);
-
-        String getStatisticsString();
-
-        void resetStats();
-
-    }
-
-    private class AggressiveStrategy implements SearchStrategy {
-        private IntSet sourceNodes = new IntHashSet(10);
-        private IntSet toNodes = new IntHashSet(10);
-
-        @Override
-        public String getStatisticsString() {
-            return witnessPathSearcher.getStatisticsString();
-        }
-
-        @Override
-        public void resetStats() {
-            witnessPathSearcher.resetStats();
-        }
-
-        @Override
-        public void findAndHandleShortcuts(int node) {
-            LOGGER.trace("Finding shortcuts (aggressive) for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
-            stats().nodes++;
-            resetEdgeCounters();
-            Set<AddedShortcut> addedShortcuts = new HashSet<>();
-
-            // first we need to identify the possible source nodes from which we can reach the center node
-            sourceNodes.clear();
-            PrepareCHEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
-            while (incomingEdges.next()) {
-                int sourceNode = incomingEdges.getAdjNode();
-                if (isContracted(sourceNode) || sourceNode == node) {
-                    continue;
-                }
-                boolean isNewSourceNode = sourceNodes.add(sourceNode);
-                if (!isNewSourceNode) {
-                    continue;
-                }
-                // for each source node we need to look at every incoming original edge and find the initial entries
-                PrepareCHEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
-                while (origInIter.next()) {
-                    int numInitialEntries = witnessPathSearcher.initSearch(node, sourceNode, origInIter.getOrigEdgeLast());
-                    if (numInitialEntries < 1) {
-                        continue;
-                    }
-
-                    // now we need to identify all target nodes that can be reached from the center node
-                    toNodes.clear();
-                    PrepareCHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
-                    while (outgoingEdges.next()) {
-                        int targetNode = outgoingEdges.getAdjNode();
-                        if (isContracted(targetNode) || targetNode == node) {
-                            continue;
-                        }
-                        boolean isNewTargetNode = toNodes.add(targetNode);
-                        if (!isNewTargetNode) {
-                            continue;
-                        }
-                        // for each target edge outgoing from a target node we need to check if reaching it requires
-                        // a 'bridge-path'
-                        PrepareCHEdgeIterator targetEdgeIter = targetNodeOrigOutEdgeExplorer.setBaseNode(targetNode);
-                        while (targetEdgeIter.next()) {
-                            int targetEdge = targetEdgeIter.getOrigEdgeFirst();
-                            dijkstraSW.start();
-                            CHEntry entry = witnessPathSearcher.runSearch(targetNode, targetEdge);
-                            dijkstraSW.stop();
-                            if (entry == null || Double.isInfinite(entry.weight)) {
-                                continue;
-                            }
-                            CHEntry root = entry.getParent();
-                            while (EdgeIterator.Edge.isValid(root.parent.edge)) {
-                                root = root.getParent();
-                            }
-                            // removing this 'optimization' improves contraction time, but introduces more
-                            // shortcuts (makes slower queries). note that 'duplicate' shortcuts get detected at time
-                            // of insertion when running with adding shortcut handler, but not when we are only counting.
-                            // only running this check while counting does not seem to improve contraction time a lot.
-                            AddedShortcut addedShortcut = new AddedShortcut(sourceNode, root.getParent().incEdge, targetNode, entry.incEdge);
-                            if (addedShortcuts.contains(addedShortcut)) {
-                                continue;
-                            }
-                            // root parent weight was misused to store initial turn cost here
-                            double initialTurnCost = root.getParent().weight;
-                            entry.weight -= initialTurnCost;
-                            handleShortcuts(entry, root);
-                            addedShortcuts.add(addedShortcut);
-                        }
-                    }
-                    numPolledEdges += witnessPathSearcher.getNumPolledEdges();
-                }
-            }
         }
     }
 
