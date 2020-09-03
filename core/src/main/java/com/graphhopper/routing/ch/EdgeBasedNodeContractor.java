@@ -60,8 +60,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private PrepareCHEdgeExplorer allEdgeExplorer;
     private PrepareCHEdgeExplorer sourceNodeOrigInEdgeExplorer;
     private PrepareCHEdgeExplorer targetNodeOrigOutEdgeExplorer;
-    private PrepareCHEdgeExplorer loopAvoidanceInEdgeExplorer;
-    private PrepareCHEdgeExplorer loopAvoidanceOutEdgeExplorer;
 
     // counts the total number of added shortcuts
     private int addedShortcutsCount;
@@ -97,8 +95,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         existingShortcutExplorer = prepareGraph.createOutEdgeExplorer();
         sourceNodeOrigInEdgeExplorer = prepareGraph.createOriginalInEdgeExplorer();
         targetNodeOrigOutEdgeExplorer = prepareGraph.createOriginalOutEdgeExplorer();
-        loopAvoidanceInEdgeExplorer = prepareGraph.createOriginalInEdgeExplorer();
-        loopAvoidanceOutEdgeExplorer = prepareGraph.createOriginalOutEdgeExplorer();
         hierarchyDepths = new int[prepareGraph.getNodes()];
     }
 
@@ -230,7 +226,10 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         // root parent weight was misused to store initial turn cost here
                         double initialTurnCost = root.getParent().weight;
                         entry.weight -= initialTurnCost;
-                        handleShortcuts(entry, root, shortcutHandler);
+                        LOGGER.trace("Adding shortcuts for target entry {}", entry);
+                        // todo: re-implement loop-avoidance heuristic as it existed in GH 1.0? it did not work the
+                        // way it was implemented so it was removed.
+                        shortcutHandler.handleShortcut(root, entry);
                         addedShortcuts.add(addedShortcut);
                     }
                 }
@@ -281,41 +280,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 continue;
             hierarchyDepths[iter.getAdjNode()] = Math.max(hierarchyDepths[iter.getAdjNode()], hierarchyDepths[node] + 1);
         }
-    }
-
-    private void handleShortcuts(CHEntry chEntry, CHEntry root, ShortcutHandler shortcutHandler) {
-        LOGGER.trace("Adding shortcuts for target entry {}", chEntry);
-        if (root.parent.adjNode == chEntry.adjNode &&
-                //here we misuse root.parent.incEdge as first orig edge of the potential shortcut
-                !loopShortcutNecessary(
-                        chEntry.adjNode, root.getParent().incEdge, chEntry.incEdge, chEntry.weight)) {
-            stats().loopsAvoided++;
-            return;
-        }
-        shortcutHandler.handleShortcut(root, chEntry);
-    }
-
-    /**
-     * A given potential loop shortcut is only necessary if there is at least one pair of original in- & out-edges for
-     * which taking the loop is cheaper than doing the direct turn. However this is almost always the case, because
-     * doing a u-turn at any of the incoming edges is forbidden, i.e. the costs of the direct turn will be infinite.
-     */
-    private boolean loopShortcutNecessary(int node, int firstOrigEdge, int lastOrigEdge, double loopWeight) {
-        PrepareCHEdgeIterator inIter = loopAvoidanceInEdgeExplorer.setBaseNode(node);
-        while (inIter.next()) {
-            PrepareCHEdgeIterator outIter = loopAvoidanceOutEdgeExplorer.setBaseNode(node);
-            double inTurnCost = getTurnCost(inIter.getEdge(), node, firstOrigEdge);
-            while (outIter.next()) {
-                double totalLoopCost = inTurnCost + loopWeight +
-                        getTurnCost(lastOrigEdge, node, outIter.getEdge());
-                double directTurnCost = getTurnCost(inIter.getEdge(), node, outIter.getEdge());
-                if (totalLoopCost < directTurnCost) {
-                    return true;
-                }
-            }
-        }
-        LOGGER.trace("Loop avoidance -> no shortcut");
-        return false;
     }
 
     private CHEntry addShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
@@ -375,10 +339,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 && (iter.getOrigEdgeLast() == lastOrigEdge);
     }
 
-    private double getTurnCost(int inEdge, int node, int outEdge) {
-        return prepareGraph.getTurnWeight(inEdge, node, outEdge);
-    }
-
     private void resetEdgeCounters() {
         numShortcuts = 0;
         numPrevEdges = 0;
@@ -425,14 +385,12 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     private static class Stats {
         int nodes;
-        long loopsAvoided;
         StopWatch stopWatch = new StopWatch();
 
         @Override
         public String toString() {
             return String.format(Locale.ROOT,
-                    "time: %7.2fs, nodes-handled: %10s, loopsAvoided: %10s",
-                    stopWatch.getCurrentSeconds(), nf(nodes), nf(loopsAvoided));
+                    "time: %7.2fs, nodes-handled: %10s", stopWatch.getCurrentSeconds(), nf(nodes));
         }
     }
 
