@@ -119,8 +119,8 @@ public class MapMatchingTest {
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 1.5);
 
-        ResponsePath matchGHRsp = new ResponsePath();
-        new PathMerger(mr.getGraph(), mr.getWeighting()).doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), graphHopper.getEncodingManager(), translationMap.get("en"));
+        ResponsePath matchGHRsp =
+                new PathMerger(mr.getGraph(), mr.getWeighting()).doWork(PointList.EMPTY, Collections.singletonList(mr.getMergedPath()), graphHopper.getEncodingManager(), translationMap.get("en"));
         InstructionList il = matchGHRsp.getInstructions();
 
         assertEquals(il.toString(), 2, il.size());
@@ -138,9 +138,9 @@ public class MapMatchingTest {
                 "Bayrischer Platz", "Bayrischer Platz"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
 
-        matchGHRsp = new ResponsePath();
-        new PathMerger(mr.getGraph(), mr.getWeighting()).doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()),
-                graphHopper.getEncodingManager(), translationMap.get("en"));
+        matchGHRsp =
+                new PathMerger(mr.getGraph(), mr.getWeighting()).doWork(PointList.EMPTY, Collections.singletonList(mr.getMergedPath()),
+                        graphHopper.getEncodingManager(), translationMap.get("en"));
         il = matchGHRsp.getInstructions();
 
         assertEquals(il.toString(), 3, il.size());
