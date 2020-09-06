@@ -18,14 +18,7 @@
 
 package com.graphhopper.http;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.SerializationConfig;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
-import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.graphhopper.GraphHopper;
@@ -54,8 +47,6 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
 
@@ -203,23 +194,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         bootstrap.getObjectMapper().setDateFormat(new StdDateFormat());
         // See https://github.com/dropwizard/dropwizard/issues/1558
         bootstrap.getObjectMapper().enable(MapperFeature.ALLOW_EXPLICIT_PROPERTY_RENAMING);
-        // Because VirtualEdgeIteratorState has getters which throw Exceptions.
-        // http://stackoverflow.com/questions/35359430/how-to-make-jackson-ignore-properties-if-the-getters-throw-exceptions
-        bootstrap.getObjectMapper().registerModule(new SimpleModule().setSerializerModifier(new BeanSerializerModifier() {
-            @Override
-            public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
-                return beanProperties.stream().map(bpw -> new BeanPropertyWriter(bpw) {
-                    @Override
-                    public void serializeAsField(Object bean, JsonGenerator gen, SerializerProvider prov) throws Exception {
-                        try {
-                            super.serializeAsField(bean, gen, prov);
-                        } catch (Exception e) {
-                            // Ignoring expected exception, see above.
-                        }
-                    }
-                }).collect(Collectors.toList());
-            }
-        }));
     }
 
     @Override
