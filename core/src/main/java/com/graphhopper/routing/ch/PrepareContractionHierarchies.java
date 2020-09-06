@@ -194,9 +194,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     private void contractNodesUsingHeuristicNodeOrdering() {
+        StopWatch sw = new StopWatch().start();
+        logger.info("Building initial queue of nodes to be contracted: {} nodes", prepareGraph.getNodes());
         // note that we update the priorities before preparing the node contractor. this does not make much sense,
         // but has always been like that and changing it would possibly require retuning the contraction parameters
         updatePrioritiesOfRemainingNodes();
+        logger.info("Finished building queue, took: {}s", sw.stop().getSeconds());
         nodeContractor.prepareContraction();
         final int initSize = sortedNodes.getSize();
         int level = 0;
