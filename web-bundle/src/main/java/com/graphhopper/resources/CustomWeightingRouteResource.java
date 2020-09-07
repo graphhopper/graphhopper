@@ -86,10 +86,9 @@ public class CustomWeightingRouteResource {
         if (!(profile instanceof CustomProfile))
             throw new IllegalArgumentException("profile '" + request.getProfile() + "' cannot be used for a custom request because it has weighting=" + profile.getWeighting());
 
-        GHResponse ghResponse = new GHResponse();
         request.putHint(Parameters.CH.DISABLE, true);
         request.putHint(CustomModel.KEY, model);
-        graphHopper.calcPaths(request, ghResponse);
+        GHResponse ghResponse = graphHopper.route(request);
 
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
         boolean enableElevation = request.getHints().getBool("elevation", false);

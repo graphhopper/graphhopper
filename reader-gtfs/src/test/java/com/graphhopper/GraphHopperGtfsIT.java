@@ -20,6 +20,7 @@ package com.graphhopper;
 
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.PtRouter;
+import com.graphhopper.gtfs.PtRouterImpl;
 import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
@@ -59,7 +60,7 @@ public class GraphHopperGtfsIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = PtRouter.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = PtRouterImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -398,6 +399,8 @@ public class GraphHopperGtfsIT {
         assertEquals("FUNNY_BLOCK_AB1", (((Trip.PtLeg) mondayTrip.getLegs().get(0)).trip_id));
         assertEquals("FUNNY_BLOCK_BFC1", (((Trip.PtLeg) mondayTrip.getLegs().get(1)).trip_id));
         assertEquals("FUNNY_BLOCK_FCAMV1", (((Trip.PtLeg) mondayTrip.getLegs().get(2)).trip_id));
+        assertTrue((((Trip.PtLeg) mondayTrip.getLegs().get(1)).isInSameVehicleAsPrevious));
+        assertTrue((((Trip.PtLeg) mondayTrip.getLegs().get(2)).isInSameVehicleAsPrevious));
 
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 7, 18, 0).atZone(zoneId).toInstant());
         response = ptRouter.route(ghRequest);
@@ -411,6 +414,7 @@ public class GraphHopperGtfsIT {
         // correctly, so I'm not sure we need a more realistic one. The more realistic case would
         // have a _different_ revenue trip here in the middle instead of _none_.
         assertEquals("FUNNY_BLOCK_FCAMV1", (((Trip.PtLeg) sundayTrip.getLegs().get(1)).trip_id));
+        assertTrue((((Trip.PtLeg) sundayTrip.getLegs().get(1)).isInSameVehicleAsPrevious));
     }
 
     @Test

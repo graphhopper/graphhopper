@@ -84,7 +84,7 @@ public class Path {
         return endNode;
     }
 
-    protected Path setEndNode(int end) {
+    public Path setEndNode(int end) {
         endNode = end;
         return this;
     }
@@ -102,7 +102,7 @@ public class Path {
     /**
      * We need to remember fromNode explicitly as its not saved in one edgeId of edgeIds.
      */
-    protected Path setFromNode(int from) {
+    public Path setFromNode(int from) {
         fromNode = from;
         return this;
     }

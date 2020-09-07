@@ -109,7 +109,6 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
             PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
             potentialAlternativeInfo.v = fromSPTEntry.adjNode;
             potentialAlternativeInfo.edgeIn = getIncomingEdge(fromSPTEntry);
-            potentialAlternativeInfo.edgeOut = getIncomingEdge(toSPTEntry);
             potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
             potentialAlternativeInfos.add(potentialAlternativeInfo);
             return true;
@@ -120,17 +119,18 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         for (PotentialAlternativeInfo potentialAlternativeInfo : potentialAlternativeInfos) {
             int v = potentialAlternativeInfo.v;
             int tailSv = potentialAlternativeInfo.edgeIn;
-            int headVt = potentialAlternativeInfo.edgeOut;
 
             // Okay, now we want the s -> v -> t shortest via-path, so we route s -> v and v -> t
             // and glue them together.
             DijkstraBidirectionEdgeCHNoSOD svRouter = new DijkstraBidirectionEdgeCHNoSOD(graph);
-            final Path svPath = svRouter.calcPath(s, v, ANY_EDGE, tailSv);
+            final Path suvPath = svRouter.calcPath(s, v, ANY_EDGE, tailSv);
             extraVisitedNodes += svRouter.getVisitedNodes();
 
+            int u = graph.getBaseGraph().getEdgeIteratorState(tailSv, v).getBaseNode();
+
             DijkstraBidirectionEdgeCHNoSOD vtRouter = new DijkstraBidirectionEdgeCHNoSOD(graph);
-            final Path vtPath = vtRouter.calcPath(v, t, headVt, ANY_EDGE);
-            Path path = concat(graph.getBaseGraph(), svPath, vtPath);
+            final Path uvtPath = vtRouter.calcPath(u, t, tailSv, ANY_EDGE);
+            Path path = concat(graph.getBaseGraph(), suvPath, uvtPath);
             extraVisitedNodes += vtRouter.getVisitedNodes();
 
             double sharedDistanceWithShortest = sharedDistanceWithShortest(path);
@@ -148,7 +148,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
             // This is the final test we need: Discard paths that are not "locally shortest" around v.
             // So move a couple of nodes to the left and right from v on our path,
             // route, and check if v is on the shortest path.
-            final IntIndexedContainer svNodes = svPath.calcNodes();
+            final IntIndexedContainer svNodes = suvPath.calcNodes();
             int vIndex = svNodes.size() - 1;
             if (!tTest(path, vIndex))
                 continue;
@@ -236,21 +236,21 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         return edges.get(i - 1);
     }
 
-    private static Path concat(Graph graph, Path svPath, Path vtPath) {
-        assert svPath.isFound();
-        assert vtPath.isFound();
+    private static Path concat(Graph graph, Path suvPath, Path uvtPath) {
+        assert suvPath.isFound();
+        assert uvtPath.isFound();
         Path path = new Path(graph);
-        path.setFromNode(svPath.calcNodes().get(0));
-        for (EdgeIteratorState edge : svPath.calcEdges()) {
+        path.setFromNode(suvPath.calcNodes().get(0));
+        for (EdgeIteratorState edge : suvPath.calcEdges()) {
             path.addEdge(edge.getEdge());
         }
-        for (EdgeIteratorState edge : vtPath.calcEdges()) {
-            path.addEdge(edge.getEdge());
-        }
-        path.setEndNode(vtPath.getEndNode());
-        path.setWeight(svPath.getWeight() + vtPath.getWeight());
-        path.setDistance(svPath.getDistance() + vtPath.getDistance());
-        path.addTime(svPath.time + vtPath.time);
+        Iterator<EdgeIteratorState> uvtPathI = uvtPath.calcEdges().iterator();
+        uvtPathI.next(); // skip u-v edge
+        uvtPathI.forEachRemaining(edge -> path.addEdge(edge.getEdge()));
+        path.setEndNode(uvtPath.getEndNode());
+        path.setWeight(suvPath.getWeight() + uvtPath.getWeight());
+        path.setDistance(suvPath.getDistance() + uvtPath.getDistance());
+        path.addTime(suvPath.time + uvtPath.time);
         path.setFound(true);
         return path;
     }
@@ -271,7 +271,6 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
     public static class PotentialAlternativeInfo {
         public int v;
         public int edgeIn;
-        public int edgeOut;
         double weight;
     }
 

@@ -97,7 +97,7 @@ if [[ -f $CONFIG && $CONFIG != config.yml ]]; then
   cp $CONFIG config.yml
 fi
 if [ ! -f "config.yml" ]; then
-  echo "no config file was specified using example-config.yml"
+  echo "no config file was specified, using config-example.yml"
   cp config-example.yml $CONFIG
 fi
 

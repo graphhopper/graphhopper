@@ -85,7 +85,7 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo {
     }
 
     @Override
-    protected SPTEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+    protected SPTEntry createEntry(EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
         int neighborNode = edge.getAdjNode();
         double heapWeight = weight + weightApprox.approximate(neighborNode, reverse);
         AStarEntry entry = new AStarEntry(edge.getEdge(), neighborNode, heapWeight, weight);
@@ -94,7 +94,7 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo {
     }
 
     @Override
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
+    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
         entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
         ((AStarEntry) entry).weightOfVisitedPath = weight;
