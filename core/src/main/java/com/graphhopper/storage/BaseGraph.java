@@ -17,9 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.coll.SparseIntIntArray;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
@@ -31,7 +28,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -94,8 +90,6 @@ class BaseGraph implements Graph {
      * interval [0,n)
      */
     private int nodeCount;
-    // remove markers are not yet persistent!
-    private GHBitSet removedNodes;
     private int edgeEntryIndex, nodeEntryIndex;
     private long maxGeoRef;
     private boolean frozen = false;
@@ -644,185 +638,6 @@ class BaseGraph implements Graph {
         if (supportsTurnCosts()) {
             turnCostStorage.copyTo(clonedG.turnCostStorage);
         }
-
-        if (removedNodes == null)
-            clonedG.removedNodes = null;
-        else
-            clonedG.removedNodes = removedNodes.copyTo(new GHBitSetImpl());
-    }
-
-    protected void trimToSize() {
-        long nodeCap = (long) nodeCount * nodeEntryBytes;
-        nodes.trimTo(nodeCap);
-//        long edgeCap = (long) (edgeCount + 1) * edgeEntrySize;
-//        edges.trimTo(edgeCap * 4);
-    }
-
-    /**
-     * This methods disconnects all edges from removed nodes. It does no edge compaction. Then it
-     * moves the last nodes into the deleted nodes, where it needs to update the node ids in every
-     * edge.
-     */
-    void inPlaceNodeRemove(int removeNodeCount) {
-        // Prepare edge-update of nodes which are connected to deleted nodes
-        int toMoveNodes = getNodes();
-        int itemsToMove = 0;
-
-        // sorted map when we access it via keyAt and valueAt - see below!
-        final SparseIntIntArray oldToNewMap = new SparseIntIntArray(removeNodeCount);
-        GHBitSet toRemoveSet = new GHBitSetImpl(removeNodeCount);
-        removedNodes.copyTo(toRemoveSet);
-
-        if (removeNodeCount > getNodes() / 2.0)
-            LoggerFactory.getLogger(getClass()).warn("More than a half of the network should be removed!? "
-                    + "Nodes:" + getNodes() + ", remove:" + removeNodeCount);
-
-        EdgeExplorer delExplorer = createEdgeExplorer();
-        // create map of old node ids pointing to new ids
-        for (int removeNode = removedNodes.next(0);
-             removeNode >= 0;
-             removeNode = removedNodes.next(removeNode + 1)) {
-            EdgeIterator delEdgesIter = delExplorer.setBaseNode(removeNode);
-            while (delEdgesIter.next()) {
-                toRemoveSet.add(delEdgesIter.getAdjNode());
-            }
-
-            toMoveNodes--;
-            // move only nodes that are not removed
-            for (; toMoveNodes >= 0; toMoveNodes--) {
-                if (!removedNodes.contains(toMoveNodes))
-                    break;
-            }
-
-            if (toMoveNodes >= removeNode)
-                oldToNewMap.put(toMoveNodes, removeNode);
-
-            itemsToMove++;
-        }
-
-        EdgeIteratorImpl adjNodesToDelIter = (EdgeIteratorImpl) createEdgeExplorer();
-        // now similar process to disconnectEdges but only for specific nodes
-        // all deleted nodes could be connected to existing. remove the connections
-        for (int removeNode = toRemoveSet.next(0);
-             removeNode >= 0;
-             removeNode = toRemoveSet.next(removeNode + 1)) {
-            // remove all edges connected to the deleted nodes
-            adjNodesToDelIter.setBaseNode(removeNode);
-            long prevPointer = EdgeIterator.NO_EDGE;
-            while (adjNodesToDelIter.next()) {
-                int nodeId = adjNodesToDelIter.getAdjNode();
-                // already invalidated
-                if (!EdgeAccess.isInvalidNodeB(nodeId) && removedNodes.contains(nodeId)) {
-                    int edgeToRemove = adjNodesToDelIter.getEdge();
-                    long edgeToRemovePointer = edgeAccess.toPointer(edgeToRemove);
-                    edgeAccess.internalEdgeDisconnect(edgeToRemove, prevPointer, removeNode);
-                    edgeAccess.invalidateEdge(edgeToRemovePointer);
-                } else {
-                    prevPointer = adjNodesToDelIter.edgePointer;
-                }
-            }
-        }
-
-        GHBitSet toMoveSet = new GHBitSetImpl(removeNodeCount * 3);
-        EdgeExplorer movedEdgeExplorer = createEdgeExplorer();
-        // marks connected nodes to rewrite the edges
-        for (int i = 0; i < itemsToMove; i++) {
-            int oldI = oldToNewMap.keyAt(i);
-            EdgeIterator movedEdgeIter = movedEdgeExplorer.setBaseNode(oldI);
-            while (movedEdgeIter.next()) {
-                int nodeId = movedEdgeIter.getAdjNode();
-                if (EdgeAccess.isInvalidNodeB(nodeId))
-                    continue;
-
-                if (removedNodes.contains(nodeId))
-                    throw new IllegalStateException("shouldn't happen as the edge to the node "
-                            + nodeId + " should be already deleted. " + oldI);
-
-                toMoveSet.add(nodeId);
-            }
-        }
-
-        // move nodes into deleted nodes
-        for (int i = 0; i < itemsToMove; i++) {
-            int oldI = oldToNewMap.keyAt(i);
-            int newI = oldToNewMap.valueAt(i);
-            long newOffset = (long) newI * nodeEntryBytes;
-            long oldOffset = (long) oldI * nodeEntryBytes;
-            for (long j = 0; j < nodeEntryBytes; j += 4) {
-                nodes.setInt(newOffset + j, nodes.getInt(oldOffset + j));
-            }
-        }
-
-        // *rewrites* all edges connected to moved nodes
-        // go through all edges and pick the necessary <- this is easier to implement than
-        // a more efficient (?) breadth-first search
-        EdgeIterator iter = getAllEdges();
-        while (iter.next()) {
-            int nodeA = iter.getBaseNode();
-            int nodeB = iter.getAdjNode();
-            if (!toMoveSet.contains(nodeA) && !toMoveSet.contains(nodeB))
-                continue;
-
-            // now overwrite exiting edge with new node ids
-            int updatedA = oldToNewMap.get(nodeA);
-            if (updatedA < 0)
-                updatedA = nodeA;
-
-            int updatedB = oldToNewMap.get(nodeB);
-            if (updatedB < 0)
-                updatedB = nodeB;
-
-            // no need to rewrite flags or other properties as they are independent of the node order unlike in <= 0.11
-            int edgeId = iter.getEdge();
-            long edgePointer = edgeAccess.toPointer(edgeId);
-            int linkA = edgeAccess.getLinkA(edgePointer);
-            int linkB = edgeAccess.getLinkB(edgePointer);
-            edgeAccess.writeEdge(edgeId, updatedA, updatedB, linkA, linkB);
-        }
-
-        if (removeNodeCount >= nodeCount)
-            throw new IllegalStateException("graph is empty after in-place removal but was " + removeNodeCount);
-
-        // clear N_EDGE_REF
-        initNodeRefs(((long) nodeCount - removeNodeCount) * nodeEntryBytes, (long) nodeCount * nodeEntryBytes);
-
-        // we do not remove the invalid edges => edgeCount stays the same!
-        nodeCount -= removeNodeCount;
-
-        // health check
-        if (isTestingEnabled()) {
-            EdgeExplorer explorer = createEdgeExplorer();
-            iter = getAllEdges();
-            while (iter.next()) {
-                int base = iter.getBaseNode();
-                int adj = iter.getAdjNode();
-                String str = iter.getEdge()
-                        + ", r.contains(" + base + "):" + removedNodes.contains(base)
-                        + ", r.contains(" + adj + "):" + removedNodes.contains(adj)
-                        + ", tr.contains(" + base + "):" + toRemoveSet.contains(base)
-                        + ", tr.contains(" + adj + "):" + toRemoveSet.contains(adj)
-                        + ", base:" + base + ", adj:" + adj + ", nodeCount:" + nodeCount;
-                if (adj >= nodeCount)
-                    throw new RuntimeException("Adj.node problem with edge " + str);
-
-                if (base >= nodeCount)
-                    throw new RuntimeException("Base node problem with edge " + str);
-
-                try {
-                    explorer.setBaseNode(adj).toString();
-                } catch (Exception ex) {
-                    org.slf4j.LoggerFactory.getLogger(getClass()).error("adj:" + adj);
-                }
-                try {
-                    explorer.setBaseNode(base).toString();
-                } catch (Exception ex) {
-                    org.slf4j.LoggerFactory.getLogger(getClass()).error("base:" + base);
-                }
-            }
-            // access last node -> no error
-            explorer.setBaseNode(nodeCount - 1).toString();
-        }
-        removedNodes = null;
     }
 
     @Override
@@ -1013,13 +828,6 @@ class BaseGraph implements Graph {
         edges.setInt(edgePointer + E_NAME, stringIndexRef);
     }
 
-    GHBitSet getRemovedNodes() {
-        if (removedNodes == null)
-            removedNodes = new GHBitSetImpl(getNodes());
-
-        return removedNodes;
-    }
-
     private void ensureGeometry(long bytePos, int byteLength) {
         wayGeometry.ensureCapacity(bytePos + byteLength);
     }
@@ -1122,9 +930,6 @@ class BaseGraph implements Graph {
 
                 edgePointer = edgeAccess.toPointer(edgeId);
                 adjNode = edgeAccess.getNodeB(edgePointer);
-                // some edges are deleted and are marked via a negative node
-                if (EdgeAccess.isInvalidNodeB(adjNode))
-                    continue;
 
                 baseNode = edgeAccess.getNodeA(edgePointer);
                 freshFlags = false;
@@ -1183,8 +988,6 @@ class BaseGraph implements Graph {
             baseNode = edgeAccess.getNodeA(edgePointer);
             adjNode = edgeAccess.getNodeB(edgePointer);
             freshFlags = false;
-            if (EdgeAccess.isInvalidNodeB(adjNode))
-                throw new IllegalStateException("content of edgeId " + this.edgeId + " is marked as invalid - ie. the edge is already removed!");
 
             if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE) {
                 reverse = false;
