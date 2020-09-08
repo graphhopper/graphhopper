@@ -258,11 +258,6 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    public EdgeExplorer createEdgeExplorer() {
-        return createEdgeExplorer(EdgeFilter.ALL_EDGES);
-    }
-
-    @Override
     public AllEdgesIterator getAllEdges() {
         throw new UnsupportedOperationException("Not supported yet.");
     }

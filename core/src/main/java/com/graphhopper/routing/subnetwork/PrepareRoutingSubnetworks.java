@@ -77,15 +77,7 @@ public class PrepareRoutingSubnetworks {
         for (PrepareJob job : prepareJobs) {
             removeSmallSubNetworks(job);
         }
-        markNodesRemovedIfUnreachable();
-        optimize();
         logger.info("Finished finding and removing subnetworks for " + prepareJobs.size() + " vehicles, took: " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
-    }
-
-    private void optimize() {
-        StopWatch sw = new StopWatch().start();
-        ghStorage.optimize();
-        logger.info("Optimized storage after subnetwork removal, took: " + sw.stop().getSeconds() + "s," + Helper.getMemInfo());
     }
 
     /**
@@ -249,23 +241,6 @@ public class PrepareRoutingSubnetworks {
             return 1;
         }
         return 0;
-    }
-
-    /**
-     * Removes nodes if all edges are not accessible. I.e. removes zero degree nodes. Note that so far we are not
-     * removing any edges entirely from the graph (we could probably do this for edges that are blocked for *all*
-     * vehicles.
-     */
-    void markNodesRemovedIfUnreachable() {
-        EdgeExplorer edgeExplorer = ghStorage.createEdgeExplorer();
-        int removedNodes = 0;
-        for (int nodeIndex = 0; nodeIndex < ghStorage.getNodes(); nodeIndex++) {
-            if (detectNodeRemovedForAllEncoders(edgeExplorer, nodeIndex)) {
-                ghStorage.markNodeRemoved(nodeIndex);
-                removedNodes++;
-            }
-        }
-        logger.info("Removed " + removedNodes + " nodes from the graph as they aren't used by any vehicle after removing subnetworks");
     }
 
     /**

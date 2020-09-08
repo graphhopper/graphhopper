@@ -133,9 +133,9 @@ public class GraphHopperAPITest {
 
         instance = new GraphHopper() {
             @Override
-            void interpolateBridgesAndOrTunnels() {
+            void interpolateBridgesTunnelsAndFerries() {
                 counter.incrementAndGet();
-                super.interpolateBridgesAndOrTunnels();
+                super.interpolateBridgesTunnelsAndFerries();
             }
         }
                 .setEncodingManager(encodingManager)
@@ -148,9 +148,9 @@ public class GraphHopperAPITest {
 
         instance = new GraphHopper() {
             @Override
-            void interpolateBridgesAndOrTunnels() {
+            void interpolateBridgesTunnelsAndFerries() {
                 counter.incrementAndGet();
-                super.interpolateBridgesAndOrTunnels();
+                super.interpolateBridgesTunnelsAndFerries();
             }
         }
                 .setEncodingManager(encodingManager)
