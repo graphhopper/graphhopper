@@ -494,30 +494,6 @@ public final class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void trimTo(long capacity) {
-        if (capacity < segmentSizeInBytes) {
-            capacity = segmentSizeInBytes;
-        }
-        int remainingSegNo = (int) (capacity / segmentSizeInBytes);
-        if (capacity % segmentSizeInBytes != 0) {
-            remainingSegNo++;
-        }
-
-        clean(remainingSegNo, segments.size());
-        segments = new ArrayList<>(segments.subList(0, remainingSegNo));
-
-        try {
-            // windows does not allow changing the length of an open files
-            if (!Constants.WINDOWS) {
-                // reduce file size
-                raFile.setLength(HEADER_OFFSET + (long) remainingSegNo * segmentSizeInBytes);
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    @Override
     public void rename(String newName) {
         if (!checkBeforeRename(newName)) {
             return;

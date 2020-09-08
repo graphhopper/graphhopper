@@ -188,7 +188,7 @@ public class TarjanSCC {
      */
     public ConnectedComponents findComponents() {
         for (int node = 0; node < graph.getNodes(); ++node) {
-            if (nodeIndex[node] != -1 || ((GraphHopperStorage) graph).isNodeRemoved(node))
+            if (nodeIndex[node] != -1)
                 continue;
 
             pushFindComponentForNode(node);

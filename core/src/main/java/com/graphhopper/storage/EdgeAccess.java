@@ -23,7 +23,6 @@ import com.graphhopper.util.EdgeIterator;
  * @author Peter Karich
  */
 abstract class EdgeAccess {
-    private static final int NO_NODE = -1;
     final DataAccess edges;
     int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS;
 
@@ -48,14 +47,6 @@ abstract class EdgeAccess {
     abstract void setEdgeRef(int nodeId, int edgeId);
 
     abstract int getEntryBytes();
-
-    final void invalidateEdge(long edgePointer) {
-        edges.setInt(edgePointer + E_NODEB, NO_NODE);
-    }
-
-    static boolean isInvalidNodeB(int node) {
-        return node == EdgeAccess.NO_NODE;
-    }
 
     final void readFlags(long edgePointer, IntsRef edgeFlags) {
         int size = edgeFlags.ints.length;
