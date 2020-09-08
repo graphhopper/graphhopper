@@ -788,20 +788,17 @@ public class Measurement {
         GraphEdgeIdFinder.BlockArea blockArea = blockAreaStr == null ? null :
                 new GraphEdgeIdFinder(hopper.getGraphHopperStorage(), hopper.getLocationIndex()).
                         parseBlockArea(blockAreaStr, edgeFilter, 1000 * 1000);
-        // randomly move points to the end of the list such that we get a random sample without duplicates
-        final int numRandomPoints = randomPoints.size();
         List<PointWithHint> points = new ArrayList<>(numPoints);
         int tries = 0;
         while (points.size() < numPoints) {
             if (tries > numPoints * 100)
                 throw new RuntimeException("Took too many tries to find points outside of blocked area.");
             tries++;
-            int index = rnd.nextInt(numRandomPoints - points.size());
+            int index = rnd.nextInt(randomPoints.size());
             PointWithHint p = randomPoints.get(index);
             if (blockArea != null && blockArea.contains(p.point))
                 continue;
             points.add(p);
-            Collections.swap(randomPoints, index, numRandomPoints - points.size());
         }
         if (points.size() != numPoints) {
             throw new IllegalStateException("List should have " + numPoints + " points");
