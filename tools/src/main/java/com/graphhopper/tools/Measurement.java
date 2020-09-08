@@ -202,7 +202,10 @@ public class Measurement {
         StopWatch sw = new StopWatch().start();
         try {
             maxNode = g.getNodes();
-            generateRandomButValidPoints(hopper, preCalculatedPoints, new Random(seed));
+            // restricting the maximum snap distance is meant to prevent that it is overly likely that we draw query
+            // points from the 'dead' parts of the map (within the bounding box, but far away from the road network)
+            double maxSnapDistance = args.getDouble("measurement. max_snap_distance", 50_000);
+            generateRandomButValidPoints(hopper, preCalculatedPoints, maxSnapDistance, new Random(seed));
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, encoder, count * 100, allowedEdges);
@@ -755,7 +758,7 @@ public class Measurement {
         print(prefix, miniPerf);
     }
 
-    private void generateRandomButValidPoints(GraphHopper hopper, int numPoints, Random rnd) {
+    private void generateRandomButValidPoints(GraphHopper hopper, int numPoints, double maxSnapDistance, Random rnd) {
         // create random but valid points to be used later (better than obtaining them during the measurement)
         StopWatch sw = new StopWatch().start();
         int numTries = 10 * numPoints;
@@ -771,7 +774,9 @@ public class Measurement {
             double lat = bBox.minLat + rnd.nextDouble() * (bBox.maxLat - bBox.minLat);
             double lon = bBox.minLon + rnd.nextDouble() * (bBox.maxLon - bBox.minLon);
             QueryResult qr = hopper.getLocationIndex().findClosest(lat, lon, edgeFilter);
-            if (qr.isValid()) {
+            if (qr.isValid() && DistancePlaneProjection.DIST_PLANE.calcDist(
+                    qr.getSnappedPoint().getLat(), qr.getSnappedPoint().getLon(),
+                    qr.getQueryPoint().getLat(), qr.getQueryPoint().getLon()) > maxSnapDistance) {
                 EdgeIterator iter = edgeExplorer.setBaseNode(qr.getClosestNode());
                 String hint = iter.next() ? iter.getName() : "";
                 randomPoints.add(new PointWithHint(new GHPoint(lat, lon), hint));
