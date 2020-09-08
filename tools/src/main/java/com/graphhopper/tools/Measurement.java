@@ -770,7 +770,7 @@ public class Measurement {
             numAttempts++;
             double lat = bBox.minLat + rnd.nextDouble() * (bBox.maxLat - bBox.minLat);
             double lon = bBox.minLon + rnd.nextDouble() * (bBox.maxLon - bBox.minLon);
-            QueryResult qr = hopper.getLocationIndex().findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+            QueryResult qr = hopper.getLocationIndex().findClosest(lat, lon, edgeFilter);
             if (qr.isValid()) {
                 EdgeIterator iter = edgeExplorer.setBaseNode(qr.getClosestNode());
                 String hint = iter.next() ? iter.getName() : "";
