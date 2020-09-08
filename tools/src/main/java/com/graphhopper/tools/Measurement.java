@@ -204,7 +204,7 @@ public class Measurement {
             maxNode = g.getNodes();
             // restricting the maximum snap distance is meant to prevent that it is overly likely that we draw query
             // points from the 'dead' parts of the map (within the bounding box, but far away from the road network)
-            double maxSnapDistance = args.getDouble("measurement. max_snap_distance", 50_000);
+            double maxSnapDistance = args.getDouble("measurement.max_snap_distance", 500);
             generateRandomButValidPoints(hopper, preCalculatedPoints, maxSnapDistance, new Random(seed));
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
