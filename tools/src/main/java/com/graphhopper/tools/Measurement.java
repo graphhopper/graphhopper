@@ -761,7 +761,7 @@ public class Measurement {
     private void generateRandomButValidPoints(GraphHopper hopper, int numPoints, double maxSnapDistance, Random rnd) {
         // create random but valid points to be used later (better than obtaining them during the measurement)
         StopWatch sw = new StopWatch().start();
-        int numTries = 10 * numPoints;
+        int numTries = 100 * numPoints;
         int numAttempts = 0;
         final EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle));
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
