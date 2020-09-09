@@ -46,7 +46,7 @@ public class JTSTriangulator implements Triangulator {
         this.routerConfig = routerConfig;
     }
 
-    public Result triangulate(QueryResult qr, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz) {
+    public Result triangulate(QueryResult qr, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, double tolerance) {
         final NodeAccess na = queryGraph.getNodeAccess();
         Collection<Coordinate> sites = new ArrayList<>();
         shortestPathTree.search(qr.getClosestNode(), label -> {
@@ -81,7 +81,7 @@ public class JTSTriangulator implements Triangulator {
         // what we want.
 
         Collection<ConstraintVertex> constraintVertices = sites.stream().map(ConstraintVertex::new).collect(Collectors.toList());
-        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(constraintVertices, 0.0);
+        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(constraintVertices, tolerance);
         conformingDelaunayTriangulator.setConstraints(new ArrayList<>(), new ArrayList<>());
         conformingDelaunayTriangulator.formInitialDelaunay();
         conformingDelaunayTriangulator.enforceConstraints();

@@ -81,6 +81,7 @@ public class IsochroneResource {
             @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceLimitInMeter,
             @QueryParam("weight_limit") @DefaultValue("-1") LongParam weightLimit,
             @QueryParam("type") @DefaultValue("json") ResponseType respType,
+            @QueryParam("tolerance") @DefaultValue("0") double tolerance,
             @QueryParam("full_geometry") @DefaultValue("false") boolean fullGeometry) {
         StopWatch sw = new StopWatch().start();
 
@@ -141,18 +142,20 @@ public class IsochroneResource {
             fz = l -> l.time;
         }
 
-        Triangulator.Result result = triangulator.triangulate(qr, queryGraph, shortestPathTree, fz);
+        Triangulator.Result result = triangulator.triangulate(qr, queryGraph, shortestPathTree, fz, tolerance);
 
         ContourBuilder contourBuilder = new ContourBuilder(result.triangulation);
         ArrayList<Geometry> isochrones = new ArrayList<>();
         for (Double z : zs) {
             logger.info("Building contour z={}", z);
             MultiPolygon isochrone = contourBuilder.computeIsoline(z, result.seedEdges);
-            if (fullGeometry) {
-                isochrones.add(isochrone);
-            } else {
-                Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, geometryFactory.createPoint(new Coordinate(point.get().lon, point.get().lat)));
-                isochrones.add(geometryFactory.createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
+            if(!isochrone.isEmpty()){
+                if (fullGeometry) {
+                    isochrones.add(isochrone);
+                } else {
+                    Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, geometryFactory.createPoint(new Coordinate(point.get().lon, point.get().lat)));
+                    isochrones.add(geometryFactory.createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
+                }
             }
         }
         ArrayList<JsonFeature> features = new ArrayList<>();
@@ -169,6 +172,7 @@ public class IsochroneResource {
         }
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
+        sw.stop();
         ObjectNode finalJson = null;
         if (respType == geojson) {
             json.put("type", "FeatureCollection");
@@ -179,7 +183,6 @@ public class IsochroneResource {
             finalJson = WebHelper.jsonResponsePutInfo(json, sw.getMillis());
         }
 
-        sw.stop();
         logger.info("took: " + sw.getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes());
         return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
                 build();

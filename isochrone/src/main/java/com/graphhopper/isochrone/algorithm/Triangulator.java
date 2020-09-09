@@ -38,6 +38,6 @@ public interface Triangulator {
 
     }
 
-    Result triangulate(QueryResult qr, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz);
+    Result triangulate(QueryResult qr, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, double tolerance);
 
 }
