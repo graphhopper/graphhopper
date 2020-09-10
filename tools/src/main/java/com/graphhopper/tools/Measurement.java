@@ -83,6 +83,7 @@ public class Measurement {
     private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
     private final Map<String, Object> properties = new TreeMap<>();
     private long seed;
+    private boolean stopOnError;
     private int maxNode;
     private String vehicle;
 
@@ -100,6 +101,7 @@ public class Measurement {
         final String countryBordersDirectory = args.getString("spatial_rules.borders_directory", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
+        stopOnError = args.getBool("measurement.stop_on_error", false);
         String summaryLocation = args.getString("measurement.summaryfile", "");
         final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
         put("measurement.timestamp", timeStamp);
@@ -806,9 +808,12 @@ public class Measurement {
 
                     if (rsp.getErrors().get(0).getMessage() == null)
                         rsp.getErrors().get(0).printStackTrace();
-                    else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found"))
-                        logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
-
+                    else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found")) {
+                        if (stopOnError)
+                            throw new RuntimeException("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
+                        else
+                            logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
+                    }
                     return 0;
                 }
 
