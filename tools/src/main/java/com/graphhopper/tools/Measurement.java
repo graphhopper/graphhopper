@@ -32,6 +32,9 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
@@ -669,6 +672,7 @@ public class Measurement {
                 if (querySettings.blockArea != null)
                     req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
                 req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
+                req.setSnapPreventions(Arrays.asList("ferry"));
                 req.getHints().
                         putObject(CH.DISABLE, !querySettings.ch).
                         putObject("stall_on_demand", querySettings.sod).
@@ -687,7 +691,13 @@ public class Measurement {
 
                 GHResponse rsp;
                 try {
+                    long s = System.nanoTime();
                     rsp = hopper.route(req);
+                    long timeNs = System.nanoTime() - s;
+                    double timeS = timeNs / 1_000_000_000.0;
+                    if (timeS > 50) {
+                        System.out.println("REQUEST TOOK MORE THAN 10s! " + req + ", took: " + timeS + "s");
+                    }
                 } catch (Exception ex) {
                     // 'not found' can happen if import creates more than one subnetwork
                     throw new RuntimeException("Error while calculating route! nodes: " + nodes + ", request:" + req, ex);
@@ -749,14 +759,20 @@ public class Measurement {
         put(prefix + ".guessed_algorithm", algoStr);
         put(prefix + ".failed_count", failedCount.get());
         put(prefix + ".distance_min", minDistance.get());
-        put(prefix + ".distance_mean", (float) distSum.get() / count);
-        put(prefix + ".air_distance_mean", (float) airDistSum.get() / count);
-        put(prefix + ".distance_max", maxDistance.get());
+        float meanDist = (float) distSum.get() / count;
+        put(prefix + ".distance_mean", meanDist);
+        float airDistMean = (float) airDistSum.get() / count;
+        put(prefix + ".air_distance_mean", airDistMean);
+        long distMax = maxDistance.get();
+        put(prefix + ".distance_max", distMax);
         put(prefix + ".visited_nodes_mean", (float) visitedNodesSum.get() / count);
         put(prefix + ".visited_nodes_max", (float) maxVisitedNodes.get());
         put(prefix + ".alternative_rate", (float) altCount.get() / count);
         print(prefix, miniPerf);
         miniPerf.printHistogram();
+        System.out.println("mean dist: " + meanDist);
+        System.out.println("mean air dist: " + airDistMean);
+        System.out.println("max dist: " + distMax);
     }
 
     private void generateRandomButValidPoints(GraphHopper hopper, int numPoints, double maxSnapDistance, Random rnd) {
@@ -765,8 +781,13 @@ public class Measurement {
         int numTries = 100 * numPoints;
         int numAttempts = 0;
         final EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle));
+        EncodingManager lookup = hopper.getEncodingManager();
+        final EnumEncodedValue<RoadClass> roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        final EnumEncodedValue<RoadEnvironment> roadEnvEnc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        SnapPreventionEdgeFilter snapFilter = new SnapPreventionEdgeFilter(edgeFilter, roadClassEnc, roadEnvEnc,
+                Arrays.asList("ferry"));
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
-        final EdgeExplorer edgeExplorer = graph.createEdgeExplorer(edgeFilter);
+        final EdgeExplorer edgeExplorer = graph.createEdgeExplorer(snapFilter);
         BBox bBox = graph.getBounds();
 
         randomPoints = new ArrayList<>(numPoints);
@@ -774,7 +795,7 @@ public class Measurement {
             numAttempts++;
             double lat = bBox.minLat + rnd.nextDouble() * (bBox.maxLat - bBox.minLat);
             double lon = bBox.minLon + rnd.nextDouble() * (bBox.maxLon - bBox.minLon);
-            QueryResult qr = hopper.getLocationIndex().findClosest(lat, lon, edgeFilter);
+            QueryResult qr = hopper.getLocationIndex().findClosest(lat, lon, snapFilter);
             if (qr.isValid() && DistancePlaneProjection.DIST_PLANE.calcDist(
                     qr.getSnappedPoint().getLat(), qr.getSnappedPoint().getLon(),
                     qr.getQueryPoint().getLat(), qr.getQueryPoint().getLon()) > maxSnapDistance) {
