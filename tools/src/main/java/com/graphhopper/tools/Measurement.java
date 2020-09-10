@@ -221,7 +221,7 @@ public class Measurement {
             }
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
-                System.gc();
+                gcAndWait();
                 boolean isCH = false;
                 boolean isLM = true;
                 Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
@@ -244,7 +244,7 @@ public class Measurement {
                 boolean isCH = true;
                 boolean isLM = false;
 //                compareCHWithAndWithoutSOD(hopper, count/5);
-                System.gc();
+                gcAndWait();
                 if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
                     CHGraph lg = g.getCHGraph(chConfig.getName());
@@ -299,7 +299,7 @@ public class Measurement {
             put("measurement.count", count);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getMillis());
-            System.gc();
+            gcAndWait();
             put("measurement.totalMB", getTotalMB());
             put("measurement.usedMB", getUsedMB());
 
