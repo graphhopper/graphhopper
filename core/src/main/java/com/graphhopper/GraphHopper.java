@@ -926,7 +926,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (!hasInterpolated() && hasElevation()) {
-            interpolateBridgesAndOrTunnels();
+            interpolateBridgesTunnelsAndFerries();
         }
 
         initLocationIndex();
@@ -962,7 +962,7 @@ public class GraphHopper implements GraphHopperAPI {
         return "true".equals(ghStorage.getProperties().get(INTERPOLATION_KEY));
     }
 
-    void interpolateBridgesAndOrTunnels() {
+    void interpolateBridgesTunnelsAndFerries() {
         if (ghStorage.getEncodingManager().hasEncodedValue(RoadEnvironment.KEY)) {
             EnumEncodedValue<RoadEnvironment> roadEnvEnc = ghStorage.getEncodingManager().getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
             StopWatch sw = new StopWatch().start();
@@ -970,8 +970,13 @@ public class GraphHopper implements GraphHopperAPI {
             float tunnel = sw.stop().getSeconds();
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.BRIDGE).execute();
+            float bridge = sw.stop().getSeconds();
+            // The SkadiProvider contains bathymetric data. For ferries this can result in bigger elevation changes
+            // See #2098 for mor information
+            sw = new StopWatch().start();
+            new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
             ghStorage.getProperties().put(INTERPOLATION_KEY, true);
-            logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, " + "tunnel interpolation " + (int) tunnel + "s");
+            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds());
         }
     }
 

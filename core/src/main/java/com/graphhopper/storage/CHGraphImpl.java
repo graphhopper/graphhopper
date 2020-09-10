@@ -459,10 +459,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     return false;
 
                 allEdgeIterator.adjNode = allEdgeIterator.edgeAccess.getNodeB(allEdgeIterator.edgePointer);
-                // some edges are deleted and are marked via a negative node
-                if (EdgeAccess.isInvalidNodeB(allEdgeIterator.adjNode))
-                    continue;
-
                 allEdgeIterator.baseNode = allEdgeIterator.edgeAccess.getNodeA(allEdgeIterator.edgePointer);
                 allEdgeIterator.freshFlags = false;
                 allEdgeIterator.reverse = false;

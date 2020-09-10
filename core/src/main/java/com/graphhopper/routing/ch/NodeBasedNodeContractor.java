@@ -36,7 +36,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private NodeBasedWitnessPathSearcher prepareAlgo;
     private int addedShortcutsCount;
     private long dijkstraCount;
-    private StopWatch dijkstraSW = new StopWatch();
+    private final StopWatch dijkstraSW = new StopWatch();
     // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
     // each edge can exist in both directions
     private double meanDegree;

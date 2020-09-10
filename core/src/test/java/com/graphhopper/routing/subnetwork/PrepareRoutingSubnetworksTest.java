@@ -69,17 +69,16 @@ public class PrepareRoutingSubnetworksTest {
 
     @Test
     public void testRemoveSubnetworkIfOnlyOneVehicle() {
+        FlagEncoder encoder = em.fetchEdgeEncoders().iterator().next();
         GraphHopperStorage g = createSubnetworkTestStorage(em);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
                 new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, null)));
         // this rules out the upper small network
         instance.setMinNetworkSize(4);
         instance.doWork();
-        g.optimize();
-        assertEquals(6, g.getNodes());
         assertTrue(GHUtility.getProblems(g).isEmpty());
-        EdgeExplorer explorer = g.createEdgeExplorer();
-        assertEquals(GHUtility.asSet(2, 1, 5), GHUtility.getNeighbors(explorer.setBaseNode(3)));
+        EdgeExplorer explorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder));
+        assertEquals(GHUtility.asSet(), GHUtility.getNeighbors(explorer.setBaseNode(4)));
 
         // this time we lower the threshold and the small network will remain
         g = createSubnetworkTestStorage(em);
@@ -87,8 +86,8 @@ public class PrepareRoutingSubnetworksTest {
                 new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, null)));
         instance.setMinNetworkSize(3);
         instance.doWork();
-        g.optimize();
-        assertEquals(9, g.getNodes());
+        explorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder));
+        assertEquals(GHUtility.asSet(5, 6), GHUtility.getNeighbors(explorer.setBaseNode(4)));
     }
 
     @Test
@@ -101,11 +100,9 @@ public class PrepareRoutingSubnetworksTest {
         // this rules out the upper small network
         instance.setMinNetworkSize(4);
         instance.doWork();
-        g.optimize();
-        assertEquals(6, g.getNodes());
         assertTrue(GHUtility.getProblems(g).isEmpty());
-        EdgeExplorer explorer = g.createEdgeExplorer();
-        assertEquals(GHUtility.asSet(2, 1, 5), GHUtility.getNeighbors(explorer.setBaseNode(3)));
+        EdgeExplorer explorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder));
+        assertEquals(GHUtility.asSet(), GHUtility.getNeighbors(explorer.setBaseNode(4)));
 
         // this time we lower the threshold and the small network will remain
         g = createSubnetworkTestStorage(em);
@@ -113,8 +110,8 @@ public class PrepareRoutingSubnetworksTest {
                 new PrepareRoutingSubnetworks.PrepareJob("car", accessEnc, null)));
         instance.setMinNetworkSize(3);
         instance.doWork();
-        g.optimize();
-        assertEquals(9, g.getNodes());
+        explorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder));
+        assertEquals(GHUtility.asSet(5, 6), GHUtility.getNeighbors(explorer.setBaseNode(4)));
     }
 
     @Test
@@ -166,9 +163,6 @@ public class PrepareRoutingSubnetworksTest {
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, prepareJobs);
         instance.setMinNetworkSize(5);
         instance.doWork();
-        g.optimize();
-        // remove nothing because of two vehicles with different subnetworks
-        assertEquals(9, g.getNodes());
 
         EdgeExplorer carExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(carEncoder));
         assertEquals(GHUtility.asSet(7, 2, 1), GHUtility.getNeighbors(carExplorer.setBaseNode(3)));
@@ -182,8 +176,6 @@ public class PrepareRoutingSubnetworksTest {
         instance = new PrepareRoutingSubnetworks(g, prepareJobs);
         instance.setMinNetworkSize(5);
         instance.doWork();
-        g.optimize();
-        assertEquals(6, g.getNodes());
     }
 
     GraphHopperStorage createSubnetworkTestStorageWithOneWays(EncodingManager em) {
@@ -217,10 +209,6 @@ public class PrepareRoutingSubnetworksTest {
         // the (7) and the (5,6) components get removed -> 2 remaining components and
         // 3 removed edges total
         assertEquals(3, removed);
-        instance.markNodesRemovedIfUnreachable();
-        g.optimize();
-
-        assertEquals(8, g.getNodes());
     }
 
     @Test
@@ -234,11 +222,6 @@ public class PrepareRoutingSubnetworksTest {
         int removed = instance.removeSmallSubNetworks(job);
 
         assertEquals(3, removed);
-        instance.markNodesRemovedIfUnreachable();
-        g.optimize();
-
-        assertEquals(8, g.getNodes());
-
         assertTrue(isConsistent(g));
         g.edge(7, 8);
         assertTrue(isConsistent(g));

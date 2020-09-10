@@ -83,6 +83,7 @@ public class Measurement {
     private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
     private final Map<String, Object> properties = new TreeMap<>();
     private long seed;
+    private boolean stopOnError;
     private int maxNode;
     private String vehicle;
 
@@ -100,6 +101,7 @@ public class Measurement {
         final String countryBordersDirectory = args.getString("spatial_rules.borders_directory", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
+        stopOnError = args.getBool("measurement.stop_on_error", false);
         String summaryLocation = args.getString("measurement.summaryfile", "");
         final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
         put("measurement.timestamp", timeStamp);
@@ -219,7 +221,7 @@ public class Measurement {
             }
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
-                System.gc();
+                gcAndWait();
                 boolean isCH = false;
                 boolean isLM = true;
                 Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
@@ -242,7 +244,7 @@ public class Measurement {
                 boolean isCH = true;
                 boolean isLM = false;
 //                compareCHWithAndWithoutSOD(hopper, count/5);
-                System.gc();
+                gcAndWait();
                 if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
                     CHGraph lg = g.getCHGraph(chConfig.getName());
@@ -289,13 +291,15 @@ public class Measurement {
 
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
+            if (stopOnError)
+                System.exit(1);
             put("error", ex.toString());
         } finally {
             put("gh.gitinfo", Constants.GIT_INFO != null ? Constants.GIT_INFO.toString() : "unknown");
             put("measurement.count", count);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getMillis());
-            System.gc();
+            gcAndWait();
             put("measurement.totalMB", getTotalMB());
             put("measurement.usedMB", getUsedMB());
 
@@ -749,16 +753,23 @@ public class Measurement {
                 IntArrayList nodes = new IntArrayList(querySettings.points);
                 // we try a few times to find points that do not lie within our blocked area
                 for (int i = 0; i < 5; i++) {
+                    nodes.clear();
                     List<GHPoint> points = new ArrayList<>();
                     List<String> pointHints = new ArrayList<>();
-                    for (int p = 0; p < querySettings.points; p++) {
+                    int tries = 0;
+                    while (nodes.size() < querySettings.points) {
                         int node = rand.nextInt(maxNode);
+                        if (++tries > g.getNodes())
+                            throw new RuntimeException("Could not find accessible points");
+                        if (GHUtility.count(edgeExplorer.setBaseNode(node)) == 0)
+                            // this node is not accessible via any roads, probably was removed during subnetwork removal
+                            // -> discard
+                            continue;
                         nodes.add(node);
                         points.add(new GHPoint(na.getLatitude(node), na.getLongitude(node)));
                         if (querySettings.withPointHints) {
                             EdgeIterator iter = edgeExplorer.setBaseNode(node);
-                            iter.next();
-                            pointHints.add(iter.getName());
+                            pointHints.add(iter.next() ? iter.getName() : "");
                         }
                     }
                     req.setPoints(points);
@@ -806,9 +817,12 @@ public class Measurement {
 
                     if (rsp.getErrors().get(0).getMessage() == null)
                         rsp.getErrors().get(0).printStackTrace();
-                    else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found"))
-                        logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
-
+                    else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found")) {
+                        if (stopOnError)
+                            throw new RuntimeException("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
+                        else
+                            logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
+                    }
                     return 0;
                 }
 

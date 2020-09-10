@@ -224,33 +224,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     @Override
-    public void markNodeRemoved(int index) {
-        baseGraph.getRemovedNodes().add(index);
-    }
-
-    @Override
-    public boolean isNodeRemoved(int index) {
-        return baseGraph.getRemovedNodes().contains(index);
-    }
-
-    @Override
-    public void optimize() {
-        if (isFrozen())
-            throw new IllegalStateException("do not optimize after graph was frozen");
-
-        int delNodes = baseGraph.getRemovedNodes().getCardinality();
-        if (delNodes <= 0)
-            return;
-
-        // Deletes only nodes.
-        // It reduces the fragmentation of the node space but introduces new unused edges.
-        baseGraph.inPlaceNodeRemove(delNodes);
-
-        // Reduce memory usage
-        baseGraph.trimToSize();
-    }
-
-    @Override
     public boolean loadExisting() {
         baseGraph.checkNotInitialized();
         if (properties.loadExisting()) {
