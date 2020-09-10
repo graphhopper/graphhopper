@@ -756,6 +756,7 @@ public class Measurement {
         put(prefix + ".visited_nodes_max", (float) maxVisitedNodes.get());
         put(prefix + ".alternative_rate", (float) altCount.get() / count);
         print(prefix, miniPerf);
+        miniPerf.printHistogram();
     }
 
     private void generateRandomButValidPoints(GraphHopper hopper, int numPoints, double maxSnapDistance, Random rnd) {
