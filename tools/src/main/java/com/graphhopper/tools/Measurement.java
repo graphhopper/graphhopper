@@ -751,16 +751,23 @@ public class Measurement {
                 IntArrayList nodes = new IntArrayList(querySettings.points);
                 // we try a few times to find points that do not lie within our blocked area
                 for (int i = 0; i < 5; i++) {
+                    nodes.clear();
                     List<GHPoint> points = new ArrayList<>();
                     List<String> pointHints = new ArrayList<>();
-                    for (int p = 0; p < querySettings.points; p++) {
+                    int tries = 0;
+                    while (nodes.size() < querySettings.points) {
                         int node = rand.nextInt(maxNode);
+                        if (++tries > g.getNodes())
+                            throw new RuntimeException("Could not find accessible points");
+                        if (GHUtility.count(edgeExplorer.setBaseNode(node)) == 0)
+                            // this node is not accessible via any roads, probably was removed during subnetwork removal
+                            // -> discard
+                            continue;
                         nodes.add(node);
                         points.add(new GHPoint(na.getLatitude(node), na.getLongitude(node)));
                         if (querySettings.withPointHints) {
                             EdgeIterator iter = edgeExplorer.setBaseNode(node);
-                            iter.next();
-                            pointHints.add(iter.getName());
+                            pointHints.add(iter.next() ? iter.getName() : "");
                         }
                     }
                     req.setPoints(points);
