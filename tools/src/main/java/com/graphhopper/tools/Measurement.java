@@ -798,7 +798,7 @@ public class Measurement {
             QueryResult qr = hopper.getLocationIndex().findClosest(lat, lon, snapFilter);
             if (qr.isValid() && DistancePlaneProjection.DIST_PLANE.calcDist(
                     qr.getSnappedPoint().getLat(), qr.getSnappedPoint().getLon(),
-                    qr.getQueryPoint().getLat(), qr.getQueryPoint().getLon()) > maxSnapDistance) {
+                    qr.getQueryPoint().getLat(), qr.getQueryPoint().getLon()) < maxSnapDistance) {
                 EdgeIterator iter = edgeExplorer.setBaseNode(qr.getClosestNode());
                 String hint = iter.next() ? iter.getName() : "";
                 randomPoints.add(new PointWithHint(new GHPoint(lat, lon), hint));
