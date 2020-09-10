@@ -291,6 +291,8 @@ public class Measurement {
 
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
+            if (stopOnError)
+                System.exit(1);
             put("error", ex.toString());
         } finally {
             put("gh.gitinfo", Constants.GIT_INFO != null ? Constants.GIT_INFO.toString() : "unknown");
