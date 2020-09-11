@@ -45,8 +45,8 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     private static final int TC_NEXT = 12;
     private static final int BYTES_PER_ENTRY = 16;
 
-    private BaseGraph baseGraph;
-    private DataAccess turnCosts;
+    private final BaseGraph baseGraph;
+    private final DataAccess turnCosts;
     private int turnCostsCount;
 
     public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
@@ -160,28 +160,27 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         turnCosts.setInt(costsBase + TC_NEXT, next);
     }
 
-    /**
-     * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
-     */
+    // move to tests?
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
-        IntsRef flags = readFlags(fromEdge, viaNode, toEdge);
-        return turnCostEnc.getDecimal(false, flags);
-    }
-
-    /**
-     * @return turn cost flags of the specified triple "from edge", "via node" and "to edge"
-     */
-    private IntsRef readFlags(int fromEdge, int viaNode, int toEdge) {
         if (!EdgeIterator.Edge.isValid(fromEdge) || !EdgeIterator.Edge.isValid(toEdge))
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (viaNode < 0)
             throw new IllegalArgumentException("via node cannot be negative");
 
-        IntsRef flags = TurnCost.createFlags();
-        readFlags(flags, fromEdge, viaNode, toEdge);
-        return flags;
+        return get(TurnCost.createFlags(), turnCostEnc, fromEdge, viaNode, toEdge);
     }
 
+    /**
+     * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
+     */
+    public double get(IntsRef tcFlags, DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
+        readFlags(tcFlags, fromEdge, viaNode, toEdge);
+        return turnCostEnc.getDecimal(false, tcFlags);
+    }
+
+    /**
+     * After the call the tcFlags is set to the turn cost for the specified triple "from edge", "via node" and "to edge".
+     */
     private void readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
         int turnCostIndex = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
         int i = 0;

@@ -21,6 +21,7 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 
@@ -56,7 +57,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     }
 
     @Override
-    public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
+    public double calcTurnWeight(IntsRef tcFlags, int edgeFrom, int nodeVia, int edgeTo) {
         if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo)) {
             return 0;
         }
@@ -66,14 +67,14 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             tCost = uTurnCosts;
         } else {
             if (turnCostEnc != null)
-                tCost = turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
+                tCost = turnCostStorage.get(tcFlags, turnCostEnc, edgeFrom, nodeVia, edgeTo);
         }
         return tCost;
     }
 
     @Override
-    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-        return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
+    public long calcTurnMillis(IntsRef tcFlags, int inEdge, int viaNode, int outEdge) {
+        return (long) (1000 * calcTurnWeight(tcFlags, inEdge, viaNode, outEdge));
     }
 
     @Override

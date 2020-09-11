@@ -29,6 +29,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -220,12 +221,12 @@ class EdgeBasedTarjanSCCTest {
         // now lets try with a restricted turn
         tarjan = new EdgeBasedTarjanSCC(g, accessEnc, new TurnCostProvider() {
             @Override
-            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+            public double calcTurnWeight(IntsRef tcFlags, int inEdge, int viaNode, int outEdge) {
                 return (inEdge == 1 && viaNode == 2 && outEdge == 2) ? Double.POSITIVE_INFINITY : 0;
             }
 
             @Override
-            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+            public long calcTurnMillis(IntsRef tcFlags, int inEdge, int viaNode, int outEdge) {
                 return 0;
             }
         }, false);

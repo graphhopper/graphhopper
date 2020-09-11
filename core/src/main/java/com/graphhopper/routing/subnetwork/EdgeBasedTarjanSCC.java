@@ -23,10 +23,12 @@ import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.LongArrayDeque;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -128,8 +130,9 @@ public class EdgeBasedTarjanSCC {
         final int edge = getEdgeFromKey(p);
         EdgeExplorer explorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc));
         EdgeIterator iter = explorer.setBaseNode(adjNode);
+        IntsRef tcFlags = TurnCost.createFlags();
         while (iter.next()) {
-            if (isTurnRestricted(edge, adjNode, iter.getEdge()))
+            if (isTurnRestricted(tcFlags, edge, adjNode, iter.getEdge()))
                 continue;
             int q = createEdgeKey(iter, false);
             handleNeighbor(p, q, iter.getAdjNode());
@@ -207,6 +210,7 @@ public class EdgeBasedTarjanSCC {
     }
 
     private void startSearch() {
+        IntsRef tcFlags = TurnCost.createFlags();
         while (hasNext()) {
             pop();
             switch (dfsState) {
@@ -232,7 +236,7 @@ public class EdgeBasedTarjanSCC {
                     final int edge = getEdgeFromKey(p);
                     EdgeIterator it = explorer.setBaseNode(adj);
                     while (it.next()) {
-                        if (isTurnRestricted(edge, adj, it.getEdge()))
+                        if (isTurnRestricted(tcFlags, edge, adj, it.getEdge()))
                             continue;
                         int q = createEdgeKey(it, false);
                         pushHandleNeighbor(p, q, it.getAdjNode());
@@ -306,8 +310,8 @@ public class EdgeBasedTarjanSCC {
         dfsStackAdj.addLast(adj);
     }
 
-    private boolean isTurnRestricted(int inEdge, int node, int outEdge) {
-        return turnCostProvider.calcTurnWeight(inEdge, node, outEdge) == Double.POSITIVE_INFINITY;
+    private boolean isTurnRestricted(IntsRef tcFlags, int inEdge, int node, int outEdge) {
+        return turnCostProvider.calcTurnWeight(tcFlags, inEdge, node, outEdge) == Double.POSITIVE_INFINITY;
     }
 
     public static int createEdgeKey(EdgeIteratorState edgeState, boolean reverse) {

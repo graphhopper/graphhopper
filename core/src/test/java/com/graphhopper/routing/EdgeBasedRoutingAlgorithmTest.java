@@ -28,10 +28,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
@@ -397,12 +394,12 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         FastestWeighting weighting = new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, tcs) {
             @Override
-            public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
+            public double calcTurnWeight(IntsRef tcFlags, int edgeFrom, int nodeVia, int edgeTo) {
                 if (edgeFrom >= 0)
                     assertNotNull("edge " + edgeFrom + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeFrom, nodeVia));
                 if (edgeTo >= 0)
                     assertNotNull("edge " + edgeTo + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeTo, nodeVia));
-                return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
+                return super.calcTurnWeight(tcFlags, edgeFrom, nodeVia, edgeTo);
             }
         });
         Path p = createAlgo(g, weighting, EDGE_BASED).calcPath(5, 1);

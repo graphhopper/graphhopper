@@ -9,6 +9,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -37,27 +38,26 @@ public class ShortestPathTreeTest {
         }
 
         @Override
-        public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-            return calcTurnMillis(inEdge, viaNode, outEdge) / 1000.0;
+        public double calcTurnWeight(IntsRef tcFlags, int inEdge, int viaNode, int outEdge) {
+            return calcTurnMillis(tcFlags, inEdge, viaNode, outEdge) / 1000.0;
         }
 
         @Override
-        public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        public long calcTurnMillis(IntsRef tcFlags, int inEdge, int viaNode, int outEdge) {
             return inEdge == outEdge ? turnMillis : 0;
         }
     }
 
     public static final TurnCostProvider FORBIDDEN_UTURNS = new TurnCostProvider() {
         @Override
-        public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        public double calcTurnWeight(IntsRef tcFlags, int inEdge, int viaNode, int outEdge) {
             return inEdge == outEdge ? Double.POSITIVE_INFINITY : 0;
         }
 
         @Override
-        public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        public long calcTurnMillis(IntsRef tcFlags, int inEdge, int viaNode, int outEdge) {
             return 0;
         }
-
     };
 
     private final EncodingManager encodingManager = EncodingManager.create("car");

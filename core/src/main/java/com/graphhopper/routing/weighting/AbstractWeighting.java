@@ -19,7 +19,9 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 
@@ -33,6 +35,7 @@ public abstract class AbstractWeighting implements Weighting {
     protected final DecimalEncodedValue avSpeedEnc;
     protected final BooleanEncodedValue accessEnc;
     private final TurnCostProvider turnCostProvider;
+    private final IntsRef tcFlags = TurnCost.createFlags();
 
     protected AbstractWeighting(FlagEncoder encoder) {
         this(encoder, NO_TURN_COST_PROVIDER);
@@ -81,12 +84,12 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+        return turnCostProvider.calcTurnWeight(tcFlags, inEdge, viaNode, outEdge);
     }
 
     @Override
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-        return turnCostProvider.calcTurnMillis(inEdge, viaNode, outEdge);
+        return turnCostProvider.calcTurnMillis(tcFlags, inEdge, viaNode, outEdge);
     }
 
     @Override
