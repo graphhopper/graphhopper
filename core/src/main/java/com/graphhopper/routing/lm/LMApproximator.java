@@ -83,8 +83,10 @@ public class LMApproximator implements WeightApproximator {
 
     @Override
     public double approximate(final int v) {
-        if (!recalculateActiveLandmarks && fallback || lms.isEmpty())
+        if (!recalculateActiveLandmarks && fallback || lms.isEmpty()) {
+            System.out.println("XXXXXXXXXXXX FALLING BACK! node: " + v + ", " + graph.getNodeAccess().getLat(v) + ", " + graph.getNodeAccess().getLon(v));
             return fallBackApproximation.approximate(v);
+        }
 
         if (v >= maxBaseNodes) {
             // handle virtual node
@@ -106,6 +108,7 @@ public class LMApproximator implements WeightApproximator {
             } else {
                 // note: fallback==true means forever true!
                 fallback = true;
+                System.out.println("XXXXXXXXXXXX FALLING BACK - FOREVER! node: " + v + ", " + graph.getNodeAccess().getLat(v) + ", " + graph.getNodeAccess().getLon(v));
                 return fallBackApproximation.approximate(v);
             }
         }
