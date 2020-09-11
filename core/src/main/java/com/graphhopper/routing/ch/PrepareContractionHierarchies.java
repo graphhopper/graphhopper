@@ -19,7 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
-import com.graphhopper.coll.GHTreeMapComposed;
+import com.graphhopper.coll.MinHeapWithUpdate;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -68,8 +68,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private PrepareCHEdgeExplorer disconnectExplorer;
     private int maxLevel;
     // nodes with highest priority come last
-    private GHTreeMapComposed sortedNodes;
-    private float[] oldPriorities;
+    private MinHeapWithUpdate sortedNodes;
     private PMap pMap = new PMap();
     private int checkCounter;
 
@@ -162,14 +161,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         maxLevel = prepareGraph.getNodes();
         allEdgeExplorer = prepareGraph.createAllEdgeExplorer();
         disconnectExplorer = prepareGraph.createAllEdgeExplorer();
-
-        // Use an alternative to PriorityQueue as it has some advantages:
-        //   1. Gets automatically smaller if less entries are stored => less total RAM used.
-        //      Important because Graph is increasing until the end.
-        //   2. is slightly faster
-        //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
-        sortedNodes = new GHTreeMapComposed();
-        oldPriorities = new float[prepareGraph.getNodes()];
+        // we need a memory-efficient priority queue with an efficient update method
+        // TreeMap is not memory-efficient and PriorityQueue does not support an efficient update method
+        // (and is not memory efficient either)
+        sortedNodes = new MinHeapWithUpdate(prepareGraph.getNodes());
         nodeContractor.initFromGraph();
     }
 
@@ -187,8 +182,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         for (int node = 0; node < nodes; node++) {
             if (prepareGraph.getLevel(node) != maxLevel)
                 continue;
-            float priority = oldPriorities[node] = calculatePriority(node);
-            sortedNodes.insert(node, priority);
+            float priority = calculatePriority(node);
+            sortedNodes.push(node, priority);
         }
         periodicUpdateSW.stop();
     }
@@ -201,7 +196,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         updatePrioritiesOfRemainingNodes();
         logger.info("Finished building queue, took: {}s", sw.stop().getSeconds());
         nodeContractor.prepareContraction();
-        final int initSize = sortedNodes.getSize();
+        final int initSize = sortedNodes.size();
         int level = 0;
         checkCounter = 0;
         final long logSize = params.getLogMessagesPercentage() == 0
@@ -245,14 +240,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             }
 
             checkCounter++;
-            int polledNode = sortedNodes.pollKey();
+            int polledNode = sortedNodes.poll();
 
-            if (!sortedNodes.isEmpty() && sortedNodes.getSize() < lastNodesLazyUpdates) {
+            if (!sortedNodes.isEmpty() && sortedNodes.size() < lastNodesLazyUpdates) {
                 lazyUpdateSW.start();
-                float priority = oldPriorities[polledNode] = calculatePriority(polledNode);
+                float priority = calculatePriority(polledNode);
                 if (priority > sortedNodes.peekValue()) {
                     // current node got more important => insert as new value and contract it later
-                    sortedNodes.insert(polledNode, priority);
+                    sortedNodes.push(polledNode, priority);
                     lazyUpdateSW.stop();
                     continue;
                 }
@@ -263,7 +258,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
             contractNode(polledNode, level);
             level++;
 
-            if (sortedNodes.getSize() < nodesToAvoidContract)
+            if (sortedNodes.size() < nodesToAvoidContract)
                 // skipped nodes are already set to maxLevel
                 break;
 
@@ -277,12 +272,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
 
                 if (neighborUpdate && !updatedNeighbors.contains(nn) && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
                     neighborUpdateSW.start();
-                    float oldPrio = oldPriorities[nn];
-                    float priority = oldPriorities[nn] = calculatePriority(nn);
-                    if (priority != oldPrio) {
-                        sortedNodes.update(nn, oldPrio, priority);
-                        updatedNeighbors.add(nn);
-                    }
+                    float priority = calculatePriority(nn);
+                    sortedNodes.update(nn, priority);
+                    updatedNeighbors.add(nn);
                     neighborUpdateSW.stop();
                 }
 
@@ -351,7 +343,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         logger.info(String.format(Locale.ROOT,
                 "%s, nodes: %10s, shortcuts: %10s, updates: %2d, checked-nodes: %10s, %s, %s, %s",
                 (isEdgeBased() ? "edge" : "node"),
-                nf(sortedNodes.getSize()),
+                nf(sortedNodes.size()),
                 nf(nodeContractor.getAddedShortcutsCount()),
                 updateCounter,
                 nf(checkCounter),
@@ -431,7 +423,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private void _close() {
         nodeContractor.close();
         sortedNodes = null;
-        oldPriorities = null;
     }
 
     void close() {
