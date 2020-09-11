@@ -84,7 +84,7 @@ public class LMApproximator implements WeightApproximator {
     @Override
     public double approximate(final int v) {
         if (!recalculateActiveLandmarks && fallback || lms.isEmpty()) {
-            System.out.println("XXXXXXXXXXXX FALLING BACK! node: " + v + ", " + graph.getNodeAccess().getLat(v) + ", " + graph.getNodeAccess().getLon(v));
+//            System.out.println("XXXXXXXXXXXX FALLING BACK! node: " + v + ", " + graph.getNodeAccess().getLat(v) + ", " + graph.getNodeAccess().getLon(v));
             return fallBackApproximation.approximate(v);
         }
 
