@@ -245,6 +245,9 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
             path.addEdge(edge.getEdge());
         }
         Iterator<EdgeIteratorState> uvtPathI = uvtPath.calcEdges().iterator();
+        if (!uvtPathI.hasNext()) { // presumably v == t, has been known to happen, no test yet
+            return suvPath;
+        }
         uvtPathI.next(); // skip u-v edge
         uvtPathI.forEachRemaining(edge -> path.addEdge(edge.getEdge()));
         path.setEndNode(uvtPath.getEndNode());

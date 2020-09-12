@@ -69,6 +69,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int numPrevEdges;
     private int numOrigEdges;
     private int numPrevOrigEdges;
+    private int numAllEdges;
 
     // counters used for performance analysis
     private int numPolledEdges;
@@ -106,10 +107,15 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public float calculatePriority(int node) {
         activeStats = countingStats;
+        resetEdgeCounters();
+        countPreviousEdges(node);
+        if (numAllEdges == 0)
+            // this node is isolated, maybe it belongs to a removed subnetwork, in any case we can quickly contract it
+            // no shortcuts will be introduced
+            return Float.NEGATIVE_INFINITY;
         stats().stopWatch.start();
         findAndHandleShortcuts(node, this::countShortcuts);
         stats().stopWatch.stop();
-        countPreviousEdges(node);
         // the higher the priority the later (!) this node will be contracted
         float edgeQuotient = numShortcuts / (float) numPrevEdges;
         float origEdgeQuotient = numOrigEdges / (float) numPrevOrigEdges;
@@ -165,7 +171,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private void findAndHandleShortcuts(int node, ShortcutHandler shortcutHandler) {
         numPolledEdges = 0;
         stats().nodes++;
-        resetEdgeCounters();
         Set<AddedShortcut> addedShortcuts = new HashSet<>();
 
         // first we need to identify the possible source nodes from which we can reach the center node
@@ -265,6 +270,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
         PrepareCHEdgeIterator allIter = allEdgeExplorer.setBaseNode(node);
         while (allIter.next()) {
+            numAllEdges++;
             if (isContracted(allIter.getAdjNode()))
                 continue;
             if (allIter.isShortcut()) {
@@ -344,6 +350,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         numPrevEdges = 0;
         numOrigEdges = 0;
         numPrevOrigEdges = 0;
+        numAllEdges = 0;
     }
 
     private Stats stats() {
