@@ -160,6 +160,39 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         turnCosts.setInt(costsBase + TC_NEXT, next);
     }
 
+    void optimize() {
+        DataAccess dataAccess = new RAMDirectory().find("tmp_turn_costs").create(1000);
+        int newTCPointer = 0;
+        for (int nodeId = 0; nodeId < baseGraph.getNodes(); nodeId++) {
+            int turnCostIndex = baseGraph.getNodeAccess().getTurnCostIndex(nodeId);
+
+            if (turnCostIndex == NO_TURN_ENTRY) {
+                baseGraph.getNodeAccess().setTurnCostIndex(nodeId, NO_TURN_ENTRY);
+                continue;
+            }
+
+            baseGraph.getNodeAccess().setTurnCostIndex(nodeId, newTCPointer / BYTES_PER_ENTRY);
+
+            while (turnCostIndex != NO_TURN_ENTRY) {
+                long oldTCPointer = (long) turnCostIndex * BYTES_PER_ENTRY;
+                dataAccess.ensureCapacity(newTCPointer + BYTES_PER_ENTRY);
+                // copy into new dataAccess
+                for (int entryIndex = 0; entryIndex < BYTES_PER_ENTRY; entryIndex += 4) {
+                    int oldEntry = turnCosts.getInt(oldTCPointer + entryIndex);
+                    if (entryIndex == TC_NEXT) {
+                        turnCostIndex = oldEntry;
+                        dataAccess.setInt(newTCPointer + entryIndex, oldEntry == NO_TURN_ENTRY ? NO_TURN_ENTRY : (newTCPointer / BYTES_PER_ENTRY + 1));
+                    } else {
+                        dataAccess.setInt(newTCPointer + entryIndex, oldEntry);
+                    }
+                }
+                newTCPointer += BYTES_PER_ENTRY;
+            }
+        }
+
+        dataAccess.copyTo(turnCosts);
+    }
+
     /**
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
@@ -204,7 +237,7 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         }
         // so many turn restrictions on one node? here is something wrong
         if (i >= 1000)
-            throw new IllegalStateException("something went wrong: there seems to be no end of the turn cost-list!?");
+            throw new IllegalStateException("something went wrong: there seems to be no end of the turn cost-list! viaNode:" + viaNode);
         tcFlags.ints[0] = EMPTY_FLAGS;
     }
 

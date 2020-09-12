@@ -356,6 +356,9 @@ class BaseGraph implements Graph {
 
         frozen = true;
         listener.freeze();
+        if (supportsTurnCosts()) {
+            turnCostStorage.optimize();
+        }
     }
 
     synchronized boolean isFrozen() {
