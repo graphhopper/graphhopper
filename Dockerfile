@@ -18,7 +18,7 @@ WORKDIR /graphhopper
 
 COPY --from=build /graphhopper/web/target/*.jar ./web/target/
 # pom.xml is used to get the jar file version. see https://github.com/graphhopper/graphhopper/pull/1990#discussion_r409438806
-COPY ./graphhopper.sh ./pom.xml ./config-example.yml ./
+COPY ./graphhopper.sh ./pom.xml ./config-example.yml ./mtb_profile.yaml ./
 
 VOLUME [ "/data" ]
 
