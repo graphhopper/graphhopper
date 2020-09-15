@@ -33,8 +33,6 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
-import java.util.Arrays;
-
 /**
  * Graph data structure used for CH preparation. It allows caching weights and edges that are not needed anymore
  * (those adjacent to contracted nodes) can be removed (see {@link #disconnect}.
@@ -49,7 +47,7 @@ public class CHPreparationGraph {
     // are less shortcuts overall so the size of the prepare graph is crucial, while for edge-based most memory is
     // consumed towards the end of the preparation anyway). for edge-based it would actually be better/faster to keep
     // separate lists of incoming/outgoing edges and even use uni-directional edge-objects.
-    private Array2D<PrepareEdge> prepareEdges;
+    private SplitArray2D<PrepareEdge> prepareEdges;
     private IntSet neighborSet;
     private OrigGraph origGraph;
     private OrigGraph.Builder origGraphBuilder;
@@ -74,7 +72,7 @@ public class CHPreparationGraph {
         this.nodes = nodes;
         this.edges = edges;
         this.edgeBased = edgeBased;
-        prepareEdges = new Array2D<>(nodes, 2);
+        prepareEdges = new SplitArray2D<>(nodes, 2);
         origGraphBuilder = edgeBased ? new OrigGraph.Builder() : null;
         neighborSet = new IntHashSet();
         nextShortcutId = edges;
@@ -177,10 +175,14 @@ public class CHPreparationGraph {
             return;
         // todonow: is it ok to cast to float? maybe add some check that asserts certain precision? especially inf?
         PrepareBaseEdge prepareEdge = new PrepareBaseEdge(edge, from, to, (float) weightFwd, (float) weightBwd);
-        prepareEdges.add(from, prepareEdge);
-        if (from != to)
-            prepareEdges.add(to, prepareEdge);
-
+        if (Double.isFinite(weightFwd)) {
+            addOutEdge(from, prepareEdge);
+            addInEdge(to, prepareEdge);
+        }
+        if (Double.isFinite(weightBwd) && from != to) {
+            addOutEdge(to, prepareEdge);
+            addInEdge(from, prepareEdge);
+        }
         if (edgeBased)
             origGraphBuilder.addEdge(from, to, edge, fwd, bwd);
     }
@@ -191,9 +193,8 @@ public class CHPreparationGraph {
         PrepareEdge prepareEdge = edgeBased
                 ? new EdgeBasedPrepareShortcut(nextShortcutId, from, to, origEdgeKeyFirst, origEdgeKeyLast, weight, skipped1, skipped2, origEdgeCount)
                 : new PrepareShortcut(nextShortcutId, from, to, weight, skipped1, skipped2, origEdgeCount);
-        prepareEdges.add(from, prepareEdge);
-        if (from != to)
-            prepareEdges.add(to, prepareEdge);
+        addOutEdge(from, prepareEdge);
+        addInEdge(to, prepareEdge);
         return nextShortcutId++;
     }
 
@@ -263,6 +264,14 @@ public class CHPreparationGraph {
             origGraph = null;
     }
 
+    private void addOutEdge(int node, PrepareEdge prepareEdge) {
+        prepareEdges.addPartTwo(node, prepareEdge);
+    }
+
+    private void addInEdge(int node, PrepareEdge prepareEdge) {
+        prepareEdges.addPartOne(node, prepareEdge);
+    }
+
     private void checkReady() {
         if (!ready)
             throw new IllegalStateException("You need to call prepareForContraction() before calling this method");
@@ -279,13 +288,14 @@ public class CHPreparationGraph {
     }
 
     private static class PrepareGraphEdgeExplorerImpl implements PrepareGraphEdgeExplorer, PrepareGraphEdgeIterator {
-        private final Array2D<PrepareEdge> prepareEdges;
+        private final SplitArray2D<PrepareEdge> prepareEdges;
         private final boolean reverse;
         private int node = -1;
+        private int end;
         private PrepareEdge currEdge;
         private int index;
 
-        PrepareGraphEdgeExplorerImpl(Array2D<PrepareEdge> prepareEdges, boolean reverse) {
+        PrepareGraphEdgeExplorerImpl(SplitArray2D<PrepareEdge> prepareEdges, boolean reverse) {
             this.prepareEdges = prepareEdges;
             this.reverse = reverse;
         }
@@ -293,28 +303,21 @@ public class CHPreparationGraph {
         @Override
         public PrepareGraphEdgeIterator setBaseNode(int node) {
             this.node = node;
-            this.index = -1;
+            // we store the in edges in the first and the out edges in the second part of the prepareEdges
+            this.index = reverse ? -1 : (prepareEdges.mid(node) - 1);
+            this.end = reverse ? prepareEdges.mid(node) : prepareEdges.size(node);
             return this;
         }
 
         @Override
         public boolean next() {
-            while (true) {
-                index++;
-                if (index >= prepareEdges.size(node)) {
-                    currEdge = null;
-                    return false;
-                }
-                currEdge = prepareEdges.get(node, index);
-                // todonow: move out weight getter and maybe use createEdgeExplorer()?
-                if (!currEdge.isShortcut()) {
-                    if (Double.isFinite(getWeight()))
-                        return true;
-                } else {
-                    if ((!reverse && nodeAisBase()) || (reverse && currEdge.getNodeB() == node))
-                        return true;
-                }
+            index++;
+            if (index == end) {
+                currEdge = null;
+                return false;
             }
+            currEdge = prepareEdges.get(node, index);
+            return true;
         }
 
         @Override
@@ -390,7 +393,7 @@ public class CHPreparationGraph {
 
         @Override
         public String toString() {
-            return index < 0 ? "not_started" : getBaseNode() + "-" + getAdjNode();
+            return currEdge == null ? "not_started" : getBaseNode() + "-" + getAdjNode();
         }
 
         private boolean nodeAisBase() {
@@ -863,65 +866,5 @@ public class CHPreparationGraph {
             result[i] = arr[sortOrder[i]];
         }
         return result;
-    }
-
-    /**
-     * This is a more memory-efficient version of `ArrayList<T>[]`, i.e. this is a fixed size array with variable
-     * sized sub-arrays. It is more memory efficient than an array of `ArrayList`s, because it saves the object-overhead
-     * of using an ArrayList object for each sub-array.
-     */
-    private static class Array2D<T> {
-        private static final int GROW_FACTOR = 2;
-        private final int initialSubArrayCapacity;
-        private final Object[][] data;
-        private final int[] sizes;
-
-        Array2D(int size, int initialSubArrayCapacity) {
-            data = new Object[size][];
-            sizes = new int[size];
-            this.initialSubArrayCapacity = initialSubArrayCapacity;
-        }
-
-        int size(int subArray) {
-            return sizes[subArray];
-        }
-
-        void add(int subArray, T element) {
-            if (data[subArray] == null) {
-                data[subArray] = new Object[initialSubArrayCapacity];
-                data[subArray][0] = element;
-                sizes[subArray] = 1;
-            } else {
-                assert data[subArray].length != 0;
-                if (sizes[subArray] == data[subArray].length)
-                    data[subArray] = Arrays.copyOf(data[subArray], data[subArray].length * GROW_FACTOR);
-                data[subArray][sizes[subArray]] = element;
-                sizes[subArray]++;
-            }
-        }
-
-        T get(int subArray, int element) {
-            return (T) data[subArray][element];
-        }
-
-        /**
-         * Removes the given element from the given sub-array. Using this method changes the order of the existing elements
-         * in the sub-array unless we remove the very last element!
-         */
-        void remove(int subArray, T element) {
-            for (int i = 0; i < sizes[subArray]; i++) {
-                if (data[subArray][i] == element) {
-                    data[subArray][i] = data[subArray][sizes[subArray] - 1];
-                    data[subArray][sizes[subArray] - 1] = null;
-                    sizes[subArray]--;
-                }
-            }
-        }
-
-        void clear(int subArray) {
-            data[subArray] = null;
-            sizes[subArray] = 0;
-        }
-
     }
 }

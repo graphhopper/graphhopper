@@ -533,7 +533,7 @@ public class EdgeBasedNodeContractorTest {
         // direct turn is restricted, so we take the left loop -> two extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(2, maxCost, 1, 2, 3, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(2), 12, false, true),
+                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(3), 12, false, true),
                 createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 20, true, false)
         );
     }
@@ -543,7 +543,7 @@ public class EdgeBasedNodeContractorTest {
         // direct turn is restricted, going on left loop is expensive, so we take the right loop -> two extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(8, 1, 1, 2, 3, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(3), 12, false, true),
+                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(2), 12, false, true),
                 createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 21, true, false)
         );
     }
@@ -553,8 +553,8 @@ public class EdgeBasedNodeContractorTest {
         // multiple turns are restricted, it is best to take the left and the right loop -> three extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(3, maxCost, 1, maxCost, 3, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(2), 13, false, true),
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.getScEdge(4), g.getScEdge(3), 24, false, true),
+                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(3), 13, false, true),
+                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.getScEdge(4), g.getScEdge(2), 24, false, true),
                 createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(5), g.e6to8.getEdge(), 33, true, false)
         );
     }
@@ -564,8 +564,8 @@ public class EdgeBasedNodeContractorTest {
         // multiple turns are restricted, it is best to take the right and the left loop -> three extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(maxCost, 5, 4, 2, maxCost, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(3), 16, false, true),
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.getScEdge(4), g.getScEdge(2), 25, false, true),
+                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(2), 16, false, true),
+                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.getScEdge(4), g.getScEdge(3), 25, false, true),
                 createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(5), g.e6to8.getEdge(), 33, true, false)
         );
     }
@@ -1057,10 +1057,10 @@ public class EdgeBasedNodeContractorTest {
                 createShortcut(5, 2, 5, 1, 5, 1, 75, true, false),
                 // from node 5 contraction
                 createShortcut(2, 2, 3, 2, 3, 2, 99, true, false),
-                createShortcut(2, 2, 3, 1, 3, 7, 134, true, false),
-                createShortcut(2, 2, 1, 2, 8, 2, 114, true, false),
-                createShortcut(3, 2, 2, 4, 2, 6, 106, false, true),
-                createShortcut(3, 2, 4, 2, 9, 2, 105, true, false)
+                createShortcut(2, 2, 3, 1, 3, 6, 134, true, false),
+                createShortcut(2, 2, 1, 2, 9, 2, 114, true, false),
+                createShortcut(3, 2, 2, 4, 2, 7, 106, false, true),
+                createShortcut(3, 2, 4, 2, 8, 2, 105, true, false)
         );
     }
 

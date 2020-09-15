@@ -41,7 +41,7 @@ class CHPreparationGraphTest {
         pg.addEdge(1, 3, 2, 9, inf);
         pg.prepareForContraction();
 
-        assertEquals(2, pg.getDegree(0));
+        assertEquals(3, pg.getDegree(0));
         assertEquals(2, pg.getDegree(4));
 
         pg.addShortcut(3, 4, 1, 3, 1, 3, 16, 2);
