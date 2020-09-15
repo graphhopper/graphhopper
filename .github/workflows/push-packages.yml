@@ -18,7 +18,7 @@ jobs:
       - name: Build and publish package
         run: |
           mvn -B versions:set -DnewVersion=$GITHUB_SHA -DgenerateBackupPoms=false
-          mvn -B -Dmaven.test.skip=true -Dskip.installnodenpm -Dskip.npm -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
+          mvn -B -DskipTests -Dskip.installnodenpm -Dskip.npm -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
