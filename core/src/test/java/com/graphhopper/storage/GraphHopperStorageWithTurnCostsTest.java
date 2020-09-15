@@ -101,8 +101,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         graph.create(100); // 100 is the minimum size
 
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-        // assert that turnCostStorage can hold 104 turn cost entries at the beginning
-        assertEquals(128, turnCostStorage.getCapacity());
+        assertEquals(0, turnCostStorage.getCapacity());
 
         Random r = new Random();
 
@@ -129,11 +128,10 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         }
 
         setTurnCost(0, 50, 1, 1337);
-        assertEquals(104, turnCostStorage.getCapacity() / 16); // we are still good here
+        assertEquals(75, turnCostStorage.getCapacity() / 16); // we are still good here
 
         setTurnCost(0, 50, 2, 1337);
-        // A new segment should be added, which will support 128 / 16 = 8 more entries.
-        assertEquals(112, turnCostStorage.getCapacity() / 16);
+        assertEquals(75, turnCostStorage.getCapacity() / 16);
     }
 
     @Test
@@ -143,7 +141,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
         // turn cost index is initialized in BaseGraph.initNodeRefs
         na.setNode(4001, 10, 11, 10);
-        assertEquals(TurnCostStorage.NO_TURN_ENTRY, na.getTurnCostIndex(4001));
+        assertEquals(0, na.getTurnCostIndex(4001));
 
         na.setNode(4000, 10, 11, 10);
         na.setTurnCostIndex(4000, 12);

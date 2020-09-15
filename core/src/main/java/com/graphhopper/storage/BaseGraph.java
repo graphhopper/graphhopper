@@ -271,11 +271,6 @@ class BaseGraph implements Graph {
         for (long pointer = oldCapacity + N_EDGE_REF; pointer < newCapacity; pointer += nodeEntryBytes) {
             nodes.setInt(pointer, EdgeIterator.NO_EDGE);
         }
-        if (supportsTurnCosts()) {
-            for (long pointer = oldCapacity + N_TC; pointer < newCapacity; pointer += nodeEntryBytes) {
-                nodes.setInt(pointer, TurnCostStorage.NO_TURN_ENTRY);
-            }
-        }
     }
 
     protected final int nextEdgeEntryIndex(int sizeInBytes) {
@@ -356,9 +351,6 @@ class BaseGraph implements Graph {
 
         frozen = true;
         listener.freeze();
-        if (supportsTurnCosts()) {
-            turnCostStorage.optimize();
-        }
     }
 
     synchronized boolean isFrozen() {
@@ -449,13 +441,14 @@ class BaseGraph implements Graph {
         if (!stringIndex.isClosed())
             stringIndex.flush();
 
+        // TODO NOW this might trigger tcs.optimize() which changes the "nodes" DataAccess
+        if (supportsTurnCosts())
+            turnCostStorage.flush();
+
         setNodesHeader();
         setEdgesHeader();
         edges.flush();
         nodes.flush();
-        if (supportsTurnCosts()) {
-            turnCostStorage.flush();
-        }
     }
 
     public void close() {
@@ -465,9 +458,8 @@ class BaseGraph implements Graph {
             stringIndex.close();
         edges.close();
         nodes.close();
-        if (supportsTurnCosts()) {
+        if (supportsTurnCosts())
             turnCostStorage.close();
-        }
     }
 
     long getCapacity() {
