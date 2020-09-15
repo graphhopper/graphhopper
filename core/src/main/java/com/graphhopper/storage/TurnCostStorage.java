@@ -70,7 +70,7 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
 
     @Override
     public void flush() {
-        // ensire array is copied into turnCosts DataAccess before flushing
+        // the entire array is copied into turnCosts DataAccess before flushing
         if (!isOptimized())
             optimize();
 
@@ -95,6 +95,7 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
 
         if (turnCosts.getHeader(0) != BYTES_PER_ENTRY)
             throw new IllegalStateException("Number of bytes per turn cost entry does not match the current configuration: " + turnCosts.getHeader(0) + " vs. " + BYTES_PER_ENTRY);
+        // read turnCosts.getHeader(4) for last viaNode
         return true;
     }
 
