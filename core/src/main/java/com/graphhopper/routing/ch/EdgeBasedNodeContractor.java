@@ -49,7 +49,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private PrepareGraphEdgeExplorer existingShortcutExplorer;
     private PrepareGraphOrigEdgeExplorer sourceNodeOrigInEdgeExplorer;
     private PrepareGraphOrigEdgeExplorer targetNodeOrigOutEdgeExplorer;
-    private final ShortcutHandler shortcutHandler;
+    private ShortcutHandler shortcutHandler;
     private final Params params = new Params();
     private final PMap pMap;
     private final StopWatch dijkstraSW = new StopWatch();
@@ -385,8 +385,14 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     @Override
     public void close() {
-        witnessPathSearcher.close();
         prepareGraph.close();
+        inEdgeExplorer = null;
+        outEdgeExplorer = null;
+        existingShortcutExplorer = null;
+        sourceNodeOrigInEdgeExplorer = null;
+        targetNodeOrigOutEdgeExplorer = null;
+        shortcutHandler = null;
+        witnessPathSearcher.close();
         sourceNodes.release();
         targetNodes.release();
         addedShortcuts.release();

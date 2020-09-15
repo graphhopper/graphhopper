@@ -29,8 +29,8 @@ import static com.graphhopper.util.Helper.nf;
 
 class NodeBasedNodeContractor implements NodeContractor {
     private final CHPreparationGraph prepareGraph;
-    private final ShortcutHandler shortcutInserter;
     private final Params params = new Params();
+    private ShortcutHandler shortcutHandler;
     private PrepareGraphEdgeExplorer inEdgeExplorer;
     private PrepareGraphEdgeExplorer outEdgeExplorer;
     private PrepareGraphEdgeExplorer existingShortcutExplorer;
@@ -45,10 +45,10 @@ class NodeBasedNodeContractor implements NodeContractor {
     private int originalEdgesCount;
     private int shortcutsCount;
 
-    NodeBasedNodeContractor(CHPreparationGraph prepareGraph, ShortcutHandler shortcutInserter, PMap pMap) {
+    NodeBasedNodeContractor(CHPreparationGraph prepareGraph, ShortcutHandler shortcutHandler, PMap pMap) {
         this.prepareGraph = prepareGraph;
         extractParams(pMap);
-        this.shortcutInserter = shortcutInserter;
+        this.shortcutHandler = shortcutHandler;
     }
 
     private void extractParams(PMap pMap) {
@@ -76,8 +76,12 @@ class NodeBasedNodeContractor implements NodeContractor {
 
     @Override
     public void close() {
-        witnessPathSearcher.close();
         prepareGraph.close();
+        shortcutHandler = null;
+        inEdgeExplorer = null;
+        outEdgeExplorer = null;
+        existingShortcutExplorer = null;
+        witnessPathSearcher.close();
     }
 
     /**
@@ -129,13 +133,13 @@ class NodeBasedNodeContractor implements NodeContractor {
      * with them.
      */
     private void insertShortcuts(int node) {
-        shortcutInserter.startContractingNode();
+        shortcutHandler.startContractingNode();
         {
             PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
             while (iter.next()) {
                 if (!iter.isShortcut())
                     continue;
-                shortcutInserter.addOutShortcut(iter.getPrepareEdge(), node, iter.getAdjNode(), iter.getSkipped1(), iter.getSkipped2(), iter.getWeight());
+                shortcutHandler.addOutShortcut(iter.getPrepareEdge(), node, iter.getAdjNode(), iter.getSkipped1(), iter.getSkipped2(), iter.getWeight());
             }
         }
         {
@@ -143,15 +147,15 @@ class NodeBasedNodeContractor implements NodeContractor {
             while (iter.next()) {
                 if (!iter.isShortcut())
                     continue;
-                shortcutInserter.addInShortcut(iter.getPrepareEdge(), node, iter.getAdjNode(), iter.getSkipped2(), iter.getSkipped1(), iter.getWeight());
+                shortcutHandler.addInShortcut(iter.getPrepareEdge(), node, iter.getAdjNode(), iter.getSkipped2(), iter.getSkipped1(), iter.getWeight());
             }
         }
-        addedShortcutsCount += shortcutInserter.finishContractingNode();
+        addedShortcutsCount += shortcutHandler.finishContractingNode();
     }
 
     @Override
     public void finishContraction() {
-        shortcutInserter.finishContraction();
+        shortcutHandler.finishContraction();
     }
 
     @Override

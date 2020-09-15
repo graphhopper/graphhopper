@@ -65,8 +65,8 @@ public class EdgeBasedWitnessPathSearcher {
     private static final double MAX_ZERO_WEIGHT_LOOP = 1.e-3;
 
     private final CHPreparationGraph prepareGraph;
-    private final PrepareGraphEdgeExplorer outEdgeExplorer;
-    private final PrepareGraphOrigEdgeExplorer origInEdgeExplorer;
+    private PrepareGraphEdgeExplorer outEdgeExplorer;
+    private PrepareGraphOrigEdgeExplorer origInEdgeExplorer;
 
     // general parameters affecting the number of found witnesses and the search time
     private final Params params = new Params();
@@ -291,13 +291,17 @@ public class EdgeBasedWitnessPathSearcher {
     }
 
     public void close() {
+        prepareGraph.close();
+        outEdgeExplorer = null;
+        origInEdgeExplorer = null;
         weights = null;
         prepareEdges = null;
         parents = null;
         adjNodes = null;
         isPathToCenters = null;
-        dijkstraHeap = null;
         initialEntryParents = null;
+        changedEdges.release();
+        dijkstraHeap = null;
     }
 
     private void initStorage(int numEntries) {
