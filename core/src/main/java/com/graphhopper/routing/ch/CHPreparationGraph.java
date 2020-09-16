@@ -123,8 +123,8 @@ public class CHPreparationGraph {
             if (viaNode < lastNode)
                 throw new IllegalStateException();
             long edgePair = BitUtil.LITTLE.combineIntsToLong(tcIter.getFromEdge(), tcIter.getToEdge());
+            // note that as long as we only use OSM turn restrictions all the turn costs are infinite anyway
             double turnCost = tcIter.getCost(turnCostEnc);
-            // todonow: do not forget that for pure OSM this is always infinite currently...
             int index = turnCostEdgePairs.size();
             turnCostEdgePairs.add(edgePair);
             turnCosts.add(turnCost);
