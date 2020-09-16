@@ -89,7 +89,6 @@ public class GraphHopperTest {
             ASTAR + ",false,439",
             DIJKSTRA_BI + ",false,208",
             ASTAR_BI + ",false,172",
-            // todonow: hmm.... this used to be something like 33 before...
             ASTAR_BI + ",true,45",
             DIJKSTRA_BI + ",true,43"
     })
