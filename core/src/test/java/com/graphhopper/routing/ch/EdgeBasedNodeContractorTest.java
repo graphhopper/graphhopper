@@ -33,7 +33,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -777,7 +776,6 @@ public class EdgeBasedNodeContractorTest {
         checkShortcuts();
     }
 
-    @Disabled("todonow: removed the fix temporarily")
     @RepeatedTest(10)
     public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
         // this test runs repeatedly because it might pass/fail by chance (because path lengths are equal)
