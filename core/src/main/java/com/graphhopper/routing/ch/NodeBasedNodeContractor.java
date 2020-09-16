@@ -122,8 +122,6 @@ class NodeBasedNodeContractor implements NodeContractor {
         insertShortcuts(node);
         // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
         meanDegree = (meanDegree * 2 + degree) / 3;
-        // note that we do not disconnect original edges, because we are re-using the base graph for different profiles,
-        // even though this is not optimal from a speed performance point of view.
         return prepareGraph.disconnect(node);
     }
 

@@ -34,7 +34,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 /**
- * Graph data structure used for CH preparation. It allows caching weights and edges that are not needed anymore
+ * Graph data structure used for CH preparation. It allows caching weights, and edges that are not needed anymore
  * (those adjacent to contracted nodes) can be removed (see {@link #disconnect}.
  */
 public class CHPreparationGraph {
@@ -485,34 +485,24 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirstAB() {
-            int keyFwd = prepareEdge << 1;
-            if (nodeA > nodeB)
-                keyFwd += 1;
-            return keyFwd;
+            int key = prepareEdge << 1;
+            return nodeA > nodeB ? key + 1 : key;
         }
 
         @Override
         public int getOrigEdgeKeyFirstBA() {
-            int keyBwd = prepareEdge << 1;
-            if (nodeB > nodeA)
-                keyBwd += 1;
-            return keyBwd;
+            int key = prepareEdge << 1;
+            return nodeB > nodeA ? key + 1 : key;
         }
 
         @Override
         public int getOrigEdgeKeyLastAB() {
-            int keyFwd = prepareEdge << 1;
-            if (nodeA > nodeB)
-                keyFwd += 1;
-            return keyFwd;
+            return getOrigEdgeKeyFirstAB();
         }
 
         @Override
         public int getOrigEdgeKeyLastBA() {
-            int keyBwd = prepareEdge << 1;
-            if (nodeB > nodeA)
-                keyBwd += 1;
-            return keyBwd;
+            return getOrigEdgeKeyFirstBA();
         }
 
         @Override
@@ -705,10 +695,17 @@ public class CHPreparationGraph {
         }
     }
 
+    /**
+     * This helper graph can be used to quickly obtain the edge-keys of the edges of a node. It is only used for
+     * edge-based CH. In principle we could use base graph for this, but it turned out it is faster to use this
+     * graph (because it does not need to read all the edge flags to determine the access flags).
+     */
     private static class OrigGraph {
-        private final IntArrayList firstEdgesByNode;
+        // we store a list of 'edges' in the format: adjNode|edgeId|accessFlags, we use two ints for each edge
         private final IntArrayList adjNodes;
         private final IntArrayList edgesAndFlags;
+        // for each node we store the index at which the edges for this node begin in the above edge list
+        private final IntArrayList firstEdgesByNode;
 
         private OrigGraph(IntArrayList firstEdgesByNode, IntArrayList adjNodes, IntArrayList edgesAndFlags) {
             this.firstEdgesByNode = firstEdgesByNode;
