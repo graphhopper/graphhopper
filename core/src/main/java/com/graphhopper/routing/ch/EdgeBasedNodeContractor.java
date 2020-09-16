@@ -140,8 +140,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
         stats().stopWatch.start();
         findAndHandlePrepareShortcuts(node, this::addShortcutsToPrepareGraph);
         insertShortcuts(node);
-        // note that we do not disconnect original edges, because we are re-using the base graph for different profiles,
-        // even though this is not optimal from a speed performance point of view.
         IntContainer neighbors = prepareGraph.disconnect(node);
         updateHierarchyDepthsOfNeighbors(node, neighbors);
         stats().stopWatch.stop();
