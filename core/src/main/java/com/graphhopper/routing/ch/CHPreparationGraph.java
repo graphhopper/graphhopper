@@ -114,8 +114,6 @@ public class CHPreparationGraph {
         DoubleArrayList turnCosts = new DoubleArrayList();
         // for each node we store the index of the first turn cost entry/triple in the list
         final int[] turnCostNodes = new int[graph.getNodes() + 1];
-        // todonow: get rid of this hack... / obtain the u-turn costs directly from weighting
-        double uTurnCosts = weighting.calcTurnWeight(1, 0, 1);
         TurnCostStorage.TurnRelationIterator tcIter = turnCostStorage.getAllTurnRelations();
         int lastNode = -1;
         while (tcIter.next()) {
@@ -140,6 +138,8 @@ public class CHPreparationGraph {
         }
         turnCostNodes[turnCostNodes.length - 1] = turnCostEdgePairs.size();
 
+        // currently the u-turn costs are the same for all junctions, so for now we just get them for one of them
+        double uTurnCosts = weighting.calcTurnWeight(1, 0, 1);
         return (inEdge, viaNode, outEdge) -> {
             if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge))
                 return 0;
