@@ -35,4 +35,6 @@ public interface ReadableTriangulation {
     }
 
     ReadableQuadEdge getEdge(int v1, int v2);
+
+    public ReadableQuadEdge getVertexQuadEdge(int v);
 }

@@ -33,6 +33,12 @@ public class Triangulation {
     Map<String, QuadEdge> edges = new HashMap<>();
     IntObjectHashMap<Vertex> vertices = new IntObjectHashMap<>();
 
+    public IntObjectHashMap<QuadEdge> getVertexQuadEdges() {
+        return vertexQuadEdges;
+    }
+
+    IntObjectHashMap<QuadEdge> vertexQuadEdges = new IntObjectHashMap<>();
+
     public QuadEdge getEdge(int o, int d) {
         if (o < d) {
             return edges.get(o+","+d);
@@ -44,10 +50,11 @@ public class Triangulation {
     }
 
     private void putEdge(int o, int d, QuadEdge quadEdge) {
+        vertexQuadEdges.put(o, quadEdge);
         if (o < d) {
             edges.put(o+","+d, quadEdge);
         } else {
-            putEdge(d, o, quadEdge.sym());
+            edges.put(d+","+o, quadEdge.sym());
         }
     }
 
@@ -68,11 +75,13 @@ public class Triangulation {
         if (e1 == null) {
             e1 = QuadEdge.makeEdge(getVertex(v1), getVertex(v2));
             putEdge(v1, v2, e1);
+            putEdge(v2, v1, e1.sym());
         }
         if (e2 == null) {
             e2 = QuadEdge.makeEdge(getVertex(v2), getVertex(v3));
             QuadEdge.splice(e1.lNext(), e2);
             putEdge(v2, v3, e2);
+            putEdge(v3, v2, e2.sym());
         }
         if (e3 == null) {
             if (e1.lNext() == e2) {
@@ -84,6 +93,7 @@ public class Triangulation {
                 e3 = QuadEdge.connect(e2, e1);
             }
             putEdge(v3, v1, e3);
+            putEdge(v1, v3, e3.sym());
         } else {
             if (e1.lNext() != e2) {
                 QuadEdge.splice(e1.lNext(), e2);

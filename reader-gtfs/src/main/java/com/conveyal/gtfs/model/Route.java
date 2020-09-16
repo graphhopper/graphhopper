@@ -38,15 +38,6 @@ public class Route extends Entity { // implements Entity.Factory<Route>
 
     private static final long serialVersionUID = -819444896818029068L;
 
-    public static final int TRAM = 0;
-    public static final int SUBWAY = 1;
-    public static final int RAIL = 2;
-    public static final int BUS = 3;
-    public static final int FERRY = 4;
-    public static final int CABLE_CAR = 4;
-    public static final int GONDOLA = 4;
-    public static final int FUNICULAR = 5;
-
     //Used for converting extended route types to simple route types
     //based on codes found here: https://developers.google.com/transit/gtfs/reference/extended-route-types    
     public static final Map<Integer, Integer> EXTENTED_ROUTE_TYPE_MAPPING = new HashMap<>();

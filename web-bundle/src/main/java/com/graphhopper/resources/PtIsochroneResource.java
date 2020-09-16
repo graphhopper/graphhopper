@@ -161,8 +161,9 @@ public class PtIsochroneResource {
                 }
             }
 
-            ContourBuilder contourBuilder = new ContourBuilder(ReadableTriangulation.wrap(tin));
-            MultiPolygon isoline = contourBuilder.computeIsoline(targetZ);
+            ReadableTriangulation triangulation = ReadableTriangulation.wrap(tin);
+            ContourBuilder contourBuilder = new ContourBuilder(triangulation);
+            MultiPolygon isoline = contourBuilder.computeIsoline(targetZ, triangulation.getEdges());
 
             // debugging tool
             if (format.equals("triangulation")) {

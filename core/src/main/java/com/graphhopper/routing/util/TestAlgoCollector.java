@@ -66,8 +66,7 @@ public class TestAlgoCollector {
                 setCalcPoints(true).
                 setSimplifyResponse(false).
                 setEnableInstructions(true);
-        ResponsePath responsePath = new ResponsePath();
-        pathMerger.doWork(responsePath, altPaths, encodingManager, trMap.getWithFallBack(Locale.US));
+        ResponsePath responsePath = pathMerger.doWork(new PointList(), altPaths, encodingManager, trMap.getWithFallBack(Locale.US));
 
         if (responsePath.hasErrors()) {
             errors.add("response for " + algoEntry + " contains errors. Expected distance: " + oneRun.getDistance()

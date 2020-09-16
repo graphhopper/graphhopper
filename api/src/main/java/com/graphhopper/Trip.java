@@ -1,11 +1,13 @@
 package com.graphhopper;
 
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.details.PathDetail;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class Trip {
     public static abstract class Leg {
@@ -69,13 +71,15 @@ public class Trip {
     }
     public static class WalkLeg extends Leg {
         public final InstructionList instructions;
+        public final Map<String, List<PathDetail>> details;
         private final Date departureTime;
         private final Date arrivalTime;
 
-        public WalkLeg(String departureLocation, Date departureTime, Geometry geometry, double distance, InstructionList instructions, Date arrivalTime) {
+        public WalkLeg(String departureLocation, Date departureTime, Geometry geometry, double distance, InstructionList instructions, Map<String, List<PathDetail>> details, Date arrivalTime) {
             super("walk", departureLocation, geometry, distance);
             this.instructions = instructions;
             this.departureTime = departureTime;
+            this.details = details;
             this.arrivalTime = arrivalTime;
         }
 

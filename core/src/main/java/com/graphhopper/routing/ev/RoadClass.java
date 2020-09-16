@@ -46,13 +46,13 @@ public enum RoadClass {
     public static RoadClass find(String name) {
         if (name == null || name.isEmpty())
             return OTHER;
-        
+
         for (RoadClass roadClass : values()) {
             if (roadClass.name().equalsIgnoreCase(name)) {
                 return roadClass;
             }
         }
-        
+
         return OTHER;
     }
 }

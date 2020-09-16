@@ -40,7 +40,7 @@ public enum RouteNetwork {
     }
 
     public static RouteNetwork find(String name) {
-        if (name == null)
+        if (Helper.isEmpty(name))
             return OTHER;
         try {
             return RouteNetwork.valueOf(Helper.toUpperCase(name));

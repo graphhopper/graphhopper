@@ -23,6 +23,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -42,6 +43,7 @@ public class Request {
     private Locale locale = Helper.getLocale("en");
     private Duration limitStreetTime;
     private Duration maxProfileDuration = Duration.ofHours(1);
+    private List<String> pathDetails = new ArrayList<>();
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;
@@ -158,5 +160,13 @@ public class Request {
 
     public void setMaxProfileDuration(Duration maxProfileDuration) {
         this.maxProfileDuration = maxProfileDuration;
+    }
+
+    public List<String> getPathDetails() {
+        return pathDetails;
+    }
+
+    public void setPathDetails(List<String> pathDetails) {
+        this.pathDetails = pathDetails;
     }
 }

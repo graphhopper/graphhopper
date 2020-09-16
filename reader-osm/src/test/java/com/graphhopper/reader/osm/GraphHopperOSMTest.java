@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
@@ -25,7 +24,6 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
@@ -40,6 +38,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
@@ -196,7 +195,7 @@ public class GraphHopperOSMTest {
             }
         });
 
-        assertEquals(47, indexNodeList.size());
+        assertEquals(57, indexNodeList.size());
         for (int nodeId : indexNodeList) {
             if (!bbox.contains(na.getLatitude(nodeId), na.getLongitude(nodeId)))
                 fail("bbox " + bbox + " should contain " + nodeId);
@@ -761,11 +760,11 @@ public class GraphHopperOSMTest {
         GHRequest req = new GHRequest().
                 setPoints(Arrays.asList(start, end)).
                 setHeadings(Arrays.asList(180., Double.NaN)).
-                setProfile("profile");
-        GHResponse response = new GHResponse();
-        List<Path> paths = instance.calcPaths(req, response);
+                setProfile("profile").
+                setPathDetails(Arrays.asList("edge_key"));
+        GHResponse response = instance.route(req);
         assertFalse(response.getErrors().toString(), response.hasErrors());
-        assertEquals(IntArrayList.from(9, 5, 8, 3, 10), paths.get(0).calcNodes());
+        assertArrayEquals(new int[]{4, 5, 8, 3, 2}, calcNodes(instance, response.getAll().get(0)));
     }
 
     @Test
@@ -780,18 +779,17 @@ public class GraphHopperOSMTest {
 
         GHRequest req = new GHRequest(start, end).
                 setHeadings(Arrays.asList(180.0, 90.0)).
-                setProfile("profile");
-        GHResponse response = new GHResponse();
-        List<Path> paths = instance.calcPaths(req, response);
+                setProfile("profile").
+                setPathDetails(Arrays.asList("edge_key"));
+        GHResponse response = instance.route(req);
         assertFalse(response.hasErrors());
-        assertEquals(IntArrayList.from(9, 5, 8, 1, 2, 10), paths.get(0).calcNodes());
+        assertArrayEquals(new int[]{4, 5, 8, 1, 2, 3}, calcNodes(instance, response.getAll().get(0)));
 
         // Test uni-directional case
         req.setAlgorithm(DIJKSTRA);
-        response = new GHResponse();
-        paths = instance.calcPaths(req, response);
+        response = instance.route(req);
         assertFalse(response.getErrors().toString(), response.hasErrors());
-        assertEquals(IntArrayList.from(9, 5, 8, 1, 2, 10), paths.get(0).calcNodes());
+        assertArrayEquals(new int[]{4, 5, 8, 1, 2, 3}, calcNodes(instance, response.getAll().get(0)));
     }
 
     @Test
@@ -808,11 +806,11 @@ public class GraphHopperOSMTest {
         GHRequest req = new GHRequest().
                 setPoints(Arrays.asList(start, via, end)).
                 setHeadings(Arrays.asList(Double.NaN, 0., Double.NaN)).
-                setProfile("profile");
-        GHResponse response = new GHResponse();
-        List<Path> paths = instance.calcPaths(req, response);
+                setProfile("profile").
+                setPathDetails(Arrays.asList("edge_key"));
+        GHResponse response = instance.route(req);
         assertFalse(response.hasErrors());
-        assertEquals(IntArrayList.from(9, 5, 6, 7, 11), paths.get(0).calcNodes());
+        assertArrayEquals(new int[]{4, 5, 6, 7, 8, 3, 2}, calcNodes(instance, response.getAll().get(0)));
     }
 
     @Test
@@ -828,14 +826,13 @@ public class GraphHopperOSMTest {
         GHPoint via = new GHPoint(0.0015, 0.001);
         GHRequest req = new GHRequest().
                 setPoints(Arrays.asList(start, via, end)).
-                setProfile("profile");
+                setProfile("profile").
+                setPathDetails(Arrays.asList("edge_key"));
         req.putHint(Routing.PASS_THROUGH, true);
-        GHResponse response = new GHResponse();
-        List<Path> paths = instance.calcPaths(req, response);
+        GHResponse response = instance.route(req);
         assertFalse(response.hasErrors());
         assertEquals(1, response.getAll().size());
-        assertEquals(IntArrayList.from(9, 4, 3, 10), paths.get(0).calcNodes());
-        assertEquals(IntArrayList.from(10, 8, 1, 2, 11), paths.get(1).calcNodes());
+        assertArrayEquals(new int[]{5, 4, 3, 8, 1, 2, 3}, calcNodes(instance, response.getAll().get(0)));
     }
 
     @Test
@@ -852,13 +849,12 @@ public class GraphHopperOSMTest {
         GHRequest req = new GHRequest().
                 setPoints(Arrays.asList(start, via, end)).
                 setHeadings(Arrays.asList(0., 3.14 / 2, Double.NaN)).
-                setProfile("profile");
+                setProfile("profile").
+                setPathDetails(Arrays.asList("edge_key"));
         req.putHint(Routing.PASS_THROUGH, true);
-        GHResponse response = new GHResponse();
-        List<Path> paths = instance.calcPaths(req, response);
+        GHResponse response = instance.route(req);
         assertFalse(response.hasErrors());
-        assertEquals(IntArrayList.from(9, 4, 3, 8, 7, 11), paths.get(0).calcNodes());
-        assertEquals(IntArrayList.from(11, 6, 5, 9, 4, 3, 10), paths.get(1).calcNodes());
+        assertArrayEquals(new int[]{5, 4, 3, 8, 7, 6, 5, 4, 3, 2}, calcNodes(instance, response.getAll().get(0)));
     }
 
     @Test
@@ -874,12 +870,11 @@ public class GraphHopperOSMTest {
         GHRequest req = new GHRequest().
                 setPoints(Arrays.asList(start, via, end)).
                 setHeadings(Arrays.asList(90., 270., 270.)).
-                setProfile("profile");
-        GHResponse response = new GHResponse();
-        List<Path> paths = instance.calcPaths(req, response);
+                setProfile("profile").
+                setPathDetails(Arrays.asList("edge_key"));
+        GHResponse response = instance.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{0, 1, 2}, paths.get(0).calcNodes().toArray());
-        assertArrayEquals(new int[]{2, 3, 4}, paths.get(1).calcNodes().toArray());
+        assertArrayEquals(new int[]{0, 1, 2, 3, 4}, calcNodes(instance, response.getAll().get(0)));
     }
 
     private GraphHopper createSquareGraphInstance() {
@@ -1206,4 +1201,19 @@ public class GraphHopperOSMTest {
             hopper.close();
         }
     }
+
+    private int[] calcNodes(GraphHopper instance, ResponsePath responsePath) {
+        List<PathDetail> edgeKeys = responsePath.getPathDetails().get("edge_key");
+        int[] result = new int[edgeKeys.size()+1];
+        for (int i = 0; i < edgeKeys.size(); i++) {
+            int edgeKey = (int) edgeKeys.get(i).getValue();
+            int edgeId = edgeKey / 2;
+            EdgeIteratorState edgeIteratorState = instance.getGraphHopperStorage().getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
+            result[i] = edgeKey % 2 == 0 ? edgeIteratorState.getBaseNode() : edgeIteratorState.getAdjNode();
+            if (i == edgeKeys.size() - 1)
+                result[edgeKeys.size()] = edgeKey % 2 == 0 ? edgeIteratorState.getAdjNode() : edgeIteratorState.getBaseNode();
+        }
+        return result;
+    }
+
 }

@@ -503,11 +503,6 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
-    public EdgeExplorer createEdgeExplorer() {
-        return createEdgeExplorer(EdgeFilter.ALL_EDGES);
-    }
-
-    @Override
     public Graph copyTo(Graph g) {
         throw new RuntimeException();
     }
