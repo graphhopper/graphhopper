@@ -193,7 +193,8 @@ public class CHPreparationGraph {
                 ? new EdgeBasedPrepareShortcut(nextShortcutId, from, to, origEdgeKeyFirst, origEdgeKeyLast, weight, skipped1, skipped2, origEdgeCount)
                 : new PrepareShortcut(nextShortcutId, from, to, weight, skipped1, skipped2, origEdgeCount);
         addOutEdge(from, prepareEdge);
-        addInEdge(to, prepareEdge);
+        if (from != to)
+            addInEdge(to, prepareEdge);
         return nextShortcutId++;
     }
 
