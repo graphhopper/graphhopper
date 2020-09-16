@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.util.EdgeIterator;
 
 import java.util.Arrays;
@@ -136,17 +135,14 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
             }
         }
 
-        IntsRef tcFlags = TurnCost.createFlags();
-        turnCostEnc.setDecimal(false, tcFlags, cost);
-        turnCostArr[tcIndexCurrent + I_TC_FLAGS] |= tcFlags.ints[0];
+        turnCostArr[tcIndexCurrent + I_TC_FLAGS] = double2Int(cost);
     }
 
     /**
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
-        IntsRef flags = readFlags(fromEdge, viaNode, toEdge);
-        return turnCostEnc.getDecimal(false, flags);
+        return readFlags(fromEdge, viaNode, toEdge);
     }
 
     private boolean isOptimized() {
@@ -183,38 +179,43 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
     /**
      * @return turn cost flags of the specified triple "from edge", "via node" and "to edge"
      */
-    private IntsRef readFlags(int fromEdge, int viaNode, int toEdge) {
+    private double readFlags(int fromEdge, int viaNode, int toEdge) {
         if (!EdgeIterator.Edge.isValid(fromEdge) || !EdgeIterator.Edge.isValid(toEdge))
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (viaNode < 0)
             throw new IllegalArgumentException("via node cannot be negative");
 
-        IntsRef flags = TurnCost.createFlags();
         if (isOptimized()) {
             int tcFromIndex = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
             int tcToIndex = getTCToIndex(viaNode);
             for (int tcIndex = tcFromIndex; tcIndex < tcToIndex; tcIndex++) {
                 if (fromEdge == turnCosts.getInt((long) tcIndex * BYTES_PER_ENTRY + TC_FROM)
                         && toEdge == turnCosts.getInt((long) tcIndex * BYTES_PER_ENTRY + TC_TO)) {
-                    flags.ints[0] = turnCosts.getInt((long) tcIndex * BYTES_PER_ENTRY + TC_FLAGS);
-                    break;
+                    return int2Double(turnCosts.getInt((long) tcIndex * BYTES_PER_ENTRY + TC_FLAGS));
                 }
             }
         } else {
             if (viaNode >= tmpTCArr.length)
-                return flags;
+                return 0;
             int[] turnCostArr = tmpTCArr[viaNode];
             if (turnCostArr != null) {
                 for (int i = 0; i < turnCostArr.length; i += INTS_PER_ENTRY) {
                     if (fromEdge == turnCostArr[i + I_TC_FROM]
                             && toEdge == turnCostArr[i + I_TC_TO]) {
-                        flags.ints[0] = turnCostArr[i + I_TC_FLAGS];
-                        break;
+                        return int2Double(turnCostArr[i + I_TC_FLAGS]);
                     }
                 }
             }
         }
-        return flags;
+        return 0;
+    }
+
+    double int2Double(int flags) {
+        return flags < 0 ? Double.POSITIVE_INFINITY : flags;
+    }
+
+    int double2Int(double cost) {
+        return Double.isInfinite(cost) ? -1 : (int) cost;
     }
 
     /**
@@ -266,7 +267,6 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         private int viaNode = -1;
         private int tcIndexEnd = 0;
         private int tcIndexCurrent = -1;
-        private IntsRef intsRef = TurnCost.createFlags();
 
         private long turnCostPtr() {
             return (long) tcIndexCurrent * BYTES_PER_ENTRY;
@@ -289,8 +289,7 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
 
         @Override
         public double getCost(DecimalEncodedValue encodedValue) {
-            intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
-            return encodedValue.getDecimal(false, intsRef);
+            return int2Double(turnCosts.getInt(turnCostPtr() + TC_FLAGS));
         }
 
         @Override
@@ -319,7 +318,6 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
         private int viaNode = -1;
         private int[] tcArr;
         private int tcIndexCurrent = -1;
-        private IntsRef intsRef = TurnCost.createFlags();
 
         @Override
         public int getFromEdge() {
@@ -338,8 +336,7 @@ public class TurnCostStorage implements Storable<TurnCostStorage> {
 
         @Override
         public double getCost(DecimalEncodedValue encodedValue) {
-            intsRef.ints[0] = tcArr[tcIndexCurrent + I_TC_FLAGS];
-            return encodedValue.getDecimal(false, intsRef);
+            return int2Double(tcArr[tcIndexCurrent + I_TC_FLAGS]);
         }
 
         @Override
