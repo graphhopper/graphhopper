@@ -18,7 +18,7 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -50,12 +50,12 @@ public class RouteResourceWithEleTest {
         config.getGraphHopperConfiguration().
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cachedir", "../core/files/").
-                putObject("prepare.min_one_way_network_size", 0).
+                putObject("prepare.min_network_size", 0).
                 putObject("graph.flag_encoders", "car").
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.location", dir).
                 setProfiles(Collections.singletonList(
-                        new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")
+                        new Profile("profile").setVehicle("car").setWeighting("fastest")
                 ));
         return config;
     }

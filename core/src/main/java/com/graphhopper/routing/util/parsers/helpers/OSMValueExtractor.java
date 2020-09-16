@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
 public class OSMValueExtractor {

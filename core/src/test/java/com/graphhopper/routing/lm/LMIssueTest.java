@@ -19,7 +19,7 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -64,7 +64,7 @@ public class LMIssueTest {
 
     private void preProcessGraph() {
         graph.freeze();
-        lm = new PrepareLandmarks(dir, graph, new LMProfile(weighting), 16);
+        lm = new PrepareLandmarks(dir, graph, new LMConfig("c", weighting), 16);
         lm.setMaximumWeight(10000);
         lm.doWork();
     }

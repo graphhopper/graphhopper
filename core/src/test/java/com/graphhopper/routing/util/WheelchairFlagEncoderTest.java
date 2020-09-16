@@ -19,8 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import org.junit.Test;
@@ -225,7 +225,7 @@ public class WheelchairFlagEncoderTest {
         assertTrue(wheelchairEncoder.getAccess(way).canSkip());
 
         way.clearTags();
-        // allow pathes as they are used as generic path
+        // allow paths as they are used as generic path
         way.setTag("highway", "path");
         assertTrue(wheelchairEncoder.getAccess(way).isWay());
 

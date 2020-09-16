@@ -41,10 +41,7 @@ public class SubnetworkStorage implements Storable<SubnetworkStorage> {
      * subnetwork is too small.
      */
     public int getSubnetwork(int nodeId) {
-        byte[] bytes = new byte[1];
-        da.getBytes(nodeId, bytes, bytes.length);
-
-        return (int) bytes[0];
+        return da.getByte(nodeId);
     }
 
     /**
@@ -55,9 +52,7 @@ public class SubnetworkStorage implements Storable<SubnetworkStorage> {
         if (subnetwork > 127)
             throw new IllegalArgumentException("Number of subnetworks is currently limited to 127 but requested " + subnetwork);
 
-        byte[] bytes = new byte[1];
-        bytes[0] = (byte) subnetwork;
-        da.setBytes(nodeId, bytes, bytes.length);
+        da.setByte(nodeId, (byte) subnetwork);
     }
 
     @Override

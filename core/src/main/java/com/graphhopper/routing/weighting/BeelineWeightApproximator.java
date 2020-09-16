@@ -19,7 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.DistanceCalcEarth;
 
 /**
  * Approximates the distance to the goal node by weighting the beeline distance according to the
@@ -30,7 +30,7 @@ import com.graphhopper.util.Helper;
 public class BeelineWeightApproximator implements WeightApproximator {
     private final NodeAccess nodeAccess;
     private final Weighting weighting;
-    private DistanceCalc distanceCalc = Helper.DIST_EARTH;
+    private DistanceCalc distanceCalc = DistanceCalcEarth.DIST_EARTH;
     private double toLat, toLon;
     private double epsilon = 1;
 

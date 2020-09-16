@@ -22,6 +22,7 @@ import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
@@ -29,14 +30,10 @@ import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
 
 public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final LandmarkStorage lms;
-    private final Weighting prepareWeighting;
-    private final int numBaseNodes;
     private int defaultActiveLandmarks;
 
     public LMRoutingAlgorithmFactory(LandmarkStorage lms) {
         this.lms = lms;
-        this.prepareWeighting = lms.getWeighting();
-        this.numBaseNodes = lms.getBaseNodes();
         this.defaultActiveLandmarks = Math.max(1, Math.min(lms.getLandmarkCount() / 2, 12));
     }
 
@@ -58,7 +55,7 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
             algo.setApproximation(getApproximator(g, activeLM, epsilon));
             algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
             return algo;
-        } else if (ASTAR_BI.equalsIgnoreCase(algoStr)) {
+        } else if (ASTAR_BI.equalsIgnoreCase(algoStr) || Helper.isEmpty(algoStr)) {
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AStarBidirection algo = new AStarBidirection(g, weighting, opts.getTraversalMode());
             algo.setApproximation(getApproximator(g, activeLM, epsilon));
@@ -84,7 +81,6 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     }
 
     private LMApproximator getApproximator(Graph g, int activeLM, double epsilon) {
-        return new LMApproximator(g, prepareWeighting, numBaseNodes, lms, activeLM, lms.getFactor(), false).
-                setEpsilon(epsilon);
+        return LMApproximator.forLandmarks(g, lms, activeLM).setEpsilon(epsilon);
     }
 }

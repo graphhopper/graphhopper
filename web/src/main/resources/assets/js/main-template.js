@@ -1,4 +1,5 @@
 global.d3 = require('d3');
+var YAML = require('js-yaml');
 var Flatpickr = require('flatpickr');
 require('flatpickr/dist/l10n');
 
@@ -34,11 +35,6 @@ if (ghenv.environment === 'development') {
     var autocomplete = AutoComplete.prototype.createStub();
 } else {
     var autocomplete = new AutoComplete(ghenv.geocoding.host, ghenv.geocoding.api_key);
-    // overwrite default for production
-    GHRequest.prototype.hasTCSupport = function() {
-       if(this.api_params.turn_costs !== false)
-          this.api_params.turn_costs = new Set(["car", "truck", "small_truck", "scooter"]).has(this.api_params.vehicle);
-    };
 }
 
 var mapLayer = require('./map.js');
@@ -50,7 +46,6 @@ var translate = require('./translate.js');
 
 var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
-var vehicleTools = require('./tools/vehicle.js');
 var tileLayers = require('./config/tileLayers.js');
 if(ghenv.with_tiles)
    tileLayers.enableVectorTiles();
@@ -78,6 +73,81 @@ $(document).ready(function (e) {
 
     gpxExport.addGpxExport(ghRequest);
 
+    $("#flex-input-link").click(function() {
+        $("#regular-input").toggle();
+        $("#flex-input").toggle();
+        // avoid default action, so use a different search button
+        $("#searchButton").toggle();
+        mapLayer.adjustMapSize();
+    });
+    $("#flex-example").click(function() {
+         $("#flex-input-text").val("speed_factor:\n  road_class:\n    motorway: 0.8\npriority:\n  road_environment:\n    tunnel: 0.0\n  road_class:\n    residential: 0.7\n  max_weight:\n    \">3\": 0.0");
+         return false;
+    });
+
+    var sendCustomData = function() {
+       mapLayer.clearElevation();
+       mapLayer.clearLayers();
+       flagAll();
+
+       var infoDiv = $("#info");
+       infoDiv.empty();
+       infoDiv.show();
+       var routeResultsDiv = $("<div class='route_results'/>");
+       infoDiv.append(routeResultsDiv);
+       routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
+       var inputText = $("#flex-input-text").val();
+       if(inputText.length < 5) {
+           routeResultsDiv.html("Routing configuration too short");
+           return;
+       }
+
+       var points = [];
+       for(var idx = 0; idx < ghRequest.route.size(); idx++) {
+           var point = ghRequest.route.getIndex(idx);
+           if (point.isResolved()) {
+               points.push([point.lng, point.lat]);
+           } else {
+               routeResultsDiv.html("Unresolved points");
+               return;
+           }
+       }
+
+       var jsonModel;
+       try {
+         jsonModel = inputText.indexOf("{") == 0? JSON.parse(inputText) : YAML.safeLoad(inputText);
+       } catch(ex) {
+         routeResultsDiv.html("Cannot parse " + inputText + " " + ex);
+         return;
+       }
+
+       jsonModel.points = points;
+       jsonModel.points_encoded = false;
+       jsonModel.elevation = ghRequest.api_params.elevation;
+       jsonModel.profile = ghRequest.api_params.profile;
+       var request = JSON.stringify(jsonModel);
+
+       $.ajax({
+           url: "/route-custom",
+           type: "POST",
+           contentType: 'application/json; charset=utf-8',
+           dataType: "json",
+           data: request,
+           success: createRouteCallback(ghRequest, routeResultsDiv, "", true),
+           error: function(err) {
+               routeResultsDiv.html("Error response: cannot process input");
+               var json = JSON.parse(err.responseText);
+               createRouteCallback(ghRequest, routeResultsDiv, "", true)(json);
+           }
+        });
+    };
+
+    $("#flex-input-text").keydown(function (e) {
+        // CTRL+Enter
+        if (e.ctrlKey && e.keyCode == 13) sendCustomData();
+    });
+    $("#flex-search-button").click(sendCustomData);
+
     if (isProduction())
         $('#hosting').show();
 
@@ -101,6 +171,16 @@ $(document).ready(function (e) {
     });
 
     var urlParams = urlTools.parseUrlWithHisto();
+
+    if(urlParams.flex)
+        $("#flex-input-link").click();
+
+    var customURL = urlParams.load_custom;
+    if(customURL && ghenv.environment === 'development')
+        $.ajax(customURL).
+            done(function(data) { $("#flex-input-text").val(data); $("#flex-input-link").click(); }).
+            fail(function(err)  { console.log("Cannot load custom URL " + customURL); });
+
     $.when(ghRequest.fetchTranslationMap(urlParams.locale), ghRequest.getInfo())
             .then(function (arg1, arg2) {
                 // init translation retrieved from first call (fetchTranslationMap)
@@ -118,17 +198,20 @@ $(document).ready(function (e) {
                 bounds.maxLon = tmp[2];
                 bounds.maxLat = tmp[3];
                 nominatim.setBounds(bounds);
-                var vehiclesDiv = $("#vehicles");
+                var profilesDiv = $("#profiles");
 
-                function createButton(vehicle, hide) {
-                    var button = $("<button class='vehicle-btn' title='" + translate.tr(vehicle) + "'/>");
+                function createButton(profile, hide) {
+                    var vehicle = profile.vehicle;
+                    var profileName = profile.name;
+                    var button = $("<button class='vehicle-btn' title='" + profileDisplayName(profileName) + "'/>");
                     if (hide)
                         button.hide();
 
-                    button.attr('id', vehicle);
-                    button.html("<img src='img/" + vehicle + ".png' alt='" + translate.tr(vehicle) + "'></img>");
+                    button.attr('id', profileName);
+                    button.html("<img src='img/" + vehicle.toLowerCase() + ".png' alt='" + profileDisplayName(profileName) + "'></img>");
                     button.click(function () {
-                        ghRequest.initVehicle(vehicle);
+                        ghRequest.setProfile(profileName);
+                        ghRequest.removeLegacyParameters();
                         resolveAll();
                         if (ghRequest.route.isResolved())
                           routeLatLng(ghRequest);
@@ -136,37 +219,71 @@ $(document).ready(function (e) {
                     return button;
                 }
 
-                if (json.features) {
-                    ghRequest.features = json.features;
+                if (json.profiles) {
+                    var profiles = json.profiles;
+                    // first sort alphabetically to maintain a consistent order, then move certain elements to front/back
+                    profiles.sort(function (a, b) {
+                         return a.vehicle < b.vehicle ? -1 : a.vehicle > b.vehicle ? 1 : 0;
+                    });
+                    // the desired order is car,foot,bike,<others>,motorcycle
+                    var firstVehicles = ["car", "foot", "bike"];
+                    for (var i=firstVehicles.length-1; i>=0; --i) {
+                        profiles = moveToFront(profiles, function(p) { return p.vehicle === firstVehicles[i]; });
+                    }
+                    var lastVehicles = ["mtb", "motorcycle"];
+                    for (var i=0; i<lastVehicles.length; ++i) {
+                        profiles = moveToFront(profiles, function(p) { return p.vehicle !== lastVehicles[i]; });
+                    }
+                    ghRequest.profiles = profiles;
+                    ghRequest.setElevation(json.elevation);
 
-                    // car, foot and bike should come first. mc comes last
-                    var prefer = {"car": 1, "foot": 2, "bike": 3, "motorcycle": 10000};
-                    var showAllVehicles = urlParams.vehicle && (!prefer[urlParams.vehicle] || prefer[urlParams.vehicle] > 3);
-                    var vehicles = vehicleTools.getSortedVehicleKeys(json.features, prefer);
-                    if (vehicles.length > 0)
-                        ghRequest.initVehicle(vehicles[0]);
+                    // only show all profiles if the url already specifies an existing profile that is not amongst the 'firstVehicles'
+                    var urlProfile = profiles.find(function (profile) { return urlParams.profile && profile.name === urlParams.profile; });
+                    var showAllProfiles = urlProfile && firstVehicles.indexOf(urlProfile.vehicle) >= 0;
+                    if (profiles.length > 0)
+                        ghRequest.setProfile(profiles[0].name);
 
+                    var numVehiclesWhenCollapsed = 3;
                     var hiddenVehicles = [];
-                    for (var i in vehicles) {
-                        var btn = createButton(vehicles[i].toLowerCase(), !showAllVehicles && i > 2);
-                        vehiclesDiv.append(btn);
-
-                        if (i > 2)
+                    for (var i = 0; i < profiles.length; ++i) {
+                        var btn = createButton(profiles[i], !showAllProfiles && i >= numVehiclesWhenCollapsed);
+                        profilesDiv.append(btn);
+                        if (i >= numVehiclesWhenCollapsed)
                             hiddenVehicles.push(btn);
                     }
 
-                    if (!showAllVehicles && vehicles.length > 3) {
+                    if (!showAllProfiles && profiles.length > numVehiclesWhenCollapsed) {
                         var moreBtn = $("<a id='more-vehicle-btn'> ...</a>").click(function () {
                             moreBtn.hide();
                             for (var i in hiddenVehicles) {
                                 hiddenVehicles[i].show();
                             }
                         });
-                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://docs.graphhopper.com/#section/Map-Data-and-Routing-Profiles/OpenStreetMap'>?</a>"));
-                        vehiclesDiv.append(moreBtn);
+                        profilesDiv.append($("<a class='vehicle-info-link' href='https://docs.graphhopper.com/#section/Map-Data-and-Routing-Profiles/OpenStreetMap'>?</a>"));
+                        profilesDiv.append(moreBtn);
                     }
                 }
+                $("button#" + profiles[0].name).addClass("selectprofile");
+
                 metaVersionInfo = messages.extractMetaVersionInfo(json);
+                // a very simplistic helper system that shows the possible entries and encoded values
+                if(json.encoded_values) {
+                    $('#flex-input-text').bind('keyup click', function() {
+                        var cleanedText = this.value.replace(/(\n|:)/gm, ' ');
+                        var startIndex = cleanedText.substring(0, this.selectionStart).lastIndexOf(" ");
+                        startIndex = startIndex < 0 ? 0 : startIndex + 1;
+                        var endIndex = cleanedText.indexOf(" ", this.selectionStart);
+                        endIndex = endIndex < 0 ? cleanedText.length : endIndex;
+                        var wordUnderCursor = cleanedText.substring(startIndex, endIndex);
+                        if(this.selectionStart == 0 || this.value.substr(this.selectionStart - 1, 1) === "\n") {
+                           document.getElementById("ev_value").innerHTML = "<b>root:</b> speed_factor, priority, max_speed, max_speed_fallback, distance_influence, areas";
+                        } else if(wordUnderCursor === "priority" || wordUnderCursor === "speed_factor" || wordUnderCursor === "max_speed") {
+                           document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + Object.keys(json.encoded_values).join(", ");
+                        } else if(json.encoded_values[wordUnderCursor]) {
+                           document.getElementById("ev_value").innerHTML = "<b>" + wordUnderCursor + ":</b> " + json.encoded_values[wordUnderCursor].join(", ");
+                        }
+                    });
+                }
 
                 mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
 
@@ -176,7 +293,7 @@ $(document).ready(function (e) {
                 checkInput();
             }, function (err) {
                 console.log(err);
-                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
+                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps/">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
 
                 bounds = {
                     "minLon": -180,
@@ -239,6 +356,19 @@ $(document).ready(function (e) {
     checkInput();
 });
 
+function profileDisplayName(profileName) {
+   // custom profile names like 'my_car' cannot be translated and will be returned like 'web.my_car', so we remove
+   // the 'web.' prefix in this case
+   return translate.tr(profileName).replace("web.", "");
+}
+
+/**
+ * Takes an array and returns another array with the same elements but sorted such that all elements matching the given
+ * condition come first.
+ */
+function moveToFront(arr, condition) {
+    return arr.filter(condition).concat(arr.filter(function (e) { return !condition(e); }))
+}
 
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
@@ -507,12 +637,207 @@ function flagAll() {
     }
 }
 
-function routeLatLng(request, doQuery) {
-    var i;
+function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom) {
+    return function (json) {
+       routeResultsDiv.html("");
+       if (json.message) {
+           var tmpErrors = json.message;
+           console.log(tmpErrors);
+           if (json.hints) {
+               for (var m = 0; m < json.hints.length; m++) {
+                   routeResultsDiv.append("<div class='error'>" + json.hints[m].message + "</div>");
+               }
+           } else {
+               routeResultsDiv.append("<div class='error'>" + tmpErrors + "</div>");
+           }
+           return;
+       }
 
+       function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, details) {
+           return function () {
+
+               var currentGeoJson = geoJsons[currentLayerIndex];
+               mapLayer.eachLayer(function (layer) {
+                   // skip markers etc
+                   if (!layer.setStyle)
+                       return;
+
+                   var doHighlight = layer.feature === currentGeoJson;
+                   layer.setStyle(doHighlight ? highlightRouteStyle : alternativeRouteStye);
+                   if (doHighlight) {
+                       if (!L.Browser.ie && !L.Browser.opera)
+                           layer.bringToFront();
+                   }
+               });
+
+               if (hasElevation) {
+                   mapLayer.clearElevation();
+                   mapLayer.addElevation(currentGeoJson, details);
+               }
+
+               headerTabs.find("li").removeClass("current");
+               routeResultsDiv.find("div").removeClass("current");
+
+               tabHeader.addClass("current");
+               oneTab.addClass("current");
+           };
+       }
+
+       var headerTabs = $("<ul id='route_result_tabs'/>");
+       if (json.paths.length > 1) {
+           routeResultsDiv.append(headerTabs);
+           routeResultsDiv.append("<div class='clear'/>");
+       }
+
+       // the routing layer uses the geojson properties.style for the style, see map.js
+       var defaultRouteStyle = {color: "#00cc33", "weight": 5, "opacity": 0.6};
+       var highlightRouteStyle = {color: "#00cc33", "weight": 6, "opacity": 0.8};
+       var alternativeRouteStye = {color: "darkgray", "weight": 6, "opacity": 0.8};
+       var geoJsons = [];
+       var firstHeader;
+
+       // Create buttons to toggle between SI and imperial units.
+       var createUnitsChooserButtonClickHandler = function (useMiles) {
+           return function () {
+               mapLayer.updateScale(useMiles);
+               ghRequest.useMiles = useMiles;
+               resolveAll();
+               if (ghRequest.route.isResolved())
+                 routeLatLng(ghRequest);
+           };
+       };
+
+       if(json.paths.length > 0 && json.paths[0].points_order) {
+           mapLayer.clearLayers();
+           var po = json.paths[0].points_order;
+           for (var i = 0; i < po.length; i++) {
+               setFlag(ghRequest.route.getIndex(po[i]), i);
+           }
+       }
+
+       for (var pathIndex = 0; pathIndex < json.paths.length; pathIndex++) {
+           var tabHeader = $("<li>").append((pathIndex + 1) + "<img class='alt_route_img' src='img/alt_route.png'/>");
+           if (pathIndex === 0)
+               firstHeader = tabHeader;
+
+           headerTabs.append(tabHeader);
+           var path = json.paths[pathIndex];
+           var style = (pathIndex === 0) ? defaultRouteStyle : alternativeRouteStye;
+
+           var geojsonFeature = {
+               "type": "Feature",
+               "geometry": path.points,
+               "properties": {
+                   "style": style,
+                   name: "route",
+                   snapped_waypoints: path.snapped_waypoints
+               }
+           };
+
+           geoJsons.push(geojsonFeature);
+           mapLayer.addDataToRoutingLayer(geojsonFeature);
+           var oneTab = $("<div class='route_result_tab'>");
+           routeResultsDiv.append(oneTab);
+           tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), path.details));
+
+           var routeInfo = $("<div class='route_description'>");
+           if (path.description && path.description.length > 0) {
+               routeInfo.text(path.description);
+               routeInfo.append("<br/>");
+           }
+
+           var tempDistance = translate.createDistanceString(path.distance, request.useMiles);
+           var tempRouteInfo;
+           if(request.isPublicTransit()) {
+               var tempArrTime = moment(ghRequest.getEarliestDepartureTime())
+                                       .add(path.time, 'milliseconds')
+                                       .format('LT');
+               if(path.transfers >= 0)
+                   tempRouteInfo = translate.tr("pt_route_info", [tempArrTime, path.transfers, tempDistance]);
+               else
+                   tempRouteInfo = translate.tr("pt_route_info_walking", [tempArrTime, tempDistance]);
+           } else {
+               var tmpDuration = translate.createTimeString(path.time);
+               tempRouteInfo = translate.tr("route_info", [tempDistance, tmpDuration]);
+           }
+
+           routeInfo.append(tempRouteInfo);
+
+           var kmButton = $("<button class='plain_text_button " + (request.useMiles ? "gray" : "") + "'>");
+           kmButton.text(translate.tr2("km_abbr"));
+           kmButton.click(createUnitsChooserButtonClickHandler(false));
+
+           var miButton = $("<button class='plain_text_button " + (request.useMiles ? "" : "gray") + "'>");
+           miButton.text(translate.tr2("mi_abbr"));
+           miButton.click(createUnitsChooserButtonClickHandler(true));
+
+           var buttons = $("<span style='float: right;'>");
+           buttons.append(kmButton);
+           buttons.append('|');
+           buttons.append(miButton);
+
+           routeInfo.append(buttons);
+
+           if (request.hasElevation()) {
+               routeInfo.append(translate.createEleInfoString(path.ascend, path.descend, request.useMiles));
+           }
+
+           routeInfo.append($("<div style='clear:both'/>"));
+           oneTab.append(routeInfo);
+
+           if (path.instructions) {
+               var instructions = require('./instructions.js');
+               oneTab.append(instructions.create(mapLayer, path, urlForHistory, request));
+           }
+
+           var detailObj = path.details;
+           if(detailObj && request.api_params.debug) {
+               // detailKey, would be for example average_speed
+               for (var detailKey in detailObj) {
+                   var pathDetailsArr = detailObj[detailKey];
+                   for (var i = 0; i < pathDetailsArr.length; i++) {
+                       var pathDetailObj = pathDetailsArr[i];
+                       var firstIndex = pathDetailObj[0];
+                       var value = pathDetailObj[2];
+                       var lngLat = path.points.coordinates[firstIndex];
+                       L.marker([lngLat[1], lngLat[0]], {
+                           icon: L.icon({
+                               iconUrl: './img/marker-small-blue.png',
+                               iconSize: [15, 15]
+                           }),
+                           draggable: true,
+                           autoPan: true
+                       }).addTo(mapLayer.getRoutingLayer()).bindPopup(detailKey + ":" + value);
+                   }
+               }
+           }
+       }
+       // already select best path
+       firstHeader.click();
+
+       mapLayer.adjustMapSize();
+       // TODO change bounding box on click
+       var firstPath = json.paths[0];
+       if (firstPath.bbox && doZoom) {
+           var minLon = firstPath.bbox[0];
+           var minLat = firstPath.bbox[1];
+           var maxLon = firstPath.bbox[2];
+           var maxLat = firstPath.bbox[3];
+           var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
+           mapLayer.fitMapToBounds(tmpB);
+       }
+
+       $('.defaulting').each(function (index, element) {
+           $(element).css("color", "black");
+       });
+   }
+}
+
+function routeLatLng(request, doQuery) {
     // do_zoom should not show up in the URL but in the request object to avoid zooming for history change
     var doZoom = request.do_zoom;
     request.do_zoom = true;
+    request.removeProfileParameterIfLegacyRequest();
 
     var urlForHistory = request.createHistoryURL() + "&layer=" + tileLayers.activeLayerName;
 
@@ -540,204 +865,15 @@ function routeLatLng(request, doQuery) {
 
     mapLayer.setDisabledForMapsContextMenu('intermediate', false);
 
-    $("#vehicles button").removeClass("selectvehicle");
-    $("button#" + request.getVehicle().toLowerCase()).addClass("selectvehicle");
+    $("#profiles button").removeClass("selectprofile");
+    var buttonToSelectId = request.getProfile();
+    // for legacy requests this might be undefined then we just do not select anything
+    if (buttonToSelectId)
+    $("button#" + buttonToSelectId.toLowerCase()).addClass("selectprofile");
 
     var urlForAPI = request.createURL();
     routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
-    request.doRequest(urlForAPI, function (json) {
-        routeResultsDiv.html("");
-        if (json.message) {
-            var tmpErrors = json.message;
-            console.log(tmpErrors);
-            if (json.hints) {
-                for (var m = 0; m < json.hints.length; m++) {
-                    routeResultsDiv.append("<div class='error'>" + json.hints[m].message + "</div>");
-                }
-            } else {
-                routeResultsDiv.append("<div class='error'>" + tmpErrors + "</div>");
-            }
-            return;
-        }
-
-        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, details) {
-            return function () {
-
-                var currentGeoJson = geoJsons[currentLayerIndex];
-                mapLayer.eachLayer(function (layer) {
-                    // skip markers etc
-                    if (!layer.setStyle)
-                        return;
-
-                    var doHighlight = layer.feature === currentGeoJson;
-                    layer.setStyle(doHighlight ? highlightRouteStyle : alternativeRouteStye);
-                    if (doHighlight) {
-                        if (!L.Browser.ie && !L.Browser.opera)
-                            layer.bringToFront();
-                    }
-                });
-
-                if (hasElevation) {
-                    mapLayer.clearElevation();
-                    mapLayer.addElevation(currentGeoJson, details);
-                }
-
-                headerTabs.find("li").removeClass("current");
-                routeResultsDiv.find("div").removeClass("current");
-
-                tabHeader.addClass("current");
-                oneTab.addClass("current");
-            };
-        }
-
-        var headerTabs = $("<ul id='route_result_tabs'/>");
-        if (json.paths.length > 1) {
-            routeResultsDiv.append(headerTabs);
-            routeResultsDiv.append("<div class='clear'/>");
-        }
-
-        // the routing layer uses the geojson properties.style for the style, see map.js
-        var defaultRouteStyle = {color: "#00cc33", "weight": 5, "opacity": 0.6};
-        var highlightRouteStyle = {color: "#00cc33", "weight": 6, "opacity": 0.8};
-        var alternativeRouteStye = {color: "darkgray", "weight": 6, "opacity": 0.8};
-        var geoJsons = [];
-        var firstHeader;
-
-        // Create buttons to toggle between SI and imperial units.
-        var createUnitsChooserButtonClickHandler = function (useMiles) {
-            return function () {
-                mapLayer.updateScale(useMiles);
-                ghRequest.useMiles = useMiles;
-                resolveAll();
-                if (ghRequest.route.isResolved())
-                  routeLatLng(ghRequest);
-            };
-        };
-
-        if(json.paths.length > 0 && json.paths[0].points_order) {
-            mapLayer.clearLayers();
-            var po = json.paths[0].points_order;
-            for (i = 0; i < po.length; i++) {
-                setFlag(ghRequest.route.getIndex(po[i]), i);
-            }
-        }
-
-        for (var pathIndex = 0; pathIndex < json.paths.length; pathIndex++) {
-            var tabHeader = $("<li>").append((pathIndex + 1) + "<img class='alt_route_img' src='img/alt_route.png'/>");
-            if (pathIndex === 0)
-                firstHeader = tabHeader;
-
-            headerTabs.append(tabHeader);
-            var path = json.paths[pathIndex];
-            var style = (pathIndex === 0) ? defaultRouteStyle : alternativeRouteStye;
-
-            var geojsonFeature = {
-                "type": "Feature",
-                "geometry": path.points,
-                "properties": {
-                    "style": style,
-                    name: "route",
-                    snapped_waypoints: path.snapped_waypoints
-                }
-            };
-
-            geoJsons.push(geojsonFeature);
-            mapLayer.addDataToRoutingLayer(geojsonFeature);
-            var oneTab = $("<div class='route_result_tab'>");
-            routeResultsDiv.append(oneTab);
-            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), path.details));
-
-            var routeInfo = $("<div class='route_description'>");
-            if (path.description && path.description.length > 0) {
-                routeInfo.text(path.description);
-                routeInfo.append("<br/>");
-            }
-
-            var tempDistance = translate.createDistanceString(path.distance, request.useMiles);
-            var tempRouteInfo;
-            if(request.isPublicTransit()) {
-                var tempArrTime = moment(ghRequest.getEarliestDepartureTime())
-                                        .add(path.time, 'milliseconds')
-                                        .format('LT');
-                if(path.transfers >= 0)
-                    tempRouteInfo = translate.tr("pt_route_info", [tempArrTime, path.transfers, tempDistance]);
-                else
-                    tempRouteInfo = translate.tr("pt_route_info_walking", [tempArrTime, tempDistance]);
-            } else {
-                var tmpDuration = translate.createTimeString(path.time);
-                tempRouteInfo = translate.tr("route_info", [tempDistance, tmpDuration]);
-            }
-
-            routeInfo.append(tempRouteInfo);
-
-            var kmButton = $("<button class='plain_text_button " + (request.useMiles ? "gray" : "") + "'>");
-            kmButton.text(translate.tr2("km_abbr"));
-            kmButton.click(createUnitsChooserButtonClickHandler(false));
-
-            var miButton = $("<button class='plain_text_button " + (request.useMiles ? "" : "gray") + "'>");
-            miButton.text(translate.tr2("mi_abbr"));
-            miButton.click(createUnitsChooserButtonClickHandler(true));
-
-            var buttons = $("<span style='float: right;'>");
-            buttons.append(kmButton);
-            buttons.append('|');
-            buttons.append(miButton);
-
-            routeInfo.append(buttons);
-
-            if (request.hasElevation()) {
-                routeInfo.append(translate.createEleInfoString(path.ascend, path.descend, request.useMiles));
-            }
-
-            routeInfo.append($("<div style='clear:both'/>"));
-            oneTab.append(routeInfo);
-
-            if (path.instructions) {
-                var instructions = require('./instructions.js');
-                oneTab.append(instructions.create(mapLayer, path, urlForHistory, request));
-            }
-
-            var detailObj = path.details;
-            if(detailObj && request.api_params.debug) {
-                // detailKey, would be for example average_speed
-                for (var detailKey in detailObj) {
-                    var pathDetailsArr = detailObj[detailKey];
-                    for (i = 0; i < pathDetailsArr.length; i++) {
-                        var pathDetailObj = pathDetailsArr[i];
-                        var firstIndex = pathDetailObj[0];
-                        var value = pathDetailObj[2];
-                        var lngLat = path.points.coordinates[firstIndex];
-                        L.marker([lngLat[1], lngLat[0]], {
-                            icon: L.icon({
-                                iconUrl: './img/marker-small-blue.png',
-                                iconSize: [15, 15]
-                            }),
-                            draggable: true,
-                            autoPan: true
-                        }).addTo(mapLayer.getRoutingLayer()).bindPopup(detailKey + ":" + value);
-                    }
-                }
-            }
-        }
-        // already select best path
-        firstHeader.click();
-
-        mapLayer.adjustMapSize();
-        // TODO change bounding box on click
-        var firstPath = json.paths[0];
-        if (firstPath.bbox && doZoom) {
-            var minLon = firstPath.bbox[0];
-            var minLat = firstPath.bbox[1];
-            var maxLon = firstPath.bbox[2];
-            var maxLat = firstPath.bbox[3];
-            var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
-            mapLayer.fitMapToBounds(tmpB);
-        }
-
-        $('.defaulting').each(function (index, element) {
-            $(element).css("color", "black");
-        });
-    });
+    request.doRequest(urlForAPI, createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom));
 }
 
 function mySubmit() {

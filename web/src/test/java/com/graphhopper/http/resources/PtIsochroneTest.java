@@ -18,7 +18,7 @@
 
 package com.graphhopper.http.resources;
 
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
@@ -50,7 +50,7 @@ public class PtIsochroneTest {
 
     private static final String GRAPH_LOC = "target/PtIsochroneResourceTest";
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private GeometryFactory geometryFactory = new GeometryFactory();
+    private final GeometryFactory geometryFactory = new GeometryFactory();
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
     private static GraphHopperServerConfiguration createConfig() {
@@ -59,7 +59,7 @@ public class PtIsochroneTest {
                 .putObject("graph.flag_encoders", "foot")
                 .putObject("graph.location", GRAPH_LOC)
                 .putObject("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
-                setProfiles(Collections.singletonList(new ProfileConfig("foot").setVehicle("foot").setWeighting("fastest")));
+                setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
         return config;
     }

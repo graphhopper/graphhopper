@@ -26,39 +26,31 @@ public interface RoutingCHGraph {
 
     int getEdges();
 
-    int getOriginalEdges();
+    int getOtherNode(int chEdge, int node);
 
-    int getOtherNode(int edge, int node);
-
-    boolean isAdjacentToNode(int edge, int node);
+    boolean isAdjacentToNode(int chEdge, int node);
 
     RoutingCHEdgeExplorer createInEdgeExplorer();
 
     RoutingCHEdgeExplorer createOutEdgeExplorer();
 
-    RoutingCHEdgeExplorer createAllEdgeExplorer();
-
-    RoutingCHEdgeExplorer createOriginalInEdgeExplorer();
-
-    RoutingCHEdgeExplorer createOriginalOutEdgeExplorer();
-
-    RoutingCHEdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode);
+    RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode);
 
     int getLevel(int node);
 
     double getTurnWeight(int inEdge, int viaNode, int outEdge);
 
     /**
-     * @return the underlying graph, i.e. a {@link CHGraph} or a {@link QueryGraph} wrapping a {@link CHGraph}
-     */
-    Graph getGraph();
-
-    /**
-     * @return the base graph (no virtual edges or shortcuts)
+     * @return the graph this CH graph is based on, i.e. a the base {@link Graph} or a {@link QueryGraph} on top of the
+     * base graph
+     * todo: maybe it would be better to remove this method and use a direct reference to the base graph when it is
+     * needed
      */
     Graph getBaseGraph();
 
     boolean hasTurnCosts();
+
+    boolean isEdgeBased();
 
     Weighting getWeighting();
 }

@@ -1,18 +1,19 @@
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 public class Path4CHTest {
     private GraphHopperStorage graph;
     private CHGraph chGraph;
+    private RoutingCHGraph routingCHGraph;
     private FlagEncoder encoder;
 
     @Before
@@ -29,9 +31,10 @@ public class Path4CHTest {
         encoder = new CarFlagEncoder(5, 5, 10).setSpeedTwoDirections(true);
         EncodingManager em = EncodingManager.create(encoder);
         graph = new GraphBuilder(em)
-                .setCHProfileStrings("car|fastest|edge")
+                .setCHConfigStrings("p1|car|fastest|edge")
                 .create();
-        chGraph = graph.getCHGraph();
+        chGraph = graph.getCHGraph("p1");
+        routingCHGraph = graph.getRoutingCHGraph("p1");
     }
 
     @Test
@@ -146,7 +149,7 @@ public class Path4CHTest {
     }
 
     private RoutingAlgorithm createAlgo() {
-        return new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, AlgorithmOptions.start().build());
+        return new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap());
     }
 
 }

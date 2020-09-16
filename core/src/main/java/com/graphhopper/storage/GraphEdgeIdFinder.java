@@ -25,7 +25,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.util.shapes.*;
 import org.locationtech.jts.algorithm.RectangleLineIntersector;
-import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,6 +49,26 @@ public class GraphEdgeIdFinder {
     }
 
     /**
+     * @return an estimated area in m^2 using the mean value of latitudes for longitude distance
+     * @param bBox
+     */
+    static double calculateArea(BBox bBox) {
+        double meanLat = (bBox.maxLat + bBox.minLat) / 2;
+        return DistancePlaneProjection.DIST_PLANE.calcDist(meanLat, bBox.minLon, meanLat, bBox.maxLon)
+                // left side should be equal to right side no mean value necessary
+                * DistancePlaneProjection.DIST_PLANE.calcDist(bBox.minLat, bBox.minLon, bBox.maxLat, bBox.minLon);
+    }
+
+    static double calculateArea(Polygon polygon) {
+        // for estimation use bounding box as reference:
+        return calculateArea(polygon.getBounds()) * polygon.envelope.getArea() / polygon.prepPolygon.getGeometry().getArea();
+    }
+
+    static double calculateArea(Circle circle) {
+        return Math.PI * circle.radiusInMeter * circle.radiusInMeter;
+    }
+
+    /**
      * This method fills the edgeIds hash with edgeIds found inside the specified shape
      */
     public void findEdgesInShape(final GHIntHashSet edgeIds, final Shape shape, EdgeFilter filter) {
@@ -60,28 +79,6 @@ public class GraphEdgeIdFinder {
                     edgeIds.add(edge.getEdge());
             }
         });
-    }
-
-    /**
-     * This method fills the edgeIds hash with edgeIds found inside the specified geometry
-     */
-    public void fillEdgeIDs(final GHIntHashSet edgeIds, final Geometry geometry, EdgeFilter filter) {
-        if (geometry instanceof Point) {
-            Point p = (Point) geometry;
-            findEdgesInShape(edgeIds, new Circle(p.getY(), p.getX(), P_RADIUS), filter);
-        } else if (geometry instanceof LineString) {
-            locationIndex.query(BBox.fromEnvelope(geometry.getEnvelopeInternal()), new LocationIndex.EdgeVisitor(graph.createEdgeExplorer(filter)) {
-                @Override
-                public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
-                    if (geometry.intersects(edge.fetchWayGeometry(FetchMode.ALL).toLineString(false)))
-                        edgeIds.add(edge.getEdge());
-                }
-            });
-        } else if (geometry instanceof MultiPoint) {
-            for (Coordinate coordinate : geometry.getCoordinates()) {
-                findEdgesInShape(edgeIds, new Circle(coordinate.y, coordinate.x, P_RADIUS), filter);
-            }
-        }
     }
 
     public static GraphEdgeIdFinder.BlockArea createBlockArea(Graph graph, LocationIndex locationIndex,
@@ -117,7 +114,7 @@ public class GraphEdgeIdFinder {
                 if (splittedObject.length > 4) {
                     final Polygon polygon = Polygon.parsePoints(objectAsString);
                     GHIntHashSet blockedEdges = blockArea.add(polygon);
-                    if (polygon.calculateArea() <= useEdgeIdsUntilAreaSize)
+                    if (calculateArea(polygon) <= useEdgeIdsUntilAreaSize)
                         findEdgesInShape(blockedEdges, polygon, filter);
                 } else if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);
@@ -129,7 +126,7 @@ public class GraphEdgeIdFinder {
                         }
                     };
                     GHIntHashSet blockedEdges = blockArea.add(preparedBBox);
-                    if (bbox.calculateArea() <= useEdgeIdsUntilAreaSize)
+                    if (calculateArea(bbox) <= useEdgeIdsUntilAreaSize)
                         findEdgesInShape(blockedEdges, preparedBBox, filter);
                 } else if (splittedObject.length == 3) {
                     double lat = Double.parseDouble(splittedObject[0]);
@@ -137,7 +134,7 @@ public class GraphEdgeIdFinder {
                     int radius = Integer.parseInt(splittedObject[2]);
                     Circle circle = new Circle(lat, lon, radius);
                     GHIntHashSet blockedEdges = blockArea.add(circle);
-                    if (circle.calculateArea() <= useEdgeIdsUntilAreaSize)
+                    if (calculateArea(circle) <= useEdgeIdsUntilAreaSize)
                         findEdgesInShape(blockedEdges, circle, filter);
 
                 } else if (splittedObject.length == 2) {

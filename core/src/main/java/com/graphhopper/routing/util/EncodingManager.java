@@ -22,7 +22,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -50,7 +50,6 @@ public class EncodingManager implements EncodedValueLookup {
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
     private final List<TagParser> edgeTagParsers = new ArrayList<>();
     private final Map<String, TurnCostParser> turnCostParsers = new LinkedHashMap<>();
-    private int nextNodeBit = 0;
     private boolean enableInstructions = true;
     private String preferredLanguage = "";
     private EncodedValue.InitializerConfig turnCostConfig;
@@ -459,9 +458,6 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         int encoderCount = edgeEncoders.size();
-        int usedBits = encoder.defineNodeBits(encoderCount, nextNodeBit);
-        encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
-        nextNodeBit = usedBits;
 
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
@@ -476,9 +472,9 @@ public class EncodingManager implements EncodedValueLookup {
     private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
         if (hasEncodedValue(ev.getName()))
             throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
-        if (!withNamespace && ev.getName().contains(SPECIAL_SEPARATOR))
+        if (!withNamespace && !isSharedEV(ev))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain namespace character '" + SPECIAL_SEPARATOR + "'");
-        if (withNamespace && !ev.getName().contains(SPECIAL_SEPARATOR))
+        if (withNamespace && isSharedEV(ev))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must contain namespace character '" + SPECIAL_SEPARATOR + "'");
         ev.init(edgeConfig);
         encodedValueMap.put(ev.getName(), ev);
@@ -652,7 +648,7 @@ public class EncodingManager implements EncodedValueLookup {
     public String toEncodedValuesAsString() {
         StringBuilder str = new StringBuilder();
         for (EncodedValue ev : encodedValueMap.values()) {
-            if (ev.getName().contains(SPECIAL_SEPARATOR))
+            if (!isSharedEV(ev))
                 continue;
 
             if (str.length() > 0)
@@ -761,6 +757,14 @@ public class EncodingManager implements EncodedValueLookup {
         return list;
     }
 
+    @Override
+    public List<EncodedValue> getAllShared() {
+        List<EncodedValue> list = new ArrayList<>(encodedValueMap.size());
+        for (EncodedValue ev : encodedValueMap.values()) {
+            if (isSharedEV(ev)) list.add(ev);
+        }
+        return list;
+    }
 
     @Override
     public BooleanEncodedValue getBooleanEncodedValue(String key) {
@@ -791,7 +795,11 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static String SPECIAL_SEPARATOR = ".";
+    private static final String SPECIAL_SEPARATOR = ".";
+
+    private boolean isSharedEV(EncodedValue ev) {
+        return !ev.getName().contains(SPECIAL_SEPARATOR);
+    }
 
     /**
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as

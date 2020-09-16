@@ -68,8 +68,6 @@ public class PathDetail {
     }
 
     public int getLast() {
-        if (last < first)
-            throw new IllegalStateException("last cannot be smaller than first");
         return last;
     }
 

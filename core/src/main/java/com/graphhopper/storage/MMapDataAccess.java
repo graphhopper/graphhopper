@@ -61,7 +61,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     private final boolean allowWrites;
     private RandomAccessFile raFile;
-    private List<ByteBuffer> segments = new ArrayList<>();
+    private List<MappedByteBuffer> segments = new ArrayList<>();
 
     MMapDataAccess(String name, String location, ByteOrder order, boolean allowWrites) {
         super(name, location, order);
@@ -240,11 +240,11 @@ public final class MMapDataAccess extends AbstractDataAccess {
         }
     }
 
-    private ByteBuffer newByteBuffer(long offset, long byteCount) throws IOException {
+    private MappedByteBuffer newByteBuffer(long offset, long byteCount) throws IOException {
         // If we request a buffer larger than the file length, it will automatically increase the file length!
         // Will this cause problems? http://stackoverflow.com/q/14011919/194609
         // For trimTo we need to reset the file length later to reduce that size
-        ByteBuffer buf = null;
+        MappedByteBuffer buf = null;
         IOException ioex = null;
         // One retry if it fails. It could fail e.g. if previously buffer wasn't yet unmapped from the jvm
         for (int trial = 0; trial < 1; ) {
@@ -305,10 +305,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already closed");
 
         try {
-            if (!segments.isEmpty() && segments.get(0) instanceof MappedByteBuffer) {
-                for (ByteBuffer bb : segments) {
-                    ((MappedByteBuffer) bb).force();
-                }
+            for (MappedByteBuffer bb : segments) {
+                bb.force();
             }
             writeHeader(raFile, raFile.length(), segmentSizeInBytes);
 
@@ -492,30 +490,6 @@ public final class MMapDataAccess extends AbstractDataAccess {
             ByteBuffer bb = segments.get(i);
             cleanMappedByteBuffer(bb);
             segments.set(i, null);
-        }
-    }
-
-    @Override
-    public void trimTo(long capacity) {
-        if (capacity < segmentSizeInBytes) {
-            capacity = segmentSizeInBytes;
-        }
-        int remainingSegNo = (int) (capacity / segmentSizeInBytes);
-        if (capacity % segmentSizeInBytes != 0) {
-            remainingSegNo++;
-        }
-
-        clean(remainingSegNo, segments.size());
-        segments = new ArrayList<>(segments.subList(0, remainingSegNo));
-
-        try {
-            // windows does not allow changing the length of an open files
-            if (!Constants.WINDOWS) {
-                // reduce file size
-                raFile.setLength(HEADER_OFFSET + (long) remainingSegNo * segmentSizeInBytes);
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
         }
     }
 

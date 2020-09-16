@@ -23,20 +23,19 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
 
 /**
  * @see AStarBidirection
  */
-public class AStarBidirectionCH extends AbstractBidirCHAlgo implements RecalculationHook {
+public class AStarBidirectionCH extends AbstractBidirCHAlgo {
     private BalancedWeightApproximator weightApprox;
 
     public AStarBidirectionCH(RoutingCHGraph graph) {
         super(graph, TraversalMode.NODE_BASED);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, graph.getWeighting());
-        defaultApprox.setDistanceCalc(Helper.DIST_PLANE);
+        defaultApprox.setDistanceCalc(DistancePlaneProjection.DIST_PLANE);
         setApproximation(defaultApprox);
     }
 
@@ -53,18 +52,17 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo implements Recalcula
     }
 
     @Override
-    protected SPTEntry createEntry(RoutingCHEdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
-        int neighborNode = edge.getAdjNode();
-        double heapWeight = weight + weightApprox.approximate(neighborNode, reverse);
-        AStar.AStarEntry entry = new AStar.AStarEntry(edge.getEdge(), neighborNode, heapWeight, weight);
+    protected SPTEntry createEntry(int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+        double heapWeight = weight + weightApprox.approximate(adjNode, reverse);
+        AStar.AStarEntry entry = new AStar.AStarEntry(edge, adjNode, heapWeight, weight);
         entry.parent = parent;
         return entry;
     }
 
     @Override
-    protected void updateEntry(SPTEntry entry, RoutingCHEdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
-        entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
+    protected void updateEntry(SPTEntry entry, int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+        entry.edge = edge;
+        entry.weight = weight + weightApprox.approximate(adjNode, reverse);
         ((AStar.AStarEntry) entry).weightOfVisitedPath = weight;
         entry.parent = parent;
     }

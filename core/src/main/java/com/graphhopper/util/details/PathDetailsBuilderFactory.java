@@ -18,8 +18,7 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.coll.MapEntry;
-import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
@@ -48,6 +47,9 @@ public class PathDetailsBuilderFactory {
 
         if (requestedPathDetails.contains(EDGE_ID))
             builders.add(new EdgeIdDetails());
+
+        if (requestedPathDetails.contains(EDGE_KEY))
+            builders.add(new EdgeKeyDetails());
 
         if (requestedPathDetails.contains(TIME))
             builders.add(new TimeDetails(weighting));

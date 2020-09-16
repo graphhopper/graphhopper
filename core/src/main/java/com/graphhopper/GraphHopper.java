@@ -17,47 +17,39 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
+import com.graphhopper.routing.ev.EncodedValueFactory;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
-import com.graphhopper.routing.lm.LMProfile;
-import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
-import com.graphhopper.routing.profiles.EncodedValueFactory;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadEnvironment;
-import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
-import com.graphhopper.routing.template.AlternativeRoutingTemplate;
-import com.graphhopper.routing.template.RoundTripRoutingTemplate;
-import com.graphhopper.routing.template.RoutingTemplate;
-import com.graphhopper.routing.template.ViaRoutingTemplate;
+import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.exceptions.PointDistanceExceededException;
-import com.graphhopper.util.exceptions.PointOutOfBoundsException;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,11 +58,8 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
-import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
+import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -80,7 +69,7 @@ import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
  */
 public class GraphHopper implements GraphHopperAPI {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final Map<String, ProfileConfig> profilesByName = new LinkedHashMap<>();
+    private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
@@ -97,15 +86,15 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean allowWrites = true;
     private boolean fullyLoaded = false;
     private boolean smoothElevation = false;
+    private double longEdgeSamplingDistance = Double.MAX_VALUE;
     // for routing
-    private final RoutingConfig routingConfig = new RoutingConfig();
+    private final RouterConfig routerConfig = new RouterConfig();
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
     private int maxRegionSearch = 4;
     // for prepare
     private int minNetworkSize = 200;
-    private int minOneWayNetworkSize = 0;
 
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
@@ -198,7 +187,7 @@ public class GraphHopper implements GraphHopperAPI {
      * also optimized for usage in the web module i.e. try reduce network IO.
      */
     public GraphHopper forServer() {
-        setSimplifyResponse(true);
+        routerConfig.setSimplifyResponse(true);
         return setInMemory();
     }
 
@@ -207,7 +196,7 @@ public class GraphHopper implements GraphHopperAPI {
      * application with enough RAM but no network latency.
      */
     public GraphHopper forDesktop() {
-        setSimplifyResponse(false);
+        routerConfig.setSimplifyResponse(false);
         return setInMemory();
     }
 
@@ -216,7 +205,7 @@ public class GraphHopper implements GraphHopperAPI {
      * Raspberry Pi with only few MB of RAM.
      */
     public GraphHopper forMobile() {
-        setSimplifyResponse(false);
+        routerConfig.setSimplifyResponse(false);
         return setMemoryMapped();
     }
 
@@ -231,9 +220,9 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public GraphHopper setMinNetworkSize(int minNetworkSize, int minOneWayNetworkSize) {
+    public GraphHopper setMinNetworkSize(int minNetworkSize) {
+        ensureNotLoaded();
         this.minNetworkSize = minNetworkSize;
-        this.minOneWayNetworkSize = minOneWayNetworkSize;
         return this;
     }
 
@@ -282,59 +271,47 @@ public class GraphHopper implements GraphHopperAPI {
      * {@code
      *   // make sure the encoding manager contains a "car" and a "bike" flag encoder
      *   hopper.setProfiles(
-     *     new ProfileConfig("my_car").setVehicle("car").setWeighting("shortest"),
-     *     new ProfileConfig("your_bike").setVehicle("bike").setWeighting("fastest")
+     *     new Profile("my_car").setVehicle("car").setWeighting("shortest"),
+     *     new Profile("your_bike").setVehicle("bike").setWeighting("fastest")
      *   );
-     *   hopper.getCHPreparationHandler().setCHProfileConfigs(
-     *     new CHProfileConfig("my_car"),
-     *     new CHProfileConfig("your_bike")
+     *   hopper.getCHPreparationHandler().setCHProfiles(
+     *     new CHProfile("my_car"),
+     *     new CHProfile("your_bike")
      *   );
-     *   hopper.getLMPreparationHandler().setLMProfileConfigs(
-     *     new LMProfileConfig("your_bike")
+     *   hopper.getLMPreparationHandler().setLMProfiles(
+     *     new LMProfile("your_bike")
      *   );
      * }
      * </pre>
      * <p>
      * See also https://github.com/graphhopper/graphhopper/pull/1922.
      *
-     * @see CHPreparationHandler#setCHProfileConfigs
-     * @see LMPreparationHandler#setLMProfileConfigs
+     * @see CHPreparationHandler#setCHProfiles
+     * @see LMPreparationHandler#setLMProfiles
      */
-    public GraphHopper setProfiles(ProfileConfig... profiles) {
+    public GraphHopper setProfiles(Profile... profiles) {
         return setProfiles(Arrays.asList(profiles));
     }
 
-    public GraphHopper setProfiles(List<ProfileConfig> profiles) {
+    public GraphHopper setProfiles(List<Profile> profiles) {
         profilesByName.clear();
-        for (ProfileConfig profile : profiles) {
-            ProfileConfig previous = this.profilesByName.put(profile.getName(), profile);
+        for (Profile profile : profiles) {
+            Profile previous = this.profilesByName.put(profile.getName(), profile);
             if (previous != null)
                 throw new IllegalArgumentException("Profile names must be unique. Duplicate name: '" + profile.getName() + "'");
         }
         return this;
     }
 
-    public List<ProfileConfig> getProfiles() {
+    public List<Profile> getProfiles() {
         return new ArrayList<>(profilesByName.values());
     }
 
     /**
      * Returns the profile for the given profile name, or null if it does not exist
      */
-    public ProfileConfig getProfile(String profileName) {
+    public Profile getProfile(String profileName) {
         return profilesByName.get(profileName);
-    }
-
-    public int getMaxVisitedNodes() {
-        return routingConfig.getMaxVisitedNodes();
-    }
-
-    /**
-     * This methods stops the algorithm from searching further if the resulting path would go over
-     * the specified node count, important if none-CH routing is used.
-     */
-    public void setMaxVisitedNodes(int maxVisitedNodes) {
-        routingConfig.setMaxVisitedNodes(maxVisitedNodes);
     }
 
     /**
@@ -353,19 +330,18 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * This methods enables gps point calculation. If disabled only distance will be calculated.
+     * Sets the distance distance between elevation samples on long edges
      */
-    public GraphHopper setEnableCalcPoints(boolean b) {
-        routingConfig.setCalcPoints(b);
+    public GraphHopper setLongEdgeSamplingDistance(double longEdgeSamplingDistance) {
+        this.longEdgeSamplingDistance = longEdgeSamplingDistance;
         return this;
     }
 
     /**
-     * This method specifies if the returned path should be simplified or not, via douglas-peucker
-     * or similar algorithm.
+     * Sets the max elevation discrepancy between way points and the simplified polyline in meters
      */
-    private GraphHopper setSimplifyResponse(boolean doSimplify) {
-        routingConfig.setSimplifyResponse(doSimplify);
+    public GraphHopper setElevationWayPointMaxDistance(double elevationWayPointMaxDistance) {
+        this.routerConfig.setElevationWayPointMaxDistance(elevationWayPointMaxDistance);
         return this;
     }
 
@@ -526,12 +502,16 @@ public class GraphHopper implements GraphHopperAPI {
 
         // elevation
         this.smoothElevation = ghConfig.getBool("graph.elevation.smoothing", false);
+        this.longEdgeSamplingDistance = ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", Double.MAX_VALUE);
+        setElevationWayPointMaxDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", Double.MAX_VALUE));
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);
 
+        if (longEdgeSamplingDistance < Double.MAX_VALUE && !elevationProvider.getInterpolate())
+            logger.warn("Long edge sampling enabled, but bilinear interpolation disabled. See #1953");
+
         // optimizable prepare
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
-        minOneWayNetworkSize = ghConfig.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
 
         // profiles
         setProfiles(ghConfig.getProfiles());
@@ -550,9 +530,16 @@ public class GraphHopper implements GraphHopperAPI {
         maxRegionSearch = ghConfig.getInt("index.max_region_search", maxRegionSearch);
 
         // routing
-        routingConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes()));
-        routingConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routingConfig.getMaxRoundTripRetries()));
-        routingConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routingConfig.getNonChMaxWaypointDistance()));
+        routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
+        routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
+        routerConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routerConfig.getNonChMaxWaypointDistance()));
+        routerConfig.setCHDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, routerConfig.isCHDisablingAllowed()));
+        routerConfig.setLMDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, routerConfig.isLMDisablingAllowed()));
+        int activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, lmPreparationHandler.getLandmarks()));
+        if (activeLandmarkCount > lmPreparationHandler.getLandmarks())
+            throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount
+                    + " should be less or equal to landmark count of " + lmPreparationHandler.getLandmarks());
+        routerConfig.setActiveLandmarkCount(activeLandmarkCount);
 
         return this;
     }
@@ -722,7 +709,9 @@ public class GraphHopper implements GraphHopperAPI {
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance).
-                setSmoothElevation(this.smoothElevation);
+                setWayPointElevationMaxDistance(routerConfig.getElevationWayPointMaxDistance()).
+                setSmoothElevation(smoothElevation).
+                setLongEdgeSamplingDistance(longEdgeSamplingDistance);
     }
 
     /**
@@ -771,15 +760,15 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmPreparationHandler.isEnabled())
             initLMPreparationHandler();
 
-        List<CHProfile> chProfiles;
+        List<CHConfig> chConfigs;
         if (chPreparationHandler.isEnabled()) {
             initCHPreparationHandler();
-            chProfiles = chPreparationHandler.getCHProfiles();
+            chConfigs = chPreparationHandler.getCHConfigs();
         } else {
-            chProfiles = Collections.emptyList();
+            chConfigs = Collections.emptyList();
         }
 
-        ghStorage.addCHGraphs(chProfiles);
+        ghStorage.addCHGraphs(chConfigs);
 
         if (!new File(graphHopperFolder).exists())
             return false;
@@ -808,7 +797,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void checkProfilesConsistency() {
-        for (ProfileConfig profile : profilesByName.values()) {
+        for (Profile profile : profilesByName.values()) {
             if (!encodingManager.hasEncoder(profile.getVehicle())) {
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
             }
@@ -825,10 +814,20 @@ public class GraphHopper implements GraphHopperAPI {
                         "Profile: " + profile + "\n" +
                         "Error: " + e.getMessage());
             }
+
+            if (profile instanceof CustomProfile) {
+                CustomModel customModel = ((CustomProfile) profile).getCustomModel();
+                if (customModel == null)
+                    throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
+                if (!CustomWeighting.NAME.equals(profile.getWeighting()))
+                    throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
+                            "weighting=" + profile.getWeighting() + " was defined");
+            }
         }
-        Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfileConfigs().size());
-        for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
-            boolean added = chProfileSet.add(chConfig.getProfile());
+
+        Set<String> chConfigSet = new LinkedHashSet<>(chPreparationHandler.getCHProfiles().size());
+        for (CHProfile chConfig : chPreparationHandler.getCHProfiles()) {
+            boolean added = chConfigSet.add(chConfig.getProfile());
             if (!added) {
                 throw new IllegalArgumentException("Duplicate CH reference to profile '" + chConfig.getProfile() + "'");
             }
@@ -836,20 +835,20 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("CH profile references unknown profile '" + chConfig.getProfile() + "'");
             }
         }
-        Map<String, LMProfileConfig> lmProfileMap = new LinkedHashMap<>(lmPreparationHandler.getLMProfileConfigs().size());
-        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
-            LMProfileConfig previous = lmProfileMap.put(lmConfig.getProfile(), lmConfig);
+        Map<String, LMProfile> lmProfileMap = new LinkedHashMap<>(lmPreparationHandler.getLMProfiles().size());
+        for (LMProfile lmProfile : lmPreparationHandler.getLMProfiles()) {
+            LMProfile previous = lmProfileMap.put(lmProfile.getProfile(), lmProfile);
             if (previous != null) {
-                throw new IllegalArgumentException("Multiple LM profiles are using the same profile '" + lmConfig.getProfile() + "'");
+                throw new IllegalArgumentException("Multiple LM profiles are using the same profile '" + lmProfile.getProfile() + "'");
             }
-            if (!profilesByName.containsKey(lmConfig.getProfile())) {
-                throw new IllegalArgumentException("LM profile references unknown profile '" + lmConfig.getProfile() + "'");
+            if (!profilesByName.containsKey(lmProfile.getProfile())) {
+                throw new IllegalArgumentException("LM profile references unknown profile '" + lmProfile.getProfile() + "'");
             }
-            if (lmConfig.usesOtherPreparation() && !profilesByName.containsKey(lmConfig.getPreparationProfile())) {
-                throw new IllegalArgumentException("LM profile references unknown preparation profile '" + lmConfig.getPreparationProfile() + "'");
+            if (lmProfile.usesOtherPreparation() && !profilesByName.containsKey(lmProfile.getPreparationProfile())) {
+                throw new IllegalArgumentException("LM profile references unknown preparation profile '" + lmProfile.getPreparationProfile() + "'");
             }
         }
-        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
+        for (LMProfile lmConfig : lmPreparationHandler.getLMProfiles()) {
             if (lmConfig.usesOtherPreparation() && !lmProfileMap.containsKey(lmConfig.getPreparationProfile())) {
                 throw new IllegalArgumentException("Unknown LM preparation profile '" + lmConfig.getPreparationProfile() + "' in LM profile '" + lmConfig.getProfile() + "' cannot be used as preparation_profile");
             }
@@ -859,47 +858,21 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    public RoutingAlgorithmFactory getAlgorithmFactory(String profile, boolean disableCH, boolean disableLM) {
-        if (chPreparationHandler.isEnabled() && disableCH && !chPreparationHandler.isDisablingAllowed()) {
-            throw new IllegalArgumentException("Disabling CH is not allowed on the server side");
-        }
-        if (lmPreparationHandler.isEnabled() && disableLM && !lmPreparationHandler.isDisablingAllowed()) {
-            throw new IllegalArgumentException("Disabling LM is not allowed on the server side");
-        }
-
-        // for now do not allow mixing CH&LM #1082,#1889
-        if (chPreparationHandler.isEnabled() && !disableCH) {
-            return chPreparationHandler.getAlgorithmFactory(profile);
-        } else if (lmPreparationHandler.isEnabled() && !disableLM) {
-            for (LMProfileConfig lmp : lmPreparationHandler.getLMProfileConfigs()) {
-                if (lmp.getProfile().equals(profile)) {
-                    return lmp.usesOtherPreparation()
-                            // cross-querying
-                            ? lmPreparationHandler.getAlgorithmFactory(lmp.getPreparationProfile())
-                            : lmPreparationHandler.getAlgorithmFactory(lmp.getProfile());
-                }
-            }
-            throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile + "'");
-        } else {
-            return new RoutingAlgorithmFactorySimple();
-        }
-    }
-
     public final CHPreparationHandler getCHPreparationHandler() {
         return chPreparationHandler;
     }
 
     private void initCHPreparationHandler() {
-        if (chPreparationHandler.hasCHProfiles()) {
+        if (chPreparationHandler.hasCHConfigs()) {
             return;
         }
 
-        for (CHProfileConfig chConfig : chPreparationHandler.getCHProfileConfigs()) {
-            ProfileConfig profile = profilesByName.get(chConfig.getProfile());
+        for (CHProfile chConfig : chPreparationHandler.getCHProfiles()) {
+            Profile profile = profilesByName.get(chConfig.getProfile());
             if (profile.isTurnCosts()) {
-                chPreparationHandler.addCHProfile(CHProfile.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
+                chPreparationHandler.addCHConfig(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
             } else {
-                chPreparationHandler.addCHProfile(CHProfile.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
+                chPreparationHandler.addCHConfig(CHConfig.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
             }
         }
     }
@@ -912,17 +885,17 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmPreparationHandler.hasLMProfiles())
             return;
 
-        for (LMProfileConfig lmConfig : lmPreparationHandler.getLMProfileConfigs()) {
-            if (lmConfig.usesOtherPreparation())
+        for (LMProfile lmProfile : lmPreparationHandler.getLMProfiles()) {
+            if (lmProfile.usesOtherPreparation())
                 continue;
-            ProfileConfig profile = profilesByName.get(lmConfig.getProfile());
+            Profile profile = profilesByName.get(lmProfile.getProfile());
             // Note that we have to make sure the weighting used for LM preparation does not include turn costs, because
             // the LM preparation is running node-based and the landmark weights will be wrong if there are non-zero
             // turn costs, see discussion in #1960
             // Running the preparation without turn costs is also useful to allow e.g. changing the u_turn_costs per
             // request (we have to use the minimum weight settings (= no turn costs) for the preparation)
             Weighting weighting = createWeighting(profile, new PMap(), true);
-            lmPreparationHandler.addLMProfile(new LMProfile(profile.getName(), weighting));
+            lmPreparationHandler.addLMConfig(new LMConfig(profile.getName(), weighting));
         }
     }
 
@@ -953,7 +926,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (!hasInterpolated() && hasElevation()) {
-            interpolateBridgesAndOrTunnels();
+            interpolateBridgesTunnelsAndFerries();
         }
 
         initLocationIndex();
@@ -966,8 +939,15 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (chPreparationHandler.isEnabled())
             chPreparationHandler.createPreparations(ghStorage);
-        if (!isCHPrepared())
+        if (isCHPrepared()) {
+            // check loaded profiles
+            for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
+                if (!getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                    throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
+            }
+        } else {
             prepareCH(closeEarly);
+        }
     }
 
     protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
@@ -982,7 +962,7 @@ public class GraphHopper implements GraphHopperAPI {
         return "true".equals(ghStorage.getProperties().get(INTERPOLATION_KEY));
     }
 
-    void interpolateBridgesAndOrTunnels() {
+    void interpolateBridgesTunnelsAndFerries() {
         if (ghStorage.getEncodingManager().hasEncodedValue(RoadEnvironment.KEY)) {
             EnumEncodedValue<RoadEnvironment> roadEnvEnc = ghStorage.getEncodingManager().getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
             StopWatch sw = new StopWatch().start();
@@ -990,211 +970,57 @@ public class GraphHopper implements GraphHopperAPI {
             float tunnel = sw.stop().getSeconds();
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.BRIDGE).execute();
+            float bridge = sw.stop().getSeconds();
+            // The SkadiProvider contains bathymetric data. For ferries this can result in bigger elevation changes
+            // See #2098 for mor information
+            sw = new StopWatch().start();
+            new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
             ghStorage.getProperties().put(INTERPOLATION_KEY, true);
-            logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, " + "tunnel interpolation " + (int) tunnel + "s");
+            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds());
         }
     }
 
-    final public Weighting createWeighting(ProfileConfig profileConfig, PMap hints) {
-        return createWeighting(profileConfig, hints, false);
+    public final Weighting createWeighting(Profile profile, PMap hints) {
+        return createWeighting(profile, hints, false);
     }
 
-    /**
-     * @param profileConfig    The profile for which the weighting shall be created
-     * @param hints            Additional hints that can be used to further specify the weighting that shall be created
-     * @param disableTurnCosts Can be used to explicitly create the weighting without turn costs. This is sometimes needed when the
-     *                         weighting shall be used by some algorithm that can only be run with node-based graph traversal, like
-     *                         LM preparation or Isochrones
-     */
-    public Weighting createWeighting(ProfileConfig profileConfig, PMap hints, boolean disableTurnCosts) {
-        return new DefaultWeightingFactory(encodingManager, ghStorage).createWeighting(profileConfig, hints, disableTurnCosts);
+    public final Weighting createWeighting(Profile profile, PMap hints, boolean disableTurnCosts) {
+        return createWeightingFactory().createWeighting(profile, hints, disableTurnCosts);
+    }
+
+    protected WeightingFactory createWeightingFactory() {
+        return new DefaultWeightingFactory(ghStorage, encodingManager);
     }
 
     @Override
     public GHResponse route(GHRequest request) {
-        GHResponse response = new GHResponse();
-        calcPaths(request, response);
-        return response;
+        return createRouter().route(request);
     }
 
-    /**
-     * This method calculates the alternative path list using the low level Path objects.
-     */
-    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
+    private Router createRouter() {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
-
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
-
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        try {
-            if (request.getHints().has("vehicle"))
-                throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see #1958");
-            if (request.getHints().has("weighting"))
-                throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see #1958");
-            if (request.getHints().has(Routing.TURN_COSTS))
-                throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see #1958");
-            if (request.getHints().has(Routing.EDGE_BASED))
-                throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see #1958");
-
-            // todonow: do not allow things like short_fastest.distance_factor or u_turn_costs unless CH is disabled and only under certain conditions for LM
-
-            PMap hints = request.getHints();
-            boolean disableCH = hints.getBool(CH.DISABLE, false);
-            if (chPreparationHandler.isEnabled() && !chPreparationHandler.isDisablingAllowed() && disableCH)
-                throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
-
-            boolean disableLM = hints.getBool(Landmark.DISABLE, false);
-            if (lmPreparationHandler.isEnabled() && !lmPreparationHandler.isDisablingAllowed() && disableLM)
-                throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
-
-            if (chPreparationHandler.isEnabled() && !disableCH) {
-                if (request.hasFavoredHeading(0))
-                    throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
-
-                if (hints.getBool(Routing.PASS_THROUGH, false))
-                    throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
-            }
-
-            String algoStr = request.getAlgorithm();
-            if (algoStr.isEmpty())
-                algoStr = chPreparationHandler.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
-
-            List<GHPoint> points = request.getPoints();
-            // TODO Maybe we should think about a isRequestValid method that checks all that stuff that we could do to fail fast
-            // For example see #734
-            checkIfPointsAreInBounds(points);
-
-            if (Helper.isEmpty(request.getProfile())) {
-                throw new IllegalArgumentException("You need to specify a profile to perform a routing request, see #1958");
-            }
-            ProfileConfig profile = profilesByName.get(request.getProfile());
-            if (profile == null) {
-                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' does not exist");
-            }
-            if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
-                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs");
-
-            // todo later: should we be able to control this using the edge_based parameter?
-            TraversalMode tMode = profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
-
-            RoutingAlgorithmFactory algorithmFactory = getAlgorithmFactory(profile.getName(), disableCH, disableLM);
-            Weighting weighting;
-            Graph graph = ghStorage;
-            if (chPreparationHandler.isEnabled() && !disableCH) {
-                if (!(algorithmFactory instanceof CHRoutingAlgorithmFactory))
-                    throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algorithmFactory);
-
-                if (hints.has(Routing.BLOCK_AREA))
-                    throw new IllegalArgumentException("When CH is enabled the " + Parameters.Routing.BLOCK_AREA + " cannot be specified");
-
-                CHProfile chProfile = ((CHRoutingAlgorithmFactory) algorithmFactory).getCHProfile();
-                weighting = chProfile.getWeighting();
-                graph = ghStorage.getCHGraph(chProfile);
-            } else {
-                checkNonChMaxWaypointDistance(points);
-                final int uTurnCostsInt = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-                if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !tMode.isEdgeBased()) {
-                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
-                }
-                FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-                weighting = createWeighting(profile, hints);
-                if (hints.has(Routing.BLOCK_AREA))
-                    weighting = new BlockAreaWeighting(weighting, GraphEdgeIdFinder.createBlockArea(ghStorage, locationIndex,
-                            points, hints, DefaultEdgeFilter.allEdges(encoder)));
-            }
-            ghRsp.addDebugInfo("tmode:" + tMode.toString());
-
-            RoutingTemplate routingTemplate = createRoutingTemplate(request, ghRsp, algoStr, weighting);
-
-            StopWatch sw = new StopWatch().start();
-            List<QueryResult> qResults = routingTemplate.lookup(points);
-            ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-            if (ghRsp.hasErrors())
-                return Collections.emptyList();
-
-            QueryGraph queryGraph = QueryGraph.lookup(graph, qResults);
-            int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, routingConfig.getMaxVisitedNodes());
-            if (maxVisitedNodesForRequest > routingConfig.getMaxVisitedNodes())
-                throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routingConfig.getMaxVisitedNodes());
-
-            AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                    algorithm(algoStr).
-                    traversalMode(tMode).
-                    weighting(weighting).
-                    maxVisitedNodes(maxVisitedNodesForRequest).
-                    hints(hints).
-                    build();
-
-            // do the actual route calculation !
-            List<Path> altPaths = routingTemplate.calcPaths(queryGraph, algorithmFactory, algoOpts);
-
-            boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, encodingManager.isEnableInstructions());
-            boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, routingConfig.isCalcPoints());
-            double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
-
-            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
-            PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
-                    setCalcPoints(tmpCalcPoints).
-                    setDouglasPeucker(peucker).
-                    setEnableInstructions(tmpEnableInstructions).
-                    setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
-                    setSimplifyResponse(routingConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
-
-            if (request.hasFavoredHeading(0))
-                pathMerger.setFavoredHeading(request.getFavoredHeading(0));
-
-            routingTemplate.finish(pathMerger, trMap.getWithFallBack(request.getLocale()));
-            return altPaths;
-        } catch (IllegalArgumentException ex) {
-            ghRsp.addError(ex);
-            return Collections.emptyList();
+        Map<String, CHGraph> chGraphs = new LinkedHashMap<>();
+        for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
+            String chGraphName = chPreparationHandler.getPreparation(chProfile.getProfile()).getCHConfig().getName();
+            chGraphs.put(chProfile.getProfile(), ghStorage.getCHGraph(chGraphName));
         }
-    }
-
-    protected RoutingTemplate createRoutingTemplate(GHRequest request, GHResponse ghRsp, String algoStr, Weighting weighting) {
-        RoutingTemplate routingTemplate;
-        if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-            routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting, routingConfig.getMaxRoundTripRetries());
-        else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
-        else
-            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager, weighting);
-        return routingTemplate;
-    }
-
-    private void checkIfPointsAreInBounds(List<GHPoint> points) {
-        BBox bounds = ghStorage.getBounds();
-        for (int i = 0; i < points.size(); i++) {
-            GHPoint point = points.get(i);
-            if (!bounds.contains(point.getLat(), point.getLon())) {
-                throw new PointOutOfBoundsException("Point " + i + " is out of bounds: " + point, i);
-            }
+        Map<String, LandmarkStorage> landmarks = new LinkedHashMap<>();
+        for (LMProfile lmp : lmPreparationHandler.getLMProfiles()) {
+            landmarks.put(lmp.getProfile(),
+                    lmp.usesOtherPreparation()
+                            // cross-querying
+                            ? lmPreparationHandler.getPreparation(lmp.getPreparationProfile()).getLandmarkStorage()
+                            : lmPreparationHandler.getPreparation(lmp.getProfile()).getLandmarkStorage());
         }
-    }
-
-    private void checkNonChMaxWaypointDistance(List<GHPoint> points) {
-        if (routingConfig.getNonChMaxWaypointDistance() == Integer.MAX_VALUE) {
-            return;
-        }
-        GHPoint lastPoint = points.get(0);
-        GHPoint point;
-        double dist;
-        DistanceCalc calc = DIST_EARTH;
-        for (int i = 1; i < points.size(); i++) {
-            point = points.get(i);
-            dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
-            if (dist > routingConfig.getNonChMaxWaypointDistance()) {
-                Map<String, Object> detailMap = new HashMap<>(2);
-                detailMap.put("from", i - 1);
-                detailMap.put("to", i);
-                throw new PointDistanceExceededException("Point " + i + " is too far from Point " + (i - 1) + ": " + point, detailMap);
-            }
-            lastPoint = point;
-        }
+        return new Router(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
+                trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks
+        );
     }
 
     protected LocationIndex createLocationIndex(Directory dir) {
@@ -1220,16 +1046,24 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private boolean isCHPrepared() {
-        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"))
-                // remove old property in >0.9
-                || "true".equals(ghStorage.getProperties().get("prepare.done"));
+        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
     }
 
-    private boolean isLMPrepared() {
-        return "true".equals(ghStorage.getProperties().get(Landmark.PREPARE + "done"));
+    private String getProfileVersion(String profile) {
+        return ghStorage.getProperties().get("graph.profiles." + profile + ".version");
+    }
+
+    private void setProfileVersion(String profile, int version) {
+        ghStorage.getProperties().put("graph.profiles." + profile + ".version", version);
     }
 
     protected void prepareCH(boolean closeEarly) {
+        for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
+            if (!getProfileVersion(profile.getProfile()).isEmpty()
+                    && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
+        }
+
         boolean tmpPrepare = chPreparationHandler.isEnabled();
         if (tmpPrepare) {
             ensureWriteAccess();
@@ -1243,6 +1077,10 @@ public class GraphHopper implements GraphHopperAPI {
             ghStorage.freeze();
             chPreparationHandler.prepare(ghStorage.getProperties(), closeEarly);
             ghStorage.getProperties().put(CH.PREPARE + "done", true);
+            for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
+                // potentially overwrite existing keys from LM
+                setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+            }
         }
     }
 
@@ -1252,10 +1090,20 @@ public class GraphHopper implements GraphHopperAPI {
     protected void loadOrPrepareLM(boolean closeEarly) {
         boolean tmpPrepare = lmPreparationHandler.isEnabled() && !lmPreparationHandler.getPreparations().isEmpty();
         if (tmpPrepare) {
+            for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
+                if (!getProfileVersion(profile.getProfile()).isEmpty()
+                        && !getProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                    throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
+            }
             ensureWriteAccess();
             ghStorage.freeze();
-            if (lmPreparationHandler.loadOrDoWork(ghStorage.getProperties(), closeEarly))
+            if (lmPreparationHandler.loadOrDoWork(ghStorage.getProperties(), closeEarly)) {
                 ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
+                for (LMProfile profile : lmPreparationHandler.getLMProfiles()) {
+                    // potentially overwrite existing keys from CH
+                    setProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+                }
+            }
         }
     }
 
@@ -1263,16 +1111,28 @@ public class GraphHopper implements GraphHopperAPI {
      * Internal method to clean up the graph.
      */
     protected void cleanUp() {
-        int prevNodeCount = ghStorage.getNodes();
-        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager.fetchEdgeEncoders());
+        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, buildSubnetworkRemovalJobs());
         preparation.setMinNetworkSize(minNetworkSize);
-        preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         preparation.doWork();
-        int currNodeCount = ghStorage.getNodes();
-        logger.info("edges: " + Helper.nf(ghStorage.getEdges()) + ", nodes " + Helper.nf(currNodeCount)
-                + ", there were " + Helper.nf(preparation.getMaxSubnetworks())
-                + " subnetworks. removed them => " + Helper.nf(prevNodeCount - currNodeCount)
-                + " less nodes");
+        logger.info("nodes: " + Helper.nf(ghStorage.getNodes()) + ", edges: " + Helper.nf(ghStorage.getEdges()));
+    }
+
+    private List<PrepareJob> buildSubnetworkRemovalJobs() {
+        List<FlagEncoder> encoders = encodingManager.fetchEdgeEncoders();
+        List<PrepareJob> jobs = new ArrayList<>();
+        for (FlagEncoder encoder : encoders) {
+            // for encoders with turn costs we do an edge-based subnetwork removal, because they *might* be used with
+            // a profile with turn_costs=true
+            if (encoder.supportsTurnCosts()) {
+                // u-turn costs are zero as we only want to make sure the graph is fully connected assuming finite
+                // u-turn costs
+                TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), 0);
+                jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), turnCostProvider));
+            } else {
+                jobs.add(new PrepareJob(encoder.toString(), encoder.getAccessEnc(), null));
+            }
+        }
+        return jobs;
     }
 
     protected void flush() {
@@ -1323,117 +1183,11 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Writes are not allowed!");
     }
 
-    public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
-        routingConfig.setNonChMaxWaypointDistance(nonChMaxWaypointDistance);
-    }
-
     private void setFullyLoaded() {
         fullyLoaded = true;
     }
 
-    private static class DefaultWeightingFactory {
-        private final GraphHopperStorage ghStorage;
-        private final EncodingManager encodingManager;
-
-        public DefaultWeightingFactory(EncodingManager encodingManager, GraphHopperStorage ghStorage) {
-            this.ghStorage = ghStorage;
-            this.encodingManager = encodingManager;
-        }
-
-        public Weighting createWeighting(ProfileConfig profile, PMap requestHints, boolean disableTurnCosts) {
-            // Merge profile hints with request hints, the request hints take precedence.
-            // Note that so far we do not check if overwriting the profile hints actually works with the preparation
-            // for LM/CH. Later we should also limit the number of parameters that can be used to modify the profile.
-            // todo: since we are not dealing with block_area here yet we cannot really apply any merging rules
-            // for it, see discussion here: https://github.com/graphhopper/graphhopper/pull/1958#discussion_r395462901
-            PMap hints = new PMap();
-            hints.putAll(profile.getHints());
-            hints.putAll(requestHints);
-
-            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            TurnCostProvider turnCostProvider;
-            if (profile.isTurnCosts() && !disableTurnCosts) {
-                if (!encoder.supportsTurnCosts())
-                    throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
-                int uTurnCosts = hints.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-                turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
-            } else {
-                turnCostProvider = NO_TURN_COST_PROVIDER;
-            }
-
-            String weightingStr = toLowerCase(profile.getWeighting());
-            if (weightingStr.isEmpty())
-                throw new IllegalArgumentException("You have to specify a weighting");
-
-            Weighting weighting = null;
-
-            if ("shortest".equalsIgnoreCase(weightingStr)) {
-                weighting = new ShortestWeighting(encoder, turnCostProvider);
-            } else if ("fastest".equalsIgnoreCase(weightingStr)) {
-                if (encoder.supports(PriorityWeighting.class))
-                    weighting = new PriorityWeighting(encoder, hints, turnCostProvider);
-                else
-                    weighting = new FastestWeighting(encoder, hints, turnCostProvider);
-            } else if ("curvature".equalsIgnoreCase(weightingStr)) {
-                if (encoder.supports(CurvatureWeighting.class))
-                    weighting = new CurvatureWeighting(encoder, hints, turnCostProvider);
-
-            } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
-                weighting = new ShortFastestWeighting(encoder, hints, turnCostProvider);
-            }
-
-            if (weighting == null)
-                throw new IllegalArgumentException("Weighting '" + weightingStr + "' not supported");
-
-            return weighting;
-        }
-    }
-
-    private static class RoutingConfig {
-        private int maxVisitedNodes = Integer.MAX_VALUE;
-        private int maxRoundTripRetries = 3;
-        private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
-        private boolean calcPoints = true;
-        private boolean simplifyResponse = true;
-
-        public int getMaxVisitedNodes() {
-            return maxVisitedNodes;
-        }
-
-        public void setMaxVisitedNodes(int maxVisitedNodes) {
-            this.maxVisitedNodes = maxVisitedNodes;
-        }
-
-        public int getMaxRoundTripRetries() {
-            return maxRoundTripRetries;
-        }
-
-        public void setMaxRoundTripRetries(int maxRoundTripRetries) {
-            this.maxRoundTripRetries = maxRoundTripRetries;
-        }
-
-        public int getNonChMaxWaypointDistance() {
-            return nonChMaxWaypointDistance;
-        }
-
-        public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
-            this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
-        }
-
-        public boolean isCalcPoints() {
-            return calcPoints;
-        }
-
-        public void setCalcPoints(boolean calcPoints) {
-            this.calcPoints = calcPoints;
-        }
-
-        public boolean isSimplifyResponse() {
-            return simplifyResponse;
-        }
-
-        public void setSimplifyResponse(boolean simplifyResponse) {
-            this.simplifyResponse = simplifyResponse;
-        }
+    public RouterConfig getRouterConfig() {
+        return routerConfig;
     }
 }

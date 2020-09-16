@@ -1,6 +1,6 @@
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.PointList;
 
 /**
@@ -25,7 +25,7 @@ public class GraphElevationSmoothing {
 
             int start = i;
             for (int j = i-1; j >= 0 ; j--) {
-                if (MAX_SEARCH_DISTANCE > Helper.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
+                if (MAX_SEARCH_DISTANCE > DistancePlaneProjection.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
                     start = j;
                 }else{
                     break;
@@ -34,7 +34,7 @@ public class GraphElevationSmoothing {
 
             int end = i;
             for (int j = i+1; j < geometry.size(); j++) {
-                if (MAX_SEARCH_DISTANCE > Helper.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
+                if (MAX_SEARCH_DISTANCE > DistancePlaneProjection.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
                     // +1 because the end is exclusive
                     end = j+1;
                 }else{
@@ -42,14 +42,14 @@ public class GraphElevationSmoothing {
                 }
             }
 
-            // In this case we cannot find any points withing the max search distance, so we simply skip this point
+            // In this case we cannot find any points within the max search distance, so we simply skip this point
             if(start == end)
                 continue;
 
             double sum = 0;
             for (int j = start; j < end; j++) {
                 // We skip points that are too far away, important for motorways
-                if (MAX_SEARCH_DISTANCE > Helper.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
+                if (MAX_SEARCH_DISTANCE > DistancePlaneProjection.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
                     sum += geometry.getEle(j);
                 }
             }

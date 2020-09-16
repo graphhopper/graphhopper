@@ -23,11 +23,11 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -85,75 +85,84 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     /**
-     * Adds a {@link CHGraph} for the given {@link CHProfile}. You need to call this method before calling {@link #create(long)}
+     * Adds a {@link CHGraph} for the given {@link CHConfig}. You need to call this method before calling {@link #create(long)}
      * or {@link #loadExisting()}.
      */
-    public GraphHopperStorage addCHGraph(CHProfile chProfile) {
+    public GraphHopperStorage addCHGraph(CHConfig chConfig) {
         baseGraph.checkNotInitialized();
-        if (getCHProfiles().contains(chProfile)) {
-            throw new IllegalArgumentException("For the given CH profile a CHGraph already exists: " + chProfile);
+        if (getCHConfigs().contains(chConfig)) {
+            throw new IllegalArgumentException("For the given CH profile a CHGraph already exists: '" + chConfig.getName() + "'");
         }
-        chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph, segmentSize));
+        chGraphs.add(new CHGraphImpl(chConfig, dir, baseGraph, segmentSize));
         return this;
     }
 
     /**
-     * @see #addCHGraph(CHProfile)
+     * @see #addCHGraph(CHConfig)
      */
-    public GraphHopperStorage addCHGraphs(List<CHProfile> chProfiles) {
-        for (CHProfile chProfile : chProfiles) {
-            addCHGraph(chProfile);
+    public GraphHopperStorage addCHGraphs(List<CHConfig> chConfigs) {
+        for (CHConfig chConfig : chConfigs) {
+            addCHGraph(chConfig);
         }
         return this;
     }
 
+    /**
+     * If possible use {@link #getRoutingCHGraph(String)} instead, as CHGraph will be removed at some point.
+     */
     public CHGraph getCHGraph() {
         if (chGraphs.isEmpty()) {
             throw new IllegalStateException("There is no CHGraph");
         } else if (chGraphs.size() > 1) {
-            throw new IllegalStateException("There are multiple CHGraphs, use getCHGraph(CHProfile) to retrieve a specific one");
+            throw new IllegalStateException("There are multiple CHGraphs, use getCHGraph(CHConfig) to retrieve a specific one");
         } else {
             return chGraphs.iterator().next();
         }
     }
 
-    public CHGraph getCHGraph(CHProfile chProfile) {
-        return getCHGraph(chProfile.getName());
+    /**
+     * @return the {@link CHGraph} for the specified profile name, or null if it does not exist
+     */
+    public CHGraph getCHGraph(String chGraphName) {
+        for (CHGraphImpl cg : chGraphs) {
+            if (cg.getCHConfig().getName().equals(chGraphName))
+                return cg;
+        }
+        return null;
     }
 
-    /**
-     * @return the {@link CHGraph} for the specified profile name
-     */
-    public CHGraph getCHGraph(String profileName) {
-        if (chGraphs.isEmpty())
-            throw new IllegalStateException("There is no CHGraph");
+    public RoutingCHGraph getRoutingCHGraph() {
+        return new RoutingCHGraphImpl(getCHGraph());
+    }
 
-        List<String> existing = new ArrayList<>();
-        for (CHGraphImpl cg : chGraphs) {
-            if (cg.getCHProfile().getName().equals(profileName))
-                return cg;
-            existing.add(cg.getCHProfile().getName());
-        }
+    public RoutingCHGraph getRoutingCHGraph(String chGraphName) {
+        CHGraph chGraph = getCHGraph(chGraphName);
+        return chGraph == null ? null : new RoutingCHGraphImpl(chGraph);
+    }
 
-        throw new IllegalStateException("Cannot find CHGraph for the specified profile: " + profileName + ", existing:" + existing);
+    public List<String> getCHGraphNames() {
+        List<String> result = new ArrayList<>();
+        for (CHGraphImpl cg : chGraphs)
+            result.add(cg.getCHConfig().getName());
+        return result;
     }
 
     public boolean isCHPossible() {
         return !chGraphs.isEmpty();
     }
 
-    public List<CHProfile> getCHProfiles() {
-        List<CHProfile> result = new ArrayList<>(chGraphs.size());
+    public List<CHConfig> getCHConfigs() {
+        List<CHConfig> result = new ArrayList<>(chGraphs.size());
         for (CHGraphImpl chGraph : chGraphs) {
-            result.add(chGraph.getCHProfile());
+            result.add(chGraph.getCHConfig());
         }
         return result;
     }
 
-    public List<CHProfile> getCHProfiles(boolean edgeBased) {
-        List<CHProfile> result = new ArrayList<>();
-        List<CHProfile> chProfiles = getCHProfiles();
-        for (CHProfile profile : chProfiles) {
+    public List<CHConfig> getCHConfigs(boolean edgeBased) {
+        List<CHConfig> result = new ArrayList<>();
+        List<CHConfig> chConfigs = getCHConfigs();
+        for (CHConfig profile : chConfigs) {
             if (edgeBased == profile.isEdgeBased()) {
                 result.add(profile);
             }
@@ -195,7 +204,12 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             cg.create(byteCount);
         }
 
-        properties.put("graph.ch.profiles", getCHProfiles().toString());
+        List<CHConfig> chConfigs = getCHConfigs();
+        List<String> chProfileNames = new ArrayList<>(chConfigs.size());
+        for (CHConfig chConfig : chConfigs) {
+            chProfileNames.add(chConfig.getName());
+        }
+        properties.put("graph.ch.profiles", chProfileNames.toString());
         return this;
     }
 
@@ -207,33 +221,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public StorableProperties getProperties() {
         return properties;
-    }
-
-    @Override
-    public void markNodeRemoved(int index) {
-        baseGraph.getRemovedNodes().add(index);
-    }
-
-    @Override
-    public boolean isNodeRemoved(int index) {
-        return baseGraph.getRemovedNodes().contains(index);
-    }
-
-    @Override
-    public void optimize() {
-        if (isFrozen())
-            throw new IllegalStateException("do not optimize after graph was frozen");
-
-        int delNodes = baseGraph.getRemovedNodes().getCardinality();
-        if (delNodes <= 0)
-            return;
-
-        // Deletes only nodes.
-        // It reduces the fragmentation of the node space but introduces new unused edges.
-        baseGraph.inPlaceNodeRemove(delNodes);
-
-        // Reduce memory usage
-        baseGraph.trimToSize();
     }
 
     @Override
@@ -280,32 +267,18 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     private void checkIfConfiguredAndLoadedWeightingsCompatible() {
         String loadedStr = properties.get("graph.ch.profiles");
-        List<String> loaded = parseList(loadedStr);
-        List<CHProfile> configured = getCHProfiles();
-        for (CHProfile chProfile : configured) {
-            if (!loaded.contains(chProfile.toString())) {
-                throw new IllegalStateException("Configured CH profile: " + chProfile.toString() + " is not contained in loaded CH profiles: " + loadedStr + ".\n" +
-                        "You configured: " + configured);
+        List<String> loaded = Helper.parseList(loadedStr);
+        List<CHConfig> configured = getCHConfigs();
+        List<String> configuredNames = new ArrayList<>(configured.size());
+        for (CHConfig p : configured) {
+            configuredNames.add(p.getName());
+        }
+        for (String configuredName : configuredNames) {
+            if (!loaded.contains(configuredName)) {
+                throw new IllegalStateException("Configured CH profile: '" + configuredName + "' is not contained in loaded CH profiles: '" + loadedStr + "'.\n" +
+                        "You configured: " + configuredNames);
             }
         }
-    }
-
-    /**
-     * parses a string like [a,b,c]
-     */
-    private List<String> parseList(String listStr) {
-        String trimmed = listStr.trim();
-        if (trimmed.length() < 2)
-            return Collections.emptyList();
-        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
-        List<String> result = new ArrayList<>();
-        for (String item : items) {
-            String s = item.trim();
-            if (!s.isEmpty()) {
-                result.add(s);
-            }
-        }
-        return result;
     }
 
     @Override
@@ -430,11 +403,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public EdgeExplorer createEdgeExplorer(EdgeFilter filter) {
         return baseGraph.createEdgeExplorer(filter);
-    }
-
-    @Override
-    public EdgeExplorer createEdgeExplorer() {
-        return baseGraph.createEdgeExplorer();
     }
 
     @Override

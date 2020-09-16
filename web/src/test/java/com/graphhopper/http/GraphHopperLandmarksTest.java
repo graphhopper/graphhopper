@@ -18,9 +18,9 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -54,20 +54,19 @@ public class GraphHopperLandmarksTest {
                 putObject("graph.flag_encoders", "car").
                 putObject("datareader.file", "../core/files/belarus-east.osm.gz").
                 putObject("prepare.min_network_size", 0).
-                putObject("prepare.min_one_way_network_size", 0).
                 putObject("routing.ch.disabling_allowed", true).
                 putObject("routing.lm.disabling_allowed", true).
                 putObject("graph.location", DIR)
                 // force landmark creation even for tiny networks
                 .putObject("prepare.lm.min_network_size", 2)
                 .setProfiles(Collections.singletonList(
-                        new ProfileConfig("car_profile").setVehicle("car").setWeighting("fastest")
+                        new Profile("car_profile").setVehicle("car").setWeighting("fastest")
                 ))
                 .setCHProfiles(Collections.singletonList(
-                        new CHProfileConfig("car_profile")
+                        new CHProfile("car_profile")
                 ))
                 .setLMProfiles(Collections.singletonList(
-                        new LMProfileConfig("car_profile")
+                        new LMProfile("car_profile")
                 ));
         return config;
     }

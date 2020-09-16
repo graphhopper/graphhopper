@@ -20,7 +20,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.BidirPathExtractor;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.storage.ShortcutUnpacker;
 import com.graphhopper.util.EdgeIteratorState;
 
 public class NodeBasedCHBidirPathExtractor extends BidirPathExtractor {
@@ -28,7 +27,7 @@ public class NodeBasedCHBidirPathExtractor extends BidirPathExtractor {
     private final RoutingCHGraph routingGraph;
 
     public NodeBasedCHBidirPathExtractor(RoutingCHGraph routingGraph) {
-        super(routingGraph.getGraph(), routingGraph.getWeighting());
+        super(routingGraph.getBaseGraph(), routingGraph.getWeighting());
         this.routingGraph = routingGraph;
         shortcutUnpacker = createShortcutUnpacker();
     }

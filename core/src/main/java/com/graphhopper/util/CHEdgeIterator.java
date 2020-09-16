@@ -17,14 +17,11 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.storage.CHGraph;
-
 /**
  * Support for CH edges
  * <p>
  *
  * @author Peter Karich
- * @see CHGraph
  */
 public interface CHEdgeIterator extends EdgeIterator, CHEdgeIteratorState {
 }

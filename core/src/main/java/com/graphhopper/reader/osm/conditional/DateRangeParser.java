@@ -61,7 +61,7 @@ public class DateRangeParser implements ConditionalValueParser {
     }
 
     static ParsedCalendar parseDateString(String dateString) throws ParseException {
-        // Replace occurences of public holidays
+        // Replace occurrences of public holidays
         dateString = dateString.replaceAll("(,( )*)?(PH|SH)", "");
         dateString = dateString.trim();
         Calendar calendar = createCalendar();
@@ -88,7 +88,7 @@ public class DateRangeParser implements ConditionalValueParser {
                         } catch (ParseException e5) {
                             int index = DAY_NAMES.indexOf(dateString);
                             if (index < 0)
-                                throw new ParseException("Unparseable date: \"" + dateString + "\"", 0);
+                                throw new ParseException("Unparsable date: \"" + dateString + "\"", 0);
 
                             // Ranges from 1-7
                             calendar.set(Calendar.DAY_OF_WEEK, index + 1);

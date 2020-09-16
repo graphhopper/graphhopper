@@ -50,6 +50,11 @@ public interface ElevationProvider {
         @Override
         public void setInterpolate(boolean interpolate) {
         }
+
+        @Override
+        public boolean getInterpolate() {
+            return false;
+        }
     };
 
     /**
@@ -74,6 +79,11 @@ public interface ElevationProvider {
      * Turned off by default.
      */
     void setInterpolate(boolean interpolate);
+
+    /**
+     * Returns true if bilinear interpolation is enabled.
+     */
+    boolean getInterpolate();
 
     /**
      * Release resources.

@@ -22,7 +22,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -61,8 +61,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
-    /* Edge Flag Encoder fields */
-    private long nodeBitMask;
     private boolean blockByDefault = true;
     private boolean blockFords = true;
     private boolean registered;
@@ -74,10 +72,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected static final double LONG_TRIP_FERRY_SPEED = 30;
 
     private ConditionalTagInspector conditionalTagInspector;
-
-    public AbstractFlagEncoder(PMap properties) {
-        throw new RuntimeException("This method must be overridden in derived classes");
-    }
 
     /**
      * @param speedBits    specify the number of bits used for speed
@@ -145,22 +139,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     /**
-     * Defines the bits for the node flags, which are currently used for barriers only.
-     * <p>
-     *
-     * @return incremented shift value pointing behind the last used bit
-     */
-    public int defineNodeBits(int index, int shift) {
-        return shift;
-    }
-
-    /**
      * Defines bits used for edge flags used for access, speed etc.
-     *
-     * @return incremented shift value pointing behind the last used bit
      */
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
-        // define the first 2 speedBits in flags for routing
+        // define the first 2 bits in flags for access
         registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true));
         roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
         encoderBit = 1L << index;
@@ -393,15 +375,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         }
     }
 
-    void setNodeBitMask(int usedBits, int shift) {
-        nodeBitMask = (1L << usedBits) - 1;
-        nodeBitMask <<= shift;
-    }
-
-    long getNodeBitMask() {
-        return nodeBitMask;
-    }
-
     public final DecimalEncodedValue getAverageSpeedEnc() {
         if (avgSpeedEnc == null)
             throw new NullPointerException("FlagEncoder " + toString() + " not yet initialized");
@@ -465,6 +438,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     protected String getPropertiesString() {
         return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
+    }
+
+    @Override
+    public List<EncodedValue> getAllShared() {
+        return encodedValueLookup.getAllShared();
     }
 
     @Override

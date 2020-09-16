@@ -40,7 +40,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     }
 
     @Test
-    public void testGetSpeed() {
+    public void testSpeedAndPriority() {
         IntsRef intsRef = encodingManager.createEdgeFlags();
         encoder.setSpeed(false, intsRef, 10);
         encoder.getAccessEnc().setBool(false, intsRef, true);
@@ -291,6 +291,32 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     }
 
     @Test
+    public void testCycleway() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("surface", "paved");
+        assertPriority(REACH_DEST.getValue(), way);
+        way.setTag("cycleway", "track");
+        assertPriority(PREFER.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("cycleway:left", "lane");
+        assertPriority(UNCHANGED.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("cycleway:right", "lane");
+        assertPriority(UNCHANGED.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:left", "opposite_lane");
+        assertPriority(REACH_DEST.getValue(), way);
+    }
+
+    @Test
     public void testWayAcceptance() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "cycleway");
@@ -315,6 +341,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("bicycle", "yes");
         way.setTag("access", "no");
         assertTrue(encoder.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "bridleway");
+        assertTrue(encoder.getAccess(way).canSkip());
+        way.setTag("bicycle", "yes");
+        assertTrue(encoder.getAccess(way).isWay());
+
     }
 
     @Test

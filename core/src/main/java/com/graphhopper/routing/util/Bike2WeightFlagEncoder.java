@@ -65,7 +65,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
             return;
 
         // Decrease the speed for ele increase (incline), and decrease the speed for ele decrease (decline). The speed-decrease
-        // has to be bigger (compared to the speed-increase) for the same elevation difference to simulate loosing energy and avoiding hills.
+        // has to be bigger (compared to the speed-increase) for the same elevation difference to simulate losing energy and avoiding hills.
         // For the reverse speed this has to be the opposite but again keeping in mind that up+down difference.
         double incEleSum = 0, incDist2DSum = 0, decEleSum = 0, decDist2DSum = 0;
         // double prevLat = pl.getLatitude(0), prevLon = pl.getLongitude(0);

@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -95,7 +94,7 @@ public class BidirPathExtractor {
     }
 
     protected void setExtractionTime(long nanos) {
-        path.setDebugInfo("path extraction: " + nanos / 1000 + " micros");
+        path.setDebugInfo("path extraction: " + nanos / 1000 + " μs");
     }
 
     protected int getIncEdge(SPTEntry entry) {

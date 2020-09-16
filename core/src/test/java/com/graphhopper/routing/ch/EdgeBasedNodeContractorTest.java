@@ -18,25 +18,25 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.Repeat;
-import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHConfig;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * In this test we mainly test if {@link EdgeBasedNodeContractorTest} inserts the correct shortcuts when certain
@@ -46,15 +46,13 @@ import static org.junit.Assert.*;
  */
 public class EdgeBasedNodeContractorTest {
     private final int maxCost = 10;
-    private CHGraph chGraph;
+    private PrepareCHGraph chGraph;
     private CarFlagEncoder encoder;
     private GraphHopperStorage graph;
 
-    @Rule
-    public RepeatRule repeatRule = new RepeatRule();
-    private List<CHProfile> chProfiles;
+    private List<CHConfig> chConfigs;
 
-    @Before
+    @BeforeEach
     public void setup() {
         // its important to use @Before when using RepeatRule!
         initialize();
@@ -64,13 +62,13 @@ public class EdgeBasedNodeContractorTest {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings(
-                        "car|shortest|edge",
-                        "car|shortest|edge|60"
+                .setCHConfigStrings(
+                        "p1|car|shortest|edge",
+                        "p2|car|shortest|edge|60"
                 )
                 .create();
-        chProfiles = graph.getCHProfiles();
-        chGraph = graph.getCHGraph(chProfiles.get(0));
+        chConfigs = graph.getCHConfigs();
+        chGraph = PrepareCHGraph.edgeBased(graph.getCHGraph(chConfigs.get(0).getName()), chConfigs.get(0).getWeighting());
     }
 
     @Test
@@ -353,8 +351,7 @@ public class EdgeBasedNodeContractorTest {
         checkNumShortcuts(1);
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testContractNode_duplicateIncomingEdges_sameWeight() {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \->/
@@ -770,8 +767,7 @@ public class EdgeBasedNodeContractorTest {
         checkShortcuts();
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
         // this test runs repeatedly because it might pass/fail by chance (because path lengths are equal)
 
@@ -1116,7 +1112,7 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     public void testFindPath_finiteUTurnCost() {
-        chGraph = graph.getCHGraph(chProfiles.get(1));
+        chGraph = PrepareCHGraph.edgeBased(graph.getCHGraph(chConfigs.get(1).getName()), chConfigs.get(1).getWeighting());
         // turning to 1 at node 3 when coming from 0 is forbidden, but taking the full loop 3-4-2-3 is very
         // expensive, so the best solution is to go straight to 4 and take a u-turn there
         //   1
@@ -1348,8 +1344,7 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(0);
-        assertTrue("too many edges polled: " + nodeContractor.getNumPolledEdges(),
-                nodeContractor.getNumPolledEdges() <= 8);
+        assertTrue(nodeContractor.getNumPolledEdges() <= 8, "too many edges polled: " + nodeContractor.getNumPolledEdges());
     }
 
     private void contractNode(NodeContractor nodeContractor, int node, int level) {
@@ -1378,8 +1373,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor() {
-        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, chGraph.getCHProfile().getWeighting());
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, new PMap());
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

@@ -20,7 +20,8 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
@@ -42,8 +43,8 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
     private final double maxShareFactor;
     private final double localOptimalityFactor;
     private final int maxPaths;
+    private final List<AlternativeInfo> alternatives = new ArrayList<>();
     private int extraVisitedNodes = 0;
-    private List<AlternativeInfo> alternatives = new ArrayList<>();
 
     public AlternativeRouteEdgeCH(RoutingCHGraph graph, PMap hints) {
         super(graph);
@@ -82,83 +83,54 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         final ArrayList<PotentialAlternativeInfo> potentialAlternativeInfos = new ArrayList<>();
 
         final Map<Integer, SPTEntry> bestWeightMapByNode = new HashMap<>();
-        bestWeightMapTo.forEach(new IntObjectPredicate<SPTEntry>() {
-            @Override
-            public boolean apply(int key, SPTEntry value) {
-                bestWeightMapByNode.put(value.adjNode, value);
+        bestWeightMapTo.forEach((IntObjectPredicate<SPTEntry>) (key, value) -> {
+            bestWeightMapByNode.put(value.adjNode, value);
+            return true;
+        });
+
+        bestWeightMapFrom.forEach((IntObjectPredicate<SPTEntry>) (wurst, fromSPTEntry) -> {
+            SPTEntry toSPTEntry = bestWeightMapByNode.get(fromSPTEntry.adjNode);
+            if (toSPTEntry == null)
+                return true;
+
+            if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > bestPath.getWeight() * maxWeightFactor)
+                return true;
+
+            // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
+            // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
+            // We still use this preliminary path to filter for shared path length with other alternatives,
+            // so we don't have to work so much.
+            Path preliminaryRoute = createPathExtractor(graph).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
+            double preliminaryShare = calculateShare(preliminaryRoute);
+            if (preliminaryShare > maxShareFactor) {
                 return true;
             }
+            assert fromSPTEntry.adjNode == toSPTEntry.adjNode;
+            PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
+            potentialAlternativeInfo.v = fromSPTEntry.adjNode;
+            potentialAlternativeInfo.edgeIn = getIncomingEdge(fromSPTEntry);
+            potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
+            potentialAlternativeInfos.add(potentialAlternativeInfo);
+            return true;
         });
 
-        bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
-            @Override
-            public boolean apply(final int wurst, final SPTEntry fromSPTEntry) {
-                SPTEntry toSPTEntry = bestWeightMapByNode.get(fromSPTEntry.adjNode);
-                if (toSPTEntry == null)
-                    return true;
-
-                if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > bestPath.getWeight() * maxWeightFactor)
-                    return true;
-
-                // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
-                // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
-                // We still use this preliminary path to filter for shared path length with other alternatives,
-                // so we don't have to work so much.
-                Path preliminaryRoute = createPathExtractor(graph).extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath());
-                double preliminaryShare = calculateShare(preliminaryRoute);
-                if (preliminaryShare > maxShareFactor) {
-                    return true;
-                }
-                PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
-                potentialAlternativeInfo.in = graph.getEdgeIteratorState(fromSPTEntry.edge, fromSPTEntry.adjNode); // TODO: real edge at end of shortcut
-                potentialAlternativeInfo.out = graph.getEdgeIteratorState(toSPTEntry.edge, toSPTEntry.adjNode); // TODO: real edge at end of shortcut
-                potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
-                potentialAlternativeInfos.add(potentialAlternativeInfo);
-                return true;
-            }
-
-        });
-
-        Collections.sort(potentialAlternativeInfos, new Comparator<PotentialAlternativeInfo>() {
-            @Override
-            public int compare(PotentialAlternativeInfo o1, PotentialAlternativeInfo o2) {
-                return Double.compare(o1.weight, o2.weight);
-            }
-        });
+        potentialAlternativeInfos.sort(Comparator.comparingDouble(o -> o.weight));
 
         for (PotentialAlternativeInfo potentialAlternativeInfo : potentialAlternativeInfos) {
-            final List<EdgeIteratorState> ins = new ArrayList<>();
-            new ShortcutUnpacker(graph, new ShortcutUnpacker.Visitor() {
-                @Override
-                public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-                    EdgeIteratorState pups = edge.detach(false);
-                    ins.add(pups);
-                }
-            }, true).visitOriginalEdgesFwd(potentialAlternativeInfo.in.getEdge(), potentialAlternativeInfo.in.getAdjNode(), false, -1);
-            final List<EdgeIteratorState> outs = new ArrayList<>();
-            new ShortcutUnpacker(graph, new ShortcutUnpacker.Visitor() {
-                @Override
-                public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-                    EdgeIteratorState pups = edge.detach(true);
-                    outs.add(pups);
-                }
-            }, true).visitOriginalEdgesBwd(potentialAlternativeInfo.out.getEdge(), potentialAlternativeInfo.out.getAdjNode(), true, -1);
-
-            EdgeIteratorState tailSv = ins.get(ins.size()-1);
-            EdgeIteratorState headVt = outs.get(0);
-
-            int v = tailSv.getAdjNode();
-            assert (v == headVt.getBaseNode());
+            int v = potentialAlternativeInfo.v;
+            int tailSv = potentialAlternativeInfo.edgeIn;
 
             // Okay, now we want the s -> v -> t shortest via-path, so we route s -> v and v -> t
             // and glue them together.
             DijkstraBidirectionEdgeCHNoSOD svRouter = new DijkstraBidirectionEdgeCHNoSOD(graph);
-            final Path svPath = svRouter.calcPath(s, v, ANY_EDGE, tailSv.getEdge());
+            final Path suvPath = svRouter.calcPath(s, v, ANY_EDGE, tailSv);
             extraVisitedNodes += svRouter.getVisitedNodes();
 
+            int u = graph.getBaseGraph().getEdgeIteratorState(tailSv, v).getBaseNode();
+
             DijkstraBidirectionEdgeCHNoSOD vtRouter = new DijkstraBidirectionEdgeCHNoSOD(graph);
-            final Path vtPath = vtRouter.calcPath(v, t, headVt.getEdge(), ANY_EDGE);
-            Path path = concat(graph.getGraph().getBaseGraph(), svPath, vtPath);
+            final Path uvtPath = vtRouter.calcPath(u, t, tailSv, ANY_EDGE);
+            Path path = concat(graph.getBaseGraph(), suvPath, uvtPath);
             extraVisitedNodes += vtRouter.getVisitedNodes();
 
             double sharedDistanceWithShortest = sharedDistanceWithShortest(path);
@@ -176,7 +148,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
             // This is the final test we need: Discard paths that are not "locally shortest" around v.
             // So move a couple of nodes to the left and right from v on our path,
             // route, and check if v is on the shortest path.
-            final IntIndexedContainer svNodes = svPath.calcNodes();
+            final IntIndexedContainer svNodes = suvPath.calcNodes();
             int vIndex = svNodes.size() - 1;
             if (!tTest(path, vIndex))
                 continue;
@@ -264,21 +236,24 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         return edges.get(i - 1);
     }
 
-    private static Path concat(Graph graph, Path svPath, Path vtPath) {
-        assert svPath.isFound();
-        assert vtPath.isFound();
+    private static Path concat(Graph graph, Path suvPath, Path uvtPath) {
+        assert suvPath.isFound();
+        assert uvtPath.isFound();
         Path path = new Path(graph);
-        path.setFromNode(svPath.calcNodes().get(0));
-        for (EdgeIteratorState edge : svPath.calcEdges()) {
+        path.setFromNode(suvPath.calcNodes().get(0));
+        for (EdgeIteratorState edge : suvPath.calcEdges()) {
             path.addEdge(edge.getEdge());
         }
-        for (EdgeIteratorState edge : vtPath.calcEdges()) {
-            path.addEdge(edge.getEdge());
+        Iterator<EdgeIteratorState> uvtPathI = uvtPath.calcEdges().iterator();
+        if (!uvtPathI.hasNext()) { // presumably v == t, has been known to happen, no test yet
+            return suvPath;
         }
-        path.setEndNode(vtPath.getEndNode());
-        path.setWeight(svPath.getWeight() + vtPath.getWeight());
-        path.setDistance(svPath.getDistance() + vtPath.getDistance());
-        path.addTime(svPath.time + vtPath.time);
+        uvtPathI.next(); // skip u-v edge
+        uvtPathI.forEachRemaining(edge -> path.addEdge(edge.getEdge()));
+        path.setEndNode(uvtPath.getEndNode());
+        path.setWeight(suvPath.getWeight() + uvtPath.getWeight());
+        path.setDistance(suvPath.getDistance() + uvtPath.getDistance());
+        path.addTime(suvPath.time + uvtPath.time);
         path.setFound(true);
         return path;
     }
@@ -297,8 +272,8 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
     }
 
     public static class PotentialAlternativeInfo {
-        public RoutingCHEdgeIteratorState in;
-        public RoutingCHEdgeIteratorState out;
+        public int v;
+        public int edgeIn;
         double weight;
     }
 

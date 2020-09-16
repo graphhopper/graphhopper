@@ -18,16 +18,15 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.Surface;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.Surface;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
 
 import java.util.List;
 
-import static com.graphhopper.routing.profiles.Surface.*;
+import static com.graphhopper.routing.ev.Surface.*;
 
 public class OSMSurfaceParser implements TagParser {
 
@@ -50,19 +49,19 @@ public class OSMSurfaceParser implements TagParser {
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
         String surfaceTag = readerWay.getTag("surface");
         Surface surface = Surface.find(surfaceTag);
-        if (surface == OTHER && !Helper.isEmpty(surfaceTag)) {
-            if (surfaceTag.equals("metal"))
-                surface = PAVED;
-            else if (surfaceTag.equals("sett"))
-                surface = COBBLESTONE;
-            else if (surfaceTag.equals("wood"))
-                surface = UNPAVED;
-            else if (surfaceTag.equals("earth"))
-                surface = DIRT;
-        }
+        if (surface == MISSING)
+            return edgeFlags;
 
-        if (surface != OTHER)
-            surfaceEnc.setEnum(false, edgeFlags, surface);
+        if (surfaceTag.equals("metal"))
+            surface = PAVED;
+        else if (surfaceTag.equals("sett"))
+            surface = COBBLESTONE;
+        else if (surfaceTag.equals("wood"))
+            surface = UNPAVED;
+        else if (surfaceTag.equals("earth"))
+            surface = DIRT;
+
+        surfaceEnc.setEnum(false, edgeFlags, surface);
         return edgeFlags;
     }
 }

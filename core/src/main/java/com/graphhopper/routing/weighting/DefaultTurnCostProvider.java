@@ -18,8 +18,8 @@
 
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
@@ -77,12 +77,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     }
 
     @Override
-    public String getName() {
-        return toString();
-    }
-
-    @Override
     public String toString() {
-        return "" + uTurnCostsInt;
+        return "default_tcp_" + uTurnCostsInt;
     }
 }

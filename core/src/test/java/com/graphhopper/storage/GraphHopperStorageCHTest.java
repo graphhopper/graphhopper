@@ -18,13 +18,11 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
@@ -42,7 +40,7 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     private CHGraph getGraph(GraphHopperStorage ghStorage) {
-        return ghStorage.getCHGraph(ghStorage.getCHProfiles().get(0));
+        return ghStorage.getCHGraph(ghStorage.getCHConfigs().get(0).getName());
     }
 
     @Override
@@ -67,7 +65,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
                     ? new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())
                     : TurnCostProvider.NO_TURN_COST_PROVIDER;
             FastestWeighting weighting = new FastestWeighting(encoder, turnCostProvider);
-            graph.addCHGraph(new CHProfile(weighting, forEdgeBasedTraversal));
+            graph.addCHGraph(new CHConfig("p_" + encoder.toString(), weighting, forEdgeBasedTraversal));
         }
         return graph;
     }
@@ -109,7 +107,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void testPrios() {
         graph = createGHStorage();
         CHGraph g = getGraph(graph);
-        g.getNodeAccess().ensureNode(30);
+        g.getBaseGraph().getNodeAccess().ensureNode(30);
         graph.freeze();
 
         assertEquals(0, g.getLevel(10));
@@ -119,32 +117,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         g.setLevel(30, 100);
         assertEquals(100, g.getLevel(30));
-    }
-
-    @Test
-    public void testEdgeFilter() {
-        graph = createGHStorage();
-        graph.edge(0, 1, 10, true);
-        graph.edge(0, 2, 20, true);
-        graph.edge(2, 3, 30, true);
-        graph.edge(10, 11, 1, true);
-        graph.freeze();
-
-        CHGraph lg = getGraph(graph);
-        lg.shortcut(3, 4, PrepareEncoder.getScDirMask(), 0, NO_EDGE, NO_EDGE);
-        lg.shortcut(0, 4, PrepareEncoder.getScDirMask(), 0, NO_EDGE, NO_EDGE);
-        lg.setLevel(0, 1);
-        lg.setLevel(4, 1);
-
-        EdgeIterator iter = lg.createEdgeExplorer(new LevelEdgeFilter(lg)).setBaseNode(0);
-        assertEquals(1, GHUtility.count(iter));
-        iter = lg.createEdgeExplorer().setBaseNode(2);
-        assertEquals(2, GHUtility.count(iter));
-
-        int sc = lg.shortcut(5, 6, PrepareEncoder.getScDirMask(), 0, 1, 2);
-        CHEdgeIteratorState tmpIter = lg.getEdgeIteratorState(sc, 6);
-        assertEquals(1, tmpIter.getSkippedEdge1());
-        assertEquals(2, tmpIter.getSkippedEdge2());
     }
 
     @Test
@@ -161,7 +133,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         lg.shortcut(1, 2, PrepareEncoder.getScDirMask(), 0, 10, 11);
         lg.shortcut(1, 0, PrepareEncoder.getScFwdDir(), 0, 12, 13);
         lg.shortcut(3, 1, PrepareEncoder.getScFwdDir(), 0, 14, 15);
-        // create everytime a new independent iterator for disconnect method
+        // create every time a new independent iterator for disconnect method
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(1);
         iter.next();
         assertEquals(3, iter.getAdjNode());
@@ -232,7 +204,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
         EncodingManager em = EncodingManager.create(customEncoder);
         FastestWeighting weighting = new FastestWeighting(customEncoder);
-        GraphHopperStorage ghStorage = new GraphBuilder(em).setCHProfiles(CHProfile.nodeBased(weighting)).create();
+        GraphHopperStorage ghStorage = new GraphBuilder(em).setCHConfigs(CHConfig.nodeBased("p1", weighting)).create();
         ghStorage.edge(0, 2);
         ghStorage.freeze();
 
@@ -241,8 +213,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 1).getWeight(), 1e-3);
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 0).getWeight(), 1e-3);
-        assertEquals(100.123, ((CHEdgeIteratorState) GHUtility.getEdge(lg, 0, 1)).getWeight(), 1e-3);
-        assertEquals(100.123, ((CHEdgeIteratorState) GHUtility.getEdge(lg, 1, 0)).getWeight(), 1e-3);
+        assertEquals(100.123, GHUtility.getEdge(lg, 0, 1).getWeight(), 1e-3);
+        assertEquals(100.123, GHUtility.getEdge(lg, 1, 0).getWeight(), 1e-3);
 
         int sc2 = lg.shortcut(1, 0, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
         assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 0).getWeight(), 1e-3);
@@ -264,48 +236,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, 0, 1);
         CHEdgeIteratorState sc = chGraph.getEdgeIteratorState(2, 2);
         assertEquals(2.01, sc.getWeight(), 1.e-6);
-    }
-
-    @Test
-    public void testQueryGraph() {
-        graph = createGHStorage();
-        CHGraph chGraph = getGraph(graph);
-        NodeAccess na = chGraph.getNodeAccess();
-        na.setNode(0, 1.00, 1.00);
-        na.setNode(1, 1.02, 1.00);
-        na.setNode(2, 1.04, 1.00);
-
-        EdgeIteratorState edge1 = graph.edge(0, 1);
-        graph.edge(1, 2);
-        graph.freeze();
-        chGraph.shortcut(0, 1, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
-
-        QueryResult fromRes = createQR(1.004, 1.01, 0, edge1);
-        QueryResult toRes = createQR(1.019, 1.00, 0, edge1);
-        QueryGraph qGraph = QueryGraph.lookup(chGraph, fromRes, toRes);
-
-        Graph baseGraph = qGraph.getBaseGraph();
-        EdgeExplorer explorer = baseGraph.createEdgeExplorer();
-
-        assertTrue(chGraph.getNodes() < qGraph.getNodes());
-        assertEquals(baseGraph.getNodes(), qGraph.getNodes());
-
-        // traverse virtual edges and normal edges but no shortcuts!
-        assertEquals(GHUtility.asSet(fromRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(toRes.getClosestNode(), 2), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-
-        // get neighbors from virtual nodes
-        assertEquals(GHUtility.asSet(0, toRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(fromRes.getClosestNode())));
-        assertEquals(GHUtility.asSet(1, fromRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(toRes.getClosestNode())));
-    }
-
-    QueryResult createQR(double lat, double lon, int wayIndex, EdgeIteratorState edge) {
-        QueryResult res = new QueryResult(lat, lon);
-        res.setClosestEdge(edge);
-        res.setWayIndex(wayIndex);
-        res.setSnappedPosition(QueryResult.Position.EDGE);
-        res.calcSnappedPoint(Helper.DIST_PLANE);
-        return res;
     }
 
     @Test
@@ -486,23 +416,23 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         FlagEncoder tmpCar = new CarFlagEncoder();
         FlagEncoder tmpBike = new Bike2WeightFlagEncoder();
         EncodingManager em = EncodingManager.create(tmpCar, tmpBike);
-        List<CHProfile> chProfiles = Arrays.asList(
-                CHProfile.nodeBased(new FastestWeighting(tmpCar)),
-                CHProfile.nodeBased(new FastestWeighting(tmpBike)));
+        List<CHConfig> chConfigs = Arrays.asList(
+                CHConfig.nodeBased("p1", new FastestWeighting(tmpCar)),
+                CHConfig.nodeBased("p2", new FastestWeighting(tmpBike)));
         BooleanEncodedValue tmpCarAccessEnc = tmpCar.getAccessEnc();
 
-        graph = new GraphBuilder(em).setCHProfiles(chProfiles).create();
+        graph = new GraphBuilder(em).setCHConfigs(chConfigs).create();
         IntsRef edgeFlags = GHUtility.setProperties(em.createEdgeFlags(), tmpCar, 100, true, false);
         graph.edge(0, 1).setDistance(10).setFlags(GHUtility.setProperties(edgeFlags, tmpBike, 10, true, true));
         graph.edge(1, 2).setDistance(10).setFlags(edgeFlags);
 
         graph.freeze();
 
-        CHGraph carCHGraph = graph.getCHGraph(chProfiles.get(0));
+        CHGraph carCHGraph = graph.getCHGraph(chConfigs.get(0).getName());
         // enable forward directions for car
         int carSC02 = carCHGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 10, NO_EDGE, NO_EDGE);
 
-        CHGraph bikeCHGraph = graph.getCHGraph(chProfiles.get(1));
+        CHGraph bikeCHGraph = graph.getCHGraph(chConfigs.get(1).getName());
         // enable both directions for bike
         int bikeSC02 = bikeCHGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 
@@ -543,25 +473,25 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
     private void testLoadingWithWrongWeighting_throws(boolean edgeBased) {
         String edgeOrNode = edgeBased ? "edge" : "node";
-        // we start with one weighting
-        GraphHopperStorage ghStorage = createStorageWithWeightings("car|fastest|" + edgeOrNode);
+        // we start with one profile
+        GraphHopperStorage ghStorage = createStorageWithWeightings("p1|car|fastest|" + edgeOrNode);
         ghStorage.create(defaultSize);
         ghStorage.flush();
 
-        // but then configure another weighting and try to load the graph from disk -> error
-        GraphHopperStorage newGHStorage = createStorageWithWeightings("car|shortest|" + edgeOrNode);
+        // but then configure another profile and try to load the graph from disk -> error
+        GraphHopperStorage newGHStorage = createStorageWithWeightings("p2|car|shortest|" + edgeOrNode);
         newGHStorage.loadExisting();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLoadingWithExtraWeighting_throws() {
-        // we start with one weighting
-        GraphHopperStorage ghStorage = createStorageWithWeightings("car|fastest|node");
+        // we start with one profile
+        GraphHopperStorage ghStorage = createStorageWithWeightings("p|car|fastest|node");
         ghStorage.create(defaultSize);
         ghStorage.flush();
 
-        // but then add an additional weighting and try to load the graph from disk -> error
-        GraphHopperStorage newGHStorage = createStorageWithWeightings("car|fastest|node", "car|shortest|node");
+        // but then add an additional profile and try to load the graph from disk -> error
+        GraphHopperStorage newGHStorage = createStorageWithWeightings("p|car|fastest|node", "q|car|shortest|node");
         newGHStorage.loadExisting();
     }
 
@@ -579,64 +509,64 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         String edgeOrNode = edgeBased ? "edge" : "node";
         // we start with a gh storage with two ch weightings and flush it to disk
         GraphHopperStorage originalStorage = createStorageWithWeightings(
-                "car|fastest|" + edgeOrNode,
-                "car|shortest|" + edgeOrNode
+                "p1|car|fastest|" + edgeOrNode,
+                "p2|car|shortest|" + edgeOrNode
         );
         originalStorage.create(defaultSize);
         originalStorage.flush();
 
         // now we create a new storage but only use one of the weightings, which should be ok
-        GraphHopperStorage smallStorage = createStorageWithWeightings("car|fastest|" + edgeOrNode);
+        GraphHopperStorage smallStorage = createStorageWithWeightings("p1|car|fastest|" + edgeOrNode);
         smallStorage.loadExisting();
-        assertEquals(edgeBased ? 0 : 1, smallStorage.getCHProfiles(false).size());
-        assertEquals(edgeBased ? 1 : 0, smallStorage.getCHProfiles(true).size());
+        assertEquals(edgeBased ? 0 : 1, smallStorage.getCHConfigs(false).size());
+        assertEquals(edgeBased ? 1 : 0, smallStorage.getCHConfigs(true).size());
         smallStorage.flush();
 
         // now we create a new storage without any ch weightings, which should also be ok
         GraphHopperStorage smallerStorage = createStorageWithWeightings();
         smallerStorage.loadExisting();
-        assertEquals(0, smallerStorage.getCHProfiles(false).size());
-        assertEquals(0, smallerStorage.getCHProfiles(true).size());
+        assertEquals(0, smallerStorage.getCHConfigs(false).size());
+        assertEquals(0, smallerStorage.getCHConfigs(true).size());
         smallerStorage.flush();
 
         // now we create yet another storage that uses both weightings again, which still works
         GraphHopperStorage fullStorage = createStorageWithWeightings(
-                "car|fastest|" + edgeOrNode,
-                "car|shortest|" + edgeOrNode
+                "p1|car|fastest|" + edgeOrNode,
+                "p2|car|shortest|" + edgeOrNode
         );
         fullStorage.loadExisting();
-        assertEquals(edgeBased ? 0 : 2, fullStorage.getCHProfiles(false).size());
-        assertEquals(edgeBased ? 2 : 0, fullStorage.getCHProfiles(true).size());
+        assertEquals(edgeBased ? 0 : 2, fullStorage.getCHConfigs(false).size());
+        assertEquals(edgeBased ? 2 : 0, fullStorage.getCHConfigs(true).size());
         fullStorage.flush();
     }
 
     @Test
     public void testLoadingWithLessWeightings_nodeAndEdge_works() {
-        // we start with a gh storage with two node-based and one edge-based ch weighting and flush it to disk
+        // we start with a gh storage with two node-based and one edge-based ch profiles and flush it to disk
         GraphHopperStorage originalStorage = createStorageWithWeightings(
-                "car|fastest|node",
-                "car|shortest|node",
-                "car|shortest|edge");
+                "p1|car|fastest|node",
+                "p2|car|shortest|node",
+                "p3|car|shortest|edge");
         originalStorage.create(defaultSize);
         originalStorage.flush();
 
-        // now we create a new storage but only use the edge weighting, which should be ok
+        // now we create a new storage but only use the edge profile, which should be ok
         GraphHopperStorage edgeStorage = createStorageWithWeightings(
-                "car|shortest|edge"
+                "p3|car|shortest|edge"
         );
         edgeStorage.loadExisting();
-        assertEquals(0, edgeStorage.getCHProfiles(false).size());
-        assertEquals(1, edgeStorage.getCHProfiles(true).size());
+        assertEquals(0, edgeStorage.getCHConfigs(false).size());
+        assertEquals(1, edgeStorage.getCHConfigs(true).size());
         edgeStorage.flush();
 
-        // now we create yet another storage that uses one of the node and the edge weighting, which still works
+        // now we create yet another storage that uses one of the node and the edge profiles, which still works
         GraphHopperStorage mixedStorage = createStorageWithWeightings(
-                "car|fastest|node",
-                "car|shortest|edge"
+                "p1|car|fastest|node",
+                "p3|car|shortest|edge"
         );
         mixedStorage.loadExisting();
-        assertEquals(1, mixedStorage.getCHProfiles(false).size());
-        assertEquals(1, mixedStorage.getCHProfiles(true).size());
+        assertEquals(1, mixedStorage.getCHConfigs(false).size());
+        assertEquals(1, mixedStorage.getCHConfigs(true).size());
         mixedStorage.flush();
     }
 
@@ -647,13 +577,13 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         {
             try {
                 new GraphBuilder(encodingManager)
-                        .setCHProfiles(
-                                CHProfile.nodeBased("a", weighting),
-                                CHProfile.nodeBased("b", weighting),
-                                CHProfile.nodeBased("a", weighting)
+                        .setCHConfigs(
+                                CHConfig.nodeBased("a", weighting),
+                                CHConfig.nodeBased("b", weighting),
+                                CHConfig.nodeBased("a", weighting)
                         )
                         .create();
-                fail("creating mulitple profiles with the same name should be an error");
+                fail("creating multiple profiles with the same name should be an error");
             } catch (Exception e) {
                 assertTrue("unexpected error: " + e.getMessage(), e.getMessage().contains("a CHGraph already exists"));
             }
@@ -661,10 +591,10 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         // ... but using multiple profiles with different names is fine even when their properties/weighting are the same
         {
             GraphHopperStorage storage = new GraphBuilder(encodingManager)
-                    .setCHProfiles(
-                            CHProfile.nodeBased("a", weighting),
-                            CHProfile.nodeBased("b", weighting),
-                            CHProfile.nodeBased("c", weighting)
+                    .setCHConfigs(
+                            CHConfig.nodeBased("a", weighting),
+                            CHConfig.nodeBased("b", weighting),
+                            CHConfig.nodeBased("c", weighting)
                     )
                     .create();
             assertSame(storage.getCHGraph("a"), storage.getCHGraph("a"));
@@ -679,10 +609,9 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
     private GraphHopperStorage createStorageWithWeightings(String... profileStrings) {
         return new GraphBuilder(encodingManager)
-                .setCHProfileStrings(profileStrings)
+                .setCHConfigStrings(profileStrings)
                 .setDir(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE))
                 .withTurnCosts(true)
                 .build();
     }
-
 }

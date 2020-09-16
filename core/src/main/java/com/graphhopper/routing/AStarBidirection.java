@@ -24,10 +24,9 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
 /**
@@ -56,14 +55,14 @@ import com.graphhopper.util.Parameters;
  * @author Peter Karich
  * @author jansoe
  */
-public class AStarBidirection extends AbstractNonCHBidirAlgo implements RecalculationHook {
+public class AStarBidirection extends AbstractNonCHBidirAlgo {
     private BalancedWeightApproximator weightApprox;
     double stoppingCriterionOffset;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
-        defaultApprox.setDistanceCalc(Helper.DIST_PLANE);
+        defaultApprox.setDistanceCalc(DistancePlaneProjection.DIST_PLANE);
         setApproximation(defaultApprox);
     }
 
@@ -89,7 +88,7 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
     }
 
     @Override
-    protected SPTEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+    protected SPTEntry createEntry(EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
         int neighborNode = edge.getAdjNode();
         double heapWeight = weight + weightApprox.approximate(neighborNode, reverse);
         AStarEntry entry = new AStarEntry(edge.getEdge(), neighborNode, heapWeight, weight);
@@ -98,18 +97,11 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
     }
 
     @Override
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
+    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
         entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
         ((AStarEntry) entry).weightOfVisitedPath = weight;
         entry.parent = parent;
-    }
-
-    @Override
-    protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
-        // TODO performance: check if the node is already existent in the opposite direction
-        // then we could avoid the approximation as we already know the exact complete path!
-        return super.calcWeight(iter, currEdge, reverse);
     }
 
     public WeightApproximator getApproximation() {

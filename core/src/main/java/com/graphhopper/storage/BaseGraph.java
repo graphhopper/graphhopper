@@ -17,13 +17,10 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -31,7 +28,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Locale;
@@ -95,8 +91,6 @@ class BaseGraph implements Graph {
      * interval [0,n)
      */
     private int nodeCount;
-    // remove markers are not yet persistent!
-    private GHBitSet removedNodes;
     private int edgeEntryIndex, nodeEntryIndex;
     private long maxGeoRef;
     private boolean frozen = false;
@@ -113,23 +107,6 @@ class BaseGraph implements Graph {
         this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
         this.edgeAccess = new EdgeAccess(edges) {
-            @Override
-            EdgeIteratorState getEdgeProps(int edgeId, int adjNode, EdgeFilter edgeFilter) {
-                if (edgeId <= EdgeIterator.NO_EDGE)
-                    throw new IllegalStateException("edgeId invalid " + edgeId + ", " + this);
-
-                BaseGraph.EdgeIterable edge = createSingleEdge(edgeFilter);
-                if (edge.init(edgeId, adjNode))
-                    return edge;
-
-                // if edgeId exists but adjacent nodes do not match
-                return null;
-            }
-
-            private EdgeIterable createSingleEdge(EdgeFilter filter) {
-                return new EdgeIterable(BaseGraph.this, this, filter);
-            }
-
             @Override
             final int getEdgeRef(int nodeId) {
                 return nodes.getInt((long) nodeId * nodeEntryBytes + N_EDGE_REF);
@@ -345,7 +322,7 @@ class BaseGraph implements Graph {
 
     @Override
     public int getEdges() {
-        return getAllEdges().length();
+        return edgeCount;
     }
 
     @Override
@@ -534,7 +511,7 @@ class BaseGraph implements Graph {
      *
      * @return the updated iterator the properties where copied to.
      */
-    EdgeIteratorState copyProperties(EdgeIteratorState from, CommonEdgeIterator to) {
+    EdgeIteratorState copyProperties(EdgeIteratorState from, EdgeIteratorStateImpl to) {
         long edgePointer = edgeAccess.toPointer(to.getEdge());
         edgeAccess.writeFlags(edgePointer, from.getFlags());
 
@@ -558,10 +535,10 @@ class BaseGraph implements Graph {
 
         ensureNodeIndex(Math.max(nodeA, nodeB));
         int edgeId = edgeAccess.internalEdgeAdd(nextEdgeId(), nodeA, nodeB);
-        EdgeIterable iter = new EdgeIterable(this, edgeAccess, EdgeFilter.ALL_EDGES);
-        boolean ret = iter.init(edgeId, nodeB);
-        assert ret;
-        return iter;
+        EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, this);
+        boolean valid = edge.init(edgeId, nodeB);
+        assert valid;
+        return edge;
     }
 
     // for test only
@@ -589,7 +566,11 @@ class BaseGraph implements Graph {
         if (!edgeAccess.isInBounds(edgeId))
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds");
         checkAdjNodeBounds(adjNode);
-        return edgeAccess.getEdgeProps(edgeId, adjNode, EdgeFilter.ALL_EDGES);
+        EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, this);
+        if (edge.init(edgeId, adjNode))
+            return edge;
+        // if edgeId exists but adjacent nodes do not match
+        return null;
     }
 
     final void checkAdjNodeBounds(int adjNode) {
@@ -599,7 +580,7 @@ class BaseGraph implements Graph {
 
     @Override
     public EdgeExplorer createEdgeExplorer(EdgeFilter filter) {
-        return new EdgeIterable(this, edgeAccess, filter);
+        return new EdgeIteratorImpl(this, edgeAccess, filter);
     }
 
     @Override
@@ -658,185 +639,6 @@ class BaseGraph implements Graph {
         if (supportsTurnCosts()) {
             turnCostStorage.copyTo(clonedG.turnCostStorage);
         }
-
-        if (removedNodes == null)
-            clonedG.removedNodes = null;
-        else
-            clonedG.removedNodes = removedNodes.copyTo(new GHBitSetImpl());
-    }
-
-    protected void trimToSize() {
-        long nodeCap = (long) nodeCount * nodeEntryBytes;
-        nodes.trimTo(nodeCap);
-//        long edgeCap = (long) (edgeCount + 1) * edgeEntrySize;
-//        edges.trimTo(edgeCap * 4);
-    }
-
-    /**
-     * This methods disconnects all edges from removed nodes. It does no edge compaction. Then it
-     * moves the last nodes into the deleted nodes, where it needs to update the node ids in every
-     * edge.
-     */
-    void inPlaceNodeRemove(int removeNodeCount) {
-        // Prepare edge-update of nodes which are connected to deleted nodes
-        int toMoveNodes = getNodes();
-        int itemsToMove = 0;
-
-        // sorted map when we access it via keyAt and valueAt - see below!
-        final SparseIntIntArray oldToNewMap = new SparseIntIntArray(removeNodeCount);
-        GHBitSet toRemoveSet = new GHBitSetImpl(removeNodeCount);
-        removedNodes.copyTo(toRemoveSet);
-
-        if (removeNodeCount > getNodes() / 2.0)
-            LoggerFactory.getLogger(getClass()).warn("More than a half of the network should be removed!? "
-                    + "Nodes:" + getNodes() + ", remove:" + removeNodeCount);
-
-        EdgeExplorer delExplorer = createEdgeExplorer();
-        // create map of old node ids pointing to new ids
-        for (int removeNode = removedNodes.next(0);
-             removeNode >= 0;
-             removeNode = removedNodes.next(removeNode + 1)) {
-            EdgeIterator delEdgesIter = delExplorer.setBaseNode(removeNode);
-            while (delEdgesIter.next()) {
-                toRemoveSet.add(delEdgesIter.getAdjNode());
-            }
-
-            toMoveNodes--;
-            // move only nodes that are not removed
-            for (; toMoveNodes >= 0; toMoveNodes--) {
-                if (!removedNodes.contains(toMoveNodes))
-                    break;
-            }
-
-            if (toMoveNodes >= removeNode)
-                oldToNewMap.put(toMoveNodes, removeNode);
-
-            itemsToMove++;
-        }
-
-        EdgeIterable adjNodesToDelIter = (EdgeIterable) createEdgeExplorer();
-        // now similar process to disconnectEdges but only for specific nodes
-        // all deleted nodes could be connected to existing. remove the connections
-        for (int removeNode = toRemoveSet.next(0);
-             removeNode >= 0;
-             removeNode = toRemoveSet.next(removeNode + 1)) {
-            // remove all edges connected to the deleted nodes
-            adjNodesToDelIter.setBaseNode(removeNode);
-            long prevPointer = EdgeIterator.NO_EDGE;
-            while (adjNodesToDelIter.next()) {
-                int nodeId = adjNodesToDelIter.getAdjNode();
-                // already invalidated
-                if (!EdgeAccess.isInvalidNodeB(nodeId) && removedNodes.contains(nodeId)) {
-                    int edgeToRemove = adjNodesToDelIter.getEdge();
-                    long edgeToRemovePointer = edgeAccess.toPointer(edgeToRemove);
-                    edgeAccess.internalEdgeDisconnect(edgeToRemove, prevPointer, removeNode);
-                    edgeAccess.invalidateEdge(edgeToRemovePointer);
-                } else {
-                    prevPointer = adjNodesToDelIter.edgePointer;
-                }
-            }
-        }
-
-        GHBitSet toMoveSet = new GHBitSetImpl(removeNodeCount * 3);
-        EdgeExplorer movedEdgeExplorer = createEdgeExplorer();
-        // marks connected nodes to rewrite the edges
-        for (int i = 0; i < itemsToMove; i++) {
-            int oldI = oldToNewMap.keyAt(i);
-            EdgeIterator movedEdgeIter = movedEdgeExplorer.setBaseNode(oldI);
-            while (movedEdgeIter.next()) {
-                int nodeId = movedEdgeIter.getAdjNode();
-                if (EdgeAccess.isInvalidNodeB(nodeId))
-                    continue;
-
-                if (removedNodes.contains(nodeId))
-                    throw new IllegalStateException("shouldn't happen as the edge to the node "
-                            + nodeId + " should be already deleted. " + oldI);
-
-                toMoveSet.add(nodeId);
-            }
-        }
-
-        // move nodes into deleted nodes
-        for (int i = 0; i < itemsToMove; i++) {
-            int oldI = oldToNewMap.keyAt(i);
-            int newI = oldToNewMap.valueAt(i);
-            long newOffset = (long) newI * nodeEntryBytes;
-            long oldOffset = (long) oldI * nodeEntryBytes;
-            for (long j = 0; j < nodeEntryBytes; j += 4) {
-                nodes.setInt(newOffset + j, nodes.getInt(oldOffset + j));
-            }
-        }
-
-        // *rewrites* all edges connected to moved nodes
-        // go through all edges and pick the necessary <- this is easier to implement than
-        // a more efficient (?) breadth-first search
-        EdgeIterator iter = getAllEdges();
-        while (iter.next()) {
-            int nodeA = iter.getBaseNode();
-            int nodeB = iter.getAdjNode();
-            if (!toMoveSet.contains(nodeA) && !toMoveSet.contains(nodeB))
-                continue;
-
-            // now overwrite exiting edge with new node ids
-            int updatedA = oldToNewMap.get(nodeA);
-            if (updatedA < 0)
-                updatedA = nodeA;
-
-            int updatedB = oldToNewMap.get(nodeB);
-            if (updatedB < 0)
-                updatedB = nodeB;
-
-            // no need to rewrite flags or other properties as they are independent of the node order unlike in <= 0.11
-            int edgeId = iter.getEdge();
-            long edgePointer = edgeAccess.toPointer(edgeId);
-            int linkA = edgeAccess.getLinkA(edgePointer);
-            int linkB = edgeAccess.getLinkB(edgePointer);
-            edgeAccess.writeEdge(edgeId, updatedA, updatedB, linkA, linkB);
-        }
-
-        if (removeNodeCount >= nodeCount)
-            throw new IllegalStateException("graph is empty after in-place removal but was " + removeNodeCount);
-
-        // clear N_EDGE_REF
-        initNodeRefs(((long) nodeCount - removeNodeCount) * nodeEntryBytes, (long) nodeCount * nodeEntryBytes);
-
-        // we do not remove the invalid edges => edgeCount stays the same!
-        nodeCount -= removeNodeCount;
-
-        // health check
-        if (isTestingEnabled()) {
-            EdgeExplorer explorer = createEdgeExplorer();
-            iter = getAllEdges();
-            while (iter.next()) {
-                int base = iter.getBaseNode();
-                int adj = iter.getAdjNode();
-                String str = iter.getEdge()
-                        + ", r.contains(" + base + "):" + removedNodes.contains(base)
-                        + ", r.contains(" + adj + "):" + removedNodes.contains(adj)
-                        + ", tr.contains(" + base + "):" + toRemoveSet.contains(base)
-                        + ", tr.contains(" + adj + "):" + toRemoveSet.contains(adj)
-                        + ", base:" + base + ", adj:" + adj + ", nodeCount:" + nodeCount;
-                if (adj >= nodeCount)
-                    throw new RuntimeException("Adj.node problem with edge " + str);
-
-                if (base >= nodeCount)
-                    throw new RuntimeException("Base node problem with edge " + str);
-
-                try {
-                    explorer.setBaseNode(adj).toString();
-                } catch (Exception ex) {
-                    org.slf4j.LoggerFactory.getLogger(getClass()).error("adj:" + adj);
-                }
-                try {
-                    explorer.setBaseNode(base).toString();
-                } catch (Exception ex) {
-                    org.slf4j.LoggerFactory.getLogger(getClass()).error("base:" + base);
-                }
-            }
-            // access last node -> no error
-            explorer.setBaseNode(nodeCount - 1).toString();
-        }
-        removedNodes = null;
     }
 
     @Override
@@ -1027,13 +829,6 @@ class BaseGraph implements Graph {
         edges.setInt(edgePointer + E_NAME, stringIndexRef);
     }
 
-    GHBitSet getRemovedNodes() {
-        if (removedNodes == null)
-            removedNodes = new GHBitSetImpl(getNodes());
-
-        return removedNodes;
-    }
-
     private void ensureGeometry(long bytePos, int byteLength) {
         wayGeometry.ensureCapacity(bytePos + byteLength);
     }
@@ -1047,12 +842,12 @@ class BaseGraph implements Graph {
         return tmp;
     }
 
-    protected static class EdgeIterable extends CommonEdgeIterator implements EdgeExplorer, EdgeIterator {
+    protected static class EdgeIteratorImpl extends EdgeIteratorStateImpl implements EdgeExplorer, EdgeIterator {
         final EdgeFilter filter;
         int nextEdgeId;
 
-        public EdgeIterable(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
-            super(-1, edgeAccess, baseGraph);
+        public EdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
+            super(edgeAccess, baseGraph);
 
             if (filter == null)
                 throw new IllegalArgumentException("Instead null filter use EdgeFilter.ALL_EDGES");
@@ -1061,33 +856,6 @@ class BaseGraph implements Graph {
 
         final void setEdgeId(int edgeId) {
             this.nextEdgeId = this.edgeId = edgeId;
-        }
-
-        /**
-         * @return false if the edge has not a node equal to expectedAdjNode
-         */
-        final boolean init(int tmpEdgeId, int expectedAdjNode) {
-            if (!EdgeIterator.Edge.isValid(tmpEdgeId))
-                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + tmpEdgeId);
-            setEdgeId(tmpEdgeId);
-            edgePointer = edgeAccess.toPointer(tmpEdgeId);
-            baseNode = edgeAccess.getNodeA(edgePointer);
-            adjNode = edgeAccess.getNodeB(edgePointer);
-            if (EdgeAccess.isInvalidNodeB(adjNode))
-                throw new IllegalStateException("content of edgeId " + edgeId + " is marked as invalid - ie. the edge is already removed!");
-
-            // a next() call should return false
-            nextEdgeId = EdgeIterator.NO_EDGE;
-            if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE) {
-                reverse = false;
-                return true;
-            } else if (expectedAdjNode == baseNode) {
-                reverse = true;
-                baseNode = adjNode;
-                adjNode = expectedAdjNode;
-                return true;
-            }
-            return false;
         }
 
         final void _setBaseNode(int baseNode) {
@@ -1131,29 +899,22 @@ class BaseGraph implements Graph {
 
         @Override
         public EdgeIteratorState detach(boolean reverseArg) {
-            if (edgeId == nextEdgeId || !EdgeIterator.Edge.isValid(edgeId))
-                throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeId + " vs. next " + nextEdgeId + ")");
-
-            EdgeIteratorState iter = edgeAccess.getEdgeProps(edgeId, reverseArg ? baseNode : adjNode, filter);
-            assert iter != null;
-            if (reverseArg) {
-                // for #162
-                ((EdgeIterable) iter).reverse = !reverse;
-            }
-            return iter;
+            if (edgeId == nextEdgeId)
+                throw new IllegalStateException("call next before detaching (edgeId:" + edgeId + " vs. next " + nextEdgeId + ")");
+            return super.detach(reverseArg);
         }
     }
 
     /**
      * Include all edges of this storage in the iterator.
      */
-    protected static class AllEdgeIterator extends CommonEdgeIterator implements AllEdgesIterator {
+    protected static class AllEdgeIterator extends EdgeIteratorStateImpl implements AllEdgesIterator {
         public AllEdgeIterator(BaseGraph baseGraph) {
             this(baseGraph, baseGraph.edgeAccess);
         }
 
         private AllEdgeIterator(BaseGraph baseGraph, EdgeAccess edgeAccess) {
-            super(-1, edgeAccess, baseGraph);
+            super(edgeAccess, baseGraph);
         }
 
         @Override
@@ -1165,14 +926,11 @@ class BaseGraph implements Graph {
         public boolean next() {
             while (true) {
                 edgeId++;
-                edgePointer = (long) edgeId * edgeAccess.getEntryBytes();
                 if (edgeId >= baseGraph.edgeCount)
                     return false;
 
+                edgePointer = edgeAccess.toPointer(edgeId);
                 adjNode = edgeAccess.getNodeB(edgePointer);
-                // some edges are deleted and are marked via a negative node
-                if (EdgeAccess.isInvalidNodeB(adjNode))
-                    continue;
 
                 baseNode = edgeAccess.getNodeA(edgePointer);
                 freshFlags = false;
@@ -1202,12 +960,9 @@ class BaseGraph implements Graph {
         }
     }
 
-    /**
-     * Common private super class for AllEdgesIteratorImpl and EdgeIterable
-     */
-    static abstract class CommonEdgeIterator implements EdgeIteratorState {
+    static class EdgeIteratorStateImpl implements EdgeIteratorState {
         final BaseGraph baseGraph;
-        long edgePointer;
+        long edgePointer = -1;
         int baseNode;
         int adjNode;
         EdgeAccess edgeAccess;
@@ -1216,13 +971,35 @@ class BaseGraph implements Graph {
         boolean freshFlags;
         int edgeId = -1;
         private final IntsRef edgeFlags;
-        int chFlags;
 
-        public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
-            this.edgePointer = edgePointer;
+        public EdgeIteratorStateImpl(EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
             this.edgeFlags = new IntsRef(baseGraph.intsForFlags);
+        }
+
+        /**
+         * @return false if the edge has not a node equal to expectedAdjNode
+         */
+        final boolean init(int edgeId, int expectedAdjNode) {
+            if (!EdgeIterator.Edge.isValid(edgeId))
+                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + edgeId);
+            this.edgeId = edgeId;
+            edgePointer = edgeAccess.toPointer(edgeId);
+            baseNode = edgeAccess.getNodeA(edgePointer);
+            adjNode = edgeAccess.getNodeB(edgePointer);
+            freshFlags = false;
+
+            if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE) {
+                reverse = false;
+                return true;
+            } else if (expectedAdjNode == baseNode) {
+                reverse = true;
+                baseNode = adjNode;
+                adjNode = expectedAdjNode;
+                return true;
+            }
+            return false;
         }
 
         @Override
@@ -1405,6 +1182,20 @@ class BaseGraph implements Graph {
         public EdgeIteratorState setName(String name) {
             baseGraph.setName(edgePointer, name);
             return this;
+        }
+
+        @Override
+        public EdgeIteratorState detach(boolean reverseArg) {
+            if (!EdgeIterator.Edge.isValid(edgeId))
+                throw new IllegalStateException("call setEdgeId before detaching (edgeId:" + edgeId + ")");
+            EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, baseGraph);
+            boolean valid = edge.init(edgeId, reverseArg ? baseNode : adjNode);
+            assert valid;
+            if (reverseArg) {
+                // for #162
+                edge.reverse = !reverse;
+            }
+            return edge;
         }
 
         @Override

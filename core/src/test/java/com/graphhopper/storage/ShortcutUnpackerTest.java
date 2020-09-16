@@ -3,9 +3,10 @@ package com.graphhopper.storage;
 import com.carrotsearch.hppc.DoubleArrayList;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.ch.ShortcutUnpacker;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -48,10 +49,10 @@ public class ShortcutUnpackerTest {
         encoder = new CarFlagEncoder(5, 5, 10).setSpeedTwoDirections(true);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("car|fastest|" + (edgeBased ? "edge" : "node"))
+                .setCHConfigStrings("profile|car|fastest|" + (edgeBased ? "edge" : "node"))
                 .create();
         chGraph = graph.getCHGraph();
-        routingCHGraph = new RoutingCHGraphImpl(chGraph, chGraph.getCHProfile().getWeighting());
+        routingCHGraph = graph.getRoutingCHGraph("profile");
     }
 
     @Test

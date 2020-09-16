@@ -17,11 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.shapes.BBox;
-
 import java.io.*;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
@@ -35,9 +31,6 @@ import java.util.Map.Entry;
  * @author Peter Karich
  */
 public class Helper {
-    public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
-    public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
-    public static final AngleCalc ANGLE_CALC = new AngleCalc();
     public static final Charset UTF_CS = Charset.forName("UTF-8");
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
@@ -174,29 +167,6 @@ public class Helper {
         return "totalMB:" + getTotalMB() + ", usedMB:" + getUsedMB();
     }
 
-    public static int getUsedMBAfterGC() {
-        long before = getTotalGcCount();
-        // trigger gc
-        System.gc();
-        while (getTotalGcCount() == before) {
-            // wait for the gc to have completed
-        }
-        long result = (ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed() +
-                ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage().getUsed()) / (1024 * 1024);
-        return (int) result;
-    }
-
-    private static long getTotalGcCount() {
-        long sum = 0;
-        for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
-            long count = b.getCollectionCount();
-            if (count != -1) {
-                sum += count;
-            }
-        }
-        return sum;
-    }
-
     public static int getSizeOfObjectRef(int factor) {
         // pointer to class, flags, lock
         return factor * (4 + 4 + 4);
@@ -237,17 +207,6 @@ public class Helper {
             }
         }
         return false;
-    }
-
-    public static int calcIndexSize(BBox graphBounds) {
-        if (!graphBounds.isValid())
-            throw new IllegalArgumentException("Bounding box is not valid to calculate index size: " + graphBounds);
-
-        double dist = DIST_EARTH.calcDist(graphBounds.maxLat, graphBounds.minLon,
-                graphBounds.minLat, graphBounds.maxLon);
-        // convert to km and maximum is 50000km => 1GB
-        dist = Math.min(dist / 1000, 50000);
-        return Math.max(2000, (int) (dist * dist));
     }
 
     public static String pruneFileEnd(String file) {
@@ -485,5 +444,38 @@ public class Helper {
             sb.append(strings.get(i));
         }
         return sb.toString();
+    }
+
+    /**
+     * parses a string like [a,b,c]
+     */
+    public static List<String> parseList(String listStr) {
+        String trimmed = listStr.trim();
+        if (trimmed.length() < 2)
+            return Collections.emptyList();
+        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
+        List<String> result = new ArrayList<>();
+        for (String item : items) {
+            String s = item.trim();
+            if (!s.isEmpty()) {
+                result.add(s);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Produces a static hashcode for a string that is platform independent and still compatible to the default
+     * of openjdk. Do not use for performance critical applications.
+     *
+     * @see String#hashCode()
+     */
+    public static int staticHashCode(String str) {
+        int len = str.length();
+        int val = 0;
+        for (int idx = 0; idx < len; ++idx) {
+            val = 31 * val + str.charAt(idx);
+        }
+        return val;
     }
 }

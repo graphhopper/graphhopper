@@ -18,12 +18,14 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.Repeat;
-import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.*;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -33,9 +35,11 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +48,9 @@ import java.util.*;
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
+import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
+import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
 import static org.junit.Assert.*;
 
 /**
@@ -63,27 +70,23 @@ public class CHTurnCostTest {
     private EncodingManager encodingManager;
     private GraphHopperStorage graph;
     private TurnCostStorage turnCostStorage;
-    private List<CHProfile> chProfiles;
-    private CHProfile chProfile;
-    private CHGraph chGraph;
+    private List<CHConfig> chConfigs;
+    private CHConfig chConfig;
+    private RoutingCHGraph chGraph;
     private boolean checkStrict;
 
-    @Rule
-    public RepeatRule repeatRule = new RepeatRule();
-
-    @Before
+    @BeforeEach
     public void init() {
-        // its important to use @Before when using Repeat Rule!
         maxCost = 10;
         encoder = new CarFlagEncoder(5, 5, maxCost);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).build();
         turnCostStorage = graph.getTurnCostStorage();
-        chProfiles = createCHProfiles();
-        graph.addCHGraphs(chProfiles).create(1000);
+        chConfigs = createCHConfigs();
+        graph.addCHGraphs(chConfigs).create(1000);
         // the default CH profile with infinite u-turn costs, can be reset in tests that should run with finite u-turn
         // costs
-        chProfile = chProfiles.get(0);
+        chConfig = chConfigs.get(0);
         checkStrict = true;
     }
 
@@ -91,24 +94,23 @@ public class CHTurnCostTest {
      * Creates a list of distinct CHProfiles with different u-turn costs that can be used by the tests.
      * There is always a profile with infinite u-turn costs and one with u-turn-costs = 50.
      */
-    private List<CHProfile> createCHProfiles() {
-        Set<CHProfile> profileSet = new LinkedHashSet<>(5);
+    private List<CHConfig> createCHConfigs() {
+        Set<CHConfig> configs = new LinkedHashSet<>(5);
         // the first one is always the one with infinite u-turn costs
-        profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, INFINITE_U_TURN_COSTS))));
+        configs.add(CHConfig.edgeBased("p0", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, INFINITE_U_TURN_COSTS))));
         // this one we also always add
-        profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 50))));
+        configs.add(CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, 50))));
         // add more (distinct) profiles
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
-        while (profileSet.size() < 5) {
+        while (configs.size() < 5) {
             int uTurnCosts = 10 + rnd.nextInt(90);
-            profileSet.add(CHProfile.edgeBased(new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts))));
+            configs.add(CHConfig.edgeBased("p" + configs.size(), new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts))));
         }
-        return new ArrayList<>(profileSet);
+        return new ArrayList<>(configs);
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_linear() {
         // 2-1-0-3-4
         graph.edge(2, 1, 2, true);
@@ -150,8 +152,7 @@ public class CHTurnCostTest {
         compareCHWithDijkstra(1000, Arrays.asList(0, 1, 2, 3));
     }
 
-    @Test
-    @Repeat(times = 100)
+    @RepeatedTest(100)
     public void testFindPath_multipleInOutEdges_turnReplacementDifference() {
         //   0   3 - 4   8
         //    \ /     \ /
@@ -192,13 +193,13 @@ public class CHTurnCostTest {
         setRandomCostOrRestriction(6, 7, 8, rnd);
         setRandomCostOrRestriction(6, 7, 9, rnd);
 
-        RoutingAlgorithmFactory factory = prepareCH(Arrays.asList(6, 0, 1, 2, 8, 9, 10, 5, 3, 4, 7));
+        prepareCH(Arrays.asList(6, 0, 1, 2, 8, 9, 10, 5, 3, 4, 7));
         // run queries for all cases (target/source edge possibly restricted/has costs)
         checkStrict = false;
-        compareCHQueryWithDijkstra(factory, 2, 10);
-        compareCHQueryWithDijkstra(factory, 1, 10);
-        compareCHQueryWithDijkstra(factory, 2, 9);
-        compareCHQueryWithDijkstra(factory, 1, 9);
+        compareCHQueryWithDijkstra(2, 10);
+        compareCHQueryWithDijkstra(1, 10);
+        compareCHQueryWithDijkstra(2, 9);
+        compareCHQueryWithDijkstra(1, 9);
     }
 
     @Test
@@ -222,8 +223,8 @@ public class CHTurnCostTest {
         setRestriction(1, 5, 6);
         setRestriction(4, 7, 9);
 
-        RoutingAlgorithmFactory factory = prepareCH(Arrays.asList(6, 0, 1, 2, 8, 9, 10, 5, 3, 4, 7));
-        compareCHQueryWithDijkstra(factory, 2, 9);
+        prepareCH(Arrays.asList(6, 0, 1, 2, 8, 9, 10, 5, 3, 4, 7));
+        compareCHQueryWithDijkstra(2, 9);
     }
 
     @Test
@@ -239,8 +240,7 @@ public class CHTurnCostTest {
         compareCHWithDijkstra(100, contractionOrder);
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_simpleLoop() {
         //      2
         //     /|
@@ -262,8 +262,7 @@ public class CHTurnCostTest {
         checkPathUsingRandomContractionOrder(IntArrayList.from(0, 4, 3, 2, 4, 1), 7, 2, 0, 1);
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_singleDirectedLoop() {
         //  3 1-2
         //  | | |
@@ -290,8 +289,7 @@ public class CHTurnCostTest {
         checkPathUsingRandomContractionOrder(expectedPath, roadCosts, turnCosts, 3, 4);
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_singleLoop() {
         //  0   4
         //  |  /|
@@ -319,8 +317,7 @@ public class CHTurnCostTest {
         checkPathUsingRandomContractionOrder(expectedPath, roadCosts, turnCosts, 0, 6);
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_singleLoopWithNoise() {
         //  0~15~16~17              solid lines: paths contributing to shortest path from 0 to 14
         //  |        {              wiggly lines: extra paths to make it more complicated
@@ -375,8 +372,7 @@ public class CHTurnCostTest {
         checkPathUsingRandomContractionOrder(expectedPath, roadCosts, turnCosts, 0, 14);
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_complicatedGraphAndPath() {
         // In this test we try to find a rather complicated shortest path including a double loop and two p-turns
         // with several turn restrictions and turn costs.
@@ -516,8 +512,7 @@ public class CHTurnCostTest {
         checkPath(expectedPath, 10, 0, 5, 7, Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7));
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_highlyConnectedGraph_compareWithDijkstra() {
         // In this test we use a random contraction order and run many random routing queries. The results are checked
         // by comparing them to the results of a standard dijkstra search.
@@ -646,8 +641,8 @@ public class CHTurnCostTest {
         setRestriction(8, 4, 6);
         graph.freeze();
 
-        RoutingAlgorithmFactory factory = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8));
-        compareCHQueryWithDijkstra(factory, 0, 5);
+        prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8));
+        compareCHQueryWithDijkstra(0, 5);
     }
 
     @Test
@@ -666,11 +661,11 @@ public class CHTurnCostTest {
         graph.edge(3, 1, 100, false);
         setRestriction(0, 3, 1);
         graph.freeze();
-        chProfile = chProfiles.get(1);
-        RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(4, 0, 2, 3, 1));
-        Path path = pch.createAlgo(chGraph, AlgorithmOptions.start().build()).calcPath(0, 1);
+        chConfig = chConfigs.get(1);
+        prepareCH(Arrays.asList(4, 0, 2, 3, 1));
+        Path path = createAlgo().calcPath(0, 1);
         assertEquals(IntArrayList.from(0, 3, 4, 3, 1), path.calcNodes());
-        compareCHQueryWithDijkstra(pch, 0, 1);
+        compareCHQueryWithDijkstra(0, 1);
     }
 
     @Test
@@ -773,9 +768,9 @@ public class CHTurnCostTest {
         graph.edge(3, 4, 1, false);
         setRestriction(1, 2, 3);
         graph.freeze();
-        RoutingAlgorithmFactory pch = automaticPrepareCH();
-        compareCHQueryWithDijkstra(pch, 0, 3);
-        compareCHQueryWithDijkstra(pch, 1, 4);
+        automaticPrepareCH();
+        compareCHQueryWithDijkstra(0, 3);
+        compareCHQueryWithDijkstra(1, 4);
         automaticCompareCHWithDijkstra(100);
     }
 
@@ -793,12 +788,13 @@ public class CHTurnCostTest {
         setTurnCost(0, 2, 2, 3);
         setTurnCost(2, 2, 4, 4);
         graph.freeze();
-        RoutingAlgorithmFactory pch = automaticPrepareCH();
-        compareCHQueryWithDijkstra(pch, 0, 4);
+        automaticPrepareCH();
+        compareCHQueryWithDijkstra(0, 4);
     }
 
-    @Test
-    public void test_issue1593_full() {
+    @ParameterizedTest
+    @ValueSource(strings = {DIJKSTRA_BI, ASTAR_BI})
+    public void test_issue1593_full(String algo) {
         //      6   5
         //   1<-x-4-x-3
         //  ||    |
@@ -840,11 +836,9 @@ public class CHTurnCostTest {
             queryResults.add(index.findClosest(point.getLat(), point.getLon(), EdgeFilter.ALL_EDGES));
         }
 
-        RoutingAlgorithmFactory pch = automaticPrepareCH();
-        QueryGraph queryGraph = QueryGraph.lookup(chGraph, queryResults);
-        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED)
-                .build());
+        automaticPrepareCH();
+        QueryGraph queryGraph = QueryGraph.create(chGraph.getBaseGraph(), queryResults);
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(5, 6);
         // there should not be a path from 5 to 6, because first we cannot go directly 5-4-6, so we need to go left
         // to 8. then at 2 we cannot go on edge 1 because of another turn restriction, but we can go on edge 2 so we
@@ -854,8 +848,9 @@ public class CHTurnCostTest {
         assertFalse("there should not be a path, but found: " + path.calcNodes(), path.isFound());
     }
 
-    @Test
-    public void test_issue_1593_simple() {
+    @ParameterizedTest
+    @ValueSource(strings = {DIJKSTRA_BI, ASTAR_BI})
+    public void test_issue_1593_simple(String algo) {
         // 1
         // |
         // 3-0-x-5-4
@@ -876,29 +871,29 @@ public class CHTurnCostTest {
         // cannot go, 2-3-1
         setRestriction(edge1, edge0, 3);
         graph.freeze();
-        RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5));
-        assertEquals(5, chGraph.getOriginalEdges());
+        prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5));
+        assertEquals(5, chGraph.getBaseGraph().getEdges());
         assertEquals("expected two shortcuts: 3->5 and 5->3", 7, chGraph.getEdges());
         // there should be no path from 2 to 1, because of the turn restriction and because u-turns are not allowed
         assertFalse(findPathUsingDijkstra(2, 1).isFound());
-        compareCHQueryWithDijkstra(pch, 2, 1);
+        compareCHQueryWithDijkstra(2, 1);
 
         // we have to pay attention when there are virtual nodes: turning from the shortcut 3-5 onto the
         // virtual edge 5-x should be forbidden.
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
         QueryResult qr = index.findClosest(0.1, 0.15, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(chGraph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, qr);
         assertEquals("expected one virtual node", 1, queryGraph.getNodes() - chGraph.getNodes());
-        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED)
-                .build());
+        QueryRoutingCHGraph routingCHGraph = new QueryRoutingCHGraph(chGraph, queryGraph);
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(2, 1);
         assertFalse("no path should be found, but found " + path.calcNodes(), path.isFound());
     }
 
-    @Test
-    public void testRouteViaVirtualNode() {
+    @ParameterizedTest
+    @ValueSource(strings = {DIJKSTRA_BI, ASTAR_BI})
+    public void testRouteViaVirtualNode(String algo) {
         //   3
         // 0-x-1-2
         graph.edge(0, 1, 0, false);
@@ -907,24 +902,23 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 1, 0.02, 0.02);
         updateDistancesFor(graph, 2, 0.03, 0.03);
         graph.freeze();
-        RoutingAlgorithmFactory pch = automaticPrepareCH();
+        automaticPrepareCH();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
         QueryResult qr = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(chGraph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, qr);
         assertEquals(3, qr.getClosestNode());
         assertEquals(0, qr.getClosestEdge().getEdge());
-        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED)
-                .build());
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(0, 2);
         assertTrue("it should be possible to route via a virtual node, but no path found", path.isFound());
         assertEquals(IntArrayList.from(0, 3, 1, 2), path.calcNodes());
-        assertEquals(Helper.DIST_PLANE.calcDist(0.00, 0.00, 0.03, 0.03), path.getDistance(), 1.e-1);
+        assertEquals(DistancePlaneProjection.DIST_PLANE.calcDist(0.00, 0.00, 0.03, 0.03), path.getDistance(), 1.e-1);
     }
 
-    @Test
-    public void testRouteViaVirtualNode_withAlternative() {
+    @ParameterizedTest
+    @ValueSource(strings = {DIJKSTRA_BI, ASTAR_BI})
+    public void testRouteViaVirtualNode_withAlternative(String algo) {
         //   3
         // 0-x-1
         //  \  |
@@ -936,22 +930,22 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 1, 0.01, 0.02);
         updateDistancesFor(graph, 2, 0.00, 0.02);
         graph.freeze();
-        RoutingAlgorithmFactory pch = automaticPrepareCH();
+        automaticPrepareCH();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
         QueryResult qr = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(chGraph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, qr);
         assertEquals(3, qr.getClosestNode());
         assertEquals(0, qr.getClosestEdge().getEdge());
-        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED)
-                .build());
+        QueryRoutingCHGraph routingCHGraph = new QueryRoutingCHGraph(chGraph, queryGraph);
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(1, 0);
         assertEquals(IntArrayList.from(1, 3, 0), path.calcNodes());
     }
 
-    @Test
-    public void testFiniteUTurnCost_virtualViaNode() {
+    @ParameterizedTest
+    @ValueSource(strings = {DIJKSTRA_BI, ASTAR_BI})
+    public void testFiniteUTurnCost_virtualViaNode(String algo) {
         // if there is an extra virtual node it can be possible to do a u-turn that otherwise would not be possible
         // and so there can be a difference between CH and non-CH... therefore u-turns at virtual nodes are forbidden
         // 4->3->2->1-x-0
@@ -973,25 +967,24 @@ public class CHTurnCostTest {
         // not allowed to turn right at node 1 -> we have to take a u-turn at node 0 (or at the virtual node...)
         setRestriction(2, 1, 5);
         graph.freeze();
-        chProfile = chProfiles.get(1);
-        RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
+        chConfig = chConfigs.get(1);
+        prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
         GHPoint virtualPoint = new GHPoint(0.1, 0.35);
         QueryResult qr = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
-        QueryGraph chQueryGraph = QueryGraph.lookup(chGraph, qr);
+        QueryGraph chQueryGraph = QueryGraph.create(graph, qr);
         assertEquals(3, qr.getClosestEdge().getEdge());
-        RoutingAlgorithm chAlgo = pch.createAlgo(chQueryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED)
-                .build());
+        QueryRoutingCHGraph routingCHGraph = new QueryRoutingCHGraph(chGraph, chQueryGraph);
+        RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(4, 6);
         assertTrue(path.isFound());
         assertEquals(IntArrayList.from(4, 3, 2, 1, 0, 1, 5, 6), path.calcNodes());
 
         QueryResult qr2 = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(graph, qr2);
+        QueryGraph queryGraph = QueryGraph.create(graph, qr2);
         assertEquals(3, qr2.getClosestEdge().getEdge());
-        Weighting w = queryGraph.wrapWeighting(chProfile.getWeighting());
+        Weighting w = queryGraph.wrapWeighting(chConfig.getWeighting());
         Dijkstra dijkstra = new Dijkstra(queryGraph, w, TraversalMode.EDGE_BASED);
         Path dijkstraPath = dijkstra.calcPath(4, 6);
         assertEquals(IntArrayList.from(4, 3, 2, 1, 7, 0, 7, 1, 5, 6), dijkstraPath.calcNodes());
@@ -1005,20 +998,18 @@ public class CHTurnCostTest {
      * It often produces exotic conditions that are hard to anticipate beforehand.
      * when it fails use {@link GHUtility#printGraphForUnitTest} to extract the graph and reproduce the error.
      */
-    @Repeat(times = 10)
-    @Test
+    @RepeatedTest(10)
     public void testFindPath_random_compareWithDijkstra() {
         long seed = System.nanoTime();
         LOGGER.info("Seed for testFindPath_random_compareWithDijkstra: {}", seed);
         compareWithDijkstraOnRandomGraph(seed);
     }
 
-    @Repeat(times = 10)
-    @Test
+    @RepeatedTest(10)
     public void testFindPath_random_compareWithDijkstra_finiteUTurnCost() {
         long seed = System.nanoTime();
-        LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chProfile.getWeighting());
-        chProfile = chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1));
+        LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chConfig.getWeighting());
+        chConfig = chConfigs.get(1 + new Random(seed).nextInt(chConfigs.size() - 1));
         compareWithDijkstraOnRandomGraph(seed);
     }
 
@@ -1036,20 +1027,18 @@ public class CHTurnCostTest {
     /**
      * same as {@link #testFindPath_random_compareWithDijkstra()}, but using automatic node priority calculation
      */
-    @Repeat(times = 10)
-    @Test
+    @RepeatedTest(10)
     public void testFindPath_heuristic_compareWithDijkstra() {
         long seed = System.nanoTime();
         LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra: {}", seed);
         compareWithDijkstraOnRandomGraph_heuristic(seed);
     }
 
-    @Repeat(times = 10)
-    @Test
+    @RepeatedTest(10)
     public void testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost() {
         long seed = System.nanoTime();
-        LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chProfile.getWeighting());
-        chProfile = chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1));
+        LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost: {}, using weighting: {}", seed, chConfig.getWeighting());
+        chConfig = chConfigs.get(1 + new Random(seed).nextInt(chConfigs.size() - 1));
         compareWithDijkstraOnRandomGraph_heuristic(seed);
     }
 
@@ -1103,18 +1092,18 @@ public class CHTurnCostTest {
     }
 
     private Path findPathUsingDijkstra(int from, int to) {
-        Weighting w = graph.wrapWeighting(chProfile.getWeighting());
+        Weighting w = graph.wrapWeighting(chConfig.getWeighting());
         Dijkstra dijkstra = new Dijkstra(graph, w, TraversalMode.EDGE_BASED);
         return dijkstra.calcPath(from, to);
     }
 
     private Path findPathUsingCH(int from, int to, List<Integer> contractionOrder) {
-        RoutingAlgorithmFactory routingAlgorithmFactory = prepareCH(contractionOrder);
-        RoutingAlgorithm chAlgo = routingAlgorithmFactory.createAlgo(chGraph, AlgorithmOptions.start().build());
+        prepareCH(contractionOrder);
+        RoutingAlgorithm chAlgo = createAlgo();
         return chAlgo.calcPath(from, to);
     }
 
-    private RoutingAlgorithmFactory prepareCH(final List<Integer> contractionOrder) {
+    private void prepareCH(final List<Integer> contractionOrder) {
         LOGGER.debug("Calculating CH with contraction order {}", contractionOrder);
         graph.freeze();
         NodeOrderingProvider nodeOrderingProvider = new NodeOrderingProvider() {
@@ -1128,33 +1117,31 @@ public class CHTurnCostTest {
                 return contractionOrder.size();
             }
         };
-        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile)
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         ch.doWork();
-        chGraph = graph.getCHGraph(chProfile);
-        return ch.getRoutingAlgorithmFactory();
+        chGraph = graph.getRoutingCHGraph(chConfig.getName());
     }
 
-    private RoutingAlgorithmFactory automaticPrepareCH() {
+    private void automaticPrepareCH() {
         PMap pMap = new PMap();
         pMap.putObject(PERIODIC_UPDATES, 20);
         pMap.putObject(LAST_LAZY_NODES_UPDATES, 100);
         pMap.putObject(NEIGHBOR_UPDATES, 4);
         pMap.putObject(LOG_MESSAGES, 10);
-        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         ch.setParams(pMap);
         ch.doWork();
-        chGraph = graph.getCHGraph(chProfile);
-        return ch.getRoutingAlgorithmFactory();
+        chGraph = graph.getRoutingCHGraph(chConfig.getName());
     }
 
     private void automaticCompareCHWithDijkstra(int numQueries) {
         long seed = System.nanoTime();
         LOGGER.info("Seed used to create random routing queries: {}", seed);
         final Random rnd = new Random(seed);
-        RoutingAlgorithmFactory factory = automaticPrepareCH();
+        automaticPrepareCH();
         for (int i = 0; i < numQueries; ++i) {
-            compareCHQueryWithDijkstra(factory, rnd.nextInt(graph.getNodes()), rnd.nextInt(graph.getNodes()));
+            compareCHQueryWithDijkstra(rnd.nextInt(graph.getNodes()), rnd.nextInt(graph.getNodes()));
         }
     }
 
@@ -1162,15 +1149,15 @@ public class CHTurnCostTest {
         long seed = System.nanoTime();
         LOGGER.info("Seed used to create random routing queries: {}", seed);
         final Random rnd = new Random(seed);
-        RoutingAlgorithmFactory factory = prepareCH(contractionOrder);
+        prepareCH(contractionOrder);
         for (int i = 0; i < numQueries; ++i) {
-            compareCHQueryWithDijkstra(factory, rnd.nextInt(graph.getNodes()), rnd.nextInt(graph.getNodes()));
+            compareCHQueryWithDijkstra(rnd.nextInt(graph.getNodes()), rnd.nextInt(graph.getNodes()));
         }
     }
 
-    private void compareCHQueryWithDijkstra(RoutingAlgorithmFactory factory, int from, int to) {
+    private void compareCHQueryWithDijkstra(int from, int to) {
         Path dijkstraPath = findPathUsingDijkstra(from, to);
-        RoutingAlgorithm chAlgo = factory.createAlgo(chGraph, AlgorithmOptions.start().build());
+        RoutingAlgorithm chAlgo = createAlgo();
         Path chPath = chAlgo.calcPath(from, to);
         boolean algosDisagree = Math.abs(dijkstraPath.getWeight() - chPath.getWeight()) > 1.e-2;
         if (checkStrict) {
@@ -1187,6 +1174,11 @@ public class CHTurnCostTest {
                     "       ch: weight: " + chPath.getWeight() + ", distance: " + chPath.getDistance() +
                     ", time: " + chPath.getTime() + ", nodes: " + chPath.calcNodes());
         }
+    }
+
+    private RoutingAlgorithm createAlgo() {
+        // use dijkstra since we do not have coordinates in most tests
+        return new CHRoutingAlgorithmFactory(chGraph).createAlgo(new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
     }
 
     private List<Integer> getRandomIntegerSequence(int nodes) {

@@ -20,10 +20,12 @@ package com.graphhopper.routing;
 
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.lm.LMProfile;
+import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -31,10 +33,10 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Rule;
@@ -50,6 +52,7 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
 import static org.junit.Assert.fail;
 
 /**
@@ -68,15 +71,14 @@ public class DirectedRoutingTest {
     private final boolean prepareLM;
     private Directory dir;
     private GraphHopperStorage graph;
-    private CHProfile chProfile;
-    private LMProfile lmProfile;
-    private CHGraph chGraph;
+    private CHConfig chConfig;
+    private LMConfig lmConfig;
+    private RoutingCHGraph routingCHGraph;
     private FlagEncoder encoder;
     private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private Weighting weighting;
     private EncodingManager encodingManager;
-    private PrepareContractionHierarchies pch;
     private PrepareLandmarks lm;
 
     @Rule
@@ -122,10 +124,10 @@ public class DirectedRoutingTest {
         graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
-        chProfile = CHProfile.edgeBased(weighting);
+        chConfig = CHConfig.edgeBased("p1", weighting);
         // important: for LM preparation we need to use a weighting without turn costs #1960
-        lmProfile = new LMProfile(new FastestWeighting(encoder));
-        graph.addCHGraph(chProfile);
+        lmConfig = new LMConfig("c2", new FastestWeighting(encoder));
+        graph.addCHGraph(chConfig);
         graph.create(1000);
     }
 
@@ -135,29 +137,37 @@ public class DirectedRoutingTest {
             return;
         }
         if (prepareCH) {
-            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
             pch.doWork();
-            chGraph = graph.getCHGraph(chProfile);
+            routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, lmProfile, 16);
+            lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
             lm.setMaximumWeight(1000);
             lm.doWork();
         }
     }
 
     private BidirRoutingAlgorithm createAlgo() {
-        return createAlgo(prepareCH ? chGraph : graph);
+        return createAlgo(graph);
     }
 
     private BidirRoutingAlgorithm createAlgo(Graph graph) {
         switch (algo) {
             case ASTAR:
                 return new AStarBidirection(graph, graph.wrapWeighting(weighting), TraversalMode.EDGE_BASED);
-            case CH_DIJKSTRA:
-                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
-            case CH_ASTAR:
-                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
+            case CH_DIJKSTRA: {
+                CHRoutingAlgorithmFactory algoFactory = graph instanceof QueryGraph
+                        ? new CHRoutingAlgorithmFactory(new QueryRoutingCHGraph(routingCHGraph, (QueryGraph) graph))
+                        : new CHRoutingAlgorithmFactory(routingCHGraph);
+                return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, DIJKSTRA_BI));
+            }
+            case CH_ASTAR: {
+                CHRoutingAlgorithmFactory algoFactory = graph instanceof QueryGraph
+                        ? new CHRoutingAlgorithmFactory(new QueryRoutingCHGraph(routingCHGraph, (QueryGraph) graph))
+                        : new CHRoutingAlgorithmFactory(routingCHGraph);
+                return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
+            }
             case LM:
                 return (BidirRoutingAlgorithm) lm.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).traversalMode(TraversalMode.EDGE_BASED).build());
             default:
@@ -169,7 +179,6 @@ public class DirectedRoutingTest {
     @Repeat(times = 10)
     public void randomGraph() {
         final long seed = System.nanoTime();
-        System.out.println("random Graph seed: " + seed);
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
@@ -188,7 +197,7 @@ public class DirectedRoutingTest {
             Path path = createAlgo()
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             // do not check nodes, because there can be ambiguity when there are zero weight loops
-            strictViolations.addAll(comparePaths(refPath, path, source, target, false));
+            strictViolations.addAll(comparePaths(refPath, path, source, target, false, seed));
         }
         // sometimes there are multiple best paths with different distance/time, if this happens too often something
         // is wrong and we fail
@@ -196,7 +205,7 @@ public class DirectedRoutingTest {
             for (String strictViolation : strictViolations) {
                 System.out.println("strict violation: " + strictViolation);
             }
-            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
+            fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
         }
     }
 
@@ -207,7 +216,6 @@ public class DirectedRoutingTest {
     @Repeat(times = 10)
     public void randomGraph_withQueryGraph() {
         final long seed = System.nanoTime();
-        System.out.println("randomGraph_withQueryGraph seed: " + seed);
         final int numQueries = 50;
 
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
@@ -223,12 +231,8 @@ public class DirectedRoutingTest {
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
-
-            List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
-
-            QueryGraph chQueryGraph = QueryGraph.lookup(prepareCH ? chGraph : graph, chQueryResults);
-            QueryGraph queryGraph = QueryGraph.lookup(graph, queryResults);
+            QueryGraph queryGraph = QueryGraph.create(graph, queryResults);
 
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();
@@ -236,21 +240,21 @@ public class DirectedRoutingTest {
             int sourceOutEdge = getSourceOutEdge(tmpRnd1, source, queryGraph);
             int targetInEdge = getTargetInEdge(tmpRnd1, target, queryGraph);
             Random tmpRnd2 = new Random(seed);
-            int chSourceOutEdge = getSourceOutEdge(tmpRnd2, source, chQueryGraph);
-            int chTargetInEdge = getTargetInEdge(tmpRnd2, target, chQueryGraph);
+            int chSourceOutEdge = getSourceOutEdge(tmpRnd2, source, queryGraph);
+            int chTargetInEdge = getTargetInEdge(tmpRnd2, target, queryGraph);
 
             Path refPath = new DijkstraBidirectionRef(queryGraph, ((Graph) queryGraph).wrapWeighting(weighting), TraversalMode.EDGE_BASED)
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
-            Path path = createAlgo(chQueryGraph)
+            Path path = createAlgo(queryGraph)
                     .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
 
             // do not check nodes, because there can be ambiguity when there are zero weight loops
-            strictViolations.addAll(comparePaths(refPath, path, source, target, false));
+            strictViolations.addAll(comparePaths(refPath, path, source, target, false, seed));
         }
         // sometimes there are multiple best paths with different distance/time, if this happens too often something
         // is wrong and we fail
         if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
-            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
+            fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
         }
     }
 
@@ -262,14 +266,14 @@ public class DirectedRoutingTest {
         return result;
     }
 
-    private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes) {
+    private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes, long seed) {
         List<String> strictViolations = new ArrayList<>();
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
         if (Math.abs(refWeight - weight) > 1.e-2) {
             System.out.println("expected: " + refPath.calcNodes());
             System.out.println("given:    " + path.calcNodes());
-            fail("wrong weight: " + source + "->" + target + ", expected: " + refWeight + ", given: " + weight);
+            fail("wrong weight: " + source + "->" + target + ", expected: " + refWeight + ", given: " + weight + ", seed: " + seed);
         }
         if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
             strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
@@ -305,12 +309,6 @@ public class DirectedRoutingTest {
         EdgeIterator iter = explorer.setBaseNode(node);
         List<Integer> edgeIds = new ArrayList<>();
         while (iter.next()) {
-            if (iter instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) iter).isShortcut()) {
-                // skip shortcuts here so we get the same restricted edges for a normal query graph and a
-                // query graph that wraps a CH graph (provided that the rnd number generator is in the same
-                // state)!
-                continue;
-            }
             edgeIds.add(iter.getOrigEdgeFirst());
             edgeIds.add(iter.getOrigEdgeLast());
         }

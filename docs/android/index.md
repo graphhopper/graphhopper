@@ -69,15 +69,11 @@ The free offline map app [Cruiser](http://wiki.openstreetmap.org/wiki/Cruiser) i
 
 The [OSMBonusPack](https://github.com/MKergall/osmbonuspack) supports the GraphHopper Routing API via a [GraphHopperRoadManager](https://github.com/MKergall/osmbonuspack/wiki/WhichRoutingService) and also provides map tile integration for various providers.
 
-### GraphHopper Directions API
-
-The [GraphHopper Directions API Java client](https://github.com/graphhopper/directions-api-java-client/blob/master/README.md) supports fetching the route and instructions from official and custom servers.
-
-## Limitations
+## Notes
 
  * You have to create the graphhopper folder on your desktop and copy it to the Android storage.
 
- * [A memory bound a* algoritm](http://en.wikipedia.org/wiki/SMA*) is not yet implemented so you can use disableShortcuts only for small routes.
+ * [A memory bound a* algorithm](http://en.wikipedia.org/wiki/SMA*) is not yet implemented so you can use disableShortcuts only for small routes.
 
 ## Problems
 

@@ -1,6 +1,6 @@
 package com.graphhopper.coll;
 
-import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.routing.SPTEntry;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

@@ -19,8 +19,14 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHEntry;
 import com.graphhopper.routing.ch.EdgeBasedCHBidirPathExtractor;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHEdgeFilter;
+import com.graphhopper.storage.RoutingCHEdgeIteratorState;
+import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
@@ -29,31 +35,29 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  * @author easbar
  */
 public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo {
-    private final RoutingCHEdgeExplorer innerInExplorer;
-    private final RoutingCHEdgeExplorer innerOutExplorer;
+    private final EdgeExplorer innerInExplorer;
+    private final EdgeExplorer innerOutExplorer;
 
     public AbstractBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
         super(graph, TraversalMode.EDGE_BASED);
-        // the inner explorers will run on the base-(or base-query-)graph edges only
+        if (!graph.isEdgeBased()) {
+            throw new IllegalArgumentException("Edge-based CH algorithms only work with edge-based CH graphs");
+        }
+        // the inner explorers will run on the base-(or base-query-)graph edges only.
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
-        innerInExplorer = graph.createOriginalInEdgeExplorer();
-        innerOutExplorer = graph.createOriginalOutEdgeExplorer();
+        BooleanEncodedValue accessEnc = graph.getWeighting().getFlagEncoder().getAccessEnc();
+        innerInExplorer = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc));
+        innerOutExplorer = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc));
     }
 
     @Override
     protected void postInitFrom() {
-        // With CH the additionalEdgeFilter is the one that filters out edges leading or coming from higher rank nodes,
-        // i.e. LevelEdgeFilter, For the first step though we need all edges, so we need to ignore this filter.
-        // Using an arbitrary filter is not supported for CH anyway.
+        // We use the levelEdgeFilter to filter out edges leading or coming from lower rank nodes.
+        // For the first step though we need all edges, so we need to ignore this filter.
         if (fromOutEdge == ANY_EDGE) {
             fillEdgesFromUsingFilter(CHEdgeFilter.ALL_EDGES);
         } else {
-            fillEdgesFromUsingFilter(new CHEdgeFilter() {
-                @Override
-                public boolean accept(RoutingCHEdgeIteratorState edgeState) {
-                    return edgeState.getOrigEdgeFirst() == fromOutEdge;
-                }
-            });
+            fillEdgesFromUsingFilter(edgeState -> edgeState.getOrigEdgeFirst() == fromOutEdge);
         }
     }
 
@@ -62,12 +66,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         if (toInEdge == ANY_EDGE) {
             fillEdgesToUsingFilter(CHEdgeFilter.ALL_EDGES);
         } else {
-            fillEdgesToUsingFilter(new CHEdgeFilter() {
-                @Override
-                public boolean accept(RoutingCHEdgeIteratorState edgeState) {
-                    return edgeState.getOrigEdgeLast() == toInEdge;
-                }
-            });
+            fillEdgesToUsingFilter(edgeState -> edgeState.getOrigEdgeLast() == toInEdge);
         }
     }
 
@@ -89,15 +88,14 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
             }
         }
 
-        RoutingCHEdgeIterator iter = reverse ?
-                innerInExplorer.setBaseNode(entry.adjNode) :
-                innerOutExplorer.setBaseNode(entry.adjNode);
-
         // todo: for a-star it should be possible to skip bridge node check at the beginning of the search as long as
-        // minimum source-target distance lies above total sum of fwd+bwd path candidates.
+        // the minimum source-target distance lies above total sum of fwd+bwd path candidates.
+        EdgeIterator iter = reverse
+                ? innerInExplorer.setBaseNode(entry.adjNode)
+                : innerOutExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
-            final int edgeId = getOrigEdgeId(iter, !reverse);
-            int key = GHUtility.createEdgeKey(getOtherNode(edgeId, iter.getBaseNode()), iter.getBaseNode(), edgeId, !reverse);
+            final int edgeId = iter.getEdge();
+            int key = GHUtility.createEdgeKey(iter.getAdjNode(), iter.getBaseNode(), edgeId, !reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {
                 continue;
@@ -139,14 +137,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
 
     @Override
     protected boolean accept(RoutingCHEdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        final int incEdge = getIncomingEdge(currEdge);
-        final int prevOrNextEdgeId = getOrigEdgeId(edge, !reverse);
-        double turnWeight = reverse
-                ? graph.getTurnWeight(prevOrNextEdgeId, edge.getBaseNode(), incEdge)
-                : graph.getTurnWeight(incEdge, edge.getBaseNode(), prevOrNextEdgeId);
-        if (Double.isInfinite(turnWeight)) {
-            return false;
-        }
         return levelEdgeFilter == null || levelEdgeFilter.accept(edge);
     }
 

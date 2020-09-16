@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.EdgeExplorer;
@@ -90,7 +90,7 @@ public class PrepareCHEdgeIteratorImpl implements PrepareCHEdgeExplorer, Prepare
      *                   do the full computation)
      */
     private double getOrigEdgeWeight(boolean reverse, boolean needWeight) {
-        // todo: for #1776 move the access check into the weighting
+        // todo: for #1835 move the access check into the weighting
         final boolean access = reverse
                 ? chIterator.getReverse(accessEnc)
                 : chIterator.get(accessEnc);

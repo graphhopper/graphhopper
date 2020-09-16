@@ -35,6 +35,12 @@ graphhopper:
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
   #   in seconds, so for example it does not work with shortest weighting.
+  # - custom_model_file: when you specified "weighting: custom" you need to set a yaml file that defines the custom_model.
+  #   If you want an empty model you can also set "custom_model_file: empty".
+  #
+  #   For more information about profiles and especially custom profiles have a look into the documentation
+  #   at docs/core/profiles.md or the examples under web/src/test/resources/com/graphhopper/http/resources/ or
+  #   the CustomWeighting class for the raw details.
   #
   # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
   # profiles (see below). Otherwise you should at least limit the number of `routing.max_visited_nodes`.
@@ -86,6 +92,19 @@ graphhopper:
   # graph.elevation.dataaccess: RAM_STORE
 
 
+  # To enable bilinear interpolation when sampling elevation at points (default uses nearest neighbor):
+  # graph.elevation.interpolate: bilinear
+
+
+  # To increase elevation profile resolution, use the following two parameters to tune the extra resolution you need
+  # against the additional storage space used for edge geometries. You should enable bilinear interpolation when using
+  # these features (see #1953 for details).
+  # - first, set the distance (in meters) at which elevation samples should be taken on long edges
+  # graph.elevation.long_edge_sampling_distance: 60
+  # - second, set the elevation tolerance (in meters) to use when simplifying polylines since the default ignores
+  #   elevation and will remove the extra points that long edge sampling added
+  # graph.elevation.way_point_max_distance: 10
+
 
   #### Speed, hybrid and flexible mode ####
 
@@ -101,11 +120,11 @@ graphhopper:
   # the default worked for you.
   # prepare.lm.threads: 1
 
-
-  # avoid being stuck in a (oneway) subnetwork, see https://discuss.graphhopper.com/t/93
+  # In many cases the road network consists of independent components without any routes going in between. In
+  # the most simple case you can imagine an island without a bridge or ferry connection. The following parameter
+  # allows setting a minimum size (number of nodes) for such detached components. This can be used to reduce the number
+  # of cases where a connection between locations might not be found.
   prepare.min_network_size: 200
-  prepare.min_one_way_network_size: 200
-
 
 
   ##### Routing #####
@@ -170,7 +189,7 @@ graphhopper:
 #
 # assets:
 #  overrides:
-#    /maps: web/src/main/resources/assets/
+#    /maps: web/target/classes/assets/
 
 # Dropwizard server configuration
 server:

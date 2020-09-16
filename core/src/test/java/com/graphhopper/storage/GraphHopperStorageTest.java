@@ -18,8 +18,8 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
@@ -187,19 +187,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void testEnsureSize() {
-        Directory dir = new RAMDirectory();
-        graph = newGHStorage(dir, false).create(defaultSize);
-        int roughEdgeRowLength = 4 * 8;
-        int testIndex = dir.find("edges", DAType.RAM_INT).getSegmentSize() * 3 / roughEdgeRowLength;
-        // we need a big node index to trigger multiple segments, but low enough to avoid OOM
-        graph.edge(0, testIndex, 10, true);
-
-        // test if optimize works without error
-        graph.optimize();
-    }
-
-    @Test
     public void testBigDataEdge() {
         Directory dir = new RAMDirectory();
         GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false);
@@ -310,9 +297,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         // load without configured FlagEncoders
         GraphHopper hopper = new GraphHopper();
-        hopper.setProfiles(Collections.singletonList(new ProfileConfig("fastest_car_node").setVehicle("car").setWeighting("fastest")));
+        hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         if (ch) {
-            hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("fastest_car_node"));
+            hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
         }
         assertTrue(hopper.load(defaultGraphLoc));
         graph = hopper.getGraphHopperStorage();
@@ -323,9 +310,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         // load via explicitly configured FlagEncoders
         hopper = new GraphHopper()
                 .setEncodingManager(encodingManager)
-                .setProfiles(Collections.singletonList(new ProfileConfig("fastest_car_node").setVehicle("car").setWeighting("fastest")));
+                .setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         if (ch) {
-            hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("fastest_car_node"));
+            hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
         }
         assertTrue(hopper.load(defaultGraphLoc));
         graph = hopper.getGraphHopperStorage();

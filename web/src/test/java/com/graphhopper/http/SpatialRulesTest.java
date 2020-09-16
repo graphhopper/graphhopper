@@ -18,7 +18,7 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -58,7 +58,7 @@ public class SpatialRulesTest {
                 putObject("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new ProfileConfig("profile").setVehicle("car").setWeighting("fastest")));
+                setProfiles(Collections.singletonList(new Profile("profile").setVehicle("car").setWeighting("fastest")));
         return config;
     }
 

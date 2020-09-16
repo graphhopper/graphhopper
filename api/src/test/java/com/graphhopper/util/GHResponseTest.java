@@ -18,11 +18,10 @@
 package com.graphhopper.util;
 
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class GHResponseTest {
@@ -35,7 +34,7 @@ public class GHResponseTest {
     public void testHasNoErrorIfEmpty() throws Exception {
         assertFalse(new GHResponse().hasErrors());
         GHResponse rsp = new GHResponse();
-        rsp.add(new PathWrapper());
+        rsp.add(new ResponsePath());
         assertFalse(rsp.hasErrors());
     }
 }

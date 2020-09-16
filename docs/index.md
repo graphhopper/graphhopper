@@ -32,7 +32,7 @@ The web module provides a web API for other programming languages as well as sta
 #### Configuration
 
 You can configure several aspects either programmatically or just via a [configuration](../config-example.yml).
-
+The configuration of routing profiles is documented [here](./core/profiles.md).
 The elevation configuration is separately documented [here](./core/elevation.md).
 
 ---
@@ -63,13 +63,12 @@ Various topics are explained in more detail separately:
  * [Spatial Rules](./core/spatial-rules.md): Instruction on how to use and create new SpatialRules. SpatialRules are used to enforce country-specific routing rules.
  * [Turn Restrictions](./core/turn-restrictions.md): Details on how to enable and use turn restrictions.
  * [Isochrone generation in Java](./isochrone/java.md): Instruction on how to create isochrones using the low-level Java API.
- * [Change Graph](./core/change-graph.md): Details about changing values of the graph without restarting GraphHopper.
  * [Postgis query script](../core/files/postgis)
 
 
 #### Other links
 
- * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search enginge in your browser.
+ * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search engine in your browser.
  * [Embed GraphHopper on your website](https://github.com/karussell/graphhopper-embed-form): A small code snippet on how to integrate GraphHopper Maps in your web site like a contact form
 
 #### Android
