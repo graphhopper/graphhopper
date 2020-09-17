@@ -115,35 +115,12 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     }
 
     @Override
-    protected void runAlgo() {
-        super.runAlgo();
-//        counter++;
-//        fromMapSizeSum += bestWeightMapFrom.size();
-//        toMapSizeSum += bestWeightMapTo.size();
-//        fromQueueSizeSum += pqOpenSetFrom.size();
-//        toQueueSizeSum += pqOpenSetTo.size();
-//        System.out.println("add: " + add + ", update: " + update + ", poll: " + poll);
-//        System.out.println("addW: " + addWatch.getSeconds() + ", updateW: " + updateWatch.getSeconds() + ", pollW: " + pollWatch.getSeconds());
-//        System.out.println("prio size from:" + fromQueueSizeSum / (float) counter + ", to:" + toQueueSizeSum / (float) counter);
-//        System.out.println("map  size from:" + fromMapSizeSum / (float) counter + ", to:" + toMapSizeSum / (float) counter);
-
-        // prio size 4k to 5k
-        // mapp size from:140k bis 224k
-        // count add: 70mio, update: 5mio, poll: 70mio
-        // time  add: 1.0s,   update: 1.3s, poll: 5.4s
-        // why is polling so slow!?
-    }
-
-    @Override
     boolean fillEdgesFrom() {
         if (pqOpenSetFrom.isEmpty()) {
             return false;
         }
-//        pollWatch.start();
         currFrom = pqOpenSetFrom.poll();
-//        pollWatch.stop();
         visitedCountFrom++;
-//        poll++;
         if (fromEntryCanBeSkipped()) {
             return true;
         }
@@ -160,11 +137,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (pqOpenSetTo.isEmpty()) {
             return false;
         }
-//        pollWatch.start();
         currTo = pqOpenSetTo.poll();
-//        pollWatch.stop();
         visitedCountTo++;
-//        poll++;
         if (toEntryCanBeSkipped()) {
             return true;
         }
@@ -175,9 +149,6 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, true);
         return true;
     }
-
-//    static StopWatch pollWatch = new StopWatch(), addWatch = new StopWatch(), updateWatch = new StopWatch();
-//    static int counter = 0, poll = 0, update = 0, add = 0, fromMapSizeSum, toMapSizeSum, fromQueueSizeSum, toQueueSizeSum;
 
     private void fillEdges(SPTEntry currEdge, GHPriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
