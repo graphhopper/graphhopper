@@ -200,6 +200,7 @@ public class CHPreparationGraph {
 
     public void prepareForContraction() {
         checkNotReady();
+        prepareEdges.trimToSize();
         origGraph = edgeBased ? origGraphBuilder.build() : null;
         origGraphBuilder = null;
         ready = true;

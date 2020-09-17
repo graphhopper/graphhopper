@@ -122,4 +122,11 @@ class SplitArray2D<T> {
         mids[n] = 0;
     }
 
+    void trimToSize() {
+        for (int n = 0; n < data.length; n++) {
+            if (data[n] != null)
+                data[n] = Arrays.copyOf(data[n], sizes[n]);
+        }
+    }
+
 }
