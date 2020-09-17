@@ -59,21 +59,6 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo {
         return entry;
     }
 
-    @Override
-    protected void updateEntry(SPTEntry entry, int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge;
-        entry.weight = weight + weightApprox.approximate(adjNode, reverse);
-        ((AStar.AStarEntry) entry).weightOfVisitedPath = weight;
-        entry.parent = parent;
-    }
-
-    @Override
-    protected double calcWeight(RoutingCHEdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
-        // TODO performance: check if the node is already existent in the opposite direction
-        // then we could avoid the approximation as we already know the exact complete path!
-        return super.calcWeight(iter, currEdge, reverse);
-    }
-
     public WeightApproximator getApproximation() {
         return weightApprox.getApproximation();
     }

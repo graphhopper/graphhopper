@@ -41,14 +41,6 @@ public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoS
     }
 
     @Override
-    protected void updateEntry(SPTEntry entry, int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge;
-        ((CHEntry) entry).incEdge = incEdge;
-        entry.weight = weight;
-        entry.parent = parent;
-    }
-
-    @Override
     public String getName() {
         return "dijkstrabi|ch|edge_based|no_sod";
     }
