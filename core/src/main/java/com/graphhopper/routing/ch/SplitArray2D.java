@@ -33,6 +33,7 @@ class SplitArray2D<T> {
     private static final int GROW_FACTOR = 2;
     private final int initialSubArrayCapacity;
     private final Object[][] data;
+    // todonow: mids/sizes can/should be combined into a single int to save some memory
     private final int[] mids;
     private final int[] sizes;
 

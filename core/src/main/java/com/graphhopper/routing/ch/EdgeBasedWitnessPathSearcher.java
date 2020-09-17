@@ -87,8 +87,7 @@ public class EdgeBasedWitnessPathSearcher {
     private double[] weights;
     private int[] prepareEdges;
     private int[] parents;
-    private int[] adjNodes;
-    private boolean[] isPathToCenters;
+    private int[] adjNodesAndIsPathToCenters;
     private IntObjectMap<PrepareCHEntry> initialEntryParents;
     private IntArrayList changedEdges;
     private IntFloatBinaryHeap dijkstraHeap;
@@ -173,7 +172,7 @@ public class EdgeBasedWitnessPathSearcher {
         while (inIter.next()) {
             final int edgeKey = GHUtility.reverseEdgeKey(inIter.getOrigEdgeKeyLast());
             if (EdgeIterator.Edge.isValid(prepareEdges[edgeKey])) {
-                boolean isZeroWeightLoop = parents[edgeKey] >= 0 && targetNode == adjNodes[parents[edgeKey]] &&
+                boolean isZeroWeightLoop = parents[edgeKey] >= 0 && targetNode == getAdjNode(parents[edgeKey]) &&
                         weights[edgeKey] - weights[parents[edgeKey]] <= MAX_ZERO_WEIGHT_LOOP;
                 if (!isZeroWeightLoop) {
                     // we may not update the best path if we are dealing with a zero weight loop here, because when a
@@ -203,16 +202,16 @@ public class EdgeBasedWitnessPathSearcher {
             currentBatchStats.numPolledEdges++;
             totalStats.numPolledEdges++;
 
-            if (isPathToCenters[currKey]) {
+            if (isPathToCenter(currKey)) {
                 numPathsToCenter--;
             }
 
             // after a certain amount of edges has been settled we only expand entries that might yield a bridge-path
-            if (numSettledEdges > maxSettledEdges && !isPathToCenters[currKey]) {
+            if (numSettledEdges > maxSettledEdges && !isPathToCenter(currKey)) {
                 continue;
             }
 
-            final int fromNode = adjNodes[currKey];
+            final int fromNode = getAdjNode(currKey);
             PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(fromNode);
             while (iter.next()) {
                 double edgeWeight = iter.getWeight() + calcTurnWeight(GHUtility.getEdgeFromEdgeKey(currKey),
@@ -221,7 +220,7 @@ public class EdgeBasedWitnessPathSearcher {
                 if (isInfinite(weight)) {
                     continue;
                 }
-                boolean isPathToCenter = isPathToCenters[currKey] && iter.getAdjNode() == centerNode;
+                boolean isPathToCenter = isPathToCenter(currKey) && iter.getAdjNode() == centerNode;
                 boolean isZeroWeightLoop = fromNode == targetNode && edgeWeight <= MAX_ZERO_WEIGHT_LOOP;
 
                 // dijkstra expansion: add or update current entries
@@ -235,7 +234,7 @@ public class EdgeBasedWitnessPathSearcher {
                     }
                 } else if (weight < weights[key]
                         // special case of a witness path with equal weight -> rather take this than the bridge path
-                        || (weight == weights[key] && iter.getAdjNode() == targetNode && !isPathToCenters[currKey])) {
+                        || (weight == weights[key] && iter.getAdjNode() == targetNode && !isPathToCenter(currKey))) {
                     updateEntry(key, iter, weight, currKey, isPathToCenter);
                     dijkstraHeap.update(weight, key);
                     if (!isZeroWeightLoop) {
@@ -271,6 +270,25 @@ public class EdgeBasedWitnessPathSearcher {
         }
     }
 
+    private void setAdjNodeAndPathToCenter(int key, int adjNode, boolean isPathToCenter) {
+        adjNodesAndIsPathToCenters[key] = (adjNode << 1) + (isPathToCenter ? 1 : 0);
+    }
+
+    private int getAdjNode(int key) {
+        return (adjNodesAndIsPathToCenters[key] >> 1);
+    }
+
+    private void setPathToCenter(int key, boolean isPathToCenter) {
+        if (isPathToCenter)
+            adjNodesAndIsPathToCenters[key] |= 0b1;
+        else
+            adjNodesAndIsPathToCenters[key] &= ~0b1;
+    }
+
+    private boolean isPathToCenter(int key) {
+        return (adjNodesAndIsPathToCenters[key] & 0b01) == 0b01;
+    }
+
     public String getStatisticsString() {
         return "last batch: " + currentBatchStats.toString() + " total: " + totalStats.toString();
     }
@@ -295,8 +313,7 @@ public class EdgeBasedWitnessPathSearcher {
         weights = null;
         prepareEdges = null;
         parents = null;
-        adjNodes = null;
-        isPathToCenters = null;
+        adjNodesAndIsPathToCenters = null;
         initialEntryParents = null;
         changedEdges.release();
         dijkstraHeap = null;
@@ -312,11 +329,9 @@ public class EdgeBasedWitnessPathSearcher {
         parents = new int[numEntries];
         Arrays.fill(parents, NO_NODE);
 
-        adjNodes = new int[numEntries];
-        Arrays.fill(adjNodes, NO_NODE);
-
-        isPathToCenters = new boolean[numEntries];
-        Arrays.fill(isPathToCenters, false);
+        adjNodesAndIsPathToCenters = new int[numEntries];
+        // need bit shift, see getAdjNode(int)
+        Arrays.fill(adjNodesAndIsPathToCenters, NO_NODE << 1);
     }
 
     private void initCollections() {
@@ -347,10 +362,9 @@ public class EdgeBasedWitnessPathSearcher {
             if (!EdgeIterator.Edge.isValid(prepareEdges[key])) {
                 // add new initial entry
                 prepareEdges[key] = outIter.getPrepareEdge();
-                adjNodes[key] = adjNode;
                 weights[key] = weight;
                 parents[key] = parentKey;
-                isPathToCenters[key] = isPathToCenter;
+                setAdjNodeAndPathToCenter(key, adjNode, isPathToCenter);
                 initialEntryParents.put(parentKey, parent);
                 changedEdges.add(key);
             } else if (weight < weights[key]) {
@@ -359,7 +373,7 @@ public class EdgeBasedWitnessPathSearcher {
                 prepareEdges[key] = outIter.getPrepareEdge();
                 weights[key] = weight;
                 parents[key] = parentKey;
-                isPathToCenters[key] = isPathToCenter;
+                setPathToCenter(key, isPathToCenter);
                 initialEntryParents.put(parentKey, parent);
             }
         }
@@ -367,7 +381,7 @@ public class EdgeBasedWitnessPathSearcher {
         // now that we know which entries are actually needed we add them to the heap
         for (int i = 0; i < changedEdges.size(); ++i) {
             int key = changedEdges.get(i);
-            if (isPathToCenters[key]) {
+            if (isPathToCenter(key)) {
                 numPathsToCenter++;
             }
             dijkstraHeap.insert(weights[key], key);
@@ -408,12 +422,12 @@ public class EdgeBasedWitnessPathSearcher {
     private void updateBestPath(int targetNode, int targetEdge, int edgeKey) {
         // whenever we hit the target node we update the best path *if* it allows turning onto the target edge
         // less costly than the currently best path
-        if (adjNodes[edgeKey] == targetNode) {
+        if (getAdjNode(edgeKey) == targetNode) {
             double totalWeight = weights[edgeKey] + calcTurnWeight(GHUtility.getEdgeFromEdgeKey(edgeKey), targetNode, targetEdge);
             // there is a path to the target so we know that there must be some parent. therefore a negative parent key
             // means that the parent is a root parent (a parent of an initial entry) and we did not go via the center
             // node.
-            boolean isBridgePath = parents[edgeKey] >= 0 && isPathToCenters[parents[edgeKey]];
+            boolean isBridgePath = parents[edgeKey] >= 0 && isPathToCenter(parents[edgeKey]);
             // in case of equal weights we always prefer a witness path over a bridge-path
             double tolerance = isBridgePath ? 0 : 1.e-6;
             if (totalWeight - tolerance < bestPathWeight) {
@@ -426,13 +440,11 @@ public class EdgeBasedWitnessPathSearcher {
 
     private void setEntry(int key, PrepareGraphEdgeIterator edge, double weight, int parent, boolean isPathToCenter) {
         prepareEdges[key] = edge.getPrepareEdge();
-        adjNodes[key] = edge.getAdjNode();
         weights[key] = weight;
         parents[key] = parent;
-        if (isPathToCenter) {
-            isPathToCenters[key] = true;
+        setAdjNodeAndPathToCenter(key, edge.getAdjNode(), isPathToCenter);
+        if (isPathToCenter)
             numPathsToCenter++;
-        }
     }
 
     private void updateEntry(int key, PrepareGraphEdgeIterator edge, double weight, int parent, boolean isPathToCenter) {
@@ -440,27 +452,26 @@ public class EdgeBasedWitnessPathSearcher {
         weights[key] = weight;
         parents[key] = parent;
         if (isPathToCenter) {
-            if (!isPathToCenters[key]) {
+            if (!isPathToCenter(key)) {
                 numPathsToCenter++;
             }
         } else {
-            if (isPathToCenters[key]) {
+            if (isPathToCenter(key)) {
                 numPathsToCenter--;
             }
         }
-        isPathToCenters[key] = isPathToCenter;
+        setPathToCenter(key, isPathToCenter);
     }
 
     private void resetEntry(int key) {
         weights[key] = Double.POSITIVE_INFINITY;
         prepareEdges[key] = NO_EDGE;
         parents[key] = NO_NODE;
-        adjNodes[key] = NO_NODE;
-        isPathToCenters[key] = false;
+        setAdjNodeAndPathToCenter(key, NO_NODE, false);
     }
 
     private PrepareCHEntry getEntryForKey(int edgeKey) {
-        return new PrepareCHEntry(prepareEdges[edgeKey], edgeKey, adjNodes[edgeKey], weights[edgeKey]);
+        return new PrepareCHEntry(prepareEdges[edgeKey], edgeKey, getAdjNode(edgeKey), weights[edgeKey]);
     }
 
     private double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
