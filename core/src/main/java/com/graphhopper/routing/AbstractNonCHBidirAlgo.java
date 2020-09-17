@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.coll.GHPriorityQueue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -29,8 +30,6 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-
-import java.util.PriorityQueue;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
@@ -62,8 +61,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         edgeExplorer = graph.createEdgeExplorer();
         outEdgeFilter = DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
         inEdgeFilter = DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
-        initCollections(size);
+        int mapSize = Math.min(graph.getNodes() / 10, 250_000);
+        initCollections(mapSize / 50, mapSize);
     }
 
     /**
@@ -151,7 +150,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         return true;
     }
 
-    private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
+    private void fillEdges(SPTEntry currEdge, GHPriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge.edge))
@@ -166,11 +165,13 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             if (entry == null) {
                 entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
-                prioQueue.add(entry);
+                prioQueue.add(entry, entry.weight);
+
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
+                // use same entry object to avoid update in bestWeightMap
                 updateEntry(entry, iter, weight, currEdge, reverse);
-                prioQueue.add(entry);
+                prioQueue.update(entry, entry.weight, false);
+
             } else
                 continue;
 
