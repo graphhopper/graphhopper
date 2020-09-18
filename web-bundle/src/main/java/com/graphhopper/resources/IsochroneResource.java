@@ -67,7 +67,7 @@ public class IsochroneResource {
         this.encodingManager = encodingManager;
     }
 
-    enum ResponseType {json, geojson}
+    public enum ResponseType {json, geojson}
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
