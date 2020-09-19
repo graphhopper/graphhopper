@@ -9,6 +9,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.OSMFileHeader;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.BBox;
 import org.openstreetmap.osmosis.osmbinary.Fileformat;
 import org.openstreetmap.osmosis.osmbinary.Osmformat;
 import org.slf4j.Logger;
@@ -18,6 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
+
+import static com.graphhopper.reader.osm.OSMReaderUtility.COORDINATE_SCALING_FACTOR;
 
 /**
  * Converts PBF block data into decoded entities ready to be passed into an Osmosis pipeline. This
@@ -97,23 +100,16 @@ public class PbfBlobDecoder implements Runnable {
         OSMFileHeader fileheader = new OSMFileHeader();
         long milliSecondDate = header.getOsmosisReplicationTimestamp();
         fileheader.setTag("timestamp", Helper.createFormatter().format(new Date(milliSecondDate * 1000)));
-        decodedEntities.add(fileheader);
 
         // Build a new bound object which corresponds to the header.
-/*
-         Bound bound;
-         if (header.hasBbox()) {
-         HeaderBBox bbox = header.getBbox();
-         bound = new Bound(bbox.getRight() * COORDINATE_SCALING_FACTOR, bbox.getLeft() * COORDINATE_SCALING_FACTOR,
-         bbox.getTop() * COORDINATE_SCALING_FACTOR, bbox.getBottom() * COORDINATE_SCALING_FACTOR,
-         header.getSource());
-         } else {
-         bound = new Bound(header.getSource());
-         }
+        if (header.hasBbox()) {
+            Osmformat.HeaderBBox bbox = header.getBbox();
+            fileheader.setBbox(new BBox(bbox.getRight() * COORDINATE_SCALING_FACTOR, bbox.getLeft() * COORDINATE_SCALING_FACTOR,
+                    bbox.getTop() * COORDINATE_SCALING_FACTOR, bbox.getBottom() * COORDINATE_SCALING_FACTOR));
+        }
+        fileheader.setTag("hasBBox", header.hasBbox());
+        decodedEntities.add(fileheader);
 
-         // Add the bound object to the results.
-         decodedEntities.add(new BoundContainer(bound));
-         */
     }
 
     private Map<String, String> buildTags(List<Integer> keys, List<Integer> values, PbfFieldDecoder fieldDecoder) {

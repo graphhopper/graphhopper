@@ -27,6 +27,7 @@ import java.util.Date;
  * @author ratrun
  */
 public class OSMReaderUtility {
+    public static final double COORDINATE_SCALING_FACTOR = 0.000000001;
     // use a day somewhere within July 1970 which then makes two identical long months ala 31 days, see #588
     private final static Date STATIC_DATE = new Date((31 * 6) * 24 * 3600 * 1000);
 

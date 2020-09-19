@@ -5,6 +5,8 @@ import org.openstreetmap.osmosis.osmbinary.Osmformat;
 
 import java.util.Date;
 
+import static com.graphhopper.reader.osm.OSMReaderUtility.COORDINATE_SCALING_FACTOR;
+
 /**
  * Manages decoding of the lower level PBF data structures.
  * <p>
@@ -13,7 +15,7 @@ import java.util.Date;
  *         <p>
  */
 public class PbfFieldDecoder {
-    private static final double COORDINATE_SCALING_FACTOR = 0.000000001;
+
     private String[] strings;
     private int coordGranularity;
     private long coordLatitudeOffset;

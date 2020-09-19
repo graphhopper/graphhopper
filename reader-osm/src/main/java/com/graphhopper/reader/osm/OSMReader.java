@@ -18,6 +18,7 @@
 package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.procedures.LongProcedure;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
@@ -165,13 +166,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             while ((item = in.getNext()) != null) {
                 if (item.isType(ReaderElement.WAY)) {
                     final ReaderWay way = (ReaderWay) item;
-                    boolean valid = filterWay(way);
-                    if (valid) {
-                        LongIndexedContainer wayNodes = way.getNodes();
-                        int s = wayNodes.size();
-                        for (int index = 0; index < s; index++) {
-                            prepareHighwayNode(wayNodes.get(index));
-                        }
+                    if (filterWay(way)) {
+                        way.getNodes().forEach((LongProcedure) longCursor -> prepareHighwayNode(longCursor));
 
                         if (++tmpWayCounter % 10_000_000 == 0) {
                             LOGGER.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:" + nf(getNodeMap().getSize()) + " ("
@@ -230,12 +226,8 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      * @return true the current xml entry is a way entry and has nodes
      */
     boolean filterWay(ReaderWay item) {
-        // ignore broken geometry
-        if (item.getNodes().size() < 2)
-            return false;
-
-        // ignore multipolygon geometry
-        if (!item.hasTags())
+        // ignore broken geometry and ignore multipolygon geometry
+        if (item.getNodes().size() < 2 || !item.hasTags())
             return false;
 
         return encodingManager.acceptWay(item, new EncodingManager.AcceptWay());

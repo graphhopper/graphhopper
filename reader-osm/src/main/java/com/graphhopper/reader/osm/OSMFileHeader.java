@@ -18,6 +18,7 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.reader.ReaderElement;
+import com.graphhopper.util.shapes.BBox;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -30,6 +31,8 @@ import javax.xml.stream.XMLStreamReader;
  * @author ratrun
  */
 public class OSMFileHeader extends ReaderElement {
+
+    private BBox bbox;
     public OSMFileHeader() {
         super(0, FILEHEADER);
     }
@@ -50,8 +53,19 @@ public class OSMFileHeader extends ReaderElement {
         }
     }
 
+    public BBox getBbox() {
+        return bbox;
+    }
+
+    public void setBbox(BBox bbox) {
+        this.bbox = bbox;
+    }
+
     @Override
     public String toString() {
-        return "OSM File header:" + super.toString();
+        String s = "OSM File header:" + super.toString();
+        if (bbox != null)
+            s += " BBox:" + bbox.toString();
+        return  s;
     }
 }
