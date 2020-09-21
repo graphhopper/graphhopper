@@ -68,7 +68,7 @@ class SplitArray2D<T> {
         } else {
             assert data[n].length != 0;
             if (sizes[n] == data[n].length)
-                data[n] = Arrays.copyOf(data[n], data[n].length * GROW_FACTOR);
+                grow(n);
             data[n][sizes[n]] = data[n][mids[n]];
             data[n][mids[n]] = element;
             mids[n]++;
@@ -87,7 +87,7 @@ class SplitArray2D<T> {
         } else {
             assert data[n].length != 0;
             if (sizes[n] == data[n].length)
-                data[n] = Arrays.copyOf(data[n], data[n].length * GROW_FACTOR);
+                grow(n);
             data[n][sizes[n]] = element;
             sizes[n]++;
         }
@@ -120,6 +120,12 @@ class SplitArray2D<T> {
         data[n] = null;
         sizes[n] = 0;
         mids[n] = 0;
+    }
+
+    private void grow(int n) {
+        // todo: think about grow factor: trimming and then doubling the size might be not what we want, rather
+        // increase by 50% or something?
+        data[n] = Arrays.copyOf(data[n], data[n].length * GROW_FACTOR);
     }
 
     void trimToSize() {
