@@ -25,6 +25,7 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
@@ -1856,6 +1857,20 @@ public class GraphHopperTest {
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(658, rsp.getBest().getDistance(), 1);
+    }
+
+    @Test
+    public void testEdgeCount() {
+        GraphHopper hopper = createGraphHopper("car").
+                setOSMFile(BAYREUTH).
+                setMinNetworkSize(50).
+                setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
+        hopper.importOrLoad();
+        int count = 0;
+        AllEdgesIterator iter = hopper.getGraphHopperStorage().getAllEdges();
+        while (iter.next())
+            count++;
+        assertEquals(hopper.getGraphHopperStorage().getEdges(), count);
     }
 
     @Test
