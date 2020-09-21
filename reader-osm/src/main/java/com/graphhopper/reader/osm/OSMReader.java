@@ -17,28 +17,64 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.*;
+import static com.graphhopper.util.Helper.nf;
+
+import com.baremaps.osm.model.Header;
+import com.baremaps.osm.model.Member;
+import com.baremaps.osm.model.Node;
+import com.baremaps.osm.model.Relation;
+import com.baremaps.osm.model.Way;
+import com.baremaps.osm.parser.EntityHandler;
+import com.baremaps.osm.parser.OSMEntityParser;
+import com.carrotsearch.hppc.IntLongMap;
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongIndexedContainer;
+import com.carrotsearch.hppc.LongLongMap;
+import com.carrotsearch.hppc.LongSet;
+import com.graphhopper.coll.GHIntLongHashMap;
+import com.graphhopper.coll.GHLongHashSet;
+import com.graphhopper.coll.GHLongIntBTree;
+import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.coll.*;
-import com.graphhopper.reader.*;
+import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.PillarInfo;
+import com.graphhopper.reader.ReaderElement;
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
-import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.DouglasPeucker;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-
-import static com.graphhopper.util.Helper.nf;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import javax.xml.stream.XMLStreamException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
@@ -158,13 +194,24 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
      */
     void preProcess(File osmFile) {
         LOGGER.info("Starting to process OSM file: '" + osmFile + "'");
-        try (OSMInput in = openOsmInputFile(osmFile)) {
-            long tmpWayCounter = 1;
-            long tmpRelationCounter = 1;
-            ReaderElement item;
-            while ((item = in.getNext()) != null) {
-                if (item.isType(ReaderElement.WAY)) {
-                    final ReaderWay way = (ReaderWay) item;
+
+        try {
+            EntityHandler handler = new EntityHandler() {
+                @Override
+                public void onHeader(Header header) throws Exception {
+                    if (header.getReplicationTimestamp() != null) {
+                        osmDataDate = Date.from(header.getReplicationTimestamp().toInstant(ZoneOffset.UTC));
+                    }
+                }
+
+                @Override
+                public void onNode(Node node) throws Exception {
+                    // do nothing
+                }
+
+                @Override
+                public void onWay(Way entity) throws Exception {
+                    final ReaderWay way = toReaderWay(entity);
                     boolean valid = filterWay(way);
                     if (valid) {
                         LongIndexedContainer wayNodes = way.getNodes();
@@ -172,34 +219,52 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                         for (int index = 0; index < s; index++) {
                             prepareHighwayNode(wayNodes.get(index));
                         }
-
-                        if (++tmpWayCounter % 10_000_000 == 0) {
-                            LOGGER.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:" + nf(getNodeMap().getSize()) + " ("
-                                    + getNodeMap().getMemoryUsage() + "MB) " + Helper.getMemInfo());
-                        }
                     }
-                } else if (item.isType(ReaderElement.RELATION)) {
-                    final ReaderRelation relation = (ReaderRelation) item;
-                    if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
-                        prepareWaysWithRelationInfo(relation);
+                }
 
+                @Override
+                public void onRelation(Relation entity) throws Exception {
+                    final ReaderRelation relation = toReaderRelation(entity);
+                    if (!relation.isMetaRelation() && relation.hasTag("type", "route")){
+                        prepareWaysWithRelationInfo(relation);
+                    }
                     if (relation.hasTag("type", "restriction")) {
                         prepareRestrictionRelation(relation);
                     }
-
-                    if (++tmpRelationCounter % 100_000 == 0) {
-                        LOGGER.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMapSize())
-                                + " " + Helper.getMemInfo());
-                    }
-                } else if (item.isType(ReaderElement.FILEHEADER)) {
-                    final OSMFileHeader fileHeader = (OSMFileHeader) item;
-                    osmDataDate = Helper.createFormatter().parse(fileHeader.getTag("timestamp"));
                 }
+            };
 
-            }
+            new OSMEntityParser().parse(osmFile.toPath(), handler);
+
         } catch (Exception ex) {
+            ex.printStackTrace();
             throw new RuntimeException("Problem while parsing file", ex);
         }
+    }
+
+    ReaderNode toReaderNode(Node entity) {
+        ReaderNode way = new ReaderNode(entity.getId(), entity.getLat(), entity.getLon());
+        way.setTags(entity.getTags());
+        return way;
+    }
+
+    ReaderWay toReaderWay(Way entity) {
+        ReaderWay way = new ReaderWay(entity.getId());
+        way.setTags(entity.getTags());
+        LongArrayList nodes = way.getNodes();
+        for (long node : entity.getNodes()) {
+            nodes.add(node);
+        }
+        return way;
+    }
+
+    ReaderRelation toReaderRelation(Relation entity) {
+        ReaderRelation relation = new ReaderRelation(entity.getId());
+        relation.setTags(entity.getTags());
+        for (Member member : entity.getMembers()) {
+            relation.add(new ReaderRelation.Member(member.getType().getNumber(), member.getRef(), member.getRole()));
+        }
+        return relation;
     }
 
     private void prepareRestrictionRelation(ReaderRelation relation) {
@@ -249,56 +314,50 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         LOGGER.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
         ghStorage.create(tmp);
 
-        long wayStart = -1;
-        long relationStart = -1;
-        long counter = 1;
-        try (OSMInput in = openOsmInputFile(osmFile)) {
-            LongIntMap nodeFilter = getNodeMap();
 
-            ReaderElement item;
-            while ((item = in.getNext()) != null) {
-                switch (item.getType()) {
-                    case ReaderElement.NODE:
-                        if (nodeFilter.get(item.getId()) != EMPTY_NODE) {
-                            processNode((ReaderNode) item);
-                        }
-                        break;
+        LongIntMap nodeFilter = getNodeMap();
 
-                    case ReaderElement.WAY:
-                        if (wayStart < 0) {
-                            LOGGER.info(nf(counter) + ", now parsing ways");
-                            wayStart = counter;
-                        }
-                        processWay((ReaderWay) item);
-                        break;
-                    case ReaderElement.RELATION:
-                        if (relationStart < 0) {
-                            LOGGER.info(nf(counter) + ", now parsing relations");
-                            relationStart = counter;
-                        }
-                        processRelation((ReaderRelation) item);
-                        break;
-                    case ReaderElement.FILEHEADER:
-                        break;
-                    default:
-                        throw new IllegalStateException("Unknown type " + item.getType());
+        try {
+            AtomicLong wayStart = new AtomicLong(-1);
+            AtomicLong relationStart = new AtomicLong(-1);
+            AtomicLong counter = new AtomicLong(1);
+
+            EntityHandler handler = new EntityHandler() {
+                @Override
+                public void onHeader(Header header) throws Exception {
+
                 }
-                if (++counter % 200_000_000 == 0) {
-                    LOGGER.info(nf(counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
+
+                @Override
+                public void onNode(Node item) throws Exception {
+                    if (nodeFilter.get(item.getId()) != EMPTY_NODE) {
+                        processNode(toReaderNode(item));
+                    }
                 }
-            }
 
-            if (in.getUnprocessedElements() > 0)
-                throw new IllegalStateException("Still unprocessed elements in reader queue " + in.getUnprocessedElements());
+                @Override
+                public void onWay(Way entity) throws Exception {
+                    processWay(toReaderWay(entity));
+                }
 
-            // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
+                @Override
+                public void onRelation(Relation entity) throws Exception {
+                    processRelation(toReaderRelation(entity));
+                }
+            };
+
+            new OSMEntityParser().parse(osmFile.toPath(), handler);
+
+            finishedReading();
+
+            if (graph.getNodes() == 0)
+                throw new RuntimeException("Graph after reading OSM must not be empty. Read " + counter + " items and " + locations + " locations");
+
+
         } catch (Exception ex) {
-            throw new RuntimeException("Couldn't process file " + osmFile + ", error: " + ex.getMessage(), ex);
+            ex.printStackTrace();
+            throw new RuntimeException("Problem while parsing file", ex);
         }
-
-        finishedReading();
-        if (graph.getNodes() == 0)
-            throw new RuntimeException("Graph after reading OSM must not be empty. Read " + counter + " items and " + locations + " locations");
     }
 
     protected OSMInput openOsmInputFile(File osmFile) throws XMLStreamException, IOException {
@@ -372,7 +431,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                         if (lastBarrier < 0)
                             lastBarrier = 0;
 
-                        // add way up to barrier shadow node                        
+                        // add way up to barrier shadow node
                         int length = i - lastBarrier + 1;
                         LongArrayList partNodeIds = new LongArrayList();
                         partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
@@ -675,7 +734,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         double towerNodeDistance = distCalc.calcDistance(pointList);
 
         if (towerNodeDistance < 0.001) {
-            // As investigation shows often two paths should have crossed via one identical point 
+            // As investigation shows often two paths should have crossed via one identical point
             // but end up in two very close points.
             zeroCounter++;
             towerNodeDistance = 0.001;
@@ -688,7 +747,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         }
 
         if (Double.isInfinite(towerNodeDistance) || towerNodeDistance > maxDistance) {
-            // Too large is very rare and often the wrong tagging. See #435 
+            // Too large is very rare and often the wrong tagging. See #435
             // so we can avoid the complexity of splitting the way for now (new towernodes would be required, splitting up geometry etc)
             LOGGER.warn("Bug in OSM or GraphHopper. Too big tower node distance " + towerNodeDistance + " reset to large value, osm way " + wayOsmId);
             towerNodeDistance = maxDistance;
@@ -957,4 +1016,5 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     public String toString() {
         return getClass().getSimpleName();
     }
+
 }
