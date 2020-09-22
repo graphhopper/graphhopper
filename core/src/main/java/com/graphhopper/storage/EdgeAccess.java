@@ -64,8 +64,11 @@ abstract class EdgeAccess {
 
     /**
      * Writes a new edge to the array of edges and adds it to the linked list of edges at nodeA and nodeB
+     *
+     * @param connectB if false the edge is not registered at / will not be visible from nodeB, this is useful for
+     *                 CH.
      */
-    final int internalEdgeAdd(int newEdgeId, int nodeA, int nodeB) {
+    final int internalEdgeAdd(int newEdgeId, int nodeA, int nodeB, boolean connectB) {
         writeEdge(newEdgeId, nodeA, nodeB, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
         long edgePointer = toPointer(newEdgeId);
 
@@ -74,7 +77,7 @@ abstract class EdgeAccess {
             edges.setInt(E_LINKA + edgePointer, edge);
         setEdgeRef(nodeA, newEdgeId);
 
-        if (nodeA != nodeB) {
+        if (connectB && nodeA != nodeB) {
             edge = getEdgeRef(nodeB);
             if (edge > EdgeIterator.NO_EDGE)
                 edges.setInt(E_LINKB + edgePointer, edge);

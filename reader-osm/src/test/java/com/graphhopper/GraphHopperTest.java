@@ -90,8 +90,8 @@ public class GraphHopperTest {
             ASTAR + ",false,439",
             DIJKSTRA_BI + ",false,208",
             ASTAR_BI + ",false,172",
-            ASTAR_BI + ",true,36",
-            DIJKSTRA_BI + ",true,34"
+            ASTAR_BI + ",true,45",
+            DIJKSTRA_BI + ",true,43"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";

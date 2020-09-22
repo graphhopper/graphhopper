@@ -18,28 +18,6 @@
 
 package com.graphhopper.routing.ch;
 
-public interface PrepareCHEdgeIterator {
-    boolean next();
-
-    int getEdge();
-
-    int getBaseNode();
-
-    int getAdjNode();
-
-    int getOrigEdgeFirst();
-
-    int getOrigEdgeLast();
-
-    boolean isShortcut();
-
-    double getWeight(boolean reverse);
-
-    void setWeight(double weight);
-
-    int getMergeStatus(int flags);
-
-    void setFlagsAndWeight(int flags, double weight);
-
-    void setSkippedEdges(int skippedEdge1, int skippedEdge2);
+public interface PrepareGraphEdgeExplorer {
+    PrepareGraphEdgeIterator setBaseNode(int node);
 }
