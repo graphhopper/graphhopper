@@ -34,6 +34,8 @@ class SplitArray2D<T> {
     private final int initialSubArrayCapacity;
     private final Object[][] data;
     // todo: mids/sizes can probably be combined into a single int to save some memory, but need to check maximum values
+    // checking for Bayern and Germany it seemed like the maximum values were around 50/100 and independent of the
+    // map size
     private final int[] mids;
     private final int[] sizes;
 
