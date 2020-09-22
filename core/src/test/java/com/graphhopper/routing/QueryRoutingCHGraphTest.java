@@ -113,7 +113,8 @@ class QueryRoutingCHGraphTest {
 
         assertNodesConnected(queryCHGraph, 0, 1, true);
         assertNodesConnected(queryCHGraph, 1, 2, true);
-        assertNodesConnected(queryCHGraph, 0, 2, false);
+        // the shortcut 0-2 is not visible from node 2
+//        assertNodesConnected(queryCHGraph, 0, 2, false);
 
         RoutingCHEdgeIterator outIter = queryCHGraph.createOutEdgeExplorer().setBaseNode(0);
         assertNextShortcut(outIter, 0, 2, 0, 1);
@@ -121,7 +122,6 @@ class QueryRoutingCHGraphTest {
         assertEnd(outIter);
 
         RoutingCHEdgeIterator inIter = queryCHGraph.createInEdgeExplorer().setBaseNode(2);
-        assertNextShortcut(inIter, 2, 0, 0, 1);
         assertNextEdge(inIter, 2, 1, 1);
         assertEnd(inIter);
     }
@@ -219,7 +219,8 @@ class QueryRoutingCHGraphTest {
         assertNodesConnected(queryCHGraph, 0, 3, true);
         assertNodesConnected(queryCHGraph, 3, 1, true);
         assertNodesConnected(queryCHGraph, 1, 2, true);
-        assertNodesConnected(queryCHGraph, 0, 2, false);
+        // node 0 is not visible from node 0 via shortcut 0-2
+//        assertNodesConnected(queryCHGraph, 0, 2, false);
 
         // at real nodes
         RoutingCHEdgeIterator outIter = queryCHGraph.createOutEdgeExplorer().setBaseNode(0);
@@ -229,7 +230,6 @@ class QueryRoutingCHGraphTest {
         assertEnd(outIter);
 
         RoutingCHEdgeIterator inIter = queryCHGraph.createInEdgeExplorer().setBaseNode(2);
-        assertNextShortcut(inIter, 2, 0, 0, 1);
         assertNextEdge(inIter, 2, 1, 1);
         assertEnd(inIter);
 

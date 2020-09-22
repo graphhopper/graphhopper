@@ -52,6 +52,10 @@ public class Transfers {
                 Transfer myRule = new Transfer();
                 myRule.from_stop_id = fromStop;
                 myRule.to_stop_id = toStopId;
+
+                if(transfers.size() == 1)
+                    myRule.min_transfer_time = transfers.get(0).min_transfer_time;
+
                 result.add(myRule);
             } else {
                 routesByStop.getOrDefault(fromStop, Collections.emptySet()).forEach(fromRoute -> {

@@ -87,6 +87,7 @@ public class Measurement {
     private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
     private final Map<String, Object> properties = new TreeMap<>();
     private long seed;
+    private boolean stopOnError;
     private int maxNode;
     private String vehicle;
     private List<PointWithHint> randomPoints;
@@ -105,6 +106,7 @@ public class Measurement {
         final String countryBordersDirectory = args.getString("spatial_rules.borders_directory", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
+        stopOnError = args.getBool("measurement.stop_on_error", false);
         String summaryLocation = args.getString("measurement.summaryfile", "");
         final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
         put("measurement.timestamp", timeStamp);
@@ -228,7 +230,7 @@ public class Measurement {
             }
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
-                System.gc();
+                gcAndWait();
                 boolean isCH = false;
                 boolean isLM = true;
                 Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
@@ -251,7 +253,7 @@ public class Measurement {
                 boolean isCH = true;
                 boolean isLM = false;
 //                compareCHWithAndWithoutSOD(hopper, count/5);
-                System.gc();
+                gcAndWait();
                 if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
                     CHGraph lg = g.getCHGraph(chConfig.getName());
@@ -298,6 +300,8 @@ public class Measurement {
 
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
+            if (stopOnError)
+                System.exit(1);
             put("error", ex.toString());
         } finally {
             put("gh.gitinfo", Constants.GIT_INFO != null ? Constants.GIT_INFO.toString() : "unknown");
@@ -305,7 +309,7 @@ public class Measurement {
             put("measurement.precalculated_points", preCalculatedPoints);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getMillis());
-            System.gc();
+            gcAndWait();
             put("measurement.totalMB", getTotalMB());
             put("measurement.usedMB", getUsedMB());
 
@@ -709,9 +713,12 @@ public class Measurement {
 
                     if (rsp.getErrors().get(0).getMessage() == null)
                         rsp.getErrors().get(0).printStackTrace();
-                    else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found"))
-                        logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
-
+                    else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found")) {
+                        if (stopOnError)
+                            throw new RuntimeException("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
+                        else
+                            logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
+                    }
                     return 0;
                 }
 

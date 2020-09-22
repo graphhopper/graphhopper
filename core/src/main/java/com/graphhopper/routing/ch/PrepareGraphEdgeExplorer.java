@@ -15,29 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.coll;
 
-/**
- * @author Peter Karich
- */
-public interface BinHeapWrapper<K, E> {
+package com.graphhopper.routing.ch;
 
-    void update(K key, E element);
-
-    void insert(K key, E element);
-
-    boolean isEmpty();
-
-    int getSize();
-
-    E peekElement();
-
-    K peekKey();
-
-    E pollElement();
-
-    // not necessary? V pollValue();
-    void clear();
-
-    void ensureCapacity(int size);
+public interface PrepareGraphEdgeExplorer {
+    PrepareGraphEdgeIterator setBaseNode(int node);
 }

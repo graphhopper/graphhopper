@@ -79,8 +79,6 @@ public interface CHGraph {
 
     AllCHEdgesIterator getAllEdges();
 
-    void disconnectEdge(int edge, int adjNode, int prevEdge);
-
     /**
      * @return the number of original edges in this graph (without shortcuts)
      */

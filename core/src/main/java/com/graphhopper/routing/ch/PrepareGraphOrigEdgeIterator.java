@@ -18,6 +18,14 @@
 
 package com.graphhopper.routing.ch;
 
-public interface PrepareCHEdgeExplorer {
-    PrepareCHEdgeIterator setBaseNode(int node);
+public interface PrepareGraphOrigEdgeIterator {
+    boolean next();
+
+    int getBaseNode();
+
+    int getAdjNode();
+
+    int getOrigEdgeKeyFirst();
+
+    int getOrigEdgeKeyLast();
 }

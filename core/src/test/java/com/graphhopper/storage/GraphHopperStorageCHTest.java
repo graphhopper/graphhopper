@@ -23,7 +23,10 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
@@ -120,44 +123,30 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     @Test
-    public void testDisconnectEdge() {
+    public void testShortcutConnection() {
         graph = createGHStorage();
         EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(carOutFilter);
-        // only remove edges
         graph.edge(4, 1, 30, true);
         graph.freeze();
 
         CHGraph lg = getGraph(graph);
-        EdgeExplorer chCarOutExplorer = lg.createEdgeExplorer(carOutFilter);
-        EdgeExplorer tmpCarInExplorer = lg.createEdgeExplorer(carInFilter);
+        EdgeExplorer chOutExplorer = lg.createEdgeExplorer(carOutFilter);
+        EdgeExplorer chInExplorer = lg.createEdgeExplorer(carInFilter);
         lg.shortcut(1, 2, PrepareEncoder.getScDirMask(), 0, 10, 11);
         lg.shortcut(1, 0, PrepareEncoder.getScFwdDir(), 0, 12, 13);
         lg.shortcut(3, 1, PrepareEncoder.getScFwdDir(), 0, 14, 15);
-        // create every time a new independent iterator for disconnect method
-        EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(1);
-        iter.next();
-        assertEquals(3, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(chCarOutExplorer.setBaseNode(3)));
-        lg.disconnectEdge(iter.getEdge(), iter.getAdjNode(), -1);
-        assertEquals(0, GHUtility.count(chCarOutExplorer.setBaseNode(3)));
-        // no shortcuts visible
-        assertEquals(0, GHUtility.count(baseCarOutExplorer.setBaseNode(3)));
+        // shortcuts are only visible from the base node, for example we do not see node 1 from node 2, or node
+        // 3 from node 1
+        assertEquals(0, GHUtility.count(chOutExplorer.setBaseNode(2)));
+        assertEquals(0, GHUtility.count(chInExplorer.setBaseNode(2)));
 
-        // even directed ways change!
-        assertTrue(iter.next());
-        assertEquals(0, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(tmpCarInExplorer.setBaseNode(0)));
-        lg.disconnectEdge(iter.getEdge(), iter.getAdjNode(), -1);
-        assertEquals(0, GHUtility.count(tmpCarInExplorer.setBaseNode(0)));
-
-        iter.next();
-        assertEquals(2, iter.getAdjNode());
-        assertEquals(1, GHUtility.count(chCarOutExplorer.setBaseNode(2)));
-        lg.disconnectEdge(iter.getEdge(), iter.getAdjNode(), -1);
-        assertEquals(0, GHUtility.count(chCarOutExplorer.setBaseNode(2)));
-
-        assertEquals(GHUtility.asSet(0, 2, 4), GHUtility.getNeighbors(chCarOutExplorer.setBaseNode(1)));
+        assertEquals(3, GHUtility.count(chOutExplorer.setBaseNode(1)));
+        assertEquals(2, GHUtility.count(chInExplorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(0, 2, 4), GHUtility.getNeighbors(chOutExplorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(4), GHUtility.getNeighbors(baseCarOutExplorer.setBaseNode(1)));
+
+        assertEquals(1, GHUtility.count(chOutExplorer.setBaseNode(3)));
+        assertEquals(0, GHUtility.count(chInExplorer.setBaseNode(3)));
     }
 
     @Test
@@ -214,7 +203,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 1).getWeight(), 1e-3);
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 0).getWeight(), 1e-3);
         assertEquals(100.123, GHUtility.getEdge(lg, 0, 1).getWeight(), 1e-3);
-        assertEquals(100.123, GHUtility.getEdge(lg, 1, 0).getWeight(), 1e-3);
 
         int sc2 = lg.shortcut(1, 0, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
         assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 0).getWeight(), 1e-3);

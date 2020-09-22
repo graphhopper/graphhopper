@@ -18,34 +18,32 @@
 
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntContainer;
+public interface PrepareGraphEdgeIterator {
+    boolean next();
 
-public interface NodeContractor {
-    void initFromGraph();
+    int getBaseNode();
 
-    void close();
+    int getAdjNode();
 
-    /**
-     * Calculates the priority of a node without changing the graph. Lower (!!) priority nodes are contracted first.
-     */
-    float calculatePriority(int node);
+    int getPrepareEdge();
 
-    /**
-     * Adds the required shortcuts for the given node.
-     *
-     * @return the set of nodes adjacent to this node (before contraction)
-     */
-    IntContainer contractNode(int node);
+    boolean isShortcut();
 
-    void finishContraction();
+    int getOrigEdgeKeyFirst();
 
-    long getAddedShortcutsCount();
+    int getOrigEdgeKeyLast();
 
-    String getStatisticsString();
+    int getSkipped1();
 
-    long getDijkstraCount();
+    int getSkipped2();
 
-    float getDijkstraSeconds();
+    double getWeight();
 
-    void prepareContraction();
+    int getOrigEdgeCount();
+
+    void setSkippedEdges(int skipped1, int skipped2);
+
+    void setWeight(double weight);
+
+    void setOrigEdgeCount(int origEdgeCount);
 }

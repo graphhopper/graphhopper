@@ -338,14 +338,5 @@
                 </plugins>
             </build>
         </profile>
-        <profile>
-            <id>include-android</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <modules>
-                <module>android/app</module>
-            </modules>
-        </profile>
     </profiles>
 </project>

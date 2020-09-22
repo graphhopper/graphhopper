@@ -115,7 +115,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         checkNodeId(a);
         checkNodeId(b);
 
-        int scId = chEdgeAccess.internalEdgeAdd(nextShortcutId(), a, b);
+        // we do not register the edge at node b which should be the higher level node (so no need to 'see' the lower
+        // level node a)
+        int scId = chEdgeAccess.internalEdgeAdd(nextShortcutId(), a, b, false);
         // do not create CHEdgeIteratorImpl object
         long edgePointer = chEdgeAccess.toPointer(scId);
         chEdgeAccess.setAccessAndWeight(edgePointer, accessFlags & scDirMask, weight);
@@ -234,14 +236,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     String toDetailsString() {
         return toString() + ", shortcuts:" + nf(shortcutCount) + ", nodesCH:(" + nodesCH.getCapacity() / Helper.MB + "MB)";
-    }
-
-    @Override
-    public void disconnectEdge(int edge, int adjNode, int prevEdge) {
-        // TODO this is ugly, move this somehow into the underlying iteration logic
-        long edgePointer = !EdgeIterator.Edge.isValid(prevEdge) ? -1
-                : isShortcut(prevEdge) ? chEdgeAccess.toPointer(prevEdge) : baseGraph.edgeAccess.toPointer(prevEdge);
-        chEdgeAccess.internalEdgeDisconnect(edge, edgePointer, adjNode);
     }
 
     @Override
@@ -459,10 +453,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     return false;
 
                 allEdgeIterator.adjNode = allEdgeIterator.edgeAccess.getNodeB(allEdgeIterator.edgePointer);
-                // some edges are deleted and are marked via a negative node
-                if (EdgeAccess.isInvalidNodeB(allEdgeIterator.adjNode))
-                    continue;
-
                 allEdgeIterator.baseNode = allEdgeIterator.edgeAccess.getNodeA(allEdgeIterator.edgePointer);
                 allEdgeIterator.freshFlags = false;
                 allEdgeIterator.reverse = false;
@@ -867,11 +857,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
             return edgeIterable.setReverse(property, value);
-        }
-
-        @Override
-        public int getMergeStatus(int flags) {
-            return PrepareEncoder.getScMergeStatus(getShortcutFlags(), flags);
         }
 
         @Override

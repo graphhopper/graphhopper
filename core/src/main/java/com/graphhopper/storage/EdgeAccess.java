@@ -23,7 +23,6 @@ import com.graphhopper.util.EdgeIterator;
  * @author Peter Karich
  */
 abstract class EdgeAccess {
-    private static final int NO_NODE = -1;
     final DataAccess edges;
     int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS;
 
@@ -49,14 +48,6 @@ abstract class EdgeAccess {
 
     abstract int getEntryBytes();
 
-    final void invalidateEdge(long edgePointer) {
-        edges.setInt(edgePointer + E_NODEB, NO_NODE);
-    }
-
-    static boolean isInvalidNodeB(int node) {
-        return node == EdgeAccess.NO_NODE;
-    }
-
     final void readFlags(long edgePointer, IntsRef edgeFlags) {
         int size = edgeFlags.ints.length;
         for (int i = 0; i < size; i++) {
@@ -73,8 +64,11 @@ abstract class EdgeAccess {
 
     /**
      * Writes a new edge to the array of edges and adds it to the linked list of edges at nodeA and nodeB
+     *
+     * @param connectB if false the edge is not registered at / will not be visible from nodeB, this is useful for
+     *                 CH.
      */
-    final int internalEdgeAdd(int newEdgeId, int nodeA, int nodeB) {
+    final int internalEdgeAdd(int newEdgeId, int nodeA, int nodeB, boolean connectB) {
         writeEdge(newEdgeId, nodeA, nodeB, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
         long edgePointer = toPointer(newEdgeId);
 
@@ -83,7 +77,7 @@ abstract class EdgeAccess {
             edges.setInt(E_LINKA + edgePointer, edge);
         setEdgeRef(nodeA, newEdgeId);
 
-        if (nodeA != nodeB) {
+        if (connectB && nodeA != nodeB) {
             edge = getEdgeRef(nodeB);
             if (edge > EdgeIterator.NO_EDGE)
                 edges.setInt(E_LINKB + edgePointer, edge);
