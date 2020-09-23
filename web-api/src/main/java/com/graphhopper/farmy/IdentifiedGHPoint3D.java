@@ -130,11 +130,11 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
             put("latitude", String.valueOf(lat));
             put("longitude", String.valueOf(lon));
             put("elevation", String.valueOf(ele));
-            put("time_window_start", getTimeWindow() != null ? String.valueOf(getTimeWindow().getStart() / 1000) : "");
-            put("time_window_end", getTimeWindow() != null ? String.valueOf(getTimeWindow().getEnd() / 1000) : "");
-            put("service_time", String.valueOf(getServiceTime() / 1000));
+            put("time_window_start", getTimeWindow() != null ? String.valueOf(getTimeWindow().getStart()) : "");
+            put("time_window_end", getTimeWindow() != null ? String.valueOf(getTimeWindow().getEnd()) : "");
+            put("service_time", String.valueOf(getServiceTime()));
             put("direction", getDirection());
-            put("planned_time", String.valueOf(getPlannedTime() / 1000));
+            put("planned_time", String.valueOf(getPlannedTime()));
             put("weight", String.valueOf(getWeight()));
             put("distance", String.valueOf(getDistance()));
         }};

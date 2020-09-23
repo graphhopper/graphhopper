@@ -13,7 +13,7 @@ public class FarmyWorkHoursConstraint implements HardActivityConstraint {
 
         totalRouteTime += newAct.getArrTime();
 
-        if (totalRouteTime / 1000 / 60 > 480) {
+        if (totalRouteTime > 480) {
             return ConstraintsStatus.NOT_FULFILLED;
         }
 

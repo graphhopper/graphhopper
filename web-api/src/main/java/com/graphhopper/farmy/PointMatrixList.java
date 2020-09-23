@@ -42,7 +42,9 @@ public class PointMatrixList extends AbstractList<PointMatrix> {
 
     private List<PointMatrix> Build() {
         List<PointMatrix> pointMatrixList = new LinkedList<>();
+        int index1 = 0;
         for(IdentifiedGHPoint3D point: this.pointList) {
+            int index2 = 0;
             for (IdentifiedGHPoint3D point2: this.pointList) {
                 if (point.equals(point2) && point.getId().equals(point2.getId())) continue;
                 GHResponse response = this.graphHopper.route(new GHRequest(point, point2)
@@ -50,9 +52,11 @@ public class PointMatrixList extends AbstractList<PointMatrix> {
                         .setVehicle("car")
                         .setLocale(Locale.US));
                 PathWrapper path = response.getBest();
-
-                pointMatrixList.add(new PointMatrix(point, point2, path.getDistance(), path.getTime()));
+                // Convert path time to seconds
+                pointMatrixList.add(new PointMatrix(point, point2, path.getDistance(), path.getTime() / 1000, index1, index2));
+                index2++;
             }
+            index1++;
         }
         return pointMatrixList;
     }

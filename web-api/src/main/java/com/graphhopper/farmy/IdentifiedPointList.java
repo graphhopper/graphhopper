@@ -17,7 +17,7 @@ public class IdentifiedPointList extends AbstractList<IdentifiedGHPoint3D> {
     }
 
     public IdentifiedPointList() {
-        this.identifiedPointList = new LinkedList<IdentifiedGHPoint3D>();
+        this.identifiedPointList = new LinkedList<>();
     }
 
     public IdentifiedPointList(PointList pointList) {
@@ -44,6 +44,10 @@ public class IdentifiedPointList extends AbstractList<IdentifiedGHPoint3D> {
                 .filter(point -> point.getId().equals(id))
                 .findFirst()
                 .orElse(new IdentifiedGHPoint3D(new GHPoint(0, 0), "NOT_FOUND_POINT"));
+    }
+
+    public int findIndex(IdentifiedGHPoint3D point) {
+        return this.identifiedPointList.indexOf(point);
     }
 
     public IdentifiedGHPoint3D findDepot() {

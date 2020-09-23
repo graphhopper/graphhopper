@@ -39,8 +39,8 @@ public class RoutePlanReader {
             if(data[16] == null || data[16].isEmpty() || data[16].equals("\"\"")) continue;
             NumberFormat nf = NumberFormat.getInstance(Locale.GERMAN);
             identifiedPointList.add(new IdentifiedGHPoint3D(new GHPoint(nf.parse(data[11]).doubleValue(), nf.parse(data[12]).doubleValue()), data[0])
-                    .setServiceTime(Integer.parseInt(data[16]) * 1000)
-                    .setTimeWindow(LocalTime.parse(data[14]).toSecondOfDay() * 1000, LocalTime.parse(data[15]).toSecondOfDay() * 1000)
+                    .setServiceTime(Integer.parseInt(data[16]))
+                    .setTimeWindow(LocalTime.parse(data[14]).toSecondOfDay(), LocalTime.parse(data[15]).toSecondOfDay())
                     .setDirection(data[13])
             );
         }
@@ -74,8 +74,8 @@ public class RoutePlanReader {
             NumberFormat nf = NumberFormat.getInstance(Locale.GERMAN);
             identifiedPointList.add(new IdentifiedGHPoint3D(new GHPoint(nf.parse(data[11]).doubleValue(), nf.parse(data[12]).doubleValue()), data[0])
                     .setWeight(Double.parseDouble(data[10]))
-                    .setServiceTime(Integer.parseInt(data[16]) * 1000)
-                    .setTimeWindow(LocalTime.parse(data[14]).toSecondOfDay() * 1000, LocalTime.parse(data[15]).toSecondOfDay()  * 1000)
+                    .setServiceTime(Integer.parseInt(data[16]))
+                    .setTimeWindow(LocalTime.parse(data[14]).toSecondOfDay(), LocalTime.parse(data[15]).toSecondOfDay())
                     .setDirection(data[13])
             );
         }
@@ -84,9 +84,10 @@ public class RoutePlanReader {
 
     public RoutePlanReader(FarmyOrder[] farmyOrders) throws IOException, ParseException {
         this.identifiedPointList = new IdentifiedPointList();
-        identifiedPointList.add(depotPoint());
+//        if(this.identifiedPointList.findDepot().getId().equals("NOT_FOUND_POINT"))
+//            identifiedPointList.add(depotPoint());
         for (FarmyOrder farmyOrder : farmyOrders) {
-            System.out.println(farmyOrder);
+//            System.out.println(farmyOrder);
             if (farmyOrder.latitude != null && farmyOrder.longitude != null && identifiedPointList.find(farmyOrder.getNumber()).getId().equals("NOT_FOUND_POINT")) {
                 identifiedPointList.add(new IdentifiedGHPoint3D(new GHPoint(farmyOrder.latitude, farmyOrder.longitude), farmyOrder.number)
                         .setWeight(farmyOrder.weight)
@@ -102,10 +103,12 @@ public class RoutePlanReader {
     }
 
     public IdentifiedGHPoint3D depotPoint() {
-        return new IdentifiedGHPoint3D(new GHPoint(47.4133906, 8.5170937), "DEPOT")
-                .setWeight(0)
-                .setServiceTime(900 * 1000)
-                .setTimeWindow(TimeWindow.newInstance(50400 * 1000, 54000 * 1000)); // Test timewindow, between 14:00 and 15:00
+        IdentifiedGHPoint3D identifiedGHPoint3D = new IdentifiedGHPoint3D(new GHPoint(47.3822499, 8.4857342), "DEPOT");
+        identifiedGHPoint3D.setWeight(0);
+        identifiedGHPoint3D.setServiceTime(900);
+        identifiedGHPoint3D.setTimeWindow(TimeWindow.newInstance(50400, 54000)); // Test timewindow, between 14:00 and 15:00
+
+        return identifiedGHPoint3D;
     }
 
 }
