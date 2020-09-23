@@ -18,9 +18,8 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
+import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap;
 import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 
 import java.util.Arrays;
@@ -30,45 +29,29 @@ import java.util.Arrays;
  * i.e. its a Dijkstra search that allows re-using the shortest path tree for different searches with the same origin
  * node and uses large int/double arrays instead of hash maps to store the shortest path tree (higher memory consumption,
  * but faster query times -> better for CH preparation). Main reason we use this instead of {@link DijkstraOneToMany}
- * is that we can use this implementation with a {@link PrepareCHGraph}.
+ * is that we can use this implementation with a {@link CHPreparationGraph} and we are only interested in checking for
+ * witness paths (e.g. we do not need to find the actual path).
  */
 public class NodeBasedWitnessPathSearcher {
-    private static final int EMPTY_PARENT = -1;
     private static final int NOT_FOUND = -1;
-    private final PrepareCHGraph graph;
-    private final PrepareCHEdgeExplorer outEdgeExplorer;
+    private PrepareGraphEdgeExplorer outEdgeExplorer;
     private final IntArrayList changedNodes;
-    private final int maxLevel;
     private int maxVisitedNodes = Integer.MAX_VALUE;
     protected double[] weights;
-    private int[] parents;
-    private int[] edgeIds;
-    private IntDoubleBinaryHeap heap;
+    private IntFloatBinaryHeap heap;
     private int ignoreNode = -1;
     private int visitedNodes;
     private boolean doClear = true;
     private int currNode, to;
     private double weightLimit = Double.MAX_VALUE;
 
-    public NodeBasedWitnessPathSearcher(PrepareCHGraph graph) {
-        this(graph, graph.getNodes());
-    }
-
-    public NodeBasedWitnessPathSearcher(PrepareCHGraph graph, int maxLevel) {
-        this.graph = graph;
-        this.maxLevel = maxLevel;
+    public NodeBasedWitnessPathSearcher(CHPreparationGraph graph) {
         outEdgeExplorer = graph.createOutEdgeExplorer();
-
-        parents = new int[graph.getNodes()];
-        Arrays.fill(parents, EMPTY_PARENT);
-
-        edgeIds = new int[graph.getNodes()];
-        Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
 
         weights = new double[graph.getNodes()];
         Arrays.fill(weights, Double.MAX_VALUE);
 
-        heap = new IntDoubleBinaryHeap(1000);
+        heap = new IntFloatBinaryHeap(1000);
         changedNodes = new IntArrayList();
     }
 
@@ -95,8 +78,6 @@ public class NodeBasedWitnessPathSearcher {
             for (int i = 0; i < vn; i++) {
                 int n = changedNodes.get(i);
                 weights[n] = Double.MAX_VALUE;
-                parents[n] = EMPTY_PARENT;
-                edgeIds[n] = EdgeIterator.NO_EDGE;
             }
 
             heap.clear();
@@ -109,19 +90,18 @@ public class NodeBasedWitnessPathSearcher {
             changedNodes.add(currNode);
         } else {
             // Cached! Re-use existing data structures
-            int parentNode = parents[to];
-            if (parentNode != EMPTY_PARENT && weights[to] <= weights[currNode])
+            if (weights[to] != Double.MAX_VALUE && weights[to] <= weights[currNode])
                 return to;
 
             if (heap.isEmpty() || isMaxVisitedNodesExceeded())
                 return NOT_FOUND;
 
-            currNode = heap.poll_element();
+            currNode = heap.poll();
         }
 
         visitedNodes = 0;
 
-        // we call 'finished' before heap.peek_element but this would add unnecessary overhead for this special case so we do it outside of the loop
+        // we call 'finished' before heap.peekElement but this would add unnecessary overhead for this special case so we do it outside of the loop
         if (finished()) {
             // then we need a small workaround for special cases see #707
             if (heap.isEmpty())
@@ -131,30 +111,25 @@ public class NodeBasedWitnessPathSearcher {
 
         while (true) {
             visitedNodes++;
-            PrepareCHEdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
+            PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
                 int adjNode = iter.getAdjNode();
-                int prevEdgeId = edgeIds[adjNode];
-                if (!accept(iter, prevEdgeId))
+                if (!accept(iter))
                     continue;
 
-                double tmpWeight = iter.getWeight(false) + weights[currNode];
+                double tmpWeight = iter.getWeight() + weights[currNode];
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
                 double w = weights[adjNode];
                 if (w == Double.MAX_VALUE) {
-                    parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
-                    heap.insert_(tmpWeight, adjNode);
+                    heap.insert(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
-                    edgeIds[adjNode] = iter.getEdge();
                 } else if (w > tmpWeight) {
-                    parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
-                    heap.update_(tmpWeight, adjNode);
+                    heap.update(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
-                    edgeIds[adjNode] = iter.getEdge();
                 }
             }
 
@@ -162,11 +137,11 @@ public class NodeBasedWitnessPathSearcher {
                 return NOT_FOUND;
 
             // calling just peek and not poll is important if the next query is cached
-            currNode = heap.peek_element();
+            currNode = heap.peekElement();
             if (finished())
                 return currNode;
 
-            heap.poll_element();
+            heap.poll();
         }
     }
 
@@ -183,9 +158,9 @@ public class NodeBasedWitnessPathSearcher {
     }
 
     public void close() {
+        outEdgeExplorer = null;
+        changedNodes.release();
         weights = null;
-        parents = null;
-        edgeIds = null;
         heap = null;
     }
 
@@ -212,14 +187,7 @@ public class NodeBasedWitnessPathSearcher {
         ignoreNode = node;
     }
 
-    private boolean accept(PrepareCHEdgeIterator iter, int prevOrNextEdgeId) {
-        if (iter.getEdge() == prevOrNextEdgeId)
-            return false;
-
-        if (graph.getLevel(iter.getAdjNode()) != maxLevel) {
-            return false;
-        }
-
+    private boolean accept(PrepareGraphEdgeIterator iter) {
         return ignoreNode < 0 || iter.getAdjNode() != ignoreNode;
     }
 

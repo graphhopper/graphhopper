@@ -9,10 +9,10 @@
     <appender name="ASYNC" class="org.apache.log4j.AsyncAppender">
         <param name="BufferSize" value="500"/>
         <appender-ref ref="stdout"/>
-    </appender>    
+    </appender>
     <logger name="com.graphhopper" additivity="false">
-        <level value="warn" />
-        <appender-ref ref="ASYNC" />
+        <level value="warn"/>
+        <appender-ref ref="ASYNC"/>
     </logger>
     <root>
         <priority value="warn"></priority>

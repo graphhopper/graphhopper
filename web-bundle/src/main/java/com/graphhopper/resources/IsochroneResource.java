@@ -7,7 +7,6 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
-import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.json.geo.JsonFeature;
@@ -18,10 +17,12 @@ import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
+import com.graphhopper.util.StopWatch;
 import io.dropwizard.jersey.params.IntParam;
 import io.dropwizard.jersey.params.LongParam;
 import org.hibernate.validator.constraints.Range;
@@ -37,9 +38,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.function.ToDoubleFunction;
 
 import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
@@ -53,18 +54,19 @@ public class IsochroneResource {
     private static final Logger logger = LoggerFactory.getLogger(IsochroneResource.class);
 
     private final GraphHopper graphHopper;
+    private final Triangulator triangulator;
     private final ProfileResolver profileResolver;
     private final EncodingManager encodingManager;
-    private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Inject
-    public IsochroneResource(GraphHopper graphHopper, ProfileResolver profileResolver, EncodingManager encodingManager) {
+    public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
+        this.triangulator = triangulator;
         this.profileResolver = profileResolver;
         this.encodingManager = encodingManager;
     }
 
-    enum ResponseType {json, geojson}
+    public enum ResponseType {json, geojson}
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -77,7 +79,8 @@ public class IsochroneResource {
             @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceLimitInMeter,
             @QueryParam("weight_limit") @DefaultValue("-1") LongParam weightLimit,
-            @QueryParam("type") @DefaultValue("json") ResponseType respType) {
+            @QueryParam("type") @DefaultValue("json") ResponseType respType,
+            @QueryParam("full_geometry") @DefaultValue("false") boolean fullGeometry) {
         StopWatch sw = new StopWatch().start();
 
         PMap hintsMap = new PMap();
@@ -128,56 +131,31 @@ public class IsochroneResource {
             zs.add((i + 1) * delta);
         }
 
-        final NodeAccess na = queryGraph.getNodeAccess();
-        Collection<Coordinate> sites = new ArrayList<>();
-        shortestPathTree.search(qr.getClosestNode(), label -> {
-            double exploreValue;
-            if (weightLimit.get() > 0) {
-                exploreValue = label.weight;
-            } else if (distanceLimitInMeter.get() > 0) {
-                exploreValue = label.distance;
-            } else {
-                exploreValue = label.time;
-            }
-            double lat = na.getLatitude(label.node);
-            double lon = na.getLongitude(label.node);
-            Coordinate site = new Coordinate(lon, lat);
-            site.z = exploreValue;
-            sites.add(site);
+        ToDoubleFunction<ShortestPathTree.IsoLabel> fz;
+        if (weightLimit.get() > 0) {
+            fz = l -> l.weight;
+        } else if (distanceLimitInMeter.get() > 0) {
+            fz = l -> l.distance;
+        } else {
+            fz = l -> l.time;
+        }
 
-            // add a pillar node to increase precision a bit for longer roads
-            if (label.parent != null) {
-                EdgeIteratorState edge = queryGraph.getEdgeIteratorState(label.edge, label.node);
-                PointList innerPoints = edge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
-                if (innerPoints.getSize() > 0) {
-                    int midIndex = innerPoints.getSize() / 2;
-                    double lat2 = innerPoints.getLat(midIndex);
-                    double lon2 = innerPoints.getLon(midIndex);
-                    Coordinate site2 = new Coordinate(lon2, lat2);
-                    site2.z = exploreValue;
-                    sites.add(site2);
-                }
-            }
-        });
-        int consumedNodes = sites.size();
-        if (consumedNodes > graphHopper.getRouterConfig().getMaxVisitedNodes() / 3)
-            throw new IllegalArgumentException("Too many nodes would be included in post processing (" + consumedNodes + "). Let us know if you need this increased.");
+        Triangulator.Result result = triangulator.triangulate(qr, queryGraph, shortestPathTree, fz);
 
-        // Sites may contain repeated coordinates. Especially for edge-based traversal, that's expected -- we visit
-        // each node multiple times.
-        // But that's okay, the triangulator de-dupes by itself, and it keeps the first z-value it sees, which is
-        // what we want.
-
-        ReadableTriangulation triangulation = Triangulator.getTriangulation(sites);
-        ContourBuilder contourBuilder = new ContourBuilder(triangulation);
-        ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
+        ContourBuilder contourBuilder = new ContourBuilder(result.triangulation);
+        ArrayList<Geometry> isochrones = new ArrayList<>();
         for (Double z : zs) {
-            MultiPolygon multiPolygon = contourBuilder.computeIsoline(z);
-            Polygon maxPolygon = heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.get().lon, point.get().lat)));
-            polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
+            logger.info("Building contour z={}", z);
+            MultiPolygon isochrone = contourBuilder.computeIsoline(z, result.seedEdges);
+            if (fullGeometry) {
+                isochrones.add(isochrone);
+            } else {
+                Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, isochrone.getFactory().createPoint(new Coordinate(point.get().lon, point.get().lat)));
+                isochrones.add(isochrone.getFactory().createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
+            }
         }
         ArrayList<JsonFeature> features = new ArrayList<>();
-        for (Coordinate[] polygonShell : polygonShells) {
+        for (Geometry isochrone : isochrones) {
             JsonFeature feature = new JsonFeature();
             HashMap<String, Object> properties = new HashMap<>();
             properties.put("bucket", features.size());
@@ -185,7 +163,7 @@ public class IsochroneResource {
                 properties.put("copyrights", WebHelper.COPYRIGHTS);
             }
             feature.setProperties(properties);
-            feature.setGeometry(geometryFactory.createPolygon(polygonShell));
+            feature.setGeometry(isochrone);
             features.add(feature);
         }
         ObjectNode json = JsonNodeFactory.instance.objectNode();
@@ -201,8 +179,7 @@ public class IsochroneResource {
         }
 
         sw.stop();
-        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes()
-                + ", consumed nodes:" + consumedNodes + ", " + uriInfo.getQueryParameters());
+        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes());
         return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
                 build();
     }

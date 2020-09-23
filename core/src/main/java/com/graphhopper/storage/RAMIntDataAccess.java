@@ -284,19 +284,6 @@ class RAMIntDataAccess extends AbstractDataAccess {
         return this;
     }
 
-    @Override
-    public void trimTo(long capacity) {
-        if (capacity < segmentSizeInBytes) {
-            capacity = segmentSizeInBytes;
-        }
-        int remainingSegments = (int) (capacity / segmentSizeInBytes);
-        if (capacity % segmentSizeInBytes != 0) {
-            remainingSegments++;
-        }
-
-        segments = Arrays.copyOf(segments, remainingSegments);
-    }
-
     boolean releaseSegment(int segNumber) {
         segments[segNumber] = null;
         return true;

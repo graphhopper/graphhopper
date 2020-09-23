@@ -115,7 +115,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         checkNodeId(a);
         checkNodeId(b);
 
-        int scId = chEdgeAccess.internalEdgeAdd(nextShortcutId(), a, b);
+        // we do not register the edge at node b which should be the higher level node (so no need to 'see' the lower
+        // level node a)
+        int scId = chEdgeAccess.internalEdgeAdd(nextShortcutId(), a, b, false);
         // do not create CHEdgeIteratorImpl object
         long edgePointer = chEdgeAccess.toPointer(scId);
         chEdgeAccess.setAccessAndWeight(edgePointer, accessFlags & scDirMask, weight);
@@ -237,14 +239,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public void disconnectEdge(int edge, int adjNode, int prevEdge) {
-        // TODO this is ugly, move this somehow into the underlying iteration logic
-        long edgePointer = !EdgeIterator.Edge.isValid(prevEdge) ? -1
-                : isShortcut(prevEdge) ? chEdgeAccess.toPointer(prevEdge) : baseGraph.edgeAccess.toPointer(prevEdge);
-        chEdgeAccess.internalEdgeDisconnect(edge, edgePointer, adjNode);
-    }
-
-    @Override
     public AllCHEdgesIterator getAllEdges() {
         return new AllCHEdgesIteratorImpl(baseGraph);
     }
@@ -354,7 +348,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         System.out.println("shortcuts:");
         String formatShortcutsBase = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s";
         String formatShortcutExt = " | %12s | %12s";
-        String header = String.format(Locale.ROOT, formatShortcutsBase, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2");
+        String header = String.format(Locale.ROOT, formatShortcutsBase, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2");
         if (chConfig.isEdgeBased()) {
             header += String.format(Locale.ROOT, formatShortcutExt, "S_ORIG_FIRST", "S_ORIG_LAST");
         }
@@ -459,10 +453,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     return false;
 
                 allEdgeIterator.adjNode = allEdgeIterator.edgeAccess.getNodeB(allEdgeIterator.edgePointer);
-                // some edges are deleted and are marked via a negative node
-                if (EdgeAccess.isInvalidNodeB(allEdgeIterator.adjNode))
-                    continue;
-
                 allEdgeIterator.baseNode = allEdgeIterator.edgeAccess.getNodeA(allEdgeIterator.edgePointer);
                 allEdgeIterator.freshFlags = false;
                 allEdgeIterator.reverse = false;
@@ -867,11 +857,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
             return edgeIterable.setReverse(property, value);
-        }
-
-        @Override
-        public int getMergeStatus(int flags) {
-            return PrepareEncoder.getScMergeStatus(getShortcutFlags(), flags);
         }
 
         @Override

@@ -8,9 +8,15 @@ cache:
 
 run_measurement:
   stage: test
+  tags:
+    - openjdk11
   script:
     # make this script exit if a command fails, a variable is missing etc.
     - set -euo pipefail
+    - mvn -v
+    - java --version
+    - cat /proc/meminfo
+    - lscpu
     - export BENCHMARK_DIR=/ext_data/
     - export BENCHMARK_RESULT_DIR=${BENCHMARK_DIR}results/$(date '+%d-%m-%Y-%s%N')/
     - export BENCHMARK_SMALL_MAP_NAME=bayern-190101.osm.pbf

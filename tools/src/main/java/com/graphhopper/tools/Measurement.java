@@ -70,7 +70,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 
 /**
@@ -83,6 +82,7 @@ public class Measurement {
     private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
     private final Map<String, Object> properties = new TreeMap<>();
     private long seed;
+    private boolean stopOnError;
     private int maxNode;
     private String vehicle;
 
@@ -100,6 +100,7 @@ public class Measurement {
         final String countryBordersDirectory = args.getString("spatial_rules.borders_directory", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
+        stopOnError = args.getBool("measurement.stop_on_error", false);
         String summaryLocation = args.getString("measurement.summaryfile", "");
         final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
         put("measurement.timestamp", timeStamp);
@@ -219,7 +220,7 @@ public class Measurement {
             }
 
             if (hopper.getLMPreparationHandler().isEnabled()) {
-                System.gc();
+                gcAndWait();
                 boolean isCH = false;
                 boolean isLM = true;
                 Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
@@ -241,8 +242,7 @@ public class Measurement {
             if (hopper.getCHPreparationHandler().isEnabled()) {
                 boolean isCH = true;
                 boolean isLM = false;
-//                compareCHWithAndWithoutSOD(hopper, count/5);
-                System.gc();
+                gcAndWait();
                 if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
                     CHGraph lg = g.getCHGraph(chConfig.getName());
@@ -289,13 +289,15 @@ public class Measurement {
 
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
+            if (stopOnError)
+                System.exit(1);
             put("error", ex.toString());
         } finally {
             put("gh.gitinfo", Constants.GIT_INFO != null ? Constants.GIT_INFO.toString() : "unknown");
             put("measurement.count", count);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getMillis());
-            System.gc();
+            gcAndWait();
             put("measurement.totalMB", getTotalMB());
             put("measurement.usedMB", getUsedMB());
 
@@ -633,94 +635,6 @@ public class Measurement {
         print("spatialrulelookup", lookupPerfTest);
     }
 
-    private void compareRouting(final GraphHopper hopper, int count) {
-        logger.info("Comparing " + count + " routes. Differences will be printed to stderr.");
-        String algo = Algorithms.ASTAR_BI;
-        final Random rand = new Random(seed);
-        final Graph g = hopper.getGraphHopperStorage();
-        final NodeAccess na = g.getNodeAccess();
-
-        for (int i = 0; i < count; i++) {
-            int from = rand.nextInt(maxNode);
-            int to = rand.nextInt(maxNode);
-
-            double fromLat = na.getLatitude(from);
-            double fromLon = na.getLongitude(from);
-            double toLat = na.getLatitude(to);
-            double toLon = na.getLongitude(to);
-            GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setProfile("profile_no_tc").
-                    setAlgorithm(algo);
-
-            GHResponse lmRsp = hopper.route(req);
-            req.putHint(Landmark.DISABLE, true);
-            GHResponse originalRsp = hopper.route(req);
-
-            String locStr = " iteration " + i + ". " + fromLat + "," + fromLon + " -> " + toLat + "," + toLon;
-            if (lmRsp.hasErrors()) {
-                if (originalRsp.hasErrors())
-                    continue;
-                logger.error("Error for LM but not for original response " + locStr);
-            }
-
-            String infoStr = " weight:" + lmRsp.getBest().getRouteWeight() + ", original: " + originalRsp.getBest().getRouteWeight()
-                    + " distance:" + lmRsp.getBest().getDistance() + ", original: " + originalRsp.getBest().getDistance()
-                    + " time:" + round2(lmRsp.getBest().getTime() / 1000) + ", original: " + round2(originalRsp.getBest().getTime() / 1000)
-                    + " points:" + lmRsp.getBest().getPoints().size() + ", original: " + originalRsp.getBest().getPoints().size();
-
-            if (Math.abs(1 - lmRsp.getBest().getRouteWeight() / originalRsp.getBest().getRouteWeight()) > 0.000001)
-                logger.error("Too big weight difference for LM. " + locStr + infoStr);
-        }
-    }
-
-    private void compareCHWithAndWithoutSOD(final GraphHopper hopper, int count) {
-        logger.info("Comparing " + count + " routes for CH with and without stall on demand." +
-                " Differences will be printed to stderr.");
-        final Random rand = new Random(seed);
-        final Graph g = hopper.getGraphHopperStorage();
-        final NodeAccess na = g.getNodeAccess();
-
-        for (int i = 0; i < count; i++) {
-            int from = rand.nextInt(maxNode);
-            int to = rand.nextInt(maxNode);
-
-            double fromLat = na.getLatitude(from);
-            double fromLon = na.getLongitude(from);
-            double toLat = na.getLatitude(to);
-            double toLon = na.getLongitude(to);
-            GHRequest sodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setProfile("profile_no_tc").
-                    setAlgorithm(DIJKSTRA_BI);
-
-            GHRequest noSodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setProfile("profile_no_tc").
-                    setAlgorithm(DIJKSTRA_BI);
-            noSodReq.putHint("stall_on_demand", false);
-
-            GHResponse sodRsp = hopper.route(sodReq);
-            GHResponse noSodRsp = hopper.route(noSodReq);
-
-            String locStr = " iteration " + i + ". " + fromLat + "," + fromLon + " -> " + toLat + "," + toLon;
-            if (sodRsp.hasErrors()) {
-                if (noSodRsp.hasErrors()) {
-                    logger.info("Error with and without SOD");
-                    continue;
-                } else {
-                    logger.error("Error with SOD but not without SOD" + locStr);
-                    continue;
-                }
-            }
-            String infoStr =
-                    " weight:" + noSodRsp.getBest().getRouteWeight() + ", original: " + sodRsp.getBest().getRouteWeight()
-                            + " distance:" + noSodRsp.getBest().getDistance() + ", original: " + sodRsp.getBest().getDistance()
-                            + " time:" + round2(noSodRsp.getBest().getTime() / 1000) + ", original: " + round2(sodRsp.getBest().getTime() / 1000)
-                            + " points:" + noSodRsp.getBest().getPoints().size() + ", original: " + sodRsp.getBest().getPoints().size();
-
-            if (Math.abs(1 - noSodRsp.getBest().getRouteWeight() / sodRsp.getBest().getRouteWeight()) > 0.000001)
-                logger.error("Too big weight difference for SOD. " + locStr + infoStr);
-        }
-    }
-
     private void printTimeOfRouteQuery(final GraphHopper hopper, final QuerySettings querySettings) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
@@ -749,16 +663,23 @@ public class Measurement {
                 IntArrayList nodes = new IntArrayList(querySettings.points);
                 // we try a few times to find points that do not lie within our blocked area
                 for (int i = 0; i < 5; i++) {
+                    nodes.clear();
                     List<GHPoint> points = new ArrayList<>();
                     List<String> pointHints = new ArrayList<>();
-                    for (int p = 0; p < querySettings.points; p++) {
+                    int tries = 0;
+                    while (nodes.size() < querySettings.points) {
                         int node = rand.nextInt(maxNode);
+                        if (++tries > g.getNodes())
+                            throw new RuntimeException("Could not find accessible points");
+                        if (GHUtility.count(edgeExplorer.setBaseNode(node)) == 0)
+                            // this node is not accessible via any roads, probably was removed during subnetwork removal
+                            // -> discard
+                            continue;
                         nodes.add(node);
                         points.add(new GHPoint(na.getLatitude(node), na.getLongitude(node)));
                         if (querySettings.withPointHints) {
                             EdgeIterator iter = edgeExplorer.setBaseNode(node);
-                            iter.next();
-                            pointHints.add(iter.getName());
+                            pointHints.add(iter.next() ? iter.getName() : "");
                         }
                     }
                     req.setPoints(points);
@@ -806,9 +727,12 @@ public class Measurement {
 
                     if (rsp.getErrors().get(0).getMessage() == null)
                         rsp.getErrors().get(0).printStackTrace();
-                    else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found"))
-                        logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
-
+                    else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found")) {
+                        if (stopOnError)
+                            throw new RuntimeException("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
+                        else
+                            logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
+                    }
                     return 0;
                 }
 

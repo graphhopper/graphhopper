@@ -27,6 +27,8 @@ public class QuadEdgeAsReadableQuadEdge implements ReadableQuadEdge {
     private final org.locationtech.jts.triangulate.quadedge.QuadEdge delegate;
 
     QuadEdgeAsReadableQuadEdge(org.locationtech.jts.triangulate.quadedge.QuadEdge startEdge) {
+        if (startEdge == null)
+            throw new NullPointerException();
         this.delegate = startEdge;
     }
 

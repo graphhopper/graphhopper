@@ -145,6 +145,7 @@ public class PrepareContractionHierarchiesTest {
         initExampleGraph(g);
         int old = routingCHGraph.getEdges();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
+        useNodeOrdering(prepare, new int[]{5, 3, 4, 0, 1, 2});
         prepare.doWork();
         assertEquals(old + 2, routingCHGraph.getEdges());
     }
@@ -154,6 +155,7 @@ public class PrepareContractionHierarchiesTest {
         initShortcutsGraph(g);
         int oldCount = routingCHGraph.getEdges();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
+        useNodeOrdering(prepare, new int[]{0, 5, 6, 7, 8, 10, 11, 13, 15, 1, 3, 9, 14, 16, 12, 4, 2});
         prepare.doWork();
         assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount + 7, routingCHGraph.getEdges());
@@ -187,8 +189,8 @@ public class PrepareContractionHierarchiesTest {
         int oldCount = g.getEdges();
         assertEquals(19, oldCount);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
+        useNodeOrdering(prepare, new int[]{10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 11, 12, 13, 14, 15, 16});
         prepare.doWork();
-        // PrepareTowerNodesShortcutsTest.printEdges(g);
         assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount, GHUtility.count(g.getAllEdges()));
 
@@ -259,6 +261,7 @@ public class PrepareContractionHierarchiesTest {
         initRoundaboutGraph(g);
         int oldCount = g.getEdges();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
+        useNodeOrdering(prepare, new int[]{26, 6, 12, 13, 2, 3, 8, 9, 10, 11, 14, 15, 16, 17, 18, 20, 21, 23, 24, 25, 19, 22, 27, 5, 29, 30, 31, 28, 7, 1, 0, 4});
         prepare.doWork();
         assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount, routingCHGraph.getBaseGraph().getEdges());
@@ -543,40 +546,11 @@ public class PrepareContractionHierarchiesTest {
         g.edge(6, 3, 1, true);
 
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
+        useNodeOrdering(prepare, new int[]{4, 1, 2, 0, 5, 6, 3});
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
     }
 
-    // 0-1-2-3-4
-    // |     / |
-    // |    8  |
-    // \   /   /
-    //  7-6-5-/
-    void initBiGraph(Graph graph) {
-        graph.edge(0, 1, 100, true);
-        graph.edge(1, 2, 1, true);
-        graph.edge(2, 3, 1, true);
-        graph.edge(3, 4, 1, true);
-        graph.edge(4, 5, 25, true);
-        graph.edge(5, 6, 25, true);
-        graph.edge(6, 7, 5, true);
-        graph.edge(7, 0, 5, true);
-        graph.edge(3, 8, 20, true);
-        graph.edge(8, 6, 20, true);
-    }
-
-    //    public static void printEdges(CHGraph g) {
-//        RawEdgeIterator iter = g.getAllEdges();
-//        while (iter.next()) {
-//            EdgeSkipIterator single = g.getEdgeProps(iter.edge(), iter.nodeB());
-//            System.out.println(iter.nodeA() + "<->" + iter.nodeB() + " \\"
-//                    + single.skippedEdge1() + "," + single.skippedEdge2() + " (" + iter.edge() + ")"
-//                    + ", dist: " + (float) iter.weight()
-//                    + ", level:" + g.getLevel(iter.nodeA()) + "<->" + g.getLevel(iter.nodeB())
-//                    + ", bothDir:" + CarFlagEncoder.isBoth(iter.setProperties()));
-//        }
-//        System.out.println("---");
-//    }
     @Test
     public void testBits() {
         int fromNode = Integer.MAX_VALUE / 3 * 2;
@@ -603,9 +577,8 @@ public class PrepareContractionHierarchiesTest {
 
         ghStorage.freeze();
 
-        for (CHConfig c : configs) {
-            checkPath(ghStorage, c, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12));
-        }
+        checkPath(ghStorage, carProfile, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12), new int[]{0, 5, 6, 7, 8, 10, 11, 13, 15, 1, 3, 9, 14, 16, 12, 4, 2});
+        checkPath(ghStorage, bikeProfile, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12), new int[]{0, 5, 6, 7, 8, 10, 11, 13, 15, 1, 3, 9, 14, 16, 12, 4, 2});
     }
 
     @Test
@@ -625,9 +598,9 @@ public class PrepareContractionHierarchiesTest {
 
         ghStorage.freeze();
 
-        checkPath(ghStorage, carConfig, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12));
+        checkPath(ghStorage, carConfig, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12), new int[]{0, 5, 6, 7, 8, 10, 11, 13, 15, 1, 3, 9, 14, 16, 12, 4, 2});
         // detour around blocked 9,14
-        checkPath(ghStorage, bikeConfig, 9, 5, IntArrayList.from(3, 10, 14, 16, 13, 12));
+        checkPath(ghStorage, bikeConfig, 9, 5, IntArrayList.from(3, 10, 14, 16, 13, 12), new int[]{0, 5, 6, 7, 8, 10, 11, 13, 14, 15, 9, 1, 4, 3, 2, 12, 16});
     }
 
     @Test
@@ -678,9 +651,10 @@ public class PrepareContractionHierarchiesTest {
         assertTrue("reusing node ordering should speed up ch contraction", timeMotorCycle < 0.5 * timeCar);
     }
 
-    private void checkPath(GraphHopperStorage g, CHConfig c, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
+    private void checkPath(GraphHopperStorage g, CHConfig c, int expShortcuts, double expDistance, IntIndexedContainer expNodes, int[] nodeOrdering) {
         RoutingCHGraph lg = g.getRoutingCHGraph(c.getName());
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, c);
+        useNodeOrdering(prepare, nodeOrdering);
         prepare.doWork();
         assertEquals(c.toString(), expShortcuts, prepare.getShortcuts());
         RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(lg).createAlgo(new PMap());
@@ -696,6 +670,20 @@ public class PrepareContractionHierarchiesTest {
     private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHConfig p) {
         g.freeze();
         return PrepareContractionHierarchies.fromGraphHopperStorage(g, p);
+    }
+
+    private void useNodeOrdering(PrepareContractionHierarchies prepare, int[] nodeOrdering) {
+        prepare.useFixedNodeOrdering(new NodeOrderingProvider() {
+            @Override
+            public int getNodeIdForLevel(int level) {
+                return nodeOrdering[level];
+            }
+
+            @Override
+            public int getNumNodes() {
+                return nodeOrdering.length;
+            }
+        });
     }
 
 }
