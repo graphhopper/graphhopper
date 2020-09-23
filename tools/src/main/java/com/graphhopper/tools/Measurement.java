@@ -219,13 +219,13 @@ public class Measurement {
             if (runSlow) {
                 boolean isCH = false;
                 boolean isLM = false;
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing", count / 10, isCH, isLM).
                         withInstructions());
                 if (encoder.supportsTurnCosts())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", count / 10, isCH, isLM).
                             withInstructions().edgeBased());
                 if (!blockAreaStr.isEmpty())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", count / 10, isCH, isLM).
                             withInstructions().blockArea(blockAreaStr));
             }
 
@@ -235,10 +235,10 @@ public class Measurement {
                 boolean isLM = true;
                 Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 10, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
                     if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
-                        printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 4, isCH, isLM).
+                        printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 10, isCH, isLM).
                                 withInstructions().activeLandmarks(activeLMCount).edgeBased());
                     }
                 });
