@@ -70,7 +70,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 
 /**
@@ -243,7 +242,6 @@ public class Measurement {
             if (hopper.getCHPreparationHandler().isEnabled()) {
                 boolean isCH = true;
                 boolean isLM = false;
-//                compareCHWithAndWithoutSOD(hopper, count/5);
                 gcAndWait();
                 if (!hopper.getCHPreparationHandler().getNodeBasedCHConfigs().isEmpty()) {
                     CHConfig chConfig = hopper.getCHPreparationHandler().getNodeBasedCHConfigs().get(0);
@@ -635,94 +633,6 @@ public class Measurement {
         }.setIterations(count).start();
 
         print("spatialrulelookup", lookupPerfTest);
-    }
-
-    private void compareRouting(final GraphHopper hopper, int count) {
-        logger.info("Comparing " + count + " routes. Differences will be printed to stderr.");
-        String algo = Algorithms.ASTAR_BI;
-        final Random rand = new Random(seed);
-        final Graph g = hopper.getGraphHopperStorage();
-        final NodeAccess na = g.getNodeAccess();
-
-        for (int i = 0; i < count; i++) {
-            int from = rand.nextInt(maxNode);
-            int to = rand.nextInt(maxNode);
-
-            double fromLat = na.getLatitude(from);
-            double fromLon = na.getLongitude(from);
-            double toLat = na.getLatitude(to);
-            double toLon = na.getLongitude(to);
-            GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setProfile("profile_no_tc").
-                    setAlgorithm(algo);
-
-            GHResponse lmRsp = hopper.route(req);
-            req.putHint(Landmark.DISABLE, true);
-            GHResponse originalRsp = hopper.route(req);
-
-            String locStr = " iteration " + i + ". " + fromLat + "," + fromLon + " -> " + toLat + "," + toLon;
-            if (lmRsp.hasErrors()) {
-                if (originalRsp.hasErrors())
-                    continue;
-                logger.error("Error for LM but not for original response " + locStr);
-            }
-
-            String infoStr = " weight:" + lmRsp.getBest().getRouteWeight() + ", original: " + originalRsp.getBest().getRouteWeight()
-                    + " distance:" + lmRsp.getBest().getDistance() + ", original: " + originalRsp.getBest().getDistance()
-                    + " time:" + round2(lmRsp.getBest().getTime() / 1000) + ", original: " + round2(originalRsp.getBest().getTime() / 1000)
-                    + " points:" + lmRsp.getBest().getPoints().size() + ", original: " + originalRsp.getBest().getPoints().size();
-
-            if (Math.abs(1 - lmRsp.getBest().getRouteWeight() / originalRsp.getBest().getRouteWeight()) > 0.000001)
-                logger.error("Too big weight difference for LM. " + locStr + infoStr);
-        }
-    }
-
-    private void compareCHWithAndWithoutSOD(final GraphHopper hopper, int count) {
-        logger.info("Comparing " + count + " routes for CH with and without stall on demand." +
-                " Differences will be printed to stderr.");
-        final Random rand = new Random(seed);
-        final Graph g = hopper.getGraphHopperStorage();
-        final NodeAccess na = g.getNodeAccess();
-
-        for (int i = 0; i < count; i++) {
-            int from = rand.nextInt(maxNode);
-            int to = rand.nextInt(maxNode);
-
-            double fromLat = na.getLatitude(from);
-            double fromLon = na.getLongitude(from);
-            double toLat = na.getLatitude(to);
-            double toLon = na.getLongitude(to);
-            GHRequest sodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setProfile("profile_no_tc").
-                    setAlgorithm(DIJKSTRA_BI);
-
-            GHRequest noSodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
-                    setProfile("profile_no_tc").
-                    setAlgorithm(DIJKSTRA_BI);
-            noSodReq.putHint("stall_on_demand", false);
-
-            GHResponse sodRsp = hopper.route(sodReq);
-            GHResponse noSodRsp = hopper.route(noSodReq);
-
-            String locStr = " iteration " + i + ". " + fromLat + "," + fromLon + " -> " + toLat + "," + toLon;
-            if (sodRsp.hasErrors()) {
-                if (noSodRsp.hasErrors()) {
-                    logger.info("Error with and without SOD");
-                    continue;
-                } else {
-                    logger.error("Error with SOD but not without SOD" + locStr);
-                    continue;
-                }
-            }
-            String infoStr =
-                    " weight:" + noSodRsp.getBest().getRouteWeight() + ", original: " + sodRsp.getBest().getRouteWeight()
-                            + " distance:" + noSodRsp.getBest().getDistance() + ", original: " + sodRsp.getBest().getDistance()
-                            + " time:" + round2(noSodRsp.getBest().getTime() / 1000) + ", original: " + round2(sodRsp.getBest().getTime() / 1000)
-                            + " points:" + noSodRsp.getBest().getPoints().size() + ", original: " + sodRsp.getBest().getPoints().size();
-
-            if (Math.abs(1 - noSodRsp.getBest().getRouteWeight() / sodRsp.getBest().getRouteWeight()) > 0.000001)
-                logger.error("Too big weight difference for SOD. " + locStr + infoStr);
-        }
     }
 
     private void printTimeOfRouteQuery(final GraphHopper hopper, final QuerySettings querySettings) {

@@ -27,7 +27,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -87,13 +86,8 @@ public class ViaRouting {
 
     static EdgeFilter createEdgeFilter(final Weighting weighting) {
         final BooleanEncodedValue accessEnc = weighting.getFlagEncoder().getAccessEnc();
-        return new EdgeFilter() {
-            @Override
-            public boolean accept(EdgeIteratorState edgeState) {
-                return edgeState.get(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, false))
-                        || edgeState.getReverse(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, true));
-            }
-        };
+        return edgeState -> edgeState.get(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, false))
+                || edgeState.getReverse(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, true));
     }
 
     public static Result calcPaths(List<GHPoint> points, QueryGraph queryGraph, List<QueryResult> queryResults, BooleanEncodedValue accessEnc, PathCalculator pathCalculator, List<String> curbsides, boolean forceCurbsides, List<Double> headings, boolean passThrough) {
