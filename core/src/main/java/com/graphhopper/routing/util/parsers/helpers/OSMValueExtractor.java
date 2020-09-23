@@ -7,7 +7,10 @@ import java.util.regex.Pattern;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.Helper;
 
 public class OSMValueExtractor {
     
@@ -43,7 +46,10 @@ public class OSMValueExtractor {
             return Double.NaN;
 
         double factor = 1;
-        if (value.endsWith("t")) {
+        if (value.endsWith("st")) {
+            value = value.substring(0, value.length() - 2);
+            factor = 0.907194048807;
+        } else if (value.endsWith("t")) {
             value = value.substring(0, value.length() - 1);
         } else if (value.endsWith("lbs")) {
             value = value.substring(0, value.length() - 3);
@@ -135,5 +141,60 @@ public class OSMValueExtractor {
                 || value.contains(">") || value.contains("<") || value.contains("-")
                 // only support '.' and no German decimals
                 || value.contains(",");
+    }
+
+    /**
+     * @return the speed in km/h
+     */
+    public static double stringToKmh(String str) {
+        if (Helper.isEmpty(str))
+            return Double.NaN;
+    
+        // on some German autobahns and a very few other places
+        if ("none".equals(str))
+            return MaxSpeed.UNLIMITED_SIGN_SPEED;
+    
+        if (str.endsWith(":rural") || str.endsWith(":trunk"))
+            return 80;
+    
+        if (str.endsWith(":urban"))
+            return 50;
+    
+        if (str.equals("walk") || str.endsWith(":living_street"))
+            return 6;
+    
+        int mpInteger = str.indexOf("mp");
+        int knotInteger = str.indexOf("knots");
+        int kmInteger = str.indexOf("km");
+        int kphInteger = str.indexOf("kph");
+
+        double factor;
+        if (mpInteger > 0) {
+            str = str.substring(0, mpInteger).trim();
+            factor = DistanceCalcEarth.KM_MILE;
+        } else if (knotInteger > 0) {
+            str = str.substring(0, knotInteger).trim();
+            factor = 1.852; // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
+        } else {
+            if (kmInteger > 0) {
+                str = str.substring(0, kmInteger).trim();
+            } else if (kphInteger > 0) {
+                str = str.substring(0, kphInteger).trim();
+            }
+            factor = 1;
+        }
+            
+        double value;
+        try {
+            value = Integer.parseInt(str) * factor;
+        } catch (Exception ex) {
+            return Double.NaN;
+        }
+        
+        if (value <= 0) {
+            return Double.NaN;
+        }
+        
+        return value;
     }
 }

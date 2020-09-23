@@ -20,7 +20,9 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.ev.UnsignedDecimalEncodedValue;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.routing.weighting.CurvatureWeighting;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
@@ -177,12 +179,12 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
             double speed = getSpeed(way);
             speed = applyMaxSpeed(way, speed);
 
-            double maxMCSpeed = parseSpeed(way.getTag("maxspeed:motorcycle"));
-            if (maxMCSpeed > 0 && maxMCSpeed < speed)
+            double maxMCSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:motorcycle"));
+            if (isValidSpeed(maxMCSpeed) && maxMCSpeed < speed)
                 speed = maxMCSpeed * 0.9;
 
             // limit speed to max 30 km/h if bad surface
-            if (speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))
+            if (isValidSpeed(speed) && speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))
                 speed = 30;
 
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);

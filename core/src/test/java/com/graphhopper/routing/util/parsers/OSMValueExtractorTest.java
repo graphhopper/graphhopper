@@ -1,5 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
+import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import org.junit.Test;
 
@@ -8,7 +9,7 @@ import static org.junit.Assert.assertTrue;
 
 public class OSMValueExtractorTest {
 
-    private final double DELTA = 0.01;
+    private final double DELTA = 0.001;
 
     @Test
     public void stringToTons() {
@@ -21,6 +22,7 @@ public class OSMValueExtractorTest {
         assertEquals(3, OSMValueExtractor.stringToTons("3 T"), DELTA);
         assertEquals(3, OSMValueExtractor.stringToTons("3ton"), DELTA);
         assertEquals(10, OSMValueExtractor.stringToTons("10000 kg"), DELTA);
+        assertEquals(25.401, OSMValueExtractor.stringToTons("28 st"), DELTA);
 
         // maximum gross weight
         assertEquals(6, OSMValueExtractor.stringToTons("6t mgw"), DELTA);
@@ -43,8 +45,8 @@ public class OSMValueExtractorTest {
         assertEquals(1.5, OSMValueExtractor.stringToMeter("1.5 m"), DELTA);
         assertEquals(1.5, OSMValueExtractor.stringToMeter("1.5   m"), DELTA);
         assertEquals(1.5, OSMValueExtractor.stringToMeter("1.5 meter"), DELTA);
-        assertEquals(1.5, OSMValueExtractor.stringToMeter("4 ft 11 in"), DELTA);
-        assertEquals(1.5, OSMValueExtractor.stringToMeter("4'11''"), DELTA);
+        assertEquals(1.499, OSMValueExtractor.stringToMeter("4 ft 11 in"), DELTA);
+        assertEquals(1.499, OSMValueExtractor.stringToMeter("4'11''"), DELTA);
 
 
         assertEquals(3, OSMValueExtractor.stringToMeter("3 m."), DELTA);
@@ -77,5 +79,31 @@ public class OSMValueExtractorTest {
     @Test
     public void stringToMeterNaN3() {
         assertTrue(Double.isNaN(OSMValueExtractor.stringToMeter("default")));
+    }
+
+    @Test
+    public void stringToKmh() {
+        assertEquals(40, OSMValueExtractor.stringToKmh("40 km/h"), DELTA);
+        assertEquals(40, OSMValueExtractor.stringToKmh("40km/h"), DELTA);
+        assertEquals(40, OSMValueExtractor.stringToKmh("40kmh"), DELTA);
+        assertEquals(64.374, OSMValueExtractor.stringToKmh("40mph"), DELTA);
+        assertEquals(48.28, OSMValueExtractor.stringToKmh("30 mph"), DELTA);
+        assertEquals(18.52, OSMValueExtractor.stringToKmh("10 knots"), DELTA);
+        assertEquals(19, OSMValueExtractor.stringToKmh("19 kph"), DELTA);
+        assertEquals(19, OSMValueExtractor.stringToKmh("19kph"), DELTA);
+
+        assertEquals(50, OSMValueExtractor.stringToKmh("RO:urban"), DELTA);
+
+        assertEquals(80, OSMValueExtractor.stringToKmh("RU:rural"), DELTA);
+
+        assertEquals(6, OSMValueExtractor.stringToKmh("walk"), DELTA);
+        assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, OSMValueExtractor.stringToKmh("none"), DELTA);
+    }
+
+    @Test
+    public void stringToKmhNaN() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh(null)));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("0")));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("-20")));
     }
 }

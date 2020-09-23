@@ -23,7 +23,7 @@ import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.AbstractFlagEncoder;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
@@ -54,7 +54,7 @@ public class OSMMaxSpeedParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        double maxSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
+        double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
 
         SpatialRuleSet spatialRuleSet = way.getTag("spatial_rule_set", null);
         if (spatialRuleSet != null && spatialRuleSet != SpatialRuleSet.EMPTY) {
@@ -62,26 +62,33 @@ public class OSMMaxSpeedParser implements TagParser {
             maxSpeed = spatialRuleSet.getMaxSpeed(roadClass, TransportationMode.MOTOR_VEHICLE, maxSpeed);
         }
 
-        double fwdSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:forward"));
-        if (fwdSpeed < 0 && maxSpeed > 0)
+        double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
+        if (!isValidSpeed(fwdSpeed) && isValidSpeed(maxSpeed))
             fwdSpeed = maxSpeed;
         double maxPossibleSpeed = MaxSpeed.UNLIMITED_SIGN_SPEED;
-        if (fwdSpeed > maxPossibleSpeed)
+        if (isValidSpeed(fwdSpeed) && fwdSpeed > maxPossibleSpeed)
             fwdSpeed = maxPossibleSpeed;
 
-        double bwdSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:backward"));
-        if (bwdSpeed < 0 && maxSpeed > 0)
+        double bwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:backward"));
+        if (!isValidSpeed(bwdSpeed) && isValidSpeed(maxSpeed))
             bwdSpeed = maxSpeed;
-        if (bwdSpeed > maxPossibleSpeed)
+        if (isValidSpeed(bwdSpeed) && bwdSpeed > maxPossibleSpeed)
             bwdSpeed = maxPossibleSpeed;
 
-        if (fwdSpeed <= 0)
+        if (!isValidSpeed(fwdSpeed))
             fwdSpeed = UNSET_SPEED;
         carMaxSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
 
-        if (bwdSpeed <= 0)
+        if (!isValidSpeed(bwdSpeed))
             bwdSpeed = UNSET_SPEED;
         carMaxSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
         return edgeFlags;
+    }
+    
+    /**
+     * @return <i>true</i> if the given speed is not {@link Double#NaN}
+     */
+    private boolean isValidSpeed(double speed) {
+        return !Double.isNaN(speed);
     }
 }
