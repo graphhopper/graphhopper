@@ -56,6 +56,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMSurfaceParser();
         else if (name.equals(Toll.KEY))
             return new OSMTollParser();
+        else if (name.equals(MtbScale.KEY))
+            return new OSMMtbScaleParser();
         else if (name.equals(TrackType.KEY))
             return new OSMTrackTypeParser();
         else if (name.equals(Hazmat.KEY))
