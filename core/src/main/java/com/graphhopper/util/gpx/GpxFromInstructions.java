@@ -19,14 +19,13 @@
 package com.graphhopper.util.gpx;
 
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 // todo: the code here does not really belong into core, but we moved it here for now so its available from
 // map-matching resource (it cannot be in the api module, because it uses AngleCalc). Probably we should separate the
@@ -80,6 +79,10 @@ public class GpxFromInstructions {
     }
 
     public static String createGPX(InstructionList instructions, String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version, Translation tr) {
+        return createGPX(instructions, trackName, startTimeMillis, includeElevation, withRoute, withTrack, withWayPoints, version, tr, Collections.emptyMap());
+    }
+
+    public static String createGPX(InstructionList instructions, String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version, Translation tr, Map<String, List<PathDetail>> pathDetails) {
         DateFormat formatter = Helper.createFormatter();
 
         DecimalFormat decimalFormat = new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.ROOT));
@@ -115,13 +118,15 @@ public class GpxFromInstructions {
             if (withRoute) {
                 gpxOutput.append("\n<rte>");
                 Instruction nextInstr = null;
+                int point = 0;
                 for (Instruction currInstr : instructions) {
                     if (null != nextInstr)
-                        createRteptBlock(gpxOutput, nextInstr, currInstr, decimalFormat, tr);
+                        createRteptBlock(gpxOutput, nextInstr, currInstr, decimalFormat, tr, getPathDetailsForRtept(pathDetails, point));
 
                     nextInstr = currInstr;
+                    point++;
                 }
-                createRteptBlock(gpxOutput, nextInstr, null, decimalFormat, tr);
+                createRteptBlock(gpxOutput, nextInstr, null, decimalFormat, tr, getPathDetailsForRtept(pathDetails, point));
                 gpxOutput.append("\n</rte>");
             }
         }
@@ -147,7 +152,7 @@ public class GpxFromInstructions {
         return gpxOutput.toString();
     }
 
-    private static void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI, DecimalFormat decimalFormat, Translation tr) {
+    private static void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI, DecimalFormat decimalFormat, Translation tr, Map<String, String> details) {
         output.append("\n<rtept lat=\"").append(decimalFormat.format(instruction.getPoints().getLatitude(0))).
                 append("\" lon=\"").append(decimalFormat.format(instruction.getPoints().getLongitude(0))).append("\">");
 
@@ -173,6 +178,9 @@ public class GpxFromInstructions {
         }
 
         output.append("<gh:sign>").append(instruction.getSign()).append("</gh:sign>");
+
+        output.append(gpxExtensionsForDetails(details));
+
         output.append("</extensions>");
         output.append("</rtept>");
     }
@@ -211,5 +219,37 @@ public class GpxFromInstructions {
         double lat = instruction.getPoints().getLatitude(0);
         double lon = instruction.getPoints().getLongitude(0);
         return AC.calcAzimuth(lat, lon, nextLat, nextLon);
+    }
+
+    private static Map<String, String> getPathDetailsForRtept(Map<String, List<PathDetail>> pathDetails, int rtept) {
+        Map<String, String> retVal = new HashMap<>();
+        for (Map.Entry<String, List<PathDetail>> detail :  pathDetails.entrySet()) {
+            PathDetail pathDetail = getPathDetailsForRtept(detail, rtept);
+            retVal.put(detail.getKey(), pathDetail != null ? pathDetail.getValue().toString() : "");
+        }
+        return retVal;
+    }
+
+    private static PathDetail getPathDetailsForRtept(Map.Entry<String, List<PathDetail>> pathDetails, int rtept) {
+        for (PathDetail pathDetail : pathDetails.getValue()) {
+            if(isPointInDetailsRange(rtept, pathDetail)) {
+                return pathDetail;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isPointInDetailsRange(int rtept, PathDetail pathDetail) {
+        return rtept > pathDetail.getFirst() && rtept <= pathDetail.getLast();
+    }
+
+    private static String gpxExtensionsForDetails(Map<String, String> details) {
+        StringBuilder output = new StringBuilder();
+        details.forEach((key, value) -> output.append(gpxExtensionForDetail(key, value)));
+        return output.toString();
+    }
+
+    private static String gpxExtensionForDetail(String key, String value) {
+        return "<gh:" + key + ">" + value + "</gh:" + key + ">";
     }
 }
