@@ -193,21 +193,19 @@ public class LMPreparationHandler {
             counter++;
             final int tmpCounter = counter;
             final String name = plm.getLMConfig().getName();
-            completionService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    if (plm.loadExisting())
-                        return;
+            completionService.submit(() -> {
+                if (plm.loadExisting())
+                    return;
 
-                    LOGGER.info(tmpCounter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getLMConfig().getWeighting() + " ... (" + getMemInfo() + ")");
-                    prepared.set(true);
-                    Thread.currentThread().setName(name);
-                    plm.doWork();
-                    if (closeEarly) {
-                        plm.close();
-                    }
-                    properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
+                LOGGER.info(tmpCounter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getLMConfig().getWeighting() + " ... (" + getMemInfo() + ")");
+                prepared.set(true);
+                Thread.currentThread().setName(name);
+                plm.doWork();
+                if (closeEarly) {
+                    plm.close();
                 }
+                LOGGER.info("LM {} finished {}", name, getMemInfo());
+                properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
             }, name);
         }
 
@@ -221,6 +219,7 @@ public class LMPreparationHandler {
             threadPool.shutdownNow();
             throw new RuntimeException(e);
         }
+        LOGGER.info("Finished LM preparation, {}", getMemInfo());
         return prepared.get();
     }
 
@@ -233,6 +232,7 @@ public class LMPreparationHandler {
         if (lmConfigs.isEmpty())
             throw new IllegalStateException("No landmark weightings found");
 
+        LOGGER.info("Creating LM preparations, {}", getMemInfo());
         List<LandmarkSuggestion> lmSuggestions = new ArrayList<>(lmSuggestionsLocations.size());
         if (!lmSuggestionsLocations.isEmpty()) {
             try {

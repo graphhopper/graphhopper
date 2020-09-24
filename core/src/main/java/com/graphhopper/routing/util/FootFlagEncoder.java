@@ -279,7 +279,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             weightToPrioMap.put(100d, PREFER.getValue());
 
         double maxSpeed = getMaxSpeed(way);
-        if (safeHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 20) {
+        if (safeHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 20)) {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues)) {
                 if (way.hasTag("sidewalk", sidewalksNoValues))
@@ -287,7 +287,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
                 else
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
-        } else if (maxSpeed > 50 || avoidHighwayTags.contains(highway)) {
+        } else if ((isValidSpeed(maxSpeed) && maxSpeed > 50) || avoidHighwayTags.contains(highway)) {
             if (!way.hasTag("sidewalk", sidewalkValues))
                 weightToPrioMap.put(45d, AVOID_IF_POSSIBLE.getValue());
         }

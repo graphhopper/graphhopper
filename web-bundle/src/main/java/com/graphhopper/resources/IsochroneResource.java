@@ -57,7 +57,6 @@ public class IsochroneResource {
     private final Triangulator triangulator;
     private final ProfileResolver profileResolver;
     private final EncodingManager encodingManager;
-    private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Inject
     public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver, EncodingManager encodingManager) {
@@ -67,7 +66,7 @@ public class IsochroneResource {
         this.encodingManager = encodingManager;
     }
 
-    enum ResponseType {json, geojson}
+    public enum ResponseType {json, geojson}
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -151,8 +150,8 @@ public class IsochroneResource {
             if (fullGeometry) {
                 isochrones.add(isochrone);
             } else {
-                Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, geometryFactory.createPoint(new Coordinate(point.get().lon, point.get().lat)));
-                isochrones.add(geometryFactory.createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
+                Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, isochrone.getFactory().createPoint(new Coordinate(point.get().lon, point.get().lat)));
+                isochrones.add(isochrone.getFactory().createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
             }
         }
         ArrayList<JsonFeature> features = new ArrayList<>();
