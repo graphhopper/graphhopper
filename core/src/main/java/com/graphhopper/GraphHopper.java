@@ -21,6 +21,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.RoadClassLinkInterpolator;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.DefaultWeightingFactory;
@@ -28,10 +29,7 @@ import com.graphhopper.routing.Router;
 import com.graphhopper.routing.RouterConfig;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ch.CHPreparationHandler;
-import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
-import com.graphhopper.routing.ev.EncodedValueFactory;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -52,6 +50,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.details.DecimalDetails;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,9 +59,12 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
+import static java.util.stream.Collectors.toCollection;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -934,6 +936,8 @@ public class GraphHopper implements GraphHopperAPI {
 
         initLocationIndex();
 
+        postProcessData();
+
         importPublicTransit();
 
         if (lmPreparationHandler.isEnabled())
@@ -956,6 +960,16 @@ public class GraphHopper implements GraphHopperAPI {
     protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
     }
 
+    /**
+     * The Graph and LocationIndex is available so that speed values can be adapted from e.g. an outside source
+     */
+    protected void postProcessData() {
+        if (getEncodingManager().hasEncodedValue(RoadClassLink.KEY)) {
+            new RoadClassLinkInterpolator(getGraphHopperStorage(), getEncodingManager(), RoadClassLinkInterpolator.collect(getEncodingManager())).
+                    execute();
+        }
+    }
+
     protected void importPublicTransit() {
     }
 
@@ -966,7 +980,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     void interpolateBridgesTunnelsAndFerries() {
-        if (ghStorage.getEncodingManager().hasEncodedValue(RoadEnvironment.KEY)) {
+        if (getEncodingManager().hasEncodedValue(RoadEnvironment.KEY)) {
             EnumEncodedValue<RoadEnvironment> roadEnvEnc = ghStorage.getEncodingManager().getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
             StopWatch sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.TUNNEL).execute();
