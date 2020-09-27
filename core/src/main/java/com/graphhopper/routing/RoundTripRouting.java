@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.tour.MultiPointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;
@@ -27,7 +28,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import com.graphhopper.util.exceptions.PointNotFoundException;
@@ -163,8 +163,9 @@ public class RoundTripRouting {
             Path path = pathCalculator.calcPaths(from, to, new EdgeRestrictions()).get(0);
             // add the edges of this path to the set of previous edges so they will be avoided from now, otherwise
             // we do not get a nice 'round trip'. note that for this reason we cannot use CH for round-trips currently
-            for (EdgeIteratorState e : path.calcEdges())
-                previousEdges.add(e.getEdge());
+            for (IntCursor c : path.getEdges()) {
+                previousEdges.add(c.value);
+            }
             return path;
         }
 
