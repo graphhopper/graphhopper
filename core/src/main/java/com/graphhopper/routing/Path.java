@@ -39,22 +39,20 @@ import java.util.List;
 public class Path {
     final Graph graph;
     private final NodeAccess nodeAccess;
-    double distance;
-    long time;
-    int endNode = -1;
+    private double weight = Double.MAX_VALUE;
+    private double distance;
+    private long time;
+    private IntArrayList edgeIds = new IntArrayList();
+    private int fromNode = -1;
+    private int endNode = -1;
     private boolean reverseOrder = true;
     private List<String> description;
     private boolean found;
-    private int fromNode = -1;
-    private IntArrayList edgeIds;
-    private double weight;
     private String debugInfo = "";
 
     public Path(Graph graph) {
         this.graph = graph;
-        this.weight = Double.MAX_VALUE;
         this.nodeAccess = graph.getNodeAccess();
-        this.edgeIds = new IntArrayList();
     }
 
     /**
@@ -290,10 +288,6 @@ public class Path {
             }
         });
         return points;
-    }
-
-    public int getSize() {
-        return edgeIds.size();
     }
 
     @Override

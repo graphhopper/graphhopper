@@ -253,7 +253,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         path.setEndNode(uvtPath.getEndNode());
         path.setWeight(suvPath.getWeight() + uvtPath.getWeight());
         path.setDistance(suvPath.getDistance() + uvtPath.getDistance());
-        path.addTime(suvPath.time + uvtPath.time);
+        path.addTime(suvPath.getTime() + uvtPath.getTime());
         path.setFound(true);
         return path;
     }

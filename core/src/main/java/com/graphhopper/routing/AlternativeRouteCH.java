@@ -237,7 +237,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
         path.setEndNode(vtPath.getEndNode());
         path.setWeight(svPath.getWeight() + vtPath.getWeight());
         path.setDistance(svPath.getDistance() + vtPath.getDistance());
-        path.addTime(svPath.time + vtPath.time);
+        path.addTime(svPath.getTime() + vtPath.getTime());
         path.setFound(true);
         return path;
     }
