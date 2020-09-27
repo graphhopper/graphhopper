@@ -21,7 +21,10 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.PointList;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,7 +48,6 @@ public class Path {
     private IntArrayList edgeIds = new IntArrayList();
     private int fromNode = -1;
     private int endNode = -1;
-    private boolean reverseOrder = true;
     private List<String> description;
     private boolean found;
     private String debugInfo = "";
@@ -70,8 +72,20 @@ public class Path {
         return this;
     }
 
+    public IntArrayList getEdges() {
+        return edgeIds;
+    }
+
+    public void setEdges(IntArrayList edgeIds) {
+        this.edgeIds = edgeIds;
+    }
+
     public void addEdge(int edge) {
         edgeIds.add(edge);
+    }
+
+    public int getEdgeCount() {
+        return edgeIds.size();
     }
 
     public int getEndNode() {
@@ -101,10 +115,6 @@ public class Path {
         return this;
     }
 
-    public int getEdgeCount() {
-        return edgeIds.size();
-    }
-
     public boolean isFound() {
         return found;
     }
@@ -112,14 +122,6 @@ public class Path {
     public Path setFound(boolean found) {
         this.found = found;
         return this;
-    }
-
-    void reverseEdges() {
-        if (!reverseOrder)
-            throw new IllegalStateException("Switching order multiple times is not supported");
-
-        reverseOrder = false;
-        ArrayUtil.reverse(edgeIds);
     }
 
     public Path setDistance(double distance) {
