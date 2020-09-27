@@ -19,13 +19,9 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,7 +46,7 @@ public class Path {
     private List<String> description;
     private boolean found;
     private int fromNode = -1;
-    private GHIntArrayList edgeIds;
+    private IntArrayList edgeIds;
     private double weight;
     private String debugInfo = "";
 
@@ -58,7 +54,7 @@ public class Path {
         this.graph = graph;
         this.weight = Double.MAX_VALUE;
         this.nodeAccess = graph.getNodeAccess();
-        this.edgeIds = new GHIntArrayList();
+        this.edgeIds = new IntArrayList();
     }
 
     /**
@@ -125,7 +121,7 @@ public class Path {
             throw new IllegalStateException("Switching order multiple times is not supported");
 
         reverseOrder = false;
-        edgeIds.reverse();
+        ArrayUtil.reverse(edgeIds);
     }
 
     public Path setDistance(double distance) {
