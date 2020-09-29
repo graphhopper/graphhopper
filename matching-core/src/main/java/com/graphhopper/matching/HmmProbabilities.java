@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.graphhopper.matching.util;
+package com.graphhopper.matching;
 
 /**
  * Based on Newson, Paul, and John Krumm. "Hidden Markov map matching through
@@ -58,8 +58,7 @@ public class HmmProbabilities {
      */
     public double transitionLogProbability(double routeLength, double linearDistance) {
         // Transition metric taken from Newson & Krumm.
-        Double transitionMetric = Math.abs(linearDistance - routeLength);
-
+        double transitionMetric = Math.abs(linearDistance - routeLength);
         return Distributions.logExponentialDistribution(beta, transitionMetric);
     }
 
