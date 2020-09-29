@@ -32,7 +32,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.Translation;
@@ -154,42 +154,42 @@ public final class PtRouterImpl implements PtRouter {
 
         GHResponse route() {
             StopWatch stopWatch = new StopWatch().start();
-            ArrayList<QueryResult> pointQueryResults = new ArrayList<>();
-            ArrayList<QueryResult> allQueryResults = new ArrayList<>();
+            ArrayList<Snap> pointSnaps = new ArrayList<>();
+            ArrayList<Snap> allSnaps = new ArrayList<>();
             PointList points = new PointList(2, false);
             List<GHLocation> locations = Arrays.asList(enter, exit);
             for (int i = 0; i < locations.size(); i++) {
                 if (enter instanceof GHPointLocation) {
-                    final QueryResult closest = findByPoint(((GHPointLocation) locations.get(i)).ghPoint, i);
-                    pointQueryResults.add(closest);
-                    allQueryResults.add(closest);
+                    final Snap closest = findByPoint(((GHPointLocation) locations.get(i)).ghPoint, i);
+                    pointSnaps.add(closest);
+                    allSnaps.add(closest);
                     points.add(closest.getSnappedPoint());
                 } else if (enter instanceof GHStationLocation) {
-                    final QueryResult station = findByStationId((GHStationLocation) locations.get(i), i);
-                    allQueryResults.add(station);
+                    final Snap station = findByStationId((GHStationLocation) locations.get(i), i);
+                    allSnaps.add(station);
                     points.add(graphHopperStorage.getNodeAccess().getLat(station.getClosestNode()), graphHopperStorage.getNodeAccess().getLon(station.getClosestNode()));
                 }
             }
-            queryGraph = QueryGraph.create(graphWithExtraEdges, pointQueryResults); // modifies queryResults
+            queryGraph = QueryGraph.create(graphWithExtraEdges, pointSnaps); // modifies pointSnaps!
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
             int startNode;
             int destNode;
             if (arriveBy) {
-                startNode = allQueryResults.get(1).getClosestNode();
-                destNode = allQueryResults.get(0).getClosestNode();
+                startNode = allSnaps.get(1).getClosestNode();
+                destNode = allSnaps.get(0).getClosestNode();
             } else {
-                startNode = allQueryResults.get(0).getClosestNode();
-                destNode = allQueryResults.get(1).getClosestNode();
+                startNode = allSnaps.get(0).getClosestNode();
+                destNode = allSnaps.get(1).getClosestNode();
             }
             List<List<Label.Transition>> solutions = findPaths(startNode, destNode);
             parseSolutionsAndAddToResponse(solutions, points);
             return response;
         }
 
-        private QueryResult findByPoint(GHPoint point, int indexForErrorMessage) {
+        private Snap findByPoint(GHPoint point, int indexForErrorMessage) {
             final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
-            QueryResult source = locationIndex.findClosest(point.lat, point.lon, filter);
+            Snap source = locationIndex.findClosest(point.lat, point.lon, filter);
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
             }
@@ -199,11 +199,11 @@ public final class PtRouterImpl implements PtRouter {
             return source;
         }
 
-        private QueryResult findByStationId(GHStationLocation exit, int indexForErrorMessage) {
+        private Snap findByStationId(GHStationLocation exit, int indexForErrorMessage) {
             for (Map.Entry<String, GTFSFeed> entry : gtfsStorage.getGtfsFeeds().entrySet()) {
                 final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(entry.getKey(), exit.stop_id));
                 if (node != null) {
-                    final QueryResult station = new QueryResult(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
+                    final Snap station = new Snap(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
                     station.setClosestNode(node);
                     return station;
                 }

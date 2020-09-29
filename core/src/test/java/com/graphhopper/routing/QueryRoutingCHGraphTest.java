@@ -28,7 +28,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,7 +70,7 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.<QueryResult>emptyList());
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertEquals(3, queryCHGraph.getNodes());
@@ -105,7 +105,7 @@ class QueryRoutingCHGraphTest {
         assertEquals(2, graph.getEdges());
         chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.<QueryResult>emptyList());
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertEquals(3, queryCHGraph.getNodes());
@@ -139,13 +139,13 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
-        QueryResult qr = new QueryResult(50.00, 10.05);
-        qr.setClosestEdge(edge);
-        qr.setWayIndex(0);
-        qr.setSnappedPosition(QueryResult.Position.EDGE);
-        qr.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+        Snap snap = new Snap(50.00, 10.05);
+        snap.setClosestEdge(edge);
+        snap.setWayIndex(0);
+        snap.setSnappedPosition(Snap.Position.EDGE);
+        snap.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(snap));
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertEquals(4, queryCHGraph.getNodes());
@@ -204,13 +204,13 @@ class QueryRoutingCHGraphTest {
         assertEquals(2, graph.getEdges());
         chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
 
-        QueryResult qr = new QueryResult(50.00, 10.05);
-        qr.setClosestEdge(edge);
-        qr.setWayIndex(0);
-        qr.setSnappedPosition(QueryResult.Position.EDGE);
-        qr.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+        Snap snap = new Snap(50.00, 10.05);
+        snap.setClosestEdge(edge);
+        snap.setWayIndex(0);
+        snap.setSnappedPosition(Snap.Position.EDGE);
+        snap.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(snap));
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertEquals(4, queryCHGraph.getNodes());
@@ -248,7 +248,7 @@ class QueryRoutingCHGraphTest {
     @Test
     public void getBaseGraph() {
         graph.edge(0, 1, 10, true);
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.<QueryResult>emptyList());
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
         assertSame(graph.getBaseGraph(), routingCHGraph.getBaseGraph());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
         assertSame(queryGraph, queryCHGraph.getBaseGraph());
@@ -267,13 +267,13 @@ class QueryRoutingCHGraphTest {
         graph.freeze();
         chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 20, 0, 1);
 
-        QueryResult qr = new QueryResult(50.00, 10.05);
-        qr.setClosestEdge(edge);
-        qr.setWayIndex(0);
-        qr.setSnappedPosition(QueryResult.Position.EDGE);
-        qr.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+        Snap snap = new Snap(50.00, 10.05);
+        snap.setClosestEdge(edge);
+        snap.setWayIndex(0);
+        snap.setSnappedPosition(Snap.Position.EDGE);
+        snap.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(snap));
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         assertGetEdgeIteratorState(queryCHGraph, 1, 2, 1);
@@ -287,7 +287,7 @@ class QueryRoutingCHGraphTest {
 
     @Test
     public void getWeighting() {
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.<QueryResult>emptyList());
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.<Snap>emptyList());
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
         // maybe query CH graph should return query graph weighting instead?
         assertSame(weighting, queryCHGraph.getWeighting());
@@ -303,13 +303,13 @@ class QueryRoutingCHGraphTest {
         chGraph.setLevel(0, 5);
         chGraph.setLevel(1, 7);
 
-        QueryResult qr = new QueryResult(50.00, 10.05);
-        qr.setClosestEdge(edge);
-        qr.setWayIndex(0);
-        qr.setSnappedPosition(QueryResult.Position.EDGE);
-        qr.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+        Snap snap = new Snap(50.00, 10.05);
+        snap.setClosestEdge(edge);
+        snap.setWayIndex(0);
+        snap.setSnappedPosition(Snap.Position.EDGE);
+        snap.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(snap));
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
         assertEquals(5, queryCHGraph.getLevel(0));
         assertEquals(7, queryCHGraph.getLevel(1));
@@ -353,13 +353,13 @@ class QueryRoutingCHGraphTest {
         assertEnd(iter);
 
         // now including virtual edges
-        QueryResult qr = new QueryResult(50.00, 10.05);
-        qr.setClosestEdge(edge);
-        qr.setWayIndex(0);
-        qr.setSnappedPosition(QueryResult.Position.EDGE);
-        qr.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+        Snap snap = new Snap(50.00, 10.05);
+        snap.setClosestEdge(edge);
+        snap.setWayIndex(0);
+        snap.setSnappedPosition(Snap.Position.EDGE);
+        snap.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(snap));
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         iter = queryCHGraph.createOutEdgeExplorer().setBaseNode(0);
@@ -450,13 +450,13 @@ class QueryRoutingCHGraphTest {
         // with query graph
         // 0-x->1
         //   2
-        QueryResult qr = new QueryResult(50.00, 10.05);
-        qr.setClosestEdge(edge);
-        qr.setWayIndex(0);
-        qr.setSnappedPosition(QueryResult.Position.EDGE);
-        qr.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+        Snap snap = new Snap(50.00, 10.05);
+        snap.setClosestEdge(edge);
+        snap.setWayIndex(0);
+        snap.setSnappedPosition(Snap.Position.EDGE);
+        snap.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.create(graph, Collections.singletonList(snap));
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
 
         iter = queryCHGraph.createOutEdgeExplorer().setBaseNode(0);
@@ -507,19 +507,19 @@ class QueryRoutingCHGraphTest {
         assertEquals(5, routingCHGraph.getTurnWeight(0, 1, 1));
 
         // with virtual nodes
-        QueryResult qr1 = new QueryResult(50.00, 10.05);
-        qr1.setClosestEdge(edge1);
-        qr1.setWayIndex(0);
-        qr1.setSnappedPosition(QueryResult.Position.EDGE);
-        qr1.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+        Snap snap1 = new Snap(50.00, 10.05);
+        snap1.setClosestEdge(edge1);
+        snap1.setWayIndex(0);
+        snap1.setSnappedPosition(Snap.Position.EDGE);
+        snap1.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
-        QueryResult qr2 = new QueryResult(50.00, 10.15);
-        qr2.setClosestEdge(edge2);
-        qr2.setWayIndex(0);
-        qr2.setSnappedPosition(QueryResult.Position.EDGE);
-        qr2.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+        Snap snap2 = new Snap(50.00, 10.15);
+        snap2.setClosestEdge(edge2);
+        snap2.setWayIndex(0);
+        snap2.setSnappedPosition(Snap.Position.EDGE);
+        snap2.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
 
-        QueryGraph queryGraph = QueryGraph.create(graph, Arrays.asList(qr1, qr2));
+        QueryGraph queryGraph = QueryGraph.create(graph, Arrays.asList(snap1, snap2));
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
         assertEquals(5, queryCHGraph.getTurnWeight(0, 1, 1));
 

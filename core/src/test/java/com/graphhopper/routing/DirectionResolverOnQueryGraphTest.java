@@ -26,7 +26,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -273,16 +273,16 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private void checkResults(ExpectedResult... expectedResults) {
-        List<QueryResult> qrs = new ArrayList<>(expectedResults.length);
+        List<Snap> snaps = new ArrayList<>(expectedResults.length);
         for (ExpectedResult r : expectedResults) {
-            qrs.add(getQueryResult(r.lat, r.lon));
+            snaps.add(snapCoordinate(r.lat, r.lon));
         }
-        queryGraph = QueryGraph.create(g, qrs);
+        queryGraph = QueryGraph.create(g, snaps);
         DirectionResolver resolver = new DirectionResolver(queryGraph, encoder.getAccessEnc());
         for (int i = 0; i < expectedResults.length; i++) {
             assertEquals("unexpected resolved direction",
                     restrictedDirection(expectedResults[i]),
-                    resolver.resolveDirections(qrs.get(i).getClosestNode(), qrs.get(i).getQueryPoint()));
+                    resolver.resolveDirections(snaps.get(i).getClosestNode(), snaps.get(i).getQueryPoint()));
         }
     }
 
@@ -299,10 +299,10 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private void assertUnrestricted(double lat, double lon) {
-        QueryResult qr = getQueryResult(lat, lon);
-        queryGraph = QueryGraph.create(g, qr);
+        Snap snap = snapCoordinate(lat, lon);
+        queryGraph = QueryGraph.create(g, snap);
         DirectionResolver resolver = new DirectionResolver(queryGraph, encoder.getAccessEnc());
-        assertEquals(unrestricted(), resolver.resolveDirections(qr.getClosestNode(), qr.getQueryPoint()));
+        assertEquals(unrestricted(), resolver.resolveDirections(snap.getClosestNode(), snap.getQueryPoint()));
     }
 
     private DirectionResolverResult restrictedDirection(ExpectedResult restriction) {
@@ -324,7 +324,7 @@ public class DirectionResolverOnQueryGraphTest {
         throw new IllegalStateException("Could not find edge from: " + from + ", to: " + to);
     }
 
-    private QueryResult getQueryResult(double lat, double lon) {
+    private Snap snapCoordinate(double lat, double lon) {
         return locationIndex.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
     }
 

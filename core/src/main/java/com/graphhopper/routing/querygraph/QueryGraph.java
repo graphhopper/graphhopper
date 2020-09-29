@@ -30,7 +30,7 @@ import com.graphhopper.storage.ExtendedNodeAccess;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -65,24 +65,24 @@ public class QueryGraph implements Graph {
     private final IntObjectMap<List<EdgeIteratorState>> virtualEdgesAtRealNodes;
     private final List<List<EdgeIteratorState>> virtualEdgesAtVirtualNodes;
 
-    public static QueryGraph create(Graph graph, QueryResult qr) {
-        return QueryGraph.create(graph, Collections.singletonList(qr));
+    public static QueryGraph create(Graph graph, Snap snap) {
+        return QueryGraph.create(graph, Collections.singletonList(snap));
     }
 
-    public static QueryGraph create(Graph graph, QueryResult fromQR, QueryResult toQR) {
-        return QueryGraph.create(graph, Arrays.asList(fromQR, toQR));
+    public static QueryGraph create(Graph graph, Snap fromSnap, Snap toSnap) {
+        return QueryGraph.create(graph, Arrays.asList(fromSnap, toSnap));
     }
 
-    public static QueryGraph create(Graph graph, List<QueryResult> queryResults) {
-        return new QueryGraph(graph, queryResults);
+    public static QueryGraph create(Graph graph, List<Snap> snaps) {
+        return new QueryGraph(graph, snaps);
     }
 
-    private QueryGraph(Graph graph, List<QueryResult> queryResults) {
+    private QueryGraph(Graph graph, List<Snap> snaps) {
         baseGraph = graph;
         baseNodes = graph.getNodes();
         baseEdges = graph.getEdges();
 
-        queryOverlay = QueryOverlayBuilder.build(graph, queryResults);
+        queryOverlay = QueryOverlayBuilder.build(graph, snaps);
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), queryOverlay.getVirtualNodes(), baseNodes);
         turnCostStorage = baseGraph.getTurnCostStorage();
 

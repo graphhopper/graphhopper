@@ -77,9 +77,9 @@ public class LocationIndexTree implements LocationIndex {
     private double deltaLon;
     private int initSizeLeafEntries = 4;
     private boolean initialized = false;
-    private static final Comparator<QueryResult> QR_COMPARATOR = new Comparator<QueryResult>() {
+    private static final Comparator<Snap> Snap_COMPARATOR = new Comparator<Snap>() {
         @Override
-        public int compare(QueryResult o1, QueryResult o2) {
+        public int compare(Snap o1, Snap o2) {
             return Double.compare(o1.getQueryDistance(), o2.getQueryDistance());
         }
     };
@@ -580,12 +580,12 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     @Override
-    public QueryResult findClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter) {
+    public Snap findClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter) {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
         GHIntHashSet allCollectedEntryIds = new GHIntHashSet();
-        final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
+        final Snap closestMatch = new Snap(queryLat, queryLon);
         for (int iteration = 0; iteration < maxRegionSearch; iteration++) {
             GHIntHashSet storedNetworkEntryIds = new GHIntHashSet();
             boolean earlyFinish = findNetworkEntries(queryLat, queryLon, storedNetworkEntryIds, iteration);
@@ -606,7 +606,7 @@ public class LocationIndexTree implements LocationIndex {
                         }
 
                         @Override
-                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos) {
+                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, Snap.Position pos) {
                             if (normedDist < closestMatch.getQueryDistance()) {
                                 closestMatch.setQueryDistance(normedDist);
                                 closestMatch.setClosestNode(node);
@@ -648,14 +648,14 @@ public class LocationIndexTree implements LocationIndex {
      *
      * @param radius in meters
      */
-    public List<QueryResult> findNClosest(final double queryLat, final double queryLon,
-                                          final EdgeFilter edgeFilter, double radius) {
+    public List<Snap> findNClosest(final double queryLat, final double queryLon,
+                                   final EdgeFilter edgeFilter, double radius) {
         // Return ALL results which are very close and e.g. within the GPS signal accuracy.
         // Also important to get all edges if GPS point is close to a junction.
         final double returnAllResultsWithin = distCalc.calcNormalizedDist(radius);
 
         // implement a cheap priority queue via List, sublist and Collections.sort
-        final List<QueryResult> queryResults = new ArrayList<>();
+        final List<Snap> snaps = new ArrayList<>();
         GHIntHashSet set = new GHIntHashSet();
 
         // Doing 2 iterations means searching 9 tiles.
@@ -678,51 +678,51 @@ public class LocationIndexTree implements LocationIndex {
                         }
 
                         @Override
-                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos) {
+                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, Snap.Position pos) {
                             if (normedDist < returnAllResultsWithin
-                                    || queryResults.isEmpty()
-                                    || queryResults.get(0).getQueryDistance() > normedDist) {
+                                    || snaps.isEmpty()
+                                    || snaps.get(0).getQueryDistance() > normedDist) {
                                 // TODO: refactor below:
                                 // - should only add edges within search radius (below allows the
                                 // returning of a candidate outside search radius if it's the only
                                 // one). Removing this test would simplify it a lot and probably
                                 // match the expected behaviour (see method description)
-                                // - create QueryResult first and the add/set as required - clean up
+                                // - create Snap first and the add/set as required - clean up
                                 // the index tracking business.
 
                                 int index = -1;
-                                for (int qrIndex = 0; qrIndex < queryResults.size(); qrIndex++) {
-                                    QueryResult qr = queryResults.get(qrIndex);
-                                    // overwrite older queryResults which are potentially more far away than returnAllResultsWithin
-                                    if (qr.getQueryDistance() > returnAllResultsWithin) {
-                                        index = qrIndex;
+                                for (int snapIndex = 0; snapIndex < snaps.size(); snapIndex++) {
+                                    Snap snap = snaps.get(snapIndex);
+                                    // overwrite older snaps which are potentially more far away than returnAllResultsWithin
+                                    if (snap.getQueryDistance() > returnAllResultsWithin) {
+                                        index = snapIndex;
                                         break;
                                     }
 
                                     // avoid duplicate edges
-                                    if (qr.getClosestEdge().getEdge() == edge.getEdge()) {
-                                        if (qr.getQueryDistance() < normedDist) {
+                                    if (snap.getClosestEdge().getEdge() == edge.getEdge()) {
+                                        if (snap.getQueryDistance() < normedDist) {
                                             // do not add current edge
                                             return true;
                                         } else {
                                             // overwrite old edge with current
-                                            index = qrIndex;
+                                            index = snapIndex;
                                             break;
                                         }
                                     }
                                 }
 
-                                QueryResult qr = new QueryResult(queryLat, queryLon);
-                                qr.setQueryDistance(normedDist);
-                                qr.setClosestNode(node);
-                                qr.setClosestEdge(edge.detach(false));
-                                qr.setWayIndex(wayIndex);
-                                qr.setSnappedPosition(pos);
+                                Snap snap = new Snap(queryLat, queryLon);
+                                snap.setQueryDistance(normedDist);
+                                snap.setClosestNode(node);
+                                snap.setClosestEdge(edge.detach(false));
+                                snap.setWayIndex(wayIndex);
+                                snap.setSnappedPosition(pos);
 
                                 if (index < 0) {
-                                    queryResults.add(qr);
+                                    snaps.add(snap);
                                 } else {
-                                    queryResults.set(index, qr);
+                                    snaps.set(index, snap);
                                 }
                             }
                             return true;
@@ -734,19 +734,19 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         // TODO: pass boolean argument for whether or not to sort? Can be expensive if not required.
-        Collections.sort(queryResults, QR_COMPARATOR);
+        Collections.sort(snaps, Snap_COMPARATOR);
 
-        for (QueryResult qr : queryResults) {
-            if (qr.isValid()) {
+        for (Snap snap : snaps) {
+            if (snap.isValid()) {
                 // denormalize distance
-                qr.setQueryDistance(distCalc.calcDenormalizedDist(qr.getQueryDistance()));
-                qr.calcSnappedPoint(distCalc);
+                snap.setQueryDistance(distCalc.calcDenormalizedDist(snap.getQueryDistance()));
+                snap.calcSnappedPoint(distCalc);
             } else {
-                throw new IllegalStateException("Invalid QueryResult should not happen here: " + qr);
+                throw new IllegalStateException("Invalid Snap should not happen here: " + snap);
             }
         }
 
-        return queryResults;
+        return snaps;
     }
 
     // make entries static as otherwise we get an additional reference to this class (memory waste)
@@ -1054,7 +1054,7 @@ public class LocationIndexTree implements LocationIndex {
             }
 
             int tmpClosestNode = currNode;
-            if (check(tmpClosestNode, currNormedDist, 0, currEdge, QueryResult.Position.TOWER)) {
+            if (check(tmpClosestNode, currNormedDist, 0, currEdge, Snap.Position.TOWER)) {
                 if (currNormedDist <= equalNormedDelta)
                     return false;
             }
@@ -1075,7 +1075,7 @@ public class LocationIndexTree implements LocationIndex {
             for (int pointIndex = 0; pointIndex < len; pointIndex++) {
                 double wayLat = pointList.getLatitude(pointIndex);
                 double wayLon = pointList.getLongitude(pointIndex);
-                QueryResult.Position pos = QueryResult.Position.EDGE;
+                Snap.Position pos = Snap.Position.EDGE;
                 if (distCalc.isCrossBoundary(tmpLon, wayLon)) {
                     tmpLat = wayLat;
                     tmpLon = wayLon;
@@ -1089,10 +1089,10 @@ public class LocationIndexTree implements LocationIndex {
                 } else {
                     if (pointIndex + 1 == len) {
                         tmpNormedDist = adjDist;
-                        pos = QueryResult.Position.TOWER;
+                        pos = Snap.Position.TOWER;
                     } else {
                         tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
-                        pos = QueryResult.Position.PILLAR;
+                        pos = Snap.Position.PILLAR;
                     }
                     check(tmpClosestNode, tmpNormedDist, pointIndex + 1, currEdge, pos);
                 }
@@ -1108,6 +1108,6 @@ public class LocationIndexTree implements LocationIndex {
 
         protected abstract double getQueryDistance();
 
-        protected abstract boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState iter, QueryResult.Position pos);
+        protected abstract boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState iter, Snap.Position pos);
     }
 }

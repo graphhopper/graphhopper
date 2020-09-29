@@ -32,7 +32,7 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeEach;
@@ -834,13 +834,13 @@ public class CHTurnCostTest {
                 new GHPoint(49.40107534698834, 9.702248694088528)
         );
 
-        List<QueryResult> queryResults = new ArrayList<>(points.size());
+        List<Snap> snaps = new ArrayList<>(points.size());
         for (GHPoint point : points) {
-            queryResults.add(index.findClosest(point.getLat(), point.getLon(), EdgeFilter.ALL_EDGES));
+            snaps.add(index.findClosest(point.getLat(), point.getLon(), EdgeFilter.ALL_EDGES));
         }
 
         automaticPrepareCH();
-        QueryGraph queryGraph = QueryGraph.create(chGraph.getBaseGraph(), queryResults);
+        QueryGraph queryGraph = QueryGraph.create(chGraph.getBaseGraph(), snaps);
         RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(5, 6);
         // there should not be a path from 5 to 6, because first we cannot go directly 5-4-6, so we need to go left
@@ -885,8 +885,8 @@ public class CHTurnCostTest {
         // virtual edge 5-x should be forbidden.
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
-        QueryResult qr = index.findClosest(0.1, 0.15, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.create(graph, qr);
+        Snap snap = index.findClosest(0.1, 0.15, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
         assertEquals("expected one virtual node", 1, queryGraph.getNodes() - chGraph.getNodes());
         QueryRoutingCHGraph routingCHGraph = new QueryRoutingCHGraph(chGraph, queryGraph);
         RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
@@ -908,10 +908,10 @@ public class CHTurnCostTest {
         automaticPrepareCH();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
-        QueryResult qr = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.create(graph, qr);
-        assertEquals(3, qr.getClosestNode());
-        assertEquals(0, qr.getClosestEdge().getEdge());
+        Snap snap = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
+        assertEquals(3, snap.getClosestNode());
+        assertEquals(0, snap.getClosestEdge().getEdge());
         RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(0, 2);
         assertTrue("it should be possible to route via a virtual node, but no path found", path.isFound());
@@ -936,10 +936,10 @@ public class CHTurnCostTest {
         automaticPrepareCH();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
-        QueryResult qr = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.create(graph, qr);
-        assertEquals(3, qr.getClosestNode());
-        assertEquals(0, qr.getClosestEdge().getEdge());
+        Snap snap = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
+        assertEquals(3, snap.getClosestNode());
+        assertEquals(0, snap.getClosestEdge().getEdge());
         QueryRoutingCHGraph routingCHGraph = new QueryRoutingCHGraph(chGraph, queryGraph);
         RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(1, 0);
@@ -975,18 +975,18 @@ public class CHTurnCostTest {
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
         GHPoint virtualPoint = new GHPoint(0.1, 0.35);
-        QueryResult qr = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
-        QueryGraph chQueryGraph = QueryGraph.create(graph, qr);
-        assertEquals(3, qr.getClosestEdge().getEdge());
+        Snap snap = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
+        QueryGraph chQueryGraph = QueryGraph.create(graph, snap);
+        assertEquals(3, snap.getClosestEdge().getEdge());
         QueryRoutingCHGraph routingCHGraph = new QueryRoutingCHGraph(chGraph, chQueryGraph);
         RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(4, 6);
         assertTrue(path.isFound());
         assertEquals(IntArrayList.from(4, 3, 2, 1, 0, 1, 5, 6), path.calcNodes());
 
-        QueryResult qr2 = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.create(graph, qr2);
-        assertEquals(3, qr2.getClosestEdge().getEdge());
+        Snap snap2 = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap2);
+        assertEquals(3, snap2.getClosestEdge().getEdge());
         Weighting w = queryGraph.wrapWeighting(chConfig.getWeighting());
         Dijkstra dijkstra = new Dijkstra(queryGraph, w, TraversalMode.EDGE_BASED);
         Path dijkstraPath = dijkstra.calcPath(4, 6);

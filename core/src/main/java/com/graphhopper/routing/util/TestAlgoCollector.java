@@ -25,7 +25,7 @@ import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -46,7 +46,7 @@ public class TestAlgoCollector {
         this.name = name;
     }
 
-    public TestAlgoCollector assertDistance(EncodingManager encodingManager, AlgoHelperEntry algoEntry, List<QueryResult> queryList,
+    public TestAlgoCollector assertDistance(EncodingManager encodingManager, AlgoHelperEntry algoEntry, List<Snap> queryList,
                                             OneRun oneRun) {
         List<Path> altPaths = new ArrayList<>();
         QueryGraph queryGraph = QueryGraph.create(algoEntry.graph, queryList);
@@ -98,7 +98,7 @@ public class TestAlgoCollector {
     }
 
     void queryIndex(Graph g, LocationIndex idx, double lat, double lon, double expectedDist) {
-        QueryResult res = idx.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+        Snap res = idx.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
         if (!res.isValid()) {
             errors.add("node not found for " + lat + "," + lon);
             return;
@@ -219,12 +219,12 @@ public class TestAlgoCollector {
             assumptions.get(index).distance = dist;
         }
 
-        public List<QueryResult> getList(LocationIndex idx, EdgeFilter edgeFilter) {
-            List<QueryResult> qr = new ArrayList<>();
+        public List<Snap> getList(LocationIndex idx, EdgeFilter edgeFilter) {
+            List<Snap> snap = new ArrayList<>();
             for (AssumptionPerPath p : assumptions) {
-                qr.add(idx.findClosest(p.lat, p.lon, edgeFilter));
+                snap.add(idx.findClosest(p.lat, p.lon, edgeFilter));
             }
-            return qr;
+            return snap;
         }
 
         @Override

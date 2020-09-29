@@ -26,7 +26,7 @@ import com.graphhopper.routing.util.tour.TourStrategy;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
@@ -66,7 +66,7 @@ public class RoundTripRouting {
         }
     }
 
-    public static List<QueryResult> lookup(List<GHPoint> points, Weighting weighting, LocationIndex locationIndex, Params params) {
+    public static List<Snap> lookup(List<GHPoint> points, Weighting weighting, LocationIndex locationIndex, Params params) {
         // todo: no snap preventions for round trip so far
         EdgeFilter edgeFilter = ViaRouting.createEdgeFilter(weighting);
         if (points.size() != 1)
@@ -75,32 +75,32 @@ public class RoundTripRouting {
         final GHPoint start = points.get(0);
 
         TourStrategy strategy = new MultiPointTour(new Random(params.seed), params.distanceInMeter, params.roundTripPointCount, params.initialHeading);
-        List<QueryResult> queryResults = new ArrayList<>(2 + strategy.getNumberOfGeneratedPoints());
-        QueryResult startQR = locationIndex.findClosest(start.lat, start.lon, edgeFilter);
-        if (!startQR.isValid())
+        List<Snap> snaps = new ArrayList<>(2 + strategy.getNumberOfGeneratedPoints());
+        Snap startSnap = locationIndex.findClosest(start.lat, start.lon, edgeFilter);
+        if (!startSnap.isValid())
             throw new PointNotFoundException("Cannot find point 0: " + start, 0);
 
-        queryResults.add(startQR);
+        snaps.add(startSnap);
 
         GHPoint last = start;
         for (int i = 0; i < strategy.getNumberOfGeneratedPoints(); i++) {
             double heading = strategy.getHeadingForIteration(i);
-            QueryResult result = generateValidPoint(last, strategy.getDistanceForIteration(i), heading, edgeFilter, locationIndex, params.maxRetries);
+            Snap result = generateValidPoint(last, strategy.getDistanceForIteration(i), heading, edgeFilter, locationIndex, params.maxRetries);
             last = result.getSnappedPoint();
-            queryResults.add(result);
+            snaps.add(result);
         }
 
-        queryResults.add(startQR);
-        return queryResults;
+        snaps.add(startSnap);
+        return snaps;
     }
 
-    private static QueryResult generateValidPoint(GHPoint lastPoint, double distanceInMeters, double heading, EdgeFilter edgeFilter, LocationIndex locationIndex, int maxRetries) {
+    private static Snap generateValidPoint(GHPoint lastPoint, double distanceInMeters, double heading, EdgeFilter edgeFilter, LocationIndex locationIndex, int maxRetries) {
         int tryCount = 0;
         while (true) {
             GHPoint generatedPoint = DistanceCalcEarth.DIST_EARTH.projectCoordinate(lastPoint.getLat(), lastPoint.getLon(), distanceInMeters, heading);
-            QueryResult qr = locationIndex.findClosest(generatedPoint.getLat(), generatedPoint.getLon(), edgeFilter);
-            if (qr.isValid())
-                return qr;
+            Snap snap = locationIndex.findClosest(generatedPoint.getLat(), generatedPoint.getLon(), edgeFilter);
+            if (snap.isValid())
+                return snap;
 
             tryCount++;
             distanceInMeters *= 0.95;
@@ -110,19 +110,19 @@ public class RoundTripRouting {
         }
     }
 
-    public static Result calcPaths(List<QueryResult> queryResults, FlexiblePathCalculator pathCalculator) {
+    public static Result calcPaths(List<Snap> snaps, FlexiblePathCalculator pathCalculator) {
         RoundTripCalculator roundTripCalculator = new RoundTripCalculator(pathCalculator);
-        Result result = new Result(queryResults.size() - 1);
-        QueryResult start = queryResults.get(0);
-        for (int qrIndex = 1; qrIndex < queryResults.size(); qrIndex++) {
+        Result result = new Result(snaps.size() - 1);
+        Snap start = snaps.get(0);
+        for (int snapIndex = 1; snapIndex < snaps.size(); snapIndex++) {
             // instead getClosestNode (which might be a virtual one and introducing unnecessary tails of the route)
             // use next tower node -> getBaseNode or getAdjNode
             // Later: remove potential route tail, maybe we can just enforce the heading at the start and when coming
             // back, and for tower nodes it does not matter anyway
-            QueryResult startQR = queryResults.get(qrIndex - 1);
-            int startNode = (startQR == start) ? startQR.getClosestNode() : startQR.getClosestEdge().getBaseNode();
-            QueryResult endQR = queryResults.get(qrIndex);
-            int endNode = (endQR == start) ? endQR.getClosestNode() : endQR.getClosestEdge().getBaseNode();
+            Snap startSnap = snaps.get(snapIndex - 1);
+            int startNode = (startSnap == start) ? startSnap.getClosestNode() : startSnap.getClosestEdge().getBaseNode();
+            Snap endSnap = snaps.get(snapIndex);
+            int endNode = (endSnap == start) ? endSnap.getClosestNode() : endSnap.getClosestEdge().getBaseNode();
 
             Path path = roundTripCalculator.calcPath(startNode, endNode);
             result.visitedNodes += pathCalculator.getVisitedNodes();

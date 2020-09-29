@@ -36,7 +36,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -682,7 +682,7 @@ public class RoutingAlgorithmWithOSMTest {
                 LocationIndex idx = entry.getIdx();
                 for (OneRun oneRun : runs) {
                     tmpOneRun = oneRun;
-                    List<QueryResult> list = oneRun.getList(idx, edgeFilter);
+                    List<Snap> list = oneRun.getList(idx, edgeFilter);
                     testCollector.assertDistance(hopper.getEncodingManager(), algoEntry, list, oneRun);
                 }
             }

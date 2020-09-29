@@ -14,7 +14,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.LongParam;
@@ -95,12 +95,12 @@ public class SPTResource {
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        QueryResult qr = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
-        if (!qr.isValid())
+        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
+        if (!snap.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
-        QueryGraph queryGraph = QueryGraph.create(graph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
 
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
@@ -143,7 +143,7 @@ public class SPTResource {
                 }
                 sb.append(LINE_SEP);
                 writer.write(sb.toString());
-                shortestPathTree.search(qr.getClosestNode(), l -> {
+                shortestPathTree.search(snap.getClosestNode(), l -> {
                     IsoLabelWithCoordinates label = isoLabelWithCoordinates(nodeAccess, l);
                     sb.setLength(0);
                     for (int colIndex = 0; colIndex < columns.size(); colIndex++) {

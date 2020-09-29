@@ -32,7 +32,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -231,11 +231,11 @@ public class DirectedRoutingTest {
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
-            List<QueryResult> queryResults = findQueryResults(index, points);
-            QueryGraph queryGraph = QueryGraph.create(graph, queryResults);
+            List<Snap> snaps = snapPoints(index, points);
+            QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
-            int source = queryResults.get(0).getClosestNode();
-            int target = queryResults.get(1).getClosestNode();
+            int source = snaps.get(0).getClosestNode();
+            int target = snaps.get(1).getClosestNode();
             Random tmpRnd1 = new Random(seed);
             int sourceOutEdge = getSourceOutEdge(tmpRnd1, source, queryGraph);
             int targetInEdge = getTargetInEdge(tmpRnd1, target, queryGraph);
@@ -258,8 +258,8 @@ public class DirectedRoutingTest {
         }
     }
 
-    private List<QueryResult> findQueryResults(LocationIndexTree index, List<GHPoint> ghPoints) {
-        List<QueryResult> result = new ArrayList<>(ghPoints.size());
+    private List<Snap> snapPoints(LocationIndexTree index, List<GHPoint> ghPoints) {
+        List<Snap> result = new ArrayList<>(ghPoints.size());
         for (GHPoint ghPoint : ghPoints) {
             result.add(index.findClosest(ghPoint.getLat(), ghPoint.getLon(), DefaultEdgeFilter.ALL_EDGES));
         }

@@ -33,7 +33,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -241,12 +241,12 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 .map(e -> {
                     PointList points = new PointList(2, false);
                     final int fromnode = getGtfsStorage().getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, e.getValue().from_stop_id));
-                    final QueryResult fromstation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
+                    final Snap fromstation = new Snap(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
                     fromstation.setClosestNode(fromnode);
                     points.add(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
 
                     final int tonode = getGtfsStorage().getStationNodes().get(new GtfsStorage.FeedIdWithStopId(id, e.getValue().to_stop_id));
-                    final QueryResult tostation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
+                    final Snap tostation = new Snap(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
                     tostation.setClosestNode(tonode);
                     points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
 
