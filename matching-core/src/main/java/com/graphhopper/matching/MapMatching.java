@@ -254,22 +254,18 @@ public class MapMatching {
         final List<TimeStep<State, Observation, Path>> timeSteps = new ArrayList<>();
         for (int i = 0; i < filteredObservations.size(); i++) {
             Observation observation = filteredObservations.get(i);
-            final Collection<QueryResult> queryResults = splitsPerObservation.get(i);
-
+            Collection<QueryResult> splits = splitsPerObservation.get(i);
             List<State> candidates = new ArrayList<>();
-            for (QueryResult qr : queryResults) {
-                int closestNode = qr.getClosestNode();
-                if (queryGraph.isVirtualNode(closestNode)) {
-                    // get virtual edges:
+            for (QueryResult split : splits) {
+                if (queryGraph.isVirtualNode(split.getClosestNode())) {
                     List<VirtualEdgeIteratorState> virtualEdges = new ArrayList<>();
-                    EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(closestNode);
+                    EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(split.getClosestNode());
                     while (iter.next()) {
                         if (!queryGraph.isVirtualEdge(iter.getEdge())) {
                             throw new RuntimeException("Virtual nodes must only have virtual edges "
                                     + "to adjacent nodes.");
                         }
-                        virtualEdges.add((VirtualEdgeIteratorState)
-                                queryGraph.getEdgeIteratorState(iter.getEdge(), iter.getAdjNode()));
+                        virtualEdges.add((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), iter.getAdjNode()));
                     }
                     if (virtualEdges.size() != 2) {
                         throw new RuntimeException("Each virtual node must have exactly 2 "
@@ -287,38 +283,21 @@ public class MapMatching {
                     // incomingVirtualEdge==outgoingVirtualEdge doesn't make sense because this
                     // would actually allow to perform a U-turn without a penalty by going to and
                     // from the virtual node through the other virtual edge or its reverse edge.
-                    VirtualEdgeIteratorState e1 = virtualEdges.get(0);
-                    VirtualEdgeIteratorState e2 = virtualEdges.get(1);
-                    for (int j = 0; j < 2; j++) {
-                        // get favored/unfavored edges:
-                        VirtualEdgeIteratorState incomingVirtualEdge = j == 0 ? e1 : e2;
-                        VirtualEdgeIteratorState outgoingVirtualEdge = j == 0 ? e2 : e1;
-                        // create candidate
-                        QueryResult vqr = new QueryResult(qr.getQueryPoint().lat, qr.getQueryPoint().lon);
-                        vqr.setQueryDistance(qr.getQueryDistance());
-                        vqr.setClosestNode(qr.getClosestNode());
-                        vqr.setWayIndex(qr.getWayIndex());
-                        vqr.setSnappedPosition(qr.getSnappedPosition());
-                        vqr.setClosestEdge(qr.getClosestEdge());
-                        vqr.calcSnappedPoint(distanceCalc);
-                        State candidate = new State(observation, vqr, incomingVirtualEdge, outgoingVirtualEdge);
-                        candidates.add(candidate);
-                    }
+                    candidates.add(new State(observation, split, virtualEdges.get(0), virtualEdges.get(1)));
+                    candidates.add(new State(observation, split, virtualEdges.get(1), virtualEdges.get(0)));
                 } else {
                     // Create an undirected candidate for the real node.
-                    State candidate = new State(observation, qr);
-                    candidates.add(candidate);
+                    candidates.add(new State(observation, split));
                 }
             }
 
-            final TimeStep<State, Observation, Path> timeStep = new TimeStep<>(observation, candidates);
-            timeSteps.add(timeStep);
+            timeSteps.add(new TimeStep<>(observation, candidates));
         }
         return timeSteps;
     }
 
     /**
-     * Computes the most likely candidate sequence for the GPX entries.
+     * Computes the most likely state sequence for the observations.
      */
     private List<SequenceState<State, Observation, Path>> computeViterbiSequence(
             List<TimeStep<State, Observation, Path>> timeSteps, int originalGpxEntriesCount,
