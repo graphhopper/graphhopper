@@ -7,8 +7,6 @@ Snaps GPX traces to the road using the
         
 Read more about the map matching problem at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching). 
 
-Currently this project is under development but produces already good results for various use cases. Let us know how it works for you!
-
 See the demo in action (black is GPS track, green is matched result):
 
 ![map-matching-example](https://cloud.githubusercontent.com/assets/129644/14740686/188a181e-0891-11e6-820c-3bd0a975f8a5.png)
