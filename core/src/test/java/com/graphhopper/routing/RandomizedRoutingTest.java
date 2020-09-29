@@ -244,7 +244,7 @@ public class RandomizedRoutingTest {
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
-            List<Snap> snaps = findSnap(index, points);
+            List<Snap> snaps = findSnaps(index, points);
             QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
             int source = snaps.get(0).getClosestNode();
@@ -279,7 +279,7 @@ public class RandomizedRoutingTest {
         return points;
     }
 
-    private List<Snap> findSnap(LocationIndexTree index, List<GHPoint> ghPoints) {
+    private List<Snap> findSnaps(LocationIndexTree index, List<GHPoint> ghPoints) {
         List<Snap> result = new ArrayList<>(ghPoints.size());
         for (GHPoint ghPoint : ghPoints) {
             result.add(index.findClosest(ghPoint.getLat(), ghPoint.getLon(), DefaultEdgeFilter.ALL_EDGES));

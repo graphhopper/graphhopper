@@ -77,12 +77,7 @@ public class LocationIndexTree implements LocationIndex {
     private double deltaLon;
     private int initSizeLeafEntries = 4;
     private boolean initialized = false;
-    private static final Comparator<Snap> Snap_COMPARATOR = new Comparator<Snap>() {
-        @Override
-        public int compare(Snap o1, Snap o2) {
-            return Double.compare(o1.getQueryDistance(), o2.getQueryDistance());
-        }
-    };
+    private static final Comparator<Snap> SNAP_COMPARATOR = Comparator.comparingDouble(Snap::getQueryDistance);
     /**
      * If normed distance is smaller than this value the node or edge is 'identical' and the
      * algorithm can stop search.
@@ -734,7 +729,7 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         // TODO: pass boolean argument for whether or not to sort? Can be expensive if not required.
-        Collections.sort(snaps, Snap_COMPARATOR);
+        Collections.sort(snaps, SNAP_COMPARATOR);
 
         for (Snap snap : snaps) {
             if (snap.isValid()) {
