@@ -2,12 +2,12 @@ package com.graphhopper.matching.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.matching.EdgeMatch;
-import com.graphhopper.matching.State;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
+import com.graphhopper.matching.State;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
@@ -45,21 +45,21 @@ public class ExtendedJsonResponseTest {
 
     private List<State> getGpxExtension() {
         List<State> list = new ArrayList<>();
-        QueryResult queryResult1 = new QueryResult(-3.4445, -38.9990) {
+        Snap snap1 = new Snap(-3.4445, -38.9990) {
             @Override
             public GHPoint3D getSnappedPoint() {
                 return new GHPoint3D(-3.4446, -38.9996, 0);
             }
         };
-        QueryResult queryResult2 = new QueryResult(-3.4445, -38.9990) {
+        Snap snap2 = new Snap(-3.4445, -38.9990) {
             @Override
             public GHPoint3D getSnappedPoint() {
                 return new GHPoint3D(-3.4449, -38.9999, 0);
             }
         };
 
-        list.add(new State(new Observation(new GHPoint(-3.4446, -38.9996)), queryResult1));
-        list.add(new State(new Observation(new GHPoint(-3.4448, -38.9999)), queryResult2));
+        list.add(new State(new Observation(new GHPoint(-3.4446, -38.9996)), snap1));
+        list.add(new State(new Observation(new GHPoint(-3.4448, -38.9999)), snap2));
         return list;
     }
 

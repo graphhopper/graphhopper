@@ -36,7 +36,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,11 +177,11 @@ public class MapMatching {
         // Snap observations to links. Generates multiple candidate snaps per observation.
         // In the next step, we will turn them into splits, but we already call them splits now
         // because they are modified in place.
-        List<Collection<QueryResult>> splitsPerObservation = filteredObservations.stream().map(o -> locationIndex.findNClosest(o.getPoint().lat, o.getPoint().lon, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()), measurementErrorSigma))
+        List<Collection<Snap>> splitsPerObservation = filteredObservations.stream().map(o -> locationIndex.findNClosest(o.getPoint().lat, o.getPoint().lon, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()), measurementErrorSigma))
                 .collect(Collectors.toList());
 
         // Create the query graph, containing split edges so that all the places where an observation might have happened
-        // are a node. This modifies the QueryResult objects and puts the new node numbers into them.
+        // are a node. This modifies the Snap objects and puts the new node numbers into them.
         queryGraph = QueryGraph.create(graph, splitsPerObservation.stream().flatMap(Collection::stream).collect(Collectors.toList()));
 
         // Due to how LocationIndex/QueryGraph is implemented, we can get duplicates when a point is snapped
@@ -189,8 +189,8 @@ public class MapMatching {
         // out the duplicates for performance reasons.
         splitsPerObservation = splitsPerObservation.stream().map(this::deduplicate).collect(Collectors.toList());
 
-        // Creates candidates from the QueryResults of all observations (a candidate is basically a
-        // QueryResult + direction).
+        // Creates candidates from the Snaps of all observations (a candidate is basically a
+        // Snap + direction).
         List<TimeStep<State, Observation, Path>> timeSteps = createTimeSteps(filteredObservations, splitsPerObservation, queryGraph);
 
         // Compute the most likely sequence of map matching candidates:
@@ -232,9 +232,9 @@ public class MapMatching {
         return filtered;
     }
 
-    private Collection<QueryResult> deduplicate(Collection<QueryResult> splits) {
+    private Collection<Snap> deduplicate(Collection<Snap> splits) {
         // Only keep one split per node number. Let's say the last one.
-        Map<Integer, QueryResult> splitsByNodeNumber = splits.stream().collect(Collectors.toMap(QueryResult::getClosestNode, s -> s, (s1, s2) -> s2));
+        Map<Integer, Snap> splitsByNodeNumber = splits.stream().collect(Collectors.toMap(Snap::getClosestNode, s -> s, (s1, s2) -> s2));
         return splitsByNodeNumber.values();
     }
 
@@ -243,7 +243,7 @@ public class MapMatching {
      * transition probabilities. Creates directed candidates for virtual nodes and undirected
      * candidates for real nodes.
      */
-    private List<TimeStep<State, Observation, Path>> createTimeSteps(List<Observation> filteredObservations, List<Collection<QueryResult>> splitsPerObservation, QueryGraph queryGraph) {
+    private List<TimeStep<State, Observation, Path>> createTimeSteps(List<Observation> filteredObservations, List<Collection<Snap>> splitsPerObservation, QueryGraph queryGraph) {
         if (splitsPerObservation.size() != filteredObservations.size()) {
             throw new IllegalArgumentException(
                     "filteredGPXEntries and queriesPerEntry must have same size.");
@@ -252,9 +252,9 @@ public class MapMatching {
         final List<TimeStep<State, Observation, Path>> timeSteps = new ArrayList<>();
         for (int i = 0; i < filteredObservations.size(); i++) {
             Observation observation = filteredObservations.get(i);
-            Collection<QueryResult> splits = splitsPerObservation.get(i);
+            Collection<Snap> splits = splitsPerObservation.get(i);
             List<State> candidates = new ArrayList<>();
-            for (QueryResult split : splits) {
+            for (Snap split : splits) {
                 if (queryGraph.isVirtualNode(split.getClosestNode())) {
                     List<VirtualEdgeIteratorState> virtualEdges = new ArrayList<>();
                     EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(split.getClosestNode());
@@ -350,7 +350,7 @@ public class MapMatching {
                                               HmmProbabilities probabilities) {
         for (State candidate : timeStep.candidates) {
             // road distance difference in meters
-            final double distance = candidate.getQueryResult().getQueryDistance();
+            final double distance = candidate.getSnap().getQueryDistance();
             timeStep.addEmissionLogProbability(candidate,
                     probabilities.emissionLogProbability(distance));
         }
@@ -399,8 +399,8 @@ public class MapMatching {
                 }
                 router.setMaxVisitedNodes(maxVisitedNodes);
 
-                final Path path = router.calcPath(from.getQueryResult().getClosestNode(),
-                        to.getQueryResult().getClosestNode());
+                final Path path = router.calcPath(from.getSnap().getClosestNode(),
+                        to.getSnap().getClosestNode());
 
                 if (path.isFound()) {
                     timeStep.addRoadPath(from, to, path);
@@ -539,26 +539,26 @@ public class MapMatching {
     /**
      * Returns a map where every virtual edge maps to its real edge with correct orientation.
      */
-    private Map<String, EdgeIteratorState> createVirtualEdgesMap(List<Collection<QueryResult>> queriesPerEntry) {
+    private Map<String, EdgeIteratorState> createVirtualEdgesMap(List<Collection<Snap>> queriesPerEntry) {
         EdgeExplorer explorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
         // TODO For map key, use the traversal key instead of string!
         Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
-        for (Collection<QueryResult> queryResults : queriesPerEntry) {
-            for (QueryResult qr : queryResults) {
-                if (queryGraph.isVirtualNode(qr.getClosestNode())) {
-                    EdgeIterator iter = explorer.setBaseNode(qr.getClosestNode());
+        for (Collection<Snap> snaps : queriesPerEntry) {
+            for (Snap snap : snaps) {
+                if (queryGraph.isVirtualNode(snap.getClosestNode())) {
+                    EdgeIterator iter = explorer.setBaseNode(snap.getClosestNode());
                     while (iter.next()) {
                         int node = traverseToClosestRealAdj(iter);
-                        if (node == qr.getClosestEdge().getAdjNode()) {
+                        if (node == snap.getClosestEdge().getAdjNode()) {
                             virtualEdgesMap.put(virtualEdgesMapKey(iter),
-                                    qr.getClosestEdge().detach(false));
+                                    snap.getClosestEdge().detach(false));
                             virtualEdgesMap.put(reverseVirtualEdgesMapKey(iter),
-                                    qr.getClosestEdge().detach(true));
-                        } else if (node == qr.getClosestEdge().getBaseNode()) {
+                                    snap.getClosestEdge().detach(true));
+                        } else if (node == snap.getClosestEdge().getBaseNode()) {
                             virtualEdgesMap.put(virtualEdgesMapKey(iter),
-                                    qr.getClosestEdge().detach(true));
+                                    snap.getClosestEdge().detach(true));
                             virtualEdgesMap.put(reverseVirtualEdgesMapKey(iter),
-                                    qr.getClosestEdge().detach(false));
+                                    snap.getClosestEdge().detach(false));
                         } else {
                             throw new RuntimeException();
                         }
@@ -597,8 +597,8 @@ public class MapMatching {
             if (!str.isEmpty()) {
                 str += ", ";
             }
-            str += "distance: " + gpxe.getQueryResult().getQueryDistance() + " to "
-                    + gpxe.getQueryResult().getSnappedPoint();
+            str += "distance: " + gpxe.getSnap().getQueryDistance() + " to "
+                    + gpxe.getSnap().getSnappedPoint();
         }
         return "[" + str + "]";
     }

@@ -18,7 +18,7 @@
 package com.graphhopper.matching;
 
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -39,7 +39,7 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class State {
     private final Observation entry;
-    private final QueryResult queryResult;
+    private final Snap snap;
     private final boolean isDirected;
     private final EdgeIteratorState incomingVirtualEdge;
     private final EdgeIteratorState outgoingVirtualEdge;
@@ -47,9 +47,9 @@ public class State {
     /**
      * Creates an undirected candidate for a real node.
      */
-    public State(Observation entry, QueryResult queryResult) {
+    public State(Observation entry, Snap snap) {
         this.entry = entry;
-        this.queryResult = queryResult;
+        this.snap = snap;
         this.isDirected = false;
         this.incomingVirtualEdge = null;
         this.outgoingVirtualEdge = null;
@@ -58,11 +58,11 @@ public class State {
     /**
      * Creates a directed candidate for a virtual node.
      */
-    public State(Observation entry, QueryResult queryResult,
+    public State(Observation entry, Snap snap,
                  VirtualEdgeIteratorState incomingVirtualEdge,
                  VirtualEdgeIteratorState outgoingVirtualEdge) {
         this.entry = entry;
-        this.queryResult = queryResult;
+        this.snap = snap;
         this.isDirected = true;
         this.incomingVirtualEdge = incomingVirtualEdge;
         this.outgoingVirtualEdge = outgoingVirtualEdge;
@@ -72,8 +72,8 @@ public class State {
         return entry;
     }
 
-    public QueryResult getQueryResult() {
-        return queryResult;
+    public Snap getSnap() {
+        return snap;
     }
 
     /**
@@ -113,9 +113,9 @@ public class State {
     @Override
     public String toString() {
         return "State{" +
-                "closest node=" + queryResult.getClosestNode() +
-                " at " + queryResult.getSnappedPoint().getLat() + "," +
-                queryResult.getSnappedPoint().getLon() +
+                "closest node=" + snap.getClosestNode() +
+                " at " + snap.getSnappedPoint().getLat() + "," +
+                snap.getSnappedPoint().getLon() +
                 ", incomingEdge=" + incomingVirtualEdge +
                 ", outgoingEdge=" + outgoingVirtualEdge +
                 '}';
