@@ -22,10 +22,7 @@ import com.bmw.hmm.ViterbiAlgorithm;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.AStarBidirection;
-import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.lm.LMApproximator;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
@@ -66,10 +63,6 @@ public class MapMatching {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    // Penalty in m for each U-turn performed at the beginning or end of a path between two
-    // subsequent candidates.
-    private final double uTurnDistancePenalty;
-
     private final Graph graph;
     private final PrepareLandmarks landmarks;
     private final LocationIndexTree locationIndex;
@@ -105,17 +98,6 @@ public class MapMatching {
             throw new IllegalArgumentException("Could not find profile '" + profileStr + "', choose one of: " + profileNames);
         }
 
-        // Convert heading penalty [s] into U-turn penalty [m]
-        // The heading penalty is automatically taken into account by GraphHopper routing,
-        // for all links that we set to "unfavored" on the QueryGraph.
-        // We use that mechanism to softly enforce a heading for each map-matching state.
-        // We want to consistently use the same parameter for our own objective function (independent of the routing),
-        // which has meters as unit, not seconds.
-
-        final double PENALTY_CONVERSION_VELOCITY = 5;  // [m/s]
-        final double headingTimePenalty = hints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY);
-        uTurnDistancePenalty = headingTimePenalty * PENALTY_CONVERSION_VELOCITY;
-
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
         if (graphHopper.getLMPreparationHandler().isEnabled() && disableLM && !graphHopper.getRouterConfig().isLMDisablingAllowed())
             throw new IllegalArgumentException("Disabling LM is not allowed");
@@ -150,8 +132,7 @@ public class MapMatching {
             landmarks = null;
         }
         graph = graphHopper.getGraphHopperStorage();
-        // since map matching does not support turn costs we have to disable them here explicitly
-        weighting = graphHopper.createWeighting(profile, hints, true);
+        weighting = graphHopper.createWeighting(profile, hints);
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
     }
 
@@ -272,15 +253,9 @@ public class MapMatching {
                     }
 
                     // Create a directed candidate for each of the two possible directions through
-                    // the virtual node. This is needed to penalize U-turns at virtual nodes
-                    // (see also #51). We need to add candidates for both directions because
+                    // the virtual node. We need to add candidates for both directions because
                     // we don't know yet which is the correct one. This will be figured
                     // out by the Viterbi algorithm.
-                    //
-                    // Adding further candidates to explicitly allow U-turns through setting
-                    // incomingVirtualEdge==outgoingVirtualEdge doesn't make sense because this
-                    // would actually allow to perform a U-turn without a penalty by going to and
-                    // from the virtual node through the other virtual edge or its reverse edge.
                     candidates.add(new State(observation, split, virtualEdges.get(0), virtualEdges.get(1)));
                     candidates.add(new State(observation, split, virtualEdges.get(1), virtualEdges.get(0)));
                 } else {
@@ -365,21 +340,9 @@ public class MapMatching {
 
         for (State from : prevTimeStep.candidates) {
             for (State to : timeStep.candidates) {
-                // enforce heading if required:
-                if (from.isOnDirectedEdge()) {
-                    // Make sure that the path starting at the "from" candidate goes through
-                    // the outgoing edge.
-                    queryGraph.unfavorVirtualEdge(from.getIncomingVirtualEdge().getEdge());
-                }
-                if (to.isOnDirectedEdge()) {
-                    // Make sure that the path ending at "to" candidate goes through
-                    // the incoming edge.
-                    queryGraph.unfavorVirtualEdge(to.getOutgoingVirtualEdge().getEdge());
-                }
-
-                RoutingAlgorithm router;
+                BidirRoutingAlgorithm router;
                 if (landmarks != null) {
-                    AStarBidirection algo = new AStarBidirection(queryGraph, weighting, TraversalMode.NODE_BASED) {
+                    AStarBidirection algo = new AStarBidirection(queryGraph, weighting, TraversalMode.EDGE_BASED) {
                         @Override
                         protected void initCollections(int size) {
                             super.initCollections(50);
@@ -388,64 +351,30 @@ public class MapMatching {
                     LandmarkStorage lms = landmarks.getLandmarkStorage();
                     int activeLM = Math.min(8, lms.getLandmarkCount());
                     algo.setApproximation(LMApproximator.forLandmarks(queryGraph, lms, activeLM));
+                    algo.setMaxVisitedNodes(maxVisitedNodes);
                     router = algo;
                 } else {
-                    router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.NODE_BASED) {
+                    router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.EDGE_BASED) {
                         @Override
                         protected void initCollections(int size) {
                             super.initCollections(50);
                         }
                     };
+                    router.setMaxVisitedNodes(maxVisitedNodes);
                 }
-                router.setMaxVisitedNodes(maxVisitedNodes);
-
-                final Path path = router.calcPath(from.getQueryResult().getClosestNode(),
-                        to.getQueryResult().getClosestNode());
-
+                final Path path = router.calcPath(from.getQueryResult().getClosestNode(), to.getQueryResult().getClosestNode(), from.isOnDirectedEdge() ? from.getOutgoingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE, to.isOnDirectedEdge() ? to.getIncomingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE);
                 if (path.isFound()) {
                     timeStep.addRoadPath(from, to, path);
+                    logger.debug("Path from: {}, to: {}, path length: {}",
+                            from, to, path.getDistance());
 
-                    // The router considers unfavored virtual edges using edge penalties
-                    // but this is not reflected in the path distance. Hence, we need to adjust the
-                    // path distance accordingly.
-                    final double penalizedPathDistance = penalizedPathDistance(path,
-                            queryGraph.getUnfavoredVirtualEdges());
-
-                    logger.debug("Path from: {}, to: {}, penalized path length: {}",
-                            from, to, penalizedPathDistance);
-
-                    final double transitionLogProbability = probabilities
-                            .transitionLogProbability(penalizedPathDistance, linearDistance);
+                    final double transitionLogProbability = probabilities.transitionLogProbability(path.getDistance(), linearDistance);
                     timeStep.addTransitionLogProbability(from, to, transitionLogProbability);
                 } else {
                     logger.debug("No path found for from: {}, to: {}", from, to);
                 }
-                queryGraph.clearUnfavoredStatus();
-
             }
         }
-    }
-
-    /**
-     * Returns the path length plus a penalty if the starting/ending edge is unfavored.
-     */
-    private double penalizedPathDistance(Path path, Set<EdgeIteratorState> penalizedVirtualEdges) {
-        double totalPenalty = 0;
-
-        // Unfavored edges in the middle of the path should not be penalized because we are
-        // only concerned about the direction at the start/end.
-        final List<EdgeIteratorState> edges = path.calcEdges();
-        if (!edges.isEmpty()) {
-            if (penalizedVirtualEdges.contains(edges.get(0))) {
-                totalPenalty += uTurnDistancePenalty;
-            }
-        }
-        if (edges.size() > 1) {
-            if (penalizedVirtualEdges.contains(edges.get(edges.size() - 1))) {
-                totalPenalty += uTurnDistancePenalty;
-            }
-        }
-        return path.getDistance() + totalPenalty;
     }
 
     private List<EdgeMatch> prepareEdgeMatches(List<SequenceState<State, Observation, Path>> seq, Map<String, EdgeIteratorState> virtualEdgesMap) {
