@@ -194,7 +194,7 @@ public class MeasurementCommand extends Command {
                         }
                         // now match, provided there are enough points
                         if (mock.size() > 2) {
-                            MatchResult match = mapMatching.doWork(mock);
+                            MatchResult match = mapMatching.match(mock);
                             // return something non-trivial, to avoid JVM optimizing away
                             return match.getEdgeMatches().size();
                         }

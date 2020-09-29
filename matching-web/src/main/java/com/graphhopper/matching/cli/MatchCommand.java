@@ -112,7 +112,7 @@ public class MatchCommand extends Command {
                 List<Observation> measurements = gpx.trk.get(0).getEntries();
                 importSW.stop();
                 matchSW.start();
-                MatchResult mr = mapMatching.doWork(measurements);
+                MatchResult mr = mapMatching.match(measurements);
                 matchSW.stop();
                 System.out.println(gpxFile);
                 System.out.println("\tmatches:\t" + mr.getEdgeMatches().size() + ", gps entries:" + measurements.size());

@@ -67,7 +67,7 @@ public class MapMatching2Test {
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-13.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
 
         // make sure no virtual edges are returned
         int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
@@ -99,7 +99,7 @@ public class MapMatching2Test {
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-70.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
 
         assertEquals(Arrays.asList("Милана Видака", "Милана Видака", "Милана Видака",
                 "Бранка Радичевића", "Бранка Радичевића", "Здравка Челара"),
@@ -127,7 +127,7 @@ public class MapMatching2Test {
 
         // query with two identical points
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-127.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
+        MatchResult mr = mapMatching.match(gpx.trk.get(0).getEntries());
 
         // make sure no virtual edges are returned
         int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();

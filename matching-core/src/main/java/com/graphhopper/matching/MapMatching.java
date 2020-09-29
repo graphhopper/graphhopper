@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class matches real world GPX entries to the digital road network stored
@@ -127,7 +128,7 @@ public class MapMatching {
             throw new IllegalArgumentException("Disabling CH is not allowed");
 
         // see map-matching/#177: both ch.disable and lm.disable can be used to force Dijkstra which is the better
-        // (=faster) choice when the gpx points are close to each other
+        // (=faster) choice when the observations are close to each other
         boolean useDijkstra = disableLM || disableCH;
 
         if (graphHopper.getLMPreparationHandler().isEnabled() && !useDijkstra) {
@@ -173,40 +174,26 @@ public class MapMatching {
         this.measurementErrorSigma = measurementErrorSigma;
     }
 
-    /**
-     * This method does the actual map matching.
-     * <p>
-     *
-     * @param gpxList the input list with GPX points which should match to edges
-     *                of the graph specified in the constructor
-     */
-    public MatchResult doWork(List<Observation> gpxList) {
-        // filter the entries:
-        List<Observation> filteredGPXEntries = filterGPXEntries(gpxList);
+    public MatchResult match(List<Observation> observations) {
+        List<Observation> filteredObservations = filterObservations(observations);
 
-        // now find each of the entries in the graph:
-        List<Collection<QueryResult>> queriesPerEntry = lookupGPXEntries(filteredGPXEntries, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
-
-        // Add virtual nodes and edges to the graph so that candidates on edges can be represented
-        // by virtual nodes.
-        List<QueryResult> allQueryResults = new ArrayList<>();
-        for (Collection<QueryResult> qrs : queriesPerEntry) {
-            allQueryResults.addAll(qrs);
-        }
-        queryGraph = QueryGraph.create(graph, allQueryResults);
+        // Snap observations to links. Generates multiple candidate links per observation.
+        List<Collection<QueryResult>> undirectedCandidatesPerObservation = createCandidates(filteredObservations, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
+        List<QueryResult> allUndirectedCandidates = undirectedCandidatesPerObservation.stream().flatMap(Collection::stream).collect(Collectors.toList());
+        queryGraph = QueryGraph.create(graph, allUndirectedCandidates);
 
         // Different QueryResults can have the same tower node as their closest node.
-        // Hence, we now dedupe the query results of each GPX entry by their closest node (#91).
+        // Hence, we now dedupe the query results of each observation by their closest node (#91).
         // This must be done after calling queryGraph.create() since this replaces some of the
         // QueryResult nodes with virtual nodes. Virtual nodes are not deduped since there is at
         // most one QueryResult per edge and virtual nodes are inserted into the middle of an edge.
         // Reducing the number of QueryResults improves performance since less shortest/fastest
         // routes need to be computed.
-        queriesPerEntry = deduplicateQueryResultsByClosestNode(queriesPerEntry);
+        undirectedCandidatesPerObservation = deduplicateQueryResultsByClosestNode(undirectedCandidatesPerObservation);
 
         logger.debug("================= Query results =================");
         int i = 1;
-        for (Collection<QueryResult> entries : queriesPerEntry) {
+        for (Collection<QueryResult> entries : undirectedCandidatesPerObservation) {
             logger.debug("Query results for GPX entry {}", i++);
             for (QueryResult qr : entries) {
                 logger.debug("Node id: {}, virtual: {}, snapped on: {}, pos: {},{}, "
@@ -217,10 +204,10 @@ public class MapMatching {
             }
         }
 
-        // Creates candidates from the QueryResults of all GPX entries (a candidate is basically a
+        // Creates candidates from the QueryResults of all observations (a candidate is basically a
         // QueryResult + direction).
         List<TimeStep<State, Observation, Path>> timeSteps =
-                createTimeSteps(filteredGPXEntries, queriesPerEntry, queryGraph);
+                createTimeSteps(filteredObservations, undirectedCandidatesPerObservation, queryGraph);
         logger.debug("=============== Time steps ===============");
         i = 1;
         for (TimeStep<State, Observation, Path> ts : timeSteps) {
@@ -231,7 +218,7 @@ public class MapMatching {
         }
 
         // Compute the most likely sequence of map matching candidates:
-        List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps, gpxList.size(), queryGraph);
+        List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps, observations.size(), queryGraph);
 
         logger.debug("=============== Viterbi results =============== ");
         i = 1;
@@ -241,8 +228,8 @@ public class MapMatching {
             i++;
         }
 
-        final Map<String, EdgeIteratorState> virtualEdgesMap = createVirtualEdgesMap(queriesPerEntry);
-        MatchResult matchResult = computeMatchResult(seq, virtualEdgesMap, gpxList, queryGraph);
+        final Map<String, EdgeIteratorState> virtualEdgesMap = createVirtualEdgesMap(undirectedCandidatesPerObservation);
+        MatchResult matchResult = computeMatchResult(seq, virtualEdgesMap, observations, queryGraph);
         logger.debug("=============== Matched real edges =============== ");
         i = 1;
         for (EdgeMatch em : matchResult.getEdgeMatches()) {
@@ -260,7 +247,7 @@ public class MapMatching {
      * Filters GPX entries to only those which will be used for map matching (i.e. those which
      * are separated by at least 2 * measurementErrorSigman
      */
-    private List<Observation> filterGPXEntries(List<Observation> gpxList) {
+    private List<Observation> filterObservations(List<Observation> gpxList) {
         List<Observation> filtered = new ArrayList<>();
         Observation prevEntry = null;
         int last = gpxList.size() - 1;
@@ -281,7 +268,7 @@ public class MapMatching {
     /**
      * Find the possible locations (edges) of each Observation in the graph.
      */
-    private List<Collection<QueryResult>> lookupGPXEntries(List<Observation> gpxList,
+    private List<Collection<QueryResult>> createCandidates(List<Observation> gpxList,
                                                            EdgeFilter edgeFilter) {
 
         final List<Collection<QueryResult>> gpxEntryLocations = new ArrayList<>();
