@@ -121,9 +121,8 @@ public class MatchCommand extends Command {
                 String outFile = gpxFile.getAbsolutePath() + ".res.gpx";
                 System.out.println("\texport results to:" + outFile);
 
-                ResponsePath responsePath = new ResponsePath();
-                new PathMerger(mr.getGraph(), weighting).
-                        doWork(responsePath, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
+                ResponsePath responsePath = new PathMerger(mr.getGraph(), weighting).
+                        doWork(PointList.EMPTY, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
                 if (responsePath.hasErrors()) {
                     System.err.println("Problem with file " + gpxFile + ", " + responsePath.getErrors());
                     continue;

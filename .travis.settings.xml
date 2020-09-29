@@ -12,12 +12,9 @@
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
   <servers>
     <server>
-      <id>packagecloud-graphhopper</id>
-      <password>${env.PACKAGECLOUD_TOKEN}</password>
-    </server>
-    <server>
-      <id>packagecloud-read</id>
-      <password>${env.PACKAGECLOUD_TOKEN_READ}</password>
+      <id>github</id>
+      <username>${env.GITHUB_USERNAME}</username>
+      <password>${env.GITHUB_PASSWORD}</password>
     </server>
   </servers>
 </settings>

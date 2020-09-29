@@ -20,11 +20,17 @@ package com.graphhopper.matching;
 import com.bmw.hmm.SequenceState;
 import com.bmw.hmm.ViterbiAlgorithm;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.matching.util.HmmProbabilities;
 import com.graphhopper.matching.util.TimeStep;
-import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.AStarBidirection;
+import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.lm.LMApproximator;
+import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -32,7 +38,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -65,16 +70,16 @@ public class MapMatching {
 
     // Penalty in m for each U-turn performed at the beginning or end of a path between two
     // subsequent candidates.
-    private double uTurnDistancePenalty;
+    private final double uTurnDistancePenalty;
 
-    private final Graph routingGraph;
+    private final Graph graph;
+    private final PrepareLandmarks landmarks;
     private final LocationIndexTree locationIndex;
     private double measurementErrorSigma = 50.0;
     private double transitionProbabilityBeta = 2.0;
     private final int maxVisitedNodes;
-    private DistanceCalc distanceCalc = new DistancePlaneProjection();
+    private final DistanceCalc distanceCalc = new DistancePlaneProjection();
     private final Weighting weighting;
-    private final boolean ch;
     private QueryGraph queryGraph;
 
     public MapMatching(GraphHopper graphHopper, PMap hints) {
@@ -113,16 +118,40 @@ public class MapMatching {
         final double headingTimePenalty = hints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY);
         uTurnDistancePenalty = headingTimePenalty * PENALTY_CONVERSION_VELOCITY;
 
-        boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
-        RoutingAlgorithmFactory routingAlgorithmFactory = graphHopper.getAlgorithmFactory(profile.getName(), disableCH, disableLM);
-        if (routingAlgorithmFactory instanceof CHRoutingAlgorithmFactory) {
-            ch = true;
-            routingGraph = graphHopper.getGraphHopperStorage().getCHGraph(((CHRoutingAlgorithmFactory) routingAlgorithmFactory).getCHConfig());
+        if (graphHopper.getLMPreparationHandler().isEnabled() && disableLM && !graphHopper.getRouterConfig().isLMDisablingAllowed())
+            throw new IllegalArgumentException("Disabling LM is not allowed");
+
+        boolean disableCH = hints.getBool(Parameters.CH.DISABLE, false);
+        if (graphHopper.getCHPreparationHandler().isEnabled() && disableCH && !graphHopper.getRouterConfig().isCHDisablingAllowed())
+            throw new IllegalArgumentException("Disabling CH is not allowed");
+
+        // see map-matching/#177: both ch.disable and lm.disable can be used to force Dijkstra which is the better
+        // (=faster) choice when the gpx points are close to each other
+        boolean useDijkstra = disableLM || disableCH;
+
+        if (graphHopper.getLMPreparationHandler().isEnabled() && !useDijkstra) {
+            // using LM because u-turn prevention does not work properly with (node-based) CH
+            List<String> lmProfileNames = new ArrayList<>();
+            PrepareLandmarks lmPreparation = null;
+            for (LMProfile lmProfile : graphHopper.getLMPreparationHandler().getLMProfiles()) {
+                lmProfileNames.add(lmProfile.getProfile());
+                if (lmProfile.getProfile().equals(profile.getName())) {
+                    lmPreparation = graphHopper.getLMPreparationHandler().getPreparation(
+                            lmProfile.usesOtherPreparation() ? lmProfile.getPreparationProfile() : lmProfile.getProfile()
+                    );
+                }
+            }
+            if (lmPreparation == null) {
+                throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile.getName() + "'" +
+                        "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
+                        "\navailable LM profiles: " + lmProfileNames);
+            }
+            landmarks = lmPreparation;
         } else {
-            ch = false;
-            routingGraph = graphHopper.getGraphHopperStorage();
+            landmarks = null;
         }
+        graph = graphHopper.getGraphHopperStorage();
         // since map matching does not support turn costs we have to disable them here explicitly
         weighting = graphHopper.createWeighting(profile, hints, true);
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
@@ -164,7 +193,7 @@ public class MapMatching {
         for (Collection<QueryResult> qrs : queriesPerEntry) {
             allQueryResults.addAll(qrs);
         }
-        queryGraph = QueryGraph.create(routingGraph, allQueryResults);
+        queryGraph = QueryGraph.create(graph, allQueryResults);
 
         // Different QueryResults can have the same tower node as their closest node.
         // Hence, we now dedupe the query results of each GPX entry by their closest node (#91).
@@ -438,26 +467,26 @@ public class MapMatching {
                 if (from.isOnDirectedEdge()) {
                     // Make sure that the path starting at the "from" candidate goes through
                     // the outgoing edge.
-                    queryGraph.unfavorVirtualEdgePair(from.getQueryResult().getClosestNode(),
-                            from.getIncomingVirtualEdge().getEdge());
+                    queryGraph.unfavorVirtualEdge(from.getIncomingVirtualEdge().getEdge());
                 }
                 if (to.isOnDirectedEdge()) {
                     // Make sure that the path ending at "to" candidate goes through
                     // the incoming edge.
-                    queryGraph.unfavorVirtualEdgePair(to.getQueryResult().getClosestNode(),
-                            to.getOutgoingVirtualEdge().getEdge());
+                    queryGraph.unfavorVirtualEdge(to.getOutgoingVirtualEdge().getEdge());
                 }
 
                 RoutingAlgorithm router;
-                if (ch) {
-                    RoutingCHGraphImpl g = new RoutingCHGraphImpl(queryGraph, weighting);
-                    router = new DijkstraBidirectionCH(g) {
+                if (landmarks != null) {
+                    AStarBidirection algo = new AStarBidirection(queryGraph, weighting, TraversalMode.NODE_BASED) {
                         @Override
                         protected void initCollections(int size) {
                             super.initCollections(50);
                         }
                     };
-                    router.setMaxVisitedNodes(maxVisitedNodes);
+                    LandmarkStorage lms = landmarks.getLandmarkStorage();
+                    int activeLM = Math.min(8, lms.getLandmarkCount());
+                    algo.setApproximation(LMApproximator.forLandmarks(queryGraph, lms, activeLM));
+                    router = algo;
                 } else {
                     router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.NODE_BASED) {
                         @Override
@@ -465,8 +494,8 @@ public class MapMatching {
                             super.initCollections(50);
                         }
                     };
-                    router.setMaxVisitedNodes(maxVisitedNodes);
                 }
+                router.setMaxVisitedNodes(maxVisitedNodes);
 
                 final Path path = router.calcPath(from.getQueryResult().getClosestNode(),
                         to.getQueryResult().getClosestNode());
@@ -535,7 +564,7 @@ public class MapMatching {
                 edges.addAll(state.transitionDescriptor.calcEdges());
             }
         }
-        Path mergedPath = new MapMatchedPath(queryGraph.getBaseGraph(), weighting, edges);
+        Path mergedPath = new MapMatchedPath(queryGraph, weighting, edges);
 
         List<EdgeMatch> edgeMatches = computeEdgeMatches(seq, virtualEdgesMap);
         MatchResult matchResult = new MatchResult(edgeMatches);
@@ -543,7 +572,7 @@ public class MapMatching {
         matchResult.setMatchMillis(time);
         matchResult.setMatchLength(distance);
         matchResult.setGPXEntriesLength(gpxLength(gpxList));
-        matchResult.setGraph(queryGraph.getBaseGraph());
+        matchResult.setGraph(queryGraph);
         matchResult.setWeighting(weighting);
         return matchResult;
     }

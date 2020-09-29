@@ -21,7 +21,7 @@ package com.graphhopper.matching;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -53,8 +53,8 @@ public class RoutingAdditivityTest {
         graphHopper.setGraphHopperLocation(GH_LOCATION);
         graphHopper.setEncodingManager(EncodingManager.create(encoder));
         graphHopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
-        graphHopper.getCHPreparationHandler().setCHProfiles(new CHProfile("my_profile"));
-        graphHopper.getCHPreparationHandler().setDisablingAllowed(true);
+        graphHopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
+        graphHopper.getRouterConfig().setLMDisablingAllowed(true);
         graphHopper.importOrLoad();
     }
 

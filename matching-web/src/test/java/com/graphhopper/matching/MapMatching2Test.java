@@ -19,7 +19,7 @@ package com.graphhopper.matching;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -60,8 +60,8 @@ public class MapMatching2Test {
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
-        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("my_profile"));
-        hopper.getCHPreparationHandler().setDisablingAllowed(true);
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
+        hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
@@ -92,8 +92,8 @@ public class MapMatching2Test {
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
-        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("my_profile"));
-        hopper.getCHPreparationHandler().setDisablingAllowed(true);
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
+        hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
@@ -119,8 +119,8 @@ public class MapMatching2Test {
         hopper.setGraphHopperLocation(GH_LOCATION);
         hopper.setEncodingManager(EncodingManager.create(encoder));
         hopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
-        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("my_profile"));
-        hopper.getCHPreparationHandler().setDisablingAllowed(true);
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
+        hopper.getRouterConfig().setLMDisablingAllowed(true);
         hopper.importOrLoad();
 
         MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
