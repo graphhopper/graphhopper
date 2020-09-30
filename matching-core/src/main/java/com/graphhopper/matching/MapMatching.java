@@ -18,6 +18,7 @@
 package com.graphhopper.matching;
 
 import com.bmw.hmm.SequenceState;
+import com.bmw.hmm.Transition;
 import com.bmw.hmm.ViterbiAlgorithm;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
@@ -172,7 +173,7 @@ public class MapMatching {
 
         // Creates candidates from the QueryResults of all observations (a candidate is basically a
         // QueryResult + direction).
-        List<TimeStep<State, Observation, Path>> timeSteps = createTimeSteps(filteredObservations, splitsPerObservation);
+        List<ObservationWithCandidateStates> timeSteps = createTimeSteps(filteredObservations, splitsPerObservation);
 
         // Compute the most likely sequence of map matching candidates:
         List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps);
@@ -222,13 +223,13 @@ public class MapMatching {
      * transition probabilities. Creates directed candidates for virtual nodes and undirected
      * candidates for real nodes.
      */
-    private List<TimeStep<State, Observation, Path>> createTimeSteps(List<Observation> filteredObservations, List<Collection<QueryResult>> splitsPerObservation) {
+    private List<ObservationWithCandidateStates> createTimeSteps(List<Observation> filteredObservations, List<Collection<QueryResult>> splitsPerObservation) {
         if (splitsPerObservation.size() != filteredObservations.size()) {
             throw new IllegalArgumentException(
                     "filteredGPXEntries and queriesPerEntry must have same size.");
         }
 
-        final List<TimeStep<State, Observation, Path>> timeSteps = new ArrayList<>();
+        final List<ObservationWithCandidateStates> timeSteps = new ArrayList<>();
         for (int i = 0; i < filteredObservations.size(); i++) {
             Observation observation = filteredObservations.get(i);
             Collection<QueryResult> splits = splitsPerObservation.get(i);
@@ -262,7 +263,7 @@ public class MapMatching {
                 }
             }
 
-            timeSteps.add(new TimeStep<>(observation, candidates));
+            timeSteps.add(new ObservationWithCandidateStates(observation, candidates));
         }
         return timeSteps;
     }
@@ -270,45 +271,45 @@ public class MapMatching {
     /**
      * Computes the most likely state sequence for the observations.
      */
-    private List<SequenceState<State, Observation, Path>> computeViterbiSequence(
-            List<TimeStep<State, Observation, Path>> timeSteps) {
-        final HmmProbabilities probabilities
-                = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
+    private List<SequenceState<State, Observation, Path>> computeViterbiSequence(List<ObservationWithCandidateStates> timeSteps) {
+        final HmmProbabilities probabilities = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
         final ViterbiAlgorithm<State, Observation, Path> viterbi = new ViterbiAlgorithm<>();
 
-        logger.debug("\n=============== Paths ===============");
         int timeStepCounter = 0;
-        TimeStep<State, Observation, Path> prevTimeStep = null;
-        int i = 1;
-        for (TimeStep<State, Observation, Path> timeStep : timeSteps) {
-            logger.debug("\nPaths to time step {}", i++);
-            computeEmissionProbabilities(timeStep, probabilities);
+        ObservationWithCandidateStates prevTimeStep = null;
+        for (ObservationWithCandidateStates timeStep : timeSteps) {
+            final Map<State, Double> emissionLogProbabilities = new HashMap<>();
+            Map<Transition<State>, Double> transitionLogProbabilities = new HashMap<>();
+            Map<Transition<State>, Path> roadPaths = new HashMap<>();
+            for (State candidate : timeStep.candidates) {
+                // road distance difference in meters
+                final double distance = candidate.getQueryResult().getQueryDistance();
+                emissionLogProbabilities.put(candidate, probabilities.emissionLogProbability(distance));
+            }
 
             if (prevTimeStep == null) {
-                viterbi.startWithInitialObservation(timeStep.observation, timeStep.candidates,
-                        timeStep.emissionLogProbabilities);
+                viterbi.startWithInitialObservation(timeStep.observation, timeStep.candidates, emissionLogProbabilities);
             } else {
-                computeTransitionProbabilities(prevTimeStep, timeStep, probabilities, queryGraph);
-                viterbi.nextStep(timeStep.observation, timeStep.candidates,
-                        timeStep.emissionLogProbabilities, timeStep.transitionLogProbabilities,
-                        timeStep.roadPaths);
-            }
-            if (viterbi.isBroken()) {
-                String likelyReasonStr = "";
-                if (prevTimeStep != null) {
-                    double dist = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat, prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
-                    if (dist > 2000) {
-                        likelyReasonStr = "Too long distance to previous measurement? "
-                                + Math.round(dist) + "m, ";
+                final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat,
+                        prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
+
+                for (State from : prevTimeStep.candidates) {
+                    for (State to : timeStep.candidates) {
+                        final Path path = createRouter().calcPath(from.getQueryResult().getClosestNode(), to.getQueryResult().getClosestNode(), from.isOnDirectedEdge() ? from.getOutgoingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE, to.isOnDirectedEdge() ? to.getIncomingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE);
+                        if (path.isFound()) {
+                            double transitionLogProbability = probabilities.transitionLogProbability(path.getDistance(), linearDistance);
+                            Transition<State> transition = new Transition<>(from, to);
+                            roadPaths.put(transition, path);
+                            transitionLogProbabilities.put(transition, transitionLogProbability);
+                        }
                     }
                 }
-
-                throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
-                        + timeStepCounter + ". "
-                        + likelyReasonStr + "observation:" + timeStep.observation + ", "
-                        + timeStep.candidates.size() + " candidates: "
-                        + getSnappedCandidates(timeStep.candidates)
-                        + ". If a match is expected consider increasing max_visited_nodes.");
+                viterbi.nextStep(timeStep.observation, timeStep.candidates,
+                        emissionLogProbabilities, transitionLogProbabilities,
+                        roadPaths);
+            }
+            if (viterbi.isBroken()) {
+                fail(timeStepCounter, prevTimeStep, timeStep);
             }
 
             timeStepCounter++;
@@ -318,60 +319,48 @@ public class MapMatching {
         return viterbi.computeMostLikelySequence();
     }
 
-    private void computeEmissionProbabilities(TimeStep<State, Observation, Path> timeStep,
-                                              HmmProbabilities probabilities) {
-        for (State candidate : timeStep.candidates) {
-            // road distance difference in meters
-            final double distance = candidate.getQueryResult().getQueryDistance();
-            timeStep.addEmissionLogProbability(candidate,
-                    probabilities.emissionLogProbability(distance));
-        }
-    }
-
-    private void computeTransitionProbabilities(TimeStep<State, Observation, Path> prevTimeStep,
-                                                TimeStep<State, Observation, Path> timeStep,
-                                                HmmProbabilities probabilities,
-                                                QueryGraph queryGraph) {
-        final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat,
-                prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
-
-        for (State from : prevTimeStep.candidates) {
-            for (State to : timeStep.candidates) {
-                BidirRoutingAlgorithm router;
-                if (landmarks != null) {
-                    AStarBidirection algo = new AStarBidirection(queryGraph, weighting, TraversalMode.EDGE_BASED) {
-                        @Override
-                        protected void initCollections(int size) {
-                            super.initCollections(50);
-                        }
-                    };
-                    LandmarkStorage lms = landmarks.getLandmarkStorage();
-                    int activeLM = Math.min(8, lms.getLandmarkCount());
-                    algo.setApproximation(LMApproximator.forLandmarks(queryGraph, lms, activeLM));
-                    algo.setMaxVisitedNodes(maxVisitedNodes);
-                    router = algo;
-                } else {
-                    router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.EDGE_BASED) {
-                        @Override
-                        protected void initCollections(int size) {
-                            super.initCollections(50);
-                        }
-                    };
-                    router.setMaxVisitedNodes(maxVisitedNodes);
-                }
-                final Path path = router.calcPath(from.getQueryResult().getClosestNode(), to.getQueryResult().getClosestNode(), from.isOnDirectedEdge() ? from.getOutgoingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE, to.isOnDirectedEdge() ? to.getIncomingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE);
-                if (path.isFound()) {
-                    timeStep.addRoadPath(from, to, path);
-                    logger.debug("Path from: {}, to: {}, path length: {}",
-                            from, to, path.getDistance());
-
-                    final double transitionLogProbability = probabilities.transitionLogProbability(path.getDistance(), linearDistance);
-                    timeStep.addTransitionLogProbability(from, to, transitionLogProbability);
-                } else {
-                    logger.debug("No path found for from: {}, to: {}", from, to);
-                }
+    private void fail(int timeStepCounter, ObservationWithCandidateStates prevTimeStep, ObservationWithCandidateStates timeStep) {
+        String likelyReasonStr = "";
+        if (prevTimeStep != null) {
+            double dist = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat, prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
+            if (dist > 2000) {
+                likelyReasonStr = "Too long distance to previous measurement? "
+                        + Math.round(dist) + "m, ";
             }
         }
+
+        throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
+                + timeStepCounter + ". "
+                + likelyReasonStr + "observation:" + timeStep.observation + ", "
+                + timeStep.candidates.size() + " candidates: "
+                + getSnappedCandidates(timeStep.candidates)
+                + ". If a match is expected consider increasing max_visited_nodes.");
+    }
+
+    private BidirRoutingAlgorithm createRouter() {
+        BidirRoutingAlgorithm router;
+        if (landmarks != null) {
+            AStarBidirection algo = new AStarBidirection(queryGraph, weighting, TraversalMode.EDGE_BASED) {
+                @Override
+                protected void initCollections(int size) {
+                    super.initCollections(50);
+                }
+            };
+            LandmarkStorage lms = landmarks.getLandmarkStorage();
+            int activeLM = Math.min(8, lms.getLandmarkCount());
+            algo.setApproximation(LMApproximator.forLandmarks(queryGraph, lms, activeLM));
+            algo.setMaxVisitedNodes(maxVisitedNodes);
+            router = algo;
+        } else {
+            router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.EDGE_BASED) {
+                @Override
+                protected void initCollections(int size) {
+                    super.initCollections(50);
+                }
+            };
+            router.setMaxVisitedNodes(maxVisitedNodes);
+        }
+        return router;
     }
 
     private List<EdgeMatch> prepareEdgeMatches(List<SequenceState<State, Observation, Path>> seq) {
