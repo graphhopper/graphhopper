@@ -282,7 +282,7 @@ public class MapMatching {
             Map<Transition<State>, Double> transitionLogProbabilities = new HashMap<>();
             Map<Transition<State>, Path> roadPaths = new HashMap<>();
             for (State candidate : timeStep.candidates) {
-                // road distance difference in meters
+                // distance from observation to road in meters
                 final double distance = candidate.getQueryResult().getQueryDistance();
                 emissionLogProbabilities.put(candidate, probabilities.emissionLogProbability(distance));
             }
