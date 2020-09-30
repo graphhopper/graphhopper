@@ -177,11 +177,9 @@ public class MapMatching {
         // Compute the most likely sequence of map matching candidates:
         List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps, observations.size(), queryGraph);
 
-        final Map<String, EdgeIteratorState> virtualEdgesMap = createVirtualEdgesMap(splitsPerObservation);
-
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
-        MatchResult result = new MatchResult(prepareEdgeMatches(seq, virtualEdgesMap));
+        MatchResult result = new MatchResult(prepareEdgeMatches(seq));
         result.setMergedPath(new MapMatchedPath(queryGraph, weighting, path));
         result.setMatchMillis(seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> s.transitionDescriptor.getTime()).sum());
         result.setMatchLength(seq.stream().filter(s -> s.transitionDescriptor != null).mapToDouble(s -> s.transitionDescriptor.getDistance()).sum());
@@ -377,7 +375,7 @@ public class MapMatching {
         }
     }
 
-    private List<EdgeMatch> prepareEdgeMatches(List<SequenceState<State, Observation, Path>> seq, Map<String, EdgeIteratorState> virtualEdgesMap) {
+    private List<EdgeMatch> prepareEdgeMatches(List<SequenceState<State, Observation, Path>> seq) {
         // This creates a list of directed edges (EdgeIteratorState instances turned the right way),
         // each associated with 0 or more of the observations.
         // These directed edges are edges of the real street graph, where nodes are intersections.
@@ -402,7 +400,7 @@ public class MapMatching {
             // transition (except before the first state)
             if (transitionAndState.transitionDescriptor != null) {
                 for (EdgeIteratorState edge : transitionAndState.transitionDescriptor.calcEdges()) {
-                    EdgeIteratorState newDirectedRealEdge = resolveToRealEdge(virtualEdgesMap, edge);
+                    EdgeIteratorState newDirectedRealEdge = resolveToRealEdge(edge);
                     if (currentDirectedRealEdge != null) {
                         if (!equalEdges(currentDirectedRealEdge, newDirectedRealEdge)) {
                             EdgeMatch edgeMatch = new EdgeMatch(currentDirectedRealEdge, states);
@@ -415,7 +413,7 @@ public class MapMatching {
             }
             // state
             if (transitionAndState.state.isOnDirectedEdge()) { // as opposed to on a node
-                EdgeIteratorState newDirectedRealEdge = resolveToRealEdge(virtualEdgesMap, transitionAndState.state.getOutgoingVirtualEdge());
+                EdgeIteratorState newDirectedRealEdge = resolveToRealEdge(transitionAndState.state.getOutgoingVirtualEdge());
                 if (currentDirectedRealEdge != null) {
                     if (!equalEdges(currentDirectedRealEdge, newDirectedRealEdge)) {
                         EdgeMatch edgeMatch = new EdgeMatch(currentDirectedRealEdge, states);
@@ -455,69 +453,20 @@ public class MapMatching {
                 && edge1.getAdjNode() == edge2.getAdjNode();
     }
 
-    private EdgeIteratorState resolveToRealEdge(Map<String, EdgeIteratorState> virtualEdgesMap,
-                                                EdgeIteratorState edgeIteratorState) {
-        if (queryGraph.isVirtualNode(edgeIteratorState.getBaseNode())
-                || queryGraph.isVirtualNode(edgeIteratorState.getAdjNode())) {
-            return virtualEdgesMap.get(virtualEdgesMapKey(edgeIteratorState));
+    private EdgeIteratorState resolveToRealEdge(EdgeIteratorState edgeIteratorState) {
+        if (queryGraph.isVirtualNode(edgeIteratorState.getBaseNode()) || queryGraph.isVirtualNode(edgeIteratorState.getAdjNode())) {
+            return findEdgeByKey(((VirtualEdgeIteratorState) edgeIteratorState).getOriginalEdgeKey());
         } else {
             return edgeIteratorState;
         }
     }
 
-    /**
-     * Returns a map where every virtual edge maps to its real edge with correct orientation.
-     */
-    private Map<String, EdgeIteratorState> createVirtualEdgesMap(List<Collection<QueryResult>> queriesPerEntry) {
-        EdgeExplorer explorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
-        // TODO For map key, use the traversal key instead of string!
-        Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
-        for (Collection<QueryResult> queryResults : queriesPerEntry) {
-            for (QueryResult qr : queryResults) {
-                if (queryGraph.isVirtualNode(qr.getClosestNode())) {
-                    EdgeIterator iter = explorer.setBaseNode(qr.getClosestNode());
-                    while (iter.next()) {
-                        int node = traverseToClosestRealAdj(iter);
-                        if (node == qr.getClosestEdge().getAdjNode()) {
-                            virtualEdgesMap.put(virtualEdgesMapKey(iter),
-                                    qr.getClosestEdge().detach(false));
-                            virtualEdgesMap.put(reverseVirtualEdgesMapKey(iter),
-                                    qr.getClosestEdge().detach(true));
-                        } else if (node == qr.getClosestEdge().getBaseNode()) {
-                            virtualEdgesMap.put(virtualEdgesMapKey(iter),
-                                    qr.getClosestEdge().detach(true));
-                            virtualEdgesMap.put(reverseVirtualEdgesMapKey(iter),
-                                    qr.getClosestEdge().detach(false));
-                        } else {
-                            throw new RuntimeException();
-                        }
-                    }
-                }
-            }
+    private EdgeIteratorState findEdgeByKey(int edgeKey) {
+        EdgeIteratorState edge = graph.getEdgeIteratorState(edgeKey / 2, Integer.MIN_VALUE);
+        if ((edgeKey % 2 == 1) == (edge.getBaseNode() < edge.getAdjNode())) {
+            edge = graph.getEdgeIteratorState(edgeKey / 2, edge.getBaseNode());
         }
-        return virtualEdgesMap;
-    }
-
-    private String virtualEdgesMapKey(EdgeIteratorState iter) {
-        return iter.getBaseNode() + "-" + iter.getEdge() + "-" + iter.getAdjNode();
-    }
-
-    private String reverseVirtualEdgesMapKey(EdgeIteratorState iter) {
-        return iter.getAdjNode() + "-" + iter.getEdge() + "-" + iter.getBaseNode();
-    }
-
-    private int traverseToClosestRealAdj(EdgeIteratorState edge) {
-        if (!queryGraph.isVirtualNode(edge.getAdjNode())) {
-            return edge.getAdjNode();
-        }
-        EdgeExplorer explorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
-        EdgeIterator iter = explorer.setBaseNode(edge.getAdjNode());
-        while (iter.next()) {
-            if (iter.getAdjNode() != edge.getBaseNode()) {
-                return traverseToClosestRealAdj(iter);
-            }
-        }
-        throw new IllegalStateException("Cannot find adjacent edge " + edge);
+        return edge;
     }
 
     private String getSnappedCandidates(Collection<State> candidates) {
