@@ -11,7 +11,7 @@ We have a prospering community and welcome everyone. Let us know your problems, 
 
 ## Questions
 
-All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage (iOS&Android), and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions
+All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage, and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions
 is on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper). Do **not** use our issue section for questions.
 
 ## Contribute
@@ -75,17 +75,20 @@ where the default is [Omniscale](http://omniscale.com/). All of these are availa
 
 ## For Mobile Apps
 
+### Online
+
+There is a [web service](./navigation) that can be consumed by [our navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
+
+[![android navigation demo app](https://raw.githubusercontent.com/graphhopper/graphhopper-navigation-example/master/files/graphhopper-navigation-example.png)](https://github.com/graphhopper/graphhopper-navigation-example)
+
 ### Offline
 
-There are subprojects to make GraphHopper work offline on Android and [iOS](http://github.com/graphhopper/graphhopper-ios)
+Offline routing is [no longer officially supported](https://github.com/graphhopper/graphhopper/issues/1940). See
+[version 1.0](https://github.com/graphhopper/graphhopper/blob/1.0/docs/android/index.md) with still an Android
+demo and [this pull request](http://github.com/graphhopper/graphhopper-ios) of the iOS fork including a demo for iOS.
 
 [![simple routing](https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png)](./android/README.md)
 
-### Online
-
-There is a [server-side endpoint](./navigation) that is usable by an [online navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
-
-[![android navigation demo app](https://raw.githubusercontent.com/graphhopper/graphhopper-navigation-example/master/files/graphhopper-navigation-example.png)](https://github.com/graphhopper/graphhopper-navigation-example)
 
 ## For Analysis
 
@@ -137,8 +140,7 @@ Other map data will need a custom import procedure, see e.g. <a href="https://gi
 
 ## Written in Java
 
-GraphHopper is written in Java and has been known to run on Linux, Mac OS X,
-Windows, BSD, Solaris, Raspberry Pi, Android, Blackberry, and even iOS.
+GraphHopper is written in Java and officially runs on Linux, Mac OS X and Windows.
 
 ### Maven
 
