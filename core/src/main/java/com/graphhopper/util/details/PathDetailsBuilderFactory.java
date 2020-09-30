@@ -71,6 +71,11 @@ public class PathDetailsBuilderFactory {
                 builders.add(new DecimalDetails(key, evl.getDecimalEncodedValue(key)));
         }
 
+        for (String key : Arrays.asList(Roundabout.KEY, RoadClassLink.KEY, GetOffBike.KEY)) {
+            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
+                builders.add(new BooleanDetails(key, evl.getBooleanEncodedValue(key)));
+        }
+
         for (Map.Entry entry : Arrays.asList(new MapEntry<>(RoadClass.KEY, RoadClass.class),
                 new MapEntry<>(RoadEnvironment.KEY, RoadEnvironment.class), new MapEntry<>(Surface.KEY, Surface.class),
                 new MapEntry<>(RoadAccess.KEY, RoadAccess.class), new MapEntry<>(Toll.KEY, Toll.class),
