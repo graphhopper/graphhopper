@@ -172,10 +172,10 @@ public class MapMatching {
 
         // Creates candidates from the QueryResults of all observations (a candidate is basically a
         // QueryResult + direction).
-        List<TimeStep<State, Observation, Path>> timeSteps = createTimeSteps(filteredObservations, splitsPerObservation, queryGraph);
+        List<TimeStep<State, Observation, Path>> timeSteps = createTimeSteps(filteredObservations, splitsPerObservation);
 
         // Compute the most likely sequence of map matching candidates:
-        List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps, observations.size(), queryGraph);
+        List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps);
 
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
@@ -222,7 +222,7 @@ public class MapMatching {
      * transition probabilities. Creates directed candidates for virtual nodes and undirected
      * candidates for real nodes.
      */
-    private List<TimeStep<State, Observation, Path>> createTimeSteps(List<Observation> filteredObservations, List<Collection<QueryResult>> splitsPerObservation, QueryGraph queryGraph) {
+    private List<TimeStep<State, Observation, Path>> createTimeSteps(List<Observation> filteredObservations, List<Collection<QueryResult>> splitsPerObservation) {
         if (splitsPerObservation.size() != filteredObservations.size()) {
             throw new IllegalArgumentException(
                     "filteredGPXEntries and queriesPerEntry must have same size.");
@@ -271,8 +271,7 @@ public class MapMatching {
      * Computes the most likely state sequence for the observations.
      */
     private List<SequenceState<State, Observation, Path>> computeViterbiSequence(
-            List<TimeStep<State, Observation, Path>> timeSteps, int originalGpxEntriesCount,
-            QueryGraph queryGraph) {
+            List<TimeStep<State, Observation, Path>> timeSteps) {
         final HmmProbabilities probabilities
                 = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
         final ViterbiAlgorithm<State, Observation, Path> viterbi = new ViterbiAlgorithm<>();
@@ -305,7 +304,7 @@ public class MapMatching {
                 }
 
                 throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
-                        + timeStepCounter + " (" + originalGpxEntriesCount + " points). "
+                        + timeStepCounter + ". "
                         + likelyReasonStr + "observation:" + timeStep.observation + ", "
                         + timeStep.candidates.size() + " candidates: "
                         + getSnappedCandidates(timeStep.candidates)
