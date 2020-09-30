@@ -11,7 +11,7 @@ import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.Circle;
@@ -78,11 +78,11 @@ public class BlockAreaWeightingTest {
         set.add(0);
 
         LocationIndex index = new LocationIndexTree(graph, graph.getDirectory()).prepareIndex();
-        QueryResult qr = index.findClosest(0.005, 0.005, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.create(graph, qr);
+        Snap snap = index.findClosest(0.005, 0.005, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
 
         BlockAreaWeighting instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
-        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());
+        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(snap.getClosestNode());
         int blockedEdges = 0, totalEdges = 0;
         while (iter.next()) {
             if (Double.isInfinite(instance.calcEdgeWeight(iter, false)))

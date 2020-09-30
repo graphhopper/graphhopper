@@ -134,7 +134,7 @@ class SplitArray2DTest {
     }
 
     private IntArrayList getRange(SplitArray2D<Integer> arr, int n, int start, int end) {
-        IntArrayList res = new IntArrayList();
+        IntArrayList res = new IntArrayList(end - start);
         for (int i = start; i < end; i++) {
             res.add(arr.get(n, i));
         }

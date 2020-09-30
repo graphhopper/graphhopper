@@ -28,7 +28,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -466,14 +466,14 @@ public class PrepareContractionHierarchiesTest {
         assertEquals("there should be exactly two (bidirectional) shortcuts (2-3) and (3-4)", 2, lg.getEdges() - lg.getOriginalEdges());
 
         // insert virtual node and edges
-        QueryResult qr = new QueryResult(0.0001, 0.0015);
-        qr.setClosestEdge(edge31);
-        qr.setSnappedPosition(QueryResult.Position.EDGE);
-        qr.setClosestNode(8);
-        qr.setWayIndex(0);
-        qr.calcSnappedPoint(new DistanceCalcEuclidean());
+        Snap snap = new Snap(0.0001, 0.0015);
+        snap.setClosestEdge(edge31);
+        snap.setSnappedPosition(Snap.Position.EDGE);
+        snap.setClosestNode(8);
+        snap.setWayIndex(0);
+        snap.calcSnappedPoint(new DistanceCalcEuclidean());
 
-        QueryGraph queryGraph = QueryGraph.create(g, qr);
+        QueryGraph queryGraph = QueryGraph.create(g, snap);
 
         // we make sure our weight fine tunings do what they are supposed to
         double weight03 = getWeight(queryGraph, fastestWeighting, 0, 3, false);

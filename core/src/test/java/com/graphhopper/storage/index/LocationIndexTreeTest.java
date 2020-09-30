@@ -90,7 +90,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         Graph graph = createTestGraph(encodingManager);
         LocationIndex index = createIndex(graph, -1);
         // query directly the tower node
-        QueryResult res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);
+        Snap res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);
         assertTrue(res.isValid());
         assertEquals(new GHPoint(-0.4, 0.9), res.getSnappedPoint());
         res = index.findClosest(-0.6, 1.6, EdgeFilter.ALL_EDGES);
@@ -223,7 +223,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         inMemIndex.store(inMemIndex.root, LocationIndexTree.START_POINTER);
         assertEquals(1 << 20, index.getCapacity());
 
-        QueryResult res = index.findClosest(-.5, -.5, EdgeFilter.ALL_EDGES);
+        Snap res = index.findClosest(-.5, -.5, EdgeFilter.ALL_EDGES);
         assertEquals(1, res.getClosestNode());
     }
 
@@ -485,14 +485,14 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         index.setMaxRegionSearch(8);
 
         EdgeFilter carFilter = DefaultEdgeFilter.allEdges(carEncoder);
-        QueryResult qr = index.findClosest(0.03, 0.03, carFilter);
-        assertTrue(qr.isValid());
-        assertEquals(33, qr.getClosestNode());
+        Snap snap = index.findClosest(0.03, 0.03, carFilter);
+        assertTrue(snap.isValid());
+        assertEquals(33, snap.getClosestNode());
 
         EdgeFilter bikeFilter = DefaultEdgeFilter.allEdges(bikeEncoder);
-        qr = index.findClosest(0.03, 0.03, bikeFilter);
-        assertTrue(qr.isValid());
-        assertEquals(2, qr.getClosestNode());
+        snap = index.findClosest(0.03, 0.03, bikeFilter);
+        assertTrue(snap.isValid());
+        assertEquals(2, snap.getClosestNode());
     }
 
     // 0--1--2--3, the "cross boundary" edges are 1-2 and 5-6
@@ -534,8 +534,8 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
         assertTrue(graph.getNodes() > 0);
         for (int i = 0; i < graph.getNodes(); i++) {
-            QueryResult qr = index.findClosest(na.getLat(i), na.getLon(i), EdgeFilter.ALL_EDGES);
-            assertEquals(i, qr.getClosestNode());
+            Snap snap = index.findClosest(na.getLat(i), na.getLon(i), EdgeFilter.ALL_EDGES);
+            assertEquals(i, snap.getClosestNode());
         }
     }
 
@@ -580,10 +580,10 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         index.prepareIndex();
 
         // query node 4 => get at least 4-5, 4-7
-        List<QueryResult> result = index.findNClosest(0.0004, 0.0006, EdgeFilter.ALL_EDGES, 15);
+        List<Snap> result = index.findNClosest(0.0004, 0.0006, EdgeFilter.ALL_EDGES, 15);
         List<Integer> ids = new ArrayList<>();
-        for (QueryResult qr : result) {
-            ids.add(qr.getClosestEdge().getEdge());
+        for (Snap snap : result) {
+            ids.add(snap.getClosestEdge().getEdge());
         }
         Collections.sort(ids);
         assertEquals("edge ids do not match",

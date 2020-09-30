@@ -35,7 +35,7 @@ import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
@@ -152,7 +152,7 @@ public class Router {
         StopWatch sw = new StopWatch().start();
         double startHeading = request.getHeadings().isEmpty() ? Double.NaN : request.getHeadings().get(0);
         RoundTripRouting.Params params = new RoundTripRouting.Params(request.getHints(), startHeading, routerConfig.getMaxRoundTripRetries());
-        List<QueryResult> qResults = RoundTripRouting.lookup(request.getPoints(), weighting, locationIndex, params);
+        List<Snap> qResults = RoundTripRouting.lookup(request.getPoints(), weighting, locationIndex, params);
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
 
         // use A* for round trips
@@ -178,7 +178,7 @@ public class Router {
             throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + request.getPoints().size() + " points");
         GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
-        List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
+        List<Snap> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
         PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
@@ -207,7 +207,7 @@ public class Router {
     protected GHResponse routeVia(GHRequest request, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean passThrough, boolean forceCurbsides, boolean disableCH, boolean disableLM) {
         GHResponse ghRsp = new GHResponse();
         StopWatch sw = new StopWatch().start();
-        List<QueryResult> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
+        List<Snap> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
@@ -309,10 +309,10 @@ public class Router {
         return pathMerger.doWork(waypoints, paths, encodingManager, translationMap.getWithFallBack(request.getLocale()));
     }
 
-    private PointList getWaypoints(List<QueryResult> queryResults) {
-        PointList pointList = new PointList(queryResults.size(), true);
-        for (QueryResult qr : queryResults) {
-            pointList.add(qr.getSnappedPoint());
+    private PointList getWaypoints(List<Snap> snaps) {
+        PointList pointList = new PointList(snaps.size(), true);
+        for (Snap snap : snaps) {
+            pointList.add(snap.getSnappedPoint());
         }
         return pointList;
     }

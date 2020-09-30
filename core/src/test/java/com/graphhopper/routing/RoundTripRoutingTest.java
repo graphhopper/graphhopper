@@ -28,7 +28,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
@@ -72,7 +72,7 @@ public class RoundTripRoutingTest {
         hints.putObject(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
         hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
-        List<QueryResult> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start), fastestWeighting, locationIndex,
+        List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start), fastestWeighting, locationIndex,
                 new RoundTripRouting.Params(hints, heading, 3));
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());
@@ -93,26 +93,26 @@ public class RoundTripRoutingTest {
         Graph g = createTestGraph();
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
-        QueryResult qr4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
-        assertEquals(4, qr4.getClosestNode());
-        QueryResult qr5 = locationIndex.findClosest(0.00, 0.05, EdgeFilter.ALL_EDGES);
-        assertEquals(5, qr5.getClosestNode());
-        QueryResult qr6 = locationIndex.findClosest(0.00, 0.10, EdgeFilter.ALL_EDGES);
-        assertEquals(6, qr6.getClosestNode());
+        Snap snap4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
+        assertEquals(4, snap4.getClosestNode());
+        Snap snap5 = locationIndex.findClosest(0.00, 0.05, EdgeFilter.ALL_EDGES);
+        assertEquals(5, snap5.getClosestNode());
+        Snap snap6 = locationIndex.findClosest(0.00, 0.10, EdgeFilter.ALL_EDGES);
+        assertEquals(6, snap6.getClosestNode());
 
-        QueryGraph qGraph = QueryGraph.create(g, Arrays.asList(qr4, qr5));
+        QueryGraph qGraph = QueryGraph.create(g, Arrays.asList(snap4, snap5));
 
         FlexiblePathCalculator pathCalculator = new FlexiblePathCalculator(
                 qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
-        List<Path> paths = RoundTripRouting.calcPaths(Arrays.asList(qr5, qr4, qr5), pathCalculator).paths;
+        List<Path> paths = RoundTripRouting.calcPaths(Arrays.asList(snap5, snap4, snap5), pathCalculator).paths;
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(5, 6, 3, 4), paths.get(0).calcNodes());
         assertEquals(IntArrayList.from(4, 8, 7, 6, 5), paths.get(1).calcNodes());
 
-        qGraph = QueryGraph.create(g, Arrays.asList(qr4, qr6));
+        qGraph = QueryGraph.create(g, Arrays.asList(snap4, snap6));
         pathCalculator = new FlexiblePathCalculator(
                 qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, fastestWeighting, tMode));
-        paths = RoundTripRouting.calcPaths(Arrays.asList(qr6, qr4, qr6), pathCalculator).paths;
+        paths = RoundTripRouting.calcPaths(Arrays.asList(snap6, snap4, snap6), pathCalculator).paths;
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(6, 3, 4), paths.get(0).calcNodes());
         assertEquals(IntArrayList.from(4, 8, 7, 6), paths.get(1).calcNodes());

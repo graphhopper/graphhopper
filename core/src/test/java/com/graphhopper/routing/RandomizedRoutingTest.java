@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
@@ -34,7 +33,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.ArrayUtil;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
@@ -244,11 +244,11 @@ public class RandomizedRoutingTest {
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             List<GHPoint> points = getRandomPoints(graph.getBounds(), 2, index, rnd);
-            List<QueryResult> queryResults = findQueryResults(index, points);
-            QueryGraph queryGraph = QueryGraph.create(graph, queryResults);
+            List<Snap> snaps = findSnaps(index, points);
+            QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
-            int source = queryResults.get(0).getClosestNode();
-            int target = queryResults.get(1).getClosestNode();
+            int source = snaps.get(0).getClosestNode();
+            int target = snaps.get(1).getClosestNode();
 
             Path refPath = new DijkstraBidirectionRef(queryGraph, queryGraph.wrapWeighting(weighting), traversalMode).calcPath(source, target);
             Path path = createAlgo(queryGraph).calcPath(source, target);
@@ -269,8 +269,8 @@ public class RandomizedRoutingTest {
         while (attempts < maxAttempts && points.size() < numPoints) {
             double lat = rnd.nextDouble() * (bounds.maxLat - bounds.minLat) + bounds.minLat;
             double lon = rnd.nextDouble() * (bounds.maxLon - bounds.minLon) + bounds.minLon;
-            QueryResult queryResult = index.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
-            if (queryResult.isValid()) {
+            Snap snap = index.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+            if (snap.isValid()) {
                 points.add(new GHPoint(lat, lon));
             }
             attempts++;
@@ -279,8 +279,8 @@ public class RandomizedRoutingTest {
         return points;
     }
 
-    private List<QueryResult> findQueryResults(LocationIndexTree index, List<GHPoint> ghPoints) {
-        List<QueryResult> result = new ArrayList<>(ghPoints.size());
+    private List<Snap> findSnaps(LocationIndexTree index, List<GHPoint> ghPoints) {
+        List<Snap> result = new ArrayList<>(ghPoints.size());
         for (GHPoint ghPoint : ghPoints) {
             result.add(index.findClosest(ghPoint.getLat(), ghPoint.getLon(), DefaultEdgeFilter.ALL_EDGES));
         }
@@ -308,27 +308,11 @@ public class RandomizedRoutingTest {
         if (!refNodes.equals(pathNodes)) {
             // sometimes paths are only different because of a zero weight loop. we do not consider these as strict
             // violations, see: #1864
-            if (!removeConsecutiveDuplicates(refNodes).equals(removeConsecutiveDuplicates(pathNodes))) {
+            if (!ArrayUtil.removeConsecutiveDuplicates(refNodes).equals(ArrayUtil.removeConsecutiveDuplicates(pathNodes))) {
                 strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refNodes + "\ngiven:    " + pathNodes);
             }
         }
         return strictViolations;
-    }
-
-    static IntIndexedContainer removeConsecutiveDuplicates(IntIndexedContainer arr) {
-        if (arr.size() < 2) {
-            return arr;
-        }
-        IntArrayList result = new IntArrayList();
-        int prev = arr.get(0);
-        for (int i = 1; i < arr.size(); i++) {
-            int val = arr.get(i);
-            if (val != prev) {
-                result.add(val);
-            }
-            prev = val;
-        }
-        return result;
     }
 
     private int getRandom(Random rnd) {

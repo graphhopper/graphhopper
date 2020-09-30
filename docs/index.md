@@ -1,29 +1,25 @@
 # GraphHopper Documentation
 
-## Getting Started
+## First Steps
 
 Try out our live demo called [GraphHopper Maps](https://graphhopper.com/maps)
 
  [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
 
 [The Readme](../README.md#features) lists all features or [this list of slides](https://graphhopper.com/public/slides/).
-See [users of GraphHopper](https://www.graphhopper.com/showcases/) or [Android apps](./android/index.md#apps) and let us know your application!
+See [users of GraphHopper](https://www.graphhopper.com/showcases/) and let us know your application!
 
-## Contact
+## Community
 
 For all questions regarding the GraphHopper routing engine please use [our forum](https://discuss.graphhopper.com). 
 For bugs see our contribute section below.
 
 ---
 
-## For Users
+## Installation
 
-Install the web demo 'GraphHopper Maps' with [this user guide](./web/quickstart.md) on your machine
-or the [Android demo](https://github.com/graphhopper/graphhopper/blob/master/README.md#get-started).
-
-#### Web
-
-The web module provides a web API for other programming languages as well as starts a simple user interface called GraphHopper Maps
+Install the web demo 'GraphHopper Maps' with [this user installation guide](./web/quickstart.md) on your
+machine. This will also install a web API that can be used in many programming languages.
 
  * [Routing API](./web/api-doc.md): Documentation of the Web API to communicate with any GraphHopper server via http.
  * [Deployment Guide](./core/deploy.md): Details about deploying GraphHopper 
@@ -37,7 +33,7 @@ The elevation configuration is separately documented [here](./core/elevation.md)
 
 ---
 
-## For Developers
+## Installation For Developers
 
 [The quickstart](./core/quickstart-from-source.md) is an introduction for developers. Explains git checkout, IDE setup and commands for setting up a GraphHopper server.
 
@@ -71,15 +67,14 @@ Various topics are explained in more detail separately:
  * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search engine in your browser.
  * [Embed GraphHopper on your website](https://github.com/karussell/graphhopper-embed-form): A small code snippet on how to integrate GraphHopper Maps in your web site like a contact form
 
-#### Android
+#### Android & iOS
 
- * [Android](./android/index.md): Instructions how to setup the demo project for GraphHopper on Android
- * [Android Studio Setup](./android/android-studio-setup.md)
+The Android demo, that shows how to use GraphHopper for offline routing on
+Android, was available until [GraphHopper 1.0](https://github.com/graphhopper/graphhopper/tree/1.0/android).
 
-#### iOS
-
-Instructions on how to setup the GraphHopper-iOS clone for iOS development are [here](https://github.com/graphhopper/graphhopper-ios/)
-including a sample application.
+There is a GraphHopper fork for iOS that allows to do offline routing on
+iOS. See the Instructions on how to setup this [here](https://github.com/graphhopper/graphhopper-ios/) including a sample application.
+See the necessary changes for modern iOS and GraphHopper 1.0 in [this pull request](https://github.com/graphhopper/graphhopper-ios/pull/47).
 
 #### Windows
 

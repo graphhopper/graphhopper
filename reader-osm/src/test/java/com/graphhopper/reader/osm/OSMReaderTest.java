@@ -36,7 +36,7 @@ import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
 import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
@@ -896,17 +896,17 @@ public class OSMReaderTest {
     @Test
     public void testCrossBoundary_issue667() {
         GraphHopper hopper = new GraphHopperFacade("test-osm-waterway.xml").importOrLoad();
-        QueryResult qr = hopper.getLocationIndex().findClosest(0.1, 179.5, EdgeFilter.ALL_EDGES);
-        assertTrue(qr.isValid());
-        assertEquals(0.1, qr.getSnappedPoint().lat, 0.1);
-        assertEquals(179.5, qr.getSnappedPoint().lon, 0.1);
-        assertEquals(11, qr.getClosestEdge().getDistance() / 1000, 1);
+        Snap snap = hopper.getLocationIndex().findClosest(0.1, 179.5, EdgeFilter.ALL_EDGES);
+        assertTrue(snap.isValid());
+        assertEquals(0.1, snap.getSnappedPoint().lat, 0.1);
+        assertEquals(179.5, snap.getSnappedPoint().lon, 0.1);
+        assertEquals(11, snap.getClosestEdge().getDistance() / 1000, 1);
 
-        qr = hopper.getLocationIndex().findClosest(0.1, -179.6, EdgeFilter.ALL_EDGES);
-        assertTrue(qr.isValid());
-        assertEquals(0.1, qr.getSnappedPoint().lat, 0.1);
-        assertEquals(-179.6, qr.getSnappedPoint().lon, 0.1);
-        assertEquals(112, qr.getClosestEdge().getDistance() / 1000, 1);
+        snap = hopper.getLocationIndex().findClosest(0.1, -179.6, EdgeFilter.ALL_EDGES);
+        assertTrue(snap.isValid());
+        assertEquals(0.1, snap.getSnappedPoint().lat, 0.1);
+        assertEquals(-179.6, snap.getSnappedPoint().lon, 0.1);
+        assertEquals(112, snap.getClosestEdge().getDistance() / 1000, 1);
     }
 
     @Test

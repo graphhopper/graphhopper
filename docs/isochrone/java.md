@@ -15,15 +15,15 @@ EncodingManager encodingManager = hopper.getEncodingManager();
 FlagEncoder encoder = encodingManager.getEncoder("car");
 
 // snap some GPS coordinates to the routing graph and build a query graph
-QueryResult qr = hopper.getLocationIndex().findClosest(lat, lon, DefaultEdgeFilter.allEdges(encoder));
-QueryGraph queryGraph = QueryGraph.create(hopper.getGraphHopperStorage(), qr);
+Snap snap = hopper.getLocationIndex().findClosest(lat, lon, DefaultEdgeFilter.allEdges(encoder));
+QueryGraph queryGraph = QueryGraph.create(hopper.getGraphHopperStorage(), snap);
 
 // run the isochrone calculation
 ShortestPathTree tree = new ShortestPathTree(queryGraph, new FastestWeighting(encoder), false, TraversalMode.NODE_BASED);
 // find all nodes that are within a radius of 60s
 tree.setTimeLimit(60_000);
 // you need to specify a callback to define what should be done 
-tree.search(qr.getClosestNode(),  label -> {
+tree.search(snap.getClosestNode(),  label -> {
     // see IsoLabel.java for more properties
     System.out.println("node: " + label.node);
     System.out.println("time: " + label.time);

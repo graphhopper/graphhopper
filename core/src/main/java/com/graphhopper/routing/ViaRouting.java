@@ -25,7 +25,7 @@ import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.routing.util.SnapPreventionEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
@@ -50,7 +50,7 @@ public class ViaRouting {
     /**
      * @throws MultiplePointsNotFoundException in case one or more points could not be resolved
      */
-    public static List<QueryResult> lookup(EncodedValueLookup lookup, List<GHPoint> points, Weighting weighting, LocationIndex locationIndex, List<String> snapPreventions, List<String> pointHints) {
+    public static List<Snap> lookup(EncodedValueLookup lookup, List<GHPoint> points, Weighting weighting, LocationIndex locationIndex, List<String> snapPreventions, List<String> pointHints) {
         if (points.size() < 2)
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
@@ -60,28 +60,28 @@ public class ViaRouting {
         EdgeFilter strictEdgeFilter = snapPreventions.isEmpty()
                 ? edgeFilter
                 : new SnapPreventionEdgeFilter(edgeFilter, roadClassEnc, roadEnvEnc, snapPreventions);
-        List<QueryResult> queryResults = new ArrayList<>(points.size());
+        List<Snap> snaps = new ArrayList<>(points.size());
         IntArrayList pointsNotFound = new IntArrayList();
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
-            QueryResult qr = null;
+            Snap snap = null;
             if (!pointHints.isEmpty())
-                qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
+                snap = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
                         pointHints.get(placeIndex), point, 100));
             else if (!snapPreventions.isEmpty())
-                qr = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
-            if (qr == null || !qr.isValid())
-                qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
-            if (!qr.isValid())
+                snap = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
+            if (snap == null || !snap.isValid())
+                snap = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+            if (!snap.isValid())
                 pointsNotFound.add(placeIndex);
 
-            queryResults.add(qr);
+            snaps.add(snap);
         }
 
         if (!pointsNotFound.isEmpty())
             throw new MultiplePointsNotFoundException(pointsNotFound);
 
-        return queryResults;
+        return snaps;
     }
 
     static EdgeFilter createEdgeFilter(final Weighting weighting) {
@@ -90,17 +90,17 @@ public class ViaRouting {
                 || edgeState.getReverse(accessEnc) && !Double.isInfinite(weighting.calcEdgeWeight(edgeState, true));
     }
 
-    public static Result calcPaths(List<GHPoint> points, QueryGraph queryGraph, List<QueryResult> queryResults, BooleanEncodedValue accessEnc, PathCalculator pathCalculator, List<String> curbsides, boolean forceCurbsides, List<Double> headings, boolean passThrough) {
+    public static Result calcPaths(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps, BooleanEncodedValue accessEnc, PathCalculator pathCalculator, List<String> curbsides, boolean forceCurbsides, List<Double> headings, boolean passThrough) {
         if (!curbsides.isEmpty() && curbsides.size() != points.size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
         if (!curbsides.isEmpty() && !headings.isEmpty())
             throw new IllegalArgumentException("You cannot use curbsides and headings or pass_through at the same time");
 
-        final int legs = queryResults.size() - 1;
+        final int legs = snaps.size() - 1;
         Result result = new Result(legs);
         for (int leg = 0; leg < legs; ++leg) {
-            QueryResult fromQResult = queryResults.get(leg);
-            QueryResult toQResult = queryResults.get(leg + 1);
+            Snap fromSnap = snaps.get(leg);
+            Snap toSnap = snaps.get(leg + 1);
 
             // enforce headings
             // at via-nodes and the target node the heading parameter is interpreted as the direction we want
@@ -108,7 +108,7 @@ public class ViaRouting {
             // all for these points (unless using pass through). see this forum discussion:
             // https://discuss.graphhopper.com/t/meaning-of-heading-parameter-for-via-routing/5643/6
             double fromHeading = (leg == 0 && !headings.isEmpty()) ? headings.get(0) : Double.NaN;
-            double toHeading = (queryResults.size() == headings.size() && !Double.isNaN(headings.get(leg + 1))) ? headings.get(leg + 1) : Double.NaN;
+            double toHeading = (snaps.size() == headings.size() && !Double.isNaN(headings.get(leg + 1))) ? headings.get(leg + 1) : Double.NaN;
 
             // enforce pass-through
             int incomingEdge = NO_EDGE;
@@ -123,7 +123,7 @@ public class ViaRouting {
             final String fromCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg);
             final String toCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg + 1);
 
-            EdgeRestrictions edgeRestrictions = buildEdgeRestrictions(queryGraph, fromQResult, toQResult,
+            EdgeRestrictions edgeRestrictions = buildEdgeRestrictions(queryGraph, fromSnap, toSnap,
                     fromHeading, toHeading, incomingEdge, passThrough,
                     fromCurbside, toCurbside, accessEnc);
 
@@ -131,7 +131,7 @@ public class ViaRouting {
             edgeRestrictions.setTargetInEdge(ignoreThrowOrAcceptImpossibleCurbsides(curbsides, edgeRestrictions.getTargetInEdge(), leg + 1, forceCurbsides));
 
             // calculate paths
-            List<Path> paths = pathCalculator.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode(), edgeRestrictions);
+            List<Path> paths = pathCalculator.calcPaths(fromSnap.getClosestNode(), toSnap.getClosestNode(), edgeRestrictions);
             result.debug += pathCalculator.getDebugString();
 
             // for alternative routing we get multiple paths and add all of them (which is ok, because we do not allow
@@ -173,7 +173,7 @@ public class ViaRouting {
      * @param incomingEdge the last edge of the previous leg (or {@link EdgeIterator#NO_EDGE} if not available
      */
     private static EdgeRestrictions buildEdgeRestrictions(
-            QueryGraph queryGraph, QueryResult fromQResult, QueryResult toQResult,
+            QueryGraph queryGraph, Snap fromSnap, Snap toSnap,
             double fromHeading, double toHeading, int incomingEdge, boolean passThrough,
             String fromCurbside, String toCurbside, BooleanEncodedValue accessEnc) {
         EdgeRestrictions edgeRestrictions = new EdgeRestrictions();
@@ -181,11 +181,11 @@ public class ViaRouting {
         // curbsides
         if (!fromCurbside.equals(CURBSIDE_ANY) || !toCurbside.equals(CURBSIDE_ANY)) {
             DirectionResolver directionResolver = new DirectionResolver(queryGraph, accessEnc);
-            DirectionResolverResult fromDirection = directionResolver.resolveDirections(fromQResult.getClosestNode(), fromQResult.getQueryPoint());
-            DirectionResolverResult toDirection = directionResolver.resolveDirections(toQResult.getClosestNode(), toQResult.getQueryPoint());
+            DirectionResolverResult fromDirection = directionResolver.resolveDirections(fromSnap.getClosestNode(), fromSnap.getQueryPoint());
+            DirectionResolverResult toDirection = directionResolver.resolveDirections(toSnap.getClosestNode(), toSnap.getQueryPoint());
             int sourceOutEdge = DirectionResolverResult.getOutEdge(fromDirection, fromCurbside);
             int targetInEdge = DirectionResolverResult.getInEdge(toDirection, toCurbside);
-            if (fromQResult.getClosestNode() == toQResult.getClosestNode()) {
+            if (fromSnap.getClosestNode() == toSnap.getClosestNode()) {
                 // special case where we go from one point back to itself. for example going from a point A
                 // with curbside right to the same point with curbside right is interpreted as 'being there
                 // already' -> empty path. Similarly if the curbside for the start/target is not even specified
@@ -213,13 +213,13 @@ public class ViaRouting {
             // streets. see also #1765
             HeadingResolver headingResolver = new HeadingResolver(queryGraph);
             if (!Double.isNaN(fromHeading))
-                edgeRestrictions.getUnfavoredEdges().addAll(headingResolver.getEdgesWithDifferentHeading(fromQResult.getClosestNode(), fromHeading));
+                edgeRestrictions.getUnfavoredEdges().addAll(headingResolver.getEdgesWithDifferentHeading(fromSnap.getClosestNode(), fromHeading));
 
             if (!Double.isNaN(toHeading)) {
                 toHeading += 180;
                 if (toHeading > 360)
                     toHeading -= 360;
-                edgeRestrictions.getUnfavoredEdges().addAll(headingResolver.getEdgesWithDifferentHeading(toQResult.getClosestNode(), toHeading));
+                edgeRestrictions.getUnfavoredEdges().addAll(headingResolver.getEdgesWithDifferentHeading(toSnap.getClosestNode(), toHeading));
             }
         }
 

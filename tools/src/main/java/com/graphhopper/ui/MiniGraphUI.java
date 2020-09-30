@@ -41,7 +41,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Algorithms;
@@ -90,8 +90,8 @@ public class MiniGraphUI {
     private LayeredPanel mainPanel;
     private MapLayer roadsLayer;
     private boolean fastPaint = false;
-    private QueryResult fromRes;
-    private QueryResult toRes;
+    private Snap fromRes;
+    private Snap toRes;
 
     public static void main(String[] strs) {
         PMap args = PMap.read(strs);
@@ -167,10 +167,10 @@ public class MiniGraphUI {
 //                g2.setColor(Color.BLUE);
 //                double fromLat = 42.56819, fromLon = 1.603231;
 //                mg.plotText(g2, fromLat, fromLon, "from");
-//                QueryResult from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
+//                Snap from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
 //                double toLat = 42.571034, toLon = 1.520662;
 //                mg.plotText(g2, toLat, toLon, "to");
-//                QueryResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
+//                Snap to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
 //
 //                g2.setColor(Color.RED.brighter().brighter());
 //                path = prepare.createAlgo().calcPath(from, to);

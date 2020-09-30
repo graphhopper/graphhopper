@@ -11,7 +11,7 @@ We have a prospering community and welcome everyone. Let us know your problems, 
 
 ## Questions
 
-All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage (iOS&Android), and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions
+All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage, and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions
 is on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper). Do **not** use our issue section for questions.
 
 ## Contribute
@@ -23,9 +23,13 @@ like finding and fixing bugs and improving our documentation or translations!
 
 To get started, read through our documentation and install the GraphHopper Web Service locally.
 
- * 1.0: [stable documentation](https://github.com/graphhopper/graphhopper/blob/1.0/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-1.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-1.0.apk), [announcement](https://www.graphhopper.com/blog/2020/05/25/graphhopper-routing-engine-1-0-released/)
- * unstable: [unstable documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md), [web service jar](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-web/2.0-SNAPSHOT/)
- * 0.13.0: [stable documentation](https://github.com/graphhopper/graphhopper/blob/0.13/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.13.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.13.0.apk), [announcement](https://www.graphhopper.com/blog/2019/09/18/graphhopper-routing-engine-0-13-released/)
+ * stable 2.0:   [documentation](https://github.com/graphhopper/graphhopper/blob/2.0/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-2.0.jar), [announcement](https://www.graphhopper.com/blog/2020/09/30/graphhopper-routing-engine-2-0-released/)
+ * unstable 3.0: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md), [web service jar](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-web/2.0-SNAPSHOT/)
+
+older releases:
+
+ * 1.0: [documentation](https://github.com/graphhopper/graphhopper/blob/1.0/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-1.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-1.0.apk), [announcement](https://www.graphhopper.com/blog/2020/05/25/graphhopper-routing-engine-1-0-released/)
+ * 0.13.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.13/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.13.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.13.0.apk), [announcement](https://www.graphhopper.com/blog/2019/09/18/graphhopper-routing-engine-0-13-released/)
  * 0.12.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.12/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.12.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.12.0.apk), [announcement](https://www.graphhopper.com/blog/2019/03/26/graphhopper-routing-engine-0-12-released/)
  * 0.11.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.11/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.11.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.11.0.apk), [announcement](https://www.graphhopper.com/blog/2018/09/17/graphhopper-routing-engine-0-11-release-open-sourcing-the-isochrone-module/)
  * 0.10.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.10/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.10.3-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.10.3.apk), [announcement](https://www.graphhopper.com/blog/2018/03/08/graphhopper-routing-engine-0-10-released/)
@@ -71,17 +75,20 @@ where the default is [Omniscale](http://omniscale.com/). All of these are availa
 
 ## For Mobile Apps
 
+### Online
+
+There is a [web service](./navigation) that can be consumed by [our navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
+
+[![android navigation demo app](https://raw.githubusercontent.com/graphhopper/graphhopper-navigation-example/master/files/graphhopper-navigation-example.png)](https://github.com/graphhopper/graphhopper-navigation-example)
+
 ### Offline
 
-There are subprojects to make GraphHopper work offline on Android and [iOS](http://github.com/graphhopper/graphhopper-ios)
+Offline routing is [no longer officially supported](https://github.com/graphhopper/graphhopper/issues/1940). See
+[version 1.0](https://github.com/graphhopper/graphhopper/blob/1.0/docs/android/index.md) with still an Android
+demo and [this pull request](http://github.com/graphhopper/graphhopper-ios) of the iOS fork including a demo for iOS.
 
 [![simple routing](https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png)](./android/README.md)
 
-### Online
-
-There is a [server-side endpoint](./navigation) that is usable by an [online navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
-
-[![android navigation demo app](https://raw.githubusercontent.com/graphhopper/graphhopper-navigation-example/master/files/graphhopper-navigation-example.png)](https://github.com/graphhopper/graphhopper-navigation-example)
 
 ## For Analysis
 
@@ -133,8 +140,7 @@ Other map data will need a custom import procedure, see e.g. <a href="https://gi
 
 ## Written in Java
 
-GraphHopper is written in Java and has been known to run on Linux, Mac OS X,
-Windows, BSD, Solaris, Raspberry Pi, Android, Blackberry, and even iOS.
+GraphHopper is written in Java and officially runs on Linux, Mac OS X and Windows.
 
 ### Maven
 

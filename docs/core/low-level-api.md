@@ -39,7 +39,7 @@ But we need to decouple requests from each other and therefor we create a very l
 
 The virtual nodes and edges have a higher `int` ID than `graph.getNodes()` or `allEdges.length()`
 
-A call `QueryGraph.create(graph, allQRs)` will determine the correct node for all `QueryResult`s: and either 
+A call `QueryGraph.create(graph, allQRs)` will determine the correct node for all `Snap`s: and either 
 create new virtual nodes or if close enough use the existing junction node.
 
 ### Create and save the graph
@@ -82,11 +82,11 @@ if (!index.loadExisting())
 ### Calculate Path with LocationIndex
 
 ```java
-QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
-QueryResult toQR = index.findClosest(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
-QueryGraph queryGraph = QueryGraph.create(graph, fromQR, toQR);
+Snap fromSnap = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
+Snap toSnap = index.findClosest(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
+QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap);
 Weighting weighting = new FastestWeighting(encoder);
-Path path = new Dijkstra(queryGraph, weighting).calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
+Path path = new Dijkstra(queryGraph, weighting).calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
 ```
 
 ### Calculate Path without LocationIndex
@@ -127,9 +127,9 @@ BidirRoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(n
 algo.calcPath(fromId, toId);
 
 // calculate a path with location index
-QueryGraph queryGraph = QueryGraph.create(graph, fromQR, toQR); // use index as shown above
+QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap); // use index as shown above
 BidirRoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap());
-algo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
+algo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
 ```
 
 **See GraphHopper's many unit tests for up-to date and more detailed usage examples of the low level API!**

@@ -18,7 +18,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -100,12 +100,12 @@ public class IsochroneResource {
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        QueryResult qr = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
-        if (!qr.isValid())
+        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
+        if (!snap.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
-        QueryGraph queryGraph = QueryGraph.create(graph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
 
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
@@ -140,7 +140,7 @@ public class IsochroneResource {
             fz = l -> l.time;
         }
 
-        Triangulator.Result result = triangulator.triangulate(qr, queryGraph, shortestPathTree, fz);
+        Triangulator.Result result = triangulator.triangulate(snap, queryGraph, shortestPathTree, fz);
 
         ContourBuilder contourBuilder = new ContourBuilder(result.triangulation);
         ArrayList<Geometry> isochrones = new ArrayList<>();

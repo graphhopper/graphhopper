@@ -33,7 +33,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIterator;
@@ -117,9 +117,9 @@ class GtfsReader {
         final EdgeFilter filter = DefaultEdgeFilter.allEdges(footEncoder);
         for (Stop stop : feed.stops.values()) {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
-                QueryResult locationQueryResult = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
+                Snap locationSnap = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
                 int streetNode;
-                if (!locationQueryResult.isValid()) {
+                if (!locationSnap.isValid()) {
                     streetNode = i++;
                     nodeAccess.setNode(streetNode, stop.stop_lat, stop.stop_lon);
                     EdgeIteratorState edge = graph.edge(streetNode, streetNode);
@@ -127,7 +127,7 @@ class GtfsReader {
                     edge.set(footEncoder.getAccessEnc(), true).setReverse(footEncoder.getAccessEnc(), false);
                     edge.set(footEncoder.getAverageSpeedEnc(), 5.0);
                 } else {
-                    streetNode = locationQueryResult.getClosestNode();
+                    streetNode = locationSnap.getClosestNode();
                 }
                 Integer prev = gtfsStorage.getStationNodes().put(new GtfsStorage.FeedIdWithStopId(id, stop.stop_id), streetNode);
                 if (prev != null) {
