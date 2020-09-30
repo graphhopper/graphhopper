@@ -965,7 +965,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     protected void postProcessData() {
         if (getEncodingManager().hasEncodedValue(RoadClassLink.KEY)) {
-            new RoadClassLinkInterpolator(getGraphHopperStorage(), getEncodingManager(), RoadClassLinkInterpolator.collect(getEncodingManager())).
+            new RoadClassLinkInterpolator(getGraphHopperStorage(), getEncodingManager(), RoadClassLinkInterpolator.collect(getEncodingManager(), 0.85)).
                     execute();
         }
     }

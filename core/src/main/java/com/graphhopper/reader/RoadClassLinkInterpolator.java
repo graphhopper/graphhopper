@@ -6,13 +6,13 @@ import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.BreadthFirstSearch;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -23,19 +23,28 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
  */
 public class RoadClassLinkInterpolator {
     private final Graph graph;
-    private final List<DecimalEncodedValue> averageSpeeds;
+    private final Map<DecimalEncodedValue, Double> averageSpeeds;
     private final BooleanEncodedValue linkEnc;
     private final EnumEncodedValue<RoadClass> rcEnc;
 
-    public RoadClassLinkInterpolator(Graph graph, EncodedValueLookup lookup, List<DecimalEncodedValue> averageSpeeds) {
+    public RoadClassLinkInterpolator(Graph graph, EncodedValueLookup lookup, Map<DecimalEncodedValue, Double> averageSpeeds) {
         this.graph = graph;
         this.averageSpeeds = averageSpeeds;
         this.linkEnc = lookup.getBooleanEncodedValue(RoadClassLink.KEY);
         this.rcEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+
+        for (Map.Entry<DecimalEncodedValue, Double> entry : averageSpeeds.entrySet()) {
+            if (entry.getValue() == null || entry.getValue() > 1.0 || entry.getValue() < 0.01)
+                throw new IllegalArgumentException("Illegal factor " + entry.getValue() + " for " + entry.getKey());
+        }
     }
 
-    public static List<DecimalEncodedValue> collect(EncodingManager encodingManager) {
-        return encodingManager.fetchEdgeEncoders().stream().map(encoder -> encodingManager.getDecimalEncodedValue(getKey(encoder.toString(), "average_speed"))).collect(Collectors.toList());
+    public static Map<DecimalEncodedValue, Double> collect(EncodingManager encodingManager, double motorVehicleInterpolationFactorForLink) {
+        return encodingManager.fetchEdgeEncoders().stream().
+                collect(Collectors.toMap(
+                        encoder -> encodingManager.getDecimalEncodedValue(getKey(encoder.toString(), "average_speed")),
+                        encoder -> encoder.getTransportationMode() == TransportationMode.MOTOR_VEHICLE ? motorVehicleInterpolationFactorForLink : 1
+                ));
     }
 
     public void execute() {
@@ -53,7 +62,7 @@ public class RoadClassLinkInterpolator {
             // same road class. For now do not care about the direction.
 
             Map<DecimalEncodedValue, Double> maxSpeedMap = new HashMap<>();
-            for (DecimalEncodedValue speedEnc : averageSpeeds) {
+            for (DecimalEncodedValue speedEnc : averageSpeeds.keySet()) {
                 maxSpeedMap.put(speedEnc, 0.0);
             }
 
@@ -70,10 +79,11 @@ public class RoadClassLinkInterpolator {
                     boolean isLink = bfsEdge.get(linkEnc);
                     if (sameRC && !isLink) {
                         doneEdges.add(bfsEdge.getEdge());
-                        for (DecimalEncodedValue speedEnc : averageSpeeds) {
-                            double maxSpeed = maxSpeedMap.get(speedEnc);
-                            maxSpeed = Math.max(Math.max(maxSpeed, bfsEdge.get(speedEnc)), bfsEdge.getReverse(speedEnc));
-                            maxSpeedMap.put(speedEnc, maxSpeed);
+                        for (Map.Entry<DecimalEncodedValue, Double> entry : averageSpeeds.entrySet()) {
+                            DecimalEncodedValue enc = entry.getKey();
+                            double maxSpeed = maxSpeedMap.get(enc);
+                            maxSpeed = Math.max(Math.max(maxSpeed, bfsEdge.get(enc)), bfsEdge.getReverse(enc));
+                            maxSpeedMap.put(enc, maxSpeed * entry.getValue());
                         }
                     }
                     return sameRC && isLink;
@@ -82,7 +92,7 @@ public class RoadClassLinkInterpolator {
             search.start(explorer, allEdgesIterator.getAdjNode());
 
             maxSpeedMap.values().removeIf(tmp -> tmp <= 0);
-            if(maxSpeedMap.isEmpty())
+            if (maxSpeedMap.isEmpty())
                 continue;
 
             // 2. store max speed for different encoder (ensure encoders without access are excluded from this interpolation)
