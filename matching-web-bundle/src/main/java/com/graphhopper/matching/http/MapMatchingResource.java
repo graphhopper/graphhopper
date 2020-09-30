@@ -224,8 +224,8 @@ public class MapMatchingResource {
             ArrayNode wpts = link.putArray("wpts");
             for (State extension : edgeMatch.getStates()) {
                 ObjectNode wpt = wpts.addObject();
-                wpt.put("x", extension.getQueryResult().getSnappedPoint().lon);
-                wpt.put("y", extension.getQueryResult().getSnappedPoint().lat);
+                wpt.put("x", extension.getSnap().getSnappedPoint().lon);
+                wpt.put("y", extension.getSnap().getSnappedPoint().lat);
             }
         }
         return root;

@@ -34,7 +34,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,11 +159,11 @@ public class MapMatching {
         // Snap observations to links. Generates multiple candidate snaps per observation.
         // In the next step, we will turn them into splits, but we already call them splits now
         // because they are modified in place.
-        List<Collection<QueryResult>> splitsPerObservation = filteredObservations.stream().map(o -> locationIndex.findNClosest(o.getPoint().lat, o.getPoint().lon, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()), measurementErrorSigma))
+        List<Collection<Snap>> splitsPerObservation = filteredObservations.stream().map(o -> locationIndex.findNClosest(o.getPoint().lat, o.getPoint().lon, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()), measurementErrorSigma))
                 .collect(Collectors.toList());
 
         // Create the query graph, containing split edges so that all the places where an observation might have happened
-        // are a node. This modifies the QueryResult objects and puts the new node numbers into them.
+        // are a node. This modifies the Snap objects and puts the new node numbers into them.
         queryGraph = QueryGraph.create(graph, splitsPerObservation.stream().flatMap(Collection::stream).collect(Collectors.toList()));
 
         // Due to how LocationIndex/QueryGraph is implemented, we can get duplicates when a point is snapped
@@ -171,8 +171,8 @@ public class MapMatching {
         // out the duplicates for performance reasons.
         splitsPerObservation = splitsPerObservation.stream().map(this::deduplicate).collect(Collectors.toList());
 
-        // Creates candidates from the QueryResults of all observations (a candidate is basically a
-        // QueryResult + direction).
+        // Creates candidates from the Snaps of all observations (a candidate is basically a
+        // Snap + direction).
         List<ObservationWithCandidateStates> timeSteps = createTimeSteps(filteredObservations, splitsPerObservation);
 
         // Compute the most likely sequence of map matching candidates:
@@ -212,9 +212,9 @@ public class MapMatching {
         return filtered;
     }
 
-    private Collection<QueryResult> deduplicate(Collection<QueryResult> splits) {
+    private Collection<Snap> deduplicate(Collection<Snap> splits) {
         // Only keep one split per node number. Let's say the last one.
-        Map<Integer, QueryResult> splitsByNodeNumber = splits.stream().collect(Collectors.toMap(QueryResult::getClosestNode, s -> s, (s1, s2) -> s2));
+        Map<Integer, Snap> splitsByNodeNumber = splits.stream().collect(Collectors.toMap(Snap::getClosestNode, s -> s, (s1, s2) -> s2));
         return splitsByNodeNumber.values();
     }
 
@@ -223,7 +223,7 @@ public class MapMatching {
      * transition probabilities. Creates directed candidates for virtual nodes and undirected
      * candidates for real nodes.
      */
-    private List<ObservationWithCandidateStates> createTimeSteps(List<Observation> filteredObservations, List<Collection<QueryResult>> splitsPerObservation) {
+    private List<ObservationWithCandidateStates> createTimeSteps(List<Observation> filteredObservations, List<Collection<Snap>> splitsPerObservation) {
         if (splitsPerObservation.size() != filteredObservations.size()) {
             throw new IllegalArgumentException(
                     "filteredGPXEntries and queriesPerEntry must have same size.");
@@ -232,9 +232,9 @@ public class MapMatching {
         final List<ObservationWithCandidateStates> timeSteps = new ArrayList<>();
         for (int i = 0; i < filteredObservations.size(); i++) {
             Observation observation = filteredObservations.get(i);
-            Collection<QueryResult> splits = splitsPerObservation.get(i);
+            Collection<Snap> splits = splitsPerObservation.get(i);
             List<State> candidates = new ArrayList<>();
-            for (QueryResult split : splits) {
+            for (Snap split : splits) {
                 if (queryGraph.isVirtualNode(split.getClosestNode())) {
                     List<VirtualEdgeIteratorState> virtualEdges = new ArrayList<>();
                     EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(split.getClosestNode());
@@ -283,7 +283,7 @@ public class MapMatching {
             Map<Transition<State>, Path> roadPaths = new HashMap<>();
             for (State candidate : timeStep.candidates) {
                 // distance from observation to road in meters
-                final double distance = candidate.getQueryResult().getQueryDistance();
+                final double distance = candidate.getSnap().getQueryDistance();
                 emissionLogProbabilities.put(candidate, probabilities.emissionLogProbability(distance));
             }
 
@@ -295,7 +295,7 @@ public class MapMatching {
 
                 for (State from : prevTimeStep.candidates) {
                     for (State to : timeStep.candidates) {
-                        final Path path = createRouter().calcPath(from.getQueryResult().getClosestNode(), to.getQueryResult().getClosestNode(), from.isOnDirectedEdge() ? from.getOutgoingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE, to.isOnDirectedEdge() ? to.getIncomingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE);
+                        final Path path = createRouter().calcPath(from.getSnap().getClosestNode(), to.getSnap().getClosestNode(), from.isOnDirectedEdge() ? from.getOutgoingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE, to.isOnDirectedEdge() ? to.getIncomingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE);
                         if (path.isFound()) {
                             double transitionLogProbability = probabilities.transitionLogProbability(path.getDistance(), linearDistance);
                             Transition<State> transition = new Transition<>(from, to);
@@ -463,8 +463,8 @@ public class MapMatching {
             if (!str.isEmpty()) {
                 str += ", ";
             }
-            str += "distance: " + gpxe.getQueryResult().getQueryDistance() + " to "
-                    + gpxe.getQueryResult().getSnappedPoint();
+            str += "distance: " + gpxe.getSnap().getQueryDistance() + " to "
+                    + gpxe.getSnap().getSnappedPoint();
         }
         return "[" + str + "]";
     }

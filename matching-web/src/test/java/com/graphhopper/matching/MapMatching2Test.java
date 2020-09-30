@@ -25,7 +25,7 @@ import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.After;
@@ -142,13 +142,13 @@ public class MapMatching2Test {
 
     private void validateEdgeMatch(EdgeMatch edgeMatch) {
         for (State state : edgeMatch.getStates()) {
-            if (state.getQueryResult().getSnappedPosition() == QueryResult.Position.TOWER) {
-                if (state.getQueryResult().getClosestNode() != edgeMatch.getEdgeState().getAdjNode()
-                        && state.getQueryResult().getClosestNode() != edgeMatch.getEdgeState().getAdjNode()) {
+            if (state.getSnap().getSnappedPosition() == Snap.Position.TOWER) {
+                if (state.getSnap().getClosestNode() != edgeMatch.getEdgeState().getAdjNode()
+                        && state.getSnap().getClosestNode() != edgeMatch.getEdgeState().getAdjNode()) {
                     fail();
                 }
             } else {
-                if (state.getQueryResult().getClosestEdge().getEdge() != edgeMatch.getEdgeState().getEdge()) {
+                if (state.getSnap().getClosestEdge().getEdge() != edgeMatch.getEdgeState().getEdge()) {
                     fail();
                 }
             }
