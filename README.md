@@ -27,7 +27,7 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
  * unstable 3.0: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md), [web service jar](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-web/2.0-SNAPSHOT/)
 
 <details><summary>Click to see older releases</summary>
-
+<p>
  * See our [changelog file](./core/files/changelog.txt) for Java API Changes.
  * 1.0: [documentation](https://github.com/graphhopper/graphhopper/blob/1.0/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-1.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-1.0.apk), [announcement](https://www.graphhopper.com/blog/2020/05/25/graphhopper-routing-engine-1-0-released/)
  * 0.13.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.13/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.13.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.13.0.apk), [announcement](https://www.graphhopper.com/blog/2019/09/18/graphhopper-routing-engine-0-13-released/)
@@ -37,10 +37,10 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
  * 0.9.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.9/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.9.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.9.0.apk), [announcement](https://www.graphhopper.com/blog/2017/05/31/graphhopper-routing-engine-0-9-released/)
  * 0.8.2: [documentation](https://github.com/graphhopper/graphhopper/blob/0.8/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.8.2-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.8.2.apk), [announcement](https://www.graphhopper.com/blog/2016/10/18/graphhopper-routing-engine-0-8-released/)
  * 0.7.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.7/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.7.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.7.0.apk), [announcement](https://www.graphhopper.com/blog/2016/06/15/graphhopper-routing-engine-0-7-released/)
-
+</p>
 </details>
 
-### Installation
+## Installation
 
 To install the [GraphHopper Maps](https://graphhopper.com/maps/) and the web service locally you just do:
 
@@ -50,7 +50,10 @@ wget https://graphhopper.com/public/releases/graphhopper-web-2.0.jar https://raw
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
 
-For more details - see [here](./docs/web/quickstart.md).
+After a while you see 'Started server at HTTP 8989', then go to http://localhost:8989/ and
+you'll see a map of Berlin. You should be able to right click on the map to create a route.
+
+For more details about the installation, see [here](./docs/web/quickstart.md).
 
 ## GraphHopper Maps
 
