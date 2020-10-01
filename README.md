@@ -41,21 +41,6 @@ older releases:
 
 See our [changelog file](./core/files/changelog.txt).
 
-### Docker
-
-Run a dockerized GraphHopper from sources:
-
-```bash
-docker build -t graphhopper:master .
-docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 8989:8989 graphhopper:master
-```
-
-See also the builds at [Docker Hub](https://hub.docker.com/r/graphhopper/graphhopper)
-
-### DEB or RPM package
-
-[There is an experimental step by step guide](https://github.com/graphhopper/graphhopper/issues/561#issuecomment-473567727) that creates a debian or rpm package from the cloned and compiled repository. Before we can recommend this we need some more testers and feedback :)
-
 ## For the Web
 
 See the road routing feature of GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps) and [install it](../stable/docs/index.md) on your own machine:
