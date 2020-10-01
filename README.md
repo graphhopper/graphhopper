@@ -50,7 +50,7 @@ wget https://graphhopper.com/public/releases/graphhopper-web-2.0.jar https://raw
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
 
-After a while you see 'Started server at HTTP 8989', then go to http://localhost:8989/ and
+After a while you see a log message with 'Server - Started', then go to http://localhost:8989/ and
 you'll see a map of Berlin. You should be able to right click on the map to create a route.
 
 For more details about the installation, see [here](./docs/web/quickstart.md).
