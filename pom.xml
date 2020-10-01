@@ -80,6 +80,7 @@
         <module>web</module>
         <module>client-hc</module>
         <module>navigation</module>
+        <module>example</module>
     </modules>
     <dependencyManagement>
         <dependencies>
