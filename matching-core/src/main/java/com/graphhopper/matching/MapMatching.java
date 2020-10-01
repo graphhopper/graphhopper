@@ -18,14 +18,12 @@
 package com.graphhopper.matching;
 
 import com.bmw.hmm.SequenceState;
+import com.bmw.hmm.Transition;
 import com.bmw.hmm.ViterbiAlgorithm;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.AStarBidirection;
-import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.lm.LMApproximator;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
@@ -66,10 +64,6 @@ public class MapMatching {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    // Penalty in m for each U-turn performed at the beginning or end of a path between two
-    // subsequent candidates.
-    private final double uTurnDistancePenalty;
-
     private final Graph graph;
     private final PrepareLandmarks landmarks;
     private final LocationIndexTree locationIndex;
@@ -105,17 +99,6 @@ public class MapMatching {
             throw new IllegalArgumentException("Could not find profile '" + profileStr + "', choose one of: " + profileNames);
         }
 
-        // Convert heading penalty [s] into U-turn penalty [m]
-        // The heading penalty is automatically taken into account by GraphHopper routing,
-        // for all links that we set to "unfavored" on the QueryGraph.
-        // We use that mechanism to softly enforce a heading for each map-matching state.
-        // We want to consistently use the same parameter for our own objective function (independent of the routing),
-        // which has meters as unit, not seconds.
-
-        final double PENALTY_CONVERSION_VELOCITY = 5;  // [m/s]
-        final double headingTimePenalty = hints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY);
-        uTurnDistancePenalty = headingTimePenalty * PENALTY_CONVERSION_VELOCITY;
-
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
         if (graphHopper.getLMPreparationHandler().isEnabled() && disableLM && !graphHopper.getRouterConfig().isLMDisablingAllowed())
             throw new IllegalArgumentException("Disabling LM is not allowed");
@@ -150,8 +133,7 @@ public class MapMatching {
             landmarks = null;
         }
         graph = graphHopper.getGraphHopperStorage();
-        // since map matching does not support turn costs we have to disable them here explicitly
-        weighting = graphHopper.createWeighting(profile, hints, true);
+        weighting = graphHopper.createWeighting(profile, hints);
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
     }
 
@@ -191,16 +173,14 @@ public class MapMatching {
 
         // Creates candidates from the Snaps of all observations (a candidate is basically a
         // Snap + direction).
-        List<TimeStep<State, Observation, Path>> timeSteps = createTimeSteps(filteredObservations, splitsPerObservation, queryGraph);
+        List<ObservationWithCandidateStates> timeSteps = createTimeSteps(filteredObservations, splitsPerObservation);
 
         // Compute the most likely sequence of map matching candidates:
-        List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps, observations.size(), queryGraph);
-
-        final Map<String, EdgeIteratorState> virtualEdgesMap = createVirtualEdgesMap(splitsPerObservation);
+        List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps);
 
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
-        MatchResult result = new MatchResult(prepareEdgeMatches(seq, virtualEdgesMap));
+        MatchResult result = new MatchResult(prepareEdgeMatches(seq));
         result.setMergedPath(new MapMatchedPath(queryGraph, weighting, path));
         result.setMatchMillis(seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> s.transitionDescriptor.getTime()).sum());
         result.setMatchLength(seq.stream().filter(s -> s.transitionDescriptor != null).mapToDouble(s -> s.transitionDescriptor.getDistance()).sum());
@@ -243,13 +223,13 @@ public class MapMatching {
      * transition probabilities. Creates directed candidates for virtual nodes and undirected
      * candidates for real nodes.
      */
-    private List<TimeStep<State, Observation, Path>> createTimeSteps(List<Observation> filteredObservations, List<Collection<Snap>> splitsPerObservation, QueryGraph queryGraph) {
+    private List<ObservationWithCandidateStates> createTimeSteps(List<Observation> filteredObservations, List<Collection<Snap>> splitsPerObservation) {
         if (splitsPerObservation.size() != filteredObservations.size()) {
             throw new IllegalArgumentException(
                     "filteredGPXEntries and queriesPerEntry must have same size.");
         }
 
-        final List<TimeStep<State, Observation, Path>> timeSteps = new ArrayList<>();
+        final List<ObservationWithCandidateStates> timeSteps = new ArrayList<>();
         for (int i = 0; i < filteredObservations.size(); i++) {
             Observation observation = filteredObservations.get(i);
             Collection<Snap> splits = splitsPerObservation.get(i);
@@ -272,15 +252,9 @@ public class MapMatching {
                     }
 
                     // Create a directed candidate for each of the two possible directions through
-                    // the virtual node. This is needed to penalize U-turns at virtual nodes
-                    // (see also #51). We need to add candidates for both directions because
+                    // the virtual node. We need to add candidates for both directions because
                     // we don't know yet which is the correct one. This will be figured
                     // out by the Viterbi algorithm.
-                    //
-                    // Adding further candidates to explicitly allow U-turns through setting
-                    // incomingVirtualEdge==outgoingVirtualEdge doesn't make sense because this
-                    // would actually allow to perform a U-turn without a penalty by going to and
-                    // from the virtual node through the other virtual edge or its reverse edge.
                     candidates.add(new State(observation, split, virtualEdges.get(0), virtualEdges.get(1)));
                     candidates.add(new State(observation, split, virtualEdges.get(1), virtualEdges.get(0)));
                 } else {
@@ -289,7 +263,7 @@ public class MapMatching {
                 }
             }
 
-            timeSteps.add(new TimeStep<>(observation, candidates));
+            timeSteps.add(new ObservationWithCandidateStates(observation, candidates));
         }
         return timeSteps;
     }
@@ -297,46 +271,45 @@ public class MapMatching {
     /**
      * Computes the most likely state sequence for the observations.
      */
-    private List<SequenceState<State, Observation, Path>> computeViterbiSequence(
-            List<TimeStep<State, Observation, Path>> timeSteps, int originalGpxEntriesCount,
-            QueryGraph queryGraph) {
-        final HmmProbabilities probabilities
-                = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
+    private List<SequenceState<State, Observation, Path>> computeViterbiSequence(List<ObservationWithCandidateStates> timeSteps) {
+        final HmmProbabilities probabilities = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
         final ViterbiAlgorithm<State, Observation, Path> viterbi = new ViterbiAlgorithm<>();
 
-        logger.debug("\n=============== Paths ===============");
         int timeStepCounter = 0;
-        TimeStep<State, Observation, Path> prevTimeStep = null;
-        int i = 1;
-        for (TimeStep<State, Observation, Path> timeStep : timeSteps) {
-            logger.debug("\nPaths to time step {}", i++);
-            computeEmissionProbabilities(timeStep, probabilities);
+        ObservationWithCandidateStates prevTimeStep = null;
+        for (ObservationWithCandidateStates timeStep : timeSteps) {
+            final Map<State, Double> emissionLogProbabilities = new HashMap<>();
+            Map<Transition<State>, Double> transitionLogProbabilities = new HashMap<>();
+            Map<Transition<State>, Path> roadPaths = new HashMap<>();
+            for (State candidate : timeStep.candidates) {
+                // distance from observation to road in meters
+                final double distance = candidate.getSnap().getQueryDistance();
+                emissionLogProbabilities.put(candidate, probabilities.emissionLogProbability(distance));
+            }
 
             if (prevTimeStep == null) {
-                viterbi.startWithInitialObservation(timeStep.observation, timeStep.candidates,
-                        timeStep.emissionLogProbabilities);
+                viterbi.startWithInitialObservation(timeStep.observation, timeStep.candidates, emissionLogProbabilities);
             } else {
-                computeTransitionProbabilities(prevTimeStep, timeStep, probabilities, queryGraph);
-                viterbi.nextStep(timeStep.observation, timeStep.candidates,
-                        timeStep.emissionLogProbabilities, timeStep.transitionLogProbabilities,
-                        timeStep.roadPaths);
-            }
-            if (viterbi.isBroken()) {
-                String likelyReasonStr = "";
-                if (prevTimeStep != null) {
-                    double dist = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat, prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
-                    if (dist > 2000) {
-                        likelyReasonStr = "Too long distance to previous measurement? "
-                                + Math.round(dist) + "m, ";
+                final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat,
+                        prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
+
+                for (State from : prevTimeStep.candidates) {
+                    for (State to : timeStep.candidates) {
+                        final Path path = createRouter().calcPath(from.getSnap().getClosestNode(), to.getSnap().getClosestNode(), from.isOnDirectedEdge() ? from.getOutgoingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE, to.isOnDirectedEdge() ? to.getIncomingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE);
+                        if (path.isFound()) {
+                            double transitionLogProbability = probabilities.transitionLogProbability(path.getDistance(), linearDistance);
+                            Transition<State> transition = new Transition<>(from, to);
+                            roadPaths.put(transition, path);
+                            transitionLogProbabilities.put(transition, transitionLogProbability);
+                        }
                     }
                 }
-
-                throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
-                        + timeStepCounter + " (" + originalGpxEntriesCount + " points). "
-                        + likelyReasonStr + "observation:" + timeStep.observation + ", "
-                        + timeStep.candidates.size() + " candidates: "
-                        + getSnappedCandidates(timeStep.candidates)
-                        + ". If a match is expected consider increasing max_visited_nodes.");
+                viterbi.nextStep(timeStep.observation, timeStep.candidates,
+                        emissionLogProbabilities, transitionLogProbabilities,
+                        roadPaths);
+            }
+            if (viterbi.isBroken()) {
+                fail(timeStepCounter, prevTimeStep, timeStep);
             }
 
             timeStepCounter++;
@@ -346,109 +319,51 @@ public class MapMatching {
         return viterbi.computeMostLikelySequence();
     }
 
-    private void computeEmissionProbabilities(TimeStep<State, Observation, Path> timeStep,
-                                              HmmProbabilities probabilities) {
-        for (State candidate : timeStep.candidates) {
-            // road distance difference in meters
-            final double distance = candidate.getSnap().getQueryDistance();
-            timeStep.addEmissionLogProbability(candidate,
-                    probabilities.emissionLogProbability(distance));
-        }
-    }
-
-    private void computeTransitionProbabilities(TimeStep<State, Observation, Path> prevTimeStep,
-                                                TimeStep<State, Observation, Path> timeStep,
-                                                HmmProbabilities probabilities,
-                                                QueryGraph queryGraph) {
-        final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat,
-                prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
-
-        for (State from : prevTimeStep.candidates) {
-            for (State to : timeStep.candidates) {
-                // enforce heading if required:
-                if (from.isOnDirectedEdge()) {
-                    // Make sure that the path starting at the "from" candidate goes through
-                    // the outgoing edge.
-                    queryGraph.unfavorVirtualEdge(from.getIncomingVirtualEdge().getEdge());
-                }
-                if (to.isOnDirectedEdge()) {
-                    // Make sure that the path ending at "to" candidate goes through
-                    // the incoming edge.
-                    queryGraph.unfavorVirtualEdge(to.getOutgoingVirtualEdge().getEdge());
-                }
-
-                RoutingAlgorithm router;
-                if (landmarks != null) {
-                    AStarBidirection algo = new AStarBidirection(queryGraph, weighting, TraversalMode.NODE_BASED) {
-                        @Override
-                        protected void initCollections(int size) {
-                            super.initCollections(50);
-                        }
-                    };
-                    LandmarkStorage lms = landmarks.getLandmarkStorage();
-                    int activeLM = Math.min(8, lms.getLandmarkCount());
-                    algo.setApproximation(LMApproximator.forLandmarks(queryGraph, lms, activeLM));
-                    router = algo;
-                } else {
-                    router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.NODE_BASED) {
-                        @Override
-                        protected void initCollections(int size) {
-                            super.initCollections(50);
-                        }
-                    };
-                }
-                router.setMaxVisitedNodes(maxVisitedNodes);
-
-                final Path path = router.calcPath(from.getSnap().getClosestNode(),
-                        to.getSnap().getClosestNode());
-
-                if (path.isFound()) {
-                    timeStep.addRoadPath(from, to, path);
-
-                    // The router considers unfavored virtual edges using edge penalties
-                    // but this is not reflected in the path distance. Hence, we need to adjust the
-                    // path distance accordingly.
-                    final double penalizedPathDistance = penalizedPathDistance(path,
-                            queryGraph.getUnfavoredVirtualEdges());
-
-                    logger.debug("Path from: {}, to: {}, penalized path length: {}",
-                            from, to, penalizedPathDistance);
-
-                    final double transitionLogProbability = probabilities
-                            .transitionLogProbability(penalizedPathDistance, linearDistance);
-                    timeStep.addTransitionLogProbability(from, to, transitionLogProbability);
-                } else {
-                    logger.debug("No path found for from: {}, to: {}", from, to);
-                }
-                queryGraph.clearUnfavoredStatus();
-
+    private void fail(int timeStepCounter, ObservationWithCandidateStates prevTimeStep, ObservationWithCandidateStates timeStep) {
+        String likelyReasonStr = "";
+        if (prevTimeStep != null) {
+            double dist = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat, prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
+            if (dist > 2000) {
+                likelyReasonStr = "Too long distance to previous measurement? "
+                        + Math.round(dist) + "m, ";
             }
         }
+
+        throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
+                + timeStepCounter + ". "
+                + likelyReasonStr + "observation:" + timeStep.observation + ", "
+                + timeStep.candidates.size() + " candidates: "
+                + getSnappedCandidates(timeStep.candidates)
+                + ". If a match is expected consider increasing max_visited_nodes.");
     }
 
-    /**
-     * Returns the path length plus a penalty if the starting/ending edge is unfavored.
-     */
-    private double penalizedPathDistance(Path path, Set<EdgeIteratorState> penalizedVirtualEdges) {
-        double totalPenalty = 0;
-
-        // Unfavored edges in the middle of the path should not be penalized because we are
-        // only concerned about the direction at the start/end.
-        final List<EdgeIteratorState> edges = path.calcEdges();
-        if (!edges.isEmpty()) {
-            if (penalizedVirtualEdges.contains(edges.get(0))) {
-                totalPenalty += uTurnDistancePenalty;
-            }
+    private BidirRoutingAlgorithm createRouter() {
+        BidirRoutingAlgorithm router;
+        if (landmarks != null) {
+            AStarBidirection algo = new AStarBidirection(queryGraph, weighting, TraversalMode.EDGE_BASED) {
+                @Override
+                protected void initCollections(int size) {
+                    super.initCollections(50);
+                }
+            };
+            LandmarkStorage lms = landmarks.getLandmarkStorage();
+            int activeLM = Math.min(8, lms.getLandmarkCount());
+            algo.setApproximation(LMApproximator.forLandmarks(queryGraph, lms, activeLM));
+            algo.setMaxVisitedNodes(maxVisitedNodes);
+            router = algo;
+        } else {
+            router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.EDGE_BASED) {
+                @Override
+                protected void initCollections(int size) {
+                    super.initCollections(50);
+                }
+            };
+            router.setMaxVisitedNodes(maxVisitedNodes);
         }
-        if (edges.size() > 1) {
-            if (penalizedVirtualEdges.contains(edges.get(edges.size() - 1))) {
-                totalPenalty += uTurnDistancePenalty;
-            }
-        }
-        return path.getDistance() + totalPenalty;
+        return router;
     }
 
-    private List<EdgeMatch> prepareEdgeMatches(List<SequenceState<State, Observation, Path>> seq, Map<String, EdgeIteratorState> virtualEdgesMap) {
+    private List<EdgeMatch> prepareEdgeMatches(List<SequenceState<State, Observation, Path>> seq) {
         // This creates a list of directed edges (EdgeIteratorState instances turned the right way),
         // each associated with 0 or more of the observations.
         // These directed edges are edges of the real street graph, where nodes are intersections.
@@ -473,7 +388,7 @@ public class MapMatching {
             // transition (except before the first state)
             if (transitionAndState.transitionDescriptor != null) {
                 for (EdgeIteratorState edge : transitionAndState.transitionDescriptor.calcEdges()) {
-                    EdgeIteratorState newDirectedRealEdge = resolveToRealEdge(virtualEdgesMap, edge);
+                    EdgeIteratorState newDirectedRealEdge = resolveToRealEdge(edge);
                     if (currentDirectedRealEdge != null) {
                         if (!equalEdges(currentDirectedRealEdge, newDirectedRealEdge)) {
                             EdgeMatch edgeMatch = new EdgeMatch(currentDirectedRealEdge, states);
@@ -486,7 +401,7 @@ public class MapMatching {
             }
             // state
             if (transitionAndState.state.isOnDirectedEdge()) { // as opposed to on a node
-                EdgeIteratorState newDirectedRealEdge = resolveToRealEdge(virtualEdgesMap, transitionAndState.state.getOutgoingVirtualEdge());
+                EdgeIteratorState newDirectedRealEdge = resolveToRealEdge(transitionAndState.state.getOutgoingVirtualEdge());
                 if (currentDirectedRealEdge != null) {
                     if (!equalEdges(currentDirectedRealEdge, newDirectedRealEdge)) {
                         EdgeMatch edgeMatch = new EdgeMatch(currentDirectedRealEdge, states);
@@ -526,69 +441,20 @@ public class MapMatching {
                 && edge1.getAdjNode() == edge2.getAdjNode();
     }
 
-    private EdgeIteratorState resolveToRealEdge(Map<String, EdgeIteratorState> virtualEdgesMap,
-                                                EdgeIteratorState edgeIteratorState) {
-        if (queryGraph.isVirtualNode(edgeIteratorState.getBaseNode())
-                || queryGraph.isVirtualNode(edgeIteratorState.getAdjNode())) {
-            return virtualEdgesMap.get(virtualEdgesMapKey(edgeIteratorState));
+    private EdgeIteratorState resolveToRealEdge(EdgeIteratorState edgeIteratorState) {
+        if (queryGraph.isVirtualNode(edgeIteratorState.getBaseNode()) || queryGraph.isVirtualNode(edgeIteratorState.getAdjNode())) {
+            return findEdgeByKey(((VirtualEdgeIteratorState) edgeIteratorState).getOriginalEdgeKey());
         } else {
             return edgeIteratorState;
         }
     }
 
-    /**
-     * Returns a map where every virtual edge maps to its real edge with correct orientation.
-     */
-    private Map<String, EdgeIteratorState> createVirtualEdgesMap(List<Collection<Snap>> queriesPerEntry) {
-        EdgeExplorer explorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
-        // TODO For map key, use the traversal key instead of string!
-        Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
-        for (Collection<Snap> snaps : queriesPerEntry) {
-            for (Snap snap : snaps) {
-                if (queryGraph.isVirtualNode(snap.getClosestNode())) {
-                    EdgeIterator iter = explorer.setBaseNode(snap.getClosestNode());
-                    while (iter.next()) {
-                        int node = traverseToClosestRealAdj(iter);
-                        if (node == snap.getClosestEdge().getAdjNode()) {
-                            virtualEdgesMap.put(virtualEdgesMapKey(iter),
-                                    snap.getClosestEdge().detach(false));
-                            virtualEdgesMap.put(reverseVirtualEdgesMapKey(iter),
-                                    snap.getClosestEdge().detach(true));
-                        } else if (node == snap.getClosestEdge().getBaseNode()) {
-                            virtualEdgesMap.put(virtualEdgesMapKey(iter),
-                                    snap.getClosestEdge().detach(true));
-                            virtualEdgesMap.put(reverseVirtualEdgesMapKey(iter),
-                                    snap.getClosestEdge().detach(false));
-                        } else {
-                            throw new RuntimeException();
-                        }
-                    }
-                }
-            }
+    private EdgeIteratorState findEdgeByKey(int edgeKey) {
+        EdgeIteratorState edge = graph.getEdgeIteratorState(edgeKey / 2, Integer.MIN_VALUE);
+        if ((edgeKey % 2 == 1) == (edge.getBaseNode() < edge.getAdjNode())) {
+            edge = graph.getEdgeIteratorState(edgeKey / 2, edge.getBaseNode());
         }
-        return virtualEdgesMap;
-    }
-
-    private String virtualEdgesMapKey(EdgeIteratorState iter) {
-        return iter.getBaseNode() + "-" + iter.getEdge() + "-" + iter.getAdjNode();
-    }
-
-    private String reverseVirtualEdgesMapKey(EdgeIteratorState iter) {
-        return iter.getAdjNode() + "-" + iter.getEdge() + "-" + iter.getBaseNode();
-    }
-
-    private int traverseToClosestRealAdj(EdgeIteratorState edge) {
-        if (!queryGraph.isVirtualNode(edge.getAdjNode())) {
-            return edge.getAdjNode();
-        }
-        EdgeExplorer explorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
-        EdgeIterator iter = explorer.setBaseNode(edge.getAdjNode());
-        while (iter.next()) {
-            if (iter.getAdjNode() != edge.getBaseNode()) {
-                return traverseToClosestRealAdj(iter);
-            }
-        }
-        throw new IllegalStateException("Cannot find adjacent edge " + edge);
+        return edge;
     }
 
     private String getSnappedCandidates(Collection<State> candidates) {
