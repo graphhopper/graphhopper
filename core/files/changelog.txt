@@ -1,3 +1,6 @@
+3.0
+    removed Dockerfile
+
 2.0
     renamed QueryResult -> Snap
     much faster CH preparation (node- and edge-based), but increased memory usage during preparation, #2132
