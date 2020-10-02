@@ -75,6 +75,8 @@ public interface EdgeIteratorState {
 
     default int getEdgeKey(boolean reverse) {
         return GHUtility.createEdgeKey(getBaseNode(), getAdjNode(), getEdge(), reverse);
+        // What I really want to do is:
+        // return getEdge() * 2 + (getBaseNode() != getAdjNode() && (get(EdgeIterator.REVERSE_STATE) ^ reverse) ? 0 : 1);
     }
 
     /**
