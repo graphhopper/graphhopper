@@ -121,23 +121,25 @@ public class RoutingExample {
         hopper.setEncodingManager(EncodingManager.create("car"));
         hopper.setProfiles(new CustomProfile("car_custom").setCustomModel(new CustomModel()).setVehicle("car"));
 
-        // enable hybrid mode. Customizable routing works also for flexible mode and speed mode but the hybrid mode
-        // gives better performance and the biggest customization possibilities (at request time).
+        // The hybrid mode uses the "landmark algorithm" and is up to 15x faster than the flexible mode (Dijkstra).
+        // Still it is slower than the speed mode ("contraction hierarchies algorithm") ...
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car_custom"));
         hopper.importOrLoad();
 
-        // The hybrid mode uses the "landmark algorithm" and is faster than the flexible mode (up to 15x). Still it is slower than the speed mode ...
-        // ... but for the hybrid mode we can still customize the routing request.
+        // ... but for the hybrid mode we can customize the route calculation even at request time:
+        // 1. a request with default preferences
         GHRequest req = new GHRequest().setProfile("car_custom").
                 addPoint(new GHPoint(42.506472,1.522475)).addPoint(new GHPoint(42.513108,1.536005));
 
         GHResponse res = hopper.route(req);
         assert Math.round(res.getBest().getTime() / 1000d) == 96;
 
+        // 2. now avoid primary roads and reduce maximum speed, see docs/core/profiles.md for an in-depth explanation
+        // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
         req.putHint(CustomModel.KEY, model);
         Map<String, Double> map = new HashMap<>();
-        // avoid primary roads, see docs/core/profiles.md
+        model.setMaxSpeedFallback(100d);
         model.getPriority().put(RoadClass.KEY, map);
         map.put(RoadClass.PRIMARY.toString(), 0.5);
 
