@@ -11,7 +11,7 @@ as jar file and download this [config-example.yml](https://raw.githubusercontent
     ```bash
     java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
     ```
- 5. After you see 'Started server at HTTP 8989' go to [http://localhost:8989/](http://localhost:8989/) and you should see a map of Berlin. You should be able to click on the map and a route appears.
+ 5. After a while you see a log message with 'Server - Started', then go to [http://localhost:8989/](http://localhost:8989/) and you should see a map of Berlin. You should be able to right click on the map to create a route.
 
 See [here](./../core/elevation.md) how to easily enable elevation data. To see how GraphHopper is configured for production usage, see the [deployment guide](./../core/deploy.md).
 
