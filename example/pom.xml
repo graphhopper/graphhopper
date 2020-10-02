@@ -18,10 +18,25 @@
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <!-- required when reading from OSM files -->
+        <dependency>
+            <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-reader-osm</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
+        <!-- required only for isochrone calculation -->
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-isochrone</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <!-- you can use this for logging or any slf4j log implementation -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
