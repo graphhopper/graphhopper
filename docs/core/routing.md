@@ -5,7 +5,7 @@ your [Maven config](/README.md#maven) correctly.
 
 To do routing in your Java code you'll need just a few lines of code.
 
-See [this code example](../example/src/test/java/com/graphhopper/example/RoutingExampleTest.java)
+See [this code example](../example/src/main/java/com/graphhopper/example/RoutingExample.java)
 on how to do that where also code examples for the next sections are
 included.
 
