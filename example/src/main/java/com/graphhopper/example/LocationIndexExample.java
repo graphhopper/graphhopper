@@ -34,7 +34,6 @@ public class LocationIndexExample {
         assert edge.getName().equals("Avinguda Meritxell");
     }
 
-
     public static void lowLevelLocationIndex() {
         // If you don't use the GraphHopper class you have to use the low level API:
         Directory dir = new RAMDirectory();
