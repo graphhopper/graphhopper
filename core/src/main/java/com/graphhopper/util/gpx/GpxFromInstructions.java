@@ -132,6 +132,7 @@ public class GpxFromInstructions {
             gpxOutput.append("\n<trk><name>").append(trackName).append("</name>");
 
             gpxOutput.append("<trkseg>");
+            int trkptCount = 0;
             for (GPXEntry entry : createGPXList(instructions)) {
                 gpxOutput.append("\n<trkpt lat=\"").append(decimalFormat.format(entry.getPoint().getLat()));
                 gpxOutput.append("\" lon=\"").append(decimalFormat.format(entry.getPoint().getLon())).append("\">");
@@ -139,6 +140,7 @@ public class GpxFromInstructions {
                     gpxOutput.append("<ele>").append(Helper.round2(((GHPoint3D) entry.getPoint()).getEle())).append("</ele>");
                 if (entry.getTime() != null)
                     gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
+                addExtensions(gpxOutput, pathDetails, trkptCount++);
                 gpxOutput.append("</trkpt>");
             }
             gpxOutput.append("\n</trkseg>");
@@ -148,6 +150,29 @@ public class GpxFromInstructions {
         // we could now use 'wpt' for via points
         gpxOutput.append("\n</gpx>");
         return gpxOutput.toString();
+    }
+
+    private static void addExtensions(StringBuilder gpxOutput, Map<String, List<PathDetail>> pathDetails, int trkptCount) {
+        gpxOutput.append("<extensions>");
+        for (Map.Entry<String, List<PathDetail>> pathDetail : pathDetails.entrySet()) {
+            addExtensions(gpxOutput, pathDetail, trkptCount);
+        }
+        gpxOutput.append("</extensions>");
+    }
+
+    private static void addExtensions(StringBuilder gpxOutput, Map.Entry<String, List<PathDetail>> pathDetails, int trkptCount) {
+        gpxOutput.append("<gh:").append(pathDetails.getKey()).append(">");
+        gpxOutput.append(getExtensionValueForTrackPoint(pathDetails.getValue(), trkptCount));
+        gpxOutput.append("</gh:").append(pathDetails.getKey()).append(">");
+    }
+
+    private static Object getExtensionValueForTrackPoint(List<PathDetail> pathDetails, int trkptCount) {
+        for (PathDetail pathDetail : pathDetails) {
+            if (trkptCount > pathDetail.getFirst() && trkptCount <= pathDetail.getLast()) {
+                return pathDetail.getValue();
+            }
+        }
+        return "";
     }
 
     private static void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI, DecimalFormat decimalFormat, Translation tr) {
