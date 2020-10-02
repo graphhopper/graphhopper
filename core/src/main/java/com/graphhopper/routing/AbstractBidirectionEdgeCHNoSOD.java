@@ -27,6 +27,7 @@ import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
@@ -95,7 +96,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
                 : innerOutExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
             final int edgeId = iter.getEdge();
-            int key = GHUtility.createEdgeKey(iter.getAdjNode(), iter.getBaseNode(), edgeId, !reverse);
+            int key = iter.getEdgeKey(reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {
                 continue;
@@ -131,8 +132,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
 
     @Override
     protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        int baseNode = getOtherNode(origEdgeId, edge.getAdjNode());
-        return GHUtility.createEdgeKey(baseNode, edge.getAdjNode(), origEdgeId, reverse);
+        EdgeIteratorState origEdge = graph.getBaseGraph().getEdgeIteratorState(origEdgeId, edge.getAdjNode());
+        return origEdge.getEdgeKey(reverse);
     }
 
     @Override

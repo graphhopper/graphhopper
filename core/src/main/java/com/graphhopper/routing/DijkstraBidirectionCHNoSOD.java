@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
 
 public class DijkstraBidirectionCHNoSOD extends AbstractBidirCHAlgo {
@@ -39,6 +40,11 @@ public class DijkstraBidirectionCHNoSOD extends AbstractBidirCHAlgo {
 
     protected SPTEntry getParent(SPTEntry entry) {
         return entry.getParent();
+    }
+
+    @Override
+    protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, boolean reverse) {
+        return edge.getAdjNode();
     }
 
     @Override

@@ -70,7 +70,10 @@ public enum TraversalMode {
      * @return the identifier to access the shortest path tree
      */
     public final int createTraversalId(EdgeIteratorState iterState, boolean reverse) {
-        return createTraversalId(iterState.getBaseNode(), iterState.getAdjNode(), iterState.getEdge(), reverse);
+        if (edgeBased) {
+            return iterState.getEdgeKey(reverse);
+        }
+        return iterState.getAdjNode();
     }
 
     /**

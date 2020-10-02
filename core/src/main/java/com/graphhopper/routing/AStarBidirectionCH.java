@@ -68,6 +68,11 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo {
     }
 
     @Override
+    protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, boolean reverse) {
+        return edge.getAdjNode();
+    }
+
+    @Override
     protected double calcWeight(RoutingCHEdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
         // TODO performance: check if the node is already existent in the opposite direction
         // then we could avoid the approximation as we already know the exact complete path!

@@ -223,13 +223,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         return edge.getEdge();
     }
 
-    protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        return getTraversalId(edge, reverse);
-    }
-
-    protected int getTraversalId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return traversalMode.createTraversalId(edge.getBaseNode(), edge.getAdjNode(), edge.getEdge(), reverse);
-    }
+    protected abstract int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, boolean reverse);
 
     @Override
     protected int getOtherNode(int edge, int node) {

@@ -64,7 +64,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
      * This method returns the original edge via its key. I.e. also the direction is
      * already correctly encoded.
      *
-     * @see GHUtility#createEdgeKey(int, int, int, boolean)
+     * @see EdgeIteratorState#getEdgeKey(boolean) 
      */
     public int getOriginalEdgeKey() {
         return originalEdgeKey;

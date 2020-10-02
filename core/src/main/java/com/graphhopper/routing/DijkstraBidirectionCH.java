@@ -56,7 +56,7 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
             if (iter.getEdge() == entry.edge) {
                 continue;
             }
-            int traversalId = getTraversalId(iter, reverse);
+            int traversalId = iter.getAdjNode();
             SPTEntry adjNode = bestWeightMap.get(traversalId);
             // we have to be careful because of rounded shortcut weights in combination with virtual via nodes, see #1574
             final double precision = 0.001;

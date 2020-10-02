@@ -21,8 +21,10 @@ import com.graphhopper.routing.ch.AStarCHEntry;
 import com.graphhopper.routing.weighting.BalancedWeightApproximator;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
+import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.GHUtility;
 
 /**
  * @author easbar

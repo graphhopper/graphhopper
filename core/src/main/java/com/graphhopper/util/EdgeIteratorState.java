@@ -73,6 +73,10 @@ public interface EdgeIteratorState {
      */
     int getEdge();
 
+    default int getEdgeKey(boolean reverse) {
+        return GHUtility.createEdgeKey(getBaseNode(), getAdjNode(), getEdge(), reverse);
+    }
+
     /**
      * @return the edge id of the first original edge of the current edge. This is needed for shortcuts
      * in edge-based contraction hierarchies and otherwise simply returns the id of the current edge.
