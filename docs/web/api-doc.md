@@ -233,7 +233,7 @@ All parameters are shown in the following table.
 Parameter                   | Default | Description
 :---------------------------|:--------|:-----------
 profile                     |         | The profile to be used for the isochrone calculation.
-buckets                     | 1       | Number by which to divide the given `time_limit` to create `buckets` nested isochrones of time intervals `time_limit/buckets`, `time_limit/(buckets - 1)`, ... , `time_limit`. Applies analogously to `distance_limit`.
+buckets                     | 1       | Number by which to divide the given `time_limit` to create `buckets` nested isochrones of time intervals `time_limit-n*time_limit/buckets` for `n=[0,buckets)`. Applies analogously to `distance_limit`.
 reverse_flow                | false   | If false the flow goes from point to the polygon, if true the flow goes from the polygon inside to the point. Example usage for false: *How many potential customer can be reached within 30min travel time from your store* vs. true: *How many customers can reach your store within 30min travel time.* (optional, default to false)
 point                       |         | Specify the start coordinate (required). A string organized as `latitude,longitude`.
 result                      | polygon | Can be "pointlist" or "polygon".
