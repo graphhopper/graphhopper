@@ -124,6 +124,8 @@ order of magnitude faster than the flexible mode and uses also less RAM for one 
 
 You can switch between all modes at request time.
 
+Read more about the technical details [here](./docs/core/technical.md).
+
 ## License
 
 We chose the Apache License to make it easy for you to embed GraphHopper in your products, even closed source.
