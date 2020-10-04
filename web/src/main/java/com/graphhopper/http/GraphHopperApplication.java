@@ -33,6 +33,7 @@ import java.util.Map;
 public final class GraphHopperApplication extends Application<GraphHopperServerConfiguration> {
 
     public static void main(String[] args) throws Exception {
+        GHSecurityManager.init();
         new GraphHopperApplication().run(args);
     }
 
