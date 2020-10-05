@@ -1008,6 +1008,10 @@ class BaseGraph implements Graph {
             return false;
         }
 
+        /**
+         * Similar to {@link #init(int edgeId, int adjNode)}, but here we retrieve the edge in a certain direction
+         * directly using an edge key.
+         */
         final void init(int edgeKey) {
             if (edgeKey < 0)
                 throw new IllegalArgumentException("edge keys must not be negative, given: " + edgeKey);
@@ -1189,7 +1193,7 @@ class BaseGraph implements Graph {
         public int getEdgeKey() {
             // edge state in storage direction -> edge key is even
             // edge state against storage direction -> edge key is odd
-            return (edgeId << 1) + (reverse ? 1 : 0);
+            return GHUtility.createEdgeKey(edgeId, reverse);
         }
 
         @Override

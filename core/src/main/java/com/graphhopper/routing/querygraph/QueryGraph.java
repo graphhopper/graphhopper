@@ -194,9 +194,8 @@ public class QueryGraph implements Graph {
     @Override
     public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
         int edge = GHUtility.getEdgeFromEdgeKey(edgeKey);
-        if (!isVirtualEdge(edge)) {
+        if (!isVirtualEdge(edge))
             return baseGraph.getEdgeIteratorStateForKey(edgeKey);
-        }
         return getVirtualEdge(edgeKey - 2 * baseEdges);
     }
 

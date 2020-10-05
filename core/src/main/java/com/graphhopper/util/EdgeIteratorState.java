@@ -75,10 +75,12 @@ public interface EdgeIteratorState {
     int getEdge();
 
     /**
-     * Returns the edge key of the current edge. the edge id can be derived from the edge key by calling
+     * Returns the edge key of the current edge. The edge id can be derived from the edge key by calling
      * {@link GHUtility#getEdgeFromEdgeKey(int)}, but the edge key also contains information about the
      * direction of the edge. The edge key is even when the edge is oriented in storage direction and odd
-     * otherwise. You can use the edge key to retrieve an edge state in the right direction using {@link Graph#getEdgeIteratorStateForKey(int)}
+     * otherwise. You can use the edge key to retrieve an edge state in the associated direction using
+     * {@link Graph#getEdgeIteratorStateForKey(int)}. Loop edges are always returned in 'forward' direction even when
+     * you use an odd edge key.
      */
     int getEdgeKey();
 

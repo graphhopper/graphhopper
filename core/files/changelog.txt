@@ -1,5 +1,6 @@
 3.0
     removed Dockerfile
+    the second argument of the VirtualEdgeIteratorState constructor is now an edge key (was an edge id before)
 
 2.0
     renamed QueryResult -> Snap

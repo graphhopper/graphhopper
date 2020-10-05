@@ -35,7 +35,6 @@ import com.graphhopper.util.PointList;
  */
 public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private final PointList pointList;
-    private final int edgeId;
     private final int edgeKey;
     private final int baseNode;
     private final int adjNode;
@@ -48,10 +47,9 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
 
-    public VirtualEdgeIteratorState(int originalEdgeKey, int edgeId, int edgeKey, int baseNode, int adjNode, double distance,
+    public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
                                     IntsRef edgeFlags, String name, PointList pointList, boolean reverse) {
         this.originalEdgeKey = originalEdgeKey;
-        this.edgeId = edgeId;
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
@@ -63,7 +61,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     /**
-     * This method returns the original (not virtual!) edge via its key. I.e. also the direction is
+     * This method returns the original (not virtual!) edge key. I.e. also the direction is
      * already correctly encoded.
      *
      * @see GHUtility#createEdgeKey(int, int, int, boolean)
@@ -74,7 +72,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public int getEdge() {
-        return edgeId;
+        return GHUtility.getEdgeFromEdgeKey(edgeKey);
     }
 
     @Override
