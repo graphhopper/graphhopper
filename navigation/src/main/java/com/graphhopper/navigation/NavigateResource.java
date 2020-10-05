@@ -25,6 +25,8 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.VoiceInstructionDistanceConfig;
+import com.graphhopper.util.VoiceInstructionDistanceUtils;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,11 +115,11 @@ public class NavigateResource {
         if (overview.equals("full"))
             minPathPrecision = 0;
 
-        DistanceUtils.Unit unit;
+        VoiceInstructionDistanceUtils.Unit unit;
         if (voiceUnits.equals("metric")) {
-            unit = DistanceUtils.Unit.METRIC;
+            unit = VoiceInstructionDistanceUtils.Unit.METRIC;
         } else {
-            unit = DistanceUtils.Unit.IMPERIAL;
+            unit = VoiceInstructionDistanceUtils.Unit.IMPERIAL;
         }
 
         String ghProfile = resolverMap.getOrDefault(mapboxProfile, mapboxProfile);
@@ -145,7 +147,7 @@ public class NavigateResource {
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
                 + took + ", " + ghProfile;
         Locale locale = Helper.getLocale(localeStr);
-        DistanceConfig config = new DistanceConfig(unit, translationMap, locale);
+        VoiceInstructionDistanceConfig config = new VoiceInstructionDistanceConfig(unit, translationMap.getWithFallBack(locale));
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());

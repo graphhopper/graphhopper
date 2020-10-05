@@ -36,7 +36,7 @@ public class NavigateResponseConverter {
     /**
      * Converts a GHResponse into a json that follows the Mapbox API specification
      */
-    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, Locale locale, DistanceConfig distanceConfig) {
+    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, Locale locale, VoiceInstructionDistanceConfig voiceInstructionDistanceConfig) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         if (ghResponse.hasErrors())
@@ -52,7 +52,7 @@ public class NavigateResponseConverter {
             ResponsePath path = paths.get(i);
             ObjectNode pathJson = routesJson.addObject();
 
-            putRouteInformation(pathJson, path, i, translationMap, locale, distanceConfig);
+            putRouteInformation(pathJson, path, i, translationMap, locale, voiceInstructionDistanceConfig);
         }
 
         final ArrayNode waypointsJson = json.putArray("waypoints");
@@ -70,7 +70,7 @@ public class NavigateResponseConverter {
         return json;
     }
 
-    private static void putRouteInformation(ObjectNode pathJson, ResponsePath path, int routeNr, TranslationMap translationMap, Locale locale, DistanceConfig distanceConfig) {
+    private static void putRouteInformation(ObjectNode pathJson, ResponsePath path, int routeNr, TranslationMap translationMap, Locale locale, VoiceInstructionDistanceConfig voiceInstructionDistanceConfig) {
         InstructionList instructions = path.getInstructions();
 
         pathJson.put("geometry", WebHelper.encodePolyline(path.getPoints(), false, 1e6));
@@ -85,7 +85,7 @@ public class NavigateResponseConverter {
 
         for (int i = 0; i < instructions.size(); i++) {
             ObjectNode instructionJson = steps.addObject();
-            putInstruction(instructions, i, locale, translationMap, instructionJson, isFirstInstructionOfLeg, distanceConfig);
+            putInstruction(instructions, i, locale, translationMap, instructionJson, isFirstInstructionOfLeg, voiceInstructionDistanceConfig);
             Instruction instruction = instructions.get(i);
             time += instruction.getTime();
             distance += instruction.getDistance();
@@ -127,7 +127,7 @@ public class NavigateResponseConverter {
     }
 
     private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, TranslationMap translationMap,
-                                             ObjectNode instructionJson, boolean isFirstInstructionOfLeg, DistanceConfig distanceConfig) {
+                                             ObjectNode instructionJson, boolean isFirstInstructionOfLeg, VoiceInstructionDistanceConfig voiceInstructionDistanceConfig) {
         Instruction instruction = instructions.get(index);
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
@@ -169,7 +169,7 @@ public class NavigateResponseConverter {
 
         // Voice and banner instructions are empty for the last element
         if (index + 1 < instructions.size()) {
-            putVoiceInstructions(instructions, distance, index, locale, translationMap, voiceInstructions, distanceConfig);
+            putVoiceInstructions(instructions, distance, index, locale, translationMap, voiceInstructions, voiceInstructionDistanceConfig);
             putBannerInstructions(instructions, distance, index, locale, translationMap, bannerInstructions);
         }
 
@@ -177,7 +177,7 @@ public class NavigateResponseConverter {
     }
 
     private static void putVoiceInstructions(InstructionList instructions, double distance, int index, Locale locale, TranslationMap translationMap,
-                                             ArrayNode voiceInstructions, DistanceConfig distanceConfig) {
+                                             ArrayNode voiceInstructions, VoiceInstructionDistanceConfig distanceConfig) {
         /*
             A VoiceInstruction Object looks like this
             {

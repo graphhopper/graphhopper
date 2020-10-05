@@ -15,34 +15,31 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.navigation;
-
-import com.graphhopper.util.TranslationMap;
+package com.graphhopper.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
-import static com.graphhopper.navigation.DistanceUtils.UnitTranslationKey.*;
+import static com.graphhopper.util.VoiceInstructionDistanceUtils.UnitTranslationKey.*;
 
-public class DistanceConfig {
+public class VoiceInstructionDistanceConfig {
     final List<VoiceInstructionConfig> voiceInstructions;
 
-    public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale) {
-        if (unit == DistanceUtils.Unit.METRIC) {
+    public VoiceInstructionDistanceConfig(VoiceInstructionDistanceUtils.Unit unit, Translation translation) {
+        if (unit == VoiceInstructionDistanceUtils.Unit.METRIC) {
             voiceInstructions = Arrays.asList(
-                    new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
-                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 2000, 2),
-                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.metric, translationMap, locale, 1000, 1),
-                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{400, 200}, new int[]{400, 200})
+                    new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translation, 4250, 250, unit),
+                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric, translation, 2000, 2),
+                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.metric, translation, 1000, 1),
+                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translation, new int[]{400, 200}, new int[]{400, 200})
             );
         } else {
             voiceInstructions = Arrays.asList(
-                    new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
-                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.imperial, translationMap, locale, 3220, 2),
-                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.imperial, translationMap, locale, 1610, 1),
-                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{400, 200}, new int[]{1300, 600})
+                    new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translation, 4250, 250, unit),
+                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.imperial, translation, 3220, 2),
+                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.imperial, translation, 1610, 1),
+                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translation, new int[]{400, 200}, new int[]{1300, 600})
             );
         }
 

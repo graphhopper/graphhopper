@@ -15,9 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.navigation;
+package com.graphhopper.util;
 
-public class DistanceUtils {
+public class VoiceInstructionDistanceUtils {
 
     static float meterToFeet = 3.28084f;
     static float meterToMiles = 0.00062137f;

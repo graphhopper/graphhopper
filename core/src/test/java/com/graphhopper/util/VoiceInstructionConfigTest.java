@@ -1,11 +1,10 @@
-package com.graphhopper.navigation;
+package com.graphhopper.util;
 
-import com.graphhopper.util.TranslationMap;
 import org.junit.Test;
 
 import java.util.Locale;
 
-import static com.graphhopper.navigation.DistanceUtils.UnitTranslationKey.*;
+import static com.graphhopper.util.VoiceInstructionDistanceUtils.UnitTranslationKey.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -17,12 +16,12 @@ public class VoiceInstructionConfigTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void conditionalDistanceVICShouldHaveSameImportValueSize() {
-        new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, trMap, locale, new int[]{400, 200}, new int[]{400});
+        new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, trMap.getWithFallBack(locale), new int[]{400, 200}, new int[]{400});
     }
 
     @Test
     public void conditionalDistanceVICShouldReturnFirstFittingMetricValues() {
-        ConditionalDistanceVoiceInstructionConfig config = new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, trMap, locale, new int[]{400, 200}, new int[]{400, 200});
+        ConditionalDistanceVoiceInstructionConfig config = new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, trMap.getWithFallBack(locale), new int[]{400, 200}, new int[]{400, 200});
 
         compareVoiceInstructionValues(
                 400,
@@ -60,7 +59,7 @@ public class VoiceInstructionConfigTest {
     @Test
     public void conditionalDistanceVICShouldReturnFirstFittingImperialValues() {
         ConditionalDistanceVoiceInstructionConfig config = new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial,
-                trMap, locale, new int[]{400, 200}, new int[]{600, 500});
+                trMap.getWithFallBack(locale), new int[]{400, 200}, new int[]{600, 500});
 
         compareVoiceInstructionValues(
                 400,
@@ -97,8 +96,8 @@ public class VoiceInstructionConfigTest {
 
     @Test
     public void initialVICMetricTest() {
-        InitialVoiceInstructionConfig configMetric = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, trMap,
-                locale, 4250, 250, DistanceUtils.Unit.METRIC);
+        InitialVoiceInstructionConfig configMetric = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric,
+                trMap.getWithFallBack(locale), 4250, 250, VoiceInstructionDistanceUtils.Unit.METRIC);
 
         compareVoiceInstructionValues(
                 4000,
@@ -115,8 +114,8 @@ public class VoiceInstructionConfigTest {
 
     @Test
     public void germanInitialVICMetricTest() {
-        InitialVoiceInstructionConfig configMetric = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, trMap,
-                Locale.GERMAN, 4250, 250, DistanceUtils.Unit.METRIC);
+        InitialVoiceInstructionConfig configMetric = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric,
+                trMap.getWithFallBack(Locale.GERMAN), 4250, 250, VoiceInstructionDistanceUtils.Unit.METRIC);
 
         compareVoiceInstructionValues(
                 4000,
@@ -133,8 +132,8 @@ public class VoiceInstructionConfigTest {
 
     @Test
     public void initialVICImperialTest() {
-        InitialVoiceInstructionConfig configImperial = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.imperial, trMap,
-                locale, 4250, 250, DistanceUtils.Unit.IMPERIAL);
+        InitialVoiceInstructionConfig configImperial = new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.imperial,
+                trMap.getWithFallBack(locale), 4250, 250, VoiceInstructionDistanceUtils.Unit.IMPERIAL);
 
         compareVoiceInstructionValues(
                 3219,
@@ -152,7 +151,7 @@ public class VoiceInstructionConfigTest {
     @Test
     public void fixedDistanceInitialVICMetricTest() {
         FixedDistanceVoiceInstructionConfig configMetric = new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric,
-                trMap, locale, 2000, 2);
+                trMap.getWithFallBack(locale), 2000, 2);
 
         compareVoiceInstructionValues(
                 2000,
@@ -172,7 +171,7 @@ public class VoiceInstructionConfigTest {
     @Test
     public void germanFixedDistanceInitialVICMetricTest() {
         FixedDistanceVoiceInstructionConfig configMetric = new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric,
-                trMap, Locale.GERMAN, 2000, 2);
+                trMap.getWithFallBack(Locale.GERMAN), 2000, 2);
 
         compareVoiceInstructionValues(
                 2000,
@@ -192,7 +191,7 @@ public class VoiceInstructionConfigTest {
     @Test
     public void fixedDistanceInitialVICImperialTest() {
         FixedDistanceVoiceInstructionConfig configImperial = new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.imperial,
-                trMap, locale, 2000, 2);
+                trMap.getWithFallBack(locale), 2000, 2);
 
         compareVoiceInstructionValues(
                 2000,

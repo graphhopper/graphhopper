@@ -1,27 +1,20 @@
-package com.graphhopper.navigation;
+package com.graphhopper.util;
 
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.TranslationMap;
+import static com.graphhopper.util.VoiceInstructionDistanceUtils.meterToKilometer;
+import static com.graphhopper.util.VoiceInstructionDistanceUtils.meterToMiles;
 
-import java.util.Locale;
-
-import static com.graphhopper.navigation.DistanceUtils.meterToKilometer;
-import static com.graphhopper.navigation.DistanceUtils.meterToMiles;
-
-abstract class VoiceInstructionConfig {
+public abstract class VoiceInstructionConfig {
     protected final String translationKey;
-    protected final TranslationMap translationMap;
-    protected final Locale locale;
+    protected final Translation translation;
 
-    public VoiceInstructionConfig(String translationKey, TranslationMap translationMap, Locale locale) {
+    public VoiceInstructionConfig(String translationKey, Translation translation) {
         this.translationKey = translationKey;
-        this.translationMap = translationMap;
-        this.locale = locale;
+        this.translation = translation;
     }
 
-    class VoiceInstructionValue {
-        final int spokenDistance;
-        final String turnDescription;
+    public static class VoiceInstructionValue {
+        public final int spokenDistance;
+        public final String turnDescription;
 
         public VoiceInstructionValue(int spokenDistance, String turnDescription) {
             this.spokenDistance = spokenDistance;
@@ -39,9 +32,9 @@ class ConditionalDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
     private final int[] distanceAlongGeometry; // distances in meter in which the instruction should be spoken
     private final int[] distanceVoiceValue; // distances in required unit. f.e: 1km, 300m or 2mi
 
-    public ConditionalDistanceVoiceInstructionConfig(String key, TranslationMap translationMap, Locale locale,
-                                                     int[] distanceAlongGeometry, int[] distanceVoiceValue) {
-        super(key, translationMap, locale);
+    public ConditionalDistanceVoiceInstructionConfig(String key, Translation translation, int[] distanceAlongGeometry,
+                                                     int[] distanceVoiceValue) {
+        super(key, translation);
         this.distanceAlongGeometry = distanceAlongGeometry;
         this.distanceVoiceValue = distanceVoiceValue;
         if (distanceAlongGeometry.length != distanceVoiceValue.length) {
@@ -64,7 +57,7 @@ class ConditionalDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
         if (instructionIndex < 0) {
             return null;
         }
-        String totalDescription = translationMap.getWithFallBack(locale).tr("navigate." + translationKey, distanceVoiceValue[instructionIndex]) + " " + turnDescription + thenVoiceInstruction;
+        String totalDescription = translation.tr("navigate." + translationKey, distanceVoiceValue[instructionIndex]) + " " + turnDescription + thenVoiceInstruction;
         int spokenDistance = distanceAlongGeometry[instructionIndex];
         return new VoiceInstructionValue(spokenDistance, totalDescription);
     }
@@ -74,8 +67,8 @@ class FixedDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
     private final int distanceAlongGeometry; // distance in meter in which the instruction should be spoken
     private final int distanceVoiceValue; // distance in required unit. f.e: 1km, 300m or 2mi
 
-    public FixedDistanceVoiceInstructionConfig(String key, TranslationMap navigateResponseConverterTranslationMap, Locale locale, int distanceAlongGeometry, int distanceVoiceValue) {
-        super(key, navigateResponseConverterTranslationMap, locale);
+    public FixedDistanceVoiceInstructionConfig(String key, Translation translation, int distanceAlongGeometry, int distanceVoiceValue) {
+        super(key, translation);
         this.distanceAlongGeometry = distanceAlongGeometry;
         this.distanceVoiceValue = distanceVoiceValue;
     }
@@ -83,7 +76,7 @@ class FixedDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
     @Override
     public VoiceInstructionValue getConfigForDistance(double distance, String turnDescription, String thenVoiceInstruction) {
         if (distance >= distanceAlongGeometry) {
-            String totalDescription = translationMap.getWithFallBack(locale).tr("navigate." + translationKey, distanceVoiceValue) + " " + turnDescription;
+            String totalDescription = translation.tr("navigate." + translationKey, distanceVoiceValue) + " " + turnDescription;
             return new VoiceInstructionValue(distanceAlongGeometry, totalDescription);
         }
         return null;
@@ -95,21 +88,19 @@ class InitialVoiceInstructionConfig extends VoiceInstructionConfig {
     // The instruction should not be spoken straight away, but wait until the user merged on the new road and can listen to instructions again
     private final int distanceDelay; // delay distance in meter
     private final int distanceForInitialStayInstruction; // min distance in meter for initial instruction
-    private final DistanceUtils.Unit unit;
-    private final TranslationMap translationMap;
+    private final VoiceInstructionDistanceUtils.Unit unit;
 
-    public InitialVoiceInstructionConfig(String key, TranslationMap translationMap, Locale locale, int distanceForInitialStayInstruction, int distanceDelay, DistanceUtils.Unit unit) {
-        super(key, translationMap, locale);
+    public InitialVoiceInstructionConfig(String key, Translation translation, int distanceForInitialStayInstruction, int distanceDelay, VoiceInstructionDistanceUtils.Unit unit) {
+        super(key, translation);
         this.distanceForInitialStayInstruction = distanceForInitialStayInstruction;
         this.distanceDelay = distanceDelay;
         this.unit = unit;
-        this.translationMap = translationMap;
     }
 
     private int distanceAlongGeometry(double distanceMeter) {
         // Cast to full units
         int tmpDistance = (int) (distanceMeter - distanceDelay);
-        if (unit == DistanceUtils.Unit.METRIC) {
+        if (unit == VoiceInstructionDistanceUtils.Unit.METRIC) {
             return (tmpDistance / 1000) * 1000;
         } else {
             tmpDistance = (int) (tmpDistance * meterToMiles);
@@ -118,7 +109,7 @@ class InitialVoiceInstructionConfig extends VoiceInstructionConfig {
     }
 
     private int distanceVoiceValue(double distanceInMeter) {
-        if (unit == DistanceUtils.Unit.METRIC) {
+        if (unit == VoiceInstructionDistanceUtils.Unit.METRIC) {
             return (int) (distanceAlongGeometry(distanceInMeter) * meterToKilometer);
         } else {
             return (int) (distanceAlongGeometry(distanceInMeter) * meterToMiles);
@@ -130,8 +121,8 @@ class InitialVoiceInstructionConfig extends VoiceInstructionConfig {
         if (distance > distanceForInitialStayInstruction) {
             int spokenDistance = distanceAlongGeometry(distance);
             int distanceVoiceValue = distanceVoiceValue(distance);
-            String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " " +
-                    this.translationMap.getWithFallBack(locale).tr("navigate." + translationKey, distanceVoiceValue);
+            String continueDescription = translation.tr("continue") + " " +
+                    translation.tr("navigate." + translationKey, distanceVoiceValue);
             continueDescription = Helper.firstBig(continueDescription);
             return new VoiceInstructionValue(spokenDistance, continueDescription);
         }
