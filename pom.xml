@@ -147,7 +147,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <gh.version>3.0-SNAPSHOT</gh.version>
+                <gh.version>${version}</gh.version>
             </properties>
         </profile>
         <profile>
