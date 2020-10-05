@@ -25,7 +25,7 @@ import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalcEuclidean;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -178,17 +178,17 @@ public class GraphExplorerTest {
 
         WrapperGraph wrapperGraph = new WrapperGraph(graph, extraEdges);
 
-        QueryResult point1 = new QueryResult(3.5, 3.5);
-        QueryResult point2 = new QueryResult(4.5, 4.5);
+        Snap point1 = new Snap(3.5, 3.5);
+        Snap point2 = new Snap(4.5, 4.5);
         point1.setClosestEdge(c);
         point1.setQueryDistance(0.0);
         point1.setWayIndex(0);
-        point1.setSnappedPosition(QueryResult.Position.EDGE);
+        point1.setSnappedPosition(Snap.Position.EDGE);
         point1.calcSnappedPoint(new DistanceCalcEuclidean());
         point2.setClosestEdge(d);
         point2.setQueryDistance(0.0);
         point2.setWayIndex(0);
-        point2.setSnappedPosition(QueryResult.Position.EDGE);
+        point2.setSnappedPosition(Snap.Position.EDGE);
         point2.calcSnappedPoint(new DistanceCalcEuclidean());
         QueryGraph queryGraph = QueryGraph.create(wrapperGraph, point1, point2);
 

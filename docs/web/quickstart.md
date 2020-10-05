@@ -5,13 +5,13 @@ The following steps are simpler and only need the JRE, a jar file and an OSM fil
 
  1. Install the latest JRE 
  2. Get the [GraphHopper Web Service](https://github.com/graphhopper/graphhopper/blob/master/README.md#get-started)
-as jar file and download this [config-example.yml](https://raw.githubusercontent.com/graphhopper/graphhopper/1.0/config-example.yml)
+as jar file and download this [config-example.yml](https://raw.githubusercontent.com/graphhopper/graphhopper/stable/config-example.yml)
  3. Copy an OSM file to the same directory. For example [berlin-latest.osm.pbf](http://download.geofabrik.de/europe/germany/berlin.html)
  4. Start GraphHopper Maps via: 
     ```bash
     java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
     ```
- 5. After you see 'Started server at HTTP 8989' go to [http://localhost:8989/](http://localhost:8989/) and you should see a map of Berlin. You should be able to click on the map and a route appears.
+ 5. After a while you see a log message with 'Server - Started', then go to [http://localhost:8989/](http://localhost:8989/) and you should see a map of Berlin. You should be able to right click on the map to create a route.
 
 See [here](./../core/elevation.md) how to easily enable elevation data. To see how GraphHopper is configured for production usage, see the [deployment guide](./../core/deploy.md).
 

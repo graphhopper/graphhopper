@@ -14,9 +14,10 @@ Then do:
 
 ```bash
 git clone git://github.com/graphhopper/graphhopper.git
-cd graphhopper; git checkout 1.0
+cd graphhopper
+git checkout stable
 ./graphhopper.sh -a web -i europe_germany_berlin.pbf
-# now go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
+# after Server started go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
 ```
 
 In the last step the data is created to get routes within the Berlin area:

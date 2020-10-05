@@ -31,7 +31,7 @@ public class OSMSurfaceParserTest {
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
-        assertEquals(Surface.OTHER, surfaceEnc.getEnum(false, intsRef));
+        assertEquals(Surface.MISSING, surfaceEnc.getEnum(false, intsRef));
 
         readerWay.setTag("surface", "cobblestone");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);

@@ -20,10 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 
 /**
  * Builds a {@link Path} from the two fwd- and bwd-shortest path tree entries of a bidirectional search
@@ -68,7 +65,7 @@ public class BidirPathExtractor {
         SPTEntry fwdRoot = followParentsUntilRoot(sptEntry, false);
         onFwdTreeRoot(fwdRoot.adjNode);
         // since we followed the fwd path in backward direction we need to reverse the edge ids
-        path.reverseEdges();
+        ArrayUtil.reverse(path.getEdges());
     }
 
     protected void extractBwdPath(SPTEntry sptEntry) {

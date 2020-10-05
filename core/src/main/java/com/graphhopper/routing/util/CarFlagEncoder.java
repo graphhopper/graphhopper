@@ -48,22 +48,19 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
     public CarFlagEncoder() {
-        this(5, 5, 0);
-    }
-
-    public CarFlagEncoder(PMap properties) {
-        this(properties.getInt("speed_bits", 5),
-                properties.getDouble("speed_factor", 5),
-                properties.getBool("turn_costs", false) ? 1 : 0);
-
-        blockPrivate(properties.getBool("block_private", true));
-        blockFords(properties.getBool("block_fords", false));
-        blockBarriersByDefault(properties.getBool("block_barriers", true));
-        setSpeedTwoDirections(properties.getBool("speed_two_directions", false));
+        this(new PMap());
     }
 
     public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+        this(new PMap().putObject("speed_bits", speedBits).putObject("speed_factor", speedFactor).
+                putObject("max_turn_costs", maxTurnCosts));
+    }
+
+    public CarFlagEncoder(PMap properties) {
+        super(properties.getInt("speed_bits", 5),
+                properties.getDouble("speed_factor", 5),
+                properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
+
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -73,6 +70,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restrictedValues.add("military");
         restrictedValues.add("emergency");
         restrictedValues.add("private");
+
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
+        blockBarriersByDefault(properties.getBool("block_barriers", true));
+        setSpeedTwoDirections(properties.getBool("speed_two_directions", false));
 
         intendedValues.add("yes");
         intendedValues.add("permissive");
@@ -303,7 +305,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
      */
     protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {
         // limit speed if bad surface
-        if (badSurfaceSpeed > 0 && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
+        if (badSurfaceSpeed > 0 && isValidSpeed(speed) && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
             speed = badSurfaceSpeed;
         return speed;
     }

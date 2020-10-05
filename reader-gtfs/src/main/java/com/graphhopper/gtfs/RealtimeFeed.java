@@ -237,11 +237,6 @@ public class RealtimeFeed {
             }
 
             @Override
-            public EdgeExplorer createEdgeExplorer() {
-                return graphHopperStorage.createEdgeExplorer();
-            }
-
-            @Override
             public Graph copyTo(Graph g) {
                 return null;
             }

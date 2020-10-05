@@ -27,9 +27,14 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -50,26 +55,32 @@ class TripFromLabel {
 
     private static final Logger logger = LoggerFactory.getLogger(TripFromLabel.class);
 
+    private final GraphHopperStorage graphHopperStorage;
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final GeometryFactory geometryFactory = new GeometryFactory();
+    private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
 
-    TripFromLabel(GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
+    TripFromLabel(GraphHopperStorage graphHopperStorage, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+        this.graphHopperStorage = graphHopperStorage;
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
+        this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
     }
 
-    ResponsePath createResponsePath(Translation tr, PointList waypoints, List<Trip.Leg> legs) {
+    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting accessEgressWeighting, List<Label.Transition> solution, List<String> requestedPathDetails) {
+        final List<Trip.Leg> legs = buildLegs(tr, queryGraph, accessEgressWeighting, solution, requestedPathDetails);
+
         if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {
             final Trip.WalkLeg accessLeg = (Trip.WalkLeg) legs.get(0);
             legs.set(0, new Trip.WalkLeg(accessLeg.departureLocation, new Date(legs.get(1).getDepartureTime().getTime() - (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime())),
-                    accessLeg.geometry, accessLeg.distance, accessLeg.instructions, legs.get(1).getDepartureTime()));
+                    accessLeg.geometry, accessLeg.distance, accessLeg.instructions, accessLeg.details, legs.get(1).getDepartureTime()));
         }
         if (legs.size() > 1 && legs.get(legs.size() - 1) instanceof Trip.WalkLeg) {
             final Trip.WalkLeg egressLeg = (Trip.WalkLeg) legs.get(legs.size() - 1);
             legs.set(legs.size() - 1, new Trip.WalkLeg(egressLeg.departureLocation, legs.get(legs.size() - 2).getArrivalTime(),
                     egressLeg.geometry, egressLeg.distance, egressLeg.instructions,
-                    new Date(legs.get(legs.size() - 2).getArrivalTime().getTime() + (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime()))));
+                    egressLeg.details, new Date(legs.get(legs.size() - 2).getArrivalTime().getTime() + (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime()))));
         }
 
         ResponsePath path = new ResponsePath();
@@ -77,12 +88,50 @@ class TripFromLabel {
 
         path.getLegs().addAll(legs);
 
-        final InstructionList instructions = getInstructions(tr, path.getLegs());
-        path.setInstructions(instructions);
-        PointList pointsList = new PointList();
-        for (Instruction instruction : instructions) {
-            pointsList.add(instruction.getPoints());
+        final InstructionList instructions = new InstructionList(tr);
+        final PointList pointsList = new PointList();
+        for (int i = 0; i < path.getLegs().size(); ++i) {
+            Trip.Leg leg = path.getLegs().get(i);
+            if (leg instanceof Trip.WalkLeg) {
+                final Trip.WalkLeg walkLeg = ((Trip.WalkLeg) leg);
+                List<Instruction> theseInstructions = walkLeg.instructions.subList(0, i < path.getLegs().size() - 1 ? walkLeg.instructions.size() - 1 : walkLeg.instructions.size());
+                int previousPointsCount = pointsList.size();
+                for (Instruction instruction : theseInstructions) {
+                    pointsList.add(instruction.getPoints());
+                }
+                instructions.addAll(theseInstructions);
+                path.addPathDetails(shift(((Trip.WalkLeg) leg).details, previousPointsCount));
+            } else if (leg instanceof Trip.PtLeg) {
+                final Trip.PtLeg ptLeg = ((Trip.PtLeg) leg);
+                final PointList pl;
+                if (!ptLeg.isInSameVehicleAsPrevious) {
+                    pl = new PointList();
+                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, InstructionAnnotation.EMPTY, pl);
+                    departureInstruction.setDistance(leg.getDistance());
+                    departureInstruction.setTime(ptLeg.travelTime);
+                    instructions.add(departureInstruction);
+                } else {
+                    pl = instructions.get(instructions.size() - 2).getPoints();
+                }
+                pl.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX());
+                pointsList.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX());
+                for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size() - 1)) {
+                    pl.add(stop.geometry.getY(), stop.geometry.getX());
+                    pointsList.add(stop.geometry.getY(), stop.geometry.getX());
+                }
+                final PointList arrivalPointList = new PointList();
+                final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
+                arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
+                pointsList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
+                Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, InstructionAnnotation.EMPTY, arrivalPointList);
+                if (ptLeg.isInSameVehicleAsPrevious) {
+                    instructions.set(instructions.size() - 1, arrivalInstruction);
+                } else {
+                    instructions.add(arrivalInstruction);
+                }
+            }
         }
+        path.setInstructions(instructions);
         path.setPoints(pointsList);
         path.setDistance(path.getLegs().stream().mapToDouble(Trip.Leg::getDistance).sum());
         path.setTime((legs.get(legs.size() - 1).getArrivalTime().toInstant().toEpochMilli() - legs.get(0).getDepartureTime().toInstant().toEpochMilli()));
@@ -114,16 +163,25 @@ class TripFromLabel {
         return path;
     }
 
-    List<Trip.Leg> getTrip(Translation tr, Graph queryGraph, Weighting weighting, List<Label.Transition> transitions) {
-        final List<List<Label.Transition>> partitions = getPartitions(transitions);
-        final List<Trip.Leg> legs = getLegs(tr, queryGraph, weighting, partitions);
-        return legs;
+    private Map<String, List<PathDetail>> shift(Map<String, List<PathDetail>> pathDetailss, int previousPointsCount) {
+        for (List<PathDetail> pathDetails : pathDetailss.values()) {
+            for (PathDetail pathDetail : pathDetails) {
+                pathDetail.setFirst(pathDetail.getFirst() + previousPointsCount);
+                pathDetail.setLast(pathDetail.getLast() + previousPointsCount);
+            }
+        }
+        return pathDetailss;
     }
 
-    private List<List<Label.Transition>> getPartitions(List<Label.Transition> transitions) {
+    private List<Trip.Leg> buildLegs(Translation tr, Graph queryGraph, Weighting weighting, List<Label.Transition> path, List<String> requestedPathDetails) {
+        final List<List<Label.Transition>> partitions = parsePathToPartitions(path);
+        return partitions.stream().flatMap(partition -> parsePartitionToLegs(partition, queryGraph, weighting, tr, requestedPathDetails).stream()).collect(Collectors.toList());
+    }
+
+    private List<List<Label.Transition>> parsePathToPartitions(List<Label.Transition> path) {
         List<List<Label.Transition>> partitions = new ArrayList<>();
         partitions.add(new ArrayList<>());
-        final Iterator<Label.Transition> iterator = transitions.iterator();
+        final Iterator<Label.Transition> iterator = path.iterator();
         partitions.get(partitions.size() - 1).add(iterator.next());
         iterator.forEachRemaining(transition -> {
             final List<Label.Transition> previous = partitions.get(partitions.size() - 1);
@@ -136,47 +194,6 @@ class TripFromLabel {
             partitions.get(partitions.size() - 1).add(transition);
         });
         return partitions;
-    }
-
-    private List<Trip.Leg> getLegs(Translation tr, Graph queryGraph, Weighting weighting, List<List<Label.Transition>> partitions) {
-        return partitions.stream().flatMap(partition -> parsePathIntoLegs(partition, queryGraph, weighting, tr).stream()).collect(Collectors.toList());
-    }
-
-    private InstructionList getInstructions(Translation tr, List<Trip.Leg> legs) {
-        final InstructionList instructions = new InstructionList(tr);
-        for (int i = 0; i < legs.size(); ++i) {
-            Trip.Leg leg = legs.get(i);
-            if (leg instanceof Trip.WalkLeg) {
-                final Trip.WalkLeg walkLeg = ((Trip.WalkLeg) leg);
-                instructions.addAll(walkLeg.instructions.subList(0, i < legs.size() - 1 ? walkLeg.instructions.size() - 1 : walkLeg.instructions.size()));
-            } else if (leg instanceof Trip.PtLeg) {
-                final Trip.PtLeg ptLeg = ((Trip.PtLeg) leg);
-                final PointList pl;
-                if (!ptLeg.isInSameVehicleAsPrevious) {
-                    pl = new PointList();
-                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, InstructionAnnotation.EMPTY, pl);
-                    departureInstruction.setDistance(leg.getDistance());
-                    departureInstruction.setTime(ptLeg.travelTime);
-                    instructions.add(departureInstruction);
-                } else {
-                    pl = instructions.get(instructions.size() - 2).getPoints();
-                }
-                pl.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX());
-                for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size() - 1)) {
-                    pl.add(stop.geometry.getY(), stop.geometry.getX());
-                }
-                final PointList arrivalPointList = new PointList();
-                final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
-                arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
-                Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, InstructionAnnotation.EMPTY, arrivalPointList);
-                if (ptLeg.isInSameVehicleAsPrevious) {
-                    instructions.set(instructions.size() - 1, arrivalInstruction);
-                } else {
-                    instructions.add(arrivalInstruction);
-                }
-            }
-        }
-        return instructions;
     }
 
     private class StopsFromBoardHopDwellEdges {
@@ -287,7 +304,6 @@ class TripFromLabel {
         }
 
         private void validateTripUpdate(GtfsReader.TripWithStopTimes tripUpdate) {
-            com.conveyal.gtfs.model.Trip originalTrip = gtfsFeed.trips.get(tripUpdate.trip.trip_id);
             try {
                 Iterable<StopTime> interpolatedStopTimesForTrip = gtfsFeed.getInterpolatedStopTimesForTrip(tripUpdate.trip.trip_id);
                 long nStopTimes = StreamSupport.stream(interpolatedStopTimesForTrip.spliterator(), false).count();
@@ -306,7 +322,7 @@ class TripFromLabel {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    private List<Trip.Leg> parsePathIntoLegs(List<Label.Transition> path, Graph graph, Weighting weighting, Translation tr) {
+    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, Weighting weighting, Translation tr, List<String> requestedPathDetails) {
         if (path.size() <= 1) {
             return Collections.emptyList();
         }
@@ -368,6 +384,17 @@ class TripFromLabel {
                 prevEdgeId = edge.getEdge();
             }
             instructionsFromEdges.finish();
+
+            Path pathh = new Path(graph);
+            for (Label.Transition transition : path) {
+                if (transition.edge != null)
+                    pathh.addEdge(transition.edge.edgeIteratorState.getEdge());
+            }
+            pathh.setFromNode(path.get(0).label.adjNode);
+            pathh.setEndNode(path.get(path.size()-1).label.adjNode);
+            pathh.setFound(true);
+            Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, graphHopperStorage.getEncodingManager(), weighting, requestedPathDetails, pathDetailsBuilderFactory, 0);
+
             final Instant departureTime = Instant.ofEpochMilli(path.get(0).label.currentTime);
             final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size() - 1).label.currentTime);
             return Collections.singletonList(new Trip.WalkLeg(
@@ -376,6 +403,7 @@ class TripFromLabel {
                     lineStringFromEdges(path),
                     edges(path).mapToDouble(edgeLabel -> edgeLabel.distance).sum(),
                     instructions,
+                    pathDetails,
                     Date.from(arrivalTime)));
         }
     }

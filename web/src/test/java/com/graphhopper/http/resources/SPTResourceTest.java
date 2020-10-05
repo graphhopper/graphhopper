@@ -96,9 +96,9 @@ public class SPTResourceTest {
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
         assertEquals("prev_node_id,edge_id,node_id,time,distance", lines[0]);
-        assertEquals("-1,-1,1884,0,0", lines[1]);
-        assertEquals("1884,2273,1324,3817,74", lines[2]);
-        assertEquals("1884,2272,263,13496,262", lines[3]);
+        assertEquals("-1,-1,1944,0,0", lines[1]);
+        assertEquals("1944,2273,1324,3817,74", lines[2]);
+        assertEquals("1944,2272,263,13496,262", lines[3]);
     }
 
     @Test

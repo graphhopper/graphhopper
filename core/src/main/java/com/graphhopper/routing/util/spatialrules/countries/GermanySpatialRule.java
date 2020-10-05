@@ -47,7 +47,7 @@ public class GermanySpatialRule extends AbstractSpatialRule {
      */
     @Override
     public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-        if (currentMaxSpeed > 0 || transport != TransportationMode.MOTOR_VEHICLE) {
+        if (!Double.isNaN(currentMaxSpeed) || transport != TransportationMode.MOTOR_VEHICLE) {
             return currentMaxSpeed;
         }
         
@@ -69,7 +69,7 @@ public class GermanySpatialRule extends AbstractSpatialRule {
             case LIVING_STREET:
                 return 4;
             default:
-                return -1;
+                return Double.NaN;
         }
     }
     

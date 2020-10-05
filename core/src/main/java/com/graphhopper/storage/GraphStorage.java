@@ -27,19 +27,4 @@ public interface GraphStorage extends Storable<GraphStorage> {
     String toDetailsString();
 
     StorableProperties getProperties();
-
-    /**
-     * Schedule the deletion of the specified node until an optimize() call happens
-     */
-    void markNodeRemoved(int index);
-
-    /**
-     * Checks if the specified node is marked as removed.
-     */
-    boolean isNodeRemoved(int index);
-
-    /**
-     * Performs optimization routines like deletion or node rearrangements.
-     */
-    void optimize();
 }

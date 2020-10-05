@@ -17,10 +17,10 @@
  */
 package com.graphhopper.util;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
@@ -296,26 +296,11 @@ public class GHUtility {
     }
 
     public static Graph shuffle(Graph g, Graph sortedGraph) {
-        if (g.getTurnCostStorage() != null) {
+        if (g.getTurnCostStorage() != null)
             throw new IllegalArgumentException("Shuffling the graph is currently not supported in the presence of turn costs");
-        }
-        int nodes = g.getNodes();
-        GHIntArrayList list = new GHIntArrayList(nodes);
-        list.fill(nodes, -1);
-        for (int i = 0; i < nodes; i++) {
-            list.set(i, i);
-        }
-        list.shuffle(new Random());
-
-        int edges = g.getEdges();
-        GHIntArrayList edgesList = new GHIntArrayList(edges);
-        edgesList.fill(edges, -1);
-        for (int i = 0; i < edges; i++) {
-            edgesList.set(i, i);
-        }
-        edgesList.shuffle(new Random());
-
-        return createSortedGraph(g, sortedGraph, list, edgesList);
+        IntArrayList nodes = ArrayUtil.permutation(g.getNodes(), new Random());
+        IntArrayList edges = ArrayUtil.permutation(g.getEdges(), new Random());
+        return createSortedGraph(g, sortedGraph, nodes, edges);
     }
 
     /**
@@ -327,14 +312,12 @@ public class GHUtility {
             throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
         }
         int nodes = g.getNodes();
-        final GHIntArrayList nodeList = new GHIntArrayList(nodes);
-        nodeList.fill(nodes, -1);
+        final IntArrayList nodeList = ArrayUtil.constant(nodes, -1);
         final GHBitSetImpl nodeBitset = new GHBitSetImpl(nodes);
         final AtomicInteger nodeRef = new AtomicInteger(-1);
 
         int edges = g.getEdges();
-        final GHIntArrayList edgeList = new GHIntArrayList(edges);
-        edgeList.fill(edges, -1);
+        final IntArrayList edgeList = ArrayUtil.constant(edges, -1);
         final GHBitSetImpl edgeBitset = new GHBitSetImpl(edges);
         final AtomicInteger edgeRef = new AtomicInteger(-1);
 

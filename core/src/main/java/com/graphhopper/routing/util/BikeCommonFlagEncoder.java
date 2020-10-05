@@ -172,6 +172,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         avoidHighwayTags.add("motorway");
         avoidHighwayTags.add("motorway_link");
 
+        setHighwaySpeed("bridleway", 6);
+        avoidHighwayTags.add("bridleway");
+
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
         routeMap.put(REGIONAL, VERY_NICE.getValue());
@@ -249,7 +252,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             return EncodingManager.Access.WAY;
 
         // accept only if explicitly tagged for bike usage
-        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue))
+        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue) || "bridleway".equals(highwayValue))
             return EncodingManager.Access.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
@@ -286,12 +289,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     @Override
     protected double applyMaxSpeed(ReaderWay way, double speed) {
         double maxSpeed = getMaxSpeed(way);
-        if (maxSpeed >= 0) {
-            // We strictly obey speed limits, see #600
-            if (speed > maxSpeed)
-                return maxSpeed;
+        // We strictly obey speed limits, see #600
+        if (isValidSpeed(maxSpeed) && speed > maxSpeed) {
+            return maxSpeed;
         }
-        if (speed > maxPossibleSpeed)
+        if (isValidSpeed(speed) && speed > maxPossibleSpeed)
             return maxPossibleSpeed;
         return speed;
     }
@@ -450,14 +452,14 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
 
         double maxSpeed = getMaxSpeed(way);
-        if (preferHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 30) {
-            if (maxSpeed < avoidSpeedLimit) {
+        if (preferHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 30)) {
+            if (!isValidSpeed(maxSpeed) || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, PREFER.getValue());
                 if (way.hasTag("tunnel", intendedValues))
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
         } else if (avoidHighwayTags.contains(highway)
-                || maxSpeed >= avoidSpeedLimit && !"track".equals(highway)) {
+                || isValidSpeed(maxSpeed) && maxSpeed >= avoidSpeedLimit && !"track".equals(highway)) {
             weightToPrioMap.put(50d, REACH_DEST.getValue());
             if (way.hasTag("tunnel", intendedValues))
                 weightToPrioMap.put(50d, AVOID_AT_ALL_COSTS.getValue());

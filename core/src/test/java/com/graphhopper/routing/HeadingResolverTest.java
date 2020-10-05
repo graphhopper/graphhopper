@@ -24,7 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalcEuclidean;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -109,8 +109,8 @@ class HeadingResolverTest {
         na.setNode(1, 48.8538, 2.3950);
 
         EdgeIteratorState edge = graph.edge(0, 1, 10, true);
-        QueryResult qr = createQR(edge, 48.859, 2.00, 0);
-        QueryGraph queryGraph = QueryGraph.create(graph, qr);
+        Snap snap = createSnap(edge, 48.859, 2.00, 0);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
         HeadingResolver resolver = new HeadingResolver(queryGraph);
 
         // if the heading points East we get the Western edge 0->2
@@ -122,13 +122,13 @@ class HeadingResolverTest {
         assertEquals(IntArrayList.from(2), resolver.getEdgesWithDifferentHeading(2, 270));
     }
 
-    private QueryResult createQR(EdgeIteratorState closestEdge, double lat, double lon, int wayIndex) {
-        QueryResult qr = new QueryResult(lat, lon);
-        qr.setClosestEdge(closestEdge);
-        qr.setSnappedPosition(QueryResult.Position.EDGE);
-        qr.setWayIndex(wayIndex);
-        qr.calcSnappedPoint(new DistanceCalcEuclidean());
-        return qr;
+    private Snap createSnap(EdgeIteratorState closestEdge, double lat, double lon, int wayIndex) {
+        Snap snap = new Snap(lat, lon);
+        snap.setClosestEdge(closestEdge);
+        snap.setSnappedPosition(Snap.Position.EDGE);
+        snap.setWayIndex(wayIndex);
+        snap.calcSnappedPoint(new DistanceCalcEuclidean());
+        return snap;
     }
 
 }

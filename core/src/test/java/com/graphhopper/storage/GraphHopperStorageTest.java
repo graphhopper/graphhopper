@@ -187,19 +187,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void testEnsureSize() {
-        Directory dir = new RAMDirectory();
-        graph = newGHStorage(dir, false).create(defaultSize);
-        int roughEdgeRowLength = 4 * 8;
-        int testIndex = dir.find("edges", DAType.RAM_INT).getSegmentSize() * 3 / roughEdgeRowLength;
-        // we need a big node index to trigger multiple segments, but low enough to avoid OOM
-        graph.edge(0, testIndex, 10, true);
-
-        // test if optimize works without error
-        graph.optimize();
-    }
-
-    @Test
     public void testBigDataEdge() {
         Directory dir = new RAMDirectory();
         GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false);

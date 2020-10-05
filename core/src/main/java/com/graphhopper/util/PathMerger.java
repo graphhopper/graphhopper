@@ -88,8 +88,8 @@ public class PathMerger {
         return this;
     }
 
-    public void doWork(ResponsePath responsePath, List<Path> paths, EncodedValueLookup evLookup, Translation tr) {
-        // todo: this method should return the/a new response path and not take it as a parameter
+    public ResponsePath doWork(PointList waypoints, List<Path> paths, EncodedValueLookup evLookup, Translation tr) {
+        ResponsePath responsePath = new ResponsePath();
         int origPoints = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
@@ -161,11 +161,13 @@ public class PathMerger {
                 setPoints(fullPoints).
                 setRouteWeight(fullWeight).
                 setDistance(fullDistance).
-                setTime(fullTimeInMillis);
+                setTime(fullTimeInMillis).
+                setWaypoints(waypoints);
 
         if (allFound && simplifyResponse && (calcPoints || enableInstructions)) {
             PathSimplification.simplify(responsePath, douglasPeucker, enableInstructions);
         }
+        return responsePath;
     }
 
     /**

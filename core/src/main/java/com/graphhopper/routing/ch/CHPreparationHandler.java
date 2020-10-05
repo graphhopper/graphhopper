@@ -185,17 +185,14 @@ public class CHPreparationHandler {
             LOGGER.info((++counter) + "/" + preparations.size() + " calling " +
                     "CH prepare.doWork for profile '" + prepare.getCHConfig().getName() + "' " + prepare.getCHConfig().getTraversalMode() + " ... (" + getMemInfo() + ")");
             final String name = prepare.getCHConfig().getName();
-            completionService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
-                    Thread.currentThread().setName(name);
-                    prepare.doWork();
-                    if (closeEarly)
-                        prepare.close();
+            completionService.submit(() -> {
+                // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
+                Thread.currentThread().setName(name);
+                prepare.doWork();
+                if (closeEarly)
+                    prepare.close();
 
-                    properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
-                }
+                properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
             }, name);
         }
 
@@ -209,6 +206,7 @@ public class CHPreparationHandler {
             threadPool.shutdownNow();
             throw new RuntimeException(e);
         }
+        LOGGER.info("Finished CH preparation, {}", getMemInfo());
     }
 
     public void createPreparations(GraphHopperStorage ghStorage) {
@@ -217,6 +215,7 @@ public class CHPreparationHandler {
         if (!hasCHConfigs())
             throw new IllegalStateException("No CH profiles found");
 
+        LOGGER.info("Creating CH preparations, {}", getMemInfo());
         for (CHConfig chConfig : chConfigs) {
             addPreparation(createCHPreparation(ghStorage, chConfig));
         }

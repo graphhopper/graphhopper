@@ -42,4 +42,9 @@ class QuadEdgeSubdivisionAsReadableTriangulation implements ReadableTriangulatio
     public ReadableQuadEdge getEdge(int v1, int v2) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public ReadableQuadEdge getVertexQuadEdge(int v) {
+        throw new UnsupportedOperationException();
+    }
 }
