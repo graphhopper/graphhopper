@@ -24,8 +24,8 @@ import com.baremaps.osm.model.Member;
 import com.baremaps.osm.model.Node;
 import com.baremaps.osm.model.Relation;
 import com.baremaps.osm.model.Way;
-import com.baremaps.osm.parser.EntityHandler;
-import com.baremaps.osm.parser.OSMEntityParser;
+import com.baremaps.osm.reader.EntityHandler;
+import com.baremaps.osm.reader.OsmEntityReader;
 import com.carrotsearch.hppc.IntLongMap;
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.LongIndexedContainer;
@@ -234,7 +234,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                 }
             };
 
-            new OSMEntityParser().parse(osmFile.toPath(), handler);
+            new OsmEntityReader().read(osmFile.toPath(), handler);
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -346,7 +346,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                 }
             };
 
-            new OSMEntityParser().parse(osmFile.toPath(), handler);
+            new OsmEntityReader().read(osmFile.toPath(), handler);
 
             finishedReading();
 
@@ -358,10 +358,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
             ex.printStackTrace();
             throw new RuntimeException("Problem while parsing file", ex);
         }
-    }
-
-    protected OSMInput openOsmInputFile(File osmFile) throws XMLStreamException, IOException {
-        return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
     }
 
     /**
