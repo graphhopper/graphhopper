@@ -1190,6 +1190,10 @@ public class GraphHopper implements GraphHopperAPI {
         fullyLoaded = true;
     }
 
+    public boolean getFullyLoaded(){
+        return fullyLoaded;
+    }
+
     public RouterConfig getRouterConfig() {
         return routerConfig;
     }
