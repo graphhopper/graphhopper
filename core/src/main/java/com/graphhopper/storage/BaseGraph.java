@@ -1191,8 +1191,6 @@ class BaseGraph implements Graph {
 
         @Override
         public int getEdgeKey() {
-            // edge state in storage direction -> edge key is even
-            // edge state against storage direction -> edge key is odd
             return GHUtility.createEdgeKey(edgeId, reverse);
         }
 
