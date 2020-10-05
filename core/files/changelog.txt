@@ -1,4 +1,5 @@
 2.0
+    AbstractFlagEncoder#getMaxSpeed returns now Double#NaN instead of -1 if no maxspeed was found
     renamed QueryResult -> Snap
     much faster CH preparation (node- and edge-based), but increased memory usage during preparation, #2132
     added navigation repo #2071
