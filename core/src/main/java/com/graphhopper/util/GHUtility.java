@@ -551,7 +551,6 @@ public class GHUtility {
      * Creates unique positive number for specified edgeId taking into account the direction defined
      * by nodeA, nodeB and reverse.
      */
-    // todonow: get rid of this?
     public static int createEdgeKey(int nodeA, int nodeB, int edgeId, boolean reverse) {
         edgeId = edgeId << 1;
         if (reverse)
