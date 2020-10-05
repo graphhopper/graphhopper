@@ -907,8 +907,8 @@ public class QueryGraphTest {
         edge.setReverse(speedEnc, 50);
 
         // query graph
-        QueryResult qr = createLocationResult(50.00, 10.15, edge, 0, EDGE);
-        QueryGraph queryGraph = QueryGraph.create(g, qr);
+        Snap snap = createLocationResult(50.00, 10.15, edge, 0, EDGE);
+        QueryGraph queryGraph = QueryGraph.create(g, snap);
         assertEquals(3, queryGraph.getNodes());
         assertEquals(5, queryGraph.getEdges());
         assertEquals(4, queryGraph.getVirtualEdges().size());

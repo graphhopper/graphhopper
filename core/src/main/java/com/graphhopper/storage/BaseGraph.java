@@ -1016,8 +1016,6 @@ class BaseGraph implements Graph {
             baseNode = edgeAccess.getNodeA(edgePointer);
             adjNode = edgeAccess.getNodeB(edgePointer);
             freshFlags = false;
-            if (EdgeAccess.isInvalidNodeB(adjNode))
-                throw new IllegalStateException("content of edgeId " + this.edgeId + " is marked as invalid - ie. the edge is already removed!");
 
             if (edgeKey % 2 == 0 || baseNode == adjNode) {
                 reverse = false;
