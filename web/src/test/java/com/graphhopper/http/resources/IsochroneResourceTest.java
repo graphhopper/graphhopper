@@ -171,7 +171,7 @@ public class IsochroneResourceTest {
         JsonNode json = response.readEntity(JsonNode.class);
         int tookLonger = json.get("info").get("took").asInt();
 
-        response = clientTarget(app, requestUrl+"&tolerance=10000")
+        response = clientTarget(app, requestUrl+"&tolerance=1000000")
                 .request().buildGet().invoke();
         json = response.readEntity(JsonNode.class);
         int tookShorter = json.get("info").get("took").asInt();
