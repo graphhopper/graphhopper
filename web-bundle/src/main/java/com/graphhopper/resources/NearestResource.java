@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.shapes.GHPoint;
@@ -64,9 +64,9 @@ public class NearestResource {
 
     @GET
     public Response doGet(@QueryParam("point") GHPoint point, @QueryParam("elevation") @DefaultValue("false") boolean elevation) {
-        QueryResult qr = index.findClosest(point.lat, point.lon, EdgeFilter.ALL_EDGES);
-        if (qr.isValid()) {
-            GHPoint3D snappedPoint = qr.getSnappedPoint();
+        Snap snap = index.findClosest(point.lat, point.lon, EdgeFilter.ALL_EDGES);
+        if (snap.isValid()) {
+            GHPoint3D snappedPoint = snap.getSnappedPoint();
             double[] coordinates = hasElevation && elevation ? new double[]{snappedPoint.lon, snappedPoint.lat, snappedPoint.ele} : new double[]{snappedPoint.lon, snappedPoint.lat};
             return new Response(coordinates, calc.calcDist(point.lat, point.lon, snappedPoint.lat, snappedPoint.lon));
         } else {

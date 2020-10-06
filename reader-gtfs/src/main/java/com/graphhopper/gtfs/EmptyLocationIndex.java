@@ -20,7 +20,7 @@ package com.graphhopper.gtfs;
 
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.shapes.BBox;
 
 class EmptyLocationIndex implements LocationIndex {
@@ -35,8 +35,8 @@ class EmptyLocationIndex implements LocationIndex {
     }
 
     @Override
-    public QueryResult findClosest(double lat, double lon, EdgeFilter edgeFilter) {
-        return new QueryResult(lat, lon);
+    public Snap findClosest(double lat, double lon, EdgeFilter edgeFilter) {
+        return new Snap(lat, lon);
     }
 
     @Override

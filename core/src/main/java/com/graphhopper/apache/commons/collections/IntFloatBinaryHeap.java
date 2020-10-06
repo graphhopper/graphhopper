@@ -15,29 +15,26 @@
  */
 package com.graphhopper.apache.commons.collections;
 
-import com.graphhopper.coll.BinHeapWrapper;
-
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 /**
  * This class is a partial copy of the class org.apache.commons.collections.BinaryHeap for
- * just the min heap and primitive, sorted double keys and associated int elements.
+ * just the min heap and primitive, sorted float keys and associated int elements.
  * <p>
  * The library can be found here: https://commons.apache.org/proper/commons-collections/
  */
-public class IntDoubleBinaryHeap implements BinHeapWrapper<Number, Integer> {
-
+public class IntFloatBinaryHeap {
     private static final int GROW_FACTOR = 2;
     private int size;
     private int[] elements;
     private float[] keys;
 
-    public IntDoubleBinaryHeap() {
+    public IntFloatBinaryHeap() {
         this(1000);
     }
 
-    public IntDoubleBinaryHeap(int initialCapacity) {
+    public IntFloatBinaryHeap(int initialCapacity) {
         //+1 as element 0 is noop
         elements = new int[initialCapacity + 1];
         keys = new float[initialCapacity + 1];
@@ -50,12 +47,7 @@ public class IntDoubleBinaryHeap implements BinHeapWrapper<Number, Integer> {
         return elements.length == size + 1;
     }
 
-    @Override
-    public void update(Number key, Integer element) {
-        update_(key.doubleValue(), element);
-    }
-
-    public void update_(double key, int element) {
+    public void update(double key, int element) {
         int i;
         // we have no clue about the element order, so we need to search the full array
         for (i = 1; i <= size; i++) {
@@ -75,14 +67,9 @@ public class IntDoubleBinaryHeap implements BinHeapWrapper<Number, Integer> {
         }
     }
 
-    @Override
-    public void insert(Number key, Integer element) {
-        insert_(key.doubleValue(), element);
-    }
-
-    public void insert_(double key, int element) {
+    public void insert(double key, int element) {
         if (isFull()) {
-            ensureCapacity((int) (elements.length * GROW_FACTOR));
+            ensureCapacity(elements.length * GROW_FACTOR);
         }
 
         size++;
@@ -91,12 +78,7 @@ public class IntDoubleBinaryHeap implements BinHeapWrapper<Number, Integer> {
         percolateUpMinHeap(size);
     }
 
-    @Override
-    public Integer peekElement() {
-        return peek_element();
-    }
-
-    public int peek_element() {
+    public int peekElement() {
         if (isEmpty()) {
             throw new NoSuchElementException("Heap is empty. Cannot peek element.");
         } else {
@@ -104,25 +86,15 @@ public class IntDoubleBinaryHeap implements BinHeapWrapper<Number, Integer> {
         }
     }
 
-    @Override
-    public Number peekKey() {
-        return peek_key();
-    }
-
-    public float peek_key() {
+    public float peekKey() {
         if (isEmpty())
             throw new NoSuchElementException("Heap is empty. Cannot peek key.");
         else
             return keys[1];
     }
 
-    @Override
-    public Integer pollElement() {
-        return poll_element();
-    }
-
-    public int poll_element() {
-        final int result = peek_element();
+    public int poll() {
+        final int result = peekElement();
         elements[1] = elements[size];
         keys[1] = keys[size];
         size--;
@@ -179,17 +151,14 @@ public class IntDoubleBinaryHeap implements BinHeapWrapper<Number, Integer> {
         keys[hole] = key;
     }
 
-    @Override
     public boolean isEmpty() {
         return size == 0;
     }
 
-    @Override
     public int getSize() {
         return size;
     }
 
-    @Override
     public void clear() {
         trimTo(0);
     }
@@ -201,10 +170,9 @@ public class IntDoubleBinaryHeap implements BinHeapWrapper<Number, Integer> {
         Arrays.fill(elements, toSize, size + 1, 0);
     }
 
-    @Override
     public void ensureCapacity(int capacity) {
         if (capacity < size) {
-            throw new IllegalStateException("IntDoubleBinaryHeap contains too many elements to fit in new capacity.");
+            throw new IllegalStateException("IntFloatBinaryHeap contains too many elements to fit in new capacity.");
         }
 
         elements = Arrays.copyOf(elements, capacity + 1);

@@ -39,7 +39,63 @@ class NodeBasedWitnessPathSearcherTest {
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("profile", weighting)).create();
     private final CHGraph lg = graph.getCHGraph();
-    private final PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
+
+    @Test
+    public void testShortestPathSkipNode() {
+        createExampleGraph();
+        CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
+        CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
+        final double normalDist = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(4, 2).getDistance();
+        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(prepareGraph);
+
+        setMaxLevelOnAllNodes();
+
+        algo.ignoreNode(3);
+        algo.setWeightLimit(100);
+        int nodeEntry = algo.findEndNode(4, 2);
+        assertTrue(algo.getWeight(nodeEntry) > normalDist);
+
+        algo.clear();
+        algo.setMaxVisitedNodes(1);
+        nodeEntry = algo.findEndNode(4, 2);
+        assertEquals(-1, nodeEntry);
+    }
+
+    @Test
+    public void testShortestPathSkipNode2() {
+        createExampleGraph();
+        CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
+        CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
+        final double normalDist = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(4, 2).getDistance();
+        assertEquals(3, normalDist, 1e-5);
+        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(prepareGraph);
+
+        setMaxLevelOnAllNodes();
+
+        algo.ignoreNode(3);
+        algo.setWeightLimit(10);
+        int nodeEntry = algo.findEndNode(4, 2);
+        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
+
+        nodeEntry = algo.findEndNode(4, 1);
+        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
+    }
+
+    @Test
+    public void testShortestPathLimit() {
+        createExampleGraph();
+        CHPreparationGraph prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
+        CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
+        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(prepareGraph);
+
+        setMaxLevelOnAllNodes();
+
+        algo.ignoreNode(0);
+        algo.setWeightLimit(2);
+        int endNode = algo.findEndNode(4, 1);
+        // did not reach endNode
+        assertNotEquals(1, endNode);
+    }
 
     private void createExampleGraph() {
         //5-1-----2
@@ -58,62 +114,10 @@ class NodeBasedWitnessPathSearcherTest {
         graph.freeze();
     }
 
-    @Test
-    public void testShortestPathSkipNode() {
-        createExampleGraph();
-        final double normalDist = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(4, 2).getDistance();
-        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(pg);
-
-        setMaxLevelOnAllNodes();
-
-        algo.ignoreNode(3);
-        algo.setWeightLimit(100);
-        int nodeEntry = algo.findEndNode(4, 2);
-        assertTrue(algo.getWeight(nodeEntry) > normalDist);
-
-        algo.clear();
-        algo.setMaxVisitedNodes(1);
-        nodeEntry = algo.findEndNode(4, 2);
-        assertEquals(-1, nodeEntry);
-    }
-
-    @Test
-    public void testShortestPathSkipNode2() {
-        createExampleGraph();
-        final double normalDist = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(4, 2).getDistance();
-        assertEquals(3, normalDist, 1e-5);
-        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(pg);
-
-        setMaxLevelOnAllNodes();
-
-        algo.ignoreNode(3);
-        algo.setWeightLimit(10);
-        int nodeEntry = algo.findEndNode(4, 2);
-        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
-
-        nodeEntry = algo.findEndNode(4, 1);
-        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
-    }
-
-    @Test
-    public void testShortestPathLimit() {
-        createExampleGraph();
-        NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(pg);
-
-        setMaxLevelOnAllNodes();
-
-        algo.ignoreNode(0);
-        algo.setWeightLimit(2);
-        int endNode = algo.findEndNode(4, 1);
-        // did not reach endNode
-        assertNotEquals(1, endNode);
-    }
-
     private void setMaxLevelOnAllNodes() {
-        int nodes = pg.getNodes();
+        int nodes = lg.getNodes();
         for (int node = 0; node < nodes; node++) {
-            pg.setLevel(node, nodes);
+            lg.setLevel(node, nodes);
         }
     }
-
 }

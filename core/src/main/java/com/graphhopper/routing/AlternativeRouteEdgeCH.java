@@ -19,6 +19,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RoutingCHGraph;
@@ -241,16 +242,17 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         assert uvtPath.isFound();
         Path path = new Path(graph);
         path.setFromNode(suvPath.calcNodes().get(0));
-        for (EdgeIteratorState edge : suvPath.calcEdges()) {
-            path.addEdge(edge.getEdge());
+        path.getEdges().addAll(suvPath.getEdges());
+        Iterator<IntCursor> uvtPathI = uvtPath.getEdges().iterator();
+        if (!uvtPathI.hasNext()) { // presumably v == t, has been known to happen, no test yet
+            return suvPath;
         }
-        Iterator<EdgeIteratorState> uvtPathI = uvtPath.calcEdges().iterator();
         uvtPathI.next(); // skip u-v edge
-        uvtPathI.forEachRemaining(edge -> path.addEdge(edge.getEdge()));
+        uvtPathI.forEachRemaining(edge -> path.addEdge(edge.value));
         path.setEndNode(uvtPath.getEndNode());
         path.setWeight(suvPath.getWeight() + uvtPath.getWeight());
         path.setDistance(suvPath.getDistance() + uvtPath.getDistance());
-        path.addTime(suvPath.time + uvtPath.time);
+        path.addTime(suvPath.getTime() + uvtPath.getTime());
         path.setFound(true);
         return path;
     }

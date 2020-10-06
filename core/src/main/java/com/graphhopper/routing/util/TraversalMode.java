@@ -83,12 +83,6 @@ public enum TraversalMode {
         return adjNode;
     }
 
-    public int reverseEdgeKey(int edgeKey) {
-        if (edgeBased)
-            return GHUtility.reverseEdgeKey(edgeKey);
-        return edgeKey;
-    }
-
     public boolean isEdgeBased() {
         return edgeBased;
     }

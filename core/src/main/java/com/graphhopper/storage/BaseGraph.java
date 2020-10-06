@@ -533,7 +533,7 @@ class BaseGraph implements Graph {
             throw new IllegalStateException("Cannot create edge if graph is already frozen");
 
         ensureNodeIndex(Math.max(nodeA, nodeB));
-        int edgeId = edgeAccess.internalEdgeAdd(nextEdgeId(), nodeA, nodeB);
+        int edgeId = edgeAccess.internalEdgeAdd(nextEdgeId(), nodeA, nodeB, true);
         EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, this);
         boolean valid = edge.init(edgeId, nodeB);
         assert valid;

@@ -37,7 +37,7 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class QueryResult {
+public class Snap {
     public static final int INVALID_NODE = -1;
     private final GHPoint queryPoint;
     private double queryDistance = Double.MAX_VALUE;
@@ -47,7 +47,7 @@ public class QueryResult {
     private GHPoint3D snappedPoint;
     private Position snappedPosition;
 
-    public QueryResult(double queryLat, double queryLon) {
+    public Snap(double queryLat, double queryLon) {
         queryPoint = new GHPoint(queryLat, queryLon);
     }
 

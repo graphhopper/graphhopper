@@ -36,7 +36,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -746,9 +746,9 @@ public class RoutingAlgorithmTest {
     }
 
     /**
-     * Creates query result on edge (node1-node2) very close to node1.
+     * Creates snaps on edge (node1-node2) very close to node1.
      */
-    private QueryResult createQRBetweenNodes(Graph graph, int node1, int node2) {
+    private Snap createSnapBetweenNodes(Graph graph, int node1, int node2) {
         EdgeIteratorState edge = GHUtility.getEdge(graph, node1, node2);
         if (edge == null)
             throw new IllegalStateException("edge not found? " + node1 + "-" + node2);
@@ -759,11 +759,11 @@ public class RoutingAlgorithmTest {
         double latAdj = na.getLatitude(edge.getAdjNode());
         double lonAdj = na.getLongitude(edge.getAdjNode());
         // calculate query point near the base node but not directly on it!
-        QueryResult res = new QueryResult(lat + (latAdj - lat) * .1, lon + (lonAdj - lon) * .1);
+        Snap res = new Snap(lat + (latAdj - lat) * .1, lon + (lonAdj - lon) * .1);
         res.setClosestNode(edge.getBaseNode());
         res.setClosestEdge(edge);
         res.setWayIndex(0);
-        res.setSnappedPosition(QueryResult.Position.EDGE);
+        res.setSnappedPosition(Snap.Position.EDGE);
         res.calcSnappedPoint(DIST_EARTH);
         return res;
     }
@@ -1043,8 +1043,8 @@ public class RoutingAlgorithmTest {
 
     private Path calcPath(GraphHopperStorage ghStorage, Weighting weighting, int fromNode1, int fromNode2, int toNode1, int toNode2) {
         // lookup two edges: fromNode1-fromNode2 and toNode1-toNode2
-        QueryResult from = createQRBetweenNodes(ghStorage, fromNode1, fromNode2);
-        QueryResult to = createQRBetweenNodes(ghStorage, toNode1, toNode2);
+        Snap from = createSnapBetweenNodes(ghStorage, fromNode1, fromNode2);
+        Snap to = createSnapBetweenNodes(ghStorage, toNode1, toNode2);
         return pathCalculator.calcPath(ghStorage, weighting, traversalMode, defaultMaxVisitedNodes, from, to);
     }
 
@@ -1070,7 +1070,7 @@ public class RoutingAlgorithmTest {
 
         Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to);
 
-        Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to);
+        Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, Snap from, Snap to);
     }
 
     private static abstract class SimpleCalculator implements PathCalculator {
@@ -1085,13 +1085,13 @@ public class RoutingAlgorithmTest {
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to) {
             LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
             index.prepareIndex();
-            QueryResult fromQR = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
-            QueryResult toQR = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
-            return calcPath(graph, weighting, traversalMode, maxVisitedNodes, fromQR, toQR);
+            Snap fromSnap = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
+            Snap toSnap = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
+            return calcPath(graph, weighting, traversalMode, maxVisitedNodes, fromSnap, toSnap);
         }
 
         @Override
-        public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
+        public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, Snap from, Snap to) {
             QueryGraph queryGraph = QueryGraph.create(graph, from, to);
             RoutingAlgorithm algo = createAlgo(queryGraph, weighting, traversalMode);
             algo.setMaxVisitedNodes(maxVisitedNodes);
@@ -1182,13 +1182,13 @@ public class RoutingAlgorithmTest {
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to) {
             LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
             LocationIndex index = locationIndex.prepareIndex();
-            QueryResult fromQR = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
-            QueryResult toQR = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
-            return calcPath(graph, weighting, traversalMode, maxVisitedNodes, fromQR, toQR);
+            Snap fromSnap = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
+            Snap toSnap = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
+            return calcPath(graph, weighting, traversalMode, maxVisitedNodes, fromSnap, toSnap);
         }
 
         @Override
-        public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
+        public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, Snap from, Snap to) {
             CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
             PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
             RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());

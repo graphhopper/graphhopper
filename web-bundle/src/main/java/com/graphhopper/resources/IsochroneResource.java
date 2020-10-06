@@ -18,7 +18,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -57,7 +57,6 @@ public class IsochroneResource {
     private final Triangulator triangulator;
     private final ProfileResolver profileResolver;
     private final EncodingManager encodingManager;
-    private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Inject
     public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver, EncodingManager encodingManager) {
@@ -67,7 +66,7 @@ public class IsochroneResource {
         this.encodingManager = encodingManager;
     }
 
-    enum ResponseType {json, geojson}
+    public enum ResponseType {json, geojson}
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -102,12 +101,12 @@ public class IsochroneResource {
         FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        QueryResult qr = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
-        if (!qr.isValid())
+        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, edgeFilter);
+        if (!snap.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
-        QueryGraph queryGraph = QueryGraph.create(graph, qr);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
 
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA))
@@ -142,19 +141,19 @@ public class IsochroneResource {
             fz = l -> l.time;
         }
 
-        Triangulator.Result result = triangulator.triangulate(qr, queryGraph, shortestPathTree, fz, tolerance);
+        Triangulator.Result result = triangulator.triangulate(snap, queryGraph, shortestPathTree, fz, tolerance);
 
         ContourBuilder contourBuilder = new ContourBuilder(result.triangulation);
         ArrayList<Geometry> isochrones = new ArrayList<>();
         for (Double z : zs) {
             logger.info("Building contour z={}", z);
             MultiPolygon isochrone = contourBuilder.computeIsoline(z, result.seedEdges);
-            if(!isochrone.isEmpty()){
+            if(!isochrone.isEmpty()) {
                 if (fullGeometry) {
                     isochrones.add(isochrone);
                 } else {
-                    Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, geometryFactory.createPoint(new Coordinate(point.get().lon, point.get().lat)));
-                    isochrones.add(geometryFactory.createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
+                    Polygon maxPolygon = heuristicallyFindMainConnectedComponent(isochrone, isochrone.getFactory().createPoint(new Coordinate(point.get().lon, point.get().lat)));
+                    isochrones.add(isochrone.getFactory().createPolygon(((LinearRing) maxPolygon.getExteriorRing())));
                 }
             }
         }

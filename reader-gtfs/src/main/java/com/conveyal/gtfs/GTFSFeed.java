@@ -434,10 +434,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     public LocalDate getStartDate() {
-        LocalDate startDate = null;
-
-        if (hasFeedInfo()) startDate = getFeedInfo().feed_start_date;
-        if (startDate == null) startDate = getCalendarServiceRangeStart();
+        LocalDate startDate = getCalendarServiceRangeStart();
         if (startDate == null) startDate = getCalendarDateStart();
 
         return startDate;
@@ -493,10 +490,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     public LocalDate getEndDate() {
-        LocalDate endDate = null;
-
-        if (hasFeedInfo()) endDate = getFeedInfo().feed_end_date;
-        if (endDate == null) endDate = getCalendarServiceRangeEnd();
+        LocalDate endDate = getCalendarServiceRangeEnd();
         if (endDate == null) endDate = getCalendarDateEnd();
 
         return endDate;

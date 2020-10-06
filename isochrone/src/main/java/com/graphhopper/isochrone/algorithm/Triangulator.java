@@ -19,7 +19,7 @@
 package com.graphhopper.isochrone.algorithm;
 
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 
 import java.util.Collection;
 import java.util.function.ToDoubleFunction;
@@ -38,6 +38,6 @@ public interface Triangulator {
 
     }
 
-    Result triangulate(QueryResult qr, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, double tolerance);
+    Result triangulate(Snap snap, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, double tolerance);
 
 }

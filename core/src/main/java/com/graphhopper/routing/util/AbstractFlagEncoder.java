@@ -23,6 +23,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -222,19 +223,26 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     /**
-     * @return -1 if no maxspeed found
+     * @return {@link Double#NaN} if no maxspeed found
      */
     protected double getMaxSpeed(ReaderWay way) {
-        double maxSpeed = parseSpeed(way.getTag("maxspeed"));
-        double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
-        if (fwdSpeed >= 0 && (maxSpeed < 0 || fwdSpeed < maxSpeed))
+        double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
+        double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
+        if (isValidSpeed(fwdSpeed) && (!isValidSpeed(maxSpeed) || fwdSpeed < maxSpeed))
             maxSpeed = fwdSpeed;
 
-        double backSpeed = parseSpeed(way.getTag("maxspeed:backward"));
-        if (backSpeed >= 0 && (maxSpeed < 0 || backSpeed < maxSpeed))
+        double backSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:backward"));
+        if (isValidSpeed(backSpeed) && (!isValidSpeed(maxSpeed) || backSpeed < maxSpeed))
             maxSpeed = backSpeed;
 
         return maxSpeed;
+    }
+    
+    /**
+     * @return <i>true</i> if the given speed is not {@link Double#NaN}
+     */
+    protected boolean isValidSpeed(double speed) {
+        return !Double.isNaN(speed);
     }
 
     @Override
@@ -254,59 +262,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
             return false;
         AbstractFlagEncoder afe = (AbstractFlagEncoder) obj;
         return toString().equals(afe.toString()) && encoderBit == afe.encoderBit && accessEnc.equals(afe.accessEnc);
-    }
-
-    /**
-     * @return the speed in km/h
-     */
-    public static double parseSpeed(String str) {
-        if (Helper.isEmpty(str))
-            return -1;
-
-        // on some German autobahns and a very few other places
-        if ("none".equals(str))
-            return MaxSpeed.UNLIMITED_SIGN_SPEED;
-
-        if (str.endsWith(":rural") || str.endsWith(":trunk"))
-            return 80;
-
-        if (str.endsWith(":urban"))
-            return 50;
-
-        if (str.equals("walk") || str.endsWith(":living_street"))
-            return 6;
-
-        try {
-            int val;
-            // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
-            int mpInteger = str.indexOf("mp");
-            if (mpInteger > 0) {
-                str = str.substring(0, mpInteger).trim();
-                val = Integer.parseInt(str);
-                return val * DistanceCalcEarth.KM_MILE;
-            }
-
-            int knotInteger = str.indexOf("knots");
-            if (knotInteger > 0) {
-                str = str.substring(0, knotInteger).trim();
-                val = Integer.parseInt(str);
-                return val * 1.852;
-            }
-
-            int kmInteger = str.indexOf("km");
-            if (kmInteger > 0) {
-                str = str.substring(0, kmInteger).trim();
-            } else {
-                kmInteger = str.indexOf("kph");
-                if (kmInteger > 0) {
-                    str = str.substring(0, kmInteger).trim();
-                }
-            }
-
-            return Integer.parseInt(str);
-        } catch (Exception ex) {
-            return -1;
-        }
     }
 
     /**
@@ -394,7 +349,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @Deprecated
      */
     protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
-        if (speed < 0 || Double.isNaN(speed))
+        if (!isValidSpeed(speed))
             throw new IllegalArgumentException("Speed cannot be negative or NaN: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(edgeFlags));
 
         if (speed < speedFactor / 2) {
@@ -429,7 +384,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected double applyMaxSpeed(ReaderWay way, double speed) {
         double maxSpeed = getMaxSpeed(way);
         // We obey speed limits
-        if (maxSpeed >= 0) {
+        if (isValidSpeed(maxSpeed)) {
             // We assume that the average speed is 90% of the allowed maximum
             return maxSpeed * 0.9;
         }

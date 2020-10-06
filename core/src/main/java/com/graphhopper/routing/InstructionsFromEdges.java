@@ -127,7 +127,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, EncodedValueLookup evLookup, final Translation tr) {
         final InstructionList ways = new InstructionList(tr);
         if (path.isFound()) {
-            if (path.getSize() == 0) {
+            if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
                 path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, tr, ways));
