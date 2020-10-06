@@ -41,6 +41,8 @@ import java.util.Arrays;
 import static com.graphhopper.http.resources.CustomWeightingRouteResourceTest.yamlToJson;
 import static com.graphhopper.http.util.TestUtils.clientTarget;
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -88,6 +90,25 @@ public class CustomWeightingRouteResourceLMTest {
         JsonNode path = json.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 3180, 10);
         assertEquals(path.get("time").asLong(), 182_000, 1_000);
+
+        JsonNode instructions = path.get("instructions").get(0);
+        assertFalse(instructions.has("voice_instructions"));
+    }
+
+    @Test
+    public void testCustomWeightingVoiceInstructionsJson() {
+        String jsonQuery = "{" +
+                " \"points\": [[1.518946,42.531453],[1.54006,42.511178]]," +
+                " \"profile\": \"car_custom\"," +
+                " \"voice_instructions\": true" +
+                "}";
+        final Response response = clientTarget(app, "/route-custom").request().post(Entity.json(jsonQuery));
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode instructions = json.get("paths").get(0).get("instructions").get(0);
+        assertTrue(instructions.has("voice_instructions"));
     }
 
     @Test
@@ -102,6 +123,9 @@ public class CustomWeightingRouteResourceLMTest {
         JsonNode path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1317, 5);
 
+        JsonNode instructions = path.get("instructions").get(0);
+        assertFalse(instructions.has("voice_instructions"));
+
         // now prefer primary roads via special yaml-map notation
         yamlQuery = "points: [[1.5274,42.506211], [1.54006,42.511178]]\n" +
                 "profile: car_custom\n" +
@@ -110,6 +134,20 @@ public class CustomWeightingRouteResourceLMTest {
         yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
         path = yamlNode.get("paths").get(0);
         assertEquals(path.get("distance").asDouble(), 1707, 5);
+    }
+
+    @Test
+    public void testCustomWeightingVoiceInstructions() {
+        String yamlQuery = "points: [[1.529106,42.506567], [1.54006,42.511178]]\n" +
+                "profile: car_custom\n" +
+                "voice_instructions: true\n" +
+                "priority:\n" +
+                "  road_class:\n" +
+                "    secondary: 1\n" +
+                "    '*': 0.5\n";
+        JsonNode yamlNode = queryYaml(yamlQuery, 200).readEntity(JsonNode.class);
+        JsonNode instructions = yamlNode.get("paths").get(0).get("instructions").get(0);
+        assertTrue(instructions.has("voice_instructions"));
     }
 
     @Test

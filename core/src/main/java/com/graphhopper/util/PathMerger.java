@@ -50,6 +50,9 @@ public class PathMerger {
     private final Weighting weighting;
 
     private boolean enableInstructions = true;
+    private boolean enableVoiceInstructions = false;
+    private VoiceInstructionDistanceUtils.Unit voiceInstructionsUnit;
+    private VoiceInstructionDistanceConfig voiceInstructionDistanceConfig;
     private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
@@ -85,6 +88,20 @@ public class PathMerger {
 
     public PathMerger setEnableInstructions(boolean enableInstructions) {
         this.enableInstructions = enableInstructions;
+        return this;
+    }
+
+    public PathMerger setEnableVoiceInstructions(boolean enableVoiceInstructions, String unit) {
+        this.enableVoiceInstructions = enableVoiceInstructions;
+
+        if (enableVoiceInstructions) {
+            if (unit.equals("metric")) {
+                this.voiceInstructionsUnit = VoiceInstructionDistanceUtils.Unit.METRIC;
+            } else {
+                this.voiceInstructionsUnit = VoiceInstructionDistanceUtils.Unit.IMPERIAL;
+            }
+        }
+
         return this;
     }
 
@@ -149,6 +166,10 @@ public class PathMerger {
         }
 
         if (enableInstructions) {
+            if (enableVoiceInstructions) {
+                voiceInstructionDistanceConfig = new VoiceInstructionDistanceConfig(this.voiceInstructionsUnit, tr);
+            }
+
             fullInstructions = updateInstructionsWithContext(fullInstructions);
             responsePath.setInstructions(fullInstructions);
         }
@@ -180,6 +201,8 @@ public class PathMerger {
         Instruction instruction;
         Instruction nextInstruction;
 
+        instructions.setVoiceInstructionsEnabled(enableVoiceInstructions);
+
         for (int i = 0; i < instructions.size() - 1; i++) {
             instruction = instructions.get(i);
 
@@ -210,6 +233,11 @@ public class PathMerger {
                     nextInstruction.setSign(Instruction.U_TURN_UNKNOWN);
                 }
             }
+
+            if (enableVoiceInstructions) {
+                instruction.setVoiceInstructions(instructions, i, voiceInstructionDistanceConfig);
+            }
+
         }
 
         return instructions;

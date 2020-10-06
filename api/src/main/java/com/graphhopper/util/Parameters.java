@@ -102,6 +102,11 @@ public class Parameters {
          */
         public static final String INSTRUCTIONS = "instructions";
         /**
+         * if true the response will contain turn voice instructions
+         */
+        public static final String VOICE_INSTRUCTIONS = "voice_instructions";
+        public static final String VOICE_INSTRUCTIONS_UNIT = "voice_unit";
+        /**
          * if true the response will contain a point list
          */
         public static final String CALC_POINTS = "calc_points";

@@ -25,6 +25,7 @@ import static com.graphhopper.util.VoiceInstructionDistanceUtils.UnitTranslation
 
 public class VoiceInstructionDistanceConfig {
     final List<VoiceInstructionConfig> voiceInstructions;
+    private final Translation translation;
 
     public VoiceInstructionDistanceConfig(VoiceInstructionDistanceUtils.Unit unit, Translation translation) {
         if (unit == VoiceInstructionDistanceUtils.Unit.METRIC) {
@@ -43,6 +44,7 @@ public class VoiceInstructionDistanceConfig {
             );
         }
 
+        this.translation = translation;
     }
 
     public List<VoiceInstructionConfig.VoiceInstructionValue> getVoiceInstructionsForDistance(double distance, String turnDescription, String thenVoiceInstruction) {
@@ -56,5 +58,8 @@ public class VoiceInstructionDistanceConfig {
         return instructionsConfigs;
     }
 
+    public Translation getTranslation() {
+        return translation;
+    }
 
 }

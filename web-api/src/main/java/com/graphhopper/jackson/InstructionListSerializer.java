@@ -53,6 +53,10 @@ public class InstructionListSerializer extends JsonSerializer<InstructionList> {
             instrJson.put("sign", instruction.getSign());
             instrJson.putAll(instruction.getExtraInfoJSON());
 
+            if (instructions.hasVoiceInstructionsEnabled()) {
+                instrJson.put("voice_instructions", instruction.getVoiceInstructions());
+            }
+
             int tmpIndex = pointsIndex + instruction.getLength();
             instrJson.put("interval", Arrays.asList(pointsIndex, tmpIndex));
             pointsIndex = tmpIndex;

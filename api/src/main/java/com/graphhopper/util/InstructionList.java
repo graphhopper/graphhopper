@@ -26,6 +26,7 @@ public class InstructionList extends AbstractList<Instruction> {
 
     private final List<Instruction> instructions;
     private final Translation tr;
+    protected boolean voiceInstructionsEnabled = false;
 
     public InstructionList(Translation tr) {
         this(10, tr);
@@ -65,4 +66,9 @@ public class InstructionList extends AbstractList<Instruction> {
         return tr;
     }
 
+    public void setVoiceInstructionsEnabled(boolean voiceInstructionsEnabled) {
+        this.voiceInstructionsEnabled = voiceInstructionsEnabled;
+    }
+
+    public boolean hasVoiceInstructionsEnabled() { return voiceInstructionsEnabled; }
 }

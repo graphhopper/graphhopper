@@ -36,7 +36,7 @@ public class NavigateResponseConverter {
     /**
      * Converts a GHResponse into a json that follows the Mapbox API specification
      */
-    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, Locale locale, VoiceInstructionDistanceConfig voiceInstructionDistanceConfig) {
+    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, Locale locale) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         if (ghResponse.hasErrors())
@@ -52,7 +52,7 @@ public class NavigateResponseConverter {
             ResponsePath path = paths.get(i);
             ObjectNode pathJson = routesJson.addObject();
 
-            putRouteInformation(pathJson, path, i, translationMap, locale, voiceInstructionDistanceConfig);
+            putRouteInformation(pathJson, path, i, translationMap, locale);
         }
 
         final ArrayNode waypointsJson = json.putArray("waypoints");
@@ -70,7 +70,7 @@ public class NavigateResponseConverter {
         return json;
     }
 
-    private static void putRouteInformation(ObjectNode pathJson, ResponsePath path, int routeNr, TranslationMap translationMap, Locale locale, VoiceInstructionDistanceConfig voiceInstructionDistanceConfig) {
+    private static void putRouteInformation(ObjectNode pathJson, ResponsePath path, int routeNr, TranslationMap translationMap, Locale locale) {
         InstructionList instructions = path.getInstructions();
 
         pathJson.put("geometry", WebHelper.encodePolyline(path.getPoints(), false, 1e6));
@@ -85,7 +85,7 @@ public class NavigateResponseConverter {
 
         for (int i = 0; i < instructions.size(); i++) {
             ObjectNode instructionJson = steps.addObject();
-            putInstruction(instructions, i, locale, translationMap, instructionJson, isFirstInstructionOfLeg, voiceInstructionDistanceConfig);
+            putInstruction(instructions, i, locale, translationMap, instructionJson, isFirstInstructionOfLeg);
             Instruction instruction = instructions.get(i);
             time += instruction.getTime();
             distance += instruction.getDistance();
@@ -127,7 +127,7 @@ public class NavigateResponseConverter {
     }
 
     private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, TranslationMap translationMap,
-                                             ObjectNode instructionJson, boolean isFirstInstructionOfLeg, VoiceInstructionDistanceConfig voiceInstructionDistanceConfig) {
+                                             ObjectNode instructionJson, boolean isFirstInstructionOfLeg) {
         Instruction instruction = instructions.get(index);
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
@@ -169,15 +169,16 @@ public class NavigateResponseConverter {
 
         // Voice and banner instructions are empty for the last element
         if (index + 1 < instructions.size()) {
-            putVoiceInstructions(instructions, distance, index, locale, translationMap, voiceInstructions, voiceInstructionDistanceConfig);
+            if (instructions.hasVoiceInstructionsEnabled()) {
+                putVoiceInstructions(instruction, voiceInstructions);
+            }
             putBannerInstructions(instructions, distance, index, locale, translationMap, bannerInstructions);
         }
 
         return instructionJson;
     }
 
-    private static void putVoiceInstructions(InstructionList instructions, double distance, int index, Locale locale, TranslationMap translationMap,
-                                             ArrayNode voiceInstructions, VoiceInstructionDistanceConfig distanceConfig) {
+    private static void putVoiceInstructions(Instruction instruction, ArrayNode voiceInstructions) {
         /*
             A VoiceInstruction Object looks like this
             {
@@ -186,54 +187,18 @@ public class NavigateResponseConverter {
                 ssmlAnnouncement: "<speak><amazon:effect name="drc"><prosody rate="1.08">Exit the traffic circle</prosody></amazon:effect></speak>",
             }
         */
-        Instruction nextInstruction = instructions.get(index + 1);
-        String turnDescription = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
-
-        String thenVoiceInstruction = getThenVoiceInstructionpart(instructions, index, locale, translationMap);
-
-        List<VoiceInstructionConfig.VoiceInstructionValue> voiceValues = distanceConfig.getVoiceInstructionsForDistance(distance, turnDescription, thenVoiceInstruction);
-
-        for (VoiceInstructionConfig.VoiceInstructionValue voiceValue : voiceValues) {
-            putSingleVoiceInstruction(voiceValue.spokenDistance, voiceValue.turnDescription, voiceInstructions);
+        for (VoiceInstruction voiceInstruction : instruction.getVoiceInstructions()) {
+            ObjectNode voiceInstructionNode = voiceInstructions.addObject();
+            voiceInstructionNode.put("distanceAlongGeometry", voiceInstruction.getDistanceToManeuver());
+            //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
+            voiceInstructionNode.put("announcement", voiceInstruction.getAnnouncement());
+            voiceInstructionNode.put(
+                    "ssmlAnnouncement",
+                    "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">" +
+                            voiceInstruction.getAnnouncement() +
+                            "</prosody></amazon:effect></speak>"
+            );
         }
-
-        // Speak 80m instructions 80 before the turn
-        // Note: distanceAlongGeometry: "how far from the upcoming maneuver the voice instruction should begin"
-        double distanceAlongGeometry = Helper.round(Math.min(distance, 80), 1);
-
-        // Special case for the arrive instruction
-        if (index + 2 == instructions.size())
-            distanceAlongGeometry = Helper.round(Math.min(distance, 25), 1);
-
-        putSingleVoiceInstruction(distanceAlongGeometry, turnDescription + thenVoiceInstruction, voiceInstructions);
-    }
-
-    private static void putSingleVoiceInstruction(double distanceAlongGeometry, String turnDescription, ArrayNode voiceInstructions) {
-        ObjectNode voiceInstruction = voiceInstructions.addObject();
-        voiceInstruction.put("distanceAlongGeometry", distanceAlongGeometry);
-        //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
-        voiceInstruction.put("announcement", turnDescription);
-        voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">" + turnDescription + "</prosody></amazon:effect></speak>");
-    }
-
-    /**
-     * For close turns, it is important to announce the next turn in the earlier instruction.
-     * e.g.: instruction i+1= turn right, instruction i+2=turn left, with instruction i+1 distance < VOICE_INSTRUCTION_MERGE_TRESHHOLD
-     * The voice instruction should be like "turn right, then turn left"
-     * <p>
-     * For instruction i+1 distance > VOICE_INSTRUCTION_MERGE_TRESHHOLD an empty String will be returned
-     */
-    private static String getThenVoiceInstructionpart(InstructionList instructions, int index, Locale locale, TranslationMap translationMap) {
-        if (instructions.size() > index + 2) {
-            Instruction firstInstruction = instructions.get(index + 1);
-            if (firstInstruction.getDistance() < VOICE_INSTRUCTION_MERGE_TRESHHOLD) {
-                Instruction secondInstruction = instructions.get(index + 2);
-                if (secondInstruction.getSign() != Instruction.REACHED_VIA)
-                    return ", " + translationMap.getWithFallBack(locale).tr("navigate.then") + " " + secondInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
-            }
-        }
-
-        return "";
     }
 
     /**

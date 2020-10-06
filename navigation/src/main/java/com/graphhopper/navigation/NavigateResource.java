@@ -25,7 +25,6 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.TranslationMap;
-import com.graphhopper.util.VoiceInstructionDistanceConfig;
 import com.graphhopper.util.VoiceInstructionDistanceUtils;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -86,10 +85,10 @@ public class NavigateResource {
             @Context UriInfo uriInfo,
             @Context ContainerRequestContext rc,
             @QueryParam("steps") @DefaultValue("false") boolean enableInstructions,
-            @QueryParam("voice_instructions") @DefaultValue("false") boolean voiceInstructions,
+            @QueryParam(VOICE_INSTRUCTIONS) @DefaultValue("false") boolean voiceInstructions,
             @QueryParam("banner_instructions") @DefaultValue("false") boolean bannerInstructions,
             @QueryParam("roundabout_exits") @DefaultValue("false") boolean roundaboutExits,
-            @QueryParam("voice_units") @DefaultValue("metric") String voiceUnits,
+            @QueryParam(VOICE_INSTRUCTIONS_UNIT) @DefaultValue("metric") String voiceUnits,
             @QueryParam("overview") @DefaultValue("simplified") String overview,
             @QueryParam("geometries") @DefaultValue("polyline") String geometries,
             @QueryParam("bearings") @DefaultValue("") String bearings,
@@ -115,13 +114,6 @@ public class NavigateResource {
         if (overview.equals("full"))
             minPathPrecision = 0;
 
-        VoiceInstructionDistanceUtils.Unit unit;
-        if (voiceUnits.equals("metric")) {
-            unit = VoiceInstructionDistanceUtils.Unit.METRIC;
-        } else {
-            unit = VoiceInstructionDistanceUtils.Unit.IMPERIAL;
-        }
-
         String ghProfile = resolverMap.getOrDefault(mapboxProfile, mapboxProfile);
         List<GHPoint> requestPoints = getPointsFromRequest(httpReq, mapboxProfile);
 
@@ -132,11 +124,17 @@ public class NavigateResource {
 
         StopWatch sw = new StopWatch().start();
 
-        GHResponse ghResponse = calcRoute(favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+        GHResponse ghResponse = calcRoute(
+                favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision,
+                voiceInstructions, voiceUnits
+        );
 
         // Only do this, when there are more than 2 points, otherwise we use alternative routes
         if (!ghResponse.hasErrors() && favoredHeadings.size() > 0) {
-            GHResponse noHeadingResponse = calcRoute(Collections.EMPTY_LIST, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+            GHResponse noHeadingResponse = calcRoute(
+                    Collections.EMPTY_LIST, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision,
+                    voiceInstructions, voiceUnits
+            );
             if (ghResponse.getBest().getDistance() != noHeadingResponse.getBest().getDistance()) {
                 ghResponse.getAll().add(noHeadingResponse.getBest());
             }
@@ -147,7 +145,6 @@ public class NavigateResource {
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
                 + took + ", " + ghProfile;
         Locale locale = Helper.getLocale(localeStr);
-        VoiceInstructionDistanceConfig config = new VoiceInstructionDistanceConfig(unit, translationMap.getWithFallBack(locale));
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
@@ -157,14 +154,15 @@ public class NavigateResource {
                     build();
         } else {
             logger.info(logStr);
-            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, locale, config)).
+            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, locale)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
     }
 
     private GHResponse calcRoute(List<Double> favoredHeadings, List<GHPoint> requestPoints, String profileStr,
-                                 String localeStr, boolean enableInstructions, double minPathPrecision) {
+                                 String localeStr, boolean enableInstructions, double minPathPrecision,
+                                 boolean enableVoiceInstructions, String voiceInstructionUnit) {
         GHRequest request;
         if (favoredHeadings.size() > 0) {
             request = new GHRequest(requestPoints, favoredHeadings);
@@ -176,6 +174,8 @@ public class NavigateResource {
                 setLocale(localeStr).
                 putHint(CALC_POINTS, true).
                 putHint(INSTRUCTIONS, enableInstructions).
+                putHint(VOICE_INSTRUCTIONS, enableVoiceInstructions).
+                putHint(VOICE_INSTRUCTIONS_UNIT, voiceInstructionUnit).
                 putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision).
                 putHint(Parameters.CH.DISABLE, true).
                 putHint(Parameters.Routing.PASS_THROUGH, false);

@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Instruction {
@@ -42,6 +43,7 @@ public class Instruction {
     public static final int PT_START_TRIP = 101;
     public static final int PT_TRANSFER = 102;
     public static final int PT_END_TRIP = 103;
+    private static final int VOICE_INSTRUCTION_MERGE_TRESHHOLD = 100;
     protected PointList points;
     protected final InstructionAnnotation annotation;
     protected boolean rawName;
@@ -49,6 +51,7 @@ public class Instruction {
     protected String name;
     protected double distance;
     protected long time;
+    protected VoiceInstructionList voiceInstructions;
     protected Map<String, Object> extraInfo = new HashMap<>(3);
 
     /**
@@ -220,5 +223,61 @@ public class Instruction {
                 str = Helper.isEmpty(streetName) ? dir : tr.tr("turn_onto", dir, streetName);
         }
         return str;
+    }
+
+    public VoiceInstructionList getVoiceInstructions() {
+        if (voiceInstructions == null) {
+            return new VoiceInstructionList(0);
+        }
+        return voiceInstructions;
+    }
+
+    public void setVoiceInstructions (InstructionList instructions, int index, VoiceInstructionDistanceConfig distanceConfig) {
+        this.voiceInstructions = new VoiceInstructionList();
+
+        Instruction nextInstruction = instructions.get(index + 1);
+        String turnDescription = nextInstruction.getTurnDescription(distanceConfig.getTranslation());
+
+        String thenVoiceInstruction = getThenVoiceInstructionpart(instructions, index, distanceConfig.getTranslation());
+
+        List<VoiceInstructionConfig.VoiceInstructionValue> voiceValues = distanceConfig.getVoiceInstructionsForDistance(distance, turnDescription, thenVoiceInstruction);
+
+        for (VoiceInstructionConfig.VoiceInstructionValue voiceValue : voiceValues) {
+            this.voiceInstructions.add(
+                new VoiceInstruction(voiceValue.turnDescription, voiceValue.spokenDistance)
+            );
+        }
+
+        // Speak 80m instructions 80 before the turn
+        // Note: distanceAlongGeometry: "how far from the upcoming maneuver the voice instruction should begin"
+        double distanceAlongGeometry = Helper.round(Math.min(distance, 80), 1);
+
+        // Special case for the arrive instruction
+        if (index + 2 == instructions.size())
+            distanceAlongGeometry = Helper.round(Math.min(distance, 25), 1);
+        
+        this.voiceInstructions.add(
+            new VoiceInstruction(turnDescription + thenVoiceInstruction, distanceAlongGeometry)
+        );
+    }
+
+    /**
+     * For close turns, it is important to announce the next turn in the earlier instruction.
+     * e.g.: instruction i+1= turn right, instruction i+2=turn left, with instruction i+1 distance < VOICE_INSTRUCTION_MERGE_TRESHHOLD
+     * The voice instruction should be like "turn right, then turn left"
+     * <p>
+     * For instruction i+1 distance > VOICE_INSTRUCTION_MERGE_TRESHHOLD an empty String will be returned
+     */
+    private static String getThenVoiceInstructionpart(InstructionList instructions, int index, Translation translation) {
+        if (instructions.size() > index + 2) {
+            Instruction firstInstruction = instructions.get(index + 1);
+            if (firstInstruction.getDistance() < VOICE_INSTRUCTION_MERGE_TRESHHOLD) {
+                Instruction secondInstruction = instructions.get(index + 2);
+                if (secondInstruction.getSign() != Instruction.REACHED_VIA)
+                    return ", " + translation.tr("navigate.then") + " " + secondInstruction.getTurnDescription(translation);
+            }
+        }
+
+        return "";
     }
 }

@@ -109,6 +109,22 @@ public class RouteResourceTest {
         double distance = path.get("distance").asDouble();
         assertTrue(distance > 9000, "distance wasn't correct:" + distance);
         assertTrue(distance < 9500, "distance wasn't correct:" + distance);
+
+        JsonNode instructions = path.get("instructions").get(0);
+        assertFalse(instructions.has("voice_instructions"));
+    }
+
+    @Test
+    public void testVoiceInstructionsQuery() {
+        final Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128&" +
+                "voice_instructions=true").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode instructions = json.get("paths").get(0).get("instructions").get(0);
+        assertTrue(instructions.has("voice_instructions"));
     }
 
     @Test
@@ -125,11 +141,36 @@ public class RouteResourceTest {
         assertTrue(distance > 9000, "distance wasn't correct:" + distance);
         assertTrue(distance < 9500, "distance wasn't correct:" + distance);
 
+        JsonNode instructions = path.get("instructions").get(0);
+        assertFalse(instructions.has("voice_instructions"));
+
         // we currently just ignore URL parameters (not sure if this is a good or bad thing)
         jsonStr = "{\"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
         response = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         assertFalse(response.readEntity(JsonNode.class).get("info").has("errors"));
+    }
+
+    @Test
+    public void testVoiceInstructionsPostQuery() {
+        String jsonStr = "{ \"profile\": \"my_car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]], \"voice_instructions\": true }";
+        Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode instructions = json.get("paths").get(0).get("instructions").get(0);
+        assertTrue(instructions.has("voice_instructions"));
+
+        // we currently just ignore URL parameters (not sure if this is a good or bad thing)
+        jsonStr = "{ \"profile\": \"my_car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]], \"voice_instructions\": true }";
+        response = clientTarget(app, "/route?voice_instructions=false").request().post(Entity.json(jsonStr));
+        assertEquals(200, response.getStatus());
+        json = response.readEntity(JsonNode.class);
+        infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        instructions = json.get("paths").get(0).get("instructions").get(0);
+        assertTrue(instructions.has("voice_instructions"));
     }
 
     @Test

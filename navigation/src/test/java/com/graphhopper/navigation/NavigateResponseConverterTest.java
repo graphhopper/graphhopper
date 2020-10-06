@@ -22,6 +22,8 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Locale;
 
+import static com.graphhopper.util.Parameters.Routing.VOICE_INSTRUCTIONS;
+import static com.graphhopper.util.Parameters.Routing.VOICE_INSTRUCTIONS_UNIT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -34,7 +36,6 @@ public class NavigateResponseConverterTest {
     private static final String profile = "my_car";
 
     private final TranslationMap trMap = hopper.getTranslationMap();
-    private final VoiceInstructionDistanceConfig voiceInstructionDistanceConfig = new VoiceInstructionDistanceConfig(VoiceInstructionDistanceUtils.Unit.METRIC, trMap.getWithFallBack(Locale.ENGLISH));
 
     @BeforeClass
     public static void beforeClass() {
@@ -59,9 +60,9 @@ public class NavigateResponseConverterTest {
     public void basicTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile));
+                setProfile(profile).putHint(VOICE_INSTRUCTIONS, true).putHint(VOICE_INSTRUCTIONS_UNIT, "metric"));
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, voiceInstructionDistanceConfig);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
 
         JsonNode route = json.get("routes").get(0);
         double routeDistance = route.get("distance").asDouble();
@@ -129,9 +130,9 @@ public class NavigateResponseConverterTest {
     public void voiceInstructionsTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile));
+                setProfile(profile).putHint(VOICE_INSTRUCTIONS, true).putHint(VOICE_INSTRUCTIONS_UNIT, "metric"));
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, voiceInstructionDistanceConfig);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -161,10 +162,9 @@ public class NavigateResponseConverterTest {
     public void voiceInstructionsImperialTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile));
+                setProfile(profile).putHint(VOICE_INSTRUCTIONS, true).putHint(VOICE_INSTRUCTIONS_UNIT, "imperial"));
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new VoiceInstructionDistanceConfig(VoiceInstructionDistanceUtils.Unit.IMPERIAL, trMap.getWithFallBack(Locale.ENGLISH)));
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -197,11 +197,11 @@ public class NavigateResponseConverterTest {
     public void alternativeRoutesTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile).setAlgorithm(Parameters.Algorithms.ALT_ROUTE));
+                setProfile(profile).setAlgorithm(Parameters.Algorithms.ALT_ROUTE).putHint(VOICE_INSTRUCTIONS, true).putHint(VOICE_INSTRUCTIONS_UNIT, "metric"));
 
         assertEquals(2, rsp.getAll().size());
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, voiceInstructionDistanceConfig);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
 
         JsonNode routes = json.get("routes");
         assertEquals(2, routes.size());
@@ -214,20 +214,20 @@ public class NavigateResponseConverterTest {
     public void voiceInstructionTranslationTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile));
+                setProfile(profile).putHint(VOICE_INSTRUCTIONS, true).putHint(VOICE_INSTRUCTIONS_UNIT, "metric"));
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, voiceInstructionDistanceConfig);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
         JsonNode voiceInstruction = steps.get(14).get("voiceInstructions").get(0);
         assertEquals("In 2 kilometers keep right", voiceInstruction.get("announcement").asText());
 
         rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile).setLocale(Locale.GERMAN));
+                setProfile(profile).setLocale(Locale.GERMAN).putHint(VOICE_INSTRUCTIONS, true).putHint(VOICE_INSTRUCTIONS_UNIT, "metric"));
 
         VoiceInstructionDistanceConfig distanceConfigGerman = new VoiceInstructionDistanceConfig(VoiceInstructionDistanceUtils.Unit.METRIC, trMap.getWithFallBack(Locale.GERMAN));
 
-        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.GERMAN, distanceConfigGerman);
+        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.GERMAN);
 
         steps = json.get("routes").get(0).get("legs").get(0).get("steps");
         voiceInstruction = steps.get(14).get("voiceInstructions").get(0);
@@ -239,9 +239,9 @@ public class NavigateResponseConverterTest {
     public void roundaboutDegreesTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile));
+                setProfile(profile).putHint(VOICE_INSTRUCTIONS, true).putHint(VOICE_INSTRUCTIONS_UNIT, "metric"));
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, voiceInstructionDistanceConfig);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -264,10 +264,12 @@ public class NavigateResponseConverterTest {
         request.addPoint(new GHPoint(42.505144, 1.526113));
         request.addPoint(new GHPoint(42.50529, 1.527218));
         request.setProfile(profile);
+        request.putHint(VOICE_INSTRUCTIONS, true);
+        request.putHint(VOICE_INSTRUCTIONS_UNIT, "metric");
 
         GHResponse rsp = hopper.route(request);
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, voiceInstructionDistanceConfig);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
 
         //Check that all waypoints are there and in the right order
         JsonNode waypointsJson = json.get("waypoints");

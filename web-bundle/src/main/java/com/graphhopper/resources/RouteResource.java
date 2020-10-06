@@ -88,6 +88,8 @@ public class RouteResource {
             @QueryParam(SNAP_PREVENTION) List<String> snapPreventions,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("heading") @NotNull List<Double> headings,
+            @QueryParam(VOICE_INSTRUCTIONS) @DefaultValue("false") boolean voiceInstructions,
+            @QueryParam(VOICE_INSTRUCTIONS_UNIT) @DefaultValue("metric") String voiceUnits,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
