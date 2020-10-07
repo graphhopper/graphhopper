@@ -114,8 +114,7 @@ public class WrapperGraph implements Graph {
 
     @Override
     public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
-        // todonow?
-        throw new UnsupportedOperationException("not implemented yet");
+        throw new RuntimeException("not implemented yet");
     }
 
     @Override
@@ -141,7 +140,6 @@ public class WrapperGraph implements Graph {
 
             @Override
             public int getEdgeKey() {
-                // todonow?
                 throw new UnsupportedOperationException();
             }
 
