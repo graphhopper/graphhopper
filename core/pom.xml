@@ -44,6 +44,11 @@
             <groupId>com.carrotsearch</groupId>
             <artifactId>hppc</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <version>3.1.2</version>
+        </dependency>
         <!-- for using CGIAR: elevation data importing via tif files-->
         <dependency>
             <groupId>org.apache.xmlgraphics</groupId>
