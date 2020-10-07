@@ -443,18 +443,10 @@ public class MapMatching {
 
     private EdgeIteratorState resolveToRealEdge(EdgeIteratorState edgeIteratorState) {
         if (queryGraph.isVirtualNode(edgeIteratorState.getBaseNode()) || queryGraph.isVirtualNode(edgeIteratorState.getAdjNode())) {
-            return findEdgeByKey(((VirtualEdgeIteratorState) edgeIteratorState).getOriginalEdgeKey());
+            return graph.getEdgeIteratorStateForKey(((VirtualEdgeIteratorState) edgeIteratorState).getOriginalEdgeKey());
         } else {
             return edgeIteratorState;
         }
-    }
-
-    private EdgeIteratorState findEdgeByKey(int edgeKey) {
-        EdgeIteratorState edge = graph.getEdgeIteratorState(edgeKey / 2, Integer.MIN_VALUE);
-        if ((edgeKey % 2 == 1) == (edge.getBaseNode() < edge.getAdjNode())) {
-            edge = graph.getEdgeIteratorState(edgeKey / 2, edge.getBaseNode());
-        }
-        return edge;
     }
 
     private String getSnappedCandidates(Collection<State> candidates) {
