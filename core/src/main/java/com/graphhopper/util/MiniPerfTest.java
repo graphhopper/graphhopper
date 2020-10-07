@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.carrotsearch.hppc.DoubleArrayList;
+import com.carrotsearch.hppc.cursors.DoubleCursor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,16 +31,17 @@ import java.util.Locale;
  */
 public abstract class MiniPerfTest {
 
-    private static final double NS_PER_S  = 1e9;
+    private static final double NS_PER_S = 1e9;
     private static final double NS_PER_MS = 1e6;
     private static final double NS_PER_US = 1e3;
-    
+
     protected Logger logger = LoggerFactory.getLogger(getClass());
     private int counts = 100;
     private long fullTime = 0;
     private long max;
     private long min = Long.MAX_VALUE;
     private int dummySum;
+    private DoubleArrayList allTimes = new DoubleArrayList(counts);
 
     public MiniPerfTest start() {
         int warmupCount = Math.max(1, counts / 3);
@@ -55,6 +58,8 @@ public abstract class MiniPerfTest {
 
             if (time > max)
                 max = time;
+
+            allTimes.add(time / 1000.0 / 1000.0);
         }
         fullTime = System.nanoTime() - startFull;
         logger.info("dummySum:" + dummySum);
@@ -63,6 +68,7 @@ public abstract class MiniPerfTest {
 
     public MiniPerfTest setIterations(int counts) {
         this.counts = counts;
+        this.allTimes = new DoubleArrayList(counts);
         return this;
     }
 
@@ -93,7 +99,7 @@ public abstract class MiniPerfTest {
     public double getMean() {
         return getSum() / counts;
     }
-    
+
     private String formatDuration(double durationNs) {
         double divisor;
         String unit;
@@ -117,6 +123,15 @@ public abstract class MiniPerfTest {
 
     public int getDummySum() {
         return dummySum;
+    }
+
+    public void printHistogram() {
+        allTimes.trimToSize();
+        Histogram h = new Histogram("histogram", 15, getMin(), getMax());
+        for (DoubleCursor allTime : allTimes) {
+            h.fill(allTime.value);
+        }
+        h.show();
     }
 
     private String nf(Number num) {

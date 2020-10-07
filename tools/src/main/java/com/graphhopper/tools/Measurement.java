@@ -32,6 +32,9 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
@@ -42,6 +45,7 @@ import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.Parameters.CH;
@@ -71,6 +75,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Used to run performance benchmarks for routing and other functionalities of GraphHopper
@@ -85,6 +90,7 @@ public class Measurement {
     private boolean stopOnError;
     private int maxNode;
     private String vehicle;
+    private List<PointWithHint> randomPoints;
 
     public static void main(String[] strs) throws IOException {
         PMap args = PMap.read(strs);
@@ -122,6 +128,7 @@ public class Measurement {
         seed = args.getLong("measurement.seed", 123);
         put("measurement.gitinfo", args.getString("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
+        int preCalculatedPoints = args.getInt("measurement.precalculated_points", 100_000);
         put("measurement.name", args.getString("measurement.name", "no_name"));
         put("measurement.map", args.getString("datareader.file", "unknown"));
         String blockAreaStr = args.getString("measurement.block_area", "");
@@ -200,7 +207,10 @@ public class Measurement {
         StopWatch sw = new StopWatch().start();
         try {
             maxNode = g.getNodes();
-
+            // restricting the maximum snap distance is meant to prevent that it is overly likely that we draw query
+            // points from the 'dead' parts of the map (within the bounding box, but far away from the road network)
+            double maxSnapDistance = args.getDouble("measurement.max_snap_distance", 500);
+            generateRandomButValidPoints(hopper, preCalculatedPoints, maxSnapDistance, new Random(seed));
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, encoder, count * 100, allowedEdges);
@@ -209,13 +219,13 @@ public class Measurement {
             if (runSlow) {
                 boolean isCH = false;
                 boolean isLM = false;
-                printTimeOfRouteQuery(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
+                printTimeOfRouteQuery(hopper, new QuerySettings("routing", count / 10, isCH, isLM).
                         withInstructions());
                 if (encoder.supportsTurnCosts())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_edge", count / 10, isCH, isLM).
                             withInstructions().edgeBased());
                 if (!blockAreaStr.isEmpty())
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routing_block_area", count / 10, isCH, isLM).
                             withInstructions().blockArea(blockAreaStr));
             }
 
@@ -225,10 +235,10 @@ public class Measurement {
                 boolean isLM = true;
                 Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
-                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 4, isCH, isLM).
+                    printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount, count / 10, isCH, isLM).
                             withInstructions().activeLandmarks(activeLMCount));
                     if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
-                        printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 4, isCH, isLM).
+                        printTimeOfRouteQuery(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 10, isCH, isLM).
                                 withInstructions().activeLandmarks(activeLMCount).edgeBased());
                     }
                 });
@@ -295,6 +305,7 @@ public class Measurement {
         } finally {
             put("gh.gitinfo", Constants.GIT_INFO != null ? Constants.GIT_INFO.toString() : "unknown");
             put("measurement.count", count);
+            put("measurement.precalculated_points", preCalculatedPoints);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getMillis());
             gcAndWait();
@@ -636,7 +647,6 @@ public class Measurement {
     }
 
     private void printTimeOfRouteQuery(final GraphHopper hopper, final QuerySettings querySettings) {
-        final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong distSum = new AtomicLong(0);
@@ -645,8 +655,6 @@ public class Measurement {
         final AtomicInteger failedCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
 
-        final EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle));
-        final EdgeExplorer edgeExplorer = g.createEdgeExplorer(edgeFilter);
         final AtomicLong visitedNodesSum = new AtomicLong(0);
         final AtomicLong maxVisitedNodes = new AtomicLong(0);
 //        final AtomicLong extractTimeSum = new AtomicLong(0);
@@ -654,49 +662,20 @@ public class Measurement {
 //        final AtomicLong calcDistTimeSum = new AtomicLong(0);
 //        final AtomicLong tmpDist = new AtomicLong(0);
         final Random rand = new Random(seed);
-        final NodeAccess na = g.getNodeAccess();
 
         MiniPerfTest miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
                 GHRequest req = new GHRequest(querySettings.points);
                 IntArrayList nodes = new IntArrayList(querySettings.points);
-                // we try a few times to find points that do not lie within our blocked area
-                for (int i = 0; i < 5; i++) {
-                    nodes.clear();
-                    List<GHPoint> points = new ArrayList<>();
-                    List<String> pointHints = new ArrayList<>();
-                    int tries = 0;
-                    while (nodes.size() < querySettings.points) {
-                        int node = rand.nextInt(maxNode);
-                        if (++tries > g.getNodes())
-                            throw new RuntimeException("Could not find accessible points");
-                        if (GHUtility.count(edgeExplorer.setBaseNode(node)) == 0)
-                            // this node is not accessible via any roads, probably was removed during subnetwork removal
-                            // -> discard
-                            continue;
-                        nodes.add(node);
-                        points.add(new GHPoint(na.getLatitude(node), na.getLongitude(node)));
-                        if (querySettings.withPointHints) {
-                            EdgeIterator iter = edgeExplorer.setBaseNode(node);
-                            pointHints.add(iter.next() ? iter.getName() : "");
-                        }
-                    }
-                    req.setPoints(points);
-                    req.setPointHints(pointHints);
-                    if (querySettings.blockArea == null)
-                        break;
-                    try {
-                        req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
-                        GraphEdgeIdFinder.createBlockArea(hopper.getGraphHopperStorage(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
-                        break;
-                    } catch (IllegalArgumentException ex) {
-                        if (i >= 4)
-                            throw new RuntimeException("Give up after 5 tries. Cannot find points outside of the block_area "
-                                    + querySettings.blockArea + " - too big block_area or map too small? Request:" + req);
-                    }
-                }
+                List<PointWithHint> points = getRandomPoints(hopper, rand, querySettings.points, querySettings.blockArea);
+                req.setPoints(points.stream().map(p -> p.point).collect(toList()));
+                if (querySettings.withPointHints)
+                    req.setPointHints(points.stream().map(p -> p.hint).collect(toList()));
+                if (querySettings.blockArea != null)
+                    req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
                 req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
+                req.setSnapPreventions(Arrays.asList("ferry"));
                 req.getHints().
                         putObject(CH.DISABLE, !querySettings.ch).
                         putObject("stall_on_demand", querySettings.sod).
@@ -715,7 +694,13 @@ public class Measurement {
 
                 GHResponse rsp;
                 try {
+                    long s = System.nanoTime();
                     rsp = hopper.route(req);
+                    long timeNs = System.nanoTime() - s;
+                    double timeS = timeNs / 1_000_000_000.0;
+                    if (timeS > 50) {
+                        System.out.println("REQUEST TOOK MORE THAN 10s! " + req + ", took: " + timeS + "s");
+                    }
                 } catch (Exception ex) {
                     // 'not found' can happen if import creates more than one subnetwork
                     throw new RuntimeException("Error while calculating route! nodes: " + nodes + ", request:" + req, ex);
@@ -780,13 +765,78 @@ public class Measurement {
         put(prefix + ".guessed_algorithm", algoStr);
         put(prefix + ".failed_count", failedCount.get());
         put(prefix + ".distance_min", minDistance.get());
-        put(prefix + ".distance_mean", (float) distSum.get() / count);
-        put(prefix + ".air_distance_mean", (float) airDistSum.get() / count);
-        put(prefix + ".distance_max", maxDistance.get());
+        float meanDist = (float) distSum.get() / count;
+        put(prefix + ".distance_mean", meanDist);
+        float airDistMean = (float) airDistSum.get() / count;
+        put(prefix + ".air_distance_mean", airDistMean);
+        long distMax = maxDistance.get();
+        put(prefix + ".distance_max", distMax);
         put(prefix + ".visited_nodes_mean", (float) visitedNodesSum.get() / count);
         put(prefix + ".visited_nodes_max", (float) maxVisitedNodes.get());
         put(prefix + ".alternative_rate", (float) altCount.get() / count);
         print(prefix, miniPerf);
+        miniPerf.printHistogram();
+        System.out.println("mean dist: " + meanDist);
+        System.out.println("mean air dist: " + airDistMean);
+        System.out.println("max dist: " + distMax);
+    }
+
+    private void generateRandomButValidPoints(GraphHopper hopper, int numPoints, double maxSnapDistance, Random rnd) {
+        // create random but valid points to be used later (better than obtaining them during the measurement)
+        StopWatch sw = new StopWatch().start();
+        int numTries = 100 * numPoints;
+        int numAttempts = 0;
+        final EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle));
+        EncodingManager lookup = hopper.getEncodingManager();
+        final EnumEncodedValue<RoadClass> roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        final EnumEncodedValue<RoadEnvironment> roadEnvEnc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        SnapPreventionEdgeFilter snapFilter = new SnapPreventionEdgeFilter(edgeFilter, roadClassEnc, roadEnvEnc,
+                Arrays.asList("ferry"));
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        final EdgeExplorer edgeExplorer = graph.createEdgeExplorer(snapFilter);
+        BBox bBox = graph.getBounds();
+
+        randomPoints = new ArrayList<>(numPoints);
+        while (randomPoints.size() < numPoints) {
+            numAttempts++;
+            double lat = bBox.minLat + rnd.nextDouble() * (bBox.maxLat - bBox.minLat);
+            double lon = bBox.minLon + rnd.nextDouble() * (bBox.maxLon - bBox.minLon);
+            QueryResult qr = hopper.getLocationIndex().findClosest(lat, lon, snapFilter);
+            if (qr.isValid() && DistancePlaneProjection.DIST_PLANE.calcDist(
+                    qr.getSnappedPoint().getLat(), qr.getSnappedPoint().getLon(),
+                    qr.getQueryPoint().getLat(), qr.getQueryPoint().getLon()) < maxSnapDistance) {
+                EdgeIterator iter = edgeExplorer.setBaseNode(qr.getClosestNode());
+                String hint = iter.next() ? iter.getName() : "";
+                randomPoints.add(new PointWithHint(new GHPoint(lat, lon), hint));
+            }
+            if (numAttempts > numTries) {
+                throw new IllegalStateException("Could not find " + numPoints + " valid points after " + numTries + " tries.");
+            }
+        }
+        logger.info("Creating " + numPoints + " random points took: " + sw.stop().getMillis() + "ms");
+    }
+
+    private List<PointWithHint> getRandomPoints(GraphHopper hopper, Random rnd, int numPoints, String blockAreaStr) {
+        final EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle));
+        GraphEdgeIdFinder.BlockArea blockArea = blockAreaStr == null ? null :
+                new GraphEdgeIdFinder(hopper.getGraphHopperStorage(), hopper.getLocationIndex()).
+                        parseBlockArea(blockAreaStr, edgeFilter, 1000 * 1000);
+        List<PointWithHint> points = new ArrayList<>(numPoints);
+        int tries = 0;
+        while (points.size() < numPoints) {
+            if (tries > numPoints * 100)
+                throw new RuntimeException("Took too many tries to find points outside of blocked area.");
+            tries++;
+            int index = rnd.nextInt(randomPoints.size());
+            PointWithHint p = randomPoints.get(index);
+            if (blockArea != null && blockArea.contains(p.point))
+                continue;
+            points.add(p);
+        }
+        if (points.size() != numPoints) {
+            throw new IllegalStateException("List should have " + numPoints + " points");
+        }
+        return points;
     }
 
     void print(String prefix, MiniPerfTest perf) {
@@ -968,5 +1018,15 @@ public class Measurement {
             }
         }
         return sum;
+    }
+
+    private static class PointWithHint {
+        final GHPoint point;
+        final String hint;
+
+        public PointWithHint(GHPoint point, String hint) {
+            this.point = point;
+            this.hint = hint;
+        }
     }
 }
