@@ -34,6 +34,7 @@ import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.*;
@@ -139,7 +140,7 @@ public class QueryGraph implements Graph {
     public Set<EdgeIteratorState> getUnfavoredVirtualEdges() {
         // Need to create a new set to convert Set<VirtualEdgeIteratorState> to
         // Set<EdgeIteratorState>.
-        return new LinkedHashSet<EdgeIteratorState>(unfavoredEdges);
+        return new LinkedHashSet<>(unfavoredEdges);
     }
 
     /**
@@ -188,6 +189,14 @@ public class QueryGraph implements Graph {
             return eis2;
         throw new IllegalStateException("Edge " + origEdgeId + " not found with adjNode:" + adjNode
                 + ". found edges were:" + eis + ", " + eis2);
+    }
+
+    @Override
+    public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
+        int edge = GHUtility.getEdgeFromEdgeKey(edgeKey);
+        if (!isVirtualEdge(edge))
+            return baseGraph.getEdgeIteratorStateForKey(edgeKey);
+        return getVirtualEdge(edgeKey - 2 * baseEdges);
     }
 
     private VirtualEdgeIteratorState getVirtualEdge(int edgeId) {

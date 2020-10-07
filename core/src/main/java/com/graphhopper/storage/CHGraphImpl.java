@@ -641,6 +641,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        public int getEdgeKey() {
+            checkShortcut(false, "getEdgeKey");
+            return edgeIterable.getEdgeKey();
+        }
+
+        @Override
         public EdgeIteratorState setFlags(IntsRef edgeFlags) {
             return edgeIterable.setFlags(edgeFlags);
         }

@@ -572,6 +572,13 @@ class BaseGraph implements Graph {
         return null;
     }
 
+    @Override
+    public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
+        EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, this);
+        edge.init(edgeKey);
+        return edge;
+    }
+
     final void checkAdjNodeBounds(int adjNode) {
         if (adjNode < 0 && adjNode != Integer.MIN_VALUE || adjNode >= nodeCount)
             throw new IllegalStateException("adjNode " + adjNode + " out of bounds [0," + nf(nodeCount) + ")");
@@ -1001,6 +1008,29 @@ class BaseGraph implements Graph {
             return false;
         }
 
+        /**
+         * Similar to {@link #init(int edgeId, int adjNode)}, but here we retrieve the edge in a certain direction
+         * directly using an edge key.
+         */
+        final void init(int edgeKey) {
+            if (edgeKey < 0)
+                throw new IllegalArgumentException("edge keys must not be negative, given: " + edgeKey);
+            this.edgeId = GHUtility.getEdgeFromEdgeKey(edgeKey);
+            edgePointer = edgeAccess.toPointer(edgeId);
+            baseNode = edgeAccess.getNodeA(edgePointer);
+            adjNode = edgeAccess.getNodeB(edgePointer);
+            freshFlags = false;
+
+            if (edgeKey % 2 == 0 || baseNode == adjNode) {
+                reverse = false;
+            } else {
+                reverse = true;
+                int tmp = baseNode;
+                baseNode = adjNode;
+                adjNode = tmp;
+            }
+        }
+
         @Override
         public final int getBaseNode() {
             return baseNode;
@@ -1157,6 +1187,11 @@ class BaseGraph implements Graph {
         @Override
         public int getEdge() {
             return edgeId;
+        }
+
+        @Override
+        public int getEdgeKey() {
+            return GHUtility.createEdgeKey(edgeId, reverse);
         }
 
         @Override

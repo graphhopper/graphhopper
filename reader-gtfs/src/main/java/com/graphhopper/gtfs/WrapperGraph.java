@@ -58,7 +58,7 @@ public class WrapperGraph implements Graph {
                 throw new RuntimeException();
             }
             extraEdgesBySource.put(extraEdge.getBaseNode(), extraEdge);
-            extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalEdgeKey(), extraEdge.getEdge(), extraEdge.getAdjNode(),
+            extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalEdgeKey(), extraEdge.getEdgeKey(), extraEdge.getAdjNode(),
                     extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(FetchMode.ALL), true));
         }
     }
@@ -113,6 +113,11 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
+    public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
+        throw new RuntimeException("not implemented yet");
+    }
+
+    @Override
     public AllEdgesIterator getAllEdges() {
         return new AllEdgesIterator() {
             @Override
@@ -130,6 +135,11 @@ public class WrapperGraph implements Graph {
 
             @Override
             public int getEdge() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int getEdgeKey() {
                 throw new UnsupportedOperationException();
             }
 
@@ -329,6 +339,11 @@ public class WrapperGraph implements Graph {
                     @Override
                     public int getEdge() {
                         return current.getEdge();
+                    }
+
+                    @Override
+                    public int getEdgeKey() {
+                        return current.getEdgeKey();
                     }
 
                     @Override
