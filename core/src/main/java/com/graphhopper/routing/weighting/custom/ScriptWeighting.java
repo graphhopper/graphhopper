@@ -7,6 +7,13 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
+import org.codehaus.janino.*;
+
+import java.io.StringReader;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
 public class ScriptWeighting extends AbstractWeighting {
     public static final String NAME = "script";
@@ -89,5 +96,89 @@ public class ScriptWeighting extends AbstractWeighting {
     @Override
     public String getName() {
         return NAME;
+    }
+
+    /**
+     * additionally to SecurityManager let's enforce a simple expressions.
+     * From FUNDAMENTALS-5: SecurityManager checks should be considered a last resort.
+     *
+     * @param returnSet collects guess parameters
+     * @return true if valid and "simple" expression
+     */
+    public static boolean parseAndGuessParameters(Set<String> returnSet, String key, NameValidator validator) {
+        if (key.length() > 100 || key.contains("{") || key.contains("}"))
+            return false;
+        try {
+            Parser parser = new Parser(new Scanner("ignore", new StringReader(key)));
+            Java.Atom atom = parser.parseConditionalExpression();
+            // after parsing the expression the input should end (otherwise it is not "simple")
+            if (parser.peek().type == TokenType.END_OF_INPUT)
+                return atom.accept(new MyVisitor(returnSet, validator));
+            return false;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private static class MyVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
+        private Set<String> parameters;
+        private NameValidator nameValidator;
+        private final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
+        private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal",
+                "getDistance", "getName", "contains",
+                "sqrt", "abs"));
+
+        public MyVisitor(Set<String> parameters, NameValidator nameValidator) {
+            this.parameters = parameters;
+            this.nameValidator = nameValidator;
+            // TODO move allowed variables and methods into the config but even if configured never allow certain methods:
+            allowedMethods.removeAll(Arrays.asList("getRuntime", "newInstance", "getClass"));
+            allowedNames.removeAll(Arrays.asList("Class", "Runtime", "System", "File", "Files"));
+        }
+
+        @Override
+        public Boolean visitPackage(Java.Package p) {
+            return false;
+        }
+
+        @Override
+        public Boolean visitRvalue(Java.Rvalue rv) throws Exception {
+            if (rv instanceof Java.AmbiguousName) {
+                Java.AmbiguousName n = (Java.AmbiguousName) rv;
+                for (String identifier : n.identifiers) {
+                    // allow only constants (upper case), encoded values, explicitly allowed variables and methods
+                    if (nameValidator.isValid(identifier) || allowedNames.contains(identifier) || allowedMethods.contains(identifier)) {
+                        if (!Character.isUpperCase(identifier.charAt(0))) parameters.add(n.identifiers[0]);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            if (rv instanceof Java.Literal)
+                return true;
+            if (rv instanceof Java.MethodInvocation) {
+                Java.MethodInvocation mi = (Java.MethodInvocation) rv;
+                if (allowedMethods.contains(mi.methodName)) return mi.target.accept(this);
+                return false;
+            }
+            if (rv instanceof Java.BinaryOperation)
+                if (((Java.BinaryOperation) rv).lhs.accept(this))
+                    return ((Java.BinaryOperation) rv).rhs.accept(this);
+            return false;
+        }
+
+        @Override
+        public Boolean visitType(Java.Type t) {
+            return false;
+        }
+
+        @Override
+        public Boolean visitConstructorInvocation(Java.ConstructorInvocation ci) {
+            return false;
+        }
+    }
+
+    interface NameValidator {
+        boolean isValid(String name);
     }
 }
