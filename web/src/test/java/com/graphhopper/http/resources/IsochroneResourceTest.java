@@ -164,22 +164,6 @@ public class IsochroneResourceTest {
     }
 
     @Test
-    public void requestUsingTolerance() {
-        String requestUrl = "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=130&type=json";
-        Response response = clientTarget(app, requestUrl)
-                .request().buildGet().invoke();
-        JsonNode json = response.readEntity(JsonNode.class);
-        int tookLonger = json.get("info").get("took").asInt();
-
-        response = clientTarget(app, requestUrl+"&tolerance=1000000")
-                .request().buildGet().invoke();
-        json = response.readEntity(JsonNode.class);
-        int tookShorter = json.get("info").get("took").asInt();
-
-        assertTrue(tookShorter  < tookLonger / 2);
-    }
-
-    @Test
     public void requestReverseFlow() {
         Response rsp = clientTarget(app, "/isochrone")
                 .queryParam("profile", "fast_car")
