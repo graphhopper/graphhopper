@@ -25,6 +25,7 @@ import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
@@ -240,7 +241,8 @@ public class RouteResource {
 
         long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
         InstructionList instructions = ghRsp.getBest().getInstructions();
-        return Response.ok(GpxFromInstructions.createGPX(instructions, trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version, instructions.getTr()), "application/gpx+xml").
+        Map<String, List<PathDetail>> pathDetails = ghRsp.getBest().getPathDetails();
+        return Response.ok(GpxFromInstructions.createGPX(instructions, trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version, instructions.getTr(), pathDetails), "application/gpx+xml").
                 header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
     }
 

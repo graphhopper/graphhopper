@@ -19,14 +19,13 @@
 package com.graphhopper.util.gpx;
 
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 // todo: the code here does not really belong into core, but we moved it here for now so its available from
 // map-matching resource (it cannot be in the api module, because it uses AngleCalc). Probably we should separate the
@@ -80,6 +79,10 @@ public class GpxFromInstructions {
     }
 
     public static String createGPX(InstructionList instructions, String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version, Translation tr) {
+        return createGPX(instructions, trackName, startTimeMillis, includeElevation, withRoute, withTrack, withWayPoints, version, tr, Collections.emptyMap());
+    }
+
+    public static String createGPX(InstructionList instructions, String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version, Translation tr, Map<String, List<PathDetail>> pathDetails) {
         DateFormat formatter = Helper.createFormatter();
 
         DecimalFormat decimalFormat = new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.ROOT));
@@ -129,6 +132,7 @@ public class GpxFromInstructions {
             gpxOutput.append("\n<trk><name>").append(trackName).append("</name>");
 
             gpxOutput.append("<trkseg>");
+            int trkptCount = 0;
             for (GPXEntry entry : createGPXList(instructions)) {
                 gpxOutput.append("\n<trkpt lat=\"").append(decimalFormat.format(entry.getPoint().getLat()));
                 gpxOutput.append("\" lon=\"").append(decimalFormat.format(entry.getPoint().getLon())).append("\">");
@@ -136,6 +140,7 @@ public class GpxFromInstructions {
                     gpxOutput.append("<ele>").append(Helper.round2(((GHPoint3D) entry.getPoint()).getEle())).append("</ele>");
                 if (entry.getTime() != null)
                     gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
+                addExtensions(gpxOutput, pathDetails, trkptCount++);
                 gpxOutput.append("</trkpt>");
             }
             gpxOutput.append("\n</trkseg>");
@@ -145,6 +150,29 @@ public class GpxFromInstructions {
         // we could now use 'wpt' for via points
         gpxOutput.append("\n</gpx>");
         return gpxOutput.toString();
+    }
+
+    private static void addExtensions(StringBuilder gpxOutput, Map<String, List<PathDetail>> pathDetails, int trkptCount) {
+        gpxOutput.append("<extensions>");
+        for (Map.Entry<String, List<PathDetail>> pathDetail : pathDetails.entrySet()) {
+            addGhDetails(gpxOutput, pathDetail, trkptCount);
+        }
+        gpxOutput.append("</extensions>");
+    }
+
+    private static void addGhDetails(StringBuilder gpxOutput, Map.Entry<String, List<PathDetail>> pathDetails, int trkptCount) {
+        gpxOutput.append("<gh:").append(pathDetails.getKey()).append(">");
+        gpxOutput.append(getGhDetailValueForTrackPoint(pathDetails.getValue(), trkptCount));
+        gpxOutput.append("</gh:").append(pathDetails.getKey()).append(">");
+    }
+
+    private static Object getGhDetailValueForTrackPoint(List<PathDetail> pathDetails, int trkptCount) {
+        for (PathDetail pathDetail : pathDetails) {
+            if (trkptCount > pathDetail.getFirst() && trkptCount <= pathDetail.getLast()) {
+                return pathDetail.getValue();
+            }
+        }
+        return "";
     }
 
     private static void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI, DecimalFormat decimalFormat, Translation tr) {

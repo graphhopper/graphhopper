@@ -32,22 +32,32 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
 import org.junit.Before;
 import org.junit.Test;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.io.IOException;
 import java.io.StringReader;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class GpxFromInstructionsTest {
 
@@ -128,21 +138,7 @@ public class GpxFromInstructionsTest {
 
     @Test
     public void testCreateGPX() {
-        InstructionAnnotation ea = InstructionAnnotation.EMPTY;
-        InstructionList instructions = new InstructionList(trMap.getWithFallBack(Locale.US));
-        PointList pl = new PointList();
-        pl.add(49.942576, 11.580384);
-        pl.add(49.941858, 11.582422);
-        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl).setDistance(240).setTime(15000));
-
-        pl = new PointList();
-        pl.add(49.941575, 11.583501);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(4000));
-
-        pl = new PointList();
-        pl.add(49.941389, 11.584311);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(3000));
-        instructions.add(new FinishInstruction(49.941029, 11.584514, 0));
+        InstructionList instructions = createInstructions();
 
         List<GPXEntry> result = GpxFromInstructions.createGPXList(instructions);
         assertEquals(5, result.size());
@@ -154,6 +150,29 @@ public class GpxFromInstructionsTest {
         assertEquals(22000, result.get(4).getTime().longValue());
 
         verifyGPX(GpxFromInstructions.createGPX(instructions, "GraphHopper", new Date().getTime(), false, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US)));
+    }
+
+
+    @Test
+    public void testCreateGPXWithPathDetailsExtensions() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException {
+        InstructionList instructions = createInstructions();
+        Map<String, List<PathDetail>> pathDetails = createPathDetails();
+
+        String gpx = GpxFromInstructions.createGPX(instructions, "GraphHopper", new Date().getTime(), false, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US), pathDetails);
+        verifyGPX(gpx);
+
+        Document doc = parse(gpx);
+        assertPathDetail(doc, 1, "road_class", "");
+        assertPathDetail(doc, 2, "road_class", "track");
+        assertPathDetail(doc, 3, "road_class", "track");
+        assertPathDetail(doc, 4, "road_class", "track");
+        assertPathDetail(doc, 5, "road_class", "residential");
+
+        assertPathDetail(doc, 1, "surface", "");
+        assertPathDetail(doc, 2, "surface", "gravel");
+        assertPathDetail(doc, 3, "surface", "gravel");
+        assertPathDetail(doc, 4, "surface", "paved");
+        assertPathDetail(doc, 5, "surface", "asphalt");
     }
 
     @Test
@@ -285,4 +304,64 @@ public class GpxFromInstructionsTest {
         assertEquals("", GpxFromInstructions.calcDirection(i5, null));
     }
 
+
+    private InstructionList createInstructions() {
+        InstructionAnnotation ea = InstructionAnnotation.EMPTY;
+        InstructionList instructions = new InstructionList(trMap.getWithFallBack(Locale.US));
+        PointList pl = new PointList();
+        pl.add(49.942576, 11.580384);
+        pl.add(49.941858, 11.582422);
+        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl).setDistance(240).setTime(15000));
+
+        pl = new PointList();
+        pl.add(49.941575, 11.583501);
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(4000));
+
+        pl = new PointList();
+        pl.add(49.941389, 11.584311);
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(3000));
+        instructions.add(new FinishInstruction(49.941029, 11.584514, 0));
+        return instructions;
+    }
+
+    private HashMap<String, List<PathDetail>> createPathDetails() {
+        HashMap<String, List<PathDetail>> pathDetails = new HashMap<>();
+        pathDetails.put("road_class", createRoadClassDetails());
+        pathDetails.put("surface", createSurfaceDetails());
+        return pathDetails;
+    }
+
+    private List<PathDetail> createRoadClassDetails() {
+        PathDetail track = createPathDetail("track", 0, 3);
+        PathDetail residential = createPathDetail("residential", 3, 4);
+        return Arrays.asList(track, residential);
+    }
+
+    private List<PathDetail> createSurfaceDetails() {
+        PathDetail gravel = createPathDetail("gravel", 0, 2);
+        PathDetail paved = createPathDetail("paved", 2, 3);
+        PathDetail asphalt = createPathDetail("asphalt", 3, 4);
+        return Arrays.asList(gravel, paved, asphalt);
+    }
+
+    private PathDetail createPathDetail(String value, int first, int last) {
+        PathDetail pathDetail = new PathDetail(value);
+        pathDetail.setFirst(first);
+        pathDetail.setLast(last);
+        return pathDetail;
+    }
+
+
+    private Document parse(String gpx) throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        InputSource src = new InputSource();
+        src.setCharacterStream(new StringReader(gpx));
+        return builder.parse(src);
+    }
+
+    private void assertPathDetail(Document doc, int trackPoint, String detail, String value) throws XPathExpressionException {
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        String surface = (String)xPath.evaluate(String.format("//trkpt[%s]/extensions/%s/text()", trackPoint, detail), doc, XPathConstants.STRING);
+        assertEquals(value, surface);
+    }
 }
