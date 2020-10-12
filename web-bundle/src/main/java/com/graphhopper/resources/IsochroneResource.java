@@ -138,15 +138,7 @@ public class IsochroneResource {
             fz = l -> l.time;
         }
 
-        double toleranceInDegrees = 0;
-        if(!Double.isNaN(toleranceInMeter) && !Double.isInfinite(toleranceInMeter) && toleranceInMeter > 0){
-            // We need to use tolerance² because we are calculating an area and not a distance
-            toleranceInDegrees = DistanceCalcEarth.DIST_EARTH.calcNormalizedDist(Math.pow(toleranceInMeter, 2));
-        }
-
-        logger.info("Convertring " + toleranceInMeter + " to normalized " + toleranceInDegrees);
-
-        Triangulator.Result result = triangulator.triangulate(snap, queryGraph, shortestPathTree, fz, toleranceInDegrees);
+        Triangulator.Result result = triangulator.triangulate(snap, queryGraph, shortestPathTree, fz, degreesFromMeters(toleranceInMeter));
 
         ContourBuilder contourBuilder = new ContourBuilder(result.triangulation);
         ArrayList<Geometry> isochrones = new ArrayList<>();
@@ -206,6 +198,17 @@ public class IsochroneResource {
             }
         }
         return maxPolygon;
+    }
+
+    /**
+     * We want to specify a tolerance in something like meters, but we need it in unprojected lat/lon-space.
+     * This is more correct in some parts of the world, and in some directions, than in others.
+     *
+     * @param distanceInMeters distance in meters
+     * @return "distance" in degrees
+     */
+    static double degreesFromMeters(double distanceInMeters) {
+        return distanceInMeters / DistanceCalcEarth.METERS_PER_DEGREE;
     }
 
 }
