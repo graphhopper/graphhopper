@@ -19,13 +19,14 @@ package com.graphhopper.reader.osm;
 
 import static com.graphhopper.util.Helper.nf;
 
-import com.baremaps.osm.model.Header;
-import com.baremaps.osm.model.Member;
-import com.baremaps.osm.model.Node;
-import com.baremaps.osm.model.Relation;
-import com.baremaps.osm.model.Way;
-import com.baremaps.osm.reader.EntityHandler;
-import com.baremaps.osm.reader.OsmEntityReader;
+import com.baremaps.osm.EntityHandler;
+import com.baremaps.osm.OpenStreetMap;
+import com.baremaps.osm.domain.Bounds;
+import com.baremaps.osm.domain.Header;
+import com.baremaps.osm.domain.Member;
+import com.baremaps.osm.domain.Node;
+import com.baremaps.osm.domain.Relation;
+import com.baremaps.osm.domain.Way;
 import com.carrotsearch.hppc.IntLongMap;
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.LongIndexedContainer;
@@ -72,7 +73,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.xml.stream.XMLStreamException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -196,21 +196,26 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         LOGGER.info("Starting to process OSM file: '" + osmFile + "'");
 
         try {
-            EntityHandler handler = new EntityHandler() {
+            OpenStreetMap.entityStream(osmFile.toPath()).sequential().forEach(new EntityHandler() {
                 @Override
-                public void onHeader(Header header) throws Exception {
+                public void handle(Header header) throws Exception {
                     if (header.getReplicationTimestamp() != null) {
                         osmDataDate = Date.from(header.getReplicationTimestamp().toInstant(ZoneOffset.UTC));
                     }
                 }
 
                 @Override
-                public void onNode(Node node) throws Exception {
+                public void handle(Bounds bounds) throws Exception {
                     // do nothing
                 }
 
                 @Override
-                public void onWay(Way entity) throws Exception {
+                public void handle(Node node) throws Exception {
+                    // do nothing
+                }
+
+                @Override
+                public void handle(Way entity) throws Exception {
                     final ReaderWay way = toReaderWay(entity);
                     boolean valid = filterWay(way);
                     if (valid) {
@@ -223,7 +228,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                 }
 
                 @Override
-                public void onRelation(Relation entity) throws Exception {
+                public void handle(Relation entity) throws Exception {
                     final ReaderRelation relation = toReaderRelation(entity);
                     if (!relation.isMetaRelation() && relation.hasTag("type", "route")){
                         prepareWaysWithRelationInfo(relation);
@@ -232,10 +237,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
                         prepareRestrictionRelation(relation);
                     }
                 }
-            };
-
-            new OsmEntityReader().read(osmFile.toPath(), handler);
-
+            });
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new RuntimeException("Problem while parsing file", ex);
@@ -318,35 +320,36 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         LongIntMap nodeFilter = getNodeMap();
 
         try {
-            AtomicLong wayStart = new AtomicLong(-1);
-            AtomicLong relationStart = new AtomicLong(-1);
             AtomicLong counter = new AtomicLong(1);
 
-            EntityHandler handler = new EntityHandler() {
+            OpenStreetMap.entityStream(osmFile.toPath()).forEach(new EntityHandler() {
                 @Override
-                public void onHeader(Header header) throws Exception {
-
+                public void handle(Header header) throws Exception {
+                    // do nothing
                 }
 
                 @Override
-                public void onNode(Node item) throws Exception {
+                public void handle(Bounds bounds) throws Exception {
+                    // do nothing
+                }
+
+                @Override
+                public void handle(Node item) throws Exception {
                     if (nodeFilter.get(item.getId()) != EMPTY_NODE) {
                         processNode(toReaderNode(item));
                     }
                 }
 
                 @Override
-                public void onWay(Way entity) throws Exception {
+                public void handle(Way entity) throws Exception {
                     processWay(toReaderWay(entity));
                 }
 
                 @Override
-                public void onRelation(Relation entity) throws Exception {
+                public void handle(Relation entity) throws Exception {
                     processRelation(toReaderRelation(entity));
                 }
-            };
-
-            new OsmEntityReader().read(osmFile.toPath(), handler);
+            });
 
             finishedReading();
 
