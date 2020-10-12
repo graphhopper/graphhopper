@@ -38,6 +38,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import org.mapdb.Fun;
@@ -202,9 +203,9 @@ public class RealtimeFeed {
             public EdgeIteratorState edge(int a, int b) {
                 int edge = firstEdge++;
                 final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                        edge, a, b, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false);
+                        GHUtility.createEdgeKey(edge, false), a, b, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false);
                 final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
-                        edge, b, a, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), true);
+                        GHUtility.createEdgeKey(edge, true), b, a, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), true);
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
                 additionalEdges.push(newEdge);
@@ -218,6 +219,11 @@ public class RealtimeFeed {
 
             @Override
             public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
+                return null;
+            }
+
+            @Override
+            public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
                 return null;
             }
 

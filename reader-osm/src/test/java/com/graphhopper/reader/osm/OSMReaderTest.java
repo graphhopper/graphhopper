@@ -522,9 +522,11 @@ public class OSMReaderTest {
 
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
+        // (2-3)->(3-8) no_entry = (2-3)->(3-8) restricted
         DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
         assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8) > 0);
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4) == 0);
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_2) == 0);
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4) == 0);

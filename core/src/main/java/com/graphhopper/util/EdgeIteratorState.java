@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 
 /**
@@ -72,6 +73,16 @@ public interface EdgeIteratorState {
      * values, except that for an implementation it is recommended that they'll be contiguous.
      */
     int getEdge();
+
+    /**
+     * Returns the edge key of the current edge. The edge id can be derived from the edge key by calling
+     * {@link GHUtility#getEdgeFromEdgeKey(int)}, but the edge key also contains information about the
+     * direction of the edge. The edge key is even when the edge is oriented in storage direction and odd
+     * otherwise. You can use the edge key to retrieve an edge state in the associated direction using
+     * {@link Graph#getEdgeIteratorStateForKey(int)}. Loop edges are always returned in 'forward' direction even when
+     * you use an odd edge key.
+     */
+    int getEdgeKey();
 
     /**
      * @return the edge id of the first original edge of the current edge. This is needed for shortcuts
