@@ -22,9 +22,17 @@ public abstract class PriorityScript implements EdgeToValueEntry {
     public PriorityScript() {
     }
 
+    public void init(EncodedValueLookup lookup) {
+        road_class_enc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        road_environment_enc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        if (lookup.hasEncodedValue(Surface.KEY))
+            surface_enc = lookup.getEnumEncodedValue(Surface.KEY, Surface.class);
+        if (lookup.hasEncodedValue(Toll.KEY))
+            toll_enc = lookup.getEnumEncodedValue(Toll.KEY, Toll.class);
+    }
+
     public static EdgeToValueEntry create(CustomModel customModel, EncodedValueLookup lookup) {
         ScriptEvaluator se = new ScriptEvaluator();
-
         se.setClassName("Priority");
         se.setDefaultImports("static com.graphhopper.routing.ev.RoadClass.*");
         se.setOverrideMethod(new boolean[]{
@@ -34,7 +42,9 @@ public abstract class PriorityScript implements EdgeToValueEntry {
                 false,
         });
         se.setExtendedClass(PriorityScript.class);
-        se.setReturnType(double.class);
+        se.setReturnTypes(new Class[]{
+                double.class,
+        });
         se.setMethodNames(new String[]{
                 "getValue",
         });
@@ -54,6 +64,7 @@ public abstract class PriorityScript implements EdgeToValueEntry {
             if (!mainExpression.isEmpty())
                 mainExpression += " : ";
 
+            // TODO NOW value must be a number or a name -> no method and no boolean expression
             if (entry.getKey().equals(CustomWeighting.CATCH_ALL)) {
                 if (!parseAndGuessParameters(createObjects, entry.getValue().toString(), nameValidator))
                     throw new IllegalArgumentException("Value not a valid, simple expression: " + entry.getValue().toString());
@@ -74,26 +85,22 @@ public abstract class PriorityScript implements EdgeToValueEntry {
         if (!closedScript)
             mainExpression += ": 1";
 
-        String expressions = "";
+        String getValueCode = "";
         for (String arg : createObjects) {
             if (lookup.hasEncodedValue(arg))
-                expressions += "Object " + arg + " = edge.get(" + arg + "_enc);\n";
+                getValueCode += "Enum " + arg + " = reverse ? edge.getReverse(" + arg + "_enc) : edge.get(" + arg + "_enc);\n";
         }
-        expressions += "return " + mainExpression + ";";
+        getValueCode += "return " + mainExpression + ";";
 
         try {
-            se.cook(new String[]{expressions});
+            se.cook(new String[]{getValueCode});
+            // TODO see if the following is possible and faster:
+            // se.createFastEvaluator
             PriorityScript priorityScript = (PriorityScript) se.getClazz().getDeclaredConstructor().newInstance();
-            // TODO include only the necessary encoded values via reflection and createObjects
-            priorityScript.road_class_enc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-            priorityScript.road_environment_enc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
-            if (lookup.hasEncodedValue(Surface.KEY))
-                priorityScript.surface_enc = lookup.getEnumEncodedValue(Surface.KEY, Surface.class);
-            if (lookup.hasEncodedValue(Toll.KEY))
-                priorityScript.toll_enc = lookup.getEnumEncodedValue(Toll.KEY, Toll.class);
+            priorityScript.init(lookup);
             return priorityScript;
         } catch (Exception ex) {
-            throw new IllegalArgumentException("In " + mainExpression, ex);
+            throw new IllegalArgumentException("Problem with: " + mainExpression, ex);
         }
     }
 }

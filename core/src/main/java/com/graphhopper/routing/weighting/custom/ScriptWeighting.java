@@ -12,7 +12,6 @@ import org.codehaus.janino.*;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 public class ScriptWeighting extends AbstractWeighting {
@@ -132,8 +131,10 @@ public class ScriptWeighting extends AbstractWeighting {
             this.parameters = parameters;
             this.nameValidator = nameValidator;
             // TODO move allowed variables and methods into the config but even if configured never allow certain methods:
-            allowedMethods.removeAll(Arrays.asList("getRuntime", "newInstance", "getClass"));
-            allowedNames.removeAll(Arrays.asList("Class", "Runtime", "System", "File", "Files"));
+            allowedMethods.removeAll(Arrays.asList("getRuntime", "newInstance", "getClass", "clone", "readObject", "invoke"));
+            allowedNames.removeAll(Arrays.asList("Class", "Module", "ClassLoader", "MethodHandles", "Method", "Field",
+                    "Constructor", "ServiceLoader", "Lookup", "AccessController", "ServerSocket", "Socket", "Policy", "URL",
+                    "HttpsURLConnection", "URLConnection", "Runtime", "System", "File", "Files", "Thread", "ExecutorService"));
         }
 
         @Override

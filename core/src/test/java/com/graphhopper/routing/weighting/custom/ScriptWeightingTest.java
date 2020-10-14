@@ -9,11 +9,18 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
-import org.codehaus.janino.ExpressionEvaluator;
+import org.codehaus.commons.compiler.CompileException;
+import org.codehaus.commons.compiler.Location;
+import org.codehaus.janino.*;
+import org.codehaus.janino.util.DeepCopier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
@@ -148,5 +155,221 @@ class ScriptWeightingTest {
 
         EdgeToValueEntry instance2 = (EdgeToValueEntry) ee.getClazz().getDeclaredConstructor().newInstance();
         assertEquals(1.0, instance2.getValue(secondary, false));
+    }
+
+    @Test
+    public void compilationUnit() throws Exception {
+        EdgeIteratorState primary = graphHopperStorage.edge(0, 1, 10, true).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80);
+
+        // try:
+        // 1. create template with possibility to overwrite getValue via the user expression
+        // 2. create template with user expression and add variables
+        Java.AbstractCompilationUnit cu = new Parser(new Scanner("ignore", new StringReader(
+                ""
+                        + "import " + PriorityScript.class.getName() + ";"
+                        + "import " + EncodedValueLookup.class.getName() + ";"
+                        + "import " + EnumEncodedValue.class.getName() + ";"
+                        + "import " + EdgeIteratorState.class.getName() + ";"
+                        + "import " + RoadClass.class.getName() + ";"
+                        + "import static " + RoadClass.class.getName() + ".*;"
+                        + "public class Test extends PriorityScript {"
+                        + "   int i = 5;"
+                        + "   @Override "
+                        + "   public void init(EncodedValueLookup lookup) {"
+                        + "      i = 17;"
+                        + "      road_class = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);"
+                        + "   }"
+                        + "   @Override "
+                        + "   public double getValue(EdgeIteratorState edge, boolean reverse) {"
+                        + "      return i; // edge.get(road_class).ordinal();\n"
+                        + "   }"
+                        + "}"
+        ))).parseAbstractCompilationUnit();
+        cu = new DeepCopier() {
+            public Java.TypeDeclaration
+            copyPackageMemberClassDeclaration(Java.PackageMemberClassDeclaration pmcd) throws CompileException {
+                Java.AbstractClassDeclaration result = (Java.AbstractClassDeclaration) super.copyPackageMemberClassDeclaration(pmcd);
+
+                result.addFieldDeclaration(new Java.FieldDeclaration(
+                        Location.NOWHERE,
+                        null,
+                        new Java.Modifier[0],
+                        new Java.ReferenceType(Location.NOWHERE, new Java.Annotation[0], new String[]{"EnumEncodedValue"}, null),
+                        new Java.VariableDeclarator[]{new Java.VariableDeclarator(Location.NOWHERE, "road_class", 0, null)}));
+                return result;
+            }
+
+//            @Override
+//            public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
+//                System.out.println("copyMethodDeclarator " + subject.name);
+//                if (subject.name.equals("getValue")) {
+//                    subject.statements.clear();
+//                    try {
+//                        Parser parser = new Parser(new Scanner("ignore", new StringReader("return 0.1;")));
+//                        Java.BlockStatement s = new Java.ReturnStatement(Location.NOWHERE, parser.parseConditionalExpression().toRvalueOrCompileException());
+//                        return new Java.MethodDeclarator(
+//                                subject.getLocation(),
+//                                subject.getDocComment(),
+//                                this.copyModifiers(subject.getModifiers()),
+//                                this.copyOptionalTypeParameters(subject.typeParameters),
+//                                this.copyType(subject.type),
+//                                subject.name,
+//                                this.copyFormalParameters(subject.formalParameters),
+//                                this.copyTypes(subject.thrownExceptions),
+//                                this.copyOptionalElementValue(subject.defaultValue),
+//                                this.copyOptionalStatements(Collections.singletonList(s))
+//                        );
+//                    } catch (Exception ex) {
+//                        throw new RuntimeException(ex);
+//                    }
+//                }
+//                return super.copyMethodDeclarator(subject);
+//            }
+        }.copyAbstractCompilationUnit(cu);
+        StringWriter sw = new StringWriter();
+        Unparser.unparse(cu, sw);
+        System.out.println(sw.toString());
+
+        SimpleCompiler sc = new SimpleCompiler();
+        sc.cook(sw.toString());
+        PriorityScript prio = (PriorityScript) sc.getClassLoader().
+                loadClass("Test").getDeclaredConstructor().newInstance();
+        prio.init(encodingManager);
+        assertEquals(17, prio.getValue(primary, false));
+
+        prio = (PriorityScript) sc.getClassLoader().
+                loadClass("Test").getDeclaredConstructor().newInstance();
+        assertEquals(5, prio.getValue(primary, false));
+    }
+
+    @Test
+    public void testCBE() throws Exception {
+        EdgeIteratorState primary = graphHopperStorage.edge(0, 1, 10, true).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80);
+
+        ClassBodyEvaluator evaluator = new ClassBodyEvaluator();
+        evaluator.setExtendedType(PriorityScript.class);
+        evaluator.setClassName("Test");
+        evaluator.setDefaultImports("com.graphhopper.routing.weighting.custom.*",
+                "com.graphhopper.routing.ev.*",
+                "com.graphhopper.util.EdgeIteratorState");
+        evaluator.cook(""
+                + "protected EnumEncodedValue road_class_enc_2;"
+                + "public void init(EncodedValueLookup lookup) {"
+                + "   road_class_enc_2 = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);"
+                + "}"
+                + "public double getValue(EdgeIteratorState edge, boolean reverse) {"
+                + "   return edge.get(road_class_enc_2).ordinal();"
+                + "}");
+        PriorityScript entry = (PriorityScript) evaluator.getClazz().getDeclaredConstructor().newInstance();
+        entry.init(encodingManager);
+        // assertTrue(entry instanceof EdgeToValueEntry);
+        assertEquals(PRIMARY.ordinal(), entry.getValue(primary, false));
+    }
+
+    public void test() throws Exception {
+        // Parse the input CU.
+        Java.AbstractCompilationUnit cu = new Parser(new Scanner(null, new StringReader(
+                ""
+                        + " class A {"
+                        + " "
+                        + "     void test() {"
+                        + "         int b = 0;"
+                        + "         int c = 1;"
+                        + "         b += c;"
+                        + "     }"
+                        + " "
+                        + "     int a;"
+                        + " }"
+        ))).parseAbstractCompilationUnit();
+
+        // Now copy the input CU and modify it on-the-fly.
+        cu = new DeepCopier() {
+
+            private final List<Java.FieldDeclaration> moreFieldDeclarations = new ArrayList<>();
+
+            @Override
+            public Java.BlockStatement
+            copyLocalVariableDeclarationStatement(Java.LocalVariableDeclarationStatement lvds) throws CompileException {
+
+                /**
+                 * Generate synthetic fields for each local variable.
+                 */
+                List<Java.VariableDeclarator> fieldVariableDeclarators = new ArrayList<>();
+                for (Java.VariableDeclarator vd : lvds.variableDeclarators) {
+                    fieldVariableDeclarators.add(new Java.VariableDeclarator(
+                            vd.getLocation(),
+                            vd.name,
+                            vd.brackets,
+                            null // initializer <= Do NOT copy the initializer!
+                    ));
+                }
+                this.moreFieldDeclarations.add(new Java.FieldDeclaration(
+                        Location.NOWHERE,                 // location
+                        null,                             // docComment
+                        lvds.modifiers,                   // modifiers
+                        this.copyType(lvds.type),         // type
+                        fieldVariableDeclarators.toArray( // variableDeclarators
+                                new Java.VariableDeclarator[fieldVariableDeclarators.size()]
+                        )
+                ));
+
+                /**
+                 * Replace each local variable declaration with an assignment expression statement.
+                 */
+                List<Java.BlockStatement> assignments = new ArrayList<>();
+                for (Java.VariableDeclarator vd : lvds.variableDeclarators) {
+
+                    Java.Rvalue initializer = (Java.Rvalue) vd.initializer;
+                    if (initializer == null) continue;
+
+                    assignments.add(new Java.ExpressionStatement(new Java.Assignment(
+                            Location.NOWHERE,            // location
+                            new Java.FieldAccessExpression(   // lhs
+                                    Location.NOWHERE,                    // location
+                                    new Java.ThisReference(Location.NOWHERE), // lhs
+                                    vd.name                              // field
+                            ),
+                            "=",                         // operator
+                            this.copyRvalue(initializer) // rhs
+                    )));
+                }
+
+                if (assignments.isEmpty()) return new Java.EmptyStatement(Location.NOWHERE);
+
+                if (assignments.size() == 1) return assignments.get(0);
+
+                Java.Block result = new Java.Block(Location.NOWHERE);
+                result.addStatements(assignments);
+                return result;
+            }
+
+            /**
+             * Add the synthetic field declarations to the class.
+             */
+            @Override
+            public Java.TypeDeclaration
+            copyPackageMemberClassDeclaration(Java.PackageMemberClassDeclaration pmcd) throws CompileException {
+
+                assert this.moreFieldDeclarations.isEmpty();
+                try {
+                    Java.AbstractClassDeclaration
+                            result = (Java.AbstractClassDeclaration) super.copyPackageMemberClassDeclaration(pmcd);
+
+                    for (Java.FieldDeclaration fd : this.moreFieldDeclarations) {
+                        result.addFieldDeclaration(fd); // TODO: Check for name clashes
+                    }
+                    return result;
+                } finally {
+                    this.moreFieldDeclarations.clear();
+                }
+            }
+
+        }.copyAbstractCompilationUnit(cu);
+
+        StringWriter sw = new StringWriter();
+        Unparser.unparse(cu, sw);
+        System.out.println(sw.toString());
     }
 }
