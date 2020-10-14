@@ -23,11 +23,11 @@ like finding and fixing bugs and improving our documentation or translations!
 
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
- * stable 2.0:   [documentation](https://github.com/graphhopper/graphhopper/blob/2.0/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-2.0.jar), [announcement](https://www.graphhopper.com/blog/2020/09/30/graphhopper-routing-engine-2-0-released/)
- * unstable 3.0: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md), [web service jar](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-web/2.0-SNAPSHOT/)
+ * stable 2.x: [documentation](https://github.com/graphhopper/graphhopper/blob/2.x/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-2.0.jar), [announcement](https://www.graphhopper.com/blog/2020/09/30/graphhopper-routing-engine-2-0-released/)
+ * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
 <details><summary>Click to see older releases</summary>
-<p>
+
  * See our [changelog file](./core/files/changelog.txt) for Java API Changes.
  * 1.0: [documentation](https://github.com/graphhopper/graphhopper/blob/1.0/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-1.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-1.0.apk), [announcement](https://www.graphhopper.com/blog/2020/05/25/graphhopper-routing-engine-1-0-released/)
  * 0.13.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.13/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.13.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.13.0.apk), [announcement](https://www.graphhopper.com/blog/2019/09/18/graphhopper-routing-engine-0-13-released/)
@@ -37,7 +37,6 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
  * 0.9.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.9/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.9.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.9.0.apk), [announcement](https://www.graphhopper.com/blog/2017/05/31/graphhopper-routing-engine-0-9-released/)
  * 0.8.2: [documentation](https://github.com/graphhopper/graphhopper/blob/0.8/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.8.2-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.8.2.apk), [announcement](https://www.graphhopper.com/blog/2016/10/18/graphhopper-routing-engine-0-8-released/)
  * 0.7.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.7/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.7.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.7.0.apk), [announcement](https://www.graphhopper.com/blog/2016/06/15/graphhopper-routing-engine-0-7-released/)
-</p>
 </details>
 
 ## Installation
@@ -123,6 +122,8 @@ Furthermore, this hybrid mode is slower than the speed mode, but it is an
 order of magnitude faster than the flexible mode and uses also less RAM for one request.
 
 You can switch between all modes at request time.
+
+Read more about the technical details [here](./docs/core/technical.md).
 
 ## License
 

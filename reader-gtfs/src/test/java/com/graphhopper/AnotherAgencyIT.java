@@ -130,4 +130,24 @@ public class AnotherAgencyIT {
         assertEquals("14:10", arrivalTime.toString());
     }
 
+    @Test
+    public void testWalkTransferBetweenFeeds() {
+        Request ghRequest = new Request(
+                Arrays.asList(
+                        new GHStationLocation("JUSTICE_COURT"),
+                        new GHStationLocation("DADAN")
+                ),
+                LocalDateTime.of(2007, 1, 1, 9, 0, 0).atZone(zoneId).toInstant()
+        );
+        ghRequest.setIgnoreTransfers(true);
+        ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
+        GHResponse route = ptRouter.route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertEquals(1, route.getAll().size());
+        ResponsePath transitSolution = route.getBest();
+        // TODO: We probably want something like a transfer leg here
+        assertEquals("Expected total travel time == scheduled travel time + wait time", time(1, 15), transitSolution.getTime());
+    }
+
 }
