@@ -55,7 +55,7 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
             } else if ("icn".equals(tag)) {
                 newBikeNetwork = RouteNetwork.INTERNATIONAL;
             }
-            if (oldBikeNetwork == RouteNetwork.OTHER || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
+            if (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
                 transformerRouteRelEnc.setEnum(false, relFlags, newBikeNetwork);
         }
 

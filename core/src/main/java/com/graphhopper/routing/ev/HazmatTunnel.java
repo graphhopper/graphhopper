@@ -4,7 +4,7 @@ package com.graphhopper.routing.ev;
  * Defines the degree of restriction for the transport of hazardous goods through tunnels.<br>
  * If not tagged it will be {@link #A}
  * 
- * @see https://wiki.openstreetmap.org/wiki/Key:hazmat#Tunnel_restrictions
+ * @see <a href="https://wiki.openstreetmap.org/wiki/Key:hazmat#Tunnel_restrictions">Hazmat Tunnel restrictions</a>
  */
 public enum HazmatTunnel {
     /** driving with any dangerous goods allowed */
