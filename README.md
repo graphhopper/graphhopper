@@ -154,7 +154,9 @@ Embed GraphHopper with OpenStreetMap support into your Java application via the 
 </dependency>
 ```
 
-If you want to write your own import procedure, then use:
+See also [our example application](./example/src/main/java/com/graphhopper/example/RoutingExample.java) to get started fast.
+
+If you want to write your own import procedure, then you might only need:
 
 ```xml
 <dependency>
