@@ -169,7 +169,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         int importance = 1;
         if (getOffBikeEnc != null) {
             if (edge.get(roadClassEnc) == RoadClass.CYCLEWAY
-                    || bikeRouteEnc != null && edge.get(bikeRouteEnc) != RouteNetwork.OTHER) {
+                    || bikeRouteEnc != null && edge.get(bikeRouteEnc) != RouteNetwork.MISSING) {
                 // for backward compatibility
                 importance = 0;
                 info = tr.tr("cycleway");
