@@ -150,6 +150,7 @@ public abstract class PriorityScript implements EdgeToValueEntry {
                                 this.copyOptionalStatements(statements)
                         );
                         statements.forEach(st -> st.setEnclosingScope(methodDecl));
+                        statements.clear();
                         return methodDecl;
                     } catch (Exception ex) {
                         throw new RuntimeException(ex);
