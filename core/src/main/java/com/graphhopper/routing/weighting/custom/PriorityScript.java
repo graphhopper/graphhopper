@@ -89,7 +89,7 @@ public abstract class PriorityScript implements EdgeToValueEntry {
                     Parser parser = new Parser(new Scanner("parser1", new StringReader(
                             "Enum " + arg + " = reverse ? edge.getReverse(" + arg + "_enc) : edge.get(" + arg + "_enc);")));
                     statements.addAll(parser.parseBlockStatements());
-                    String className = Helper.underScoreToCamelCase(arg);
+                    String className = toClassName(arg);
                     String packageName = "com.graphhopper.routing.ev";
                     importSourceCode += "import static " + packageName + "." + className + ".*;\n";
                     importSourceCode += "import " + packageName + "." + className + ";\n";
@@ -100,19 +100,19 @@ public abstract class PriorityScript implements EdgeToValueEntry {
             }
 
             final String classTemplate = ""
-                    + "import " + PriorityScript.class.getName() + ";"
-                    + "import " + EncodedValueLookup.class.getName() + ";"
-                    + "import " + EnumEncodedValue.class.getName() + ";"
-                    + "import " + EdgeIteratorState.class.getName() + ";"
+                    + "import " + PriorityScript.class.getName() + ";\n"
+                    + "import " + EncodedValueLookup.class.getName() + ";\n"
+                    + "import " + EnumEncodedValue.class.getName() + ";\n"
+                    + "import " + EdgeIteratorState.class.getName() + ";\n"
                     + importSourceCode
-                    + "public class Test extends PriorityScript {"
+                    + "\npublic class Test extends PriorityScript {\n"
                     + classSourceCode
                     + "   @Override "
-                    + "   public void init(EncodedValueLookup lookup) {"
+                    + "   public void init(EncodedValueLookup lookup) {\n"
                     + initSourceCode
-                    + "   }"
+                    + "   }\n\n"
                     + "   @Override "
-                    + "   public double getValue(EdgeIteratorState edge, boolean reverse) {"
+                    + "   public double getValue(EdgeIteratorState edge, boolean reverse) {\n"
                     + "      return 0.17; //will be overwritten by code injected in DeepCopier\n"
                     + "   }"
                     + "}";
@@ -170,5 +170,14 @@ public abstract class PriorityScript implements EdgeToValueEntry {
         } catch (Exception ex) {
             throw new IllegalArgumentException("Problem with: " + mainUserExpression, ex);
         }
+    }
+
+    private static String toClassName(String arg) {
+        if (arg.isEmpty())
+            return "";
+        if (arg.length() == 1)
+            return "" + Character.toLowerCase(arg.charAt(0));
+        String clazz = Helper.underScoreToCamelCase(arg);
+        return Character.toUpperCase(clazz.charAt(0)) + clazz.substring(1);
     }
 }
