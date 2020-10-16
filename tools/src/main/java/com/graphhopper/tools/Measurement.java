@@ -359,28 +359,22 @@ public class Measurement {
             description = "CH";
             CHGraph lg = (CHGraph) graph;
             final CHEdgeExplorer chExplorer = lg.createEdgeExplorer(new LevelEdgeFilter(lg));
-            MiniPerfTest miniPerf = new MiniPerfTest() {
-                @Override
-                public int doCalc(boolean warmup, int run) {
-                    int nodeId = rand.nextInt(maxNode);
-                    return GHUtility.count(chExplorer.setBaseNode(nodeId));
-                }
-            }.setIterations(count).start();
+            MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
+                int nodeId = rand.nextInt(maxNode);
+                return GHUtility.count(chExplorer.setBaseNode(nodeId));
+            });
             print("unit_testsCH.level_edge_state_next", miniPerf);
 
             final CHEdgeExplorer chExplorer2 = lg.createEdgeExplorer();
-            miniPerf = new MiniPerfTest() {
-                @Override
-                public int doCalc(boolean warmup, int run) {
-                    int nodeId = rand.nextInt(maxNode);
-                    CHEdgeIterator iter = chExplorer2.setBaseNode(nodeId);
-                    while (iter.next()) {
-                        if (iter.isShortcut())
-                            nodeId += (int) iter.getWeight();
-                    }
-                    return nodeId;
+            miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
+                int nodeId = rand.nextInt(maxNode);
+                CHEdgeIterator iter = chExplorer2.setBaseNode(nodeId);
+                while (iter.next()) {
+                    if (iter.isShortcut())
+                        nodeId += (int) iter.getWeight();
                 }
-            }.setIterations(count).start();
+                return nodeId;
+            });
             print("unit_testsCH.get_weight", miniPerf);
 
             if (countEdgeTests > 0) {
@@ -394,36 +388,30 @@ public class Measurement {
 
         EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder);
         final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
-        MiniPerfTest miniPerf = new MiniPerfTest() {
-            @Override
-            public int doCalc(boolean warmup, int run) {
-                int nodeId = rand.nextInt(maxNode);
-                return GHUtility.count(outExplorer.setBaseNode(nodeId));
-            }
-        }.setIterations(count).start();
+        MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
+            int nodeId = rand.nextInt(maxNode);
+            return GHUtility.count(outExplorer.setBaseNode(nodeId));
+        });
         print("unit_tests" + description + ".out_edge_state_next", miniPerf);
 
         final EdgeExplorer allExplorer = graph.createEdgeExplorer();
-        miniPerf = new MiniPerfTest() {
+        miniPerf = new MiniPerfTest().setIterations(count).start(new MiniPerfTest.MeasurementUnit() {
             @Override
             public int doCalc(boolean warmup, int run) {
                 int nodeId = rand.nextInt(maxNode);
                 return GHUtility.count(allExplorer.setBaseNode(nodeId));
             }
-        }.setIterations(count).start();
+        });
         print("unit_tests" + description + ".all_edge_state_next", miniPerf);
 
         final int maxEdgesId = graph.getAllEdges().length();
-        miniPerf = new MiniPerfTest() {
-            @Override
-            public int doCalc(boolean warmup, int run) {
-                while (true) {
-                    int edgeId = rand.nextInt(maxEdgesId);
-                    if (allowedEdges.contains(edgeId))
-                        return graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
-                }
+        miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
+            while (true) {
+                int edgeId = rand.nextInt(maxEdgesId);
+                if (allowedEdges.contains(edgeId))
+                    return graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
             }
-        }.setIterations(count).start();
+        });
         print("unit_tests" + description + ".get_edge_state", miniPerf);
     }
 
@@ -435,44 +423,35 @@ public class Measurement {
         MiniPerfTest miniPerf;
         RoutingCHGraphImpl routingCHGraph = new RoutingCHGraphImpl(lg, chWeighting);
         final RoutingCHEdgeExplorer chOutEdgeExplorer = routingCHGraph.createOutEdgeExplorer();
-        miniPerf = new MiniPerfTest() {
-            @Override
-            public int doCalc(boolean warmup, int run) {
-                int nodeId = rand.nextInt(maxNode);
-                RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
-                while (iter.next()) {
-                    nodeId += iter.getAdjNode();
-                }
-                return nodeId;
+        miniPerf = new MiniPerfTest().setIterations(countEdgeTests).start((warmup, run) -> {
+            int nodeId = rand.nextInt(maxNode);
+            RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
+            while (iter.next()) {
+                nodeId += iter.getAdjNode();
             }
-        }.setIterations(countEdgeTests).start();
+            return nodeId;
+        });
         print("unit_testsCH.out_edge_next", miniPerf);
 
-        miniPerf = new MiniPerfTest() {
-            @Override
-            public int doCalc(boolean warmup, int run) {
-                int nodeId = rand.nextInt(maxNode);
-                RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
-                while (iter.next()) {
-                    nodeId += iter.getWeight(false);
-                }
-                return nodeId;
+        miniPerf = new MiniPerfTest().setIterations(countEdgeTests).start((warmup, run) -> {
+            int nodeId = rand.nextInt(maxNode);
+            RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
+            while (iter.next()) {
+                nodeId += iter.getWeight(false);
             }
-        }.setIterations(countEdgeTests).start();
+            return nodeId;
+        });
         print("unit_testsCH.out_edge_get_weight", miniPerf);
 
         final RoutingCHEdgeExplorer chOrigEdgeExplorer = routingCHGraph.createOriginalOutEdgeExplorer();
-        miniPerf = new MiniPerfTest() {
-            @Override
-            public int doCalc(boolean warmup, int run) {
-                int nodeId = rand.nextInt(maxNode);
-                RoutingCHEdgeIterator iter = chOrigEdgeExplorer.setBaseNode(nodeId);
-                while (iter.next()) {
-                    nodeId += iter.getAdjNode();
-                }
-                return nodeId;
+        miniPerf = new MiniPerfTest().setIterations(countEdgeTests).start((warmup, run) -> {
+            int nodeId = rand.nextInt(maxNode);
+            RoutingCHEdgeIterator iter = chOrigEdgeExplorer.setBaseNode(nodeId);
+            while (iter.next()) {
+                nodeId += iter.getAdjNode();
             }
-        }.setIterations(countEdgeTests).start();
+            return nodeId;
+        });
         print("unit_testsCH.out_orig_edge_next", miniPerf);
     }
 
@@ -493,115 +472,112 @@ public class Measurement {
         final Random rand = new Random(seed);
         final NodeAccess na = g.getNodeAccess();
 
-        MiniPerfTest miniPerf = new MiniPerfTest() {
-            @Override
-            public int doCalc(boolean warmup, int run) {
-                int from = -1, to = -1;
-                double fromLat = 0, fromLon = 0, toLat = 0, toLon = 0;
-                GHRequest req = null;
-                for (int i = 0; i < 5; i++) {
-                    from = rand.nextInt(maxNode);
-                    to = rand.nextInt(maxNode);
-                    fromLat = na.getLatitude(from);
-                    fromLon = na.getLongitude(from);
-                    toLat = na.getLatitude(to);
-                    toLon = na.getLongitude(to);
-                    req = new GHRequest(fromLat, fromLon, toLat, toLon);
-                    req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
-                    if (querySettings.blockArea == null)
-                        break;
+        MiniPerfTest miniPerf = new MiniPerfTest().setIterations(querySettings.count).start((warmup, run) -> {
+            int from = -1, to = -1;
+            double fromLat = 0, fromLon = 0, toLat = 0, toLon = 0;
+            GHRequest req = null;
+            for (int i = 0; i < 5; i++) {
+                from = rand.nextInt(maxNode);
+                to = rand.nextInt(maxNode);
+                fromLat = na.getLatitude(from);
+                fromLon = na.getLongitude(from);
+                toLat = na.getLatitude(to);
+                toLon = na.getLongitude(to);
+                req = new GHRequest(fromLat, fromLon, toLat, toLon);
+                req.setProfile(querySettings.edgeBased ? "profile_tc" : "profile_no_tc");
+                if (querySettings.blockArea == null)
+                    break;
 
-                    try {
-                        req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
-                        GraphEdgeIdFinder.createBlockArea(hopper.getGraphHopperStorage(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
-                        break;
-                    } catch (IllegalArgumentException ex) {
-                        if (i >= 4)
-                            throw new RuntimeException("Give up after 5 trials. Cannot find points outside of the block_area "
-                                    + querySettings.blockArea + " - too big block_area or map too small? Request:" + req);
-                    }
+                try {
+                    req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
+                    GraphEdgeIdFinder.createBlockArea(hopper.getGraphHopperStorage(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
+                    break;
+                } catch (IllegalArgumentException ex) {
+                    if (i >= 4)
+                        throw new RuntimeException("Give up after 5 trials. Cannot find points outside of the block_area "
+                                + querySettings.blockArea + " - too big block_area or map too small? Request:" + req);
+                }
+            }
+
+            req.getHints().
+                    putObject(CH.DISABLE, !querySettings.ch).
+                    putObject("stall_on_demand", querySettings.sod).
+                    putObject(Landmark.DISABLE, !querySettings.lm).
+                    putObject(Landmark.ACTIVE_COUNT, querySettings.activeLandmarks).
+                    putObject("instructions", querySettings.withInstructions);
+
+            if (querySettings.alternative)
+                req.setAlgorithm(ALT_ROUTE);
+
+            if (querySettings.withInstructions)
+                req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
+
+            if (querySettings.simplify) {
+                req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED, Parameters.Details.EDGE_ID, Parameters.Details.STREET_NAME));
+            } else {
+                // disable path simplification by setting the distance to zero
+                req.getHints().putObject(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
+            }
+
+            if (querySettings.withPointHints) {
+                EdgeIterator iter = edgeExplorer.setBaseNode(from);
+                if (!iter.next())
+                    throw new IllegalArgumentException("wrong 'from' when adding point hint");
+                EdgeIterator iter2 = edgeExplorer.setBaseNode(to);
+                if (!iter2.next())
+                    throw new IllegalArgumentException("wrong 'to' when adding point hint");
+                req.setPointHints(Arrays.asList(iter.getName(), iter2.getName()));
+            }
+
+            // put(algo + ".approximation", "BeelineSimplification").
+            // put(algo + ".epsilon", 2);
+
+            GHResponse rsp;
+            try {
+                rsp = hopper.route(req);
+            } catch (Exception ex) {
+                // 'not found' can happen if import creates more than one subnetwork
+                throw new RuntimeException("Error while calculating route! "
+                        + "nodes:" + from + " -> " + to + ", request:" + req, ex);
+            }
+
+            if (rsp.hasErrors()) {
+                if (!warmup)
+                    failedCount.incrementAndGet();
+
+                if (rsp.getErrors().get(0).getMessage() == null)
+                    rsp.getErrors().get(0).printStackTrace();
+                else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found"))
+                    logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
+
+                return 0;
+            }
+
+            ResponsePath responsePath = rsp.getBest();
+            if (!warmup) {
+                long visitedNodes = rsp.getHints().getLong("visited_nodes.sum", 0);
+                visitedNodesSum.addAndGet(visitedNodes);
+                if (visitedNodes > maxVisitedNodes.get()) {
+                    maxVisitedNodes.set(visitedNodes);
                 }
 
-                req.getHints().
-                        putObject(CH.DISABLE, !querySettings.ch).
-                        putObject("stall_on_demand", querySettings.sod).
-                        putObject(Landmark.DISABLE, !querySettings.lm).
-                        putObject(Landmark.ACTIVE_COUNT, querySettings.activeLandmarks).
-                        putObject("instructions", querySettings.withInstructions);
+                long dist = (long) responsePath.getDistance();
+                distSum.addAndGet(dist);
+
+                airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
+
+                if (dist > maxDistance.get())
+                    maxDistance.set(dist);
+
+                if (dist < minDistance.get())
+                    minDistance.set(dist);
 
                 if (querySettings.alternative)
-                    req.setAlgorithm(ALT_ROUTE);
-
-                if (querySettings.withInstructions)
-                    req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
-
-                if (querySettings.simplify) {
-                    req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED, Parameters.Details.EDGE_ID, Parameters.Details.STREET_NAME));
-                } else {
-                    // disable path simplification by setting the distance to zero
-                    req.getHints().putObject(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
-                }
-
-                if (querySettings.withPointHints) {
-                    EdgeIterator iter = edgeExplorer.setBaseNode(from);
-                    if (!iter.next())
-                        throw new IllegalArgumentException("wrong 'from' when adding point hint");
-                    EdgeIterator iter2 = edgeExplorer.setBaseNode(to);
-                    if (!iter2.next())
-                        throw new IllegalArgumentException("wrong 'to' when adding point hint");
-                    req.setPointHints(Arrays.asList(iter.getName(), iter2.getName()));
-                }
-
-                // put(algo + ".approximation", "BeelineSimplification").
-                // put(algo + ".epsilon", 2);
-
-                GHResponse rsp;
-                try {
-                    rsp = hopper.route(req);
-                } catch (Exception ex) {
-                    // 'not found' can happen if import creates more than one subnetwork
-                    throw new RuntimeException("Error while calculating route! "
-                            + "nodes:" + from + " -> " + to + ", request:" + req, ex);
-                }
-
-                if (rsp.hasErrors()) {
-                    if (!warmup)
-                        failedCount.incrementAndGet();
-
-                    if (rsp.getErrors().get(0).getMessage() == null)
-                        rsp.getErrors().get(0).printStackTrace();
-                    else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found"))
-                        logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
-
-                    return 0;
-                }
-
-                ResponsePath responsePath = rsp.getBest();
-                if (!warmup) {
-                    long visitedNodes = rsp.getHints().getLong("visited_nodes.sum", 0);
-                    visitedNodesSum.addAndGet(visitedNodes);
-                    if (visitedNodes > maxVisitedNodes.get()) {
-                        maxVisitedNodes.set(visitedNodes);
-                    }
-
-                    long dist = (long) responsePath.getDistance();
-                    distSum.addAndGet(dist);
-
-                    airDistSum.addAndGet((long) distCalc.calcDist(fromLat, fromLon, toLat, toLon));
-
-                    if (dist > maxDistance.get())
-                        maxDistance.set(dist);
-
-                    if (dist < minDistance.get())
-                        minDistance.set(dist);
-
-                    if (querySettings.alternative)
-                        altCount.addAndGet(rsp.getAll().size());
-                }
-
-                return responsePath.getPoints().getSize();
+                    altCount.addAndGet(rsp.getAll().size());
             }
-        }.setIterations(querySettings.count).start();
+
+            return responsePath.getPoints().getSize();
+        });
 
         int count = querySettings.count - failedCount.get();
 
