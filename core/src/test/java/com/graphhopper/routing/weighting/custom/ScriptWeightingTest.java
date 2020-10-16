@@ -92,6 +92,8 @@ class ScriptWeightingTest {
         assertFalse(ScriptWeighting.parseAndGuessParameters(set, "System.out.println(\"\")", allNamesValid));
         assertFalse(ScriptWeighting.parseAndGuessParameters(set, "something.newInstance()", allNamesValid));
         assertFalse(ScriptWeighting.parseAndGuessParameters(set, "e.getClass ( )", allNamesValid));
+        assertFalse(ScriptWeighting.parseAndGuessParameters(set, "edge.getDistance()*7/*test", allNamesValid));
+        assertFalse(ScriptWeighting.parseAndGuessParameters(set, "edge.getDistance()//*test", allNamesValid));
         assertEquals("[]", set.toString());
         assertFalse(ScriptWeighting.parseAndGuessParameters(set, "edge; getClass()", allNamesValid));
         set.clear();
@@ -162,85 +164,75 @@ class ScriptWeightingTest {
         EdgeIteratorState primary = graphHopperStorage.edge(0, 1, 10, true).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80);
 
-        // try:
-        // 1. create template with possibility to overwrite getValue via the user expression
-        // 2. create template with user expression and add variables
-        Java.AbstractCompilationUnit cu = new Parser(new Scanner("ignore", new StringReader(
-                ""
-                        + "import " + PriorityScript.class.getName() + ";"
-                        + "import " + EncodedValueLookup.class.getName() + ";"
-                        + "import " + EnumEncodedValue.class.getName() + ";"
-                        + "import " + EdgeIteratorState.class.getName() + ";"
-                        + "import " + RoadClass.class.getName() + ";"
-                        + "import static " + RoadClass.class.getName() + ".*;"
-                        + "public class Test extends PriorityScript {"
-                        + "   int i = 5;"
-                        + "   @Override "
-                        + "   public void init(EncodedValueLookup lookup) {"
-                        + "      i = 17;"
-                        + "      road_class = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);"
-                        + "   }"
-                        + "   @Override "
-                        + "   public double getValue(EdgeIteratorState edge, boolean reverse) {"
-                        + "      return i; // edge.get(road_class).ordinal();\n"
-                        + "   }"
-                        + "}"
-        ))).parseAbstractCompilationUnit();
+        // safely inject the following expression into getValue and add convenience helper variable 'road_class' before
+        String userExpression = "road_class == PRIMARY ? 0.7 : 0.8";
+        String classTemplate = ""
+                + "import " + PriorityScript.class.getName() + ";"
+                + "import " + EncodedValueLookup.class.getName() + ";"
+                + "import " + EnumEncodedValue.class.getName() + ";"
+                + "import " + EdgeIteratorState.class.getName() + ";"
+                + "import " + RoadClass.class.getName() + ";"
+                + "import static " + RoadClass.class.getName() + ".*;"
+                + "public class Test extends PriorityScript {"
+                + "   EnumEncodedValue road_class_enc2;"
+                + "   @Override "
+                + "   public void init(EncodedValueLookup lookup) {"
+                + "      road_class_enc2 = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);"
+                + "   }"
+                + "   @Override "
+                + "   public double getValue(EdgeIteratorState edge, boolean reverse) {"
+                + "      return 0.17; //will be overwritten by code injected in DeepCopier\n"
+                + "   }"
+                + "}";
+        Java.AbstractCompilationUnit cu = new Parser(new Scanner("ignore", new StringReader(classTemplate))).
+                parseAbstractCompilationUnit();
+
+        // instead of string appending safely add the expression via Java:
         cu = new DeepCopier() {
-            public Java.TypeDeclaration
-            copyPackageMemberClassDeclaration(Java.PackageMemberClassDeclaration pmcd) throws CompileException {
-                Java.AbstractClassDeclaration result = (Java.AbstractClassDeclaration) super.copyPackageMemberClassDeclaration(pmcd);
 
-                result.addFieldDeclaration(new Java.FieldDeclaration(
-                        Location.NOWHERE,
-                        null,
-                        new Java.Modifier[0],
-                        new Java.ReferenceType(Location.NOWHERE, new Java.Annotation[0], new String[]{"EnumEncodedValue"}, null),
-                        new Java.VariableDeclarator[]{new Java.VariableDeclarator(Location.NOWHERE, "road_class", 0, null)}));
-                return result;
+            @Override
+            public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
+                if (!subject.name.equals("getValue"))
+                    return super.copyMethodDeclarator(subject);
+
+                try {
+                    Parser parser = new Parser(new Scanner("parser1", new StringReader("Enum road_class = edge.get(road_class_enc2);")));
+                    List<Java.BlockStatement> statements = new ArrayList<>(parser.parseBlockStatements());
+
+                    parser = new Parser(new Scanner("parser2", new StringReader(userExpression)));
+                    Java.Rvalue rvalue = parser.parseConditionalExpression().toRvalueOrCompileException();
+                    statements.add(new Java.ReturnStatement(new Location("ignore", 1, 1), rvalue));
+
+                    Java.MethodDeclarator methodDecl = new Java.MethodDeclarator(
+                            new Location("m1", 1, 1),
+                            subject.getDocComment(),
+                            this.copyModifiers(subject.getModifiers()),
+                            this.copyOptionalTypeParameters(subject.typeParameters),
+                            this.copyType(subject.type),
+                            subject.name,
+                            this.copyFormalParameters(subject.formalParameters),
+                            this.copyTypes(subject.thrownExceptions),
+                            this.copyOptionalElementValue(subject.defaultValue),
+                            this.copyOptionalStatements(statements)
+                    );
+                    statements.forEach(st -> st.setEnclosingScope(methodDecl));
+                    return methodDecl;
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
             }
-
-//            @Override
-//            public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
-//                System.out.println("copyMethodDeclarator " + subject.name);
-//                if (subject.name.equals("getValue")) {
-//                    subject.statements.clear();
-//                    try {
-//                        Parser parser = new Parser(new Scanner("ignore", new StringReader("return 0.1;")));
-//                        Java.BlockStatement s = new Java.ReturnStatement(Location.NOWHERE, parser.parseConditionalExpression().toRvalueOrCompileException());
-//                        return new Java.MethodDeclarator(
-//                                subject.getLocation(),
-//                                subject.getDocComment(),
-//                                this.copyModifiers(subject.getModifiers()),
-//                                this.copyOptionalTypeParameters(subject.typeParameters),
-//                                this.copyType(subject.type),
-//                                subject.name,
-//                                this.copyFormalParameters(subject.formalParameters),
-//                                this.copyTypes(subject.thrownExceptions),
-//                                this.copyOptionalElementValue(subject.defaultValue),
-//                                this.copyOptionalStatements(Collections.singletonList(s))
-//                        );
-//                    } catch (Exception ex) {
-//                        throw new RuntimeException(ex);
-//                    }
-//                }
-//                return super.copyMethodDeclarator(subject);
-//            }
         }.copyAbstractCompilationUnit(cu);
+
+        // would be nice to avoid that: https://github.com/janino-compiler/janino/issues/135
         StringWriter sw = new StringWriter();
         Unparser.unparse(cu, sw);
-        System.out.println(sw.toString());
 
         SimpleCompiler sc = new SimpleCompiler();
         sc.cook(sw.toString());
         PriorityScript prio = (PriorityScript) sc.getClassLoader().
                 loadClass("Test").getDeclaredConstructor().newInstance();
         prio.init(encodingManager);
-        assertEquals(17, prio.getValue(primary, false));
-
-        prio = (PriorityScript) sc.getClassLoader().
-                loadClass("Test").getDeclaredConstructor().newInstance();
-        assertEquals(5, prio.getValue(primary, false));
+        assertEquals(0.7, prio.getValue(primary, false));
     }
 
     @Test
@@ -251,8 +243,7 @@ class ScriptWeightingTest {
         ClassBodyEvaluator evaluator = new ClassBodyEvaluator();
         evaluator.setExtendedType(PriorityScript.class);
         evaluator.setClassName("Test");
-        evaluator.setDefaultImports("com.graphhopper.routing.weighting.custom.*",
-                "com.graphhopper.routing.ev.*",
+        evaluator.setDefaultImports("com.graphhopper.routing.weighting.custom.*", "com.graphhopper.routing.ev.*",
                 "com.graphhopper.util.EdgeIteratorState");
         evaluator.cook(""
                 + "protected EnumEncodedValue road_class_enc_2;"
@@ -264,112 +255,6 @@ class ScriptWeightingTest {
                 + "}");
         PriorityScript entry = (PriorityScript) evaluator.getClazz().getDeclaredConstructor().newInstance();
         entry.init(encodingManager);
-        // assertTrue(entry instanceof EdgeToValueEntry);
         assertEquals(PRIMARY.ordinal(), entry.getValue(primary, false));
-    }
-
-    public void test() throws Exception {
-        // Parse the input CU.
-        Java.AbstractCompilationUnit cu = new Parser(new Scanner(null, new StringReader(
-                ""
-                        + " class A {"
-                        + " "
-                        + "     void test() {"
-                        + "         int b = 0;"
-                        + "         int c = 1;"
-                        + "         b += c;"
-                        + "     }"
-                        + " "
-                        + "     int a;"
-                        + " }"
-        ))).parseAbstractCompilationUnit();
-
-        // Now copy the input CU and modify it on-the-fly.
-        cu = new DeepCopier() {
-
-            private final List<Java.FieldDeclaration> moreFieldDeclarations = new ArrayList<>();
-
-            @Override
-            public Java.BlockStatement
-            copyLocalVariableDeclarationStatement(Java.LocalVariableDeclarationStatement lvds) throws CompileException {
-
-                /**
-                 * Generate synthetic fields for each local variable.
-                 */
-                List<Java.VariableDeclarator> fieldVariableDeclarators = new ArrayList<>();
-                for (Java.VariableDeclarator vd : lvds.variableDeclarators) {
-                    fieldVariableDeclarators.add(new Java.VariableDeclarator(
-                            vd.getLocation(),
-                            vd.name,
-                            vd.brackets,
-                            null // initializer <= Do NOT copy the initializer!
-                    ));
-                }
-                this.moreFieldDeclarations.add(new Java.FieldDeclaration(
-                        Location.NOWHERE,                 // location
-                        null,                             // docComment
-                        lvds.modifiers,                   // modifiers
-                        this.copyType(lvds.type),         // type
-                        fieldVariableDeclarators.toArray( // variableDeclarators
-                                new Java.VariableDeclarator[fieldVariableDeclarators.size()]
-                        )
-                ));
-
-                /**
-                 * Replace each local variable declaration with an assignment expression statement.
-                 */
-                List<Java.BlockStatement> assignments = new ArrayList<>();
-                for (Java.VariableDeclarator vd : lvds.variableDeclarators) {
-
-                    Java.Rvalue initializer = (Java.Rvalue) vd.initializer;
-                    if (initializer == null) continue;
-
-                    assignments.add(new Java.ExpressionStatement(new Java.Assignment(
-                            Location.NOWHERE,            // location
-                            new Java.FieldAccessExpression(   // lhs
-                                    Location.NOWHERE,                    // location
-                                    new Java.ThisReference(Location.NOWHERE), // lhs
-                                    vd.name                              // field
-                            ),
-                            "=",                         // operator
-                            this.copyRvalue(initializer) // rhs
-                    )));
-                }
-
-                if (assignments.isEmpty()) return new Java.EmptyStatement(Location.NOWHERE);
-
-                if (assignments.size() == 1) return assignments.get(0);
-
-                Java.Block result = new Java.Block(Location.NOWHERE);
-                result.addStatements(assignments);
-                return result;
-            }
-
-            /**
-             * Add the synthetic field declarations to the class.
-             */
-            @Override
-            public Java.TypeDeclaration
-            copyPackageMemberClassDeclaration(Java.PackageMemberClassDeclaration pmcd) throws CompileException {
-
-                assert this.moreFieldDeclarations.isEmpty();
-                try {
-                    Java.AbstractClassDeclaration
-                            result = (Java.AbstractClassDeclaration) super.copyPackageMemberClassDeclaration(pmcd);
-
-                    for (Java.FieldDeclaration fd : this.moreFieldDeclarations) {
-                        result.addFieldDeclaration(fd); // TODO: Check for name clashes
-                    }
-                    return result;
-                } finally {
-                    this.moreFieldDeclarations.clear();
-                }
-            }
-
-        }.copyAbstractCompilationUnit(cu);
-
-        StringWriter sw = new StringWriter();
-        Unparser.unparse(cu, sw);
-        System.out.println(sw.toString());
     }
 }
