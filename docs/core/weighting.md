@@ -10,6 +10,8 @@ In order to create a custom weighting you need to do the following:
 
  1. Implement the Weighting class
  2. Create a subclass of GraphHopper and override `createWeighting`
+ 
+Or use the CustomWeighting feature explained in [profiles](profiles.md).
 
 ### Implement your own weighting
 
