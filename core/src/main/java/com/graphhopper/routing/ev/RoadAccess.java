@@ -20,11 +20,11 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.util.Helper;
 
 /**
- * This enum defines the road access of an edge. Most edges are accessible from everyone but certain have restrictions
- * like accessible only for customers or when delivering.
+ * This enum defines the road access of an edge. Most edges are accessible from everyone and so the default value is
+ * YES. But some have restrictions like "accessible only for customers" or when delivering. Unknown tags will get the
+ * value OTHER. The NO value does not permit any access.
  */
 public enum RoadAccess {
-    // order is important here as we assume "smaller index" means "broader access"
     YES("yes"), DESTINATION("destination"), CUSTOMERS("customers"), DELIVERY("delivery"),
     FORESTRY("forestry"), AGRICULTURAL("agricultural"),
     PRIVATE("private"), OTHER("other"), NO("no");

@@ -55,7 +55,7 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
             } else if ("iwn".equals(tag)) {
                 newFootNetwork = RouteNetwork.INTERNATIONAL;
             }
-            if (oldFootNetwork == RouteNetwork.OTHER || oldFootNetwork.ordinal() > newFootNetwork.ordinal())
+            if (oldFootNetwork == RouteNetwork.MISSING || oldFootNetwork.ordinal() > newFootNetwork.ordinal())
                 transformerRouteRelEnc.setEnum(false, relFlags, newFootNetwork);
         }
 
