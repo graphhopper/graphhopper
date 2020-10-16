@@ -15,7 +15,8 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.custom.ScriptWeighting.parseAndGuessParameters;
+import static com.graphhopper.routing.weighting.custom.ScriptWeighting.parseAndGuessParametersFromCondition;
+import static com.graphhopper.routing.weighting.custom.ScriptWeighting.parseAndGuessParametersFromExpression;
 
 public abstract class PriorityScript implements EdgeToValueEntry {
 
@@ -48,30 +49,31 @@ public abstract class PriorityScript implements EdgeToValueEntry {
                 {EdgeIteratorState.class, boolean.class},
         });
 
+        // TODO create expressions via new Java.ConditionalExpression(location, lhs, mhs, rhs) (reuse objects created in the parse methods before)
         String mainUserExpression = "";
         boolean closedScript = false;
         HashSet<String> createObjects = new HashSet<>();
-        ScriptWeighting.NameValidator nameValidator = name ->
+        Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
+        ScriptWeighting.NameValidator nameInConditionValidator = name ->
                 // allow all encoded values and constants
-                lookup.hasEncodedValue(name) || name.toUpperCase(Locale.ROOT).equals(name);
+                lookup.hasEncodedValue(name) || name.toUpperCase(Locale.ROOT).equals(name) || allowedNames.contains(name);
+        ScriptWeighting.NameValidator nameInExpressionValidator = name -> false;
         for (Map.Entry<String, Object> entry : customModel.getPriority().entrySet()) {
             if (!mainUserExpression.isEmpty())
                 mainUserExpression += " : ";
 
-            // TODO NOW value must be a number or a name -> no method and no boolean expression
             if (entry.getKey().equals(CustomWeighting.CATCH_ALL)) {
-                if (!parseAndGuessParameters(createObjects, entry.getValue().toString(), nameValidator))
-                    throw new IllegalArgumentException("Value not a valid, simple expression: " + entry.getValue().toString());
+                if (!parseAndGuessParametersFromExpression(createObjects, entry.getValue(), nameInExpressionValidator))
+                    throw new IllegalArgumentException("Value is invalid simple expression: " + entry.getValue());
                 mainUserExpression += entry.getValue();
                 closedScript = true;
                 break;
             } else {
-                if (!parseAndGuessParameters(createObjects, entry.getKey(), nameValidator))
-                    throw new IllegalArgumentException("Key not a valid, simple expression: " + entry.getKey());
-                if (!parseAndGuessParameters(createObjects, entry.getValue().toString(), nameValidator))
-                    throw new IllegalArgumentException("Value not a valid, simple expression: " + entry.getValue().toString());
+                if (!parseAndGuessParametersFromCondition(createObjects, entry.getKey(), nameInConditionValidator))
+                    throw new IllegalArgumentException("Key is invalid simple condition: " + entry.getKey());
+                if (!parseAndGuessParametersFromExpression(createObjects, entry.getValue(), nameInExpressionValidator))
+                    throw new IllegalArgumentException("Value is invalid simple expression: " + entry.getValue());
 
-                // TODO should we build the expressions via Java? new Java.ConditionalExpression(location, lhs, mhs, rhs);
                 mainUserExpression += entry.getKey() + " ? " + entry.getValue();
             }
         }
@@ -121,7 +123,7 @@ public abstract class PriorityScript implements EdgeToValueEntry {
             Java.AbstractCompilationUnit cu = new Parser(new Scanner("ignore", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
 
-            // instead of string appending safely add the expression via Java:
+            // instead of string appending safely add the expression via Java and compile before:
             cu = new DeepCopier() {
 
                 @Override

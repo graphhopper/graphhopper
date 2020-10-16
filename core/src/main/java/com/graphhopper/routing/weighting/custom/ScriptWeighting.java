@@ -104,37 +104,47 @@ public class ScriptWeighting extends AbstractWeighting {
      * @param returnSet collects guess parameters
      * @return true if valid and "simple" expression
      */
-    public static boolean parseAndGuessParameters(Set<String> returnSet, String key, NameValidator validator) {
-        if (key.length() > 100 || key.contains("{") || key.contains("}"))
+    public static boolean parseAndGuessParametersFromCondition(Set<String> returnSet, String key, NameValidator validator) {
+        if (key.length() > 100)
             return false;
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(key)));
             Java.Atom atom = parser.parseConditionalExpression();
             // after parsing the expression the input should end (otherwise it is not "simple")
             if (parser.peek().type == TokenType.END_OF_INPUT)
-                return atom.accept(new MyVisitor(returnSet, validator));
+                return atom.accept(new MyConditionVisitor(returnSet, validator));
             return false;
         } catch (Exception ex) {
             return false;
         }
     }
 
-    private static class MyVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
-        private Set<String> parameters;
-        private NameValidator nameValidator;
-        private final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
+    public static boolean parseAndGuessParametersFromExpression(Set<String> returnSet, Object o, NameValidator validator) {
+        String key = o.toString();
+        if (key.length() > 100 || !(o instanceof Number))
+            return false;
+        try {
+            Parser parser = new Parser(new Scanner("ignore", new StringReader(key)));
+            Java.Atom atom = parser.parseExpression().toRvalueOrCompileException();
+            // after parsing the expression the input should end (otherwise it is not "simple")
+            if (parser.peek().type == TokenType.END_OF_INPUT)
+                return atom.accept(new MyExpressionVisitor(returnSet, validator));
+            return false;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private static class MyConditionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
+        private final Set<String> parameters;
+        private final NameValidator nameValidator;
         private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal",
                 "getDistance", "getName", "contains",
                 "sqrt", "abs"));
 
-        public MyVisitor(Set<String> parameters, NameValidator nameValidator) {
+        public MyConditionVisitor(Set<String> parameters, NameValidator nameValidator) {
             this.parameters = parameters;
             this.nameValidator = nameValidator;
-            // TODO move allowed variables and methods into the config but even if configured never allow certain methods:
-            allowedMethods.removeAll(Arrays.asList("getRuntime", "newInstance", "getClass", "clone", "readObject", "invoke"));
-            allowedNames.removeAll(Arrays.asList("Class", "Module", "ClassLoader", "MethodHandles", "Method", "Field",
-                    "Constructor", "ServiceLoader", "Lookup", "AccessController", "ServerSocket", "Socket", "Policy", "URL",
-                    "HttpsURLConnection", "URLConnection", "Runtime", "System", "File", "Files", "Thread", "ExecutorService"));
         }
 
         @Override
@@ -147,9 +157,10 @@ public class ScriptWeighting extends AbstractWeighting {
             if (rv instanceof Java.AmbiguousName) {
                 Java.AmbiguousName n = (Java.AmbiguousName) rv;
                 for (String identifier : n.identifiers) {
-                    // allow only constants (upper case), encoded values, explicitly allowed variables and methods
-                    if (nameValidator.isValid(identifier) || allowedNames.contains(identifier) || allowedMethods.contains(identifier)) {
-                        if (!Character.isUpperCase(identifier.charAt(0))) parameters.add(n.identifiers[0]);
+                    // allow only certain methods and other identifiers (constants and like encoded values)
+                    if (nameValidator.isValid(identifier) || allowedMethods.contains(identifier)) {
+                        if (!Character.isUpperCase(identifier.charAt(0)))
+                            parameters.add(n.identifiers[0]);
                         return true;
                     }
                 }
@@ -166,6 +177,48 @@ public class ScriptWeighting extends AbstractWeighting {
                 if (((Java.BinaryOperation) rv).lhs.accept(this))
                     return ((Java.BinaryOperation) rv).rhs.accept(this);
             return false;
+        }
+
+        @Override
+        public Boolean visitType(Java.Type t) {
+            return false;
+        }
+
+        @Override
+        public Boolean visitConstructorInvocation(Java.ConstructorInvocation ci) {
+            return false;
+        }
+    }
+
+    private static class MyExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
+        private final Set<String> parameters;
+        private final NameValidator nameValidator;
+
+        public MyExpressionVisitor(Set<String> parameters, NameValidator nameValidator) {
+            this.parameters = parameters;
+            this.nameValidator = nameValidator;
+        }
+
+        @Override
+        public Boolean visitPackage(Java.Package p) {
+            return false;
+        }
+
+        @Override
+        public Boolean visitRvalue(Java.Rvalue rv) {
+            if (rv instanceof Java.AmbiguousName) {
+                Java.AmbiguousName n = (Java.AmbiguousName) rv;
+                for (String identifier : n.identifiers) {
+                    // allow only valid identifiers, encoded values, explicitly allowed variables and methods
+                    if (nameValidator.isValid(identifier)) {
+                        if (!Character.isUpperCase(identifier.charAt(0)))
+                            parameters.add(n.identifiers[0]);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return rv instanceof Java.IntegerLiteral || rv instanceof Java.FloatingPointLiteral;
         }
 
         @Override
