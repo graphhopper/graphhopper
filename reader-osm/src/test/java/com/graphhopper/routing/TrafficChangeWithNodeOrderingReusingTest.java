@@ -125,7 +125,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         LOGGER.info("Running performance test, seed = {}", seed);
         final double[] distAndWeight = {0.0, 0.0};
-        MiniPerfTest performanceTest = new MiniPerfTest() {
+        MiniPerfTest performanceTest = new MiniPerfTest();
+        performanceTest.setIterations(iterations).start(new MiniPerfTest.MeasurementUnit() {
             private long queryTime;
 
             @Override
@@ -155,8 +156,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                 }
                 return 0;
             }
-        };
-        performanceTest.setIterations(iterations).start();
+        });
         if (performanceTest.getDummySum() > 0.5 * iterations) {
             throw new IllegalStateException("too many errors, probably something is wrong");
         }
