@@ -147,7 +147,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <gh.version>${version}</gh.version>
+                <gh.version>${project.version}</gh.version>
             </properties>
         </profile>
         <profile>
