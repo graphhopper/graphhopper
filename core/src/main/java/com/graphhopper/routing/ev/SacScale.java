@@ -47,4 +47,9 @@ public enum SacScale {
             return NONE;
         }
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
