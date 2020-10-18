@@ -123,7 +123,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         LOGGER.info("Running performance test, seed = {}", seed);
         final double[] distAndWeight = {0.0, 0.0};
         MiniPerfTest performanceTest = new MiniPerfTest();
-        performanceTest.setIterations(iterations).start(new MiniPerfTest.MeasurementUnit() {
+        performanceTest.setIterations(iterations).start(new MiniPerfTest.Task() {
             private long queryTime;
 
             @Override

@@ -213,7 +213,7 @@ public class CHMeasurement {
         final Random random = new Random(seed);
 
         MiniPerfTest compareTest = new MiniPerfTest();
-        compareTest.setIterations(iterations).start(new MiniPerfTest.MeasurementUnit() {
+        compareTest.setIterations(iterations).start(new MiniPerfTest.Task() {
             long chTime = 0;
             long noChTime = 0;
             long chErrors = 0;
@@ -299,7 +299,7 @@ public class CHMeasurement {
         LOGGER.info("Running performance test for {}, seed = {}", algo, seed);
         final long[] numVisitedNodes = {0};
         MiniPerfTest performanceTest = new MiniPerfTest();
-        performanceTest.setIterations(iterations).start(new MiniPerfTest.MeasurementUnit() {
+        performanceTest.setIterations(iterations).start(new MiniPerfTest.Task() {
             private long queryTime;
 
             @Override

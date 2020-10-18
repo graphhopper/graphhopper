@@ -40,7 +40,7 @@ public class MiniPerfTest {
     private long min = Long.MAX_VALUE;
     private int dummySum;
 
-    public MiniPerfTest start(MeasurementUnit m) {
+    public MiniPerfTest start(Task m) {
         int warmupCount = Math.max(1, counts / 3);
         for (int i = 0; i < warmupCount; i++) {
             dummySum += m.doCalc(true, i);
@@ -61,7 +61,7 @@ public class MiniPerfTest {
         return this;
     }
 
-    public interface MeasurementUnit {
+    public interface Task {
 
         /**
          * @return return some integer as result from your processing to make sure that the JVM cannot
