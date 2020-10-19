@@ -24,10 +24,13 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class OSMTollParser implements TagParser {
 
+    private static final List<String> HGV_TAGS = Collections.unmodifiableList(Arrays.asList("toll:hgv", "toll:N2", "toll:N3"));
     private final EnumEncodedValue<Toll> tollEnc;
 
     public OSMTollParser() {
@@ -45,14 +48,12 @@ public class OSMTollParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-        if (readerWay.hasTag("toll", "yes"))
+        if (readerWay.hasTag("toll", "yes")) {
             tollEnc.setEnum(false, edgeFlags, Toll.ALL);
-        else if (readerWay.hasTag("toll:hgv", "yes"))
+        } else if (readerWay.hasTag(HGV_TAGS, Collections.singletonList("yes"))) {
             tollEnc.setEnum(false, edgeFlags, Toll.HGV);
-        else if (readerWay.hasTag("toll:N2", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
-        else if (readerWay.hasTag("toll:N3", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
+        }
+        
         return edgeFlags;
     }
 }
