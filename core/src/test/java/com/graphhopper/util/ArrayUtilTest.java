@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Random;
 
+import static com.carrotsearch.hppc.IntArrayList.from;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ArrayUtilTest {
@@ -46,6 +47,13 @@ class ArrayUtilTest {
     }
 
     @Test
+    public void testRange() {
+        assertEquals(from(3, 4, 5, 6), ArrayUtil.range(3, 7));
+        assertEquals(from(-3, -2), ArrayUtil.range(-3, -1));
+        assertEquals(from(), ArrayUtil.range(5, 5));
+    }
+
+    @Test
     public void testPermutation() {
         IntArrayList list = ArrayUtil.permutation(15, new Random());
         assertEquals(15, list.buffer.length);
@@ -55,18 +63,18 @@ class ArrayUtilTest {
 
     @Test
     public void testReverse() {
-        assertEquals(IntArrayList.from(), ArrayUtil.reverse(IntArrayList.from()));
-        assertEquals(IntArrayList.from(1), ArrayUtil.reverse(IntArrayList.from(1)));
-        assertEquals(IntArrayList.from(9, 5), ArrayUtil.reverse(IntArrayList.from(5, 9)));
-        assertEquals(IntArrayList.from(7, 1, 3), ArrayUtil.reverse(IntArrayList.from(3, 1, 7)));
-        assertEquals(IntArrayList.from(4, 3, 2, 1), ArrayUtil.reverse(IntArrayList.from(1, 2, 3, 4)));
-        assertEquals(IntArrayList.from(5, 4, 3, 2, 1), ArrayUtil.reverse(IntArrayList.from(1, 2, 3, 4, 5)));
+        assertEquals(from(), ArrayUtil.reverse(from()));
+        assertEquals(from(1), ArrayUtil.reverse(from(1)));
+        assertEquals(from(9, 5), ArrayUtil.reverse(from(5, 9)));
+        assertEquals(from(7, 1, 3), ArrayUtil.reverse(from(3, 1, 7)));
+        assertEquals(from(4, 3, 2, 1), ArrayUtil.reverse(from(1, 2, 3, 4)));
+        assertEquals(from(5, 4, 3, 2, 1), ArrayUtil.reverse(from(1, 2, 3, 4, 5)));
     }
 
     @Test
     public void testShuffle() {
-        assertEquals(IntArrayList.from(4, 1, 3, 2), ArrayUtil.shuffle(IntArrayList.from(1, 2, 3, 4), new Random(0)));
-        assertEquals(IntArrayList.from(4, 3, 2, 1, 5), ArrayUtil.shuffle(IntArrayList.from(1, 2, 3, 4, 5), new Random(1)));
+        assertEquals(from(4, 1, 3, 2), ArrayUtil.shuffle(from(1, 2, 3, 4), new Random(0)));
+        assertEquals(from(4, 3, 2, 1, 5), ArrayUtil.shuffle(from(1, 2, 3, 4, 5), new Random(1)));
     }
 
 }

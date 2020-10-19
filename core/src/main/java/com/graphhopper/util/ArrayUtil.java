@@ -37,14 +37,29 @@ public class ArrayUtil {
     }
 
     /**
+     * Creates an IntArrayList filled with zeros
+     */
+    public static IntArrayList zero(int size) {
+        IntArrayList result = new IntArrayList(size);
+        result.elementsCount = size;
+        return result;
+    }
+
+    /**
      * Creates an IntArrayList filled with the integers 0,1,2,3,...,size-1
      */
     public static IntArrayList iota(int size) {
-        IntArrayList result = new IntArrayList(size);
-        result.elementsCount = size;
-        for (int i = 0; i < size; i++) {
-            result.set(i, i);
-        }
+        return range(0, size);
+    }
+
+    /**
+     * Creates an IntArrayList filled with the integers [startIncl,endExcl[
+     */
+    public static IntArrayList range(int startIncl, int endExcl) {
+        IntArrayList result = new IntArrayList(endExcl - startIncl);
+        result.elementsCount = endExcl - startIncl;
+        for (int i = 0; i < result.size(); ++i)
+            result.set(i, startIncl + i);
         return result;
     }
 
@@ -90,16 +105,14 @@ public class ArrayUtil {
      * Creates a copy of the given list where all consecutive duplicates are removed
      */
     public static IntIndexedContainer removeConsecutiveDuplicates(IntIndexedContainer arr) {
-        if (arr.size() < 2) {
+        if (arr.size() < 2)
             return arr;
-        }
         IntArrayList result = new IntArrayList();
         int prev = arr.get(0);
         for (int i = 1; i < arr.size(); i++) {
             int val = arr.get(i);
-            if (val != prev) {
+            if (val != prev)
                 result.add(val);
-            }
             prev = val;
         }
         return result;
