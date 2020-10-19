@@ -25,7 +25,8 @@ import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.*;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeIteratorState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -237,7 +238,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
         return maxSpeed;
     }
-    
+
     /**
      * @return <i>true</i> if the given speed is not {@link Double#NaN}
      */
@@ -442,5 +443,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     @Override
     public boolean hasEncodedValue(String key) {
         return encodedValueLookup.hasEncodedValue(key);
+    }
+
+    @Override
+    public Collection<String> getRestrictions() {
+        return restrictions;
     }
 }

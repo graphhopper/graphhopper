@@ -20,6 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
@@ -46,27 +47,16 @@ public class OSMTurnRelationParser implements TurnCostParser {
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      *                     turn is forbidden and results in costs of positive infinity.
      */
-    public OSMTurnRelationParser(String name, int maxTurnCosts) {
-        this(name, maxTurnCosts, Collections.<String>emptyList());
+    public OSMTurnRelationParser(FlagEncoder encoder, int maxTurnCosts) {
+        this(encoder, maxTurnCosts, Collections.<String>emptyList());
     }
 
-    public OSMTurnRelationParser(String name, int maxTurnCosts, Collection<String> restrictions) {
-        this.name = name;
+    public OSMTurnRelationParser(FlagEncoder encoder, int maxTurnCosts, Collection<String> restrictions) {
+        this.name = encoder.toString();
         this.turnCostEnc = TurnCost.create(name, maxTurnCosts);
 
         if (restrictions.isEmpty()) {
-            // https://wiki.openstreetmap.org/wiki/Key:access
-            if (name.contains("car"))
-                this.restrictions = Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access");
-            else if (name.contains("motorbike") || name.contains("motorcycle"))
-                this.restrictions = Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access");
-            else if (name.contains("truck"))
-                this.restrictions = Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
-            else if (name.contains("bike") || name.contains("bicycle"))
-                this.restrictions = Arrays.asList("bicycle", "vehicle", "access");
-            else
-                // assume default is some motor_vehicle, exception is too strict
-                this.restrictions = Arrays.asList("motor_vehicle", "vehicle", "access");
+            this.restrictions = encoder.getRestrictions();
         } else {
             this.restrictions = restrictions;
         }

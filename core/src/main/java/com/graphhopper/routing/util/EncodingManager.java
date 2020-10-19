@@ -356,7 +356,7 @@ public class EncodingManager implements EncodedValueLookup {
             // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
             for (AbstractFlagEncoder encoder : flagEncoderList) {
                 if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(encoder.toString()))
-                    _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts()));
+                    _addTurnCostParser(new OSMTurnRelationParser(encoder, encoder.getMaxTurnCosts()));
             }
 
             if (em.encodedValueMap.isEmpty())

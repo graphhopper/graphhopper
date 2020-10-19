@@ -22,6 +22,8 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
+import java.util.Collection;
+
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
  * (currently an integer value), which is stored in an edge.
@@ -65,4 +67,9 @@ public interface FlagEncoder extends EncodedValueLookup {
      * @return true if already registered in an EncodingManager
      */
     boolean isRegistered();
+
+    /**
+     * @return a collection of restrictions for the given profile
+     */
+    Collection<String> getRestrictions();
 }

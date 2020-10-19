@@ -709,6 +709,12 @@ public class OSMReaderTest {
     public void testTurnFlagCombination() {
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         CarFlagEncoder truck = new CarFlagEncoder(5, 5, 24) {
+
+            @Override
+            public Collection<String> getRestrictions() {
+                return Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
+            }
+
             @Override
             public String toString() {
                 return "truck";
