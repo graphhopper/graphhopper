@@ -46,7 +46,7 @@ public interface SpatialRule {
     double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed);
     
     /**
-     * Returns the {@link RoadAccess} for a certain highway type and transportation transport.
+     * Returns the {@link RoadAccess} for a certain highway type and transportation mode.
      *
      * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
      * @param transport          The mode of transportation
