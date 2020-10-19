@@ -77,4 +77,17 @@ class ArrayUtilTest {
         assertEquals(from(4, 3, 2, 1, 5), ArrayUtil.shuffle(from(1, 2, 3, 4, 5), new Random(1)));
     }
 
+    @Test
+    public void testWithoutConsecutiveDuplicates() {
+        assertEquals(from(), ArrayUtil.withoutConsecutiveDuplicates(from()));
+        assertEquals(from(1), ArrayUtil.withoutConsecutiveDuplicates(from(1)));
+        assertEquals(from(1), ArrayUtil.withoutConsecutiveDuplicates(from(1, 1)));
+        assertEquals(from(1), ArrayUtil.withoutConsecutiveDuplicates(from(1, 1, 1)));
+        assertEquals(from(1, 2), ArrayUtil.withoutConsecutiveDuplicates(from(1, 1, 2)));
+        assertEquals(from(1, 2, 1), ArrayUtil.withoutConsecutiveDuplicates(from(1, 2, 1)));
+        assertEquals(
+                from(5, 6, 5, 8, 9, 11, 2, -1, 3),
+                ArrayUtil.withoutConsecutiveDuplicates(from(5, 5, 5, 6, 6, 5, 5, 8, 9, 11, 11, 2, 2, -1, 3, 3)));
+    }
+
 }

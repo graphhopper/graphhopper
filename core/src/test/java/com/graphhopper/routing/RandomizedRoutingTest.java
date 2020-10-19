@@ -308,7 +308,7 @@ public class RandomizedRoutingTest {
         if (!refNodes.equals(pathNodes)) {
             // sometimes paths are only different because of a zero weight loop. we do not consider these as strict
             // violations, see: #1864
-            if (!ArrayUtil.removeConsecutiveDuplicates(refNodes).equals(ArrayUtil.removeConsecutiveDuplicates(pathNodes))) {
+            if (!ArrayUtil.withoutConsecutiveDuplicates(refNodes).equals(ArrayUtil.withoutConsecutiveDuplicates(pathNodes))) {
                 strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refNodes + "\ngiven:    " + pathNodes);
             }
         }

@@ -104,11 +104,12 @@ public class ArrayUtil {
     /**
      * Creates a copy of the given list where all consecutive duplicates are removed
      */
-    public static IntIndexedContainer removeConsecutiveDuplicates(IntIndexedContainer arr) {
-        if (arr.size() < 2)
-            return arr;
+    public static IntIndexedContainer withoutConsecutiveDuplicates(IntIndexedContainer arr) {
         IntArrayList result = new IntArrayList();
+        if (arr.isEmpty())
+            return result;
         int prev = arr.get(0);
+        result.add(prev);
         for (int i = 1; i < arr.size(); i++) {
             int val = arr.get(i);
             if (val != prev)
