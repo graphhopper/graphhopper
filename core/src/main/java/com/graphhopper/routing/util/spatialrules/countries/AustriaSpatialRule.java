@@ -24,6 +24,7 @@ import org.locationtech.jts.geom.Polygon;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.TransportationMode;
 
@@ -90,6 +91,19 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
         default:
             return RoadAccess.YES;
         }
+    }
+    
+    @Override
+    public Toll getToll(RoadClass roadClass, TransportationMode transport, Toll currentToll) {
+        if (!transport.isMotorVehicle() || currentToll != Toll.MISSING) {
+            return currentToll;
+        }
+        
+        if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK) {
+            return Toll.ALL;
+        }
+        
+        return currentToll;
     }
 
     @Override
