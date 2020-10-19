@@ -22,6 +22,7 @@ import java.util.List;
 
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.TransportationMode;
 
 /**
@@ -72,6 +73,22 @@ public class SpatialRuleSet {
         RoadAccess value = currentRoadAccess;
         for (SpatialRule rule : rules) {
             value = rule.getAccess(roadClass, transport, value);
+        }
+        return value;
+    }
+    
+    /**
+     * Returns the {@link Toll} for a certain highway type and transportation mode.
+     *
+     * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
+     * @param transport          The mode of transportation
+     * @param currentToll        The current toll value (default: {@link Toll#MISSING})
+     * @return if tolls are due
+     */
+    public Toll getToll(RoadClass roadClass, TransportationMode transport, Toll currentToll) {
+        Toll value = currentToll;
+        for (SpatialRule rule : rules) {
+            value = rule.getToll(roadClass, transport, value);
         }
         return value;
     }

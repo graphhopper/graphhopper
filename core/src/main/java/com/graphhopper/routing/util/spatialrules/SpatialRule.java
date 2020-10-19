@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.Toll;
 
 import java.util.List;
 
@@ -54,6 +55,16 @@ public interface SpatialRule {
      * @return the type of access to be used
      */
     RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess);
+    
+    /**
+     * Returns the {@link Toll} for a certain highway type and transportation mode.
+     *
+     * @param roadClass          The highway type, e.g. {@link RoadClass#MOTORWAY}
+     * @param transport          The mode of transportation
+     * @param currentToll        The current toll value (default: {@link Toll#MISSING})
+     * @return if toll is due
+     */
+    Toll getToll(RoadClass roadClass, TransportationMode transport, Toll currentToll);
 
     /**
      * Returns the borders in which the SpatialRule is valid
