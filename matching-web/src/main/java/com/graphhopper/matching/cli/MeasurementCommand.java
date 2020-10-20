@@ -46,7 +46,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- * @author Peter Karisch
+ * @author Peter Karich
  * @author kodonnell
  */
 public class MeasurementCommand extends Command {
@@ -138,14 +138,12 @@ public class MeasurementCommand extends Command {
         final double latDelta = bbox.maxLat - bbox.minLat;
         final double lonDelta = bbox.maxLon - bbox.minLon;
         final Random rand = new Random(seed);
-        MiniPerfTest miniPerf = new MiniPerfTest() {
-            @Override
-            public int doCalc(boolean warmup, int run) {
-                double lat = rand.nextDouble() * latDelta + bbox.minLat;
-                double lon = rand.nextDouble() * lonDelta + bbox.minLon;
-                return idx.findNClosest(lat, lon, EdgeFilter.ALL_EDGES, rand.nextDouble() * 500).size();
-            }
-        }.setIterations(count).start();
+        MiniPerfTest miniPerf = new MiniPerfTest()
+                .setIterations(count).start((warmup, run) -> {
+                    double lat = rand.nextDouble() * latDelta + bbox.minLat;
+                    double lon = rand.nextDouble() * lonDelta + bbox.minLon;
+                    return idx.findNClosest(lat, lon, EdgeFilter.ALL_EDGES, rand.nextDouble() * 500).size();
+                });
         print("location_index_match", miniPerf);
     }
 
@@ -161,47 +159,45 @@ public class MeasurementCommand extends Command {
         final double latDelta = bbox.maxLat - bbox.minLat;
         final double lonDelta = bbox.maxLon - bbox.minLon;
         final Random rand = new Random(seed);
-        MiniPerfTest miniPerf = new MiniPerfTest() {
-            @Override
-            public int doCalc(boolean warmup, int run) {
-                // keep going until we find a path (which we may not for certain start/end points)
-                while (true) {
-                    // create random points and find route between:
-                    double lat0 = bbox.minLat + rand.nextDouble() * latDelta;
-                    double lon0 = bbox.minLon + rand.nextDouble() * lonDelta;
-                    double lat1 = bbox.minLat + rand.nextDouble() * latDelta;
-                    double lon1 = bbox.minLon + rand.nextDouble() * lonDelta;
-                    GHRequest request = new GHRequest(lat0, lon0, lat1, lon1);
-                    request.setProfile("fast_car");
-                    GHResponse r = hopper.route(request);
+        MiniPerfTest miniPerf = new MiniPerfTest()
+                .setIterations(count).start((warmup, run) -> {
+                    // keep going until we find a path (which we may not for certain start/end points)
+                    while (true) {
+                        // create random points and find route between:
+                        double lat0 = bbox.minLat + rand.nextDouble() * latDelta;
+                        double lon0 = bbox.minLon + rand.nextDouble() * lonDelta;
+                        double lat1 = bbox.minLat + rand.nextDouble() * latDelta;
+                        double lon1 = bbox.minLon + rand.nextDouble() * lonDelta;
+                        GHRequest request = new GHRequest(lat0, lon0, lat1, lon1);
+                        request.setProfile("fast_car");
+                        GHResponse r = hopper.route(request);
 
-                    // if found, use it for map matching:
-                    if (!r.hasErrors()) {
-                        double sampleProportion = rand.nextDouble();
-                        GHPoint prev = null;
-                        List<Observation> mock = new ArrayList<>();
-                        PointList points = r.getBest().getPoints();
-                        // loop through points and add (approximately) sampleProportion of them:
-                        for (GHPoint p : points) {
-                            if (null != prev && rand.nextDouble() < sampleProportion) {
-                                // randomise the point lat/lon (i.e. so it's not
-                                // exactly on the route):
-                                GHPoint randomised = distCalc.projectCoordinate(p.lat, p.lon,
-                                        20 * rand.nextDouble(), 360 * rand.nextDouble());
-                                mock.add(new Observation(randomised));
+                        // if found, use it for map matching:
+                        if (!r.hasErrors()) {
+                            double sampleProportion = rand.nextDouble();
+                            GHPoint prev = null;
+                            List<Observation> mock = new ArrayList<>();
+                            PointList points = r.getBest().getPoints();
+                            // loop through points and add (approximately) sampleProportion of them:
+                            for (GHPoint p : points) {
+                                if (null != prev && rand.nextDouble() < sampleProportion) {
+                                    // randomise the point lat/lon (i.e. so it's not
+                                    // exactly on the route):
+                                    GHPoint randomised = distCalc.projectCoordinate(p.lat, p.lon,
+                                            20 * rand.nextDouble(), 360 * rand.nextDouble());
+                                    mock.add(new Observation(randomised));
+                                }
+                                prev = p;
                             }
-                            prev = p;
-                        }
-                        // now match, provided there are enough points
-                        if (mock.size() > 2) {
-                            MatchResult match = mapMatching.match(mock);
-                            // return something non-trivial, to avoid JVM optimizing away
-                            return match.getEdgeMatches().size();
+                            // now match, provided there are enough points
+                            if (mock.size() > 2) {
+                                MatchResult match = mapMatching.match(mock);
+                                // return something non-trivial, to avoid JVM optimizing away
+                                return match.getEdgeMatches().size();
+                            }
                         }
                     }
-                }
-            }
-        }.setIterations(count).start();
+                });
         print("map_match", miniPerf);
     }
 
