@@ -25,7 +25,7 @@ import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
+import com.graphhopper.routing.util.TransportationMode;
 
 /**
  * Defines the default rules for Austria roads
@@ -40,7 +40,7 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
     
     @Override
     public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-        if (!Double.isNaN(currentMaxSpeed) || transport != TransportationMode.MOTOR_VEHICLE) {
+        if (!Double.isNaN(currentMaxSpeed) || !transport.isMotorVehicle()) {
             return currentMaxSpeed;
         }
         
@@ -72,7 +72,7 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
             return currentRoadAccess;
         }
         
-        if (transport != TransportationMode.MOTOR_VEHICLE) {
+        if (!transport.isMotorVehicle()) {
             return RoadAccess.YES;
         }
         

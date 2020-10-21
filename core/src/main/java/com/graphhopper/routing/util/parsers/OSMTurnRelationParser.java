@@ -25,9 +25,6 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
@@ -38,7 +35,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 public class OSMTurnRelationParser implements TurnCostParser {
     private String name;
     private DecimalEncodedValue turnCostEnc;
-    private final Collection<String> restrictions;
+    private final List<String> restrictions;
     private BooleanEncodedValue accessEnc;
     private EdgeExplorer cachedOutExplorer, cachedInExplorer;
 
@@ -46,32 +43,16 @@ public class OSMTurnRelationParser implements TurnCostParser {
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      *                     turn is forbidden and results in costs of positive infinity.
      */
-    public OSMTurnRelationParser(String name, int maxTurnCosts) {
-        this(name, maxTurnCosts, Collections.<String>emptyList());
-    }
-
-    public OSMTurnRelationParser(String name, int maxTurnCosts, Collection<String> restrictions) {
+    public OSMTurnRelationParser(String name, int maxTurnCosts, List<String> restrictions) {
         this.name = name;
         this.turnCostEnc = TurnCost.create(name, maxTurnCosts);
 
-        if (restrictions.isEmpty()) {
-            // https://wiki.openstreetmap.org/wiki/Key:access
-            if (name.contains("car"))
-                this.restrictions = Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access");
-            else if (name.contains("motorbike") || name.contains("motorcycle"))
-                this.restrictions = Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access");
-            else if (name.contains("truck"))
-                this.restrictions = Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
-            else if (name.contains("bike") || name.contains("bicycle"))
-                this.restrictions = Arrays.asList("bicycle", "vehicle", "access");
-            else
-                // assume default is some motor_vehicle, exception is too strict
-                this.restrictions = Arrays.asList("motor_vehicle", "vehicle", "access");
-        } else {
-            this.restrictions = restrictions;
-        }
+        if (restrictions.isEmpty())
+            throw new IllegalArgumentException("restrictions cannot be empty");
+        this.restrictions = restrictions;
     }
 
+    // for test only
     DecimalEncodedValue getTurnCostEnc() {
         return turnCostEnc;
     }

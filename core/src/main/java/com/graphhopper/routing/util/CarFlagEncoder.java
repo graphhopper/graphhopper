@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.UnsignedDecimalEncodedValue;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -149,7 +148,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     public TransportationMode getTransportationMode() {
-        return TransportationMode.MOTOR_VEHICLE;
+        return TransportationMode.MOTORCAR;
     }
 
     @Override
