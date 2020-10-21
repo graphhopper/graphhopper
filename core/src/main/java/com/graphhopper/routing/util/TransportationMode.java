@@ -30,14 +30,18 @@ import java.util.List;
 public interface TransportationMode {
     TransportationMode
             OTHER = new TraMoImpl("other", java.util.Collections.singletonList("access"), false),
-            FOOT = new TraMoImpl("foot", Arrays.asList("foot", "access"), false),
+            FOOT = new TraMoImpl("foot", Arrays.asList("foot", "access"), false)
+            // in OSM and road regulations a wheelchair is not a vehicle - we probably should remove it here?
+            ,
+            WHEELCHAIR = new TraMoImpl("wheelchair", Arrays.asList("wheelchair", "foot", "access"), false),
             VEHICLE = new TraMoImpl("vehicle", Arrays.asList("vehicle", "access"), false)
             // if we assume that TM_CONST.getRestrictions().contains(TM_CONST.getName()) is true then we need to name things like in OSM e.g. bicycle instead bike or motorcar instead car
             ,
             BICYCLE = new TraMoImpl("bicycle", Arrays.asList("bicycle", "vehicle", "access"), false),
             MOTOR_VEHICLE = new TraMoImpl("motor_vehicle", Arrays.asList("motor_vehicle", "vehicle", "access"), true),
             MOTORCAR = new TraMoImpl("motorcar", Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"), true),
-            MOTORCYCLE = new TraMoImpl("motorcycle", Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access"), true);
+            MOTORCYCLE = new TraMoImpl("motorcycle", Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access"), true),
+            HGV = new TraMoImpl("truck", Arrays.asList("hgv", "motor_vehicle", "vehicle", "access"), true);
 
     List<String> getRestrictions();
 

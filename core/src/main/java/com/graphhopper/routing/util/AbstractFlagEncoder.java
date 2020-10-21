@@ -42,8 +42,6 @@ import java.util.*;
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder {
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
-    /* restriction definitions where order is important */
-    protected final List<String> restrictions = new ArrayList<>(5);
     protected final Set<String> intendedValues = new HashSet<>(5);
     protected final Set<String> restrictedValues = new HashSet<>(5);
     protected final Set<String> ferries = new HashSet<>(5);
@@ -96,7 +94,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     protected void init(DateRangeParser dateRangeParser) {
         setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
-                restrictions, restrictedValues, intendedValues, false));
+                getTransportationMode().getRestrictions(), restrictedValues, intendedValues, false));
     }
 
     protected void setConditionalTagInspector(ConditionalTagInspector inspector) {
@@ -179,6 +177,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         if (node.hasTag("barrier", absoluteBarriers))
             return encoderBit;
 
+        List<String> restrictions = getTransportationMode().getRestrictions();
         // movable barriers block if they are not marked as passable
         if (node.hasTag("barrier", potentialBarriers)) {
             boolean locked = false;

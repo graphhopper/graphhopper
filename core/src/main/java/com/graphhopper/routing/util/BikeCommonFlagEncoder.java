@@ -60,8 +60,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     protected BikeCommonFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
-        // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
-        restrictions.addAll(Arrays.asList("bicycle", "vehicle", "access"));
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -224,7 +222,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 accept = EncodingManager.Access.WAY;
 
             if (!accept.canSkip()) {
-                if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+                if (way.hasTag(getTransportationMode().getRestrictions(), restrictedValues)
+                        && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
                     return EncodingManager.Access.CAN_SKIP;
                 return accept;
             }
@@ -262,7 +261,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             return EncodingManager.Access.CAN_SKIP;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+        if (way.hasTag(getTransportationMode().getRestrictions(), restrictedValues)
+                && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
             return EncodingManager.Access.CAN_SKIP;
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))

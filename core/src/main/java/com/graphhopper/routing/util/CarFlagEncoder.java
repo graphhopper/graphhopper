@@ -60,7 +60,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 properties.getDouble("speed_factor", 5),
                 properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
 
-        restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -192,7 +191,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     public EncodingManager.Access getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
-        String firstValue = way.getFirstPriorityTag(restrictions);
+        String firstValue = way.getFirstPriorityTag(getTransportationMode().getRestrictions());
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 if (restrictedValues.contains(firstValue))

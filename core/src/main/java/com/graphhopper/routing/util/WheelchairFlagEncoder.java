@@ -59,7 +59,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
     protected WheelchairFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor);
-        restrictions.add("wheelchair");
 
         absoluteBarriers.add("handrail");
         absoluteBarriers.add("wall");
@@ -277,6 +276,11 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         }
 
         return weightToPrioMap.lastEntry().getValue();
+    }
+
+    @Override
+    public TransportationMode getTransportationMode() {
+        return TransportationMode.WHEELCHAIR;
     }
 
     @Override
