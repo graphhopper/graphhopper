@@ -27,12 +27,12 @@ import java.util.Locale;
 /**
  * @author Peter Karich
  */
-public abstract class MiniPerfTest {
+public class MiniPerfTest {
 
-    private static final double NS_PER_S  = 1e9;
+    private static final double NS_PER_S = 1e9;
     private static final double NS_PER_MS = 1e6;
     private static final double NS_PER_US = 1e3;
-    
+
     protected Logger logger = LoggerFactory.getLogger(getClass());
     private int counts = 100;
     private long fullTime = 0;
@@ -40,15 +40,15 @@ public abstract class MiniPerfTest {
     private long min = Long.MAX_VALUE;
     private int dummySum;
 
-    public MiniPerfTest start() {
+    public MiniPerfTest start(Task m) {
         int warmupCount = Math.max(1, counts / 3);
         for (int i = 0; i < warmupCount; i++) {
-            dummySum += doCalc(true, i);
+            dummySum += m.doCalc(true, i);
         }
         long startFull = System.nanoTime();
         for (int i = 0; i < counts; i++) {
             long start = System.nanoTime();
-            dummySum += doCalc(false, i);
+            dummySum += m.doCalc(false, i);
             long time = System.nanoTime() - start;
             if (time < min)
                 min = time;
@@ -59,6 +59,15 @@ public abstract class MiniPerfTest {
         fullTime = System.nanoTime() - startFull;
         logger.info("dummySum:" + dummySum);
         return this;
+    }
+
+    public interface Task {
+
+        /**
+         * @return return some integer as result from your processing to make sure that the JVM cannot
+         * optimize (away) the call or within the call something.
+         */
+        int doCalc(boolean warmup, int run);
     }
 
     public MiniPerfTest setIterations(int counts) {
@@ -93,7 +102,7 @@ public abstract class MiniPerfTest {
     public double getMean() {
         return getSum() / counts;
     }
-    
+
     private String formatDuration(double durationNs) {
         double divisor;
         String unit;
@@ -122,10 +131,4 @@ public abstract class MiniPerfTest {
     private String nf(Number num) {
         return new DecimalFormat("#.###", DecimalFormatSymbols.getInstance(Locale.ROOT)).format(num);
     }
-
-    /**
-     * @return return some integer as result from your processing to make sure that the JVM cannot
-     * optimize (away) the call or within the call something.
-     */
-    public abstract int doCalc(boolean warmup, int run);
 }
