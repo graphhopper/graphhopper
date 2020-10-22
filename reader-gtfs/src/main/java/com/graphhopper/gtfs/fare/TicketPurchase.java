@@ -35,6 +35,7 @@ class TicketPurchase {
                 currentTickets.compute(fareAssignment.fare.fare_id, (s, tempTicket) -> {
                     if (fareAssignment.segment.getStartTime() > tempTicket.validUntil
                             || tempTicket.nMoreTransfers == 0) {
+                        tempTicket.feed_id = fareAssignment.segment.feed_id;
                         tempTicket.fare = fareAssignment.fare;
                         tempTicket.validUntil = fareAssignment.segment.getStartTime() + fareAssignment.fare.fare_attribute.transfer_duration;
                         tempTicket.nMoreTransfers = fareAssignment.fare.fare_attribute.transfers;
@@ -50,7 +51,7 @@ class TicketPurchase {
         ArrayList<Ticket> tickets = new ArrayList<>();
         for (TicketPurchaseScoreCalculator.TempTicket t : currentTickets.values()) {
             for (int i = 0; i<t.totalNumber; i++) {
-                tickets.add(new Ticket(t.fare));
+                tickets.add(new Ticket(t.feed_id, t.fare));
             }
         }
         return tickets;
