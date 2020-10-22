@@ -19,12 +19,11 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import static com.graphhopper.routing.ev.RoadAccess.YES;
@@ -61,10 +60,32 @@ public class OSMRoadAccessParser implements TagParser {
         SpatialRuleSet spatialRuleSet = readerWay.getTag("spatial_rule_set", null);
         if (spatialRuleSet != null && spatialRuleSet != SpatialRuleSet.EMPTY) {
             RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-            accessValue = spatialRuleSet.getAccess(roadClass, TransportationMode.MOTORCAR, YES);
+            accessValue = spatialRuleSet.getAccess(roadClass, TransportationMode.CAR, YES);
         }
-            
+
         roadAccessEnc.setEnum(false, edgeFlags, accessValue);
         return edgeFlags;
+    }
+
+    public static List<String> toOSMRestrictions(TransportationMode mode) {
+        switch (mode) {
+            case FOOT:
+                return Arrays.asList("foot", "access");
+            case VEHICLE:
+                return Arrays.asList("vehicle", "access");
+            case BIKE:
+                return Arrays.asList("bicycle", "vehicle", "access");
+            case MOTOR_VEHICLE:
+                return Arrays.asList("motor_vehicle", "vehicle", "access");
+            case CAR:
+                return Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access");
+            case MOTORCYCLE:
+                return Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access");
+            case HGV:
+                return Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
+            default:
+                return mode.isMotorVehicle() ?
+                        Arrays.asList("motor_vehicle", "vehicle", "access") : java.util.Collections.singletonList("access");
+        }
     }
 }

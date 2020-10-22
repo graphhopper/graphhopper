@@ -84,7 +84,7 @@ public class EncodingManagerTest {
     public void testToDetailsStringIncludesEncoderVersionNumber() {
         FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 0) {
             public TransportationMode getTransportationMode() {
-                return TransportationMode.BICYCLE;
+                return TransportationMode.BIKE;
             }
 
             @Override

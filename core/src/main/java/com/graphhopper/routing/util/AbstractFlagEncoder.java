@@ -23,6 +23,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
@@ -43,6 +44,8 @@ import java.util.*;
 public abstract class AbstractFlagEncoder implements FlagEncoder {
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
     protected final Set<String> intendedValues = new HashSet<>(5);
+    // order is important
+    protected final List<String> restrictions = new ArrayList<>(5);
     protected final Set<String> restrictedValues = new HashSet<>(5);
     protected final Set<String> ferries = new HashSet<>(5);
     protected final Set<String> oneways = new HashSet<>(5);
@@ -90,11 +93,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
         ferries.add("shuttle_train");
         ferries.add("ferry");
+        restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(getTransportationMode()));
     }
 
     protected void init(DateRangeParser dateRangeParser) {
         setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
-                getTransportationMode().getRestrictions(), restrictedValues, intendedValues, false));
+                restrictions, restrictedValues, intendedValues, false));
     }
 
     protected void setConditionalTagInspector(ConditionalTagInspector inspector) {
@@ -177,7 +181,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         if (node.hasTag("barrier", absoluteBarriers))
             return encoderBit;
 
-        List<String> restrictions = getTransportationMode().getRestrictions();
         // movable barriers block if they are not marked as passable
         if (node.hasTag("barrier", potentialBarriers)) {
             boolean locked = false;

@@ -59,7 +59,7 @@ public class OSMMaxSpeedParser implements TagParser {
         SpatialRuleSet spatialRuleSet = way.getTag("spatial_rule_set", null);
         if (spatialRuleSet != null && spatialRuleSet != SpatialRuleSet.EMPTY) {
             RoadClass roadClass = RoadClass.find(way.getTag("highway", ""));
-            maxSpeed = spatialRuleSet.getMaxSpeed(roadClass, TransportationMode.MOTORCAR, maxSpeed);
+            maxSpeed = spatialRuleSet.getMaxSpeed(roadClass, TransportationMode.CAR, maxSpeed);
         }
 
         double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));

@@ -124,7 +124,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     @Override
     public EncodingManager.Access getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
-        String firstValue = way.getFirstPriorityTag(getTransportationMode().getRestrictions());
+        String firstValue = way.getFirstPriorityTag(restrictions);
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 if (restrictedValues.contains(firstValue))

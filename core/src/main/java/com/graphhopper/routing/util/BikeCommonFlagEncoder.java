@@ -183,7 +183,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public TransportationMode getTransportationMode() {
-        return TransportationMode.BICYCLE;
+        return TransportationMode.BIKE;
     }
 
     @Override
@@ -222,8 +222,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 accept = EncodingManager.Access.WAY;
 
             if (!accept.canSkip()) {
-                if (way.hasTag(getTransportationMode().getRestrictions(), restrictedValues)
-                        && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+                if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
                     return EncodingManager.Access.CAN_SKIP;
                 return accept;
             }
@@ -261,8 +260,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             return EncodingManager.Access.CAN_SKIP;
 
         // check access restrictions
-        if (way.hasTag(getTransportationMode().getRestrictions(), restrictedValues)
-                && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
             return EncodingManager.Access.CAN_SKIP;
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))

@@ -181,8 +181,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
                 acceptPotentially = EncodingManager.Access.WAY;
 
             if (!acceptPotentially.canSkip()) {
-                if (way.hasTag(getTransportationMode().getRestrictions(), restrictedValues)
-                        && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+                if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
                     return EncodingManager.Access.CAN_SKIP;
                 return acceptPotentially;
             }
@@ -199,8 +198,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return EncodingManager.Access.WAY;
 
         // check access restrictions
-        if (way.hasTag(getTransportationMode().getRestrictions(), restrictedValues)
-                && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
             return EncodingManager.Access.CAN_SKIP;
 
         if (way.hasTag("sidewalk", sidewalkValues))

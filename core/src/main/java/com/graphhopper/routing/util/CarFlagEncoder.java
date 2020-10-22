@@ -147,7 +147,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     public TransportationMode getTransportationMode() {
-        return TransportationMode.MOTORCAR;
+        return TransportationMode.CAR;
     }
 
     @Override
@@ -191,7 +191,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     public EncodingManager.Access getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
-        String firstValue = way.getFirstPriorityTag(getTransportationMode().getRestrictions());
+        String firstValue = way.getFirstPriorityTag(restrictions);
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 if (restrictedValues.contains(firstValue))
