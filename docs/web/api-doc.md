@@ -39,7 +39,7 @@ point_hint       | -       | Optional parameter. Specifies a hint for each `poin
 snap_prevention  | -       | Optional parameter to avoid snapping to a certain road class or road environment. Current supported values: `motorway`, `trunk`, `ferry`, `tunnel`, `bridge` and `ford`. Multiple values are specified like `snap_prevention=ferry&snap_prevention=motorway`
 details          | -       | Optional parameter. You can request additional details for the route: `average_speed`, `street_name`, `edge_id`, `road_class`, `road_environment`, `max_speed` and `time` (and see which other values are configured in `graph.encoded_values`).  Multiple values are specified like `details=average_speed&details=time`. The returned format for one detail segment is `[fromRef, toRef, value]`. The `ref` references the points of the response. Value can also be `null` if the property does not exist for one detail segment.
 curbside         | any     | Optional parameter applicable to edge-based routing only. It specifies on which side a query point should be relative to the driver when she leaves/arrives at a start/target/via point. Possible values: right, left, any. Specify for every point parameter. See similar heading parameter.
-force_curbside   | false   | True if the curbside parameters should lead to an exception if they cannot be fulfilled.
+force_curbside   | true    | Optional parameter. If it is set to true there will be an exception in case the curbside parameters cannot be fulfilled (e.g. specifying the wrong side for one-ways).
 
 ### Hybrid
 
