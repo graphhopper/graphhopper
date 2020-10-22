@@ -33,7 +33,7 @@ public class OSMRoadAccessParser implements TagParser {
     private final List<String> restrictions;
 
     public OSMRoadAccessParser() {
-        this(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class), Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
+        this(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class), toOSMRestrictions(TransportationMode.CAR));
     }
 
     public OSMRoadAccessParser(EnumEncodedValue<RoadAccess> roadAccessEnc, List<String> restrictions) {
