@@ -24,6 +24,13 @@ public class PointMatrixList extends AbstractList<PointMatrix> {
         this.pointMatrixList = Build();
     }
 
+    public PointMatrixList(GraphHopperAPI graphHopper, IdentifiedPointList pointList, IdentifiedGHPoint3D depotPoint) {
+        this.graphHopper = graphHopper;
+        this.pointList = pointList;
+        this.pointList.add(depotPoint);
+        this.pointMatrixList = Build();
+    }
+
     public PointMatrix get(int index) {
         return pointMatrixList.get(index);
     }
@@ -46,7 +53,7 @@ public class PointMatrixList extends AbstractList<PointMatrix> {
         for(IdentifiedGHPoint3D point: this.pointList) {
             int index2 = 0;
             for (IdentifiedGHPoint3D point2: this.pointList) {
-                if (point.equals(point2) && point.getId().equals(point2.getId())) continue;
+//                if (point.equals(point2) || point.getId().equals(point2.getId())) continue;
                 GHResponse response = this.graphHopper.route(new GHRequest(point, point2)
                         .setWeighting("fastest")
                         .setVehicle("car")
@@ -61,3 +68,4 @@ public class PointMatrixList extends AbstractList<PointMatrix> {
         return pointMatrixList;
     }
 }
+//pointMatrixList.stream().filter(pointMatrix -> pointMatrix.getPoint1().getLocation().equals(Location.newInstance(47.3822499, 8.4857342))).toArray()

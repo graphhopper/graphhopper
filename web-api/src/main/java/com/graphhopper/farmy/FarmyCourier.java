@@ -20,8 +20,7 @@ public class FarmyCourier {
     private Boolean isPlus;
     @JsonProperty("name")
     private String name;
-    @JsonProperty("vehicle")
-    private FarmyVehicle farmyVehicle;
+
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
@@ -53,16 +52,6 @@ public class FarmyCourier {
     @JsonProperty("name")
     public void setName(String name) {
         this.name = name;
-    }
-
-    @JsonProperty("farmyVehicle")
-    public FarmyVehicle getFarmyVehicle() {
-        return farmyVehicle;
-    }
-
-    @JsonProperty("farmyVehicle")
-    public void setFarmyVehicle(FarmyVehicle farmyVehicle) {
-        this.farmyVehicle = farmyVehicle;
     }
 
     @JsonAnyGetter

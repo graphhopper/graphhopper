@@ -103,9 +103,9 @@ public class RoutePlanReader {
     }
 
     public IdentifiedGHPoint3D depotPoint() {
-        IdentifiedGHPoint3D identifiedGHPoint3D = new IdentifiedGHPoint3D(new GHPoint(47.3822499, 8.4857342), "DEPOT");
+        IdentifiedGHPoint3D identifiedGHPoint3D = new IdentifiedGHPoint3D(new GHPoint(47.3822499, 8.4857342), "[x=47.3822499][y=8.4857342]");
         identifiedGHPoint3D.setWeight(0);
-        identifiedGHPoint3D.setServiceTime(900);
+        identifiedGHPoint3D.setServiceTime(1200);
         identifiedGHPoint3D.setTimeWindow(TimeWindow.newInstance(50400, 54000)); // Test timewindow, between 14:00 and 15:00
 
         return identifiedGHPoint3D;

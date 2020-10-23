@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.farmy.FarmyCourier;
 import com.graphhopper.farmy.FarmyOrder;
+import com.graphhopper.farmy.FarmyVehicle;
 import com.graphhopper.farmy.RouteOptimize;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
@@ -19,7 +20,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-@Path("optimize-route")
+@Path(" optimize-route")
 public class OptimizeRouteResource {
 
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
@@ -65,16 +66,17 @@ public class OptimizeRouteResource {
 //        return Response.ok().entity(routeOptimize.getOptimizedRoutes()).build();
 //    }
 
+
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@FormDataParam("orders") String farmyOrdersStr,
-                           @FormDataParam("couriers") String farmyCouriersStr) throws IOException {
+                           @FormDataParam("vehicle") String farmyVehicleStr) throws IOException {
         FarmyOrder[] farmyOrders = new ObjectMapper().readValue(farmyOrdersStr, FarmyOrder[].class);
-        FarmyCourier[] farmyCouriers = new ObjectMapper().readValue(farmyCouriersStr, FarmyCourier[].class);
+        FarmyVehicle[] farmyVehicles = new ObjectMapper().readValue(farmyVehicleStr, FarmyVehicle[].class);
         RouteOptimize routeOptimize = null;
         try {
-            routeOptimize = new RouteOptimize(this.graphHopper, farmyOrders, farmyCouriers);
+            routeOptimize = new RouteOptimize(this.graphHopper, farmyOrders, farmyVehicles);
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().build();
