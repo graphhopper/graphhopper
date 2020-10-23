@@ -36,6 +36,8 @@ public class GHSecurityPolicy extends Policy {
 
         // why do we need that for an API request?
         p.add(new RuntimePermission("accessDeclaredMembers"));
+        // TODO NOW?
+        // p.setReadOnly();
         return p;
     }
 }
