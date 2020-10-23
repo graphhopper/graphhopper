@@ -15,10 +15,7 @@ import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public class RoutingExample {
     public static void main(String[] args) {
@@ -59,12 +56,9 @@ public class RoutingExample {
                         setLocale(Locale.US);
         GHResponse rsp = hopper.route(req);
 
-        // first check for errors
-        if (rsp.hasErrors()) {
-            // handle them!
-            // rsp.getErrors()
-            return;
-        }
+        // handle errors
+        if (rsp.hasErrors())
+            throw new RuntimeException(rsp.getErrors().toString());
 
         // use the best path, see the GHResponse class for more possibilities.
         ResponsePath path = rsp.getBest();
@@ -88,6 +82,8 @@ public class RoutingExample {
         GHRequest req = new GHRequest(42.508552, 1.532936, 42.507508, 1.528773).
                 setProfile("car").setAlgorithm(Parameters.Algorithms.ASTAR_BI).putHint(Parameters.CH.DISABLE, true);
         GHResponse res = hopper.route(req);
+        if (res.hasErrors())
+            throw new RuntimeException(res.getErrors().toString());
         assert Helper.round(res.getBest().getDistance(), -2) == 900;
     }
 
@@ -97,10 +93,12 @@ public class RoutingExample {
                 addPoint(new GHPoint(42.508774, 1.535414)).addPoint(new GHPoint(42.506595, 1.528795)).
                 setHeadings(Arrays.asList(180d, 90d)).
                 // use flexible mode (i.e. disable contraction hierarchies) to make heading and pass_through working
-                putHint(Parameters.CH.DISABLE, true);
+                        putHint(Parameters.CH.DISABLE, true);
         // if you have via points you can avoid U-turns there with
         // req.getHints().putObject(Parameters.Routing.PASS_THROUGH, true);
         GHResponse res = hopper.route(req);
+        if (res.hasErrors())
+            throw new RuntimeException(res.getErrors().toString());
         assert res.getAll().size() == 1;
         assert Helper.round(res.getBest().getDistance(), -2) == 800;
 
@@ -110,6 +108,8 @@ public class RoutingExample {
                 setAlgorithm(Parameters.Algorithms.ALT_ROUTE);
         req.getHints().putObject(Parameters.Algorithms.AltRoute.MAX_PATHS, 3);
         res = hopper.route(req);
+        if (res.hasErrors())
+            throw new RuntimeException(res.getErrors().toString());
         assert res.getAll().size() == 2;
         assert Helper.round(res.getBest().getDistance(), -2) == 1600;
     }
@@ -129,21 +129,27 @@ public class RoutingExample {
         // ... but for the hybrid mode we can customize the route calculation even at request time:
         // 1. a request with default preferences
         GHRequest req = new GHRequest().setProfile("car_custom").
-                addPoint(new GHPoint(42.506472,1.522475)).addPoint(new GHPoint(42.513108,1.536005));
+                addPoint(new GHPoint(42.506472, 1.522475)).addPoint(new GHPoint(42.513108, 1.536005));
 
         GHResponse res = hopper.route(req);
+        if (res.hasErrors())
+            throw new RuntimeException(res.getErrors().toString());
+
         assert Math.round(res.getBest().getTime() / 1000d) == 96;
 
         // 2. now avoid primary roads and reduce maximum speed, see docs/core/profiles.md for an in-depth explanation
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
         req.putHint(CustomModel.KEY, model);
-        Map<String, Double> map = new HashMap<>();
+        Map<String, Double> map = new LinkedHashMap<>();
         model.setMaxSpeedFallback(100d);
         model.getPriority().put(RoadClass.KEY, map);
         map.put(RoadClass.PRIMARY.toString(), 0.5);
 
         res = hopper.route(req);
+        if (res.hasErrors())
+            throw new RuntimeException(res.getErrors().toString());
+
         assert Math.round(res.getBest().getTime() / 1000d) == 165;
     }
 }
