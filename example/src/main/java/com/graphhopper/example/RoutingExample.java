@@ -93,7 +93,7 @@ public class RoutingExample {
                 addPoint(new GHPoint(42.508774, 1.535414)).addPoint(new GHPoint(42.506595, 1.528795)).
                 setHeadings(Arrays.asList(180d, 90d)).
                 // use flexible mode (i.e. disable contraction hierarchies) to make heading and pass_through working
-                        putHint(Parameters.CH.DISABLE, true);
+                putHint(Parameters.CH.DISABLE, true);
         // if you have via points you can avoid U-turns there with
         // req.getHints().putObject(Parameters.Routing.PASS_THROUGH, true);
         GHResponse res = hopper.route(req);
