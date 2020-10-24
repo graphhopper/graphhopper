@@ -100,7 +100,7 @@ final class SpeedCalculator {
                         (Number) value, 1, 0, 1));
             } else {
                 if (!(value instanceof LinkedHashMap))
-                    throw new IllegalArgumentException(speedFactorKey + ": non-root entries require a map (LinkedHashMap), but was: " + value.getClass().getSimpleName());
+                    throw new IllegalArgumentException(speedFactorKey + ": non-root entries require a sorted map (LinkedHashMap), but was: " + value.getClass().getSimpleName());
                 final double defaultSpeedFactor = 1, minSpeedFactor = 0, maxSpeedFactor = 1;
                 EncodedValue encodedValue = getEV(lookup, "speed_factor", key);
                 if (encodedValue instanceof EnumEncodedValue) {
