@@ -41,8 +41,7 @@ import java.util.Map;
 
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CustomWeightingTest {
 
@@ -250,11 +249,7 @@ public class CustomWeightingTest {
         map.put(" > 1.5", 0.2); // allow decimal values in range even for int encoded value
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.getPriority().put("lanes", map);
-        try {
-            createWeighting(vehicleModel);
-            assertTrue(false);
-        } catch (Exception ex) {
-        }
+        assertThrows(IllegalArgumentException.class, () -> createWeighting(vehicleModel));
     }
 
     @Test
