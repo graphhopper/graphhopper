@@ -45,7 +45,7 @@ class ScriptWeightingTest {
     }
 
     @Test
-    public void testBasics() {
+    public void testPriority() {
         EdgeIteratorState primary = graphHopperStorage.edge(0, 1, 10, true).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80);
         EdgeIteratorState secondary = graphHopperStorage.edge(1, 2, 10, true).
@@ -63,7 +63,6 @@ class ScriptWeightingTest {
         assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.73, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
 
-        // change priority for primary explicitly and change priority for secondary using catch all
         vehicleModel.getPriority().put("road_class == SECONDARY", 0.7);
         vehicleModel.getPriority().put(CustomWeighting.CATCH_ALL, 0.9);
         assertEquals(1.2, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
@@ -73,6 +72,22 @@ class ScriptWeightingTest {
         vehicleModel = new CustomModel();
         vehicleModel.getPriority().put("road_class == PRIMARY", 1);
         assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+    }
+
+    @Test
+    public void testSpeedFactorAndPriority() {
+        EdgeIteratorState primary = graphHopperStorage.edge(0, 1, 10, true).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80);
+        EdgeIteratorState secondary = graphHopperStorage.edge(1, 2, 10, true).
+                set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70);
+
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.getPriority().put("road_class == PRIMARY", 1.0);
+        vehicleModel.getPriority().put(CustomWeighting.CATCH_ALL, 0.5);
+
+        vehicleModel.getSpeedFactor().put("road_class != PRIMARY", 0.9);
+        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+        assertEquals(1.84, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {

@@ -26,8 +26,7 @@ public class ScriptWeighting extends AbstractWeighting {
     private final double maxSpeed;
     private final double distanceInfluence;
     private final double headingPenaltySeconds;
-    private final EdgeToValueEntry speedCalculator;
-    private final EdgeToValueEntry priorityCalculator;
+    private final ScriptHelper scriptHelper;
 
     public ScriptWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
                            TurnCostProvider turnCostProvider, CustomModel customModel) {
@@ -38,11 +37,9 @@ public class ScriptWeighting extends AbstractWeighting {
         headingPenaltySeconds = customModel.getHeadingPenalty();
         baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
 
-        speedCalculator = SpeedScript.create(baseFlagEncoder.getMaxSpeed(), customModel, baseFlagEncoder.getAverageSpeedEnc(), lookup);
+        scriptHelper = ScriptHelper.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
         // TODO NOW lower max speed if specified
         maxSpeed = baseFlagEncoder.getMaxSpeed() / SPEED_CONV;
-
-        priorityCalculator = PriorityScript.create(customModel, lookup);
 
         // given unit is s/km -> convert to s/m
         distanceInfluence = customModel.getDistanceInfluence() / 1000;
@@ -64,7 +61,7 @@ public class ScriptWeighting extends AbstractWeighting {
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
-        return seconds / priorityCalculator.getValue(edgeState, reverse) + distanceCosts;
+        return seconds / scriptHelper.getPriority(edgeState, reverse) + distanceCosts;
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
@@ -76,7 +73,7 @@ public class ScriptWeighting extends AbstractWeighting {
         if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
             return Double.POSITIVE_INFINITY;
 
-        double speed = speedCalculator.getValue(edgeState, reverse);
+        double speed = scriptHelper.getSpeed(edgeState, reverse);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
