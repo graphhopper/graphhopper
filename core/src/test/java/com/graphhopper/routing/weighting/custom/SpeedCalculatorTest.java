@@ -29,6 +29,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -57,7 +58,7 @@ class SpeedCalculatorTest {
     public void maxSpeed() {
         // here we use max_speed to limit speed
         CustomModel model = new CustomModel();
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         map.put("*", 25);
         model.getMaxSpeed().put(RoadClass.KEY, map);
         assertEquals(25, calcSpeed(edge, model));
@@ -78,7 +79,7 @@ class SpeedCalculatorTest {
     @Test
     public void invalidMaxSpeed() {
         CustomModel model = new CustomModel();
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         map.put("*", 300);
         model.getMaxSpeed().put(RoadClass.KEY, map);
         try {
@@ -103,9 +104,9 @@ class SpeedCalculatorTest {
         EnumEncodedValue<RoadEnvironment> roadEnvironment = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edge.set(roadClass, RoadClass.PRIMARY);
         edge.set(roadEnvironment, RoadEnvironment.BRIDGE);
-        Map<String, Object> roadClassMap = new HashMap<>();
+        Map<String, Object> roadClassMap = new LinkedHashMap<>();
         roadClassMap.put(RoadClass.PRIMARY.toString(), 40);
-        Map<String, Object> roadEnvironmentMap = new HashMap<>();
+        Map<String, Object> roadEnvironmentMap = new LinkedHashMap<>();
         roadEnvironmentMap.put(RoadEnvironment.BRIDGE.toString(), 20);
         CustomModel model = new CustomModel();
         model.getMaxSpeed().put(RoadClass.KEY, roadClassMap);
@@ -118,7 +119,7 @@ class SpeedCalculatorTest {
     public void speedFactor() {
         // here we use speed_factor to adjust speed
         CustomModel model = new CustomModel();
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         map.put("*", 0.1);
         model.getSpeedFactor().put(RoadClass.KEY, map);
         assertEquals(6, calcSpeed(edge, model));
@@ -136,7 +137,7 @@ class SpeedCalculatorTest {
     @Test
     public void invalidSpeedFactor() {
         CustomModel model = new CustomModel();
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         map.put("*", 1.1);
         model.getSpeedFactor().put(RoadClass.KEY, map);
         try {
@@ -154,9 +155,9 @@ class SpeedCalculatorTest {
         EnumEncodedValue<RoadEnvironment> roadEnvironment = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edge.set(roadClass, RoadClass.PRIMARY);
         edge.set(roadEnvironment, RoadEnvironment.BRIDGE);
-        Map<String, Object> roadClassMap = new HashMap<>();
+        Map<String, Object> roadClassMap = new LinkedHashMap<>();
         roadClassMap.put(RoadClass.PRIMARY.toString(), 0.7);
-        Map<String, Object> roadEnvironmentMap = new HashMap<>();
+        Map<String, Object> roadEnvironmentMap = new LinkedHashMap<>();
         roadEnvironmentMap.put(RoadEnvironment.BRIDGE.toString(), 0.5);
         CustomModel model = new CustomModel();
         model.getSpeedFactor().put(RoadClass.KEY, roadClassMap);

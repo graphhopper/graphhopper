@@ -52,31 +52,19 @@ public class CustomModelTest {
         assertNull(getValue(car, "max_weight"));
 
         assertEquals("<3.0", getValue(CustomModel.merge(car, truck), "max_width"));
-        try {
-            CustomModel.merge(truck, car);
-            fail("car is incompatible to truck (base)");
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().contains("max_width: only use a comparison key with a bigger value than 3.0 but was 2.0"), ex.getMessage());
-        }
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> CustomModel.merge(truck, car));
+        assertTrue(ex.getMessage().contains("max_width: only use a comparison key with a bigger value than 3.0 but was 2.0"), ex.getMessage());
 
         CustomModel car2 = setValue(new CustomModel(), ">", "max_width", 2);
-        try {
-            CustomModel.merge(truck, car2);
-            fail("car is incompatible to car2 (base)");
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().contains("max_width: comparison keys must match but did not: "), ex.getMessage());
-        }
+        ex = assertThrows(IllegalArgumentException.class, () -> CustomModel.merge(truck, car2));
+        assertTrue(ex.getMessage().contains("max_width: comparison keys must match but did not: "), ex.getMessage());
 
         Map<String, Object> map = new HashMap<>();
         map.put("<2.0", 0.5);
         CustomModel customModel = new CustomModel();
         customModel.getPriority().put("max_width", map);
-        try {
-            CustomModel.merge(customModel, customModel);
-            fail("models are incompatible");
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().contains("only blocking comparisons are allowed, but query was 0.5 and server side: 0.5"), ex.getMessage());
-        }
+        ex = assertThrows(IllegalArgumentException.class, () -> CustomModel.merge(customModel, customModel));
+        assertTrue(ex.getMessage().contains("only blocking comparisons are allowed, but query was 0.5 and server side: 0.5"), ex.getMessage());
     }
 
     @Test
@@ -110,11 +98,7 @@ public class CustomModelTest {
         assertEquals(1.5, (Double) ((Map) truck.getPriority().get("road_class")).get("primary"), .1);
 
         truck.getPriority().put("road_class", createMap("primary", "incompatible"));
-        try {
-            CustomModel.merge(car, truck);
-            fail("we cannot merge this");
-        } catch (Exception ex) {
-        }
+        assertThrows(IllegalArgumentException.class, () -> CustomModel.merge(car, truck));
     }
 
     Map createMap(Object... objects) {
