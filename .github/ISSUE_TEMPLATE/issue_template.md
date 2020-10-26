@@ -11,9 +11,9 @@ A clear and concise description of what the bug is. For questions or usage probl
 Steps to reproduce the behavior. For examples:
 
 1. checkout recent and stable version of GraphHopper
-2. download a certain OSM pbf
+2. link to your OSM pbf
 3. include the config.yml you are using
-4. run `java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml`
+4. run `java -Ddw.graphhopper.datareader.file=your.osm.pbf -jar *.jar server config-example.yml`
 
 Instead of a manual reproduction it would be even better to have a unit or integration test reproducing the issue.
 
