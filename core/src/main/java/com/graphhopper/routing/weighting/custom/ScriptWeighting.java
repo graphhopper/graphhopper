@@ -38,7 +38,6 @@ public class ScriptWeighting extends AbstractWeighting {
         baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
 
         scriptHelper = ScriptHelper.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
-        // TODO NOW lower max speed if specified
         maxSpeed = baseFlagEncoder.getMaxSpeed() / SPEED_CONV;
 
         // given unit is s/km -> convert to s/m

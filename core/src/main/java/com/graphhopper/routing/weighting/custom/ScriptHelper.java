@@ -45,7 +45,8 @@ public class ScriptHelper {
             // TODO create expressions via new Java.ConditionalExpression(location, lhs, mhs, rhs) (reuse objects created in the parse methods before)
             HashSet<String> priorityVariables = new HashSet<>();
             List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-            initStatementsAndVariables(priorityVariables, priorityStatements, customModel.getPriority(), lookup, "return value;");
+            addStatementsAndGuessVariables(priorityVariables, priorityStatements, customModel.getPriority(), lookup,
+                    "return (", "return 1;");
             // a bit inefficient to define some variables twice but we have two methods for now
             for (String arg : priorityVariables) {
                 Parser parser = new Parser(new Scanner("parser1", new StringReader(
@@ -55,9 +56,10 @@ public class ScriptHelper {
 
             HashSet<String> speedVariables = new HashSet<>();
             List<Java.BlockStatement> speedStatements = new ArrayList<>();
-            initStatementsAndVariables(speedVariables, speedStatements, customModel.getSpeedFactor(), lookup, "return value * speed;");
-            // TODO NOW: max speed
-//            initStatementsAndVariables(speedVariables, speedStatements, customModel.getMaxSpeed(), lookup);
+            addStatementsAndGuessVariables(speedVariables, speedStatements, customModel.getSpeedFactor(), lookup,
+                    "speed *= (", "");
+            addStatementsAndGuessVariables(speedVariables, speedStatements, customModel.getMaxSpeed(), lookup,
+                    "return Math.min(speed,", "return speed;");
             String speedStartExpressions = "double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);\n"
                     + "if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0) throw new IllegalStateException(\"Invalid estimated speed \" + speed);\n";
             for (String arg : speedVariables) {
@@ -114,14 +116,14 @@ public class ScriptHelper {
             Java.AbstractCompilationUnit cu = new Parser(new Scanner("ignore", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
 
-            // instead of string appending safely add the expression via Java and compile before:
+            // instead of string appending we safely add the expression via Java and compile before:
             cu = new DeepCopier() {
 
                 @Override
                 public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
                     if (subject.name.equals("getSpeed") && !speedStatements.isEmpty()) {
                         return copyMethod(subject, this, speedStatements);
-                    } else if (subject.name.equals("getPriority") && !priorityStatements.isEmpty()) {
+                    } else if (subject.name.equals("getPriority")) {
                         return copyMethod(subject, this, priorityStatements);
                     } else {
                         return super.copyMethodDeclarator(subject);
@@ -147,6 +149,8 @@ public class ScriptHelper {
     private static Java.MethodDeclarator copyMethod(Java.MethodDeclarator subject, DeepCopier deepCopier,
                                                     List<Java.BlockStatement> statements) {
         try {
+            if (statements.isEmpty())
+                throw new IllegalArgumentException("Statements cannot be empty when copying method");
             Java.MethodDeclarator methodDecl = new Java.MethodDeclarator(
                     new Location("m1", 1, 1),
                     subject.getDocComment(),
@@ -167,8 +171,9 @@ public class ScriptHelper {
         }
     }
 
-    private static void initStatementsAndVariables(Set<String> createObjects, List<Java.BlockStatement> createStatements,
-                                                   Map<String, Object> map, EncodedValueLookup lookup, String returnStmt) throws Exception {
+    private static void addStatementsAndGuessVariables(Set<String> createObjects, List<Java.BlockStatement> createStatements,
+                                                       Map<String, Object> map, EncodedValueLookup lookup,
+                                                       String function, String lastStmt) throws Exception {
 
         Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
         ScriptWeighting.NameValidator nameInConditionValidator = name ->
@@ -176,7 +181,7 @@ public class ScriptHelper {
                 lookup.hasEncodedValue(name) || name.toUpperCase(Locale.ROOT).equals(name) || allowedNames.contains(name);
         ScriptWeighting.NameValidator nameInExpressionValidator = name -> false;
 
-        StringBuilder expressions = new StringBuilder("double value = 1;\n");
+        StringBuilder expressions = new StringBuilder();
         int count = 0;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String expression = entry.getKey();
@@ -184,30 +189,19 @@ public class ScriptHelper {
             if (!(numberObj instanceof Number))
                 throw new IllegalArgumentException("value not a Number " + numberObj);
             Number number = (Number) numberObj;
-            if (expression.equals(CustomWeighting.CATCH_ALL)) {
-                if (!parseAndGuessParametersFromExpression(createObjects, number, nameInExpressionValidator))
-                    throw new IllegalArgumentException("Value is invalid simple expression: " + number);
-                if (count == 0)
-                    throw new IllegalArgumentException("* expression cannot be first: " + number);
+            if (expression.equals(CustomWeighting.CATCH_ALL))
+                throw new IllegalArgumentException("replace all '*' expressions with 'true'");
 
-                expressions.append("else value *= " + number + ";\n");
-                // last expression
-                break;
-
-
-            } else {
-                if (!parseAndGuessParametersFromCondition(createObjects, expression, nameInConditionValidator))
-                    throw new IllegalArgumentException("Key is invalid simple condition: " + expression);
-                if (!parseAndGuessParametersFromExpression(createObjects, number, nameInExpressionValidator))
-                    throw new IllegalArgumentException("Value is invalid simple expression: " + number);
-                if (count > 0)
-                    expressions.append("else ");
-                expressions.append("if (" + expression + ") value *= " + number + ";\n");
-            }
+            if (!parseAndGuessParametersFromCondition(createObjects, expression, nameInConditionValidator))
+                throw new IllegalArgumentException("Key is invalid simple condition: " + expression);
+            if (!parseAndGuessParametersFromExpression(createObjects, number, nameInExpressionValidator))
+                throw new IllegalArgumentException("Value is invalid simple expression: " + number);
+            if (count > 0)
+                expressions.append("else ");
+            expressions.append("if (" + expression + ") " + function + number + ");\n");
             count++;
         }
-
-        expressions.append(returnStmt + "\n");
+        expressions.append(lastStmt + "\n");
 
         Parser parser = new Parser(new Scanner("priority_parser", new StringReader(expressions.toString())));
         createStatements.addAll(parser.parseBlockStatements());
