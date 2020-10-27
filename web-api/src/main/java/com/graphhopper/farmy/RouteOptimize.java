@@ -230,9 +230,9 @@ public class RouteOptimize {
 
 //          Time convert in min
 //          Distance convert in km
-        StateManager stateManager = new StateManager(vrp);
-        ConstraintManager constraintManager = new ConstraintManager(vrp, stateManager);
-        constraintManager.addConstraint(new FarmyWorkingHoursConstraint(54000 + 28800, stateManager, this.vrtcm), ConstraintManager.Priority.HIGH);
+//        StateManager stateManager = new StateManager(vrp);
+//        ConstraintManager constraintManager = new ConstraintManager(vrp, stateManager);
+//        constraintManager.addConstraint(new FarmyWorkingHoursConstraint(54000 + 28800, stateManager, this.vrtcm), ConstraintManager.Priority.HIGH);
 
 //      End test constraint
 
