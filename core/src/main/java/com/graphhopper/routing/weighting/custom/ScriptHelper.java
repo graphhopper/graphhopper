@@ -1,6 +1,8 @@
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
@@ -41,81 +43,36 @@ public class ScriptHelper {
 
     public static ScriptHelper create(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed, DecimalEncodedValue avgSpeedEnc) {
         try {
-            // TODO create expressions via new Java.ConditionalExpression(location, lhs, mhs, rhs) (reuse objects created in the parse methods before)
+            //// for getPriority
             HashSet<String> priorityVariables = new HashSet<>();
             List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-            addStatementsAndGuessVariables(priorityVariables, priorityStatements, customModel.getPriority(), lookup,
-                    "return (", "return 1;");
-            // a bit inefficient to define some variables twice but we have two methods for now
+            priorityStatements.addAll(verifyExpressions(priorityVariables, customModel.getPriority(), lookup,
+                    "return (", "return 1;"));
+            String priorityStartBlock = "";
             for (String arg : priorityVariables) {
-                Parser parser = new Parser(new Scanner("parser1", new StringReader(
-                        "Enum " + arg + " = reverse ? edge.getReverse(" + arg + "_enc) : edge.get(" + arg + "_enc);")));
-                priorityStatements.addAll(0, parser.parseBlockStatements());
+                priorityStartBlock += "Enum " + arg + " = reverse ? edge.getReverse(" + arg + "_enc) : edge.get(" + arg + "_enc);";
             }
+            priorityStatements.addAll(0, new Parser(new Scanner("parser1", new StringReader(priorityStartBlock))).parseBlockStatements());
 
+            //// for getSpeed
             HashSet<String> speedVariables = new HashSet<>();
             List<Java.BlockStatement> speedStatements = new ArrayList<>();
-            addStatementsAndGuessVariables(speedVariables, speedStatements, customModel.getSpeedFactor(), lookup,
-                    "speed *= (", "");
-            addStatementsAndGuessVariables(speedVariables, speedStatements, customModel.getMaxSpeed(), lookup,
-                    "speed = Math.min(speed,", "return Math.min(speed, " + globalMaxSpeed + ");");
-            String speedStartExpressions = "double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);\n"
+            speedStatements.addAll(verifyExpressions(speedVariables, customModel.getSpeedFactor(), lookup,
+                    "speed *= (", ""));
+            speedStatements.addAll(verifyExpressions(speedVariables, customModel.getMaxSpeed(), lookup,
+                    "speed = Math.min(speed,", "return Math.min(speed, " + globalMaxSpeed + ");"));
+            String speedStartBlock = "double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);\n"
                     + "if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0) throw new IllegalStateException(\"Invalid estimated speed \" + speed);\n";
+            // a bit inefficient to possibly define variables twice, but for now we have two separate methods
             for (String arg : speedVariables) {
-                speedStartExpressions += "Enum " + arg + " = reverse ? edge.getReverse(" + arg + "_enc) : edge.get(" + arg + "_enc);\n";
+                speedStartBlock += "Enum " + arg + " = reverse ? edge.getReverse(" + arg + "_enc) : edge.get(" + arg + "_enc);\n";
             }
-            speedStatements.addAll(0, new Parser(new Scanner("parser2", new StringReader(speedStartExpressions))).parseBlockStatements());
+            speedStatements.addAll(0, new Parser(new Scanner("parser2", new StringReader(speedStartBlock))).parseBlockStatements());
 
-            final StringBuilder importSourceCode = new StringBuilder();
-            final StringBuilder classSourceCode = new StringBuilder();
-            final StringBuilder initSourceCode = new StringBuilder("this.avg_speed_enc = avgSpeedEnc;\n");
-            Set<String> set = new HashSet<>(priorityVariables);
-            set.addAll(speedVariables);
-            for (String arg : set) {
-                if (lookup.hasEncodedValue(arg)) {
-                    EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
-                    if (!EncodingManager.isSharedEV(enc))
-                        break;
-
-                    String className = toClassName(arg);
-                    String packageName = "com.graphhopper.routing.ev";
-                    importSourceCode.append("import static " + packageName + "." + className + ".*;\n");
-                    importSourceCode.append("import " + packageName + "." + className + ";\n");
-                    String evType = enc.getClass().getSimpleName();
-                    classSourceCode.append("protected " + evType + " " + arg + "_enc;\n");
-                    initSourceCode.append("if (lookup.hasEncodedValue(" + className + ".KEY)) ");
-                    initSourceCode.append(arg + "_enc = lookup.get" + evType + "(" + className + ".KEY, " + className + ".class);\n");
-                }
-            }
-
-            final String classTemplate = ""
-                    + "import " + ScriptHelper.class.getName() + ";\n"
-                    + "import " + EncodedValueLookup.class.getName() + ";\n"
-                    + "import " + EnumEncodedValue.class.getName() + ";\n"
-                    + "import " + DecimalEncodedValue.class.getName() + ";\n"
-                    + "import " + IntEncodedValue.class.getName() + ";\n"
-                    + "import " + EdgeIteratorState.class.getName() + ";\n"
-                    + importSourceCode
-                    + "\npublic class Test extends ScriptHelper {\n"
-                    + classSourceCode
-                    + "   @Override\n"
-                    + "   public void init(EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc) {\n"
-                    + initSourceCode
-                    + "   }\n\n"
-                    + "   @Override\n"
-                    + "   public double getPriority(EdgeIteratorState edge, boolean reverse) {\n"
-                    + "      return 1; //will be overwritten by code injected in DeepCopier\n"
-                    + "   }\n"
-                    + "   @Override\n"
-                    + "   public double getSpeed(EdgeIteratorState edge, boolean reverse) {\n"
-                    + "      return speed; //will be overwritten by code injected in DeepCopier\n"
-                    + "   }\n"
-                    + "}";
-
+            //// add the parsed expressions (now BlockStatement) via DeepCopier:
+            String classTemplate = createClassTemplate(priorityVariables, speedVariables, lookup);
             Java.AbstractCompilationUnit cu = new Parser(new Scanner("ignore", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
-
-            // instead of string appending we safely add the expression via Java and compile before:
             cu = new DeepCopier() {
 
                 @Override
@@ -130,7 +87,7 @@ public class ScriptHelper {
                 }
             }.copyAbstractCompilationUnit(cu);
 
-            // would be nice to avoid that: https://github.com/janino-compiler/janino/issues/135
+            // TODO avoid that: https://github.com/janino-compiler/janino/issues/135
             StringWriter sw = new StringWriter();
             Unparser.unparse(cu, sw);
 
@@ -145,34 +102,63 @@ public class ScriptHelper {
         }
     }
 
-    private static Java.MethodDeclarator copyMethod(Java.MethodDeclarator subject, DeepCopier deepCopier,
-                                                    List<Java.BlockStatement> statements) {
-        try {
-            if (statements.isEmpty())
-                throw new IllegalArgumentException("Statements cannot be empty when copying method");
-            Java.MethodDeclarator methodDecl = new Java.MethodDeclarator(
-                    new Location("m1", 1, 1),
-                    subject.getDocComment(),
-                    deepCopier.copyModifiers(subject.getModifiers()),
-                    deepCopier.copyOptionalTypeParameters(subject.typeParameters),
-                    deepCopier.copyType(subject.type),
-                    subject.name,
-                    deepCopier.copyFormalParameters(subject.formalParameters),
-                    deepCopier.copyTypes(subject.thrownExceptions),
-                    deepCopier.copyOptionalElementValue(subject.defaultValue),
-                    deepCopier.copyOptionalStatements(statements)
-            );
-            statements.forEach(st -> st.setEnclosingScope(methodDecl));
-            statements.clear();
-            return methodDecl;
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
+    /**
+     * Create the class source file from the detected variables with proper imports and declarations if EncodedValue
+     */
+    private static String createClassTemplate(Set<String> priorityVariables, Set<String> speedVariables, EncodedValueLookup lookup) {
+        final StringBuilder importSourceCode = new StringBuilder();
+        final StringBuilder classSourceCode = new StringBuilder();
+        final StringBuilder initSourceCode = new StringBuilder("this.avg_speed_enc = avgSpeedEnc;\n");
+        Set<String> set = new HashSet<>(priorityVariables);
+        set.addAll(speedVariables);
+        for (String arg : set) {
+            if (lookup.hasEncodedValue(arg)) {
+                EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
+                if (!EncodingManager.isSharedEV(enc))
+                    continue;
+                String className = toClassName(arg);
+                String packageName = "com.graphhopper.routing.ev";
+                importSourceCode.append("import static " + packageName + "." + className + ".*;\n");
+                importSourceCode.append("import " + packageName + "." + className + ";\n");
+                classSourceCode.append("protected " + enc.getClass().getName() + " " + arg + "_enc;\n");
+                initSourceCode.append("if (lookup.hasEncodedValue(" + className + ".KEY)) ");
+                initSourceCode.append(arg + "_enc = lookup.get" + enc.getClass().getSimpleName() + "(" + className + ".KEY, " + className + ".class);\n");
+            }
         }
+
+        return ""
+                + "import " + ScriptHelper.class.getName() + ";\n"
+                + "import " + EncodedValueLookup.class.getName() + ";\n"
+                + "import " + EdgeIteratorState.class.getName() + ";\n"
+                + importSourceCode
+                + "\npublic class Test extends ScriptHelper {\n"
+                + classSourceCode
+                + "   @Override\n"
+                + "   public void init(EncodedValueLookup lookup, " + DecimalEncodedValue.class.getName() + " avgSpeedEnc) {\n"
+                + initSourceCode
+                + "   }\n\n"
+                + "   @Override\n"
+                + "   public double getPriority(EdgeIteratorState edge, boolean reverse) {\n"
+                + "      return 1; //will be overwritten by code injected in DeepCopier\n"
+                + "   }\n"
+                + "   @Override\n"
+                + "   public double getSpeed(EdgeIteratorState edge, boolean reverse) {\n"
+                + "      return 0; //will be overwritten by code injected in DeepCopier\n"
+                + "   }\n"
+                + "}";
     }
 
-    private static void addStatementsAndGuessVariables(Set<String> createObjects, List<Java.BlockStatement> createStatements,
-                                                       Map<String, Object> map, EncodedValueLookup lookup,
-                                                       String function, String lastStmt) throws Exception {
+    /**
+     * This method does:
+     * 1. check user expressions via parseConditionalExpression. It has a white list of variables and methods.
+     * 2. while this check it also guesses the variable names and stores it in createObjects
+     * 3. creates if-then-elseif expressions
+     *
+     * @return the created if-then-elseif expressions
+     */
+    private static List<Java.BlockStatement> verifyExpressions(Set<String> createObjects,
+                                                               Map<String, Object> map, EncodedValueLookup lookup,
+                                                               String function, String lastStmt) throws Exception {
 
         Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
         ScriptWeighting.NameValidator nameInConditionValidator = name ->
@@ -198,9 +184,34 @@ public class ScriptHelper {
             count++;
         }
         expressions.append(lastStmt + "\n");
+        // TODO can we reuse Java.Atom created in parseAndGuessParametersFromCondition?
+        return new Parser(new Scanner("priority_parser", new StringReader(expressions.toString()))).
+                parseBlockStatements();
+    }
 
-        Parser parser = new Parser(new Scanner("priority_parser", new StringReader(expressions.toString())));
-        createStatements.addAll(parser.parseBlockStatements());
+    private static Java.MethodDeclarator copyMethod(Java.MethodDeclarator subject, DeepCopier deepCopier,
+                                                    List<Java.BlockStatement> statements) {
+        try {
+            if (statements.isEmpty())
+                throw new IllegalArgumentException("Statements cannot be empty when copying method");
+            Java.MethodDeclarator methodDecl = new Java.MethodDeclarator(
+                    new Location("m1", 1, 1),
+                    subject.getDocComment(),
+                    deepCopier.copyModifiers(subject.getModifiers()),
+                    deepCopier.copyOptionalTypeParameters(subject.typeParameters),
+                    deepCopier.copyType(subject.type),
+                    subject.name,
+                    deepCopier.copyFormalParameters(subject.formalParameters),
+                    deepCopier.copyTypes(subject.thrownExceptions),
+                    deepCopier.copyOptionalElementValue(subject.defaultValue),
+                    deepCopier.copyOptionalStatements(statements)
+            );
+            statements.forEach(st -> st.setEnclosingScope(methodDecl));
+            statements.clear();
+            return methodDecl;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     private static String toClassName(String arg) {
