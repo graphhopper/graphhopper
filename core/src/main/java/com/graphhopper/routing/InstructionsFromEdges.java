@@ -191,7 +191,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         if (ra == RoadAccess.PRIVATE)
             info = info.isEmpty() ? tr.tr("way_contains_private") : info + ", " + tr.tr("way_contains_private");
 
-        if (tollEnc != null && edge.get(tollEnc) != Toll.NO)
+        if (tollEnc != null && edge.get(tollEnc) == Toll.ALL)
             info = info.isEmpty() ? tr.tr("way_contains_toll") : info + ", " + tr.tr("way_contains_toll");
 
         InstructionAnnotation annotation = info.isEmpty()
