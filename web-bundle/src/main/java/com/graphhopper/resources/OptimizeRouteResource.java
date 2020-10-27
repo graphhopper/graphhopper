@@ -20,7 +20,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
-@Path(" optimize-route")
+@Path("optimize-route")
 public class OptimizeRouteResource {
 
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
@@ -71,7 +71,7 @@ public class OptimizeRouteResource {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@FormDataParam("orders") String farmyOrdersStr,
-                           @FormDataParam("vehicle") String farmyVehicleStr) throws IOException {
+                           @FormDataParam("vehicles") String farmyVehicleStr) throws IOException {
         FarmyOrder[] farmyOrders = new ObjectMapper().readValue(farmyOrdersStr, FarmyOrder[].class);
         FarmyVehicle[] farmyVehicles = new ObjectMapper().readValue(farmyVehicleStr, FarmyVehicle[].class);
         RouteOptimize routeOptimize = null;

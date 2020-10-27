@@ -33,7 +33,7 @@ public class CORSFilter implements Filter {
       rsp.setHeader("Access-Control-Expose-Headers", "X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-RateLimit-Credits");
       rsp.setHeader("Access-Control-Allow-Origin", "*");
 
-      chain.doFilter(request, response);
+      chain.doFilter(request, rsp);
     }
 
     @Override
