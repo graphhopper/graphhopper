@@ -39,7 +39,7 @@ public class ScriptHelper {
         return speed;
     }
 
-    public static ScriptHelper create(CustomModel customModel, EncodedValueLookup lookup, double maxSpeed, DecimalEncodedValue avgSpeedEnc) {
+    public static ScriptHelper create(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed, DecimalEncodedValue avgSpeedEnc) {
         try {
             // TODO create expressions via new Java.ConditionalExpression(location, lhs, mhs, rhs) (reuse objects created in the parse methods before)
             HashSet<String> priorityVariables = new HashSet<>();
@@ -58,7 +58,7 @@ public class ScriptHelper {
             addStatementsAndGuessVariables(speedVariables, speedStatements, customModel.getSpeedFactor(), lookup,
                     "speed *= (", "");
             addStatementsAndGuessVariables(speedVariables, speedStatements, customModel.getMaxSpeed(), lookup,
-                    "return Math.min(speed,", "return speed;");
+                    "speed = Math.min(speed,", "return Math.min(speed, " + globalMaxSpeed + ");");
             String speedStartExpressions = "double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);\n"
                     + "if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0) throw new IllegalStateException(\"Invalid estimated speed \" + speed);\n";
             for (String arg : speedVariables) {
