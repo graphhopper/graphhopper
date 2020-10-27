@@ -20,10 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.util.Parameters;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class is used in combination with CustomProfile.
@@ -38,9 +35,9 @@ public class CustomModel {
     private Double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km, for trucks this is usually larger
     private double distanceInfluence = DEFAULT_D_I;
-    private Map<String, Object> speedFactorMap = new HashMap<>();
-    private Map<String, Object> maxSpeedMap = new HashMap<>();
-    private Map<String, Object> priorityMap = new HashMap<>();
+    private Map<String, Object> speedFactorMap = new LinkedHashMap<>();
+    private Map<String, Object> maxSpeedMap = new LinkedHashMap<>();
+    private Map<String, Object> priorityMap = new LinkedHashMap<>();
     private Map<String, JsonFeature> areas = new HashMap<>();
 
     public CustomModel() {
@@ -66,7 +63,8 @@ public class CustomModel {
             }
             return (T) newList;
         } else if (originalObject instanceof Map) {
-            Map copy = new HashMap<>(((Map) originalObject).size());
+            Map copy = originalObject instanceof LinkedHashMap ? new LinkedHashMap<>(((Map) originalObject).size()) :
+                    new HashMap<>(((Map) originalObject).size());
             for (Object o : ((Map) originalObject).entrySet()) {
                 Map.Entry entry = (Map.Entry) o;
                 copy.put(entry.getKey(), deepCopy(entry.getValue()));

@@ -33,6 +33,8 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
+import static com.graphhopper.util.ArrayUtil.zero;
+
 /**
  * Graph data structure used for CH preparation. It allows caching weights, and edges that are not needed anymore
  * (those adjacent to contracted nodes) can be removed (see {@link #disconnect}.
@@ -766,9 +768,9 @@ public class CHPreparationGraph {
             private IntArrayList buildFirstEdgesByNode() {
                 // it is assumed the edges have been sorted already
                 final int numFroms = maxFrom + 1;
-                IntArrayList firstEdgesByNode = new IntArrayList(numFroms + 1);
-                firstEdgesByNode.elementsCount = numFroms + 1;
-                int numEdges = fromNodes.size();
+                final int numEdges = fromNodes.size();
+
+                IntArrayList firstEdgesByNode = zero(numFroms + 1);
                 if (numFroms == 0) {
                     firstEdgesByNode.set(0, numEdges);
                     return firstEdgesByNode;

@@ -120,7 +120,7 @@ public interface GtfsStorageI {
         }
     }
 
-    Map<String, Fare> getFares();
+    Map<String, Map<String, Fare>> getFares();
 
     Map<GtfsStorage.Validity, Integer> getOperatingDayPatterns();
 
