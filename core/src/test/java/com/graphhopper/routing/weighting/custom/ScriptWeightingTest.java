@@ -21,7 +21,6 @@ import java.util.HashSet;
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.custom.ScriptWeighting.parseAndGuessParametersFromCondition;
-import static com.graphhopper.routing.weighting.custom.ScriptWeighting.parseAndGuessParametersFromExpression;
 import static org.junit.jupiter.api.Assertions.*;
 
 // TODO NOW copy entire CustomWeightingTest
@@ -135,27 +134,10 @@ class ScriptWeightingTest {
                 "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" +
                         "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd")) {
             assertFalse(parseAndGuessParametersFromCondition(set, toParse, allNamesInvalid), "should not be simple condition: " + toParse);
-            assertFalse(parseAndGuessParametersFromExpression(set, toParse, allNamesInvalid), "should not be simple expression: " + toParse);
             assertEquals("[]", set.toString());
         }
 
-        assertFalse(parseAndGuessParametersFromExpression(set, "edge; getClass()", allNamesInvalid));
         assertFalse(parseAndGuessParametersFromCondition(set, "edge; getClass()", allNamesInvalid));
-    }
-
-    @Test
-    public void isValidAndSimpleExpression() {
-        HashSet<String> set = new HashSet<>();
-        ScriptWeighting.NameValidator allNamesInvalid = s -> false;
-
-        // for now accept only number literals
-        assertTrue(parseAndGuessParametersFromExpression(set, 5, allNamesInvalid));
-        assertTrue(parseAndGuessParametersFromExpression(set, 5.0, allNamesInvalid));
-        assertFalse(parseAndGuessParametersFromExpression(set, "5", allNamesInvalid));
-        assertFalse(parseAndGuessParametersFromExpression(set, "false", allNamesInvalid));
-        assertFalse(parseAndGuessParametersFromExpression(set, "test == TEST", allNamesInvalid));
-
-        assertEquals("[]", set.toString());
     }
 
     @Test

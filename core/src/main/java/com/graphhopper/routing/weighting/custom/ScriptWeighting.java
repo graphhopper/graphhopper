@@ -115,22 +115,6 @@ public class ScriptWeighting extends AbstractWeighting {
         }
     }
 
-    public static boolean parseAndGuessParametersFromExpression(Set<String> returnSet, Object o, NameValidator validator) {
-        String key = o.toString();
-        if (key.length() > 100 || !(o instanceof Number))
-            return false;
-        try {
-            Parser parser = new Parser(new Scanner("ignore", new StringReader(key)));
-            Java.Atom atom = parser.parseExpression().toRvalueOrCompileException();
-            // after parsing the expression the input should end (otherwise it is not "simple")
-            if (parser.peek().type == TokenType.END_OF_INPUT)
-                return atom.accept(new MyExpressionVisitor(returnSet, validator));
-            return false;
-        } catch (Exception ex) {
-            return false;
-        }
-    }
-
     private static class MyConditionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         private final Set<String> parameters;
         private final NameValidator nameValidator;

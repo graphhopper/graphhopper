@@ -16,7 +16,6 @@ import java.io.StringWriter;
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.custom.ScriptWeighting.parseAndGuessParametersFromCondition;
-import static com.graphhopper.routing.weighting.custom.ScriptWeighting.parseAndGuessParametersFromExpression;
 
 public class ScriptHelper {
 
@@ -179,26 +178,23 @@ public class ScriptHelper {
         ScriptWeighting.NameValidator nameInConditionValidator = name ->
                 // allow all encoded values and constants
                 lookup.hasEncodedValue(name) || name.toUpperCase(Locale.ROOT).equals(name) || allowedNames.contains(name);
-        ScriptWeighting.NameValidator nameInExpressionValidator = name -> false;
 
         StringBuilder expressions = new StringBuilder();
         int count = 0;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String expression = entry.getKey();
+            if (expression.equals(CustomWeighting.CATCH_ALL))
+                throw new IllegalArgumentException("replace all '*' expressions with 'true'");
+            if (!parseAndGuessParametersFromCondition(createObjects, expression, nameInConditionValidator))
+                throw new IllegalArgumentException("Key is invalid simple condition: " + expression);
             Object numberObj = entry.getValue();
             if (!(numberObj instanceof Number))
                 throw new IllegalArgumentException("value not a Number " + numberObj);
             Number number = (Number) numberObj;
-            if (expression.equals(CustomWeighting.CATCH_ALL))
-                throw new IllegalArgumentException("replace all '*' expressions with 'true'");
 
-            if (!parseAndGuessParametersFromCondition(createObjects, expression, nameInConditionValidator))
-                throw new IllegalArgumentException("Key is invalid simple condition: " + expression);
-            if (!parseAndGuessParametersFromExpression(createObjects, number, nameInExpressionValidator))
-                throw new IllegalArgumentException("Value is invalid simple expression: " + number);
             if (count > 0)
                 expressions.append("else ");
-            expressions.append("if (" + expression + ") " + function + number + ");\n");
+            expressions.append("if (" + expression + ") " + function + " " + number + " );\n");
             count++;
         }
         expressions.append(lastStmt + "\n");
