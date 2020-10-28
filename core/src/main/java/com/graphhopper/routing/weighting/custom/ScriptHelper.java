@@ -9,12 +9,13 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.commons.compiler.Location;
+import org.codehaus.janino.Java;
+import org.codehaus.janino.Parser;
 import org.codehaus.janino.Scanner;
-import org.codehaus.janino.*;
+import org.codehaus.janino.SimpleCompiler;
 import org.codehaus.janino.util.DeepCopier;
 
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.custom.ScriptWeighting.parseAndGuessParametersFromCondition;
@@ -76,6 +77,14 @@ public class ScriptHelper {
             cu = new DeepCopier() {
 
                 @Override
+                public Java.FieldDeclaration copyFieldDeclaration(Java.FieldDeclaration subject) throws CompileException {
+                    // for https://github.com/janino-compiler/janino/issues/135
+                    Java.FieldDeclaration fd = super.copyFieldDeclaration(subject);
+                    fd.setEnclosingScope(subject.getEnclosingScope());
+                    return fd;
+                }
+
+                @Override
                 public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
                     if (subject.name.equals("getSpeed") && !speedStatements.isEmpty()) {
                         return copyMethod(subject, this, speedStatements);
@@ -87,12 +96,8 @@ public class ScriptHelper {
                 }
             }.copyAbstractCompilationUnit(cu);
 
-            // TODO avoid that: https://github.com/janino-compiler/janino/issues/135
-            StringWriter sw = new StringWriter();
-            Unparser.unparse(cu, sw);
-
             SimpleCompiler sc = new SimpleCompiler();
-            sc.cook(sw.toString());
+            sc.cook(cu);
             ScriptHelper prio = (ScriptHelper) sc.getClassLoader().
                     loadClass("Test").getDeclaredConstructor().newInstance();
             prio.init(lookup, avgSpeedEnc);
