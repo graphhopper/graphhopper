@@ -26,6 +26,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,7 +46,7 @@ class PriorityCalculatorTest {
     @Test
     public void priority() {
         CustomModel model = new CustomModel();
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         map.put("*", 0.3);
         model.getPriority().put(RoadClass.KEY, map);
         assertEquals(0.3, calcPriority(edge, model));
@@ -63,7 +64,7 @@ class PriorityCalculatorTest {
     @Test
     public void invalidPriority() {
         CustomModel model = new CustomModel();
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         map.put("*", 1.1);
         model.getPriority().put(RoadClass.KEY, map);
         try {
@@ -88,9 +89,9 @@ class PriorityCalculatorTest {
         EnumEncodedValue<RoadEnvironment> roadEnvironment = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edge.set(roadClass, RoadClass.PRIMARY);
         edge.set(roadEnvironment, RoadEnvironment.BRIDGE);
-        Map<String, Object> roadClassMap = new HashMap<>();
+        Map<String, Object> roadClassMap = new LinkedHashMap<>();
         roadClassMap.put(RoadClass.PRIMARY.toString(), 0.7);
-        Map<String, Object> roadEnvironmentMap = new HashMap<>();
+        Map<String, Object> roadEnvironmentMap = new LinkedHashMap<>();
         roadEnvironmentMap.put(RoadEnvironment.BRIDGE.toString(), 0.5);
         CustomModel model = new CustomModel();
         model.getPriority().put(RoadClass.KEY, roadClassMap);
@@ -106,7 +107,7 @@ class PriorityCalculatorTest {
         edge.set(maxSpeedEnc, 110);
         edge.setReverse(maxSpeedEnc, 50);
 
-        Map<String, Object> maxSpeedMap = new HashMap<>();
+        Map<String, Object> maxSpeedMap = new LinkedHashMap<>();
         maxSpeedMap.put("<100", 0.5);
 
         CustomModel model = new CustomModel();
