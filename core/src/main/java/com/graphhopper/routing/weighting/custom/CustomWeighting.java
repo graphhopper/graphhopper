@@ -7,15 +7,13 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
-import org.codehaus.janino.*;
-
-import java.io.StringReader;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 public class CustomWeighting extends AbstractWeighting {
     public static final String NAME = "custom";
+    /**
+     * constant that starts if-then-else-if block
+     */
+    public static final String FIRST_MATCH = "first_match";
 
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
@@ -36,9 +34,11 @@ public class CustomWeighting extends AbstractWeighting {
 
         headingPenaltySeconds = customModel.getHeadingPenalty();
         baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
-
-        scriptHelper = ScriptHelper.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), baseFlagEncoder.getAverageSpeedEnc());
-        maxSpeed = baseFlagEncoder.getMaxSpeed() / SPEED_CONV;
+        double maxSpeedTmp = customModel.getMaxSpeedFallback() == null ? baseFlagEncoder.getMaxSpeed() : customModel.getMaxSpeedFallback();
+        if (customModel.getMaxSpeedFallback() != null && customModel.getMaxSpeedFallback() > maxSpeedTmp)
+            throw new IllegalArgumentException("max_speed_fallback cannot be bigger than max_speed " + maxSpeedTmp);
+        scriptHelper = ScriptHelper.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
+        maxSpeed = maxSpeedTmp / SPEED_CONV;
 
         // given unit is s/km -> convert to s/m
         distanceInfluence = customModel.getDistanceInfluence() / 1000;
@@ -60,7 +60,8 @@ public class CustomWeighting extends AbstractWeighting {
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
-        return seconds / scriptHelper.getPriority(edgeState, reverse) + distanceCosts;
+        double p = scriptHelper.getPriority(edgeState, reverse);
+        return seconds / p + distanceCosts;
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {

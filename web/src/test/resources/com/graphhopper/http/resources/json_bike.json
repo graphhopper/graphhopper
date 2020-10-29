@@ -1,12 +1,8 @@
 {
   "max_speed": {
-    "road_class": {
-      "primary": 28
-    }
+    "road_class==PRIMARY": 28
   },
   "priority": {
-    "max_width": {
-      "<1.2": 0
-    }
+    "max_width < 1.2": 0
   }
 }

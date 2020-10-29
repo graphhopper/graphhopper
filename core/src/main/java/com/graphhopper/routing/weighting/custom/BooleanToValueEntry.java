@@ -22,7 +22,7 @@ import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Map;
 
-import static com.graphhopper.routing.weighting.custom.CustomWeighting.CATCH_ALL;
+import static com.graphhopper.routing.weighting.custom.CustomWeightingOld.CATCH_ALL;
 import static com.graphhopper.routing.weighting.custom.EnumToValueEntry.getReturnValue;
 
 final class BooleanToValueEntry implements EdgeToValueEntry {

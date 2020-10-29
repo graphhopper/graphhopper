@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.graphhopper.routing.weighting.custom.CustomWeighting.CATCH_ALL;
+import static com.graphhopper.routing.weighting.custom.CustomWeightingOld.CATCH_ALL;
 import static com.graphhopper.routing.weighting.custom.DecimalToValueEntry.parseRange;
 import static com.graphhopper.routing.weighting.custom.EnumToValueEntry.getReturnValue;
 

@@ -141,10 +141,8 @@ public class RoutingExample {
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
         req.putHint(CustomModel.KEY, model);
-        Map<String, Double> map = new LinkedHashMap<>();
         model.setMaxSpeedFallback(100d);
-        model.getPriority().put(RoadClass.KEY, map);
-        map.put(RoadClass.PRIMARY.toString(), 0.5);
+        model.getPriority().put("road_class == PRIMARY", 0.5);
 
         res = hopper.route(req);
         if (res.hasErrors())

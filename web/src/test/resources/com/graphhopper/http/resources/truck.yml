@@ -3,23 +3,20 @@
 
 # The formula is defined in CustomWeighting, where the speed_factor can be used to decrease speed.
 # The minimum value is 0 and the maximum is 1. If two conditions are satisfied the values are
-# multiplied e.g. if road_class==motorway and road_environment==tunnel, then the resulting speed is
-# average_speed*0.85*0.9.
+# multiplied e.g. if road_class==MOTORWAY and road_environment==TUNNEL, then the resulting speed is
+# average_speed*0.85*0.9 except when you use first_match
 speed_factor:
-  road_environment:
-    tunnel: 0.85
+  road_environment == TUNNEL: 0.85
   # trucks should be a bit slower on certain road classes compared to the 'base' car
-  # a more compact JSON-way to list the properties, fully YAML-compatible:
-  road_class: { motorway: 0.85, primary: 0.9 }
+  road_class == MOTORWAY: 0.85
+  road_class == PRIMARY: 0.9
 
 # You can lower the average speed for certain conditions via this max_speed entry. The speed_factor is applied before
 # this operation. See the following example that sets the maximum speed to 95km/h for motorways.
 max_speed:
-  road_class:
-    motorway: 95
-    residential: 30
-  road_environment:
-    bridge: 85
+  road_class == MOTORWAY: 95
+  road_class == RESIDENTIAL: 30
+  road_environment == BRIDGE: 85
 
 # Trucks are slower so limit all speed to this value. In km/h
 # If none of the conditions in the map above apply use the fallback, if specified:
@@ -36,27 +33,26 @@ distance_influence: 90
 # To prefer a certain case you lower the priority of all other entries via the catch-all key "*",
 # see the road_class entry where motorways are preferred. If two conditions are met the values will be multiplied.
 priority:
-  road_class:
-    motorway: 1.0
-    residential: 0.4
-    "*": 0.9
-    # and if you do not want that tracks go over tracks just exclude them via
-    # track: 0
+  first_match:
+    road_class == RESIDENTIAL: 0.4
+    road_class != MOTORWAY: 0.9
+
+  # and if you do not want that routes go over tracks just exclude them via
+  # road_class==TRACK: 0
   # let's assume we transport gas: so NEVER go on restricted roads with hazmat==no
-  hazmat: { no: 0 }
+  hazmat == NO: 0
   # avoid destination-only roads
   # TODO include private and delivery only access for base car profile so that we can avoid it here, but not exclude it
-  road_access: { destination: 0.1 }
+  road_access == DESTINATION: 0.1
   # avoid turns if possible and links are one simple indication for that
-  road_class_link:
-    true: 0.5
+  road_class_link: 0.5
   # avoid toll roads
-  toll: { no: 1, "*": 0.5 }
+  toll != NO: 0.5
   # avoid a certain area
-  area_custom1: 0.5
-  max_weight: { "<4.5": 0 }
-  max_height: { "<3.8": 0 }
-  max_width: { "<2.5": 0 }
+  in_area_custom1: 0.5
+  max_weight < 4.5: 0
+  max_height < 3.8: 0
+  max_width < 2.5: 0
 
 areas:
   custom1:

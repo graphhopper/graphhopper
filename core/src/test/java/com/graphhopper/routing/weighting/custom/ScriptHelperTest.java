@@ -56,7 +56,5 @@ public class ScriptHelperTest {
         // TODO call inside a method call is currently not supported
         //  assertTrue(parseAndGuessParametersFromCondition(set, "Math.sqrt(road_class.ordinal()) > 1", nameValidator1));
         set.clear();
-        assertTrue(parseAndGuessParametersFromCondition(set, "in(area_custom1, edge)", nameValidator1));
-        assertEquals("[edge, area_custom1]", set.toString());
     }
 }

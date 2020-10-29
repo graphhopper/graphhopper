@@ -92,9 +92,10 @@ public class CustomWeightingRouteResourceTest {
 
         // 'blocking' the area either leads to a route that still crosses it (but on a faster road) or to a road
         // going all the way around it depending on the priority, see #2021
-        yamlQuery += "priority:\n" +
+        yamlQuery += "" +
+                "priority:\n" +
                 // a faster road (see #2021)? or maybe do both?
-                "  area_custom1: " + priority + "\n" +
+                "  in_area_custom1: " + priority + "\n" +
                 "areas:\n" +
                 "  custom1:\n" +
                 "    type: \"Feature\"\n" +

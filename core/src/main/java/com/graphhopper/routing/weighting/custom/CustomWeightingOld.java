@@ -73,7 +73,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * @see SpeedCalculator for details how speed_factor and max_speed are derived from some given edge properties
  * @see PriorityCalculator for details how priority is derived for some given edge properties
  */
-public final class CustomWeightingOlder extends AbstractWeighting {
+public final class CustomWeightingOld extends AbstractWeighting {
     public static final String NAME = "custom_old";
     public static final String CATCH_ALL = "*";
 
@@ -89,8 +89,8 @@ public final class CustomWeightingOlder extends AbstractWeighting {
     private final SpeedCalculator speedCalculator;
     private final PriorityCalculator priorityCalculator;
 
-    public CustomWeightingOlder(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
-                                TurnCostProvider turnCostProvider, CustomModel customModel) {
+    public CustomWeightingOld(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
+                              TurnCostProvider turnCostProvider, CustomModel customModel) {
         super(baseFlagEncoder, turnCostProvider);
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");

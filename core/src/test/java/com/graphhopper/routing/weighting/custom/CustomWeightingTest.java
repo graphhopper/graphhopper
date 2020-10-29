@@ -18,9 +18,14 @@ import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+import static com.graphhopper.routing.weighting.custom.CustomWeighting.FIRST_MATCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CustomWeightingTest {
 
@@ -49,8 +54,7 @@ class CustomWeightingTest {
                 set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.getPriority().put("road_class == PRIMARY", 1.0);
-        vehicleModel.getPriority().put("true", 0.5);
+        vehicleModel.getPriority().put("road_class != PRIMARY", 0.5);
 
         assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.73, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
@@ -60,8 +64,12 @@ class CustomWeightingTest {
         assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.73, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
 
-        vehicleModel.getPriority().put("road_class == SECONDARY", 0.7);
-        vehicleModel.getPriority().put("true", 0.9);
+        vehicleModel = new CustomModel();
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("road_class != PRIMARY", 0.5);
+        map.put("road_class == SECONDARY", 0.7);
+        map.put("true", 0.9);
+        vehicleModel.getPriority().put(FIRST_MATCH, map);
         assertEquals(1.2, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.73, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
 
@@ -79,9 +87,16 @@ class CustomWeightingTest {
                 set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70);
 
         CustomModel vehicleModel = new CustomModel();
-        vehicleModel.getPriority().put("road_class == PRIMARY", 1.0);
-        vehicleModel.getPriority().put("true", 0.5);
+        vehicleModel.getPriority().put("road_class != PRIMARY", 0.5);
+        vehicleModel.getSpeedFactor().put("road_class != PRIMARY", 0.9);
+        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+        assertEquals(1.84, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
 
+        vehicleModel = new CustomModel();
+        Map<String, Object> map = new LinkedHashMap<>();
+        vehicleModel.getPriority().put(FIRST_MATCH, map);
+        map.put("road_class == PRIMARY", 1.0);
+        map.put("true", 0.5);
         vehicleModel.getSpeedFactor().put("road_class != PRIMARY", 0.9);
         assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.84, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
@@ -106,6 +121,32 @@ class CustomWeightingTest {
     }
 
     @Test
+    public void testFirstMatch() {
+        EdgeIteratorState primary = graphHopperStorage.edge(0, 1, 10, true).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80);
+        EdgeIteratorState secondary = graphHopperStorage.edge(1, 2, 10, true).
+                set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70);
+
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.getSpeedFactor().put("road_class == PRIMARY", 0.8);
+        assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+        assertEquals(1.21, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("road_class == PRIMARY", 0.9);
+        map.put("road_class == SECONDARY", 0.8);
+        vehicleModel.getPriority().put(FIRST_MATCH, map);
+        assertEquals(1.33, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+        assertEquals(1.34, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+
+        map = new LinkedHashMap<>();
+        map.put("true", 0.9);
+        map.put("road_class == SECONDARY", 0.8);
+        vehicleModel.getPriority().put(FIRST_MATCH, map);
+        assertThrows(IllegalArgumentException.class, () -> createWeighting(vehicleModel).calcEdgeWeight(primary, false));
+    }
+
+    @Test
     public void testArea() throws Exception {
         EdgeIteratorState primary = graphHopperStorage.edge(0, 1, 10, true).
                 set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80);
@@ -114,7 +155,7 @@ class CustomWeightingTest {
 
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.getPriority().put("road_class == PRIMARY", 1.0);
-        vehicleModel.getPriority().put("in(area_custom1, edge)", 0.5);
+        vehicleModel.getPriority().put("in_area_custom1", 0.5);
 
         ObjectMapper om = new ObjectMapper().registerModule(new JtsModule());
         JsonFeature json = om.readValue("{ \"geometry\":{ \"type\": \"Polygon\", \"coordinates\": " +

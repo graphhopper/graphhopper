@@ -24,8 +24,10 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
 
+import static com.graphhopper.routing.weighting.custom.CustomWeighting.FIRST_MATCH;
+
 public class ScriptHelper {
-    static final String AREA_PREFIX = "area_";
+    static final String AREA_PREFIX = "in_area_";
     protected DecimalEncodedValue avg_speed_enc;
 
     public ScriptHelper() {
@@ -49,18 +51,20 @@ public class ScriptHelper {
     public static boolean in(Polygon p, EdgeIteratorState edge) {
         BBox bbox = GHUtility.createBBox(edge);
         if (p.getBounds().intersects(bbox))
-            return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable());
+            return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()); // TODO PERF: cache bbox and edge wayGeometry for multiple area
         return false;
     }
 
-    public static ScriptHelper create(CustomModel customModel, EncodedValueLookup lookup, double globalMaxSpeed, DecimalEncodedValue avgSpeedEnc) {
+    public static ScriptHelper create(CustomModel customModel, EncodedValueLookup lookup,
+                                      double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
         Java.AbstractCompilationUnit cu = null;
         try {
             //// for getPriority
             HashSet<String> priorityVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-            priorityStatements.addAll(verifyExpressions("priority_user_statements", priorityVariables, customModel.getPriority(), lookup,
-                    "return (", "return 1;"));
+            priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;"), "priority_user_statements",
+                    priorityVariables, customModel.getPriority(), lookup,
+                    n -> "value *= " + n + ";\n", "return value;"));
             String priorityMethodStartBlock = "";
             for (String arg : priorityVariables) {
                 priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
@@ -71,10 +75,14 @@ public class ScriptHelper {
             //// for getSpeed
             HashSet<String> speedVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> speedStatements = new ArrayList<>();
-            speedStatements.addAll(verifyExpressions("speed_factor_user_statements", speedVariables, customModel.getSpeedFactor(), lookup,
-                    "speed *= (", ""));
-            speedStatements.addAll(verifyExpressions("max_speed_user_statements", speedVariables, customModel.getMaxSpeed(), lookup,
-                    "speed = Math.min(speed,", "return Math.min(speed, " + globalMaxSpeed + ");"));
+            speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed_factor_user_statements", speedVariables, customModel.getSpeedFactor(), lookup,
+                    n -> "speed *= " + n + ";\n", ""));
+            StringBuilder codeSB = new StringBuilder("boolean applied = false;\n");
+            speedStatements.addAll(verifyExpressions(codeSB, "max_speed_user_statements",
+                    speedVariables, customModel.getMaxSpeed(), lookup,
+                    n -> "applied = true; speed = Math.min(speed," + n + ");",
+                    "if (!applied && speed > " + maxSpeedFallback + ") return " + maxSpeedFallback + ";\n" +
+                            "return Math.min(speed, " + globalMaxSpeed + ");\n"));
             String speedMethodStartBlock = "double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);\n"
                     + "if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)"
                     + " throw new IllegalStateException(\"Invalid estimated speed \" + speed);\n";
@@ -110,15 +118,18 @@ public class ScriptHelper {
                 }
             }.copyAbstractCompilationUnit(cu);
 
-            mydebug(cu);
+            // mydebug(cu);
             SimpleCompiler sc = new SimpleCompiler();
             sc.cook(cu);
             ScriptHelper prio = (ScriptHelper) sc.getClassLoader().
                     loadClass("Test").getDeclaredConstructor().newInstance();
+            customModel.getAreas().keySet().stream().forEach(areaId -> {
+                if (areaId.length() > 20) throw new IllegalArgumentException("Area id too long: " + areaId.length());
+            });
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
             return prio;
         } catch (Exception ex) {
-            // mydebug(cu);
+            mydebug(cu);
             String location = "";
             if (ex instanceof CompileException)
                 location = " in " + ((CompileException) ex).getLocation().getFileName();
@@ -141,13 +152,16 @@ public class ScriptHelper {
     }
 
     private static String getVariableDeclaration(EncodedValueLookup lookup, String arg) {
-        if (isValidVariableName(arg)) {
-            return "";
+        if (arg.startsWith(AREA_PREFIX)) {
+            String id = arg.substring(AREA_PREFIX.length());
+            return "boolean " + arg + " = in(area_" + id + ", edge);\n";
         } else if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getPrimitive(enc.getClass()) + " " + arg + " = reverse ? " +
                     "edge.getReverse((" + getInterface(enc) + ")" + arg + "_enc) : " +
                     "edge.get((" + getInterface(enc) + ")" + arg + "_enc);\n";
+        } else if (isValidVariableName(arg)) {
+            return "";
         } else {
             throw new IllegalArgumentException("Not supported " + arg);
         }
@@ -205,18 +219,19 @@ public class ScriptHelper {
                     importSourceCode.append("import " + GHUtility.class.getName() + ";\n");
                     importSourceCode.append("import " + PreparedGeometryFactory.class.getName() + ";\n");
                     importSourceCode.append("import " + JsonFeature.class.getName() + ";\n");
-
+                    importSourceCode.append("import " + Polygon.class.getName() + ";\n");
                     includedAreaImports = true;
                 }
-                importSourceCode.append("import " + Polygon.class.getName() + ";\n");
+
                 String id = arg.substring(AREA_PREFIX.length());
-                classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
+                String varName = "area_" + id;
+                classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + varName + ";\n");
                 initSourceCode.append("JsonFeature feature = (JsonFeature) areas.get(\"" + id + "\");\n");
-                initSourceCode.append("if(feature == null) throw new IllegalArgumentException(\"Area does not exist " + id + "\");\n");
-                initSourceCode.append(arg + " = new Polygon(new PreparedGeometryFactory().create(feature.getGeometry()));\n");
+                initSourceCode.append("if(feature == null) throw new IllegalArgumentException(\"Area '" + id + "' wasn't found\");\n");
+                initSourceCode.append(varName + " = new Polygon(new PreparedGeometryFactory().create(feature.getGeometry()));\n");
             } else {
                 if (!isValidVariableName(arg))
-                    throw new IllegalArgumentException("Variable not supported " + arg);
+                    throw new IllegalArgumentException("Variable not supported: " + arg);
             }
         }
 
@@ -250,37 +265,54 @@ public class ScriptHelper {
      * 2. while this check it also guesses the variable names and stores it in createObjects
      * 3. creates if-then-elseif expressions from the checks and returns them as BlockStatements
      *
-     * @return the created if-then-elseif expressions
+     * @return the created if-then (and elseif) expressions
      */
-    private static List<Java.BlockStatement> verifyExpressions(String info, Set<String> createObjects,
+    private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
                                                                Map<String, Object> map, EncodedValueLookup lookup,
-                                                               String function, String lastStmt) throws Exception {
+                                                               CodeBuilder codeBuilder, String lastStmt) throws Exception {
+        // TODO can or should we reuse Java.Atom created in parseAndGuessParametersFromCondition?
+        internalVerifyExpressions(expressions, info, createObjects, map, lookup, codeBuilder, lastStmt, false);
+        return new Parser(new Scanner(info, new StringReader(expressions.toString()))).
+                parseBlockStatements();
+    }
 
+    private static void internalVerifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
+                                                  Map<String, Object> map, EncodedValueLookup lookup,
+                                                  CodeBuilder codeBuilder, String lastStmt, boolean firstMatch) {
+        if (!(map instanceof LinkedHashMap))
+            throw new IllegalArgumentException("map needs to be ordered for " + info + " but was " + map.getClass().getSimpleName());
         // allow variables, all encoded values, constants
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
 
-        StringBuilder expressions = new StringBuilder();
         int count = 0;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String expression = entry.getKey();
-            if (expression.equals(CustomWeightingOlder.CATCH_ALL))
+            if (expression.equals(CustomWeightingOld.CATCH_ALL))
                 throw new IllegalArgumentException("replace all '*' expressions with 'true'");
+            if (firstMatch) {
+                if ("true".equals(expression) && count + 1 != map.size())
+                    throw new IllegalArgumentException("'true' in " + FIRST_MATCH + " must come as last expression but was " + count);
+            } else if (expression.equals(FIRST_MATCH)) { // do not allow further nested blocks
+                if (!(entry.getValue() instanceof LinkedHashMap))
+                    throw new IllegalArgumentException("entries for " + expression + " in " + info + " are invalid");
+                internalVerifyExpressions(expressions, info + " " + expression, createObjects,
+                        (Map<String, Object>) entry.getValue(), lookup, codeBuilder, "", true);
+                continue;
+            }
+
             if (!parseAndGuessParametersFromCondition(createObjects, expression, nameInConditionValidator))
                 throw new IllegalArgumentException("key is an invalid simple condition: " + expression);
             Object numberObj = entry.getValue();
             if (!(numberObj instanceof Number))
                 throw new IllegalArgumentException("value is not a Number " + numberObj);
             Number number = (Number) numberObj;
-            if (count > 0)
+            if (firstMatch && count > 0)
                 expressions.append("else ");
-            expressions.append("if (" + expression + ") " + function + " " + number + " );\n");
+            expressions.append("if (" + expression + ") {" + codeBuilder.create(number) + "}\n");
             count++;
         }
         expressions.append(lastStmt + "\n");
-        // TODO can we reuse Java.Atom created in parseAndGuessParametersFromCondition?
-        return new Parser(new Scanner(info, new StringReader(expressions.toString()))).
-                parseBlockStatements();
     }
 
     private static Java.MethodDeclarator copyMethod(Java.MethodDeclarator subject, DeepCopier deepCopier,
@@ -309,26 +341,22 @@ public class ScriptHelper {
     }
 
     static String toCamelCase(String arg) {
-        if (arg.isEmpty())
-            return "";
-        if (arg.length() == 1)
-            return "" + Character.toLowerCase(arg.charAt(0));
+        if (arg.isEmpty()) throw new IllegalArgumentException("Cannot be empty");
         String clazz = Helper.underScoreToCamelCase(arg);
         return Character.toUpperCase(clazz.charAt(0)) + clazz.substring(1);
     }
 
     /**
-     * additionally to SecurityManager let's enforce a simple expressions.
-     * From FUNDAMENTALS-5: SecurityManager checks should be considered a last resort.
+     * Enforce simple expressions of user input to increase security.
      *
      * @param returnSet collects guess parameters
      * @return true if valid and "simple" expression
      */
-    static boolean parseAndGuessParametersFromCondition(Set<String> returnSet, String key, NameValidator validator) {
-        if (key.length() > 100)
+    static boolean parseAndGuessParametersFromCondition(Set<String> returnSet, String expression, NameValidator validator) {
+        if (expression.length() > 100)
             return false;
         try {
-            Parser parser = new Parser(new Scanner("ignore", new StringReader(key)));
+            Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
             Java.Atom atom = parser.parseConditionalExpression();
             // after parsing the expression the input should end (otherwise it is not "simple")
             if (parser.peek().type == TokenType.END_OF_INPUT)
@@ -348,11 +376,6 @@ public class ScriptHelper {
         public MyConditionVisitor(Set<String> parameters, NameValidator nameValidator) {
             this.parameters = parameters;
             this.nameValidator = nameValidator;
-        }
-
-        @Override
-        public Boolean visitPackage(Java.Package p) {
-            return false;
         }
 
         @Override
@@ -394,6 +417,11 @@ public class ScriptHelper {
         }
 
         @Override
+        public Boolean visitPackage(Java.Package p) {
+            return false;
+        }
+
+        @Override
         public Boolean visitType(Java.Type t) {
             return false;
         }
@@ -406,5 +434,9 @@ public class ScriptHelper {
 
     interface NameValidator {
         boolean isValid(String name);
+    }
+
+    interface CodeBuilder {
+        String create(Number n);
     }
 }

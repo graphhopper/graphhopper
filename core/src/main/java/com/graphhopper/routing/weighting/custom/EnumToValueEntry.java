@@ -24,7 +24,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.Arrays;
 import java.util.Map;
 
-import static com.graphhopper.routing.weighting.custom.CustomWeighting.CATCH_ALL;
+import static com.graphhopper.routing.weighting.custom.CustomWeightingOld.CATCH_ALL;
 
 final class EnumToValueEntry implements EdgeToValueEntry {
     private final IntEncodedValue eev;
