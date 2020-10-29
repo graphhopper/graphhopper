@@ -23,7 +23,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.custom.CustomWeighting;
+import com.graphhopper.routing.weighting.custom.CustomWeightingOlder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
@@ -43,7 +43,7 @@ import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CustomWeightingTest {
+public class CustomWeightingOlderTest {
 
     GraphHopperStorage graphHopperStorage;
     DecimalEncodedValue avSpeedEnc;
@@ -131,7 +131,7 @@ public class CustomWeightingTest {
         Map map = new LinkedHashMap();
 
         map.put(PRIMARY.toString(), 1.0);
-        map.put(CustomWeighting.CATCH_ALL, 0.5);
+        map.put(CustomWeightingOlder.CATCH_ALL, 0.5);
         vehicleModel.getPriority().put(KEY, map);
 
         assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
@@ -139,7 +139,7 @@ public class CustomWeightingTest {
 
         // change priority for primary explicitly and change priority for secondary using catch all
         map.put(PRIMARY.toString(), 0.7);
-        map.put(CustomWeighting.CATCH_ALL, 0.9);
+        map.put(CustomWeightingOlder.CATCH_ALL, 0.9);
         assertEquals(1.34, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.27, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
 
@@ -173,7 +173,7 @@ public class CustomWeightingTest {
         Map map = new LinkedHashMap<>();
         map.put("true", 0.5);
         vehicleModel.getPriority().put(RoadClassLink.KEY, map);
-        CustomWeighting weighting = createWeighting(vehicleModel);
+        CustomWeightingOlder weighting = createWeighting(vehicleModel);
         BooleanEncodedValue rcLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
         assertEquals(3.1, weighting.calcEdgeWeight(edge.set(rcLinkEnc, false), false), 0.01);
         assertEquals(5.5, weighting.calcEdgeWeight(edge.set(rcLinkEnc, true), false), 0.01);
@@ -186,7 +186,7 @@ public class CustomWeightingTest {
         Map map = new LinkedHashMap();
         map.put(MOTORWAY.toString(), 0.1);
         vehicleModel.getPriority().put(KEY, map);
-        CustomWeighting weighting = createWeighting(vehicleModel);
+        CustomWeightingOlder weighting = createWeighting(vehicleModel);
 
         EdgeIteratorState edge = graphHopperStorage.edge(0, 1, 10, true).set(avSpeedEnc, 15);
         assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
@@ -201,7 +201,7 @@ public class CustomWeightingTest {
 
     @Test
     public void testAvoidHighSpeed() {
-        CustomWeighting weighting = createWeighting(new CustomModel());
+        CustomWeightingOlder weighting = createWeighting(new CustomModel());
         EdgeIteratorState slowEdge = graphHopperStorage.edge(0, 1, 10, true).set(avSpeedEnc, 15).set(maxSpeedEnc, 50);
         EdgeIteratorState fastEdge = graphHopperStorage.edge(1, 2, 10, true).set(avSpeedEnc, 60).set(maxSpeedEnc, 70);
         assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
@@ -228,7 +228,7 @@ public class CustomWeightingTest {
     @Test
     public void testIntEncodedValue() {
         // currently we have no inbuilt encoded value that requires int but it is not bad to have for e.g. lanes
-        CustomWeighting weighting = createWeighting(new CustomModel());
+        CustomWeightingOlder weighting = createWeighting(new CustomModel());
         EdgeIteratorState slowEdge = graphHopperStorage.edge(0, 1, 10, true).set(avSpeedEnc, 15).set(laneEnc, 0);
         EdgeIteratorState fastEdge = graphHopperStorage.edge(1, 2, 10, true).set(avSpeedEnc, 60).set(laneEnc, 2);
         assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
@@ -267,7 +267,7 @@ public class CustomWeightingTest {
         JsonFeature area = new JsonFeature(areaId, "Polygon", null, poly, Collections.<String, Object>emptyMap());
         vehicleModel.getAreas().put(areaId, area);
         vehicleModel.setDistanceInfluence(0);
-        CustomWeighting weighting = createWeighting(vehicleModel);
+        CustomWeightingOlder weighting = createWeighting(vehicleModel);
 
         graphHopperStorage.getNodeAccess().setNode(0, 51.036213, 13.713684);
         graphHopperStorage.getNodeAccess().setNode(1, 51.036591, 13.719864);
@@ -283,7 +283,7 @@ public class CustomWeightingTest {
         assertEquals(240, weighting.calcEdgeWeight(edge2, false), 0.01);
     }
 
-    private CustomWeighting createWeighting(CustomModel vehicleModel) {
-        return new CustomWeighting(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+    private CustomWeightingOlder createWeighting(CustomModel vehicleModel) {
+        return new CustomWeightingOlder(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
     }
 }

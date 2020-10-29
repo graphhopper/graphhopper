@@ -1,5 +1,8 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.MaxSpeed;
@@ -15,16 +18,11 @@ import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static com.graphhopper.routing.weighting.custom.ScriptWeighting.parseAndGuessParametersFromCondition;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-// TODO NOW copy entire CustomWeightingTest
-class ScriptWeightingTest {
+class CustomWeightingTest {
 
     GraphHopperStorage graphHopperStorage;
     DecimalEncodedValue avSpeedEnc;
@@ -107,51 +105,27 @@ class ScriptWeightingTest {
         assertEquals(1.42, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
     }
 
+    @Test
+    public void testArea() throws Exception {
+        EdgeIteratorState primary = graphHopperStorage.edge(0, 1, 10, true).
+                set(roadClassEnc, PRIMARY).set(avSpeedEnc, 80);
+        EdgeIteratorState secondary = graphHopperStorage.edge(1, 2, 10, true).
+                set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70);
+
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.getPriority().put("road_class == PRIMARY", 1.0);
+        vehicleModel.getPriority().put("in(area_custom1, edge)", 0.5);
+
+        ObjectMapper om = new ObjectMapper().registerModule(new JtsModule());
+        JsonFeature json = om.readValue("{ \"geometry\":{ \"type\": \"Polygon\", \"coordinates\": " +
+                "[[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }}", JsonFeature.class);
+        vehicleModel.getAreas().put("custom1", json);
+
+        assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
+        assertEquals(1.21, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+    }
+
     private Weighting createWeighting(CustomModel vehicleModel) {
-        return new ScriptWeighting(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
-    }
-
-    @Test
-    public void protectUsFromStuff() {
-        HashSet<String> set = new HashSet<>();
-        ScriptWeighting.NameValidator allNamesInvalid = s -> false;
-        for (String toParse : Arrays.asList("",
-                "new Object()",
-                "java.lang.Object",
-                "Test.class",
-                "new Object(){}.toString().length",
-                "{ 5}",
-                "{ 5, 7 }",
-                "Object.class",
-                "System.out.println(\"\")",
-                "something.newInstance()",
-                "e.getClass ( )",
-                "edge.getDistance()*7/*test",
-                "edge.getDistance()//*test",
-                "edge . getClass()",
-                "(edge = edge) == edge",
-                ") edge (",
-                "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" +
-                        "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd")) {
-            assertFalse(parseAndGuessParametersFromCondition(set, toParse, allNamesInvalid), "should not be simple condition: " + toParse);
-            assertEquals("[]", set.toString());
-        }
-
-        assertFalse(parseAndGuessParametersFromCondition(set, "edge; getClass()", allNamesInvalid));
-    }
-
-    @Test
-    public void isValidAndSimpleCondition() {
-        HashSet<String> set = new HashSet<>();
-        ScriptWeighting.NameValidator nameValidator1 = s -> s.equals("edge") || s.equals("PRIMARY") || s.equals("road_class");
-        assertTrue(parseAndGuessParametersFromCondition(set, "edge == edge", nameValidator1));
-        assertEquals("[edge]", set.toString());
-        assertTrue(parseAndGuessParametersFromCondition(set, "edge.getDistance()", nameValidator1));
-        assertEquals("[edge]", set.toString());
-        assertTrue(parseAndGuessParametersFromCondition(set, "road_class == PRIMARY", nameValidator1));
-        assertEquals("[edge, road_class]", set.toString());
-        assertFalse(parseAndGuessParametersFromCondition(set, "road_class == PRIMARY", s -> false));
-        assertTrue(parseAndGuessParametersFromCondition(set, "road_class.ordinal()*2 == PRIMARY.ordinal()*2", nameValidator1));
-        assertTrue(parseAndGuessParametersFromCondition(set, "Math.sqrt(road_class.ordinal()) > 1", nameValidator1));
+        return new CustomWeighting(carFE, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
     }
 }
