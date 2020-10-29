@@ -212,7 +212,8 @@ public class CHMeasurement {
         final NodeAccess nodeAccess = g.getNodeAccess();
         final Random random = new Random(seed);
 
-        MiniPerfTest compareTest = new MiniPerfTest() {
+        MiniPerfTest compareTest = new MiniPerfTest();
+        compareTest.setIterations(iterations).start(new MiniPerfTest.Task() {
             long chTime = 0;
             long noChTime = 0;
             long chErrors = 0;
@@ -284,8 +285,7 @@ public class CHMeasurement {
                 }
                 return chRoute.getErrors().size();
             }
-        };
-        compareTest.setIterations(iterations).start();
+        });
     }
 
     private static void runPerformanceTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts,
@@ -298,7 +298,8 @@ public class CHMeasurement {
 
         LOGGER.info("Running performance test for {}, seed = {}", algo, seed);
         final long[] numVisitedNodes = {0};
-        MiniPerfTest performanceTest = new MiniPerfTest() {
+        MiniPerfTest performanceTest = new MiniPerfTest();
+        performanceTest.setIterations(iterations).start(new MiniPerfTest.Task() {
             private long queryTime;
 
             @Override
@@ -329,8 +330,7 @@ public class CHMeasurement {
                     queryTime += nanoTime() - start;
                 return getRealErrors(route).size();
             }
-        };
-        performanceTest.setIterations(iterations).start();
+        });
         if (performanceTest.getDummySum() > 0.01 * iterations) {
             throw new IllegalStateException("too many errors, probably something is wrong");
         }

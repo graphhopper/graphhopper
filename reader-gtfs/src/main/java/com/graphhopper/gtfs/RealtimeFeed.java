@@ -276,7 +276,7 @@ public class RealtimeFeed {
             ZoneId timezone = ZoneId.of(feed.agency.values().stream().findFirst().get().agency_timezone);
             GtfsStorageI gtfsStorage = new GtfsStorageI() {
                 @Override
-                public Map<String, Fare> getFares() {
+                public Map<String, Map<String, Fare>> getFares() {
                     return null;
                 }
 

@@ -29,11 +29,11 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 
 public class Fares {
-    public static Optional<Amount> cheapestFare(Map<String, Fare> fares, Trip trip) {
+    public static Optional<Amount> cheapestFare(Map<String, Map<String, Fare>> fares, Trip trip) {
         return ticketsBruteForce(fares, trip)
                 .flatMap(tickets -> tickets.stream()
                         .map(ticket -> {
-                            Fare fare = fares.get(ticket.getFare().fare_id);
+                            Fare fare = fares.get(ticket.feed_id).get(ticket.getFare().fare_id);
                             final BigDecimal priceOfOneTicket = BigDecimal.valueOf(fare.fare_attribute.price);
                             return new Amount(priceOfOneTicket, fare.fare_attribute.currency_type);
                         })
@@ -44,7 +44,7 @@ public class Fares {
                         .map(e -> new Amount(e.getValue(), e.getKey())));
     }
 
-    private static Optional<List<Ticket>> ticketsBruteForce(Map<String, Fare> fares, Trip trip) {
+    static Optional<List<Ticket>> ticketsBruteForce(Map<String, Map<String, Fare>> fares, Trip trip) {
         // Recursively enumerate all packages of tickets with which the trip can be done.
         // Take the cheapest.
         TicketPurchaseScoreCalculator ticketPurchaseScoreCalculator = new TicketPurchaseScoreCalculator();
@@ -53,14 +53,14 @@ public class Fares {
                 .map(TicketPurchase::getTickets);
     }
 
-    static Stream<TicketPurchase> allShoppingCarts(Map<String, Fare> fares, Trip trip) {
+    static Stream<TicketPurchase> allShoppingCarts(Map<String, Map<String, Fare>> fares, Trip trip) {
         // Recursively enumerate all packages of tickets with which the trip can be done.
         List<Trip.Segment> segments = trip.segments;
         List<List<FareAssignment>> result = allFareAssignments(fares, segments);
         return result.stream().map(TicketPurchase::new);
     }
 
-    private static List<List<FareAssignment>> allFareAssignments(Map<String, Fare> fares, List<Trip.Segment> segments) {
+    private static List<List<FareAssignment>> allFareAssignments(Map<String, Map<String, Fare>> fares, List<Trip.Segment> segments) {
         // Recursively enumerate all possible ways of assigning trip segments to fares.
         if (segments.isEmpty()) {
             ArrayList<List<FareAssignment>> emptyList = new ArrayList<>();
@@ -70,7 +70,7 @@ public class Fares {
             List<List<FareAssignment>> result = new ArrayList<>();
             Trip.Segment segment = segments.get(0);
             List<List<FareAssignment>> tail = allFareAssignments(fares, segments.subList(1, segments.size()));
-            Collection<Fare> possibleFares = Fares.possibleFares(fares, segment);
+            Collection<Fare> possibleFares = Fares.possibleFares(fares.get(segment.feed_id), segment);
             for (Fare fare : possibleFares) {
                 for (List<FareAssignment> tailFareAssignments : tail) {
                     ArrayList<FareAssignment> fairAssignments = new ArrayList<>(tailFareAssignments);
