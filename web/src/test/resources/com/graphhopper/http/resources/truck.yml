@@ -4,7 +4,7 @@
 # The formula is defined in CustomWeighting, where the speed_factor can be used to decrease speed.
 # The minimum value is 0 and the maximum is 1. If two conditions are satisfied the values are
 # multiplied e.g. if road_class==MOTORWAY and road_environment==TUNNEL, then the resulting speed is
-# average_speed*0.85*0.9 except when you use first_match
+# average_speed*0.85*0.9 except when first_match is used.
 speed_factor:
   road_environment == TUNNEL: 0.85
   # trucks should be a bit slower on certain road classes compared to the 'base' car
@@ -30,16 +30,15 @@ distance_influence: 90
 
 # Now we want to set a preference without changing the taken time. The default priority is 1 and does not change something.
 # The minimum value is 0 (block access). A value lower than 1 will avoid it. Values higher than 1 are not allowed.
-# To prefer a certain case you lower the priority of all other entries via the catch-all key "*",
-# see the road_class entry where motorways are preferred. If two conditions are met the values will be multiplied.
+# To prefer a certain case you lower the priority of all other entries. See the road_class entry where motorways are preferred.
+# If two conditions are met the values will be multiplied except when first_match is used.
 priority:
   first_match:
     road_class == RESIDENTIAL: 0.4
     road_class != MOTORWAY: 0.9
-
-  # and if you do not want that routes go over tracks just exclude them via
-  # road_class==TRACK: 0
-  # let's assume we transport gas: so NEVER go on restricted roads with hazmat==no
+    # and if you do not want that routes go over tracks just exclude them:
+    # road_class==TRACK: 0
+  # let's assume we transport gas: so NEVER go on restricted roads with hazmat==NO
   hazmat == NO: 0
   # avoid destination-only roads
   # TODO include private and delivery only access for base car profile so that we can avoid it here, but not exclude it
