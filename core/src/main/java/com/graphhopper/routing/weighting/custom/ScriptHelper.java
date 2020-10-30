@@ -74,12 +74,12 @@ public class ScriptHelper {
 
     public static ScriptHelper create(CustomModel customModel, EncodedValueLookup lookup,
                                       double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
-        Java.AbstractCompilationUnit cu = null;
+        Java.CompilationUnit cu;
         try {
             //// for getPriority
             HashSet<String> priorityVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-            priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;"), "priority_user_statements",
+            priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;\n"), "priority_user_statements",
                     priorityVariables, customModel.getPriority(), lookup,
                     n -> "value *= " + n + ";\n", "return value;"));
             String priorityMethodStartBlock = "";
@@ -112,7 +112,7 @@ public class ScriptHelper {
 
             //// add the parsed expressions (converted to BlockStatement) via DeepCopier:
             String classTemplate = createClassTemplate(priorityVariables, speedVariables, lookup);
-            cu = new Parser(new Scanner("source", new StringReader(classTemplate))).
+            cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
             cu = new DeepCopier() {
                 @Override
@@ -133,28 +133,30 @@ public class ScriptHelper {
                         return super.copyMethodDeclarator(subject);
                     }
                 }
-            }.copyAbstractCompilationUnit(cu);
+            }.copyCompilationUnit(cu);
 
             // mydebug(cu);
+            // this is the most expensive call: after JIT it costs 10ms where classSource costs 1ms
             SimpleCompiler sc = new SimpleCompiler();
             sc.cook(cu);
-            ScriptHelper prio = (ScriptHelper) sc.getClassLoader().
-                    loadClass("Test").getDeclaredConstructor().newInstance();
+            ScriptHelper prio = (ScriptHelper) sc.getClassLoader().loadClass("com.graphhopper.Test").getDeclaredConstructor().newInstance();
             customModel.getAreas().keySet().stream().forEach(areaId -> {
                 if (areaId.length() > 20) throw new IllegalArgumentException("Area id too long: " + areaId.length());
             });
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
             return prio;
         } catch (Exception ex) {
-            mydebug(cu);
+            // mydebug(cu);
             String location = "";
-            if (ex instanceof CompileException)
+            if (ex instanceof CompileException) {
                 location = " in " + ((CompileException) ex).getLocation().getFileName();
-            throw new IllegalArgumentException("Problem" + location + " with: " + customModel, ex);
+                // ex.printStackTrace();
+            }
+            throw new IllegalArgumentException("Cannot compile script" + location + ", " + ex.getMessage(), ex);
         }
     }
 
-    private static void mydebug(Java.AbstractCompilationUnit cu) {
+    private static void mydebug(Java.CompilationUnit cu) {
         if (cu != null) {
             StringWriter sw = new StringWriter();
             Unparser.unparse(cu, sw);
@@ -253,6 +255,7 @@ public class ScriptHelper {
         }
 
         return ""
+                + "package com.graphhopper;"
                 + "import " + ScriptHelper.class.getName() + ";\n"
                 + "import " + EncodedValueLookup.class.getName() + ";\n"
                 + "import " + EdgeIteratorState.class.getName() + ";\n"
@@ -329,7 +332,7 @@ public class ScriptHelper {
             expressions.append("if (" + expression + ") {" + codeBuilder.create(number) + "}\n");
             count++;
         }
-        expressions.append(lastStmt + "\n");
+        expressions.append(lastStmt);
     }
 
     private static Java.MethodDeclarator copyMethod(Java.MethodDeclarator subject, DeepCopier deepCopier,
