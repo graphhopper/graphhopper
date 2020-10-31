@@ -24,10 +24,7 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 import org.codehaus.commons.compiler.CompileException;
@@ -71,6 +68,13 @@ public class ScriptHelper {
             return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()); // TODO PERF: cache bbox and edge wayGeometry for multiple area
         return false;
     }
+
+    private static Map<String, Class> map = new LinkedHashMap<String, Class>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Class> eldest) {
+            return size() > 1000;
+        }
+    };
 
     public static ScriptHelper create(CustomModel customModel, EncodedValueLookup lookup,
                                       double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
@@ -135,15 +139,28 @@ public class ScriptHelper {
                 }
             }.copyCompilationUnit(cu);
 
+            StopWatch sw = new StopWatch().start();
             // mydebug(cu);
-            // this is the most expensive call: after JIT it costs 10ms where classSource costs 1ms
-            SimpleCompiler sc = new SimpleCompiler();
-            sc.cook(cu);
-            ScriptHelper prio = (ScriptHelper) sc.getClassLoader().loadClass("com.graphhopper.Test").getDeclaredConstructor().newInstance();
+            StringWriter writer = new StringWriter();
+            Unparser.unparse(cu, writer);
+
+            // for now NOT THREAD SAFE!!
+            // we would need to lock but this might be even slower. And ThreadLocal does not make too much sense as caching gets slower the more threads there are
+            String key = writer.toString();
+            Class clazz = map.get(key);
+            if (clazz == null) {
+                // this is the most expensive call: after JIT it costs 10ms where classSource costs 1ms
+                SimpleCompiler sc = new SimpleCompiler();
+                sc.cook(cu);
+                clazz = sc.getClassLoader().loadClass("com.graphhopper.Test");
+                map.put(key, clazz);
+            }
+            ScriptHelper prio = (ScriptHelper) clazz.getDeclaredConstructor().newInstance();
             customModel.getAreas().keySet().stream().forEach(areaId -> {
                 if (areaId.length() > 20) throw new IllegalArgumentException("Area id too long: " + areaId.length());
             });
             prio.init(lookup, avgSpeedEnc, customModel.getAreas());
+            // LoggerFactory.getLogger(ScriptHelper.class).info("compiling took: " + sw.stop().getSeconds() + ", cache size: " + map.size());
             return prio;
         } catch (Exception ex) {
             // mydebug(cu);

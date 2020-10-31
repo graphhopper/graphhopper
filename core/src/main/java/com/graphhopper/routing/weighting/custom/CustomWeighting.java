@@ -25,6 +25,8 @@ import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
 
+import java.util.LinkedHashMap;
+
 public class CustomWeighting extends AbstractWeighting {
     public static final String NAME = "custom";
     /**
