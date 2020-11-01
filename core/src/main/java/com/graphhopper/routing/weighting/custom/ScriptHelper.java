@@ -72,13 +72,6 @@ public class ScriptHelper {
         return false;
     }
 
-    private static Map<String, Class> map = new LinkedHashMap<String, Class>() {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, Class> eldest) {
-            return size() > 1000;
-        }
-    };
-
     public static ScriptHelper create(CustomModel customModel, EncodedValueLookup lookup,
                                       double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
         Java.CompilationUnit cu;
@@ -88,7 +81,7 @@ public class ScriptHelper {
             List<Java.BlockStatement> priorityStatements = new ArrayList<>();
             priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;\n"), "priority_user_statements",
                     priorityVariables, customModel.getPriority(), lookup,
-                    n -> "value *= " + n + ";\n", "return value;"));
+                    num -> "value *= " + num + ";\n", "return value;"));
             String priorityMethodStartBlock = "";
             for (String arg : priorityVariables) {
                 priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
@@ -100,11 +93,11 @@ public class ScriptHelper {
             HashSet<String> speedVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> speedStatements = new ArrayList<>();
             speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed_factor_user_statements", speedVariables, customModel.getSpeedFactor(), lookup,
-                    n -> "speed *= " + n + ";\n", ""));
+                    num -> "speed *= " + num + ";\n", ""));
             StringBuilder codeSB = new StringBuilder("boolean applied = false;\n");
             speedStatements.addAll(verifyExpressions(codeSB, "max_speed_user_statements",
                     speedVariables, customModel.getMaxSpeed(), lookup,
-                    n -> "applied = true; speed = Math.min(speed," + n + ");",
+                    num -> "applied = true; speed = Math.min(speed," + num + ");",
                     "if (!applied && speed > " + maxSpeedFallback + ") return " + maxSpeedFallback + ";\n" +
                             "return Math.min(speed, " + globalMaxSpeed + ");\n"));
             String speedMethodStartBlock = "double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);\n"
@@ -172,7 +165,7 @@ public class ScriptHelper {
 
     private static final Set<String> allowedNames = new HashSet<>(Arrays.asList("edge", "Math"));
 
-    private static boolean isValidVariableName(String name) {
+    static boolean isValidVariableName(String name) {
         return name.startsWith(AREA_PREFIX) || allowedNames.contains(name);
     }
 
@@ -213,14 +206,12 @@ public class ScriptHelper {
     private static String createClassTemplate(Set<String> priorityVariables, Set<String> speedVariables, EncodedValueLookup lookup) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
-        final StringBuilder classSourceCode = new StringBuilder();
+        final StringBuilder classSourceCode = new StringBuilder(100);
         boolean includedAreaImports = false;
 
         final StringBuilder initSourceCode = new StringBuilder("this.avg_speed_enc = avgSpeedEnc;\n");
         Set<String> set = new HashSet<>(priorityVariables);
         set.addAll(speedVariables);
-        Set<String> alreadyDone = new HashSet<>();
-        String packageName = "com.graphhopper.routing.ev";
         for (String arg : set) {
             if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
@@ -230,10 +221,6 @@ public class ScriptHelper {
                 if (arg.endsWith(RouteNetwork.key("")))
                     className = RouteNetwork.class.getSimpleName();
 
-                if (!alreadyDone.contains(className)) {
-                    importSourceCode.append("import static " + packageName + "." + className + ".*;\n");
-                    alreadyDone.add(className);
-                }
                 classSourceCode.append("protected " + enc.getClass().getSimpleName() + " " + arg + "_enc;\n");
                 initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
                 initSourceCode.append(arg + "_enc = (" + enc.getClass().getSimpleName() + ") lookup.getEncodedValue(\"" + arg + "\", "
@@ -327,15 +314,17 @@ public class ScriptHelper {
                 continue;
             }
 
-            if (!parseAndGuessParametersFromCondition(createObjects, expression, nameInConditionValidator))
-                throw new IllegalArgumentException("key is an invalid simple condition: " + expression);
             Object numberObj = entry.getValue();
             if (!(numberObj instanceof Number))
                 throw new IllegalArgumentException("value is not a Number " + numberObj);
+            ParseResult parseResult = parseAndGuessParametersFromCondition(expression, nameInConditionValidator);
+            if (!parseResult.ok)
+                throw new IllegalArgumentException("key is an invalid simple condition: " + expression);
+            createObjects.addAll(parseResult.guessVariables);
             Number number = (Number) numberObj;
             if (firstMatch && count > 0)
                 expressions.append("else ");
-            expressions.append("if (" + expression + ") {" + codeBuilder.create(number) + "}\n");
+            expressions.append("if (" + parseResult.converted + ") {" + codeBuilder.create(number) + "}\n");
             count++;
         }
         expressions.append(lastStmt);
@@ -375,70 +364,99 @@ public class ScriptHelper {
     /**
      * Enforce simple expressions of user input to increase security.
      *
-     * @param returnSet collects guess parameters
      * @return true if valid and "simple" expression
      */
-    static boolean parseAndGuessParametersFromCondition(Set<String> returnSet, String expression, NameValidator validator) {
+    static ParseResult parseAndGuessParametersFromCondition(String expression, NameValidator validator) {
+        ParseResult result = new ParseResult();
         if (expression.length() > 100)
-            return false;
+            return result;
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
             Java.Atom atom = parser.parseConditionalExpression();
             // after parsing the expression the input should end (otherwise it is not "simple")
-            if (parser.peek().type == TokenType.END_OF_INPUT)
-                return atom.accept(new MyConditionVisitor(returnSet, validator));
-            return false;
+            if (parser.peek().type == TokenType.END_OF_INPUT) {
+                result.guessVariables = new LinkedHashSet<>();
+                MyConditionVisitor visitor = new MyConditionVisitor(result, validator);
+                result.ok = atom.accept(visitor);
+                if (result.ok) {
+                    result.converted = new StringBuilder(expression.length());
+                    int start = 0;
+                    for (Map.Entry<Integer, String> inject : visitor.injects.entrySet()) {
+                        result.converted.append(expression, start, inject.getKey());
+                        result.converted.append(inject.getValue());
+                        start = inject.getKey();
+                    }
+                    result.converted.append(expression.substring(start));
+                }
+            }
+
+            return result;
         } catch (Exception ex) {
-            return false;
+            return result;
         }
     }
 
-    private static class MyConditionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
-        private final Set<String> parameters;
+    static class ParseResult {
+        StringBuilder converted;
+        boolean ok;
+        Set<String> guessVariables;
+    }
+
+    static class MyConditionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
+        private final ParseResult result;
+        private final TreeMap<Integer, String> injects = new TreeMap<>();
         private final NameValidator nameValidator;
         private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
-                "contains", "in", "sqrt", "abs"));
+                "contains", "sqrt", "abs"));
 
-        public MyConditionVisitor(Set<String> parameters, NameValidator nameValidator) {
-            this.parameters = parameters;
+        public MyConditionVisitor(ParseResult result, NameValidator nameValidator) {
+            this.result = result;
             this.nameValidator = nameValidator;
+        }
+
+        boolean isValidVariable(String identifier) {
+            // allow only certain methods and other identifiers (constants and like encoded values)
+            if (nameValidator.isValid(identifier)) {
+                if (!Character.isUpperCase(identifier.charAt(0)))
+                    result.guessVariables.add(identifier);
+                return true;
+            }
+            return false;
         }
 
         @Override
         public Boolean visitRvalue(Java.Rvalue rv) throws Exception {
             if (rv instanceof Java.AmbiguousName) {
                 Java.AmbiguousName n = (Java.AmbiguousName) rv;
-                for (String identifier : n.identifiers) {
-                    // allow only certain methods and other identifiers (constants and like encoded values)
-                    if (nameValidator.isValid(identifier)) {
-                        if (!Character.isUpperCase(identifier.charAt(0)))
-                            parameters.add(n.identifiers[0]);
-                        return true;
-                    }
-                }
-                return false;
+                if (n.identifiers.length < 1 || n.identifiers.length > 2)
+                    return false;
+                // road_class, edge.getDistance, Math.sqrt
+                return isValidVariable(n.identifiers[0]);
             }
             if (rv instanceof Java.Literal)
                 return true;
             if (rv instanceof Java.MethodInvocation) {
                 Java.MethodInvocation mi = (Java.MethodInvocation) rv;
                 if (allowedMethods.contains(mi.methodName)) {
-                    // class methods like in() only have an implicit "this"
-                    if (mi.target == null) {
-                        for (Java.Rvalue methodArg : mi.arguments) {
-                            // allow only simple method arguments i.e. no methods etc
-                            if (!(methodArg instanceof Java.AmbiguousName)) return false;
-                            if (!visitRvalue(methodArg)) return false;
-                        }
-                        return true;
-                    }
+                    // skip methods like this.in for now
+                    if (mi.target == null)
+                        return false;
                     return mi.target.accept(this); // Math.sqrt
                 }
                 return false;
             }
-            if (rv instanceof Java.BinaryOperation)
-                if (((Java.BinaryOperation) rv).lhs.accept(this))
-                    return ((Java.BinaryOperation) rv).rhs.accept(this);
+            if (rv instanceof Java.BinaryOperation) {
+                Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
+                if (!binOp.lhs.accept(this) || !binOp.rhs.accept(this))
+                    return false;
+                if (binOp.lhs instanceof Java.AmbiguousName && binOp.rhs instanceof Java.AmbiguousName) {
+                    if (nameValidator.isValid(binOp.lhs.toString()) &&
+                            binOp.rhs.toString().toUpperCase(Locale.ROOT).equals(binOp.rhs.toString())) {
+                        injects.put(binOp.rhs.getLocation().getColumnNumber() - 1, toCamelCase(binOp.lhs.toString()) + ".");
+                    }
+                }
+                return true;
+            }
             return false;
         }
 

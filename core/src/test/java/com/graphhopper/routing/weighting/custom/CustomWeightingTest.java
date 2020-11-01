@@ -11,6 +11,8 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.parsers.OSMHazmatParser;
+import com.graphhopper.routing.util.parsers.OSMTollParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -39,7 +41,7 @@ class CustomWeightingTest {
     @BeforeEach
     public void setup() {
         carFE = new CarFlagEncoder().setSpeedTwoDirections(true);
-        encodingManager = new EncodingManager.Builder().add(carFE).build();
+        encodingManager = new EncodingManager.Builder().add(carFE).add(new OSMTollParser()).add(new OSMHazmatParser()).build();
         avSpeedEnc = carFE.getAverageSpeedEnc();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
@@ -118,6 +120,20 @@ class CustomWeightingTest {
         vehicleModel.getMaxSpeed().put("road_class != PRIMARY", 50);
         assertEquals(1.33, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
         assertEquals(1.42, createWeighting(vehicleModel).calcEdgeWeight(secondary, false), 0.01);
+    }
+
+    @Test
+    public void testIssueSameKey() {
+        EdgeIteratorState withToll = graphHopperStorage.edge(0, 1, 10, true).
+                set(avSpeedEnc, 80);
+        EdgeIteratorState noToll = graphHopperStorage.edge(1, 2, 10, true).
+                set(avSpeedEnc, 80);
+
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.getSpeedFactor().put("toll != NO", 0.8);
+        vehicleModel.getSpeedFactor().put("hazmat != NO", 0.8);
+        assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(withToll, false), 0.01);
+        assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(noToll, false), 0.01);
     }
 
     @Test

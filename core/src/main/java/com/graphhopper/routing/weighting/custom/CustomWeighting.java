@@ -25,8 +25,6 @@ import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.LinkedHashMap;
-
 public class CustomWeighting extends AbstractWeighting {
     public static final String NAME = "custom";
     /**
@@ -79,8 +77,8 @@ public class CustomWeighting extends AbstractWeighting {
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
-        double p = scriptHelper.getPriority(edgeState, reverse);
-        return seconds / p + distanceCosts;
+        double priority = scriptHelper.getPriority(edgeState, reverse);
+        return seconds / priority + distanceCosts;
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
