@@ -10,7 +10,7 @@ priority:
     road_class == MOTORWAY: 1
     road_class == PRIMARY: 0.5
     true: 0.9
-  toll != NO: 0.5
-  hazmat == NO: 0
+  toll != Toll.NO: 0.5
+  hazmat == Hazmat.NO: 0
 
 max_speed_fallback: 110
