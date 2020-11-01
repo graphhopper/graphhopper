@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,26 +52,5 @@ class CHPreparationGraphTest {
             res += iter.toString() + ",";
         }
         assertEquals("3-4,", res);
-    }
-
-    @Test
-    void bla() {
-        // 0 -> 1 <-> 5
-        //      v     v
-        //      2 --> 3 -> 4
-        CHPreparationGraph pg = CHPreparationGraph.edgeBased(6, 10, (a, b, c) -> 0);
-        double inf = Double.POSITIVE_INFINITY;
-        pg.addEdge(0, 1, 0, 10, inf);
-        pg.addEdge(1, 2, 1, 10, inf);
-        pg.addEdge(2, 3, 2, 10, inf);
-        pg.addEdge(3, 4, 3, 10, inf);
-        pg.addEdge(1, 5, 4, 10, 10);
-        pg.addEdge(5, 3, 5, 10, inf);
-        pg.prepareForContraction();
-        System.out.println(pg);
-        EdgeBasedWitnessPathSearcher wps = new EdgeBasedWitnessPathSearcher(pg, new PMap());
-        int i = wps.initSearch(5, 1, 0);
-        PrepareCHEntry chEntry = wps.runSearch(3, 3);
-        System.out.println(chEntry);
     }
 }

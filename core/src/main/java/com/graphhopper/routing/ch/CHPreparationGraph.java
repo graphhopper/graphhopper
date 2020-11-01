@@ -46,13 +46,10 @@ public class CHPreparationGraph {
     private final TurnCostFunction turnCostFunction;
     // each edge/shortcut between nodes a/b is represented as a single object and we maintain two linked lists of such
     // objects for every node (one for outgoing edges and one for incoming edges).
-    // todonow: is this still the case?
-    // for edge-based it would actually be better/faster to keep
-    // separate lists of incoming/outgoing edges and even use uni-directional edge-objects.
     private PrepareEdge[] prepareEdgesOut;
     private PrepareEdge[] prepareEdgesIn;
-    // todonow: do we need this? does it hurt?
-    private final int[] degrees;
+    // todo: maybe we can get rid of this
+    private int[] degrees;
     private IntSet neighborSet;
     private OrigGraph origGraph;
     private OrigGraph.Builder origGraphBuilder;
@@ -246,68 +243,35 @@ public class CHPreparationGraph {
         // node ids
         neighborSet.clear();
         IntArrayList neighbors = new IntArrayList(getDegree(node));
-        {
-            PrepareEdge currOut = prepareEdgesOut[node];
-            while (currOut != null) {
-                int adjNode = currOut.getNodeB();
-                if (adjNode == node)
-                    adjNode = currOut.getNodeA();
-                if (adjNode == node) {
-                    // this is a loop
-                    currOut = currOut.getNextOut(node);
-                    continue;
-                }
-                PrepareEdge prevIn = null;
-                PrepareEdge currIn = prepareEdgesIn[adjNode];
-                while (currIn != null) {
-                    if (currIn == currOut) {
-                        if (prevIn == null) {
-                            prepareEdgesIn[adjNode] = currIn.getNextIn(adjNode);
-                        } else {
-                            prevIn.setNextIn(adjNode, currIn.getNextIn(adjNode));
-                        }
-                        degrees[adjNode]--;
-                    } else {
-                        prevIn = currIn;
-                    }
-                    currIn = currIn.getNextIn(adjNode);
-                }
-                if (neighborSet.add(adjNode))
-                    neighbors.add(adjNode);
+        PrepareEdge currOut = prepareEdgesOut[node];
+        while (currOut != null) {
+            int adjNode = currOut.getNodeB();
+            if (adjNode == node)
+                adjNode = currOut.getNodeA();
+            if (adjNode == node) {
+                // this is a loop
                 currOut = currOut.getNextOut(node);
+                continue;
             }
+            removeInEdge(adjNode, currOut);
+            if (neighborSet.add(adjNode))
+                neighbors.add(adjNode);
+            currOut = currOut.getNextOut(node);
         }
-
-        {
-            PrepareEdge currIn = prepareEdgesIn[node];
-            while (currIn != null) {
-                int adjNode = currIn.getNodeB();
-                if (adjNode == node)
-                    adjNode = currIn.getNodeA();
-                if (adjNode == node) {
-                    // this is a loop
-                    currIn = currIn.getNextIn(node);
-                    continue;
-                }
-                PrepareEdge prevOut = null;
-                PrepareEdge currOut = prepareEdgesOut[adjNode];
-                while (currOut != null) {
-                    if (currOut == currIn) {
-                        if (prevOut == null) {
-                            prepareEdgesOut[adjNode] = currOut.getNextOut(adjNode);
-                        } else {
-                            prevOut.setNextOut(adjNode, currOut.getNextOut(adjNode));
-                        }
-                        degrees[adjNode]--;
-                    } else {
-                        prevOut = currOut;
-                    }
-                    currOut = currOut.getNextOut(adjNode);
-                }
-                if (neighborSet.add(adjNode))
-                    neighbors.add(adjNode);
+        PrepareEdge currIn = prepareEdgesIn[node];
+        while (currIn != null) {
+            int adjNode = currIn.getNodeB();
+            if (adjNode == node)
+                adjNode = currIn.getNodeA();
+            if (adjNode == node) {
+                // this is a loop
                 currIn = currIn.getNextIn(node);
+                continue;
             }
+            removeOutEdge(adjNode, currIn);
+            if (neighborSet.add(adjNode))
+                neighbors.add(adjNode);
+            currIn = currIn.getNextIn(node);
         }
         prepareEdgesOut[node] = null;
         prepareEdgesIn[node] = null;
@@ -315,10 +279,47 @@ public class CHPreparationGraph {
         return neighbors;
     }
 
+    private void removeOutEdge(int node, PrepareEdge prepareEdge) {
+        PrepareEdge prevOut = null;
+        PrepareEdge currOut = prepareEdgesOut[node];
+        while (currOut != null) {
+            if (currOut == prepareEdge) {
+                if (prevOut == null) {
+                    prepareEdgesOut[node] = currOut.getNextOut(node);
+                } else {
+                    prevOut.setNextOut(node, currOut.getNextOut(node));
+                }
+                degrees[node]--;
+            } else {
+                prevOut = currOut;
+            }
+            currOut = currOut.getNextOut(node);
+        }
+    }
+
+    private void removeInEdge(int node, PrepareEdge prepareEdge) {
+        PrepareEdge prevIn = null;
+        PrepareEdge currIn = prepareEdgesIn[node];
+        while (currIn != null) {
+            if (currIn == prepareEdge) {
+                if (prevIn == null) {
+                    prepareEdgesIn[node] = currIn.getNextIn(node);
+                } else {
+                    prevIn.setNextIn(node, currIn.getNextIn(node));
+                }
+                degrees[node]--;
+            } else {
+                prevIn = currIn;
+            }
+            currIn = currIn.getNextIn(node);
+        }
+    }
+
     public void close() {
         checkReady();
         prepareEdgesOut = null;
         prepareEdgesIn = null;
+        degrees = null;
         neighborSet = null;
         if (edgeBased)
             origGraph = null;
@@ -354,141 +355,30 @@ public class CHPreparationGraph {
     private static class PrepareGraphEdgeExplorerImpl implements PrepareGraphEdgeExplorer, PrepareGraphEdgeIterator {
         private final PrepareEdge[] prepareEdges;
         private final boolean reverse;
-        private PrepareEdge startEdge;
         private int node = -1;
         private PrepareEdge currEdge;
+        private PrepareEdge nextEdge;
 
         PrepareGraphEdgeExplorerImpl(PrepareEdge[] prepareEdges, boolean reverse) {
             this.prepareEdges = prepareEdges;
             this.reverse = reverse;
-            this.startEdge = new PrepareEdge() {
-                PrepareEdge nextOut;
-                PrepareEdge nextIn;
-
-                @Override
-                public boolean isShortcut() {
-                    return false;
-                }
-
-                @Override
-                public int getPrepareEdge() {
-                    return 0;
-                }
-
-                @Override
-                public int getNodeA() {
-                    return 0;
-                }
-
-                @Override
-                public int getNodeB() {
-                    return 0;
-                }
-
-                @Override
-                public double getWeightAB() {
-                    return 0;
-                }
-
-                @Override
-                public double getWeightBA() {
-                    return 0;
-                }
-
-                @Override
-                public int getOrigEdgeKeyFirstAB() {
-                    return 0;
-                }
-
-                @Override
-                public int getOrigEdgeKeyFirstBA() {
-                    return 0;
-                }
-
-                @Override
-                public int getOrigEdgeKeyLastAB() {
-                    return 0;
-                }
-
-                @Override
-                public int getOrigEdgeKeyLastBA() {
-                    return 0;
-                }
-
-                @Override
-                public int getSkipped1() {
-                    return 0;
-                }
-
-                @Override
-                public int getSkipped2() {
-                    return 0;
-                }
-
-                @Override
-                public int getOrigEdgeCount() {
-                    return 0;
-                }
-
-                @Override
-                public void setSkipped1(int skipped1) {
-
-                }
-
-                @Override
-                public void setSkipped2(int skipped2) {
-
-                }
-
-                @Override
-                public void setWeight(double weight) {
-
-                }
-
-                @Override
-                public void setOrigEdgeCount(int origEdgeCount) {
-
-                }
-
-                @Override
-                public PrepareEdge getNextOut(int base) {
-                    return nextOut;
-                }
-
-                @Override
-                public void setNextOut(int base, PrepareEdge prepareEdge) {
-                    this.nextOut = prepareEdge;
-                }
-
-                @Override
-                public PrepareEdge getNextIn(int base) {
-                    return nextIn;
-                }
-
-                @Override
-                public void setNextIn(int base, PrepareEdge prepareEdge) {
-                    this.nextIn = prepareEdge;
-                }
-            };
         }
 
         @Override
         public PrepareGraphEdgeIterator setBaseNode(int node) {
             this.node = node;
-//             todonow
-//            this.startEdge = new PrepareBaseEdge(-1, node, node, -1, -1);
-            if (reverse)
-                startEdge.setNextIn(node, prepareEdges[node]);
-            else
-                startEdge.setNextOut(node, prepareEdges[node]);
-            this.currEdge = startEdge;
+            currEdge = null;
+            nextEdge = prepareEdges[node];
             return this;
         }
 
         @Override
         public boolean next() {
-            currEdge = reverse ? currEdge.getNextIn(node) : currEdge.getNextOut(node);
-            return currEdge != null;
+            currEdge = nextEdge;
+            if (currEdge == null)
+                return false;
+            nextEdge = reverse ? currEdge.getNextIn(node) : currEdge.getNextOut(node);
+            return true;
         }
 
         @Override
@@ -731,37 +621,37 @@ public class CHPreparationGraph {
             else if (base == nodeB)
                 return nextOutB;
             else
-                throw new IllegalStateException("todonow");
+                throw new IllegalStateException("Cannot get next out edge as the given base " + base + " is not adjacent to the current edge");
         }
 
         @Override
         public void setNextOut(int base, PrepareEdge prepareEdge) {
             if (base == nodeA)
-                this.nextOutA = prepareEdge;
+                nextOutA = prepareEdge;
             else if (base == nodeB)
-                this.nextOutB = prepareEdge;
+                nextOutB = prepareEdge;
             else
-                throw new IllegalStateException("todonow");
+                throw new IllegalStateException("Cannot set next out edge as the given base " + base + " is not adjacent to the current edge");
         }
 
         @Override
         public PrepareEdge getNextIn(int base) {
             if (base == nodeA)
-                return this.nextInA;
+                return nextInA;
             else if (base == nodeB)
-                return this.nextInB;
+                return nextInB;
             else
-                throw new IllegalStateException("todonow");
+                throw new IllegalStateException("Cannot get next in edge as the given base " + base + " is not adjacent to the current edge");
         }
 
         @Override
         public void setNextIn(int base, PrepareEdge prepareEdge) {
             if (base == nodeA)
-                this.nextInA = prepareEdge;
+                nextInA = prepareEdge;
             else if (base == nodeB)
-                this.nextInB = prepareEdge;
+                nextInB = prepareEdge;
             else
-                throw new IllegalStateException("todonow");
+                throw new IllegalStateException("Cannot set next in edge as the given base " + base + " is not adjacent to the current edge");
         }
 
         @Override
@@ -778,8 +668,6 @@ public class CHPreparationGraph {
         private int skipped1;
         private int skipped2;
         private int origEdgeCount;
-        // todonow: do we need both for shortcuts? or do we even need four? looks like we can get away with two for
-        // edge-based, but what about node-based? shall we try to replace this with integer 'pointers'?
         private PrepareEdge nextOut;
         private PrepareEdge nextIn;
 
