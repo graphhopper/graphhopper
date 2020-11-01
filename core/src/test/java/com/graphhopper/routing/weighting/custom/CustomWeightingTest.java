@@ -3,14 +3,12 @@ package com.graphhopper.routing.weighting.custom;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
 import com.graphhopper.routing.util.parsers.OSMHazmatParser;
 import com.graphhopper.routing.util.parsers.OSMTollParser;
 import com.graphhopper.routing.weighting.Weighting;
@@ -41,7 +39,7 @@ class CustomWeightingTest {
     @BeforeEach
     public void setup() {
         carFE = new CarFlagEncoder().setSpeedTwoDirections(true);
-        encodingManager = new EncodingManager.Builder().add(carFE).add(new OSMTollParser()).add(new OSMHazmatParser()).build();
+        encodingManager = new EncodingManager.Builder().add(carFE).add(new OSMTollParser()).add(new OSMHazmatParser()).add(new OSMBikeNetworkTagParser()).build();
         avSpeedEnc = carFE.getAverageSpeedEnc();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
@@ -132,6 +130,11 @@ class CustomWeightingTest {
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.getSpeedFactor().put("toll != NO", 0.8);
         vehicleModel.getSpeedFactor().put("hazmat != NO", 0.8);
+        assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(withToll, false), 0.01);
+        assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(noToll, false), 0.01);
+
+        vehicleModel = new CustomModel();
+        vehicleModel.getSpeedFactor().put("bike_network != OTHER", 0.8);
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(withToll, false), 0.01);
         assertEquals(1.26, createWeighting(vehicleModel).calcEdgeWeight(noToll, false), 0.01);
     }

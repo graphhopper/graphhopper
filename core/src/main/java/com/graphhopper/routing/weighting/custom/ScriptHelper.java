@@ -217,9 +217,7 @@ public class ScriptHelper {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 if (!EncodingManager.isSharedEV(enc))
                     continue;
-                String className = toCamelCase(arg);
-                if (arg.endsWith(RouteNetwork.key("")))
-                    className = RouteNetwork.class.getSimpleName();
+                String className = toEncodedValueClassName(arg);
 
                 classSourceCode.append("protected " + enc.getClass().getSimpleName() + " " + arg + "_enc;\n");
                 initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
@@ -355,8 +353,9 @@ public class ScriptHelper {
         }
     }
 
-    static String toCamelCase(String arg) {
+    static String toEncodedValueClassName(String arg) {
         if (arg.isEmpty()) throw new IllegalArgumentException("Cannot be empty");
+        if (arg.endsWith(RouteNetwork.key(""))) return RouteNetwork.class.getSimpleName();
         String clazz = Helper.underScoreToCamelCase(arg);
         return Character.toUpperCase(clazz.charAt(0)) + clazz.substring(1);
     }
@@ -364,7 +363,7 @@ public class ScriptHelper {
     /**
      * Enforce simple expressions of user input to increase security.
      *
-     * @return true if valid and "simple" expression
+     * @return ParseResult with ok if valid and "simple" expression
      */
     static ParseResult parseAndGuessParametersFromCondition(String expression, NameValidator validator) {
         ParseResult result = new ParseResult();
@@ -382,8 +381,8 @@ public class ScriptHelper {
                     result.converted = new StringBuilder(expression.length());
                     int start = 0;
                     for (Map.Entry<Integer, String> inject : visitor.injects.entrySet()) {
-                        result.converted.append(expression, start, inject.getKey());
-                        result.converted.append(inject.getValue());
+                        String value = toEncodedValueClassName(inject.getValue());
+                        result.converted.append(expression, start, inject.getKey()).append(value).append('.');
                         start = inject.getKey();
                     }
                     result.converted.append(expression.substring(start));
@@ -452,7 +451,7 @@ public class ScriptHelper {
                 if (binOp.lhs instanceof Java.AmbiguousName && binOp.rhs instanceof Java.AmbiguousName) {
                     if (nameValidator.isValid(binOp.lhs.toString()) &&
                             binOp.rhs.toString().toUpperCase(Locale.ROOT).equals(binOp.rhs.toString())) {
-                        injects.put(binOp.rhs.getLocation().getColumnNumber() - 1, toCamelCase(binOp.lhs.toString()) + ".");
+                        injects.put(binOp.rhs.getLocation().getColumnNumber() - 1, binOp.lhs.toString());
                     }
                 }
                 return true;
