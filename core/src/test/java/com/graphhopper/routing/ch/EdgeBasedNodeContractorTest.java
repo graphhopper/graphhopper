@@ -553,8 +553,8 @@ public class EdgeBasedNodeContractorTest {
         GraphWithTwoLoops g = new GraphWithTwoLoops(3, maxCost, 1, maxCost, 3, maxCost);
         g.contractAndCheckShortcuts(
                 createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(3), 13, false, true),
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.getScEdge(4), g.getScEdge(2), 24, false, true),
-                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(5), g.e6to8.getEdge(), 33, true, false)
+                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.getScEdge(5), g.getScEdge(2), 24, false, true),
+                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 33, true, false)
         );
     }
 
@@ -564,8 +564,8 @@ public class EdgeBasedNodeContractorTest {
         GraphWithTwoLoops g = new GraphWithTwoLoops(maxCost, 5, 4, 2, maxCost, maxCost);
         g.contractAndCheckShortcuts(
                 createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(2), 16, false, true),
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.getScEdge(4), g.getScEdge(3), 25, false, true),
-                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(5), g.e6to8.getEdge(), 33, true, false)
+                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.getScEdge(5), g.getScEdge(3), 25, false, true),
+                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 33, true, false)
         );
     }
 
@@ -1056,9 +1056,9 @@ public class EdgeBasedNodeContractorTest {
                 // from node 5 contraction
                 createShortcut(2, 2, 3, 2, 3, 2, 99, true, false),
                 createShortcut(2, 2, 3, 1, 3, 6, 134, true, false),
-                createShortcut(2, 2, 1, 2, 9, 2, 114, true, false),
+                createShortcut(2, 2, 1, 2, 8, 2, 114, true, false),
                 createShortcut(3, 2, 2, 4, 2, 7, 106, false, true),
-                createShortcut(3, 2, 4, 2, 8, 2, 105, true, false)
+                createShortcut(3, 2, 4, 2, 9, 2, 105, true, false)
         );
     }
 
