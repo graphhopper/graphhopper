@@ -318,10 +318,11 @@ public class Helper {
     }
 
     /**
-     * Round the value to the specified exponent
+     * Round the value to the specified number of decimal places, i.e. decimalPlaces=2 means we round to two decimal
+     * places. Using negative values like decimalPlaces=-2 means we round to two places before the decimal point.
      */
-    public static double round(double value, int exponent) {
-        double factor = Math.pow(10, exponent);
+    public static double round(double value, int decimalPlaces) {
+        double factor = Math.pow(10, decimalPlaces);
         return Math.round(value * factor) / factor;
     }
 
