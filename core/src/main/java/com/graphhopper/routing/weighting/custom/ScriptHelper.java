@@ -72,73 +72,40 @@ public class ScriptHelper {
         return false;
     }
 
+    // note: we only need to synchronize the get and put methods alone. No need for synch of an iteration or the block
+    // where more work would be needed. E.g. we do not care for the rare case where two identical classes are created
+    // and only one is cached. This cache requires that the created ScriptHelper class needs to be stateless.
+    static final Map<String, Class> cache = Collections.synchronizedMap(new LinkedHashMap<String, Class>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry eldest) {
+            return size() > 1000;
+        }
+    });
+
     public static ScriptHelper create(CustomModel customModel, EncodedValueLookup lookup,
                                       double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
         Java.CompilationUnit cu;
         try {
-            //// for getPriority
-            HashSet<String> priorityVariables = new LinkedHashSet<>();
-            List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-            priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;\n"), "priority_user_statements",
-                    priorityVariables, customModel.getPriority(), lookup,
-                    num -> "value *= " + num + ";\n", "return value;"));
-            String priorityMethodStartBlock = "";
-            for (String arg : priorityVariables) {
-                priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
+            String key = customModel.toString() + ",global:" + globalMaxSpeed + ",fallback:" + maxSpeedFallback;
+            Class clazz = cache.get(key);
+            if (clazz == null) {
+                HashSet<String> priorityVariables = new LinkedHashSet<>();
+                List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
+                HashSet<String> speedVariables = new LinkedHashSet<>();
+                List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, globalMaxSpeed, maxSpeedFallback);
+                String classTemplate = createClassTemplate(priorityVariables, speedVariables, lookup);
+                cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
+                        parseAbstractCompilationUnit();
+                // add the parsed expressions (converted to BlockStatement) via DeepCopier:
+                cu = copyCompilationUnit(priorityStatements, speedStatements, cu);
+                // mydebug(cu);
+                SimpleCompiler sc = new SimpleCompiler();
+                sc.cook(cu);
+                clazz = sc.getClassLoader().loadClass("com.graphhopper.Test");
+                cache.put(key, clazz);
             }
-            priorityStatements.addAll(0, new Parser(new Scanner("getPriority", new StringReader(priorityMethodStartBlock))).
-                    parseBlockStatements());
 
-            //// for getSpeed
-            HashSet<String> speedVariables = new LinkedHashSet<>();
-            List<Java.BlockStatement> speedStatements = new ArrayList<>();
-            speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed_factor_user_statements", speedVariables, customModel.getSpeedFactor(), lookup,
-                    num -> "speed *= " + num + ";\n", ""));
-            StringBuilder codeSB = new StringBuilder("boolean applied = false;\n");
-            speedStatements.addAll(verifyExpressions(codeSB, "max_speed_user_statements",
-                    speedVariables, customModel.getMaxSpeed(), lookup,
-                    num -> "applied = true; speed = Math.min(speed," + num + ");",
-                    "if (!applied && speed > " + maxSpeedFallback + ") return " + maxSpeedFallback + ";\n" +
-                            "return Math.min(speed, " + globalMaxSpeed + ");\n"));
-            String speedMethodStartBlock = "double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);\n"
-                    + "if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)"
-                    + " throw new IllegalStateException(\"Invalid estimated speed \" + speed);\n";
-            // a bit inefficient to possibly define variables twice, but for now we have two separate methods
-            for (String arg : speedVariables) {
-                speedMethodStartBlock += getVariableDeclaration(lookup, arg);
-            }
-            speedStatements.addAll(0, new Parser(new Scanner("getSpeed", new StringReader(speedMethodStartBlock))).
-                    parseBlockStatements());
-
-            //// add the parsed expressions (converted to BlockStatement) via DeepCopier:
-            String classTemplate = createClassTemplate(priorityVariables, speedVariables, lookup);
-            cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
-                    parseAbstractCompilationUnit();
-            cu = new DeepCopier() {
-                @Override
-                public Java.FieldDeclaration copyFieldDeclaration(Java.FieldDeclaration subject) throws CompileException {
-                    // for https://github.com/janino-compiler/janino/issues/135
-                    Java.FieldDeclaration fd = super.copyFieldDeclaration(subject);
-                    fd.setEnclosingScope(subject.getEnclosingScope());
-                    return fd;
-                }
-
-                @Override
-                public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
-                    if (subject.name.equals("getSpeed") && !speedStatements.isEmpty()) {
-                        return copyMethod(subject, this, speedStatements);
-                    } else if (subject.name.equals("getPriority")) {
-                        return copyMethod(subject, this, priorityStatements);
-                    } else {
-                        return super.copyMethodDeclarator(subject);
-                    }
-                }
-            }.copyCompilationUnit(cu);
-
-            // mydebug(cu);
-            SimpleCompiler sc = new SimpleCompiler();
-            sc.cook(cu);
-            ScriptHelper prio = (ScriptHelper) sc.getClassLoader().loadClass("com.graphhopper.Test").getDeclaredConstructor().newInstance();
+            ScriptHelper prio = (ScriptHelper) clazz.getDeclaredConstructor().newInstance();
             customModel.getAreas().keySet().stream().forEach(areaId -> {
                 if (areaId.length() > 20) throw new IllegalArgumentException("Area id too long: " + areaId.length());
             });
@@ -153,6 +120,72 @@ public class ScriptHelper {
             }
             throw new IllegalArgumentException("Cannot compile script" + location + ", " + ex.getMessage(), ex);
         }
+    }
+
+    private static Java.CompilationUnit copyCompilationUnit(List<Java.BlockStatement> priorityStatements,
+                                                            List<Java.BlockStatement> speedStatements,
+                                                            Java.CompilationUnit cu) throws CompileException {
+        cu = new DeepCopier() {
+            @Override
+            public Java.FieldDeclaration copyFieldDeclaration(Java.FieldDeclaration subject) throws CompileException {
+                // for https://github.com/janino-compiler/janino/issues/135
+                Java.FieldDeclaration fd = super.copyFieldDeclaration(subject);
+                fd.setEnclosingScope(subject.getEnclosingScope());
+                return fd;
+            }
+
+            @Override
+            public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
+                if (subject.name.equals("getSpeed") && !speedStatements.isEmpty()) {
+                    return copyMethod(subject, this, speedStatements);
+                } else if (subject.name.equals("getPriority")) {
+                    return copyMethod(subject, this, priorityStatements);
+                } else {
+                    return super.copyMethodDeclarator(subject);
+                }
+            }
+        }.copyCompilationUnit(cu);
+        return cu;
+    }
+
+    private static List<Java.BlockStatement> createGetSpeedStatements(Set<String> speedVariables,
+                                                                      CustomModel customModel, EncodedValueLookup lookup,
+                                                                      double globalMaxSpeed, double maxSpeedFallback) throws Exception {
+        List<Java.BlockStatement> speedStatements = new ArrayList<>();
+        speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed_factor_user_statements", speedVariables,
+                customModel.getSpeedFactor(), lookup,
+                num -> "speed *= " + num + ";\n", ""));
+        StringBuilder codeSB = new StringBuilder("boolean applied = false;\n");
+        speedStatements.addAll(verifyExpressions(codeSB, "max_speed_user_statements",
+                speedVariables, customModel.getMaxSpeed(), lookup,
+                num -> "applied = true; speed = Math.min(speed," + num + ");",
+                "if (!applied && speed > " + maxSpeedFallback + ") return " + maxSpeedFallback + ";\n" +
+                        "return Math.min(speed, " + globalMaxSpeed + ");\n"));
+        String speedMethodStartBlock = "double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);\n"
+                + "if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)"
+                + " throw new IllegalStateException(\"Invalid estimated speed \" + speed);\n";
+        // a bit inefficient to possibly define variables twice, but for now we have two separate methods
+        for (String arg : speedVariables) {
+            speedMethodStartBlock += getVariableDeclaration(lookup, arg);
+        }
+        speedStatements.addAll(0, new Parser(new Scanner("getSpeed", new StringReader(speedMethodStartBlock))).
+                parseBlockStatements());
+        return speedStatements;
+    }
+
+    private static List<Java.BlockStatement> createGetPriorityStatements(Set<String> priorityVariables,
+                                                                         CustomModel customModel, EncodedValueLookup lookup) throws Exception {
+        List<Java.BlockStatement> priorityStatements = new ArrayList<>();
+        priorityStatements.addAll(verifyExpressions(new StringBuilder("double value = 1;\n"), "priority_user_statements",
+                priorityVariables, customModel.getPriority(), lookup,
+                num -> "value *= " + num + ";\n", "return value;"));
+        String priorityMethodStartBlock = "";
+        for (String arg : priorityVariables) {
+            priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
+        }
+        priorityStatements.addAll(0, new Parser(new Scanner("getPriority", new StringReader(priorityMethodStartBlock))).
+                parseBlockStatements());
+        return priorityStatements;
     }
 
     private static void mydebug(Java.CompilationUnit cu) {
