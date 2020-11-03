@@ -59,6 +59,10 @@ public class ScriptHelper {
     }
 
     public double getSpeed(EdgeIteratorState edge, boolean reverse) {
+        return getRawSpeed(edge, reverse);
+    }
+
+    public final double getRawSpeed(EdgeIteratorState edge, boolean reverse) {
         double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid estimated speed " + speed);
@@ -76,9 +80,11 @@ public class ScriptHelper {
     // where more work would be needed. E.g. we do not care for the rare case where two identical classes are created
     // and only one is cached. This cache requires that the created ScriptHelper class needs to be stateless.
     static final Map<String, Class> cache = Collections.synchronizedMap(new LinkedHashMap<String, Class>() {
+        int count = Runtime.getRuntime().availableProcessors();
+
         @Override
         protected boolean removeEldestEntry(Map.Entry eldest) {
-            return size() > 1000;
+            return size() > 500 * count;
         }
     });
 
@@ -161,9 +167,7 @@ public class ScriptHelper {
                 num -> "applied = true; speed = Math.min(speed," + num + ");",
                 "if (!applied && speed > " + maxSpeedFallback + ") return " + maxSpeedFallback + ";\n" +
                         "return Math.min(speed, " + globalMaxSpeed + ");\n"));
-        String speedMethodStartBlock = "double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);\n"
-                + "if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)"
-                + " throw new IllegalStateException(\"Invalid estimated speed \" + speed);\n";
+        String speedMethodStartBlock = "double speed = super.getRawSpeed(edge, reverse);\n";
         // a bit inefficient to possibly define variables twice, but for now we have two separate methods
         for (String arg : speedVariables) {
             speedMethodStartBlock += getVariableDeclaration(lookup, arg);
