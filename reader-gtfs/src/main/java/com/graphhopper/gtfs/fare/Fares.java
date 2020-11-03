@@ -44,7 +44,7 @@ public class Fares {
                         .map(e -> new Amount(e.getValue(), e.getKey())));
     }
 
-    private static Optional<List<Ticket>> ticketsBruteForce(Map<String, Map<String, Fare>> fares, Trip trip) {
+    static Optional<List<Ticket>> ticketsBruteForce(Map<String, Map<String, Fare>> fares, Trip trip) {
         // Recursively enumerate all packages of tickets with which the trip can be done.
         // Take the cheapest.
         TicketPurchaseScoreCalculator ticketPurchaseScoreCalculator = new TicketPurchaseScoreCalculator();

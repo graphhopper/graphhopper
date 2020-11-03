@@ -141,9 +141,10 @@ public class AlternativeRouteEdgeCHTest {
         hints.putObject("alternative_route.max_paths", 4);
         AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(g.getRoutingCHGraph(), hints);
         List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(10, 5);
-        assertEquals(2, pathInfos.size());
+        assertEquals(3, pathInfos.size());
         assertEquals(IntArrayList.from(10, 4, 3, 6, 5), pathInfos.get(0).path.calcNodes());
         assertEquals(IntArrayList.from(10, 4, 8, 7, 6, 5), pathInfos.get(1).path.calcNodes());
+        assertEquals(IntArrayList.from(10, 4, 8, 7, 6, 3, 2, 9, 1, 5), pathInfos.get(2).path.calcNodes());
         // The shortest path works (no restrictions on the way back
     }
 

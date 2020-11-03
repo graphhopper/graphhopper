@@ -36,12 +36,12 @@ import org.locationtech.jts.geom.GeometryFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CustomWeightingTest {
 
@@ -85,7 +85,7 @@ public class CustomWeightingTest {
         assertEquals(72, new FastestWeighting(carFE, NO_TURN_COST_PROVIDER).calcEdgeWeight(medium, false), .1);
         assertEquals(36, new FastestWeighting(carFE, NO_TURN_COST_PROVIDER).calcEdgeWeight(fast, false), .1);
 
-        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         CustomModel model = new CustomModel().setDistanceInfluence(0);
         assertEquals(144, createWeighting(model).calcEdgeWeight(slow, false), .1);
         assertEquals(72, createWeighting(model).calcEdgeWeight(medium, false), .1);
@@ -128,7 +128,7 @@ public class CustomWeightingTest {
                 set(roadClassEnc, SECONDARY).set(avSpeedEnc, 70);
 
         CustomModel vehicleModel = new CustomModel();
-        Map map = new HashMap();
+        Map map = new LinkedHashMap();
 
         map.put(PRIMARY.toString(), 1.0);
         map.put(CustomWeighting.CATCH_ALL, 0.5);
@@ -158,7 +158,7 @@ public class CustomWeightingTest {
         assertEquals(1.15, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
 
         // now reduce speed for road class 'primary' -> the weight increases
-        Map map = new HashMap();
+        Map map = new LinkedHashMap();
         map.put(PRIMARY.toString(), 60);
         vehicleModel.getMaxSpeed().put(KEY, map);
         assertEquals(1.3, createWeighting(vehicleModel).calcEdgeWeight(primary, false), 0.01);
@@ -170,7 +170,7 @@ public class CustomWeightingTest {
         CustomModel vehicleModel = new CustomModel();
         assertEquals(3.1, createWeighting(vehicleModel).calcEdgeWeight(edge, false), 0.01);
         // here we increase weight for edges that are road class links
-        Map map = new HashMap<>();
+        Map map = new LinkedHashMap<>();
         map.put("true", 0.5);
         vehicleModel.getPriority().put(RoadClassLink.KEY, map);
         CustomWeighting weighting = createWeighting(vehicleModel);
@@ -183,7 +183,7 @@ public class CustomWeightingTest {
     public void testPriority() {
         CustomModel vehicleModel = new CustomModel();
 
-        Map map = new HashMap();
+        Map map = new LinkedHashMap();
         map.put(MOTORWAY.toString(), 0.1);
         vehicleModel.getPriority().put(KEY, map);
         CustomWeighting weighting = createWeighting(vehicleModel);
@@ -207,7 +207,7 @@ public class CustomWeightingTest {
         assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
         assertEquals(1.30, weighting.calcEdgeWeight(fastEdge, false), 0.01);
 
-        Map map = new HashMap();
+        Map map = new LinkedHashMap();
         map.put(">69", 0.2);
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.getPriority().put("max_speed", map);
@@ -216,7 +216,7 @@ public class CustomWeightingTest {
         assertEquals(3.70, weighting.calcEdgeWeight(fastEdge, false), 0.01);
 
         // this is currently a bit hidden feature as only the shared encoded values are suggested in the UI
-        map = new HashMap();
+        map = new LinkedHashMap();
         map.put(">50", 0.2);
         vehicleModel = new CustomModel();
         vehicleModel.getPriority().put(EncodingManager.getKey("car", "average_speed"), map);
@@ -234,13 +234,22 @@ public class CustomWeightingTest {
         assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
         assertEquals(1.30, weighting.calcEdgeWeight(fastEdge, false), 0.01);
 
-        Map map = new HashMap();
+        Map map = new LinkedHashMap();
         map.put(" > 1.5", 0.2); // allow decimal values in range even for int encoded value
         CustomModel vehicleModel = new CustomModel();
         vehicleModel.getPriority().put("lanes", map);
         weighting = createWeighting(vehicleModel);
         assertEquals(3.10, weighting.calcEdgeWeight(slowEdge, false), 0.01);
         assertEquals(3.70, weighting.calcEdgeWeight(fastEdge, false), 0.01);
+    }
+
+    @Test
+    public void unorderedMapShouldFail() {
+        Map map = new HashMap<>();
+        map.put(" > 1.5", 0.2); // allow decimal values in range even for int encoded value
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.getPriority().put("lanes", map);
+        assertThrows(IllegalArgumentException.class, () -> createWeighting(vehicleModel));
     }
 
     @Test
