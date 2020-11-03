@@ -55,8 +55,8 @@ public class HelperTest {
         assertEquals(100.94, Helper.round(100.94, 2), 1e-7);
         assertEquals(100.9, Helper.round(100.94, 1), 1e-7);
         assertEquals(101.0, Helper.round(100.95, 1), 1e-7);
-        // todonow
-        assertEquals(1040.02, Helper.round(1040.02125359, -2), 1.e-7);
+        // using a negative exponent means the decimal point is shifted to the *left*
+        assertEquals(1000, Helper.round(1040.02, -2), 1.e-7);
     }
 
     @Test
