@@ -126,25 +126,4 @@ abstract class EdgeAccess {
         return edgePointer;
     }
 
-    /**
-     * This method disconnects the specified edge from the list of edges of the specified node. It
-     * does not release the freed space to be reused.
-     *
-     * @param edgeToUpdatePointer if it is negative then the nextEdgeId will be saved to refToEdges of nodes
-     */
-    final long internalEdgeDisconnect(int edgeToRemove, long edgeToUpdatePointer, int baseNode) {
-        long edgeToRemovePointer = toPointer(edgeToRemove);
-        // an edge is shared across the two nodes even if the edge is not in both directions
-        // so we need to know two edge-pointers pointing to the edge before edgeToRemovePointer
-        int nextEdgeId = getNodeA(edgeToRemovePointer) == baseNode ? getLinkA(edgeToRemovePointer) : getLinkB(edgeToRemovePointer);
-        if (edgeToUpdatePointer < 0) {
-            setEdgeRef(baseNode, nextEdgeId);
-        } else {
-            // adjNode is different for the edge we want to update with the new link
-            long link = getNodeA(edgeToUpdatePointer) == baseNode ? edgeToUpdatePointer + E_LINKA : edgeToUpdatePointer + E_LINKB;
-            edges.setInt(link, nextEdgeId);
-        }
-        return edgeToRemovePointer;
-    }
-
 }

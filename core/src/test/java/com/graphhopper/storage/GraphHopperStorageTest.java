@@ -159,34 +159,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void internalDisconnect() {
-        GraphHopperStorage storage = createGHStorage();
-        BaseGraph graph = (BaseGraph) storage.getBaseGraph();
-        EdgeIteratorState iter0 = graph.edge(0, 1, 10, true);
-        EdgeIteratorState iter2 = graph.edge(1, 2, 10, true);
-        EdgeIteratorState iter3 = graph.edge(0, 3, 10, true);
-
-        EdgeExplorer explorer = graph.createEdgeExplorer();
-
-        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-        // remove edge "1-2" but only from 1 not from 2
-        graph.edgeAccess.internalEdgeDisconnect(iter2.getEdge(), -1, iter2.getBaseNode());
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-        assertEquals(GHUtility.asSet(1), GHUtility.getNeighbors(explorer.setBaseNode(2)));
-        // let 0 unchanged -> no side effects
-        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-
-        // remove edge "0-1" but only from 0
-        graph.edgeAccess.internalEdgeDisconnect(iter0.getEdge(), (long) iter3.getEdge() * graph.edgeEntryBytes,
-                iter0.getBaseNode());
-        assertEquals(GHUtility.asSet(3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(3)));
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-        storage.close();
-    }
-
-    @Test
     public void testBigDataEdge() {
         Directory dir = new RAMDirectory();
         GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false);
@@ -204,11 +176,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         graph.close();
 
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true);
-        try {
-            graph.loadExisting();
-            fail();
-        } catch (Exception ex) {
-        }
+        assertThrows(Exception.class, () -> graph.loadExisting());
     }
 
     @Test
