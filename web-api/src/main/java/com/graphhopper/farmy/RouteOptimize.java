@@ -3,16 +3,10 @@ package com.graphhopper.farmy;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
-import com.graphhopper.jsprit.core.algorithm.state.StateId;
-import com.graphhopper.jsprit.core.algorithm.state.StateManager;
-import com.graphhopper.jsprit.core.algorithm.state.StateUpdater;
 import com.graphhopper.jsprit.core.analysis.SolutionAnalyser;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
-import com.graphhopper.jsprit.core.problem.constraint.ConstraintManager;
-import com.graphhopper.jsprit.core.problem.constraint.HardActivityConstraint;
 import com.graphhopper.jsprit.core.problem.job.*;
-import com.graphhopper.jsprit.core.problem.misc.JobInsertionContext;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.*;
@@ -25,10 +19,7 @@ import com.graphhopper.jsprit.core.util.UnassignedJobReasonTracker;
 import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.io.InputStream;
-import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.DoubleStream;
 
 public class RouteOptimize {
 
@@ -176,18 +167,20 @@ public class RouteOptimize {
 
         for (FarmyVehicle vehicle : farmyVehicles) {
             VehicleType type = VehicleTypeImpl.Builder.newInstance(String.format("[TYPE] #%s", vehicle.getId()))
-                    .setFixedCost(1) //Fixe Bedienzeit
-                    .setCostPerDistance(1)
-                    .addCapacityDimension(0, 90)
-//                    .setMaxVelocity(courier.getIsPlus() ? 13.0 : 20.8) // ~50km/h // ~80km/h // 1 ~= 3.85
+                    .setFixedCost(vehicle.getFixedCosts()) //Fixe Bedienzeit
+                    .setCostPerDistance(vehicle.getCostsPerDistance())
+                    .setCostPerTransportTime(vehicle.getCostsPerTransportTime())
+                    .setCostPerServiceTime(vehicle.getCostsPerServiceTime())
+                    .setCostPerWaitingTime(vehicle.getCostPerWaitingTime())
+                    .addCapacityDimension(0, vehicle.getCapacity())
                     .setMaxVelocity(vehicle.isPlus() ? 50.0 : 80.0) // ~50km/h // ~80km/h // 1 ~= 3.85
                     .build();
 
             vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance(String.format("%s#%s%s", vehicle.getName(), vehicle.getId(), vehicle.isPlus() ? " (" + vehicle.getCourier().getName() + ")" : ""))
                     .setStartLocation(getDepotLocation())
                     .setEndLocation(getDepotLocation())
+                    .setLatestArrival(vehicle.getLatestArrival())
                     .setType(type)
-//                    .setReturnToDepot(true) // Rückkehr zum Depot nach Tour ja/nein
                     .build());
         }
 

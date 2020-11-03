@@ -34,39 +34,6 @@ public class OptimizeRouteResource {
         this.hasElevation = hasElevation;
     }
 
-//    @GET
-//    @Produces({MediaType.APPLICATION_JSON})
-//    public Response doGet() {
-//
-//        RouteOptimize routeOptimize = null;
-//        try {
-//            routeOptimize = new RouteOptimize(this.graphHopper);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return Response.serverError().build();
-//        }
-//        return Response.ok().entity(routeOptimize.getOptimizedRoutes()).build();
-//    }
-
-
-//    @POST
-//    @Consumes(MediaType.MULTIPART_FORM_DATA)
-//    @Produces({MediaType.APPLICATION_JSON})
-//    public Response doPost(@FormDataParam("file") InputStream file,
-//                           @FormDataParam("file") FormDataContentDisposition fileInfo,
-//                           @FormDataParam("depotPoint") String depotPoint) {
-//
-//        RouteOptimize routeOptimize = null;
-//        try {
-//            routeOptimize = new RouteOptimize(this.graphHopper, file, GHPoint3D.fromString(depotPoint));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return Response.serverError().build();
-//        }
-//        return Response.ok().entity(routeOptimize.getOptimizedRoutes()).build();
-//    }
-
-
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
