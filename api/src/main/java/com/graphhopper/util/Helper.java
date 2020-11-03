@@ -327,15 +327,15 @@ public class Helper {
     }
 
     public static double round6(double value) {
-        return Math.round(value * 1e6) / 1e6;
+        return round(value, 6);
     }
 
     public static double round4(double value) {
-        return Math.round(value * 1e4) / 1e4;
+        return round(value, 4);
     }
 
     public static double round2(double value) {
-        return Math.round(value * 100) / 100d;
+        return round(value, 2);
     }
 
     /**
