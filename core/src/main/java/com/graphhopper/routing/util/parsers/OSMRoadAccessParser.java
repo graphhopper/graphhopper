@@ -84,8 +84,7 @@ public class OSMRoadAccessParser implements TagParser {
             case HGV:
                 return Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
             default:
-                return mode.isMotorVehicle() ?
-                        Arrays.asList("motor_vehicle", "vehicle", "access") : java.util.Collections.singletonList("access");
+                throw new IllegalArgumentException("Cannot convert TransportationMode " + mode + " to list of restrictions");
         }
     }
 }
