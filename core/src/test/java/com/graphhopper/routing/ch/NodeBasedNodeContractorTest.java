@@ -133,8 +133,8 @@ public class NodeBasedNodeContractorTest {
                 expectedShortcut(4, 6, iter8to4, iter6to8, false, true),
                 expectedShortcut(4, 6, iter4to5, iter5to6, true, false),
                 // there should be two different shortcuts for both directions!
-                expectedShortcut(1, 6, lg.getEdgeIteratorState(7, 4), lg.getEdgeIteratorState(8, 6), true, false),
-                expectedShortcut(1, 6, lg.getEdgeIteratorState(7, 1), lg.getEdgeIteratorState(9, 4), false, true)
+                expectedShortcut(1, 6, lg.getEdgeIteratorState(8, 4), lg.getEdgeIteratorState(7, 6), true, false),
+                expectedShortcut(1, 6, lg.getEdgeIteratorState(8, 1), lg.getEdgeIteratorState(9, 4), false, true)
         );
     }
 
