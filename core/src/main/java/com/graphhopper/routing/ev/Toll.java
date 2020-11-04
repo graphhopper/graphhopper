@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.Helper;
-
 /**
  * This enum defines the toll value like MISSING (default), NO (no toll), ALL
  * (all vehicles) and HGV (toll for heavy goods vehicles)
@@ -32,16 +30,6 @@ public enum Toll {
 
     Toll(String name) {
         this.name = name;
-    }
-
-    public static Toll find(String name) {
-        if (name == null)
-            return MISSING;
-        try {
-            return Toll.valueOf(Helper.toUpperCase(name));
-        } catch (IllegalArgumentException ex) {
-            return MISSING;
-        }
     }
 
     @Override
