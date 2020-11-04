@@ -20,7 +20,6 @@ package com.graphhopper.http.health;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.storage.GraphHopperStorage;
 
 public class GraphHopperHealthCheck extends HealthCheck {
 
@@ -32,11 +31,12 @@ public class GraphHopperHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() {
-        boolean valid = graphHopper.getGraphHopperStorage().getBounds().isValid();
-        if (valid) {
-            return Result.healthy();
-        } else {
+        if (!graphHopper.getGraphHopperStorage().getBounds().isValid()) {
             return Result.unhealthy("GraphHopperStorage has invalid bounds.");
         }
+        if (!graphHopper.getFullyLoaded()) {
+            return Result.unhealthy("GraphHopper is not fully loaded.");
+        }
+        return Result.healthy();
     }
 }
