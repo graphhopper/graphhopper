@@ -73,7 +73,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         final String name = chConfig.getName();
         this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
-        this.chEdgeAccess = new CHEdgeAccess(name);
+        this.chEdgeAccess = new CHEdgeAccess();
         if (segmentSize >= 0) {
             nodesCH.setSegmentSize(segmentSize);
             shortcuts.setSegmentSize(segmentSize);
@@ -447,12 +447,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public boolean next() {
             allEdgeIterator.edgeId++;
-            allEdgeIterator.edgePointer = (long) allEdgeIterator.edgeId * allEdgeIterator.edgeAccess.getEntryBytes();
-            if (!checkRange())
+            if (allEdgeIterator.edgeId >= baseGraph.edgeCount + shortcutCount)
                 return false;
-
-            allEdgeIterator.adjNode = allEdgeIterator.edgeAccess.getNodeB(allEdgeIterator.edgePointer);
+            selectEdgeAccess(allEdgeIterator.edgeId);
+            allEdgeIterator.edgePointer = allEdgeIterator.edgeAccess.toPointer(allEdgeIterator.edgeId);
             allEdgeIterator.baseNode = allEdgeIterator.edgeAccess.getNodeA(allEdgeIterator.edgePointer);
+            allEdgeIterator.adjNode = allEdgeIterator.edgeAccess.getNodeB(allEdgeIterator.edgePointer);
             allEdgeIterator.freshFlags = false;
             allEdgeIterator.reverse = false;
             return true;
@@ -463,25 +463,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             return allEdgeIterator.detach(reverseArg);
         }
 
-        private boolean checkRange() {
-            if (isShortcut())
-                return allEdgeIterator.edgeId < shortcutCount;
-
-            if (allEdgeIterator.edgeId < baseGraph.edgeCount)
-                return true;
-
-            // iterate over shortcuts
-            allEdgeIterator.edgeAccess = chEdgeAccess;
-            allEdgeIterator.edgeId = 0;
-            allEdgeIterator.edgePointer = (long) allEdgeIterator.edgeId * shortcutEntryBytes;
-            return allEdgeIterator.edgeId < shortcutCount;
-        }
-
         @Override
         public int getEdge() {
-            if (isShortcut())
-                return baseGraph.edgeCount + allEdgeIterator.edgeId;
-            return super.getEdge();
+            return allEdgeIterator.edgeId;
         }
 
         @Override
@@ -497,11 +481,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     private class CHEdgeAccess extends EdgeAccess {
-        private final String name;
 
-        public CHEdgeAccess(String name) {
+        public CHEdgeAccess() {
             super(shortcuts);
-            this.name = name;
         }
 
         @Override
@@ -512,11 +494,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         final void setEdgeRef(int nodeId, int edgeId) {
             nodesCH.setInt((long) nodeId * nodeCHEntryBytes + N_CH_REF, edgeId);
-        }
-
-        @Override
-        final int getEntryBytes() {
-            return shortcutEntryBytes;
         }
 
         void setShortcutFlags(long edgePointer, int flags) {
@@ -599,10 +576,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             return tmp < shortcutCount && tmp >= 0;
         }
 
-        @Override
-        public String toString() {
-            return "ch edge access " + name;
-        }
     }
 
     private class CHEdgeIteratorStateImpl implements CHEdgeIteratorState {
