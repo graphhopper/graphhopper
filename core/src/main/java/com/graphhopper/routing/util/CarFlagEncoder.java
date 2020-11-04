@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.UnsignedDecimalEncodedValue;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -61,7 +60,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 properties.getDouble("speed_factor", 5),
                 properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
 
-        restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -149,7 +147,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     public TransportationMode getTransportationMode() {
-        return TransportationMode.MOTOR_VEHICLE;
+        return TransportationMode.CAR;
     }
 
     @Override

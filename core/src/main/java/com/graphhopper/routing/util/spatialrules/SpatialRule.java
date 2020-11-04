@@ -22,6 +22,7 @@ import com.graphhopper.routing.ev.RoadClass;
 
 import java.util.List;
 
+import com.graphhopper.routing.util.TransportationMode;
 import org.locationtech.jts.geom.Polygon;
 
 /**

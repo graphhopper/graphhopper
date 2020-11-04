@@ -20,6 +20,7 @@ package com.graphhopper.routing.util.spatialrules;
 import java.util.Collections;
 import java.util.List;
 
+import com.graphhopper.routing.util.TransportationMode;
 import org.locationtech.jts.geom.Polygon;
 
 import com.graphhopper.routing.ev.RoadAccess;
