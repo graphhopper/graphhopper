@@ -10,12 +10,6 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
     else
         sign = messages.getSignName(sign);
     var title = instr.text;
-    if (instr.annotation_text) {
-        if (!title)
-            title = instr.annotation_text;
-        else
-            title = title + ", " + instr.annotation_text;
-    }
 
     var pathname = window.location.pathname;
     var dirname = pathname.substring(0, pathname.lastIndexOf('/'));
