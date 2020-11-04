@@ -1,5 +1,6 @@
 package com.graphhopper.farmy;
 
+import com.google.gson.Gson;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
@@ -18,6 +19,7 @@ import com.graphhopper.jsprit.core.util.Solutions;
 import com.graphhopper.jsprit.core.util.UnassignedJobReasonTracker;
 import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
 import com.graphhopper.util.shapes.GHPoint;
+import org.apache.commons.math3.stat.Frequency;
 
 import java.util.*;
 
@@ -28,10 +30,13 @@ public class RouteOptimize {
     private final GraphHopperAPI graphHopper;
     private IdentifiedGHPoint3D depotPoint;
     private RoutePlanReader routePlanReader;
+    private UnassignedJobReasonTracker reasonTracker;
 
     public VehicleRoutingTransportCostsMatrix vrtcm;
 
     public List<Double> speedAvg = new ArrayList<>();
+
+
 
 
 //    public RouteOptimize(GraphHopperAPI graphHopper, InputStream fileStream, GHPoint depotPoint) throws Exception {
@@ -60,9 +65,10 @@ public class RouteOptimize {
         build(this.routePlanReader.getIdentifiedPointList(), farmyVehicles);
     }
 
-    public HashMap<String, HashMap<String, Object>> getOptimizedRoutes() {
-        HashMap<String, HashMap<String, Object>> allMap = new HashMap<>();
+    public HashMap<String, String> getOptimizedRoutes() {
+        HashMap<String, String> allMap = new HashMap<>();
 
+        HashMap<String, HashMap<String, Object>> optimizedRoutesMap = new HashMap<>();
         for (VehicleRoute route : solution.getRoutes()) {
             HashMap<String, Object> vehicleHashMap = new HashMap<>();
             IdentifiedGHPoint3D firstPoint = null;
@@ -116,9 +122,15 @@ public class RouteOptimize {
                 vehicleHashMap.put("avg_speed", (routeDistance / route.getEnd().getArrTime()) * 3.85);
             }
 
-            allMap.put(routeVehicleId(route, allMap, 0), vehicleHashMap);
+            optimizedRoutesMap.put(routeVehicleId(route, optimizedRoutesMap, 0), vehicleHashMap);
         }
-//        allMap.put("UnassignedJobs", (HashMap<String, Object>) solution.getUnassignedJobs());
+        Gson gson = new Gson();
+
+        allMap.put("OptimizedRoutes", gson.toJson(optimizedRoutesMap));
+        HashMap<String, Frequency> frequencyHashMap= new HashMap<>();
+        this.reasonTracker.getFailedConstraintNamesFrequencyMapping().entrySet().stream().filter(o -> this.solution.getUnassignedJobs().stream().anyMatch(d -> d.getId().equals(o.getKey()))).forEach(d -> frequencyHashMap.put(d.getKey(), d.getValue()));
+
+        allMap.put("UnassignedJobs",  gson.toJson(frequencyHashMap));
         return allMap;
     }
 
@@ -179,7 +191,7 @@ public class RouteOptimize {
             vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance(String.format("%s#%s%s", vehicle.getName(), vehicle.getId(), vehicle.isPlus() ? " (" + vehicle.getCourier().getName() + ")" : ""))
                     .setStartLocation(getDepotLocation())
                     .setEndLocation(getDepotLocation())
-                    .setLatestArrival(vehicle.getLatestArrival())
+//                    .setLatestArrival(vehicle.getLatestArrival())
                     .setType(type)
                     .build());
         }
@@ -232,13 +244,12 @@ public class RouteOptimize {
         VehicleRoutingAlgorithm vra = Jsprit.Builder.newInstance(vrp)
 //                .setStateAndConstraintManager(stateManager, constraintManager)
                 .setProperty(Jsprit.Parameter.FAST_REGRET, "true")
-                .setProperty(Jsprit.Parameter.THREADS, "5")
-                .setProperty(Jsprit.Parameter.FIXED_COST_PARAM, "1.")
+                .setProperty(Jsprit.Parameter.THREADS, "8")
                 .buildAlgorithm();
 
-        UnassignedJobReasonTracker reasonTracker = new UnassignedJobReasonTracker();
+        this.reasonTracker = new UnassignedJobReasonTracker();
 
-        vra.addListener(reasonTracker);
+        vra.addListener(this.reasonTracker);
         vra.setMaxIterations(64); // Fast iterations for testing
 
         Collection<VehicleRoutingProblemSolution> solutions = vra.searchSolutions();
