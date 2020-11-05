@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.BikeNetwork;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Roundabout;
@@ -149,7 +150,7 @@ public class EncodingManagerTest {
         manager.acceptWay(osmWay, map);
         IntsRef edgeFlags = manager.handleWayTags(osmWay, map, relFlags);
 
-        EnumEncodedValue enc = manager.getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
+        EnumEncodedValue enc = manager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class);
 
         assertTrue(defaultBike.priorityEnc.getDecimal(false, edgeFlags)
                 > lessRelationCodes.priorityEnc.getDecimal(false, edgeFlags));

@@ -18,13 +18,12 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**
@@ -33,63 +32,94 @@ import static com.graphhopper.util.Parameters.Details.*;
  * @author Robin Boldt
  */
 public class PathDetailsBuilderFactory {
+    
+    private static final String PRIORITY_EV_SUFFIX = EncodingManager.getKey("", "priority");
 
     public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, EncodedValueLookup evl, Weighting weighting) {
         List<PathDetailsBuilder> builders = new ArrayList<>();
-
-        if (requestedPathDetails.contains(AVERAGE_SPEED))
-            builders.add(new AverageSpeedDetails(weighting));
-
-        if (requestedPathDetails.contains(STREET_NAME))
-            builders.add(new StreetNameDetails());
-
-        if (requestedPathDetails.contains(EDGE_ID))
-            builders.add(new EdgeIdDetails());
-
-        if (requestedPathDetails.contains(EDGE_KEY))
-            builders.add(new EdgeKeyDetails());
-
-        if (requestedPathDetails.contains(TIME))
-            builders.add(new TimeDetails(weighting));
-
-        if (requestedPathDetails.contains(WEIGHT))
-            builders.add(new WeightDetails(weighting));
-
-        if (requestedPathDetails.contains(DISTANCE))
-            builders.add(new DistanceDetails());
-
-        for (String checkSuffix : requestedPathDetails) {
-            if (checkSuffix.endsWith(getKey("", "priority")) && evl.hasEncodedValue(checkSuffix))
-                builders.add(new DecimalDetails(checkSuffix, evl.getDecimalEncodedValue(checkSuffix)));
-        }
-
-        for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY,
-                MaxAxleLoad.KEY, MaxLength.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new DecimalDetails(key, evl.getDecimalEncodedValue(key)));
-        }
-
-        for (String key : Arrays.asList(Roundabout.KEY, RoadClassLink.KEY, GetOffBike.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new BooleanDetails(key, evl.getBooleanEncodedValue(key)));
-        }
-
-        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, RoadAccess.KEY,
-                BikeNetwork.KEY, FootNetwork.KEY, Toll.KEY, TrackType.KEY, Hazmat.KEY, HazmatTunnel.KEY,
-                HazmatWater.KEY, Country.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new EnumDetails<>(key, evl.getEnumEncodedValue(key, Enum.class)));
-        }
-
-        for (String key : Arrays.asList(MtbRating.KEY, HikeRating.KEY, HorseRating.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new IntDetails(key, evl.getIntEncodedValue(key)));
-        }
-
-        if (requestedPathDetails.size() != builders.size()) {
-            throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);
+        
+        for (String pathDetail : requestedPathDetails) {
+            builders.add(createPathDetailsBuilder(pathDetail, evl, weighting));
         }
 
         return builders;
+    }
+    
+    private PathDetailsBuilder createPathDetailsBuilder(String pathDetail, EncodedValueLookup evl, Weighting weighting) {
+        switch (pathDetail) {
+        case AVERAGE_SPEED:
+            return new AverageSpeedDetails(weighting);
+        case DISTANCE:
+            return new DistanceDetails();
+        case EDGE_ID:
+            return new EdgeIdDetails();
+        case EDGE_KEY:
+            return new EdgeKeyDetails();
+        case STREET_NAME:
+            return new StreetNameDetails();
+        case TIME:
+            return new TimeDetails(weighting);
+        case WEIGHT:
+            return new WeightDetails(weighting);
+        case MaxAxleLoad.KEY:
+        case MaxHeight.KEY:
+        case MaxLength.KEY:
+        case MaxSpeed.KEY:
+        case MaxWeight.KEY:
+        case MaxWidth.KEY:
+            return createDecimalDetails(pathDetail, evl);
+        case GetOffBike.KEY:
+        case RoadClassLink.KEY:
+        case Roundabout.KEY:
+            return createBooleanDetails(pathDetail, evl);
+        case HikeRating.KEY:
+        case HorseRating.KEY:
+        case MtbRating.KEY:
+            return createIntDetails(pathDetail, evl);
+        case BikeNetwork.KEY:
+        case Country.KEY:
+        case FootNetwork.KEY:
+        case Hazmat.KEY:
+        case HazmatTunnel.KEY:
+        case HazmatWater.KEY:
+        case RoadAccess.KEY:
+        case RoadClass.KEY:
+        case RoadEnvironment.KEY:
+        case Surface.KEY:
+        case Toll.KEY:
+        case TrackType.KEY:
+            return createEnumDetails(pathDetail, evl);
+        default:
+            if (pathDetail.endsWith(PRIORITY_EV_SUFFIX)) {
+                return createDecimalDetails(pathDetail, evl);
+            }
+            throw new IllegalArgumentException("Unsupported path detail: " + pathDetail);
+        }
+    }
+    
+    private BooleanDetails createBooleanDetails(String key, EncodedValueLookup evl) {
+        checkEncodedValue(key, evl);
+        return new BooleanDetails(key, evl.getBooleanEncodedValue(key));
+    }
+    
+    private DecimalDetails createDecimalDetails(String key, EncodedValueLookup evl) {
+        checkEncodedValue(key, evl);
+        return new DecimalDetails(key, evl.getDecimalEncodedValue(key));
+    }
+    
+    private IntDetails createIntDetails(String key, EncodedValueLookup evl) {
+        checkEncodedValue(key, evl);
+        return new IntDetails(key, evl.getIntEncodedValue(key));
+    }
+    
+    private EnumDetails<?> createEnumDetails(String key, EncodedValueLookup evl) {
+        checkEncodedValue(key, evl);
+        return new EnumDetails<>(key, evl.getEnumEncodedValue(key, Enum.class));
+    }
+    
+    private static void checkEncodedValue(String key, EncodedValueLookup evl) {
+        if (!evl.hasEncodedValue(key)) {
+            throw new IllegalArgumentException("Missing encoded values for path detail: " + key);
+        }
     }
 }
