@@ -18,11 +18,11 @@
 package com.graphhopper.routing.ev;
 
 /**
- * This enum defines the toll value like MISSING (default), NO (no toll), ALL
- * (all vehicles) and HGV (toll for heavy goods vehicles)
+ * This enum defines the toll value like MISSING (default), NO (no toll), HGV
+ * (toll for heavy goods vehicles) and ALL (all vehicles)
  */
 public enum Toll {
-    MISSING("missing"), NO("no"), ALL("all"), HGV("hgv");
+    MISSING("missing"), NO("no"), HGV("hgv"), ALL("all");
 
     public static final String KEY = "toll";
 
