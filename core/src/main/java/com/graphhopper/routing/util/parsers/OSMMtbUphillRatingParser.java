@@ -20,33 +20,32 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.MtbUphillScale;
+import com.graphhopper.routing.ev.MtbUphillRating;
+import com.graphhopper.routing.ev.UnsignedIntEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
-public class OSMMtbUphillScaleParser implements TagParser {
+public class OSMMtbUphillRatingParser implements TagParser {
 
-    private final EnumEncodedValue<MtbUphillScale> scaleEncoder;
+    private final UnsignedIntEncodedValue ratingEncoder;
 
-    public OSMMtbUphillScaleParser() {
-        this.scaleEncoder = new EnumEncodedValue<>(MtbUphillScale.KEY, MtbUphillScale.class);
+    public OSMMtbUphillRatingParser() {
+        this.ratingEncoder = new UnsignedIntEncodedValue(MtbUphillRating.KEY, 3, true);
     }
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(scaleEncoder);
+        link.add(ratingEncoder);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
         String value = readerWay.getTag("mtb:scale:uphill");
-        MtbUphillScale scale = MtbUphillScale.find(value);
-        if (scale == MtbUphillScale.NONE) {
-            return edgeFlags;
+        MtbUphillRating rating = MtbUphillRating.find(value);
+        if (rating != MtbUphillRating.NONE) {
+            ratingEncoder.setInt(false, edgeFlags, rating.ordinal());
         }
-        scaleEncoder.setEnum(false, edgeFlags, scale);
         return edgeFlags;
     }
 }

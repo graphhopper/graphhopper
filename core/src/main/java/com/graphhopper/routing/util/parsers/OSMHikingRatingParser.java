@@ -18,32 +18,34 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.HikingRating;
+import com.graphhopper.routing.ev.UnsignedIntEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
-public class OSMSacScaleParser implements TagParser {
+public class OSMHikingRatingParser implements TagParser {
 
-    private final EnumEncodedValue<SacScale> scaleEncoder;
+    private final UnsignedIntEncodedValue ratingEncoder;
 
-    public OSMSacScaleParser() {
-        this.scaleEncoder = new EnumEncodedValue<>(SacScale.KEY, SacScale.class);
+    public OSMHikingRatingParser() {
+        this.ratingEncoder = new UnsignedIntEncodedValue(HikingRating.KEY, 3, true);
     }
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(scaleEncoder);
+        link.add(ratingEncoder);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
         String value = readerWay.getTag("sac_scale");
-        SacScale scale = SacScale.find(value);
-        if (scale == SacScale.NONE) {
-            return edgeFlags;
+        HikingRating rating = HikingRating.find(value);
+        if (rating != HikingRating.NONE) {
+            ratingEncoder.setInt(false, edgeFlags, rating.ordinal());
         }
-        scaleEncoder.setEnum(false, edgeFlags, scale);
         return edgeFlags;
     }
 }

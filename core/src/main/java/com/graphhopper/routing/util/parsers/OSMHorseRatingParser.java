@@ -20,33 +20,32 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.MtbScale;
+import com.graphhopper.routing.ev.HorseRating;
+import com.graphhopper.routing.ev.UnsignedIntEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
-public class OSMMtbScaleParser implements TagParser {
+public class OSMHorseRatingParser implements TagParser {
 
-    private final EnumEncodedValue<MtbScale> scaleEncoder;
+    private final UnsignedIntEncodedValue ratingEncoder;
 
-    public OSMMtbScaleParser() {
-        this.scaleEncoder = new EnumEncodedValue<>(MtbScale.KEY, MtbScale.class);
+    public OSMHorseRatingParser() {
+        this.ratingEncoder = new UnsignedIntEncodedValue(HorseRating.KEY, 3, true);
     }
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(scaleEncoder);
+        link.add(ratingEncoder);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-        String value = readerWay.getTag("mtb:scale");
-        MtbScale scale = MtbScale.find(value);
-        if (scale == MtbScale.NONE) {
-            return edgeFlags;
+        String value = readerWay.getTag("horse_scale");
+        HorseRating rating = HorseRating.find(value);
+        if (rating != HorseRating.NONE) {
+            ratingEncoder.setInt(false, edgeFlags, rating.ordinal());
         }
-        scaleEncoder.setEnum(false, edgeFlags, scale);
         return edgeFlags;
     }
 }

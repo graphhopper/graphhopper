@@ -76,14 +76,17 @@ public class PathDetailsBuilderFactory {
                 builders.add(new BooleanDetails(key, evl.getBooleanEncodedValue(key)));
         }
 
+        for (String key : Arrays.asList(MtbRating.KEY, MtbUphillRating.KEY, HikingRating.KEY, HorseRating.KEY)) {
+            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
+                builders.add(new IntDetails(key, evl.getIntEncodedValue(key)));
+        }
+
         for (Map.Entry entry : Arrays.asList(new MapEntry<>(RoadClass.KEY, RoadClass.class),
                 new MapEntry<>(RoadEnvironment.KEY, RoadEnvironment.class), new MapEntry<>(Surface.KEY, Surface.class),
                 new MapEntry<>(RoadAccess.KEY, RoadAccess.class), new MapEntry<>(Toll.KEY, Toll.class),
                 new MapEntry<>(TrackType.KEY, TrackType.class), new MapEntry<>(Hazmat.KEY, Hazmat.class),
                 new MapEntry<>(HazmatTunnel.KEY, HazmatTunnel.class), new MapEntry<>(HazmatWater.KEY, HazmatWater.class),
-                new MapEntry<>(Country.KEY, Country.class), new MapEntry<>(MtbScale.KEY, MtbScale.class),
-                new MapEntry<>(MtbUphillScale.KEY, MtbUphillScale.class), new MapEntry<>(SacScale.KEY, SacScale.class),
-                new MapEntry<>(HorseScale.KEY, HorseScale.class))) {
+                new MapEntry<>(Country.KEY, Country.class))) {
             String key = (String) entry.getKey();
             if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
                 builders.add(new EnumDetails(key, evl.getEnumEncodedValue(key, (Class<Enum>) entry.getValue())));
