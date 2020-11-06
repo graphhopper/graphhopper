@@ -15,28 +15,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.routing.util;
 
 /**
- * Defining different types of transportation.
- * <p>
- * We started with a subset of the definition found in the OSM Wiki
- * https://wiki.openstreetmap.org/wiki/Key:access#Land-based_transportation
+ * Define different types of transportation that are used to create and populate our encoded values from a data source
+ * like OpenStreetMap.
  *
  * @author Robin Boldt
+ * @author Peter Karich
  */
 public enum TransportationMode {
+    OTHER(false), FOOT(false), VEHICLE(false), BIKE(false),
+    MOTOR_VEHICLE(true), CAR(true), MOTORCYCLE(true), HGV(true);
 
-    OTHER(0), MOTOR_VEHICLE(1), BICYCLE(2), FOOT(3);
+    private final boolean motorVehicle;
 
-    private final int value;
-
-    TransportationMode(int value) {
-        this.value = value;
+    TransportationMode(boolean motorVehicle) {
+        this.motorVehicle = motorVehicle;
     }
 
-    public int getValue() {
-        return value;
+    public boolean isMotorVehicle() {
+        return motorVehicle;
     }
-
 }

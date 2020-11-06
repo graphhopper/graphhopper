@@ -710,6 +710,11 @@ public class OSMReaderTest {
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         CarFlagEncoder truck = new CarFlagEncoder(5, 5, 24) {
             @Override
+            public TransportationMode getTransportationMode() {
+                return TransportationMode.HGV;
+            }
+
+            @Override
             public String toString() {
                 return "truck";
             }

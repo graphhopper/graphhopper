@@ -125,7 +125,7 @@ public class GtfsStorage implements GtfsStorageI {
 
 	private Map<Integer, PlatformDescriptor> platformDescriptorsByEdge;
 
-	private Map<String, Fare> fares;
+	private Map<String, Map<String, Fare>> faresByFeed;
 	private Map<String, int[]> boardEdgesForTrip;
 	private Map<String, int[]> leaveEdgesForTrip;
 
@@ -160,10 +160,7 @@ public class GtfsStorage implements GtfsStorageI {
 			GTFSFeed feed = new GTFSFeed(dbFile);
 			this.gtfsFeeds.put(gtfsFeedId, feed);
 		}
-
-		LocalDate latestStartDate = LocalDate.ofEpochDay(this.gtfsFeeds.values().stream().mapToLong(f -> f.getStartDate().toEpochDay()).max().getAsLong());
-		LocalDate earliestEndDate = LocalDate.ofEpochDay(this.gtfsFeeds.values().stream().mapToLong(f -> f.getEndDate().toEpochDay()).min().getAsLong());
-		LOGGER.info("Calendar range covered by all feeds: {} till {}", latestStartDate, earliestEndDate);
+		postInit();
 		return true;
 	}
 
@@ -191,7 +188,6 @@ public class GtfsStorage implements GtfsStorageI {
 		this.readableTimeZones = Collections.unmodifiableMap(readableTimeZones);
 		this.tripDescriptors = data.getTreeMap("tripDescriptors");
 		this.stopSequences = data.getTreeMap("stopSequences");
-		this.fares = data.getTreeMap("fares");
 		this.boardEdgesForTrip = data.getHashMap("boardEdgesForTrip");
 		this.leaveEdgesForTrip = data.getHashMap("leaveEdgesForTrip");
 		this.stationNodes = data.getHashMap("stationNodes");
@@ -209,6 +205,15 @@ public class GtfsStorage implements GtfsStorageI {
 			throw new RuntimeException(e);
 		}
 		this.gtfsFeedIds.add(id);
+	}
+
+	// TODO: Refactor initialization
+	public void postInit() {
+		LocalDate latestStartDate = LocalDate.ofEpochDay(this.gtfsFeeds.values().stream().mapToLong(f -> f.getStartDate().toEpochDay()).max().getAsLong());
+		LocalDate earliestEndDate = LocalDate.ofEpochDay(this.gtfsFeeds.values().stream().mapToLong(f -> f.getEndDate().toEpochDay()).min().getAsLong());
+		LOGGER.info("Calendar range covered by all feeds: {} till {}", latestStartDate, earliestEndDate);
+		faresByFeed = new HashMap<>();
+		this.gtfsFeeds.forEach((feed_id, feed) -> faresByFeed.put(feed_id, feed.fares));
 	}
 
 	public void close() {
@@ -262,8 +267,8 @@ public class GtfsStorage implements GtfsStorageI {
     }
 
     @Override
-	public Map<String, Fare> getFares() {
-		return fares;
+	public Map<String, Map<String, Fare>> getFares() {
+		return faresByFeed;
 	}
 
 	public Map<String, GTFSFeed> getGtfsFeeds() {

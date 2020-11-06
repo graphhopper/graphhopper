@@ -148,6 +148,11 @@ public class Path {
         return time;
     }
 
+    public Path setTime(long time) {
+        this.time = time;
+        return this;
+    }
+
     public Path addTime(long time) {
         this.time += time;
         return this;

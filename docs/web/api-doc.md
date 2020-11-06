@@ -39,7 +39,7 @@ point_hint       | -       | Optional parameter. Specifies a hint for each `poin
 snap_prevention  | -       | Optional parameter to avoid snapping to a certain road class or road environment. Current supported values: `motorway`, `trunk`, `ferry`, `tunnel`, `bridge` and `ford`. Multiple values are specified like `snap_prevention=ferry&snap_prevention=motorway`
 details          | -       | Optional parameter. You can request additional details for the route: `average_speed`, `street_name`, `edge_id`, `road_class`, `road_environment`, `max_speed` and `time` (and see which other values are configured in `graph.encoded_values`).  Multiple values are specified like `details=average_speed&details=time`. The returned format for one detail segment is `[fromRef, toRef, value]`. The `ref` references the points of the response. Value can also be `null` if the property does not exist for one detail segment.
 curbside         | any     | Optional parameter applicable to edge-based routing only. It specifies on which side a query point should be relative to the driver when she leaves/arrives at a start/target/via point. Possible values: right, left, any. Specify for every point parameter. See similar heading parameter.
-force_curbside   | false   | True if the curbside parameters should lead to an exception if they cannot be fulfilled.
+force_curbside   | true    | Optional parameter. If it is set to true there will be an exception in case the curbside parameters cannot be fulfilled (e.g. specifying the wrong side for one-ways).
 
 ### Hybrid
 
@@ -224,7 +224,7 @@ HTTP error code | Reason
 
 ## Isochrone
 
-In addition to routing, the end point to obtain an isochrone is `/isochrone`.
+In addition to routing, the end point to obtain an isochrone is `/isochrone`. To get a point list instead of a polygon you can have a look into the /spt endpoint.
 
 [http://localhost:8989/isochrone](http://localhost:8989/isochrone)
 
@@ -236,6 +236,5 @@ profile                     |         | The profile to be used for the isochrone
 buckets                     | 1       | Number by which to divide the given `time_limit` to create `buckets` nested isochrones of time intervals `time_limit-n*time_limit/buckets` for `n=[0,buckets)`. Applies analogously to `distance_limit`.
 reverse_flow                | false   | If false the flow goes from point to the polygon, if true the flow goes from the polygon inside to the point. Example usage for false: *How many potential customer can be reached within 30min travel time from your store* vs. true: *How many customers can reach your store within 30min travel time.* (optional, default to false)
 point                       |         | Specify the start coordinate (required). A string organized as `latitude,longitude`.
-result                      | polygon | Can be "pointlist" or "polygon".
 time_limit                  | 600     | Specify which time the vehicle should travel. In seconds. (optional, default to 600)
 distance_limit              | -1      | Specify which distance the vehicle should travel. In meter. (optional, default to -1)

@@ -162,6 +162,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                         throw new RuntimeException(e);
                     }
                 }
+                getGtfsStorage().postInit();
 
                 //When set a transfer edge will be created between stops connected to same OSM node. This is to keep previous behavior before
                 //this commit https://github.com/graphhopper/graphhopper/commit/31ae1e1534849099f24e45d53c96340a7c6a5197.

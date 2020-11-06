@@ -22,6 +22,7 @@ import java.util.List;
 
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.util.TransportationMode;
 
 /**
  * Contains all rules which are applicable for a certain position.

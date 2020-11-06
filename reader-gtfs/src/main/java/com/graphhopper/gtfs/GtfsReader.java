@@ -138,7 +138,6 @@ class GtfsReader {
     }
 
     void buildPtNetwork() {
-        gtfsStorage.getFares().putAll(feed.fares);
         createTrips();
         wireUpStops();
         insertGtfsTransfers();

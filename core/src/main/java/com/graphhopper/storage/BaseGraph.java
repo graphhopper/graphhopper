@@ -117,11 +117,6 @@ class BaseGraph implements Graph {
             }
 
             @Override
-            final int getEntryBytes() {
-                return edgeEntryBytes;
-            }
-
-            @Override
             final long toPointer(int edgeId) {
                 assert isInBounds(edgeId) : "edgeId " + edgeId + " not in bounds [0," + edgeCount + ")";
                 return (long) edgeId * edgeEntryBytes;
@@ -930,19 +925,15 @@ class BaseGraph implements Graph {
 
         @Override
         public boolean next() {
-            while (true) {
-                edgeId++;
-                if (edgeId >= baseGraph.edgeCount)
-                    return false;
-
-                edgePointer = edgeAccess.toPointer(edgeId);
-                adjNode = edgeAccess.getNodeB(edgePointer);
-
-                baseNode = edgeAccess.getNodeA(edgePointer);
-                freshFlags = false;
-                reverse = false;
-                return true;
-            }
+            edgeId++;
+            if (edgeId >= baseGraph.edgeCount)
+                return false;
+            edgePointer = edgeAccess.toPointer(edgeId);
+            baseNode = edgeAccess.getNodeA(edgePointer);
+            adjNode = edgeAccess.getNodeB(edgePointer);
+            freshFlags = false;
+            reverse = false;
+            return true;
         }
 
         @Override
