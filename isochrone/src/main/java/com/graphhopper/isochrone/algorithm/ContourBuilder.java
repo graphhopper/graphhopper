@@ -68,12 +68,7 @@ public class ContourBuilder {
                     cC = e.orig().midPoint(e.dest()).getCoordinate();
                 }
                 // Strip z coordinate
-                Coordinate c = new Coordinate(cC.x, cC.y);
-                // Truncate coordinates at defined number of decimal places.
-                // Shouldn't be necessary because Geometries carry the precision model with them, but the
-                // JSON writer ignores it, so there's that.
-                geometryFactory.getPrecisionModel().makePrecise(c);
-                polyPoints.add(c);
+                polyPoints.add(new Coordinate(cC.x, cC.y));
                 processed.add(e);
                 ReadableQuadEdge E1 = ccw ? e.oNext().getPrimary() : e.oPrev().getPrimary();
                 ReadableQuadEdge E2 = ccw ? e.dPrev().getPrimary() : e.dNext().getPrimary();
