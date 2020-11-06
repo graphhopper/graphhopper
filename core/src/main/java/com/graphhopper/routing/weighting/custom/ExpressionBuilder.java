@@ -25,15 +25,16 @@ import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.util.CustomModel;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.commons.compiler.Location;
-import org.codehaus.janino.Scanner;
-import org.codehaus.janino.*;
+import org.codehaus.janino.Java;
+import org.codehaus.janino.Parser;
+import org.codehaus.janino.SimpleCompiler;
+import org.codehaus.janino.Unparser;
 import org.codehaus.janino.util.DeepCopier;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
@@ -42,43 +43,15 @@ import java.io.StringWriter;
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.custom.CustomWeighting.FIRST_MATCH;
+import static com.graphhopper.routing.weighting.custom.ExpressionVisitor.parseExpression;
 
-public class ScriptHelper {
+class ExpressionBuilder {
     static final String AREA_PREFIX = "in_area_";
-    protected DecimalEncodedValue avg_speed_enc;
-
-    public ScriptHelper() {
-    }
-
-    public void init(EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc, Map<String, JsonFeature> areas) {
-        this.avg_speed_enc = avgSpeedEnc;
-    }
-
-    public double getPriority(EdgeIteratorState edge, boolean reverse) {
-        return -1;
-    }
-
-    public double getSpeed(EdgeIteratorState edge, boolean reverse) {
-        return getRawSpeed(edge, reverse);
-    }
-
-    public final double getRawSpeed(EdgeIteratorState edge, boolean reverse) {
-        double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);
-        if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
-            throw new IllegalStateException("Invalid estimated speed " + speed);
-        return speed;
-    }
-
-    public static boolean in(Polygon p, EdgeIteratorState edge) {
-        BBox bbox = GHUtility.createBBox(edge);
-        if (p.getBounds().intersects(bbox))
-            return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()); // TODO PERF: cache bbox and edge wayGeometry for multiple area
-        return false;
-    }
 
     // note: we only need to synchronize the get and put methods alone. No need for synch of an iteration or the block
     // where more work would be needed. E.g. we do not care for the rare case where two identical classes are created
-    // and only one is cached. This cache requires that the created ScriptHelper class needs to be stateless.
+    // and only one is cached. We could use CachingJavaSourceClassLoader but 1. we would need to use a single compiler
+    // across threads and 2. the statements (for priority and speed) are still unnecessarily created
     static final Map<String, Class> cache = Collections.synchronizedMap(new LinkedHashMap<String, Class>() {
         int count = Runtime.getRuntime().availableProcessors();
 
@@ -88,8 +61,12 @@ public class ScriptHelper {
         }
     });
 
-    public static ScriptHelper create(CustomModel customModel, EncodedValueLookup lookup,
-                                      double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
+    /**
+     * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
+     * and returns an instance.
+     */
+    static CustomWeightingHelper create(CustomModel customModel, EncodedValueLookup lookup,
+                                        double globalMaxSpeed, double maxSpeedFallback, DecimalEncodedValue avgSpeedEnc) {
         Java.CompilationUnit cu;
         try {
             String key = customModel.toString() + ",global:" + globalMaxSpeed + ",fallback:" + maxSpeedFallback;
@@ -100,18 +77,19 @@ public class ScriptHelper {
                 HashSet<String> speedVariables = new LinkedHashSet<>();
                 List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, globalMaxSpeed, maxSpeedFallback);
                 String classTemplate = createClassTemplate(priorityVariables, speedVariables, lookup);
-                cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
+                cu = (Java.CompilationUnit) new Parser(new org.codehaus.janino.Scanner("source", new StringReader(classTemplate))).
                         parseAbstractCompilationUnit();
                 // add the parsed expressions (converted to BlockStatement) via DeepCopier:
-                cu = copyCompilationUnit(priorityStatements, speedStatements, cu);
+                cu = injectStatements(priorityStatements, speedStatements, cu);
                 // mydebug(cu);
                 SimpleCompiler sc = new SimpleCompiler();
+                // sc.setWarningHandler((handle, message, location) -> System.out.println(handle + ", " + message + ", " + location));
                 sc.cook(cu);
                 clazz = sc.getClassLoader().loadClass("com.graphhopper.Test");
                 cache.put(key, clazz);
             }
 
-            ScriptHelper prio = (ScriptHelper) clazz.getDeclaredConstructor().newInstance();
+            CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             customModel.getAreas().keySet().stream().forEach(areaId -> {
                 if (areaId.length() > 20) throw new IllegalArgumentException("Area id too long: " + areaId.length());
             });
@@ -124,13 +102,13 @@ public class ScriptHelper {
                 location = " in " + ((CompileException) ex).getLocation().getFileName();
                 // ex.printStackTrace();
             }
-            throw new IllegalArgumentException("Cannot compile script" + location + ", " + ex.getMessage(), ex);
+            throw new IllegalArgumentException("Cannot compile expression " + location + ", " + ex.getMessage(), ex);
         }
     }
 
-    private static Java.CompilationUnit copyCompilationUnit(List<Java.BlockStatement> priorityStatements,
-                                                            List<Java.BlockStatement> speedStatements,
-                                                            Java.CompilationUnit cu) throws CompileException {
+    private static Java.CompilationUnit injectStatements(List<Java.BlockStatement> priorityStatements,
+                                                         List<Java.BlockStatement> speedStatements,
+                                                         Java.CompilationUnit cu) throws CompileException {
         cu = new DeepCopier() {
             @Override
             public Java.FieldDeclaration copyFieldDeclaration(Java.FieldDeclaration subject) throws CompileException {
@@ -172,7 +150,7 @@ public class ScriptHelper {
         for (String arg : speedVariables) {
             speedMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
-        speedStatements.addAll(0, new Parser(new Scanner("getSpeed", new StringReader(speedMethodStartBlock))).
+        speedStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getSpeed", new StringReader(speedMethodStartBlock))).
                 parseBlockStatements());
         return speedStatements;
     }
@@ -187,7 +165,7 @@ public class ScriptHelper {
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
-        priorityStatements.addAll(0, new Parser(new Scanner("getPriority", new StringReader(priorityMethodStartBlock))).
+        priorityStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getPriority", new StringReader(priorityMethodStartBlock))).
                 parseBlockStatements());
         return priorityStatements;
     }
@@ -209,12 +187,12 @@ public class ScriptHelper {
     private static String getVariableDeclaration(EncodedValueLookup lookup, String arg) {
         if (arg.startsWith(AREA_PREFIX)) {
             String id = arg.substring(AREA_PREFIX.length());
-            return "boolean " + arg + " = in(area_" + id + ", edge);\n";
+            return "boolean " + arg + " = " + CustomWeightingHelper.class.getSimpleName() + ".in(this.area_" + id + ", edge);\n";
         } else if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getPrimitive(enc.getClass()) + " " + arg + " = reverse ? " +
-                    "edge.getReverse((" + getInterface(enc) + ")" + arg + "_enc) : " +
-                    "edge.get((" + getInterface(enc) + ")" + arg + "_enc);\n";
+                    "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
+                    "edge.get((" + getInterface(enc) + ") this." + arg + "_enc);\n";
         } else if (isValidVariableName(arg)) {
             return "";
         } else {
@@ -222,7 +200,7 @@ public class ScriptHelper {
         }
     }
 
-    static String getInterface(EncodedValue enc) {
+    private static String getInterface(EncodedValue enc) {
         if (enc.getClass().getInterfaces().length == 0)
             return enc.getClass().getSimpleName();
         return enc.getClass().getInterfaces()[0].getSimpleName();
@@ -258,7 +236,7 @@ public class ScriptHelper {
 
                 classSourceCode.append("protected " + enc.getClass().getSimpleName() + " " + arg + "_enc;\n");
                 initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
-                initSourceCode.append(arg + "_enc = (" + enc.getClass().getSimpleName() + ") lookup.getEncodedValue(\"" + arg + "\", "
+                initSourceCode.append("this." + arg + "_enc = (" + enc.getClass().getSimpleName() + ") lookup.getEncodedValue(\"" + arg + "\", "
                         + className + ".class);\n");
             } else if (arg.startsWith(AREA_PREFIX)) {
                 if (!includedAreaImports) {
@@ -275,7 +253,7 @@ public class ScriptHelper {
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + varName + ";\n");
                 initSourceCode.append("JsonFeature feature = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("if(feature == null) throw new IllegalArgumentException(\"Area '" + id + "' wasn't found\");\n");
-                initSourceCode.append(varName + " = new Polygon(new PreparedGeometryFactory().create(feature.getGeometry()));\n");
+                initSourceCode.append("this." + varName + " = new Polygon(new PreparedGeometryFactory().create(feature.getGeometry()));\n");
             } else {
                 if (!isValidVariableName(arg))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
@@ -284,11 +262,11 @@ public class ScriptHelper {
 
         return ""
                 + "package com.graphhopper;"
-                + "import " + ScriptHelper.class.getName() + ";\n"
+                + "import " + CustomWeightingHelper.class.getName() + ";\n"
                 + "import " + EncodedValueLookup.class.getName() + ";\n"
                 + "import " + EdgeIteratorState.class.getName() + ";\n"
                 + importSourceCode
-                + "\npublic class Test extends ScriptHelper {\n"
+                + "\npublic class Test extends " + CustomWeightingHelper.class.getSimpleName() + " {\n"
                 + classSourceCode
                 + "   @Override\n"
                 + "   public void init(EncodedValueLookup lookup, "
@@ -302,7 +280,7 @@ public class ScriptHelper {
                 + "   }\n"
                 + "   @Override\n"
                 + "   public double getSpeed(EdgeIteratorState edge, boolean reverse) {\n"
-                + "      return 0; //will be overwritten by code injected in DeepCopier\n"
+                + "      return getRawSpeed(edge, reverse); //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "}";
     }
@@ -320,7 +298,7 @@ public class ScriptHelper {
                                                                CodeBuilder codeBuilder, String lastStmt) throws Exception {
         // TODO can or should we reuse Java.Atom created in parseAndGuessParametersFromCondition?
         internalVerifyExpressions(expressions, info, createObjects, map, lookup, codeBuilder, lastStmt, false);
-        return new Parser(new Scanner(info, new StringReader(expressions.toString()))).
+        return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
 
@@ -330,7 +308,7 @@ public class ScriptHelper {
         if (!(map instanceof LinkedHashMap))
             throw new IllegalArgumentException("map needs to be ordered for " + info + " but was " + map.getClass().getSimpleName());
         // allow variables, all encoded values, constants
-        NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
+        ExpressionVisitor.NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
 
         int count = 0;
@@ -352,10 +330,10 @@ public class ScriptHelper {
             Object numberObj = entry.getValue();
             if (!(numberObj instanceof Number))
                 throw new IllegalArgumentException("value is not a Number " + numberObj);
-            ParseResult parseResult = parseAndGuessParametersFromCondition(expression, nameInConditionValidator);
+            ExpressionVisitor.ParseResult parseResult = parseExpression(expression, nameInConditionValidator);
             if (!parseResult.ok)
                 throw new IllegalArgumentException("key is an invalid simple condition: " + expression);
-            createObjects.addAll(parseResult.guessVariables);
+            createObjects.addAll(parseResult.guessedVariables);
             Number number = (Number) numberObj;
             if (firstMatch && count > 0)
                 expressions.append("else ");
@@ -363,6 +341,10 @@ public class ScriptHelper {
             count++;
         }
         expressions.append(lastStmt);
+    }
+
+    interface CodeBuilder {
+        String create(Number n);
     }
 
     private static Java.MethodDeclarator copyMethod(Java.MethodDeclarator subject, DeepCopier deepCopier,
@@ -395,128 +377,5 @@ public class ScriptHelper {
         if (arg.endsWith(RouteNetwork.key(""))) return RouteNetwork.class.getSimpleName();
         String clazz = Helper.underScoreToCamelCase(arg);
         return Character.toUpperCase(clazz.charAt(0)) + clazz.substring(1);
-    }
-
-    /**
-     * Enforce simple expressions of user input to increase security.
-     *
-     * @return ParseResult with ok if valid and "simple" expression
-     */
-    static ParseResult parseAndGuessParametersFromCondition(String expression, NameValidator validator) {
-        ParseResult result = new ParseResult();
-        if (expression.length() > 100)
-            return result;
-        try {
-            Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
-            Java.Atom atom = parser.parseConditionalExpression();
-            // after parsing the expression the input should end (otherwise it is not "simple")
-            if (parser.peek().type == TokenType.END_OF_INPUT) {
-                result.guessVariables = new LinkedHashSet<>();
-                MyConditionVisitor visitor = new MyConditionVisitor(result, validator);
-                result.ok = atom.accept(visitor);
-                if (result.ok) {
-                    result.converted = new StringBuilder(expression.length());
-                    int start = 0;
-                    for (Map.Entry<Integer, String> inject : visitor.injects.entrySet()) {
-                        String value = toEncodedValueClassName(inject.getValue());
-                        result.converted.append(expression, start, inject.getKey()).append(value).append('.');
-                        start = inject.getKey();
-                    }
-                    result.converted.append(expression.substring(start));
-                }
-            }
-
-            return result;
-        } catch (Exception ex) {
-            return result;
-        }
-    }
-
-    static class ParseResult {
-        StringBuilder converted;
-        boolean ok;
-        Set<String> guessVariables;
-    }
-
-    static class MyConditionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
-        private final ParseResult result;
-        private final TreeMap<Integer, String> injects = new TreeMap<>();
-        private final NameValidator nameValidator;
-        private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
-                "contains", "sqrt", "abs"));
-
-        public MyConditionVisitor(ParseResult result, NameValidator nameValidator) {
-            this.result = result;
-            this.nameValidator = nameValidator;
-        }
-
-        boolean isValidVariable(String identifier) {
-            // allow only certain methods and other identifiers (constants and like encoded values)
-            if (nameValidator.isValid(identifier)) {
-                if (!Character.isUpperCase(identifier.charAt(0)))
-                    result.guessVariables.add(identifier);
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public Boolean visitRvalue(Java.Rvalue rv) throws Exception {
-            if (rv instanceof Java.AmbiguousName) {
-                Java.AmbiguousName n = (Java.AmbiguousName) rv;
-                if (n.identifiers.length < 1 || n.identifiers.length > 2)
-                    return false;
-                // road_class, edge.getDistance, Math.sqrt
-                return isValidVariable(n.identifiers[0]);
-            }
-            if (rv instanceof Java.Literal)
-                return true;
-            if (rv instanceof Java.MethodInvocation) {
-                Java.MethodInvocation mi = (Java.MethodInvocation) rv;
-                if (allowedMethods.contains(mi.methodName)) {
-                    // skip methods like this.in for now
-                    if (mi.target == null)
-                        return false;
-                    return mi.target.accept(this); // Math.sqrt
-                }
-                return false;
-            }
-            if (rv instanceof Java.BinaryOperation) {
-                Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
-                if (!binOp.lhs.accept(this) || !binOp.rhs.accept(this))
-                    return false;
-                if (binOp.lhs instanceof Java.AmbiguousName && binOp.rhs instanceof Java.AmbiguousName) {
-                    if (nameValidator.isValid(binOp.lhs.toString()) &&
-                            binOp.rhs.toString().toUpperCase(Locale.ROOT).equals(binOp.rhs.toString())) {
-                        injects.put(binOp.rhs.getLocation().getColumnNumber() - 1, binOp.lhs.toString());
-                    }
-                }
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public Boolean visitPackage(Java.Package p) {
-            return false;
-        }
-
-        @Override
-        public Boolean visitType(Java.Type t) {
-            return false;
-        }
-
-        @Override
-        public Boolean visitConstructorInvocation(Java.ConstructorInvocation ci) {
-            return false;
-        }
-    }
-
-    interface NameValidator {
-        boolean isValid(String name);
-    }
-
-    interface CodeBuilder {
-        String create(Number n);
     }
 }

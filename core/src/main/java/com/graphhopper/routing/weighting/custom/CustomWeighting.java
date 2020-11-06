@@ -41,10 +41,10 @@ public class CustomWeighting extends AbstractWeighting {
     private final double maxSpeed;
     private final double distanceInfluence;
     private final double headingPenaltySeconds;
-    private final ScriptHelper scriptHelper;
+    private final CustomWeightingHelper cwHelper;
 
-    public CustomWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
-                           TurnCostProvider turnCostProvider, CustomModel customModel) {
+    public CustomWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
+                           CustomModel customModel) {
         super(baseFlagEncoder, turnCostProvider);
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
@@ -54,13 +54,27 @@ public class CustomWeighting extends AbstractWeighting {
         double maxSpeedTmp = customModel.getMaxSpeedFallback() == null ? baseFlagEncoder.getMaxSpeed() : customModel.getMaxSpeedFallback();
         if (customModel.getMaxSpeedFallback() != null && customModel.getMaxSpeedFallback() > maxSpeedTmp)
             throw new IllegalArgumentException("max_speed_fallback cannot be bigger than max_speed " + maxSpeedTmp);
-        scriptHelper = ScriptHelper.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
+        cwHelper = ExpressionBuilder.create(customModel, lookup, baseFlagEncoder.getMaxSpeed(), maxSpeedTmp, baseFlagEncoder.getAverageSpeedEnc());
         maxSpeed = maxSpeedTmp / SPEED_CONV;
 
         // given unit is s/km -> convert to s/m
-        distanceInfluence = customModel.getDistanceInfluence() / 1000;
-        if (distanceInfluence < 0)
-            throw new IllegalArgumentException("maximum distance_influence cannot be negative " + distanceInfluence);
+        this.distanceInfluence = customModel.getDistanceInfluence() / 1000.0;
+        if (this.distanceInfluence < 0)
+            throw new IllegalArgumentException("maximum distance_influence cannot be negative " + this.distanceInfluence);
+    }
+
+    public CustomWeighting(FlagEncoder baseFlagEncoder, TurnCostProvider turnCostProvider, CustomWeightingHelper cwHelper,
+                           double maxSpeed, double distanceInfluence, double headingPenaltySeconds) {
+        super(baseFlagEncoder, turnCostProvider);
+        this.cwHelper = cwHelper;
+        this.baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
+        this.headingPenaltySeconds = headingPenaltySeconds;
+        this.maxSpeed = maxSpeed / SPEED_CONV;
+
+        // given unit is s/km -> convert to s/m
+        this.distanceInfluence = distanceInfluence / 1000.0;
+        if (this.distanceInfluence < 0)
+            throw new IllegalArgumentException("maximum distance_influence cannot be negative " + this.distanceInfluence);
     }
 
     @Override
@@ -77,7 +91,7 @@ public class CustomWeighting extends AbstractWeighting {
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts))
             return Double.POSITIVE_INFINITY;
-        double priority = scriptHelper.getPriority(edgeState, reverse);
+        double priority = cwHelper.getPriority(edgeState, reverse);
         return seconds / priority + distanceCosts;
     }
 
@@ -90,7 +104,7 @@ public class CustomWeighting extends AbstractWeighting {
         if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
             return Double.POSITIVE_INFINITY;
 
-        double speed = scriptHelper.getSpeed(edgeState, reverse);
+        double speed = cwHelper.getSpeed(edgeState, reverse);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
