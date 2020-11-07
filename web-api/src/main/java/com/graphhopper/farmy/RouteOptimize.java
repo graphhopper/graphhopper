@@ -191,10 +191,13 @@ public class RouteOptimize {
             vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance(String.format("%s", vehicle.getId()))
                     .setStartLocation(getDepotLocation())
                     .setEndLocation(getDepotLocation())
+                    .setReturnToDepot(vehicle.isReturnToDepot())
                     .setEarliestStart(50400) // 14:00
 //                    .setLatestArrival(vehicle.getLatestArrival())
                     .setType(type)
                     .build());
+
+            System.out.println("isReturnToDepot: " + vehicle.isReturnToDepot());
         }
 
 
