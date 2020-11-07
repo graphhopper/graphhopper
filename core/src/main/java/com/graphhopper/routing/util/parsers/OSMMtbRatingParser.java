@@ -18,21 +18,24 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.IntEncodedValue;
+import com.graphhopper.routing.ev.MtbRating;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
 /**
  * Parses the mountain biking difficulty.
- * A mapping mtb:scale=0 corresponds to Rating.R1 and mtb:scale=1 to R2 etc
+ * A mapping mtb:scale=0 corresponds to 1 and mtb:scale=1 to 2 until 7.
  *
  * @see <a href="https://wiki.openstreetmap.org/wiki/Key:mtb:scale">Key:mtb:scale</a> for details on OSM mountain biking difficulties.
  * @see <a href=""http://www.singletrail-skala.de/>Single Trail Scale</a>
  */
 public class OSMMtbRatingParser implements TagParser {
 
-    private final EnumEncodedValue<Rating> mtbRatingEnc;
+    private final IntEncodedValue mtbRatingEnc;
 
     public OSMMtbRatingParser() {
         this.mtbRatingEnc = MtbRating.create();
@@ -46,20 +49,19 @@ public class OSMMtbRatingParser implements TagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
         String scale = readerWay.getTag("mtb:scale");
-        Rating rating = Rating.MISSING;
+        int rating = 0;
         if (scale != null) {
             if (scale.length() == 2 && (scale.charAt(1) == '+' || scale.charAt(1) == '-'))
                 scale = scale.substring(0, 1);
             try {
-                // mtb:scale=0, or S0 maps to R1, and mtb:scale=1 to R2 etc
                 int scaleAsInt = Integer.parseInt(scale);
-                rating = Rating.values()[scaleAsInt + 1];
+                rating = scaleAsInt + 1;
             } catch (Exception ex) {
             }
         }
 
-        if (rating != Rating.MISSING)
-            mtbRatingEnc.setEnum(false, edgeFlags, rating);
+        if (rating != 0)
+            mtbRatingEnc.setInt(false, edgeFlags, rating);
 
         return edgeFlags;
     }

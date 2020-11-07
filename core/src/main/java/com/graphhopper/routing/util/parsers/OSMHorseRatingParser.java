@@ -18,19 +18,22 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.HorseRating;
+import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
 /**
- * Parses the horseback riding difficulty. Where common is mapped to R1, demanding to R2 etc and R7 is unused.
+ * Parses the horseback riding difficulty. Where common is mapped to 1, demanding to 2 until 6
  *
  * @see <a href="https://wiki.openstreetmap.org/wiki/Key:horse_scale">Key:horse_scale</a> for details on horseback riding difficulties.
  */
 public class OSMHorseRatingParser implements TagParser {
 
-    private final EnumEncodedValue<Rating> horseScale;
+    private final IntEncodedValue horseScale;
 
     public OSMHorseRatingParser() {
         this.horseScale = HorseRating.create();
@@ -44,17 +47,17 @@ public class OSMHorseRatingParser implements TagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
         String scale = readerWay.getTag("horse_scale");
-        Rating rating = Rating.MISSING;
+        int rating = 0;
         if (scale != null) {
-            if (scale.equals("common")) rating = Rating.R1;
-            else if (scale.equals("demanding")) rating = Rating.R2;
-            else if (scale.equals("difficult")) rating = Rating.R3;
-            else if (scale.equals("critical")) rating = Rating.R4;
-            else if (scale.equals("dangerous")) rating = Rating.R5;
-            else if (scale.equals("impossible")) rating = Rating.R6;
+            if (scale.equals("common")) rating = 1;
+            else if (scale.equals("demanding")) rating = 2;
+            else if (scale.equals("difficult")) rating = 3;
+            else if (scale.equals("critical")) rating = 4;
+            else if (scale.equals("dangerous")) rating = 5;
+            else if (scale.equals("impossible")) rating = 6;
         }
-        if (rating != Rating.MISSING)
-            horseScale.setEnum(false, edgeFlags, rating);
+        if (rating != 0)
+            horseScale.setInt(false, edgeFlags, rating);
         return edgeFlags;
     }
 }

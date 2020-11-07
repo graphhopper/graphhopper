@@ -75,10 +75,14 @@ public class PathDetailsBuilderFactory {
         }
 
         for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, RoadAccess.KEY,
-                Toll.KEY, TrackType.KEY, Hazmat.KEY, HazmatTunnel.KEY, HazmatWater.KEY, Country.KEY,
-                MtbRating.KEY, HikeRating.KEY, HorseRating.KEY)) {
+                Toll.KEY, TrackType.KEY, Hazmat.KEY, HazmatTunnel.KEY, HazmatWater.KEY, Country.KEY)) {
             if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
                 builders.add(new EnumDetails<>(key, evl.getEnumEncodedValue(key, Enum.class)));
+        }
+
+        for (String key : Arrays.asList(MtbRating.KEY, HikeRating.KEY, HorseRating.KEY)) {
+            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
+                builders.add(new IntDetails(key, evl.getIntEncodedValue(key)));
         }
 
         if (requestedPathDetails.size() != builders.size()) {
