@@ -45,6 +45,7 @@ public class FarmyVehicle {
 
     @JsonProperty("isReturnToDepot")
     private boolean returnToDepot;
+
     @JsonProperty("costPerDistance")
     private double costsPerDistance;
     @JsonProperty("costsPerTransportTime")
@@ -100,7 +101,7 @@ public class FarmyVehicle {
     @JsonAnyGetter
     public double getFixedCosts() { return fixedCosts; }
     @JsonAnySetter
-    public void setFixedCosts(int fixedCosts) {
+    public void setFixedCosts(double fixedCosts) {
         this.fixedCosts = fixedCosts;
     }
     @JsonAnyGetter
@@ -126,19 +127,19 @@ public class FarmyVehicle {
     @JsonAnyGetter
     public double getCostsPerTransportTime() { return costsPerTransportTime; }
     @JsonAnySetter
-    public void setCostsPerTransportTime(int costsPerTransportTime) { this.costsPerTransportTime = costsPerTransportTime; }
+    public void setCostsPerTransportTime(double costsPerTransportTime) { this.costsPerTransportTime = costsPerTransportTime; }
     @JsonAnyGetter
     public double getCostsPerDistance() { return costsPerDistance; }
     @JsonAnySetter
-    public void setCostsPerDistance(int costsPerDistance) { this.costsPerDistance = costsPerDistance; }
+    public void setCostsPerDistance(double costsPerDistance) { this.costsPerDistance = costsPerDistance; }
     @JsonAnyGetter
     public double getCostsPerServiceTime() { return costsPerServiceTime; }
     @JsonAnySetter
-    public void setCostsPerServiceTime(int costsPerServiceTime) { this.costsPerServiceTime = costsPerServiceTime; }
+    public void setCostsPerServiceTime(double costsPerServiceTime) { this.costsPerServiceTime = costsPerServiceTime; }
     @JsonAnyGetter
     public double getCostPerWaitingTime() { return costPerWaitingTime; }
     @JsonAnySetter
-    public void setCostPerWaitingTime(int costPerWaitingTime) { this.costPerWaitingTime = costPerWaitingTime; }
+    public void setCostPerWaitingTime(double costPerWaitingTime) { this.costPerWaitingTime = costPerWaitingTime; }
     @JsonAnyGetter
     public double getLatestArrival() { return latestArrival; }
     @JsonAnySetter

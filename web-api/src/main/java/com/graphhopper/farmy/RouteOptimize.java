@@ -119,7 +119,7 @@ public class RouteOptimize {
 
 //          Calc for avg speed
             if (this.speedAvg.size() > 0) {
-                vehicleHashMap.put("avg_speed", (routeDistance / route.getEnd().getArrTime()) * 3.85);
+                vehicleHashMap.put("avg_speed", (routeDistance / (route.getEnd().getArrTime() - route.getStart().getArrTime())));
             }
 
             optimizedRoutesMap.put(routeVehicleId(route, optimizedRoutesMap, 0), vehicleHashMap);
@@ -185,12 +185,13 @@ public class RouteOptimize {
                     .setCostPerServiceTime(vehicle.getCostsPerServiceTime())
                     .setCostPerWaitingTime(vehicle.getCostPerWaitingTime())
                     .addCapacityDimension(0, vehicle.getCapacity())
-                    .setMaxVelocity(vehicle.isPlus() ? 50.0 : 80.0) // ~50km/h // ~80km/h // 1 ~= 3.85
+                    .setMaxVelocity(vehicle.isPlus() ? 50.0/3.6 : 80.0/3.6) // ~50km/h // ~80km/h // 1 ~= 3.85
                     .build();
 
-            vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance(String.format("%s#%s%s", vehicle.getName(), vehicle.getId(), vehicle.isPlus() ? " (" + vehicle.getCourier().getName() + ")" : ""))
+            vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance(String.format("%s", vehicle.getId()))
                     .setStartLocation(getDepotLocation())
                     .setEndLocation(getDepotLocation())
+                    .setEarliestStart(50400) // 14:00
 //                    .setLatestArrival(vehicle.getLatestArrival())
                     .setType(type)
                     .build());
@@ -250,7 +251,7 @@ public class RouteOptimize {
         this.reasonTracker = new UnassignedJobReasonTracker();
 
         vra.addListener(this.reasonTracker);
-        vra.setMaxIterations(64); // Fast iterations for testing
+//        vra.setMaxIterations(64); // Fast iterations for testing
 
         Collection<VehicleRoutingProblemSolution> solutions = vra.searchSolutions();
         this.solution = Solutions.bestOf(solutions);
@@ -262,17 +263,17 @@ public class RouteOptimize {
 //        SolutionPrinter.print(vrp, Solutions.bestOf(solutions), SolutionPrinter.Print.VERBOSE);
 
         SolutionAnalyser analyser = new SolutionAnalyser(vrp, Solutions.bestOf(solutions), vrp.getTransportCosts());
-//        System.out.println("tp_distance: " + analyser.getDistance());
-//        System.out.println("tp_time: " + analyser.getTransportTime());
-//        System.out.println("waiting: " + analyser.getWaitingTime());
-//        System.out.println("service: " + analyser.getServiceTime());
-//        System.out.println("#picks: " + analyser.getNumberOfPickups());
-//        System.out.println("#deliveries: " + analyser.getNumberOfDeliveries());
-//        System.out.println("#load_delivered: " + analyser.getLoadDelivered());
-//        System.out.println("#capacity_violation: " + analyser.getCapacityViolation());
-//        System.out.println("#time_window_violation: " + analyser.getTimeWindowViolation());
-//        System.out.println("#number_of_deliveries: " + analyser.getNumberOfDeliveriesAtEnd());
-//        System.out.println("#unnasigned_jobs: " + this.solution.getUnassignedJobs().size());
+        System.out.println("tp_distance: " + analyser.getDistance());
+        System.out.println("tp_time: " + analyser.getTransportTime());
+        System.out.println("waiting: " + analyser.getWaitingTime());
+        System.out.println("service: " + analyser.getServiceTime());
+        System.out.println("#picks: " + analyser.getNumberOfPickups());
+        System.out.println("#deliveries: " + analyser.getNumberOfDeliveries());
+        System.out.println("#load_delivered: " + analyser.getLoadDelivered());
+        System.out.println("#capacity_violation: " + analyser.getCapacityViolation());
+        System.out.println("#time_window_violation: " + analyser.getTimeWindowViolation());
+        System.out.println("#number_of_deliveries: " + analyser.getNumberOfDeliveriesAtEnd());
+        System.out.println("#unnasigned_jobs: " + this.solution.getUnassignedJobs().size());
 
 //        for (VehicleRoute route : solution.getRoutes()) {
 //            StringBuilder urlStr = new StringBuilder("http://localhost:8989/maps/");
