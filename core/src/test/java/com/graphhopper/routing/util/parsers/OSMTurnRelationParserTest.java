@@ -5,6 +5,7 @@ import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostStorage;
@@ -29,7 +30,7 @@ public class OSMTurnRelationParserTest {
         internalToOSMEdge.put(3, 3L);
         internalToOSMEdge.put(4, 4L);
 
-        OSMTurnRelationParser parser = new OSMTurnRelationParser(encoder.toString(), 1);
+        OSMTurnRelationParser parser = new OSMTurnRelationParser(encoder.toString(), 1, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
         GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager.Builder().add(encoder).addTurnCostParser(parser).build()).create();
         EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage);
         TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
@@ -62,13 +63,5 @@ public class OSMTurnRelationParserTest {
         instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
         parser.addRelationToTCStorage(instance, map, ghStorage);
         assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 3)));
-    }
-
-    @Test
-    public void unknownShouldBehaveLikeMotorVehicle() {
-        OSMTurnRelationParser parser = new OSMTurnRelationParser("fatcarsomething", 1);
-        OSMTurnRelation turnRelation = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
-        turnRelation.setVehicleTypeRestricted("space");
-        parser.handleTurnRelationTags(turnRelation, null, null);
     }
 }

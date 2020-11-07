@@ -23,6 +23,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.storage.Graph;

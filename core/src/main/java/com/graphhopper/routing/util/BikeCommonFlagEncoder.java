@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -63,8 +62,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     protected BikeCommonFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
-        // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
-        restrictions.addAll(Arrays.asList("bicycle", "vehicle", "access"));
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -188,7 +185,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public TransportationMode getTransportationMode() {
-        return TransportationMode.BICYCLE;
+        return TransportationMode.BIKE;
     }
 
     @Override

@@ -41,7 +41,7 @@ public class HelperTest {
     }
 
     @Test
-    public void testGetLocale() throws Exception {
+    public void testGetLocale() {
         assertEquals(Locale.GERMAN, Helper.getLocale("de"));
         assertEquals(Locale.GERMANY, Helper.getLocale("de_DE"));
         assertEquals(Locale.GERMANY, Helper.getLocale("de-DE"));
@@ -55,6 +55,9 @@ public class HelperTest {
         assertEquals(100.94, Helper.round(100.94, 2), 1e-7);
         assertEquals(100.9, Helper.round(100.94, 1), 1e-7);
         assertEquals(101.0, Helper.round(100.95, 1), 1e-7);
+        // using negative values for decimalPlaces means we are rounding with precision > 1
+        assertEquals(1040, Helper.round(1041.02, -1), 1.e-7);
+        assertEquals(1000, Helper.round(1041.02, -2), 1.e-7);
     }
 
     @Test
