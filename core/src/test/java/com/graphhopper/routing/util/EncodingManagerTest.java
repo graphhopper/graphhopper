@@ -83,6 +83,7 @@ public class EncodingManagerTest {
     @Test
     public void testToDetailsStringIncludesEncoderVersionNumber() {
         FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 0) {
+            @Override
             public TransportationMode getTransportationMode() {
                 return TransportationMode.BIKE;
             }

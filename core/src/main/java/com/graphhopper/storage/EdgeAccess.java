@@ -46,8 +46,6 @@ abstract class EdgeAccess {
 
     abstract void setEdgeRef(int nodeId, int edgeId);
 
-    abstract int getEntryBytes();
-
     final void readFlags(long edgePointer, IntsRef edgeFlags) {
         int size = edgeFlags.ints.length;
         for (int i = 0; i < size; i++) {

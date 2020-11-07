@@ -146,6 +146,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         return this;
     }
 
+    @Override
     public TransportationMode getTransportationMode() {
         return TransportationMode.CAR;
     }

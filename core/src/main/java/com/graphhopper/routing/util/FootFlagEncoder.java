@@ -138,6 +138,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         speedDefault = MEAN_SPEED;
     }
 
+    @Override
     public TransportationMode getTransportationMode() {
         return TransportationMode.FOOT;
     }
