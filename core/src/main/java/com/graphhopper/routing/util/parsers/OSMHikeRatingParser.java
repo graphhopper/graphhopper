@@ -18,34 +18,44 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.MtbUphillRating;
-import com.graphhopper.routing.ev.UnsignedIntEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
-public class OSMMtbUphillRatingParser implements TagParser {
+/**
+ * Parses the hiking difficulty. Where hiking corresponds to R1, mountain_hiking to R2 etc and R7 is unused.
+ *
+ * @see <a href="https://wiki.openstreetmap.org/wiki/Key:sac_scale">Key:sac_scale</a> for details on OSM hiking difficulties.
+ */
+public class OSMHikeRatingParser implements TagParser {
 
-    private final UnsignedIntEncodedValue ratingEncoder;
+    private final EnumEncodedValue<Rating> sacScaleEnc;
 
-    public OSMMtbUphillRatingParser() {
-        this.ratingEncoder = new UnsignedIntEncodedValue(MtbUphillRating.KEY, 3, true);
+    public OSMHikeRatingParser() {
+        this.sacScaleEnc = HikeRating.create();
     }
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(ratingEncoder);
+        link.add(sacScaleEnc);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-        String value = readerWay.getTag("mtb:scale:uphill");
-        MtbUphillRating rating = MtbUphillRating.find(value);
-        if (rating != MtbUphillRating.NONE) {
-            ratingEncoder.setInt(false, edgeFlags, rating.ordinal());
+        String scale = readerWay.getTag("sac_scale");
+        Rating rating = Rating.MISSING;
+        if (scale != null) {
+            if (scale.equals("hiking")) rating = Rating.R1;
+            else if (scale.equals("mountain_hiking")) rating = Rating.R2;
+            else if (scale.equals("demanding_mountain_hiking")) rating = Rating.R3;
+            else if (scale.equals("alpine_hiking")) rating = Rating.R4;
+            else if (scale.equals("demanding_alpine_hiking")) rating = Rating.R5;
+            else if (scale.equals("difficult_alpine_hiking")) rating = Rating.R6;
         }
+        if (rating != Rating.MISSING)
+            sacScaleEnc.setEnum(false, edgeFlags, rating);
+
         return edgeFlags;
     }
 }

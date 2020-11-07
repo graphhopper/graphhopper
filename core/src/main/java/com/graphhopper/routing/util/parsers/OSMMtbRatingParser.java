@@ -23,26 +23,44 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
+/**
+ * Parses the mountain biking difficulty.
+ * A mapping mtb:scale=0 corresponds to Rating.R1 and mtb:scale=1 to R2 etc
+ *
+ * @see <a href="https://wiki.openstreetmap.org/wiki/Key:mtb:scale">Key:mtb:scale</a> for details on OSM mountain biking difficulties.
+ * @see <a href=""http://www.singletrail-skala.de/>Single Trail Scale</a>
+ */
 public class OSMMtbRatingParser implements TagParser {
 
-    private final UnsignedIntEncodedValue ratingEncoder;
+    private final EnumEncodedValue<Rating> mtbRatingEnc;
 
     public OSMMtbRatingParser() {
-        this.ratingEncoder = new UnsignedIntEncodedValue(MtbRating.KEY, 3, true);
+        this.mtbRatingEnc = MtbRating.create();
     }
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(ratingEncoder);
+        link.add(mtbRatingEnc);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-        String value = readerWay.getTag("mtb:scale");
-        MtbRating rating = MtbRating.find(value);
-        if (rating != MtbRating.NONE) {
-            ratingEncoder.setInt(false, edgeFlags, rating.ordinal());
+        String scale = readerWay.getTag("mtb:scale");
+        Rating rating = Rating.MISSING;
+        if (scale != null) {
+            if (scale.length() == 2 && (scale.charAt(1) == '+' || scale.charAt(1) == '-'))
+                scale = scale.substring(0, 1);
+            try {
+                // mtb:scale=0, or S0 maps to R1, and mtb:scale=1 to R2 etc
+                int scaleAsInt = Integer.parseInt(scale);
+                rating = Rating.values()[scaleAsInt + 1];
+            } catch (Exception ex) {
+            }
         }
+
+        if (rating != Rating.MISSING)
+            mtbRatingEnc.setEnum(false, edgeFlags, rating);
+
         return edgeFlags;
     }
 }
