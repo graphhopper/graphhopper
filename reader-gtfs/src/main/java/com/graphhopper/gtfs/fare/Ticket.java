@@ -22,9 +22,11 @@ import com.conveyal.gtfs.model.Fare;
 
 class Ticket {
 
+    public final String feed_id;
     private Fare fare;
 
-    Ticket(Fare fare) {
+    Ticket(String feed_id, Fare fare) {
+        this.feed_id = feed_id;
         this.fare = fare;
     }
 

@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -61,8 +60,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     protected BikeCommonFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
-        // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
-        restrictions.addAll(Arrays.asList("bicycle", "vehicle", "access"));
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -186,7 +183,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public TransportationMode getTransportationMode() {
-        return TransportationMode.BICYCLE;
+        return TransportationMode.BIKE;
     }
 
     @Override
@@ -289,12 +286,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     @Override
     protected double applyMaxSpeed(ReaderWay way, double speed) {
         double maxSpeed = getMaxSpeed(way);
-        if (maxSpeed >= 0) {
-            // We strictly obey speed limits, see #600
-            if (speed > maxSpeed)
-                return maxSpeed;
+        // We strictly obey speed limits, see #600
+        if (isValidSpeed(maxSpeed) && speed > maxSpeed) {
+            return maxSpeed;
         }
-        if (speed > maxPossibleSpeed)
+        if (isValidSpeed(speed) && speed > maxPossibleSpeed)
             return maxPossibleSpeed;
         return speed;
     }
@@ -453,14 +449,14 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
 
         double maxSpeed = getMaxSpeed(way);
-        if (preferHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 30) {
-            if (maxSpeed < avoidSpeedLimit) {
+        if (preferHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 30)) {
+            if (!isValidSpeed(maxSpeed) || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, PREFER.getValue());
                 if (way.hasTag("tunnel", intendedValues))
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
         } else if (avoidHighwayTags.contains(highway)
-                || maxSpeed >= avoidSpeedLimit && !"track".equals(highway)) {
+                || isValidSpeed(maxSpeed) && maxSpeed >= avoidSpeedLimit && !"track".equals(highway)) {
             weightToPrioMap.put(50d, REACH_DEST.getValue());
             if (way.hasTag("tunnel", intendedValues))
                 weightToPrioMap.put(50d, AVOID_AT_ALL_COSTS.getValue());

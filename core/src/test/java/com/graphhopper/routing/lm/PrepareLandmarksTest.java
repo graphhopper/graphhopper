@@ -32,7 +32,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -169,15 +169,15 @@ public class PrepareLandmarksTest {
 
         // landmarks with A* and a QueryGraph. We expect slightly less optimal as two more cycles needs to be traversed
         // due to the two more virtual nodes but this should not harm in practise
-        QueryResult fromQR = index.findClosest(-0.0401, 0.2201, EdgeFilter.ALL_EDGES);
-        QueryResult toQR = index.findClosest(-0.2401, 0.0601, EdgeFilter.ALL_EDGES);
-        QueryGraph qGraph = QueryGraph.create(graph, fromQR, toQR);
+        Snap fromSnap = index.findClosest(-0.0401, 0.2201, EdgeFilter.ALL_EDGES);
+        Snap toSnap = index.findClosest(-0.2401, 0.0601, EdgeFilter.ALL_EDGES);
+        QueryGraph qGraph = QueryGraph.create(graph, fromSnap, toSnap);
         RoutingAlgorithm qGraphOneDirAlgo = prepare.getRoutingAlgorithmFactory().createAlgo(qGraph,
                 AlgorithmOptions.start().algorithm(ASTAR).weighting(weighting).traversalMode(tm).hints(hints).build());
-        path = qGraphOneDirAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
+        path = qGraphOneDirAlgo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
 
         expectedAlgo = new AStar(qGraph, weighting, tm);
-        expectedPath = expectedAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
+        expectedPath = expectedAlgo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
         assertEquals(expectedAlgo.getVisitedNodes() - 135, qGraphOneDirAlgo.getVisitedNodes());

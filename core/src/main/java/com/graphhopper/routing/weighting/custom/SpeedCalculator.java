@@ -24,6 +24,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -60,8 +61,8 @@ final class SpeedCalculator {
                 maxSpeedList.add(GeoToValueEntry.create(maxSpeedKey, new PreparedGeometryFactory().create(geometry),
                         (Number) value, maxSpeed, 0, maxSpeed));
             } else {
-                if (!(value instanceof Map))
-                    throw new IllegalArgumentException(maxSpeedKey + ": non-root entries require a map but was: " + value.getClass().getSimpleName());
+                if (!(value instanceof LinkedHashMap))
+                    throw new IllegalArgumentException(maxSpeedKey + ": non-root entries require a sorted map (LinkedHashMap), but was: " + value.getClass().getSimpleName());
                 final double defaultMaxSpeed = maxSpeed, minMaxSpeed = 0, maxMaxSpeed = maxSpeed;
                 EncodedValue encodedValue = getEV(lookup, "max_speed", key);
                 if (encodedValue instanceof EnumEncodedValue) {
@@ -98,8 +99,8 @@ final class SpeedCalculator {
                 speedFactorList.add(GeoToValueEntry.create(speedFactorKey, new PreparedGeometryFactory().create(geometry),
                         (Number) value, 1, 0, 1));
             } else {
-                if (!(value instanceof Map))
-                    throw new IllegalArgumentException(speedFactorKey + ": non-root entries require a map but was: " + value.getClass().getSimpleName());
+                if (!(value instanceof LinkedHashMap))
+                    throw new IllegalArgumentException(speedFactorKey + ": non-root entries require a sorted map (LinkedHashMap), but was: " + value.getClass().getSimpleName());
                 final double defaultSpeedFactor = 1, minSpeedFactor = 0, maxSpeedFactor = 1;
                 EncodedValue encodedValue = getEV(lookup, "speed_factor", key);
                 if (encodedValue instanceof EnumEncodedValue) {

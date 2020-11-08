@@ -47,7 +47,7 @@ public interface LocationIndex extends Storable<LocationIndex> {
     LocationIndex prepareIndex();
 
     /**
-     * This method returns the closest QueryResult for the specified location (lat, lon) and only if
+     * This method returns the closest Snap for the specified location (lat, lon) and only if
      * the filter accepts the edge as valid candidate (e.g. filtering away car-only results for bike
      * search)
      * <p>
@@ -57,9 +57,9 @@ public interface LocationIndex extends Storable<LocationIndex> {
      *                   <pre>DefaultEdgeFilter.allEdges(footFlagEncoder);</pre>
      * @return An object containing the closest node and edge for the specified location. The node id
      * has at least one edge which is accepted from the specified edgeFilter. If nothing is found
-     * the method QueryResult.isValid will return false.
+     * the method Snap.isValid will return false.
      */
-    QueryResult findClosest(double lat, double lon, EdgeFilter edgeFilter);
+    Snap findClosest(double lat, double lon, EdgeFilter edgeFilter);
 
     /**
      * @param approxDist false if initialization and querying should be faster but less precise.

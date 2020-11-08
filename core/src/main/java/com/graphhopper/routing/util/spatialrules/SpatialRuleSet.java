@@ -22,6 +22,7 @@ import java.util.List;
 
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.util.TransportationMode;
 
 /**
  * Contains all rules which are applicable for a certain position.
@@ -48,7 +49,7 @@ public class SpatialRuleSet {
      *
      * @param roadClass       The highway type, e.g. {@link RoadClass#MOTORWAY}
      * @param transport       The mode of transportation
-     * @param currentMaxSpeed The current max speed value or -1 if no value has been set yet
+     * @param currentMaxSpeed The current max speed value or {@link Double#NaN} if no value has been set yet
      * @return the maximum speed value to be used
      */
     public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {

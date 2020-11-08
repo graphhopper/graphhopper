@@ -2,7 +2,7 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -60,7 +60,7 @@ public class LandmarkSuggestion {
                 throw new RuntimeException("Invalid format " + lmStr + " for point " + lmSuggestionIdx);
 
             lmSuggestionIdx++;
-            QueryResult result = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+            Snap result = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             if (!result.isValid()) {
                 errors += "Cannot find close node found for landmark suggestion[" + lmSuggestionIdx + "]=" + point + ".\n";
                 continue;

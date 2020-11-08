@@ -21,7 +21,7 @@ package com.graphhopper.isochrone.algorithm;
 import com.graphhopper.routing.RouterConfig;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
@@ -46,10 +46,10 @@ public class JTSTriangulator implements Triangulator {
         this.routerConfig = routerConfig;
     }
 
-    public Result triangulate(QueryResult qr, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz) {
+    public Result triangulate(Snap snap, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, double tolerance) {
         final NodeAccess na = queryGraph.getNodeAccess();
         Collection<Coordinate> sites = new ArrayList<>();
-        shortestPathTree.search(qr.getClosestNode(), label -> {
+        shortestPathTree.search(snap.getClosestNode(), label -> {
             double exploreValue = fz.applyAsDouble(label);
             double lat = na.getLatitude(label.node);
             double lon = na.getLongitude(label.node);
@@ -81,7 +81,7 @@ public class JTSTriangulator implements Triangulator {
         // what we want.
 
         Collection<ConstraintVertex> constraintVertices = sites.stream().map(ConstraintVertex::new).collect(Collectors.toList());
-        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(constraintVertices, 0.0);
+        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(constraintVertices, tolerance);
         conformingDelaunayTriangulator.setConstraints(new ArrayList<>(), new ArrayList<>());
         conformingDelaunayTriangulator.formInitialDelaunay();
         conformingDelaunayTriangulator.enforceConstraints();

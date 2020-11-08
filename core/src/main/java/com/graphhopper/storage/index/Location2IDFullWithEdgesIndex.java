@@ -69,11 +69,11 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex {
     }
 
     @Override
-    public QueryResult findClosest(double queryLat, double queryLon, EdgeFilter filter) {
+    public Snap findClosest(double queryLat, double queryLon, EdgeFilter filter) {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
-        QueryResult res = new QueryResult(queryLat, queryLon);
+        Snap res = new Snap(queryLat, queryLon);
         double foundDist = Double.MAX_VALUE;
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {

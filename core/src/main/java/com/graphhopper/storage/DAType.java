@@ -74,6 +74,8 @@ public class DAType {
         DAType type;
         if (dataAccess.contains("SYNC"))
             throw new IllegalArgumentException("SYNC option is no longer supported, see #982");
+        else if (dataAccess.contains("MMAP_RO"))
+            type = DAType.MMAP_RO;
         else if (dataAccess.contains("MMAP"))
             type = DAType.MMAP;
         else if (dataAccess.contains("UNSAFE"))

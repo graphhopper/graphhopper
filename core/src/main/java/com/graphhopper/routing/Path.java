@@ -19,7 +19,6 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIterator;
@@ -43,22 +42,19 @@ import java.util.List;
 public class Path {
     final Graph graph;
     private final NodeAccess nodeAccess;
-    double distance;
-    long time;
-    int endNode = -1;
-    private boolean reverseOrder = true;
+    private double weight = Double.MAX_VALUE;
+    private double distance;
+    private long time;
+    private IntArrayList edgeIds = new IntArrayList();
+    private int fromNode = -1;
+    private int endNode = -1;
     private List<String> description;
     private boolean found;
-    private int fromNode = -1;
-    private GHIntArrayList edgeIds;
-    private double weight;
     private String debugInfo = "";
 
     public Path(Graph graph) {
         this.graph = graph;
-        this.weight = Double.MAX_VALUE;
         this.nodeAccess = graph.getNodeAccess();
-        this.edgeIds = new GHIntArrayList();
     }
 
     /**
@@ -76,8 +72,20 @@ public class Path {
         return this;
     }
 
+    public IntArrayList getEdges() {
+        return edgeIds;
+    }
+
+    public void setEdges(IntArrayList edgeIds) {
+        this.edgeIds = edgeIds;
+    }
+
     public void addEdge(int edge) {
         edgeIds.add(edge);
+    }
+
+    public int getEdgeCount() {
+        return edgeIds.size();
     }
 
     public int getEndNode() {
@@ -107,10 +115,6 @@ public class Path {
         return this;
     }
 
-    public int getEdgeCount() {
-        return edgeIds.size();
-    }
-
     public boolean isFound() {
         return found;
     }
@@ -118,14 +122,6 @@ public class Path {
     public Path setFound(boolean found) {
         this.found = found;
         return this;
-    }
-
-    void reverseEdges() {
-        if (!reverseOrder)
-            throw new IllegalStateException("Switching order multiple times is not supported");
-
-        reverseOrder = false;
-        edgeIds.reverse();
     }
 
     public Path setDistance(double distance) {
@@ -150,6 +146,11 @@ public class Path {
      */
     public long getTime() {
         return time;
+    }
+
+    public Path setTime(long time) {
+        this.time = time;
+        return this;
     }
 
     public Path addTime(long time) {
@@ -294,10 +295,6 @@ public class Path {
             }
         });
         return points;
-    }
-
-    public int getSize() {
-        return edgeIds.size();
     }
 
     @Override

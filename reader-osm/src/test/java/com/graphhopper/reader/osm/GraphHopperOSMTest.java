@@ -859,7 +859,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testGetPathsDirectionEnforcement6() {
-        // Test if query results at tower nodes are ignored
+        // Test if snaps at tower nodes are ignored
         instance = createSquareGraphInstance();
 
         // QueryPoints directly on TowerNodes 

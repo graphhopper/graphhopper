@@ -23,7 +23,10 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.DefaultWeightingFactory;
+import com.graphhopper.routing.Router;
+import com.graphhopper.routing.RouterConfig;
+import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
 import com.graphhopper.routing.ev.EncodedValueFactory;
@@ -261,9 +264,8 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Sets the routing profiles that can be used for CH/LM preparation. So far adding these profiles is only required
-     * so we can refer to them when configuring the CH/LM preparations, later it will be required to specify all
-     * routing profiles that shall be supported by this GraphHopper instance here.
+     * Sets the routing profiles that shall be supported by this GraphHopper instance. The (and only the) given profiles
+     * can be used for routing without preparation and for CH/LM preparation.
      * <p>
      * Here is an example how to setup two CH profiles and one LM profile (via the Java API)
      *
@@ -825,14 +827,14 @@ public class GraphHopper implements GraphHopperAPI {
             }
         }
 
-        Set<String> chConfigSet = new LinkedHashSet<>(chPreparationHandler.getCHProfiles().size());
-        for (CHProfile chConfig : chPreparationHandler.getCHProfiles()) {
-            boolean added = chConfigSet.add(chConfig.getProfile());
+        Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfiles().size());
+        for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
+            boolean added = chProfileSet.add(chProfile.getProfile());
             if (!added) {
-                throw new IllegalArgumentException("Duplicate CH reference to profile '" + chConfig.getProfile() + "'");
+                throw new IllegalArgumentException("Duplicate CH reference to profile '" + chProfile.getProfile() + "'");
             }
-            if (!profilesByName.containsKey(chConfig.getProfile())) {
-                throw new IllegalArgumentException("CH profile references unknown profile '" + chConfig.getProfile() + "'");
+            if (!profilesByName.containsKey(chProfile.getProfile())) {
+                throw new IllegalArgumentException("CH profile references unknown profile '" + chProfile.getProfile() + "'");
             }
         }
         Map<String, LMProfile> lmProfileMap = new LinkedHashMap<>(lmPreparationHandler.getLMProfiles().size());
@@ -848,12 +850,12 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("LM profile references unknown preparation profile '" + lmProfile.getPreparationProfile() + "'");
             }
         }
-        for (LMProfile lmConfig : lmPreparationHandler.getLMProfiles()) {
-            if (lmConfig.usesOtherPreparation() && !lmProfileMap.containsKey(lmConfig.getPreparationProfile())) {
-                throw new IllegalArgumentException("Unknown LM preparation profile '" + lmConfig.getPreparationProfile() + "' in LM profile '" + lmConfig.getProfile() + "' cannot be used as preparation_profile");
+        for (LMProfile lmProfile : lmPreparationHandler.getLMProfiles()) {
+            if (lmProfile.usesOtherPreparation() && !lmProfileMap.containsKey(lmProfile.getPreparationProfile())) {
+                throw new IllegalArgumentException("Unknown LM preparation profile '" + lmProfile.getPreparationProfile() + "' in LM profile '" + lmProfile.getProfile() + "' cannot be used as preparation_profile");
             }
-            if (lmConfig.usesOtherPreparation() && lmProfileMap.get(lmConfig.getPreparationProfile()).usesOtherPreparation()) {
-                throw new IllegalArgumentException("Cannot use '" + lmConfig.getPreparationProfile() + "' as preparation_profile for LM profile '" + lmConfig.getProfile() + "', because it uses another profile for preparation itself.");
+            if (lmProfile.usesOtherPreparation() && lmProfileMap.get(lmProfile.getPreparationProfile()).usesOtherPreparation()) {
+                throw new IllegalArgumentException("Cannot use '" + lmProfile.getPreparationProfile() + "' as preparation_profile for LM profile '" + lmProfile.getProfile() + "', because it uses another profile for preparation itself.");
             }
         }
     }
@@ -867,8 +869,8 @@ public class GraphHopper implements GraphHopperAPI {
             return;
         }
 
-        for (CHProfile chConfig : chPreparationHandler.getCHProfiles()) {
-            Profile profile = profilesByName.get(chConfig.getProfile());
+        for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
+            Profile profile = profilesByName.get(chProfile.getProfile());
             if (profile.isTurnCosts()) {
                 chPreparationHandler.addCHConfig(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
             } else {
@@ -976,7 +978,7 @@ public class GraphHopper implements GraphHopperAPI {
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
             ghStorage.getProperties().put(INTERPOLATION_KEY, true);
-            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds());
+            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds()+"s");
         }
     }
 
@@ -1064,8 +1066,8 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
         }
 
-        boolean tmpPrepare = chPreparationHandler.isEnabled();
-        if (tmpPrepare) {
+        boolean chEnabled = chPreparationHandler.isEnabled();
+        if (chEnabled) {
             ensureWriteAccess();
 
             if (closeEarly) {
@@ -1185,6 +1187,10 @@ public class GraphHopper implements GraphHopperAPI {
 
     private void setFullyLoaded() {
         fullyLoaded = true;
+    }
+
+    public boolean getFullyLoaded(){
+        return fullyLoaded;
     }
 
     public RouterConfig getRouterConfig() {

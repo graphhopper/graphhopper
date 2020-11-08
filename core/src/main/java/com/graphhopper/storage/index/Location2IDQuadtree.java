@@ -274,8 +274,8 @@ class Location2IDQuadtree implements LocationIndex {
     }
 
     @Override
-    public QueryResult findClosest(final double queryLat, final double queryLon,
-                                   final EdgeFilter edgeFilter) {
+    public Snap findClosest(final double queryLat, final double queryLon,
+                            final EdgeFilter edgeFilter) {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
@@ -300,7 +300,7 @@ class Location2IDQuadtree implements LocationIndex {
         final int id = index.getInt(key * 4);
         double mainLat = nodeAccess.getLatitude(id);
         double mainLon = nodeAccess.getLongitude(id);
-        final QueryResult res = new QueryResult(queryLat, queryLon);
+        final Snap res = new Snap(queryLat, queryLon);
         res.setClosestNode(id);
         res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
         goFurtherHook(id);

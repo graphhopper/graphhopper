@@ -30,10 +30,11 @@ import com.graphhopper.storage.ExtendedNodeAccess;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.*;
@@ -65,24 +66,24 @@ public class QueryGraph implements Graph {
     private final IntObjectMap<List<EdgeIteratorState>> virtualEdgesAtRealNodes;
     private final List<List<EdgeIteratorState>> virtualEdgesAtVirtualNodes;
 
-    public static QueryGraph create(Graph graph, QueryResult qr) {
-        return QueryGraph.create(graph, Collections.singletonList(qr));
+    public static QueryGraph create(Graph graph, Snap snap) {
+        return QueryGraph.create(graph, Collections.singletonList(snap));
     }
 
-    public static QueryGraph create(Graph graph, QueryResult fromQR, QueryResult toQR) {
-        return QueryGraph.create(graph, Arrays.asList(fromQR, toQR));
+    public static QueryGraph create(Graph graph, Snap fromSnap, Snap toSnap) {
+        return QueryGraph.create(graph, Arrays.asList(fromSnap, toSnap));
     }
 
-    public static QueryGraph create(Graph graph, List<QueryResult> queryResults) {
-        return new QueryGraph(graph, queryResults);
+    public static QueryGraph create(Graph graph, List<Snap> snaps) {
+        return new QueryGraph(graph, snaps);
     }
 
-    private QueryGraph(Graph graph, List<QueryResult> queryResults) {
+    private QueryGraph(Graph graph, List<Snap> snaps) {
         baseGraph = graph;
         baseNodes = graph.getNodes();
         baseEdges = graph.getEdges();
 
-        queryOverlay = QueryOverlayBuilder.build(graph, queryResults);
+        queryOverlay = QueryOverlayBuilder.build(graph, snaps);
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), queryOverlay.getVirtualNodes(), baseNodes);
         turnCostStorage = baseGraph.getTurnCostStorage();
 
@@ -139,7 +140,7 @@ public class QueryGraph implements Graph {
     public Set<EdgeIteratorState> getUnfavoredVirtualEdges() {
         // Need to create a new set to convert Set<VirtualEdgeIteratorState> to
         // Set<EdgeIteratorState>.
-        return new LinkedHashSet<EdgeIteratorState>(unfavoredEdges);
+        return new LinkedHashSet<>(unfavoredEdges);
     }
 
     /**
@@ -188,6 +189,14 @@ public class QueryGraph implements Graph {
             return eis2;
         throw new IllegalStateException("Edge " + origEdgeId + " not found with adjNode:" + adjNode
                 + ". found edges were:" + eis + ", " + eis2);
+    }
+
+    @Override
+    public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
+        int edge = GHUtility.getEdgeFromEdgeKey(edgeKey);
+        if (!isVirtualEdge(edge))
+            return baseGraph.getEdgeIteratorStateForKey(edgeKey);
+        return getVirtualEdge(edgeKey - 2 * baseEdges);
     }
 
     private VirtualEdgeIteratorState getVirtualEdge(int edgeId) {

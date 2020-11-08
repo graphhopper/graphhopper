@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>2.0-SNAPSHOT</version>
+    <version>3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -80,6 +80,7 @@
         <module>web</module>
         <module>client-hc</module>
         <module>navigation</module>
+        <module>example</module>
     </modules>
     <dependencyManagement>
         <dependencies>

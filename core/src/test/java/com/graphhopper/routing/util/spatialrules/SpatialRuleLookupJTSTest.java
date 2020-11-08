@@ -2,6 +2,7 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.util.TransportationMode;
 import org.junit.Test;
 import org.locationtech.jts.geom.*;
 

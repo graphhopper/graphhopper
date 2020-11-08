@@ -15,33 +15,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.coll;
-
-import java.util.Random;
-
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+package com.graphhopper.routing.util;
 
 /**
+ * Define different types of transportation that are used to create and populate our encoded values from a data source
+ * like OpenStreetMap.
+ *
+ * @author Robin Boldt
  * @author Peter Karich
  */
-public class GHIntArrayListTest {
+public enum TransportationMode {
+    OTHER(false), FOOT(false), VEHICLE(false), BIKE(false),
+    MOTOR_VEHICLE(true), CAR(true), MOTORCYCLE(true), HGV(true);
 
-    @Test
-    public void testReverse() {
-        assertEquals(GHIntArrayList.from(4, 3, 2, 1), GHIntArrayList.from(1, 2, 3, 4).reverse());
-        assertEquals(GHIntArrayList.from(5, 4, 3, 2, 1), GHIntArrayList.from(1, 2, 3, 4, 5).reverse());
+    private final boolean motorVehicle;
+
+    TransportationMode(boolean motorVehicle) {
+        this.motorVehicle = motorVehicle;
     }
 
-    @Test
-    public void testShuffle() {
-        assertEquals(GHIntArrayList.from(4, 1, 3, 2), GHIntArrayList.from(1, 2, 3, 4).shuffle(new Random(0)));
-        assertEquals(GHIntArrayList.from(4, 3, 2, 1, 5), GHIntArrayList.from(1, 2, 3, 4, 5).shuffle(new Random(1)));
-    }
-
-    @Test
-    public void testFill() {
-        assertEquals(GHIntArrayList.from(-1, -1, -1, -1), new GHIntArrayList(4).fill(4, -1));
+    public boolean isMotorVehicle() {
+        return motorVehicle;
     }
 }

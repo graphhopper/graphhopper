@@ -18,16 +18,16 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.*;
-import org.junit.Before;
-import org.junit.Test;
+import com.graphhopper.storage.CHConfig;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -42,13 +42,11 @@ public class CHPreparationHandlerTest {
     private CHConfig configEdge3;
     private GraphHopperStorage ghStorage;
 
-    @Before
+    @BeforeEach
     public void setup() {
         instance = new CHPreparationHandler();
-        Directory dir = new RAMDirectory();
-        FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager encodingManager = EncodingManager.create(encoder);
-        ghStorage = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true)
+        EncodingManager encodingManager = EncodingManager.create("car");
+        ghStorage = new GraphBuilder(encodingManager).withTurnCosts(true)
                 .setCHConfigStrings(
                         "p1|car|fastest|node",
                         "p2|car|shortest|node",
@@ -74,25 +72,31 @@ public class CHPreparationHandlerTest {
         assertTrue(instance.isEnabled());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testAddingPreparationBeforeProfile_throws() {
-        PrepareContractionHierarchies preparation = createPreparation(configNode1);
-        instance.addPreparation(preparation);
+        assertThrows(IllegalStateException.class, () -> {
+            PrepareContractionHierarchies preparation = createPreparation(configNode1);
+            instance.addPreparation(preparation);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testAddingPreparationWithWrongProfile_throws() {
-        instance.addCHConfig(configNode1);
-        PrepareContractionHierarchies preparation = createPreparation(configNode2);
-        instance.addPreparation(preparation);
+        assertThrows(IllegalArgumentException.class, () -> {
+            instance.addCHConfig(configNode1);
+            PrepareContractionHierarchies preparation = createPreparation(configNode2);
+            instance.addPreparation(preparation);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testAddingPreparationsInWrongOrder_throws() {
-        instance.addCHConfig(configNode1);
-        instance.addCHConfig(configNode2);
-        instance.addPreparation(createPreparation(configNode2));
-        instance.addPreparation(createPreparation(configNode1));
+        assertThrows(IllegalArgumentException.class, () -> {
+            instance.addCHConfig(configNode1);
+            instance.addCHConfig(configNode2);
+            instance.addPreparation(createPreparation(configNode2));
+            instance.addPreparation(createPreparation(configNode1));
+        });
     }
 
     @Test

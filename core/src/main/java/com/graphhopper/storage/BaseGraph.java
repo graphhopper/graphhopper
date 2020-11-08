@@ -117,11 +117,6 @@ class BaseGraph implements Graph {
             }
 
             @Override
-            final int getEntryBytes() {
-                return edgeEntryBytes;
-            }
-
-            @Override
             final long toPointer(int edgeId) {
                 assert isInBounds(edgeId) : "edgeId " + edgeId + " not in bounds [0," + edgeCount + ")";
                 return (long) edgeId * edgeEntryBytes;
@@ -533,7 +528,7 @@ class BaseGraph implements Graph {
             throw new IllegalStateException("Cannot create edge if graph is already frozen");
 
         ensureNodeIndex(Math.max(nodeA, nodeB));
-        int edgeId = edgeAccess.internalEdgeAdd(nextEdgeId(), nodeA, nodeB);
+        int edgeId = edgeAccess.internalEdgeAdd(nextEdgeId(), nodeA, nodeB, true);
         EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, this);
         boolean valid = edge.init(edgeId, nodeB);
         assert valid;
@@ -570,6 +565,13 @@ class BaseGraph implements Graph {
             return edge;
         // if edgeId exists but adjacent nodes do not match
         return null;
+    }
+
+    @Override
+    public EdgeIteratorState getEdgeIteratorStateForKey(int edgeKey) {
+        EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(edgeAccess, this);
+        edge.init(edgeKey);
+        return edge;
     }
 
     final void checkAdjNodeBounds(int adjNode) {
@@ -923,19 +925,15 @@ class BaseGraph implements Graph {
 
         @Override
         public boolean next() {
-            while (true) {
-                edgeId++;
-                if (edgeId >= baseGraph.edgeCount)
-                    return false;
-
-                edgePointer = edgeAccess.toPointer(edgeId);
-                adjNode = edgeAccess.getNodeB(edgePointer);
-
-                baseNode = edgeAccess.getNodeA(edgePointer);
-                freshFlags = false;
-                reverse = false;
-                return true;
-            }
+            edgeId++;
+            if (edgeId >= baseGraph.edgeCount)
+                return false;
+            edgePointer = edgeAccess.toPointer(edgeId);
+            baseNode = edgeAccess.getNodeA(edgePointer);
+            adjNode = edgeAccess.getNodeB(edgePointer);
+            freshFlags = false;
+            reverse = false;
+            return true;
         }
 
         @Override
@@ -999,6 +997,29 @@ class BaseGraph implements Graph {
                 return true;
             }
             return false;
+        }
+
+        /**
+         * Similar to {@link #init(int edgeId, int adjNode)}, but here we retrieve the edge in a certain direction
+         * directly using an edge key.
+         */
+        final void init(int edgeKey) {
+            if (edgeKey < 0)
+                throw new IllegalArgumentException("edge keys must not be negative, given: " + edgeKey);
+            this.edgeId = GHUtility.getEdgeFromEdgeKey(edgeKey);
+            edgePointer = edgeAccess.toPointer(edgeId);
+            baseNode = edgeAccess.getNodeA(edgePointer);
+            adjNode = edgeAccess.getNodeB(edgePointer);
+            freshFlags = false;
+
+            if (edgeKey % 2 == 0 || baseNode == adjNode) {
+                reverse = false;
+            } else {
+                reverse = true;
+                int tmp = baseNode;
+                baseNode = adjNode;
+                adjNode = tmp;
+            }
         }
 
         @Override
@@ -1157,6 +1178,11 @@ class BaseGraph implements Graph {
         @Override
         public int getEdge() {
             return edgeId;
+        }
+
+        @Override
+        public int getEdgeKey() {
+            return GHUtility.createEdgeKey(edgeId, reverse);
         }
 
         @Override

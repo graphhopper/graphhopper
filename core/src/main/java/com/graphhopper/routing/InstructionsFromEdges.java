@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -102,7 +102,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // both EncodedValues are optional; And return annotation only when instructions for bike encoder is requested
         String key = RouteNetwork.key("bike");
         this.bikeRouteEnc = evLookup.hasEncodedValue(key) ? evLookup.getEnumEncodedValue(key, RouteNetwork.class) : null;
-        this.getOffBikeEnc = encoder.getTransportationMode() == TransportationMode.BICYCLE && evLookup.hasEncodedValue(GetOffBike.KEY)
+        this.getOffBikeEnc = encoder.getTransportationMode() == TransportationMode.BIKE && evLookup.hasEncodedValue(GetOffBike.KEY)
                 ? evLookup.getBooleanEncodedValue(GetOffBike.KEY) : null;
         this.tollEnc = evLookup.hasEncodedValue(Toll.KEY) ? evLookup.getEnumEncodedValue(Toll.KEY, Toll.class) : null;
 
@@ -127,7 +127,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, EncodedValueLookup evLookup, final Translation tr) {
         final InstructionList ways = new InstructionList(tr);
         if (path.isFound()) {
-            if (path.getSize() == 0) {
+            if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
                 path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, tr, ways));
@@ -169,7 +169,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         int importance = 1;
         if (getOffBikeEnc != null) {
             if (edge.get(roadClassEnc) == RoadClass.CYCLEWAY
-                    || bikeRouteEnc != null && edge.get(bikeRouteEnc) != RouteNetwork.OTHER) {
+                    || bikeRouteEnc != null && edge.get(bikeRouteEnc) != RouteNetwork.MISSING) {
                 // for backward compatibility
                 importance = 0;
                 info = tr.tr("cycleway");

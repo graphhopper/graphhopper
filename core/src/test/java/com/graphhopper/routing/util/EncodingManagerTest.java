@@ -23,7 +23,6 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.routing.ev.RouteNetwork;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
@@ -84,8 +83,9 @@ public class EncodingManagerTest {
     @Test
     public void testToDetailsStringIncludesEncoderVersionNumber() {
         FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 0) {
+            @Override
             public TransportationMode getTransportationMode() {
-                return TransportationMode.BICYCLE;
+                return TransportationMode.BIKE;
             }
 
             @Override
@@ -129,7 +129,7 @@ public class EncodingManagerTest {
         BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder() {
             @Override
             public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
-                if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.OTHER)
+                if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.MISSING)
                     priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
                 return edgeFlags;
             }

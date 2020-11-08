@@ -33,7 +33,9 @@ public class ContourBuilder {
 
     private static final double EPSILON = 0.000001;
 
-    private final GeometryFactory geometryFactory = new GeometryFactory();
+    // OpenStreetMap has 1E7 (coordinates with 7 decimal places), and we walk on the edges of that grid,
+    // so we use 1E8 so we can, in theory, always wedge a point petween any two OSM points.
+    private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(1E8));
     private final ReadableTriangulation triangulation;
 
     public ContourBuilder(ReadableTriangulation triangulation) {
@@ -65,7 +67,8 @@ public class ContourBuilder {
                 } else {
                     cC = e.orig().midPoint(e.dest()).getCoordinate();
                 }
-                polyPoints.add(new Coordinate(cC.x, cC.y)); // Strip z coordinate
+                // Strip z coordinate
+                polyPoints.add(new Coordinate(cC.x, cC.y));
                 processed.add(e);
                 ReadableQuadEdge E1 = ccw ? e.oNext().getPrimary() : e.oPrev().getPrimary();
                 ReadableQuadEdge E2 = ccw ? e.dPrev().getPrimary() : e.dNext().getPrimary();

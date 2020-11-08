@@ -11,7 +11,7 @@ We have a prospering community and welcome everyone. Let us know your problems, 
 
 ## Questions
 
-All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage (iOS&Android), and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions
+All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage, and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions
 is on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper). Do **not** use our issue section for questions.
 
 ## Contribute
@@ -21,40 +21,42 @@ like finding and fixing bugs and improving our documentation or translations!
 
 ## Get Started
 
-To get started, read through our documentation and install the GraphHopper Web Service locally.
+To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
- * 1.0: [stable documentation](https://github.com/graphhopper/graphhopper/blob/1.0/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-1.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-1.0.apk), [announcement](https://www.graphhopper.com/blog/2020/05/25/graphhopper-routing-engine-1-0-released/)
- * unstable: [unstable documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md), [web service jar](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-web/2.0-SNAPSHOT/)
- * 0.13.0: [stable documentation](https://github.com/graphhopper/graphhopper/blob/0.13/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.13.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.13.0.apk), [announcement](https://www.graphhopper.com/blog/2019/09/18/graphhopper-routing-engine-0-13-released/)
+ * stable 2.x: [documentation](https://github.com/graphhopper/graphhopper/blob/2.x/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-2.0.jar), [announcement](https://www.graphhopper.com/blog/2020/09/30/graphhopper-routing-engine-2-0-released/)
+ * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
+
+<details><summary>Click to see older releases</summary>
+
+ * See our [changelog file](./core/files/changelog.txt) for Java API Changes.
+ * 1.0: [documentation](https://github.com/graphhopper/graphhopper/blob/1.0/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-1.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-1.0.apk), [announcement](https://www.graphhopper.com/blog/2020/05/25/graphhopper-routing-engine-1-0-released/)
+ * 0.13.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.13/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.13.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.13.0.apk), [announcement](https://www.graphhopper.com/blog/2019/09/18/graphhopper-routing-engine-0-13-released/)
  * 0.12.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.12/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.12.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.12.0.apk), [announcement](https://www.graphhopper.com/blog/2019/03/26/graphhopper-routing-engine-0-12-released/)
  * 0.11.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.11/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.11.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.11.0.apk), [announcement](https://www.graphhopper.com/blog/2018/09/17/graphhopper-routing-engine-0-11-release-open-sourcing-the-isochrone-module/)
  * 0.10.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.10/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.10.3-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.10.3.apk), [announcement](https://www.graphhopper.com/blog/2018/03/08/graphhopper-routing-engine-0-10-released/)
  * 0.9.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.9/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.9.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.9.0.apk), [announcement](https://www.graphhopper.com/blog/2017/05/31/graphhopper-routing-engine-0-9-released/)
  * 0.8.2: [documentation](https://github.com/graphhopper/graphhopper/blob/0.8/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.8.2-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.8.2.apk), [announcement](https://www.graphhopper.com/blog/2016/10/18/graphhopper-routing-engine-0-8-released/)
  * 0.7.0: [documentation](https://github.com/graphhopper/graphhopper/blob/0.7/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.7.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.7.0.apk), [announcement](https://www.graphhopper.com/blog/2016/06/15/graphhopper-routing-engine-0-7-released/)
- 
-### Java API Changes
+</details>
 
-See our [changelog file](./core/files/changelog.txt).
+## Installation
 
-### Docker
-
-Run a dockerized GraphHopper from sources:
+To install the [GraphHopper Maps](https://graphhopper.com/maps/) and the web service locally you just do:
 
 ```bash
-docker build -t graphhopper:master .
-docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 8989:8989 graphhopper:master
+# download and install a JVM that supports at least Java 8 (https://adoptopenjdk.net)
+wget https://graphhopper.com/public/releases/graphhopper-web-2.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/stable/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
 
-See also the builds at [Docker Hub](https://hub.docker.com/r/graphhopper/graphhopper)
+After a while you see a log message with 'Server - Started', then go to http://localhost:8989/ and
+you'll see a map of Berlin. You should be able to right click on the map to create a route.
 
-### DEB or RPM package
+For more details about the installation, see [here](./docs/web/quickstart.md).
 
-[There is an experimental step by step guide](https://github.com/graphhopper/graphhopper/issues/561#issuecomment-473567727) that creates a debian or rpm package from the cloned and compiled repository. Before we can recommend this we need some more testers and feedback :)
+## GraphHopper Maps
 
-## For the Web
-
-See the road routing feature of GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps) and [install it](../stable/docs/index.md) on your own machine:
+To see the road routing feature of GraphHopper in action please go to [GraphHopper Maps](https://graphhopper.com/maps).
 
 [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
 
@@ -71,17 +73,20 @@ where the default is [Omniscale](http://omniscale.com/). All of these are availa
 
 ## For Mobile Apps
 
+### Online
+
+There is a [web service](./navigation) that can be consumed by [our navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
+
+[![android navigation demo app](https://raw.githubusercontent.com/graphhopper/graphhopper-navigation-example/master/files/graphhopper-navigation-example.png)](https://github.com/graphhopper/graphhopper-navigation-example)
+
 ### Offline
 
-There are subprojects to make GraphHopper work offline on Android and [iOS](http://github.com/graphhopper/graphhopper-ios)
+Offline routing is [no longer officially supported](https://github.com/graphhopper/graphhopper/issues/1940). See
+[version 1.0](https://github.com/graphhopper/graphhopper/blob/1.0/docs/android/index.md) with still an Android
+demo and [this pull request](http://github.com/graphhopper/graphhopper-ios) of the iOS fork including a demo for iOS.
 
 [![simple routing](https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png)](./android/README.md)
 
-### Online
-
-There is a [server-side endpoint](./navigation) that is usable by an [online navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
-
-[![android navigation demo app](https://raw.githubusercontent.com/graphhopper/graphhopper-navigation-example/master/files/graphhopper-navigation-example.png)](https://github.com/graphhopper/graphhopper-navigation-example)
 
 ## For Analysis
 
@@ -118,6 +123,8 @@ order of magnitude faster than the flexible mode and uses also less RAM for one 
 
 You can switch between all modes at request time.
 
+Read more about the technical details [here](./docs/core/technical.md).
+
 ## License
 
 We chose the Apache License to make it easy for you to embed GraphHopper in your products, even closed source.
@@ -133,8 +140,7 @@ Other map data will need a custom import procedure, see e.g. <a href="https://gi
 
 ## Written in Java
 
-GraphHopper is written in Java and has been known to run on Linux, Mac OS X,
-Windows, BSD, Solaris, Raspberry Pi, Android, Blackberry, and even iOS.
+GraphHopper is written in Java and officially runs on Linux, Mac OS X and Windows.
 
 ### Maven
 
@@ -148,7 +154,9 @@ Embed GraphHopper with OpenStreetMap support into your Java application via the 
 </dependency>
 ```
 
-If you want to write your own import procedure, then use:
+See also [our example application](./example/src/main/java/com/graphhopper/example/RoutingExample.java) to get started fast.
+
+If you want to write your own import procedure, then you might only need:
 
 ```xml
 <dependency>
