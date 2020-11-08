@@ -21,8 +21,7 @@ import static com.graphhopper.util.Helper.nf;
 
 import com.baremaps.osm.EntityHandler;
 import com.baremaps.osm.OpenStreetMap;
-import com.baremaps.osm.domain.Bounds;
-import com.baremaps.osm.domain.Entity;
+import com.baremaps.osm.domain.Bound;
 import com.baremaps.osm.domain.Header;
 import com.baremaps.osm.domain.Member;
 import com.baremaps.osm.domain.Node;
@@ -73,15 +72,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -202,58 +194,71 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         + "total:" + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
   }
 
+  void read(File osmFile, EntityHandler handler) {
+    try {
+      ForkJoinPool pool = new ForkJoinPool(workerThreads);
+      pool.submit(() -> {
+        try {
+          OpenStreetMap.entityStream(osmFile.toPath(), true).forEachOrdered(handler);
+        } catch (IOException exception) {
+          exception.printStackTrace();
+        }
+      }).get();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      e.printStackTrace();
+    }
+  }
+
   /**
    * Preprocessing of OSM file to select nodes which are used for highways. This allows a more compact graph data
    * structure.
    */
   void preProcess(File osmFile) {
     LOGGER.info("Starting to process OSM file: '" + osmFile + "'");
-    try {
-      OpenStreetMap.entityStream(osmFile.toPath(), true).forEachOrdered(new EntityHandler() {
-        @Override
-        public void handle(Header header) {
-          if (header.getReplicationTimestamp() != null) {
-            osmDataDate = Date.from(header.getReplicationTimestamp().toInstant(ZoneOffset.UTC));
+    read(osmFile, new EntityHandler() {
+      @Override
+      public void handle(Header header) {
+        if (header.getReplicationTimestamp() != null) {
+          osmDataDate = Date.from(header.getReplicationTimestamp().toInstant(ZoneOffset.UTC));
+        }
+      }
+
+      @Override
+      public void handle(Bound bounds) {
+        // do nothing
+      }
+
+      @Override
+      public void handle(Node node) {
+        // do nothing
+      }
+
+      @Override
+      public void handle(Way entity) {
+        final ReaderWay way = toReaderWay(entity);
+        boolean valid = filterWay(way);
+        if (valid) {
+          LongIndexedContainer wayNodes = way.getNodes();
+          int s = wayNodes.size();
+          for (int index = 0; index < s; index++) {
+            prepareHighwayNode(wayNodes.get(index));
           }
         }
+      }
 
-        @Override
-        public void handle(Bounds bounds) {
-          // do nothing
+      @Override
+      public void handle(Relation entity) {
+        final ReaderRelation relation = toReaderRelation(entity);
+        if (!relation.isMetaRelation() && relation.hasTag("type", "route")) {
+          prepareWaysWithRelationInfo(relation);
         }
-
-        @Override
-        public void handle(Node node) {
-          // do nothing
+        if (relation.hasTag("type", "restriction")) {
+          prepareRestrictionRelation(relation);
         }
-
-        @Override
-        public void handle(Way entity) {
-          final ReaderWay way = toReaderWay(entity);
-          boolean valid = filterWay(way);
-          if (valid) {
-            LongIndexedContainer wayNodes = way.getNodes();
-            int s = wayNodes.size();
-            for (int index = 0; index < s; index++) {
-              prepareHighwayNode(wayNodes.get(index));
-            }
-          }
-        }
-
-        @Override
-        public void handle(Relation entity) {
-          final ReaderRelation relation = toReaderRelation(entity);
-          if (!relation.isMetaRelation() && relation.hasTag("type", "route")) {
-            prepareWaysWithRelationInfo(relation);
-          }
-          if (relation.hasTag("type", "restriction")) {
-            prepareRestrictionRelation(relation);
-          }
-        }
-      });
-    } catch (IOException exception) {
-      exception.printStackTrace();
-    }
+      }
+    });
   }
 
   ReaderNode toReaderNode(Node entity) {
@@ -333,41 +338,35 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     ghStorage.create(tmp);
 
     LongIntMap nodeFilter = getNodeMap();
-
     AtomicLong counter = new AtomicLong(1);
+    read(osmFile, new EntityHandler() {
+      @Override
+      public void handle(Header header) {
+        // do nothing
+      }
 
-    try {
-      OpenStreetMap.entityStream(osmFile.toPath(), true).forEachOrdered(new EntityHandler() {
-        @Override
-        public void handle(Header header) {
-          // do nothing
-        }
+      @Override
+      public void handle(Bound bounds) {
+        // do nothing
+      }
 
-        @Override
-        public void handle(Bounds bounds) {
-          // do nothing
+      @Override
+      public void handle(Node item) {
+        if (nodeFilter.get(item.getId()) != EMPTY_NODE) {
+          processNode(toReaderNode(item));
         }
+      }
 
-        @Override
-        public void handle(Node item) {
-          if (nodeFilter.get(item.getId()) != EMPTY_NODE) {
-            processNode(toReaderNode(item));
-          }
-        }
+      @Override
+      public void handle(Way entity) {
+        processWay(toReaderWay(entity));
+      }
 
-        @Override
-        public void handle(Way entity) {
-          processWay(toReaderWay(entity));
-        }
-
-        @Override
-        public void handle(Relation entity) {
-          processRelation(toReaderRelation(entity));
-        }
-      });
-    } catch (IOException exception) {
-      exception.printStackTrace();
-    }
+      @Override
+      public void handle(Relation entity) {
+        processRelation(toReaderRelation(entity));
+      }
+    });
 
     finishedReading();
 
