@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 /**
- * Define different types of transportation that are used to create and populate our encoded values from a data source
+ * Define disjunct ways of transportation that are used to create and populate our encoded values from a data source
  * like OpenStreetMap.
  *
  * @author Robin Boldt
@@ -26,7 +26,7 @@ package com.graphhopper.routing.util;
  */
 public enum TransportationMode {
     OTHER(false), FOOT(false), VEHICLE(false), BIKE(false),
-    MOTOR_VEHICLE(true), CAR(true), MOTORCYCLE(true), HGV(true);
+    CAR(true), MOTORCYCLE(true), HGV(true);
 
     private final boolean motorVehicle;
 
