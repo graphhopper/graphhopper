@@ -91,24 +91,6 @@ public class CarFlagEncoderTest {
         assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
-        way.setTag("route", "ferry");
-        assertTrue(encoder.getAccess(way).isFerry());
-        way.setTag("motorcar", "no");
-        assertTrue(encoder.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("route", "ferry");
-        way.setTag("foot", "yes");
-        assertTrue(encoder.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("route", "ferry");
-        way.setTag("access", "no");
-        assertTrue(encoder.getAccess(way).canSkip());
-        way.setTag("vehicle", "yes");
-        assertTrue(encoder.getAccess(way).isFerry());
-
-        way.clearTags();
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
         assertTrue(encoder.getAccess(way).canSkip());
@@ -487,8 +469,11 @@ public class CarFlagEncoderTest {
         way.setTag("railway", "tram");
         // but allow tram to be on the same way
         assertTrue(encoder.getAccess(way).isWay());
+    }
 
-        way = new ReaderWay(1);
+    @Test
+    public void testFerry() {
+        ReaderWay way = new ReaderWay(1);
         way.setTag("route", "shuttle_train");
         way.setTag("motorcar", "yes");
         way.setTag("bicycle", "no");
@@ -527,6 +512,30 @@ public class CarFlagEncoderTest {
         assertTrue(encoder.getAccess(way).isFerry());
         // We have ignored the unrealisitc long duration and take the unknown speed
         assertEquals(2.5, encoder.getFerrySpeed(way), 1e-1);
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        assertTrue(encoder.getAccess(way).isFerry());
+        way.setTag("motorcar", "no");
+        assertTrue(encoder.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "yes");
+        assertTrue(encoder.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "designated");
+        way.setTag("motor_vehicle", "designated");
+        assertTrue(encoder.getAccess(way).isFerry());
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("access", "no");
+        assertTrue(encoder.getAccess(way).canSkip());
+        way.setTag("vehicle", "yes");
+        assertTrue(encoder.getAccess(way).isFerry());
     }
 
     @Test
