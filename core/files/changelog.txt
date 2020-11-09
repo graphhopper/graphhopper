@@ -3,6 +3,7 @@
     CustomWeighting requires LinkedHashMap throw exception if this is not provided
     removed Dockerfile
     the second argument of the VirtualEdgeIteratorState constructor is now an edge key (was an edge id before)
+    removed instruction annotations(cycleway, off_bike, ford, ferry, private, toll)
 
 2.0
     AbstractFlagEncoder#getMaxSpeed returns now Double#NaN instead of -1 if no maxspeed was found
