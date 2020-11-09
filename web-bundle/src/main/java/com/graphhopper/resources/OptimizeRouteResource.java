@@ -49,7 +49,7 @@ public class OptimizeRouteResource {
             e.printStackTrace();
             return Response.serverError().build();
         }
-        return Response.ok().entity(routeOptimize.getOptimizedRoutes()).build();
+        return Response.ok().entity(routeOptimize.getOptimizedRoutes().toString()).build();
     }
 
 

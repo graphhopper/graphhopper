@@ -78,7 +78,6 @@ public class RouteOptimize {
             IdentifiedGHPoint3D firstPoint = null;
             IdentifiedGHPoint3D lastPoint = null;
             JsonArray waypoints = new JsonArray();
-            double routeDistance = 0.0;
 
             // Add depot location
 //            waypoints.add(this.depotPoint);
@@ -103,7 +102,6 @@ public class RouteOptimize {
                 if (lastPoint != null) {
                     distance = this.vrtcm.getDistance(idPoint.getId(), lastPoint.getId());
                     idPoint.setDistance(distance);
-                    routeDistance += distance;
 
                     System.out.printf("Point: %s \n Distance: %s \n Time: %s%n", idPoint.getId(), distance, activity.getArrTime());
                 }
@@ -123,7 +121,7 @@ public class RouteOptimize {
 
             optimizedRoutesMap.add(this.routeVehicleId(route, optimizedRoutesMap.entrySet().stream(), 0), vehicleHashMap);
         }
-        Gson gson = new Gson();
+//        Gson gson = new Gson();
 
         allMap.add("OptimizedRoutes", optimizedRoutesMap);
 
