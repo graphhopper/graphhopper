@@ -1,6 +1,8 @@
 package com.graphhopper.farmy;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
@@ -19,9 +21,9 @@ import com.graphhopper.jsprit.core.util.Solutions;
 import com.graphhopper.jsprit.core.util.UnassignedJobReasonTracker;
 import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
 import com.graphhopper.util.shapes.GHPoint;
-import org.apache.commons.math3.stat.Frequency;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class RouteOptimize {
 
@@ -31,6 +33,7 @@ public class RouteOptimize {
     private IdentifiedGHPoint3D depotPoint;
     private RoutePlanReader routePlanReader;
     private UnassignedJobReasonTracker reasonTracker;
+    private SolutionAnalyser analyser;
 
     public VehicleRoutingTransportCostsMatrix vrtcm;
 
@@ -65,15 +68,16 @@ public class RouteOptimize {
         build(this.routePlanReader.getIdentifiedPointList(), farmyVehicles);
     }
 
-    public HashMap<String, String> getOptimizedRoutes() {
-        HashMap<String, String> allMap = new HashMap<>();
+    public JsonObject getOptimizedRoutes() {
+        JsonObject allMap = new JsonObject();
 
-        HashMap<String, HashMap<String, Object>> optimizedRoutesMap = new HashMap<>();
+        JsonObject optimizedRoutesMap = new JsonObject();
+
         for (VehicleRoute route : solution.getRoutes()) {
-            HashMap<String, Object> vehicleHashMap = new HashMap<>();
+            JsonObject vehicleHashMap = new JsonObject();
             IdentifiedGHPoint3D firstPoint = null;
             IdentifiedGHPoint3D lastPoint = null;
-            ArrayList<GHPoint> waypoints = new ArrayList<>();
+            JsonArray waypoints = new JsonArray();
             double routeDistance = 0.0;
 
             // Add depot location
@@ -93,7 +97,7 @@ public class RouteOptimize {
                 // Get Job as DeliveryService
                 IdentifiedGHPoint3D idPoint = this.pointList.find(service.getId()); // Find point by service id
                 idPoint.setPlannedTime(activity.getArrTime()); // set arrtime from activity
-                waypoints.add(idPoint); // add the point to waypoints
+                waypoints.add(idPoint.toJsonObject()); // add the point to waypoints
 //              Calc for distance
 
                 if (lastPoint != null) {
@@ -110,27 +114,34 @@ public class RouteOptimize {
 
 
 //          allMap.get(route.getVehicle().getId()).put(allMap.get(route.getVehicle().getId()).get("waypoints"), waypoints);
-            vehicleHashMap.put("waypoints", waypoints.toArray());
+            vehicleHashMap.add("waypoints", waypoints);
 
-            // Calc add add route distance
-            if (this.vrtcm != null && firstPoint != null) {
-                vehicleHashMap.put("distance", routeDistance);
-            }
+            vehicleHashMap.addProperty("serviceTime", this.analyser.getServiceTime(route));
+            vehicleHashMap.addProperty("distance", this.analyser.getDistance(route));
+            vehicleHashMap.addProperty("waitingTime", this.analyser.getWaitingTime(route));
+            vehicleHashMap.addProperty("transportTime", this.analyser.getTransportTime(route));
 
-//          Calc for avg speed
-            if (this.speedAvg.size() > 0) {
-                vehicleHashMap.put("avg_speed", (routeDistance / route.getEnd().getArrTime()) * 3.85);
-            }
-
-            optimizedRoutesMap.put(routeVehicleId(route, optimizedRoutesMap, 0), vehicleHashMap);
+            optimizedRoutesMap.add(this.routeVehicleId(route, optimizedRoutesMap.entrySet().stream(), 0), vehicleHashMap);
         }
         Gson gson = new Gson();
 
-        allMap.put("OptimizedRoutes", gson.toJson(optimizedRoutesMap));
-        HashMap<String, Frequency> frequencyHashMap= new HashMap<>();
-        this.reasonTracker.getFailedConstraintNamesFrequencyMapping().entrySet().stream().filter(o -> this.solution.getUnassignedJobs().stream().anyMatch(d -> d.getId().equals(o.getKey()))).forEach(d -> frequencyHashMap.put(d.getKey(), d.getValue()));
+        allMap.add("OptimizedRoutes", optimizedRoutesMap);
 
-        allMap.put("UnassignedJobs",  gson.toJson(frequencyHashMap));
+        JsonObject frequencyHashMap= new JsonObject();
+        this.reasonTracker.getFailedConstraintNamesFrequencyMapping().entrySet().stream()
+                .filter(o -> this.solution.getUnassignedJobs().stream().anyMatch(d -> d.getId().equals(o.getKey())))
+                .forEach(d -> frequencyHashMap.addProperty(d.getKey(), d.getValue().toString()));
+
+        allMap.add("UnassignedJobs", frequencyHashMap);
+
+        JsonObject routeInfoHashMap= new JsonObject();
+        routeInfoHashMap.addProperty("serviceTime", this.analyser.getServiceTime());
+        routeInfoHashMap.addProperty("totalCosts", this.analyser.getTotalCosts());
+        routeInfoHashMap.addProperty("distance", this.analyser.getDistance());
+        routeInfoHashMap.addProperty("waitingTime", this.analyser.getWaitingTime());
+        routeInfoHashMap.addProperty("transportTime", this.analyser.getTransportTime());
+        allMap.add("RouteInfo", routeInfoHashMap);
+
         return allMap;
     }
 
@@ -261,7 +272,7 @@ public class RouteOptimize {
 //        new GraphStreamViewer(vrp, Solutions.bestOf(solutions)).labelWith(GraphStreamViewer.Label.ID).setRenderDelay(200).display();
 //        SolutionPrinter.print(vrp, Solutions.bestOf(solutions), SolutionPrinter.Print.VERBOSE);
 
-        SolutionAnalyser analyser = new SolutionAnalyser(vrp, Solutions.bestOf(solutions), vrp.getTransportCosts());
+        this.analyser = new SolutionAnalyser(vrp, Solutions.bestOf(solutions), vrp.getTransportCosts());
 //        System.out.println("tp_distance: " + analyser.getDistance());
 //        System.out.println("tp_time: " + analyser.getTransportTime());
 //        System.out.println("waiting: " + analyser.getWaitingTime());
@@ -285,12 +296,13 @@ public class RouteOptimize {
 //        }
     }
 
-    private String routeVehicleId(VehicleRoute route, HashMap<String, HashMap<String, Object>> allMap, int routeNumber) {
+    private String routeVehicleId(VehicleRoute route, Stream allMap, int routeNumber) {
 //          Check if vehicle is already added
         String vehicleId = route.getVehicle().getId().replaceAll("\\s+", "");
-        if (allMap.containsKey(String.format("%s#%s", vehicleId, routeNumber))) {
+        int finalRouteNumber = routeNumber;
+        if (allMap.anyMatch(a -> a.equals(String.format("%s#%s", a, finalRouteNumber)))) {
             routeNumber++;
-            return routeVehicleId(route, allMap, routeNumber);
+            return this.routeVehicleId(route, allMap, routeNumber);
         } else {
             return String.format("%s#%s", vehicleId, routeNumber);
         }

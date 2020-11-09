@@ -1,5 +1,6 @@
 package com.graphhopper.farmy;
 
+import com.google.gson.JsonObject;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.TimeWindow;
 import com.graphhopper.util.shapes.GHPoint;
@@ -119,6 +120,23 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
     public String toString() {
         return super.toString() + "," + id;
     }
+
+    public JsonObject toJsonObject() {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", this.getId());
+        jsonObject.addProperty("latitude", String.valueOf(lat));
+        jsonObject.addProperty("longitude", String.valueOf(lon));
+        jsonObject.addProperty("elevation", String.valueOf(ele));
+        jsonObject.addProperty("time_window_start", getTimeWindow() != null ? String.valueOf(getTimeWindow().getStart()) : "");
+        jsonObject.addProperty("time_window_end", getTimeWindow() != null ? String.valueOf(getTimeWindow().getEnd()) : "");
+        jsonObject.addProperty("service_time", String.valueOf(getServiceTime()));
+        jsonObject.addProperty("direction", getDirection());
+        jsonObject.addProperty("planned_time", String.valueOf(getPlannedTime()));
+        jsonObject.addProperty("weight",  String.valueOf(getWeight()));
+        jsonObject.addProperty("distance", String.valueOf(getDistance()));
+        return jsonObject;
+    }
+
 
     public Location getLocation() {
         return Location.newInstance(this.getLat(), this.getLon());
