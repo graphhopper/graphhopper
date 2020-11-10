@@ -62,6 +62,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private int shortcutEntryBytes;
     private int shortcutCount = 0;
     private boolean isReadyForContraction;
+    private boolean frozen;
 
     CHGraphImpl(CHConfig chConfig, Directory dir, final BaseGraph baseGraph, int segmentSize) {
         if (chConfig.getWeighting() == null)
@@ -133,8 +134,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         // level node a)
         int shortcutId = nextShortcutId();
         writeShortcut(shortcutId, a, b);
-        // we keep track of the last shortcut for each node (-1 if there are no shortcuts)
-        setEdgeRef(a, shortcutId);
         long edgePointer = toPointer(shortcutId);
         setAccessAndWeight(edgePointer, accessFlags & scDirMask, weight);
         setSkippedEdges(edgePointer, skippedEdge1, skippedEdge2);
@@ -246,6 +245,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public CHEdgeExplorer createEdgeExplorer(EdgeFilter filter) {
+        if (!frozen)
+            throw new IllegalArgumentException("ch graph not frozen yet");
         return new CHEdgeIteratorImpl(baseGraph, filter);
     }
 
@@ -261,6 +262,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public final CHEdgeIteratorState getEdgeIteratorState(int edgeId, int endNode) {
+        if (!frozen)
+            throw new IllegalArgumentException("ch graph not frozen yet");
         if (isShortcut(edgeId)) {
             if (!isInBounds(edgeId))
                 throw new IllegalStateException("shortcutId " + edgeId + " out of bounds");
@@ -319,9 +322,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             return;
         long maxCapacity = ((long) getNodes()) * nodeCHEntryBytes;
         nodesCH.ensureCapacity(maxCapacity);
-        // copy normal edge refs into ch edge refs
         for (int node = 0; node < getNodes(); node++)
-            setEdgeRef(node, baseGraph.getEdgeRef(node));
+            setEdgeRef(node, -1);
+        for (int i = 0; i < getNodes(); i++)
+            setLevel(i, -1);
         isReadyForContraction = true;
     }
 
@@ -351,10 +355,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     void loadNodesHeader() {
         isReadyForContraction = nodesCH.getHeader(0 * 4) == 1;
+        frozen = nodesCH.getHeader(1 * 4) == 1;
     }
 
     void setNodesHeader() {
         nodesCH.setHeader(0 * 4, isReadyForContraction ? 1 : 0);
+        nodesCH.setHeader(1 * 4, frozen ? 1 : 0);
     }
 
     protected int loadEdgesHeader() {
@@ -481,6 +487,20 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
     }
 
+    @Override
+    public void freeze() {
+        if (frozen)
+            return;
+        int levels = getNodes();
+        int count = baseGraph.edgeCount;
+        for (int level = 0; level < levels; level++) {
+            while (count < baseGraph.edgeCount + shortcutCount && getLevel(getNodeA(toPointer(count))) < level)
+                count++;
+            setEdgeRef(level, count);
+        }
+        frozen = true;
+    }
+
     private int getNodeA(long edgePointer) {
         return shortcuts.getInt(edgePointer + E_NODEA);
     }
@@ -504,7 +524,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     class CHEdgeIteratorImpl extends CHEdgeIteratorStateImpl implements CHEdgeExplorer, CHEdgeIterator {
         private final EdgeIteratorImpl baseIterator;
-        private int nextEdgeId;
+        private int end;
 
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeFilter filter) {
             super(new EdgeIteratorImpl(baseGraph, filter));
@@ -517,7 +537,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             baseIterator.nextEdgeId = baseIterator.edgeId = baseGraph.getEdgeRef(baseNode);
             baseIterator.baseNode = baseNode;
 
-            nextEdgeId = edgeId = CHGraphImpl.this.getEdgeRef(baseNode);
+            edgeId = CHGraphImpl.this.getEdgeRef(getLevel(baseNode)) - 1;
+            end = (getLevel(baseNode) < (getNodes() - 1)) ? CHGraphImpl.this.getEdgeRef(getLevel(baseNode) + 1) : getEdges();
+            if (edgeId > end)
+                throw new IllegalStateException("todonow");
             return this;
         }
 
@@ -525,18 +548,23 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public boolean next() {
             // todo: note that it would be more efficient to separate in/out edges, especially for edge-based where we
             //       do not use bidirectional shortcuts
-            while (true) {
-                if (!EdgeIterator.Edge.isValid(nextEdgeId) || nextEdgeId < baseGraph.edgeCount)
+            while (end >= 0) {
+                // todonow: hmm... simply counting up the shortcut id is nice, but apparently its not really faster and
+                // it requires the freeze() step so not sure if its worth it. one big plus would be if this way we could
+                // get rid of nodeA entirely, but currently I do not think so because of shortcut unpacking
+                edgeId++;
+                if (edgeId == end) {
+                    edgeId = baseIterator.edgeId;
+                    end = -1;
                     break;
-                edgeId = nextEdgeId;
+                }
                 edgePointer = toPointer(edgeId);
                 baseNode = getNodeA(edgePointer);
+                // todonow: do we even need these?
                 adjNode = getNodeB(edgePointer);
-                nextEdgeId = edgeId - 1;
-                if (nextEdgeId < baseGraph.edgeCount || getNodeA(toPointer(nextEdgeId)) != baseNode)
-                    nextEdgeId = edgeIterable.edgeId;
                 reverse = false;
                 freshFlags = false;
+//                 todonow: do we need this? for shortcuts?
                 if (baseIterator.filter.accept(this))
                     return true;
             }

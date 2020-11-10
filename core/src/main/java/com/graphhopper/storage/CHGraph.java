@@ -91,6 +91,8 @@ public interface CHGraph {
      */
     boolean isReadyForContraction();
 
+    void freeze();
+
     Graph getBaseGraph();
 
     int getNodes();

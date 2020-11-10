@@ -146,6 +146,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         } else {
             contractNodesUsingHeuristicNodeOrdering();
         }
+        chGraph.freeze();
     }
 
     public boolean isEdgeBased() {
