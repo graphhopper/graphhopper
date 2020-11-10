@@ -6,6 +6,7 @@ import com.graphhopper.jsprit.core.problem.solution.route.activity.TimeWindow;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class IdentifiedGHPoint3D extends GHPoint3D {
@@ -45,6 +46,11 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
 
     public IdentifiedGHPoint3D(Location point, String id) {
         super(point.getCoordinate().getX(), point.getCoordinate().getY(), 0);
+        this.id = id;
+    }
+
+    public IdentifiedGHPoint3D(ArrayList<Double> arrayList, String id) {
+        super(arrayList.get(0), arrayList.get(1), 0);
         this.id = id;
     }
 

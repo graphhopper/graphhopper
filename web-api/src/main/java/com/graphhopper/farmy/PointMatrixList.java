@@ -31,6 +31,12 @@ public class PointMatrixList extends AbstractList<PointMatrix> {
         this.pointMatrixList = Build();
     }
 
+    public PointMatrixList(GraphHopperAPI graphHopper, IdentifiedPointList pointList) {
+        this.graphHopper = graphHopper;
+        this.pointList = pointList;
+        this.pointMatrixList = Build();
+    }
+
     public PointMatrix get(int index) {
         return pointMatrixList.get(index);
     }
@@ -68,4 +74,3 @@ public class PointMatrixList extends AbstractList<PointMatrix> {
         return pointMatrixList;
     }
 }
-//pointMatrixList.stream().filter(pointMatrix -> pointMatrix.getPoint1().getLocation().equals(Location.newInstance(47.3822499, 8.4857342))).toArray()

@@ -40,32 +40,17 @@ public class RouteOptimize {
 
     public List<Double> speedAvg = new ArrayList<>();
 
-
-
-
-//    public RouteOptimize(GraphHopperAPI graphHopper, InputStream fileStream, GHPoint depotPoint) throws Exception {
-//        this.graphHopper = graphHopper;
-//        buildSolution(fileStream, depotPoint);
-//    }
-
-//    public RouteOptimize(GraphHopperAPI graphHopper, FarmyOrder[] farmyOrders) throws Exception {
-//        this.graphHopper = graphHopper;
-//        buildSolution(farmyOrders);
-//    }
+    public RouteOptimize(GraphHopperAPI graphHopper, FarmyOrder[] farmyOrders, FarmyVehicle[] farmyVehicles, IdentifiedGHPoint3D depotPoint) throws Exception {
+        this.graphHopper = graphHopper;
+        this.routePlanReader = new RoutePlanReader(farmyOrders);
+        this.depotPoint = depotPoint;
+        build(this.routePlanReader.getIdentifiedPointList(), farmyVehicles);
+    }
 
     public RouteOptimize(GraphHopperAPI graphHopper, FarmyOrder[] farmyOrders, FarmyVehicle[] farmyVehicles) throws Exception {
         this.graphHopper = graphHopper;
-        buildSolution(farmyOrders, farmyVehicles);
-    }
-
-//    public void buildSolution(InputStream fileStream, GHPoint depotPointParms) throws Exception {
-//        RoutePlanReader routePlanReader = new RoutePlanReader(fileStream);
-//        this.depotLocation = Location.newInstance(depotPointParms.getLat(), depotPointParms.getLon());
-//        build(routePlanReader.getIdentifiedPointList());
-//    }
-
-    public void buildSolution(FarmyOrder[] farmyOrders, FarmyVehicle[] farmyVehicles) throws Exception {
         this.routePlanReader = new RoutePlanReader(farmyOrders);
+        this.depotPoint = this.routePlanReader.depotPoint();
         build(this.routePlanReader.getIdentifiedPointList(), farmyVehicles);
     }
 
@@ -79,9 +64,6 @@ public class RouteOptimize {
             IdentifiedGHPoint3D firstPoint = null;
             IdentifiedGHPoint3D lastPoint = null;
             JsonArray waypoints = new JsonArray();
-
-            // Add depot location
-//            waypoints.add(this.depotPoint);
 
             TourActivity[] tourActivities = route.getActivities().toArray(new TourActivity[0]);
 
@@ -123,7 +105,6 @@ public class RouteOptimize {
 
             optimizedRoutesMap.add(this.routeVehicleId(route, optimizedRoutesMap.entrySet().stream(), 0), vehicleHashMap);
         }
-//        Gson gson = new Gson();
 
         allMap.add("OptimizedRoutes", optimizedRoutesMap);
 
@@ -150,7 +131,7 @@ public class RouteOptimize {
     }
 
     public Location getDepotLocation() {
-        return this.depotPoint.getLocation();
+        return Location.Builder.newInstance().setId(this.depotPoint.getId()).setCoordinate(this.depotPoint.getLocation().getCoordinate()).build();
     }
 
     public IdentifiedPointList getPointList() {
@@ -183,10 +164,6 @@ public class RouteOptimize {
          * Adding Vehicles
          */
 
-//        vrpBuilder.addJob(Service.Builder.newInstance("DEPOT")
-//                .setLocation(depotLocation)
-//                .addSizeDimension(0, this.pointList.size()).build());
-
 
         for (FarmyVehicle vehicle : farmyVehicles) {
             VehicleType type = VehicleTypeImpl.Builder.newInstance(String.format("[TYPE] #%s", vehicle.getId()))
@@ -200,11 +177,11 @@ public class RouteOptimize {
                     .build();
 
             vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance(String.format("%s", vehicle.getId()))
-                    .setStartLocation(getDepotLocation())
-                    .setEndLocation(getDepotLocation())
+                    .setStartLocation(this.getDepotLocation())
+                    .setEndLocation(this.getDepotLocation())
                     .setReturnToDepot(vehicle.isReturnToDepot())
-                    .setEarliestStart(50400) // 14:00
-//                    .setLatestArrival(vehicle.getLatestArrival())
+                    .setEarliestStart(vehicle.getEarliestStart()) // 14:00
+                    .setLatestArrival(vehicle.getLatestArrival())
                     .setType(type)
                     .build());
 
@@ -289,26 +266,17 @@ public class RouteOptimize {
         System.out.println("#number_of_deliveries: " + analyser.getNumberOfDeliveriesAtEnd());
         System.out.println("#unnasigned_jobs: " + this.solution.getUnassignedJobs().size());
 
-//        for (VehicleRoute route : solution.getRoutes()) {
-//            StringBuilder urlStr = new StringBuilder("http://localhost:8989/maps/");
-//            urlStr.append("?point=").append(depotLocation.getCoordinate().getX()).append(",").append(depotLocation.getCoordinate().getY());
-//            for (TourActivity activity : route.getActivities()) {
-//                Coordinate coordinate = activity.getLocation().getCoordinate();
-//                urlStr.append("&point=").append(coordinate.getX()).append(",").append(coordinate.getY());
-//            }
-//            System.out.println(urlStr);
-//        }
     }
 
     private String routeVehicleId(VehicleRoute route, Stream allMap, int routeNumber) {
 //          Check if vehicle is already added
         String vehicleId = route.getVehicle().getId().replaceAll("\\s+", "");
         int finalRouteNumber = routeNumber;
-        if (allMap.anyMatch(a -> a.equals(String.format("%s#%s", a, finalRouteNumber)))) {
+        if (allMap.anyMatch(a -> a.equals(String.format("%s", finalRouteNumber)))) {
             routeNumber++;
             return this.routeVehicleId(route, allMap, routeNumber);
         } else {
-            return String.format("%s#%s", vehicleId, routeNumber);
+            return String.format("%s", routeNumber);
         }
     }
 }
