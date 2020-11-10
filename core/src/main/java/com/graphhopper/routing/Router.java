@@ -137,7 +137,7 @@ public class Router {
         } catch (MultiplePointsNotFoundException ex) {
             GHResponse ghRsp = new GHResponse();
             for (IntCursor p : ex.getPointsNotFound()) {
-                ghRsp.addError(new PointNotFoundException("Cannot find point " + p.value + ": " + request.getPoints().get(p.index), p.value));
+                ghRsp.addError(new PointNotFoundException("Cannot find point " + p.value + ": " + request.getPoints().get(p.value), p.value));
             }
             return ghRsp;
         } catch (IllegalArgumentException ex) {
