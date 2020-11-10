@@ -180,7 +180,7 @@ public class RouteOptimize {
                     .setStartLocation(this.getDepotLocation())
                     .setEndLocation(this.getDepotLocation())
                     .setReturnToDepot(vehicle.isReturnToDepot())
-                    .setEarliestStart(vehicle.getEarliestStart()) // 14:00
+                    .setEarliestStart(vehicle.getEarliestDeparture()) // 14:00
                     .setLatestArrival(vehicle.getLatestArrival())
                     .setType(type)
                     .build());
@@ -242,7 +242,7 @@ public class RouteOptimize {
         this.reasonTracker = new UnassignedJobReasonTracker();
 
         vra.addListener(this.reasonTracker);
-//        vra.setMaxIterations(64); // Fast iterations for testing
+        vra.setMaxIterations(64); // Fast iterations for testing
 
         Collection<VehicleRoutingProblemSolution> solutions = vra.searchSolutions();
         this.solution = Solutions.bestOf(solutions);
