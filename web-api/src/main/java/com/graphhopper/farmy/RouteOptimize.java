@@ -119,6 +119,7 @@ public class RouteOptimize {
             vehicleHashMap.addProperty("distance", this.analyser.getDistance(route));
             vehicleHashMap.addProperty("waitingTime", this.analyser.getWaitingTime(route));
             vehicleHashMap.addProperty("transportTime", this.analyser.getTransportTime(route));
+            vehicleHashMap.addProperty("cost", this.analyser.getVariableTransportCosts(route) + this.analyser.getFixedCosts(route));
 
             optimizedRoutesMap.add(this.routeVehicleId(route, optimizedRoutesMap.entrySet().stream(), 0), vehicleHashMap);
         }
