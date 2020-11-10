@@ -3,6 +3,7 @@ package com.graphhopper.farmy;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
@@ -128,7 +129,7 @@ public class RouteOptimize {
         JsonObject frequencyHashMap= new JsonObject();
         this.reasonTracker.getFailedConstraintNamesFrequencyMapping().entrySet().stream()
                 .filter(o -> this.solution.getUnassignedJobs().stream().anyMatch(d -> d.getId().equals(o.getKey())))
-                .forEach(d -> frequencyHashMap.addProperty(d.getKey(), d.getValue().toString()));
+                .forEach(d -> frequencyHashMap.add(d.getKey(), JsonParser.parseString(d.getValue().getMode().toString())));
 
         allMap.add("UnassignedJobs", frequencyHashMap);
 
