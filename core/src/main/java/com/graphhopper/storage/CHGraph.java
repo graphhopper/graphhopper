@@ -110,4 +110,5 @@ public interface CHGraph {
      */
     boolean isAdjacentToNode(int edge, int node);
 
+    void debugPrint();
 }

@@ -1360,15 +1360,15 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void contractNode(NodeContractor nodeContractor, int node, int level) {
-        nodeContractor.contractNode(node);
         chGraph.setLevel(node, level);
+        nodeContractor.contractNode(node);
     }
 
     private void contractAllNodesInOrder() {
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         for (int node = 0; node < graph.getNodes(); ++node) {
-            nodeContractor.contractNode(node);
             chGraph.setLevel(node, node);
+            nodeContractor.contractNode(node);
         }
         nodeContractor.finishContraction();
     }
@@ -1380,8 +1380,8 @@ public class EdgeBasedNodeContractorTest {
     private void contractNodes(int... nodes) {
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         for (int i = 0; i < nodes.length; ++i) {
-            nodeContractor.contractNode(nodes[i]);
             chGraph.setLevel(nodes[i], i);
+            nodeContractor.contractNode(nodes[i]);
         }
         nodeContractor.finishContraction();
     }
