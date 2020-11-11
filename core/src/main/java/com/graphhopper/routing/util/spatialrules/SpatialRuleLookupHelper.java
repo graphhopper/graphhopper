@@ -41,7 +41,7 @@ import java.util.*;
 public class SpatialRuleLookupHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(SpatialRuleLookupHelper.class);
-    static String JSON_ID_FIELD = "ISO_A3";
+    public static final String JSON_ID_FIELD = "ISO_A3";
 
     /**
      * This method limits the JsonFeatures to the specified subset
