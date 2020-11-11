@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.graphhopper.*;
 import com.graphhopper.config.LMProfileConfig;
 import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.farmy.IdentifiedGHPoint3D;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.BBox;
@@ -43,6 +44,9 @@ public class GraphHopperModule extends SimpleModule {
         addSerializer(PathDetail.class, new PathDetailSerializer());
         addSerializer(InstructionList.class, new InstructionListSerializer());
         addSerializer(MultiException.class, new MultiExceptionSerializer());
+
+        // Farmy
+        addSerializer(IdentifiedGHPoint3D.class, new IdentifiedGHPointSerializer());
     }
 
 }

@@ -1,0 +1,34 @@
+<div class="content">
+    <div class="route-service">
+        <h3>Search Route</h3>
+        <hr>
+        <div class="rs-points">
+            <div class="rs-start-point">
+                Start Point: <input type="text" ng-model="rs.startPoint">
+            </div>
+            <div class="rs-end-point">
+                End Point: <input type="text" ng-model="rs.endPoint">
+            </div>
+        </div>
+        <button ng-click="rsDrawRoute()">Draw Route</button>
+    </div>
+    <div class="vehicle-routes">
+        <h3>Vehicle Routes</h3>
+        <hr>
+        <label>Add File : <input type="file"></label>
+        <button ng-click="loadOptimizedRoutes()">Load Optimized Routes</button>
+        <div class="vehicle-route" ng-repeat="(vehicle, data) in optimizedRoutes">
+            <div class="vehicle">Vehicle Name: {{vehicle}}</div>
+            <div class="color-route" style="background-color: {{data.color}}"></div>
+            <div class="order-route">
+                Point List:
+                <ul>
+                    <li class="order-point" ng-repeat="orderPoint in data.waypoints">
+                        {{orderPoint[3]}}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="content-map"></div>
+</div>
