@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 
@@ -162,7 +162,7 @@ public class WebHelper {
         json.putPOJO("hints", ghRsp.getHints().toMap());
         jsonResponsePutInfo(json, took);
         ArrayNode jsonPathList = json.putArray("paths");
-        for (PathWrapper ar : ghRsp.getAll()) {
+        for (ResponsePath ar : ghRsp.getAll()) {
             ObjectNode jsonPath = jsonPathList.addObject();
             jsonPath.put("distance", Helper.round(ar.getDistance(), 3));
             jsonPath.put("weight", Helper.round6(ar.getRouteWeight()));

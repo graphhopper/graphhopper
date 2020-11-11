@@ -176,7 +176,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         graph.close();
 
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true);
-        assertThrows(Exception.class, () -> graph.loadExisting());
     }
 
     @Test

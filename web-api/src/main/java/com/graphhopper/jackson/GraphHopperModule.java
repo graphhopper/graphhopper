@@ -25,7 +25,6 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.farmy.IdentifiedGHPoint3D;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.Envelope;
 

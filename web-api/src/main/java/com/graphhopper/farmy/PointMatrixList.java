@@ -3,7 +3,7 @@ package com.graphhopper.farmy;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.AbstractList;
@@ -61,10 +61,9 @@ public class PointMatrixList extends AbstractList<PointMatrix> {
             for (IdentifiedGHPoint3D point2: this.pointList) {
 //                if (point.equals(point2) || point.getId().equals(point2.getId())) continue;
                 GHResponse response = this.graphHopper.route(new GHRequest(point, point2)
-                        .setWeighting("fastest")
-                        .setVehicle("car")
-                        .setLocale(Locale.US));
-                PathWrapper path = response.getBest();
+                        .setProfile("car")
+                        .setLocale(Locale.GERMANY));
+                ResponsePath path = response.getBest();
                 // Convert path time to seconds
                 pointMatrixList.add(new PointMatrix(point, point2, path.getDistance(), path.getTime() / 1000, index1, index2));
                 index2++;
