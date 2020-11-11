@@ -17,9 +17,9 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.gtfs.dropwizard.RealtimeBundle;
 import com.graphhopper.http.cli.ImportCommand;
 import com.graphhopper.http.resources.RootResource;
+import com.graphhopper.navigation.NavigateResource;
 import io.dropwizard.Application;
 import io.dropwizard.bundles.assets.ConfiguredAssetsBundle;
 import io.dropwizard.setup.Bootstrap;
@@ -49,10 +49,9 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
     }
 
     @Override
-    public void run(GraphHopperServerConfiguration configuration, Environment environment) throws Exception {
-        environment.jersey().register(new GHJerseyViolationExceptionMapper());
+    public void run(GraphHopperServerConfiguration configuration, Environment environment) {
         environment.jersey().register(new RootResource());
+        environment.jersey().register(NavigateResource.class);
         environment.servlets().addFilter("cors", CORSFilter.class).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
-        environment.servlets().addFilter("ipfilter", new IPFilter(configuration.getGraphHopperConfiguration().get("jetty.whiteips", ""), configuration.getGraphHopperConfiguration().get("jetty.blackips", ""))).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
     }
 }

@@ -17,12 +17,12 @@
  */
 package com.graphhopper.util;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.graphhopper.util.Helper.DIST_EARTH;
+import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
@@ -222,7 +222,7 @@ public class GHUtility {
         double fromLon = nodeAccess.getLon(from);
         double toLat = nodeAccess.getLat(to);
         double toLon = nodeAccess.getLon(to);
-        return Helper.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
+        return DistancePlaneProjection.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
     }
 
     public static void addRandomTurnCosts(Graph graph, long seed, EncodingManager em, FlagEncoder encoder, int maxTurnCost, TurnCostStorage turnCostStorage) {
@@ -274,7 +274,7 @@ public class GHUtility {
     public static String getNodeInfo(CHGraph g, int nodeId, EdgeFilter filter) {
         CHEdgeExplorer ex = g.createEdgeExplorer(filter);
         CHEdgeIterator iter = ex.setBaseNode(nodeId);
-        NodeAccess na = g.getNodeAccess();
+        NodeAccess na = g.getBaseGraph().getNodeAccess();
         String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
@@ -296,26 +296,11 @@ public class GHUtility {
     }
 
     public static Graph shuffle(Graph g, Graph sortedGraph) {
-        if (g.getTurnCostStorage() != null) {
+        if (g.getTurnCostStorage() != null)
             throw new IllegalArgumentException("Shuffling the graph is currently not supported in the presence of turn costs");
-        }
-        int nodes = g.getNodes();
-        GHIntArrayList list = new GHIntArrayList(nodes);
-        list.fill(nodes, -1);
-        for (int i = 0; i < nodes; i++) {
-            list.set(i, i);
-        }
-        list.shuffle(new Random());
-
-        int edges = g.getEdges();
-        GHIntArrayList edgesList = new GHIntArrayList(edges);
-        edgesList.fill(edges, -1);
-        for (int i = 0; i < edges; i++) {
-            edgesList.set(i, i);
-        }
-        edgesList.shuffle(new Random());
-
-        return createSortedGraph(g, sortedGraph, list, edgesList);
+        IntArrayList nodes = ArrayUtil.permutation(g.getNodes(), new Random());
+        IntArrayList edges = ArrayUtil.permutation(g.getEdges(), new Random());
+        return createSortedGraph(g, sortedGraph, nodes, edges);
     }
 
     /**
@@ -327,14 +312,12 @@ public class GHUtility {
             throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
         }
         int nodes = g.getNodes();
-        final GHIntArrayList nodeList = new GHIntArrayList(nodes);
-        nodeList.fill(nodes, -1);
+        final IntArrayList nodeList = ArrayUtil.constant(nodes, -1);
         final GHBitSetImpl nodeBitset = new GHBitSetImpl(nodes);
         final AtomicInteger nodeRef = new AtomicInteger(-1);
 
         int edges = g.getEdges();
-        final GHIntArrayList edgeList = new GHIntArrayList(edges);
-        edgeList.fill(edges, -1);
+        final IntArrayList edgeList = ArrayUtil.constant(edges, -1);
         final GHBitSetImpl edgeBitset = new GHBitSetImpl(edges);
         final AtomicInteger edgeRef = new AtomicInteger(-1);
 
@@ -450,7 +433,7 @@ public class GHUtility {
                 .withTurnCosts(store.getTurnCostStorage() != null)
                 .set3D(is3D)
                 .setDir(outdir)
-                .setCHProfiles(store.getCHProfiles())
+                .setCHConfigs(store.getCHConfigs())
                 .setBytes(store.getNodes())
                 .create();
     }
@@ -555,6 +538,15 @@ public class GHUtility {
         return null;
     }
 
+    public static CHEdgeIteratorState getEdge(CHGraph graph, int base, int adj) {
+        CHEdgeIterator iter = graph.createEdgeExplorer().setBaseNode(base);
+        while (iter.next()) {
+            if (iter.getAdjNode() == adj)
+                return iter;
+        }
+        return null;
+    }
+
     /**
      * Creates unique positive number for specified edgeId taking into account the direction defined
      * by nodeA, nodeB and reverse.
@@ -564,6 +556,15 @@ public class GHUtility {
         if (reverse)
             return (nodeA >= nodeB) ? edgeId : edgeId + 1;
         return (nodeA > nodeB) ? edgeId + 1 : edgeId;
+    }
+
+    /**
+     * Creates an edge key, i.e. an integer number that encodes an edge ID and the direction of an edge
+     */
+    public static int createEdgeKey(int edgeId, boolean reverse) {
+        // edge state in storage direction -> edge key is even
+        // edge state against storage direction -> edge key is odd
+        return (edgeId << 1) + (reverse ? 1 : 0);
     }
 
     /**
@@ -639,7 +640,7 @@ public class GHUtility {
         na.setNode(node, lat, lon);
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
         while (iter.next()) {
-            iter.setDistance(iter.fetchWayGeometry(FetchMode.ALL).calcDistance(DIST_EARTH));
+            iter.setDistance(DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)));
             // System.out.println(node + "->" + adj + ": " + iter.getDistance());
         }
     }
@@ -673,6 +674,7 @@ public class GHUtility {
         }
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
         // todo: why no first/last orig edge here as in calcWeight ?
+//        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
         final int origEdgeId = edgeState.getEdge();
         long turnMillis = reverse
                 ? weighting.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
@@ -684,7 +686,7 @@ public class GHUtility {
      * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
      * certain methods.
      */
-    public static class DisabledEdgeIterator implements CHEdgeIterator {
+    public static class DisabledEdgeIterator implements EdgeIterator {
         @Override
         public EdgeIterator detach(boolean reverse) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
@@ -707,6 +709,11 @@ public class GHUtility {
 
         @Override
         public int getEdge() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getEdgeKey() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
@@ -836,36 +843,6 @@ public class GHUtility {
         }
 
         @Override
-        public boolean isShortcut() {
-            return false;
-        }
-
-        @Override
-        public boolean getFwdAccess() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public boolean getBwdAccess() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getSkippedEdge1() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getSkippedEdge2() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
         public int getOrigEdgeFirst() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -875,25 +852,6 @@ public class GHUtility {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
-        @Override
-        public double getWeight() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public CHEdgeIteratorState setWeight(double weight) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public void setFlagsAndWeight(int flags, double weight) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty");
-        }
-
-        @Override
-        public int getMergeStatus(int flags) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
     }
 
     /**

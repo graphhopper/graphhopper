@@ -1,8 +1,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.Surface;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.Surface;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import org.junit.Before;
@@ -31,7 +31,7 @@ public class OSMSurfaceParserTest {
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);
-        assertEquals(Surface.OTHER, surfaceEnc.getEnum(false, intsRef));
+        assertEquals(Surface.MISSING, surfaceEnc.getEnum(false, intsRef));
 
         readerWay.setTag("surface", "cobblestone");
         parser.handleWayTags(intsRef, readerWay, false, relFlags);

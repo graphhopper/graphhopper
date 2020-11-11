@@ -23,7 +23,6 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
 
 import java.util.PriorityQueue;
@@ -50,7 +49,7 @@ public class AStar extends AbstractRoutingAlgorithm {
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         initCollections(size);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
-        defaultApprox.setDistanceCalc(Helper.DIST_PLANE);
+        defaultApprox.setDistanceCalc(DistancePlaneProjection.DIST_PLANE);
         setApproximation(defaultApprox);
     }
 
@@ -94,7 +93,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                 if (!accept(iter, currEdge.edge))
                     continue;
 
-                // todo: for #1776/#1835 move the access check into weighting
+                // todo: for #1835 move the access check into weighting
                 double tmpWeight = !outEdgeFilter.accept(iter)
                         ? Double.POSITIVE_INFINITY
                         : (GHUtility.calcWeightWithTurnWeight(weighting, iter, false, currEdge.edge) + currEdge.weightOfVisitedPath);

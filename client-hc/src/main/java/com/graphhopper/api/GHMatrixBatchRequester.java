@@ -18,7 +18,7 @@
 package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.jackson.PathWrapperDeserializer;
+import com.graphhopper.jackson.ResponsePathDeserializer;
 import com.graphhopper.util.Helper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -92,7 +92,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
 
             JsonNode responseJson = fromStringToJSON(postUrl, postResponseStr);
             if (responseJson.has("message")) {
-                matrixResponse.addErrors(PathWrapperDeserializer.readErrors(objectMapper, responseJson));
+                matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, responseJson));
                 return matrixResponse;
             }
             if (!responseJson.has("job_id")) {
@@ -121,7 +121,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
                 if (debug) {
                     logger.info(i + " GET URL:" + getUrl + ", response: " + getResponseStr);
                 }
-                matrixResponse.addErrors(PathWrapperDeserializer.readErrors(objectMapper, getResponseJson));
+                matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, getResponseJson));
                 if (matrixResponse.hasErrors()) {
                     break;
                 }

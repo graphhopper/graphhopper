@@ -102,17 +102,20 @@ public abstract class GHMatrixAbstractRequester {
 
         putStrings(requestJson, "snap_preventions", ghRequest.getSnapPreventions());
         putStrings(requestJson, "out_arrays", outArraysList);
-        requestJson.put("vehicle", ghRequest.getVehicle());
+        requestJson.put("vehicle", ghRequest.getHints().getString("vehicle", ""));
         // requestJson.put("elevation", ghRequest.getHints().getBool("elevation", false));
         requestJson.put("fail_fast", ghRequest.getFailFast());
 
-        Map<String, String> hintsMap = ghRequest.getHints().toMap();
+        Map<String, Object> hintsMap = ghRequest.getHints().toMap();
         for (String hintKey : hintsMap.keySet()) {
             if (ignoreSet.contains(hintKey))
                 continue;
 
-            String hint = hintsMap.get(hintKey);
-            requestJson.put(hintKey, hint);
+            Object hint = hintsMap.get(hintKey);
+            if (hint instanceof String)
+                requestJson.put(hintKey, (String) hint);
+            else
+                requestJson.putPOJO(hintKey, hint);
         }
         return requestJson;
     }
@@ -282,8 +285,8 @@ public abstract class GHMatrixAbstractRequester {
 
     protected String buildURLNoHints(String path, GHMRequest ghRequest) {
         // allow per request service URLs
-        String url = ghRequest.getHints().get(SERVICE_URL, serviceUrl) + path + "?";
-        String key = ghRequest.getHints().get(KEY, "");
+        String url = ghRequest.getHints().getString(SERVICE_URL, serviceUrl) + path + "?";
+        String key = ghRequest.getHints().getString(KEY, "");
         if (!Helper.isEmpty(key)) {
             url += "key=" + key;
         }

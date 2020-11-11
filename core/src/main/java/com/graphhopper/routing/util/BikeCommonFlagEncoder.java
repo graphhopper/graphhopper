@@ -18,15 +18,14 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
 import java.util.*;
 
-import static com.graphhopper.routing.profiles.RouteNetwork.*;
+import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
@@ -61,8 +60,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     protected BikeCommonFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
-        // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
-        restrictions.addAll(Arrays.asList("bicycle", "vehicle", "access"));
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -172,6 +169,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         avoidHighwayTags.add("motorway");
         avoidHighwayTags.add("motorway_link");
 
+        setHighwaySpeed("bridleway", 6);
+        avoidHighwayTags.add("bridleway");
+
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
         routeMap.put(REGIONAL, VERY_NICE.getValue());
@@ -183,7 +183,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public TransportationMode getTransportationMode() {
-        return TransportationMode.BICYCLE;
+        return TransportationMode.BIKE;
     }
 
     @Override
@@ -249,7 +249,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             return EncodingManager.Access.WAY;
 
         // accept only if explicitly tagged for bike usage
-        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue))
+        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue) || "bridleway".equals(highwayValue))
             return EncodingManager.Access.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
@@ -286,12 +286,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     @Override
     protected double applyMaxSpeed(ReaderWay way, double speed) {
         double maxSpeed = getMaxSpeed(way);
-        if (maxSpeed >= 0) {
-            // We strictly obey speed limits, see #600
-            if (speed > maxSpeed)
-                return maxSpeed;
+        // We strictly obey speed limits, see #600
+        if (isValidSpeed(maxSpeed) && speed > maxSpeed) {
+            return maxSpeed;
         }
-        if (speed > maxPossibleSpeed)
+        if (isValidSpeed(speed) && speed > maxPossibleSpeed)
             return maxPossibleSpeed;
         return speed;
     }
@@ -450,17 +449,24 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
 
         double maxSpeed = getMaxSpeed(way);
-        if (preferHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 30) {
-            if (maxSpeed < avoidSpeedLimit) {
+        if (preferHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 30)) {
+            if (!isValidSpeed(maxSpeed) || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, PREFER.getValue());
                 if (way.hasTag("tunnel", intendedValues))
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
         } else if (avoidHighwayTags.contains(highway)
-                || maxSpeed >= avoidSpeedLimit && !"track".equals(highway)) {
+                || isValidSpeed(maxSpeed) && maxSpeed >= avoidSpeedLimit && !"track".equals(highway)) {
             weightToPrioMap.put(50d, REACH_DEST.getValue());
             if (way.hasTag("tunnel", intendedValues))
                 weightToPrioMap.put(50d, AVOID_AT_ALL_COSTS.getValue());
+        }
+
+        String cycleway = way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:left", "cycleway:right"));
+        if (Arrays.asList("lane", "shared_lane", "share_busway", "shoulder").contains(cycleway)) {
+            weightToPrioMap.put(100d, UNCHANGED.getValue());
+        } else if ("track".equals(cycleway)) {
+            weightToPrioMap.put(100d, PREFER.getValue());
         }
 
         if (pushingSectionsHighways.contains(highway)

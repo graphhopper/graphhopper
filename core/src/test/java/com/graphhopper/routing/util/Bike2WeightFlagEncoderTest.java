@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import org.junit.Test;
@@ -66,7 +66,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
     public void testUnchangedForStepsBridgeAndTunnel() {
         Graph graph = initExampleGraph();
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
-        IntsRef oldFlags = edge.getFlags();
+        IntsRef oldFlags = IntsRef.deepCopyOf(edge.getFlags());
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "steps");
         encoder.applyWayTags(way, edge);

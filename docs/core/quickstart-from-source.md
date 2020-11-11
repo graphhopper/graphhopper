@@ -14,11 +14,10 @@ Then do:
 
 ```bash
 git clone git://github.com/graphhopper/graphhopper.git
-cd graphhopper; git checkout 0.13
-# fetches main.js, can be omitted if no UI is needed
-cd web/src/main/resources/ && ZFILE=/tmp/gh.jar && wget -O $ZFILE "https://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.graphhopper&a=graphhopper-web&v=LATEST" && unzip $ZFILE assets/js/main.js && rm $ZFILE && cd ../../../..
+cd graphhopper
+git checkout stable
 ./graphhopper.sh -a web -i europe_germany_berlin.pbf
-# now go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
+# after Server started go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
 ```
 
 In the last step the data is created to get routes within the Berlin area:
@@ -61,6 +60,13 @@ Main class: com.graphhopper.http.GraphHopperApplication
 VM options: -Xms1g -Xmx1g -server -Ddw.graphhopper.datareader.file=[your-area].osm.pbf -Ddw.graphhopper.graph.location=./[your-area].osm-gh
 Program arguments: server config.yml
 ```
+
+If IntelliJ shows an error like: 
+```
+Error:(46, 56) java: package sun.misc does not exist
+```
+go to `Settings -> Build,Execution,Deployment -> Compiler -> Java Compiler` and disable: 
+`Use '--release' option for cross compilation (java 9 and later)`. c.f. #1854
 
 ### Contribute
 
@@ -135,13 +141,6 @@ npm run lint
 
 # see the package.json where more scripts are defined
 ```
-
-### Experimental
-
-If you need **offline** routing in the browser like for smaller areas or hybrid routing solution
-then there is a highly experimental version of GraphHopper using TeaVM. 
-Have a look into this [blog post](http://karussell.wordpress.com/2014/05/04/graphhopper-in-the-browser-teavm-makes-offline-routing-via-openstreetmap-possible-in-javascript/) 
-for a demo and more information.
 
 ### Android Usage
  

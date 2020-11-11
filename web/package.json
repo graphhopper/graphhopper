@@ -1,33 +1,46 @@
 {
-  "name": "farmyvrp",
+  "name": "graphhopper-js-ui",
   "version": "1.0.0",
+  "description": "A Route Planner Frontend for GraphHopper",
+  "author": "GraphHopper Community",
+  "license": "Apache-2.0",
+  "main": "main.js",
   "scripts": {
-    "dev": "node_modules/.bin/webpack-dev-server --hot --mode development",
-    "watch": "node_modules/.bin/webpack --watch --hot --mode development",
-    "build": "node_modules/.bin/webpack --progress --hide-modules --mode production"
+    "watch": "watchify src/main/resources/assets/js/main-template.js -o target/classes/assets/js/main.js --debug --verbose",
+    "bundle": "browserify src/main/resources/assets/js/main-template.js -o target/classes/assets/js/main.js",
+    "bundleDebug": "browserify src/main/resources/assets/js/main-template.js --debug -o target/classes/assets/js/main.js",
+    "bundleProduction": "browserify -g uglifyify src/main/resources/assets/js/main-template.js -o target/classes/assets/js/main.js",
+    "test": "JASMINE_CONFIG_PATH=src/test/resources/assets/spec/jasmine.json jasmine",
+    "lint": "jshint src/main/resources/assets/js/"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-swap"
+    ]
+  },
+  "browserify-swap": {
+    "production": {
+      "config/options.js$": "./src/main/resources/assets/js/config/options_prod.js"
+    }
   },
   "dependencies": {
-    "angular": "^1.7.9",
-    "leaflet": "^1.6.0",
-    "leaflet-defaulticon-compatibility": "^0.1.1",
-    "leaflet-routing-machine": "^3.2.12",
-    "lrm-graphhopper": "^1.3.0",
-    "ng-file-upload": "^12.2.13"
+    "browserify": "16.2.0",
+    "browserify-swap": "0.2.2",
+    "d3": "5.11.0",
+    "flatpickr": "4.4.6",
+    "jquery": "3.5.0",
+    "js-yaml": "3.13.1",
+    "leaflet": "1.5.1",
+    "leaflet-contextmenu": "1.4.0",
+    "leaflet-loading": "0.1.24",
+    "leaflet.heightgraph": "0.2.0",
+    "leaflet.vectorgrid": "1.3.0",
+    "moment": "2.22.1",
+    "uglifyify": "5.0.2"
   },
-  "description": "Farmy VRP Solution",
-  "main": "index.js",
-  "author": "Farmych",
-  "license": "MIT",
-  "private": true,
   "devDependencies": {
-    "css-loader": "^3.4.2",
-    "html-loader": "^0.5.5",
-    "node-sass": "^4.13.1",
-    "sass-loader": "^8.0.2",
-    "style-loader": "^1.1.3",
-    "url-loader": "^4.0.0",
-    "webpack": "^4.42.0",
-    "webpack-cli": "^3.3.11",
-    "webpack-dev-server": "^3.10.3"
+    "jasmine": "3.1.0",
+    "jshint": "^2.10.2",
+    "watchify": "^3.11.1"
   }
 }

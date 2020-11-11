@@ -22,7 +22,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -50,7 +50,6 @@ public class EncodingManager implements EncodedValueLookup {
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
     private final List<TagParser> edgeTagParsers = new ArrayList<>();
     private final Map<String, TurnCostParser> turnCostParsers = new LinkedHashMap<>();
-    private int nextNodeBit = 0;
     private boolean enableInstructions = true;
     private String preferredLanguage = "";
     private EncodedValue.InitializerConfig turnCostConfig;
@@ -319,8 +318,10 @@ public class EncodingManager implements EncodedValueLookup {
                 _addEdgeTagParser(new OSMRoadEnvironmentParser(), false, false);
             if (!em.hasEncodedValue(MaxSpeed.KEY))
                 _addEdgeTagParser(new OSMMaxSpeedParser(), false, false);
-            if (!em.hasEncodedValue(RoadAccess.KEY))
+            if (!em.hasEncodedValue(RoadAccess.KEY)) {
+                // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
                 _addEdgeTagParser(new OSMRoadAccessParser(), false, false);
+            }
 
             // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or road_access
             // TODO can we avoid this hack without complex dependency management?
@@ -357,7 +358,8 @@ public class EncodingManager implements EncodedValueLookup {
             // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
             for (AbstractFlagEncoder encoder : flagEncoderList) {
                 if (encoder.supportsTurnCosts() && !em.turnCostParsers.containsKey(encoder.toString()))
-                    _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts()));
+                    _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts(),
+                            OSMRoadAccessParser.toOSMRestrictions(encoder.getTransportationMode())));
             }
 
             if (em.encodedValueMap.isEmpty())
@@ -459,9 +461,6 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         int encoderCount = edgeEncoders.size();
-        int usedBits = encoder.defineNodeBits(encoderCount, nextNodeBit);
-        encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
-        nextNodeBit = usedBits;
 
         encoder.setEncodedValueLookup(this);
         List<EncodedValue> list = new ArrayList<>();
@@ -476,9 +475,9 @@ public class EncodingManager implements EncodedValueLookup {
     private void addEncodedValue(EncodedValue ev, boolean withNamespace) {
         if (hasEncodedValue(ev.getName()))
             throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
-        if (!withNamespace && ev.getName().contains(SPECIAL_SEPARATOR))
+        if (!withNamespace && !isSharedEV(ev))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain namespace character '" + SPECIAL_SEPARATOR + "'");
-        if (withNamespace && !ev.getName().contains(SPECIAL_SEPARATOR))
+        if (withNamespace && isSharedEV(ev))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must contain namespace character '" + SPECIAL_SEPARATOR + "'");
         ev.init(edgeConfig);
         encodedValueMap.put(ev.getName(), ev);
@@ -652,7 +651,7 @@ public class EncodingManager implements EncodedValueLookup {
     public String toEncodedValuesAsString() {
         StringBuilder str = new StringBuilder();
         for (EncodedValue ev : encodedValueMap.values()) {
-            if (ev.getName().contains(SPECIAL_SEPARATOR))
+            if (!isSharedEV(ev))
                 continue;
 
             if (str.length() > 0)
@@ -761,6 +760,14 @@ public class EncodingManager implements EncodedValueLookup {
         return list;
     }
 
+    @Override
+    public List<EncodedValue> getAllShared() {
+        List<EncodedValue> list = new ArrayList<>(encodedValueMap.size());
+        for (EncodedValue ev : encodedValueMap.values()) {
+            if (isSharedEV(ev)) list.add(ev);
+        }
+        return list;
+    }
 
     @Override
     public BooleanEncodedValue getBooleanEncodedValue(String key) {
@@ -791,12 +798,16 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static String SPECIAL_SEPARATOR = ".";
+    private static final String SPECIAL_SEPARATOR = ".";
+
+    private boolean isSharedEV(EncodedValue ev) {
+        return !ev.getName().contains(SPECIAL_SEPARATOR);
+    }
 
     /**
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as
      * "none-shared" across the other FlagEncoders. E.g. average_speed for the CarFlagEncoder will
-     * be named car-average_speed
+     * be named car.average_speed
      */
     public static String getKey(FlagEncoder encoder, String str) {
         return getKey(encoder.toString(), str);

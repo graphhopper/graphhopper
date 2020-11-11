@@ -18,11 +18,11 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -52,9 +52,9 @@ public class SpatialRuleParser implements TagParser {
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
         GHPoint estimatedCenter = way.getTag("estimated_center", null);
         if (estimatedCenter != null) {
-            SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
-            way.setTag("spatial_rule", rule);
-            spatialRuleEnc.setInt(false, edgeFlags, spatialRuleLookup.getSpatialId(rule));
+            SpatialRuleSet ruleSet = spatialRuleLookup.lookupRules(estimatedCenter.lat, estimatedCenter.lon);
+            way.setTag("spatial_rule_set", ruleSet);
+            spatialRuleEnc.setInt(false, edgeFlags, ruleSet.getSpatialId());
         }
         return edgeFlags;
     }

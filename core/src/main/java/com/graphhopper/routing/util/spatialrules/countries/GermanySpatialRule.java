@@ -21,12 +21,12 @@ import java.util.List;
 
 import org.locationtech.jts.geom.Polygon;
 
-import com.graphhopper.routing.profiles.Country;
-import com.graphhopper.routing.profiles.MaxSpeed;
-import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.MaxSpeed;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
+import com.graphhopper.routing.util.TransportationMode;
 
 /**
  * Defines the default rules for German roads
@@ -47,7 +47,7 @@ public class GermanySpatialRule extends AbstractSpatialRule {
      */
     @Override
     public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-        if (currentMaxSpeed > 0 || transport != TransportationMode.MOTOR_VEHICLE) {
+        if (!Double.isNaN(currentMaxSpeed) || !transport.isMotorVehicle()) {
             return currentMaxSpeed;
         }
         
@@ -69,7 +69,7 @@ public class GermanySpatialRule extends AbstractSpatialRule {
             case LIVING_STREET:
                 return 4;
             default:
-                return -1;
+                return Double.NaN;
         }
     }
     
@@ -79,7 +79,7 @@ public class GermanySpatialRule extends AbstractSpatialRule {
             return currentRoadAccess;
         }
         
-        if (transport != TransportationMode.MOTOR_VEHICLE) {
+        if (!transport.isMotorVehicle()) {
             return RoadAccess.YES;
         }
 

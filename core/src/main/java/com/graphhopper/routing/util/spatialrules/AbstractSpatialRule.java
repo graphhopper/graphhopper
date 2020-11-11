@@ -20,15 +20,18 @@ package com.graphhopper.routing.util.spatialrules;
 import java.util.Collections;
 import java.util.List;
 
+import com.graphhopper.routing.util.TransportationMode;
 import org.locationtech.jts.geom.Polygon;
 
-import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
 
 /**
  * @author Robin Boldt
  */
 public abstract class AbstractSpatialRule implements SpatialRule {
+    
+    public static final int DEFAULT_PRIORITY = 100;
 
     private final List<Polygon> borders;
     
@@ -55,6 +58,11 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     }
 
     @Override
+    public int getPriority() {
+        return DEFAULT_PRIORITY;
+    }
+    
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -72,6 +80,12 @@ public abstract class AbstractSpatialRule implements SpatialRule {
 
     @Override
     public String toString() {
-        return getId();
+        StringBuilder builder = new StringBuilder();
+        builder.append("SpatialRule [getId()=");
+        builder.append(getId());
+        builder.append(", getPriority()=");
+        builder.append(getPriority());
+        builder.append("]");
+        return builder.toString();
     }
 }

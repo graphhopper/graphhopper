@@ -17,25 +17,16 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.change.ChangeGraphHelper;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -57,6 +48,7 @@ public class GraphHopperAPITest {
 
     @Test
     public void testLoad() {
+        final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";
         GraphHopperStorage graph = new GraphBuilder(EncodingManager.create(vehicle)).create();
@@ -70,15 +62,16 @@ public class GraphHopperAPITest {
         graph.edge(4, 3, 40, true);
 
         GraphHopper instance = createGraphHopper(vehicle).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(false).
                 loadGraph(graph);
         // 3 -> 0
-        GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10).setVehicle(vehicle).setWeighting(weighting));
-        assertFalse(rsp.hasErrors());
-        PathWrapper arsp = rsp.getBest();
-        assertEquals(80, arsp.getDistance(), 1e-6);
+        GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10).setProfile(profile));
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        ResponsePath responsePath = rsp.getBest();
+        assertEquals(80, responsePath.getDistance(), 1e-6);
 
-        PointList points = arsp.getPoints();
+        PointList points = responsePath.getPoints();
         assertEquals(42, points.getLatitude(0), 1e-5);
         assertEquals(10.4, points.getLongitude(0), 1e-5);
         assertEquals(41.9, points.getLatitude(1), 1e-5);
@@ -89,15 +82,17 @@ public class GraphHopperAPITest {
 
     @Test
     public void testDisconnected179() {
+        final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";
         GraphHopperStorage graph = new GraphBuilder(EncodingManager.create(vehicle)).create();
         initGraph(graph);
 
         GraphHopper instance = createGraphHopper(vehicle).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setStoreOnFlush(false).
                 loadGraph(graph);
-        GHResponse rsp = instance.route(new GHRequest(42, 10, 42, 10.4).setVehicle(vehicle).setWeighting(weighting));
+        GHResponse rsp = instance.route(new GHRequest(42, 10, 42, 10.4).setProfile(profile));
         assertTrue(rsp.hasErrors());
 
         try {
@@ -138,12 +133,13 @@ public class GraphHopperAPITest {
 
         instance = new GraphHopper() {
             @Override
-            void interpolateBridgesAndOrTunnels() {
+            void interpolateBridgesTunnelsAndFerries() {
                 counter.incrementAndGet();
-                super.interpolateBridgesAndOrTunnels();
+                super.interpolateBridgesTunnelsAndFerries();
             }
         }
                 .setEncodingManager(encodingManager)
+                .setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest"))
                 .setElevation(true);
         instance.load(loc);
         instance.flush();
@@ -152,12 +148,13 @@ public class GraphHopperAPITest {
 
         instance = new GraphHopper() {
             @Override
-            void interpolateBridgesAndOrTunnels() {
+            void interpolateBridgesTunnelsAndFerries() {
                 counter.incrementAndGet();
-                super.interpolateBridgesAndOrTunnels();
+                super.interpolateBridgesTunnelsAndFerries();
             }
         }
                 .setEncodingManager(encodingManager)
+                .setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest"))
                 .setElevation(true);
         instance.load(loc);
         instance.flush();
@@ -169,12 +166,14 @@ public class GraphHopperAPITest {
 
     @Test
     public void testNoLoad() {
+        String profile = "profile";
         String vehicle = "car";
         String weighting = "fastest";
         GraphHopper instance = createGraphHopper(vehicle).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setVehicle(weighting)).
                 setStoreOnFlush(false);
         try {
-            instance.route(new GHRequest(42, 10.4, 42, 10).setVehicle(vehicle).setWeighting(weighting));
+            instance.route(new GHRequest(42, 10.4, 42, 10).setProfile(profile));
             fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
@@ -182,82 +181,16 @@ public class GraphHopperAPITest {
 
         instance = createGraphHopper(vehicle);
         try {
-            instance.route(new GHRequest(42, 10.4, 42, 10).setVehicle(vehicle).setWeighting(weighting));
+            instance.route(new GHRequest(42, 10.4, 42, 10).setProfile(profile));
             fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
         }
     }
 
-    @Test
-    public void testConcurrentGraphChange() throws InterruptedException {
-        final String vehicle = "car";
-        final String weighting = "fastest";
-        EncodingManager encodingManager = EncodingManager.create(vehicle);
-        final GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
-        initGraph(graph);
-        graph.edge(1, 2, 10, true);
-
-        final CountDownLatch latch = new CountDownLatch(1);
-        final AtomicInteger checkPointCounter = new AtomicInteger(0);
-        final GraphHopper graphHopper = new GraphHopper() {
-            @Override
-            protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
-                return new ChangeGraphHelper(graph, locationIndex) {
-                    @Override
-                    public long applyChanges(EncodingManager em, Collection<JsonFeature> features) {
-                        // force sleep inside the lock and let the main thread run until the lock barrier
-                        latch.countDown();
-                        try {
-                            Thread.sleep(400);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                        checkPointCounter.incrementAndGet();
-                        return super.applyChanges(em, features);
-                    }
-                };
-            }
-        }
-                .setEncodingManager(encodingManager)
-                .setStoreOnFlush(false).
-                        loadGraph(graph);
-
-        GHResponse rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10).setVehicle(vehicle).setWeighting(weighting));
-        assertFalse(rsp.toString(), rsp.hasErrors());
-        assertEquals(1800, rsp.getBest().getTime());
-
-        final List<JsonFeature> list = new ArrayList<>();
-        Map<String, Object> properties = new HashMap<>();
-        properties.put("speed", 5);
-
-        list.add(new JsonFeature("1", "bbox",
-                new BBox(10.399, 10.4, 42.0, 42.001),
-                null, properties));
-
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                graphHopper.changeGraph(list);
-                checkPointCounter.incrementAndGet();
-            }
-        });
-
-        latch.await();
-        assertEquals(0, checkPointCounter.get());
-        rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10).setVehicle(vehicle).setWeighting(weighting));
-        assertFalse(rsp.toString(), rsp.hasErrors());
-        assertEquals(8400, rsp.getBest().getTime());
-
-        executorService.shutdown();
-        executorService.awaitTermination(3, TimeUnit.SECONDS);
-
-        assertEquals(2, checkPointCounter.get());
-    }
-
     private GraphHopper createGraphHopper(String vehicle) {
         return new GraphHopper()
-                .setEncodingManager(EncodingManager.create(vehicle));
+                .setEncodingManager(EncodingManager.create(vehicle))
+                .setProfiles(new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest"));
     }
 }

@@ -18,15 +18,15 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.TrackType;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.TrackType;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
-import static com.graphhopper.routing.profiles.TrackType.OTHER;
+import static com.graphhopper.routing.ev.TrackType.MISSING;
 
 public class OSMTrackTypeParser implements TagParser {
 
@@ -47,10 +47,8 @@ public class OSMTrackTypeParser implements TagParser {
             return edgeFlags;
 
         String trackTypeTag = readerWay.getTag("tracktype");
-        if (trackTypeTag == null)
-            return edgeFlags;
         TrackType trackType = TrackType.find(trackTypeTag);
-        if (trackType != OTHER)
+        if (trackType != MISSING)
             trackTypeEnc.setEnum(false, edgeFlags, trackType);
         return edgeFlags;
     }

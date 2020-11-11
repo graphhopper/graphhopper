@@ -17,12 +17,12 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
 
 import java.util.List;
-import java.util.Objects;
 
+import com.graphhopper.routing.util.TransportationMode;
 import org.locationtech.jts.geom.Polygon;
 
 /**
@@ -40,7 +40,7 @@ public interface SpatialRule {
      *
      * @param roadClass       The highway type, e.g. {@link RoadClass#MOTORWAY}
      * @param transport       The mode of transportation
-     * @param currentMaxSpeed The current max speed value or -1 if no value has been set yet
+     * @param currentMaxSpeed The current max speed value or {@link Double#NaN} if no value has been set yet
      * @return the maximum speed value to be used
      */
     double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed);
@@ -61,49 +61,17 @@ public interface SpatialRule {
     List<Polygon> getBorders();
 
     /**
+     * Returns the priority of the rule. If multiple rules overlap they're
+     * processed in natural order of their priority.
+     * 
+     * @return the priority as an integer value between
+     *         {@link Integer#MIN_VALUE} (minimum priority) and
+     *         {@link Integer#MAX_VALUE} (maximum priority)
+     */
+    int getPriority();
+
+    /**
      * Returns the id for this rule, e.g. the ISO name of the country. The id has to be unique.
      */
     String getId();
-
-
-    SpatialRule EMPTY = new SpatialRule() {
-        @Override
-        public double getMaxSpeed(RoadClass roadClass, TransportationMode transport, double currentMaxSpeed) {
-            return currentMaxSpeed;
-        }
-
-        @Override
-        public RoadAccess getAccess(RoadClass roadClass, TransportationMode transport, RoadAccess currentRoadAccess) {
-            return currentRoadAccess;
-        }
-
-        // should we use Country.DEFAULT here?
-        @Override
-        public String getId() {
-            return "SpatialRule.EMPTY";
-        }
-
-        @Override
-        public List<Polygon> getBorders() {
-            throw new IllegalArgumentException("Empty rule does not have borders");
-        }
-
-        @Override
-        public String toString() {
-            return "SpatialRule.EMPTY";
-        }
-        
-        @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof SpatialRule)) {
-                return false;
-            }
-            return Objects.equals(getId(), ((SpatialRule) obj).getId());
-        }
-        
-        @Override
-        public int hashCode() {
-            return getId().hashCode();
-        }
-    };
 }

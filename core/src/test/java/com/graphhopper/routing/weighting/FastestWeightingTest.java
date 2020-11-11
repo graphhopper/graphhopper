@@ -17,14 +17,17 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.Test;
@@ -49,10 +52,9 @@ public class FastestWeightingTest {
 
     @Test
     public void testWeightWrongHeading() {
-        Weighting instance = new FastestWeighting(encoder, new PMap().
-                put(Parameters.Routing.HEADING_PENALTY, "100"));
+        Weighting instance = new FastestWeighting(encoder, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100));
 
-        VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
+        VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, GHUtility.createEdgeKey(1, false), 1, 2, 10,
                 GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 10, true, false), "test", Helper.createPointList(51, 0, 51, 1), false);
         double time = instance.calcEdgeWeight(virtEdge, false);
 

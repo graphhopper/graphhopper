@@ -17,15 +17,13 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static com.graphhopper.util.Helper.isEmpty;
-import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * @author Peter Karich
@@ -92,6 +90,11 @@ public abstract class AbstractWeighting implements Weighting {
     }
 
     @Override
+    public boolean hasTurnCosts() {
+        return turnCostProvider != NO_TURN_COST_PROVIDER;
+    }
+
+    @Override
     public FlagEncoder getFlagEncoder() {
         return flagEncoder;
     }
@@ -120,22 +123,8 @@ public abstract class AbstractWeighting implements Weighting {
         return name.matches("[\\|_a-z]+");
     }
 
-    /**
-     * Replaces all characters which are not numbers, characters or underscores with underscores
-     */
-    public static String weightingToFileName(Weighting w) {
-        String name = w.toString();
-        name = name.replaceAll("u_turn_costs=", "");
-        return toLowerCase(name).replaceAll("\\|", "_");
-    }
-
     @Override
     public String toString() {
-        String turnCostProviderName = turnCostProvider.getName();
-        String result = getName() + "|" + flagEncoder;
-        if (!isEmpty(turnCostProviderName)) {
-            result += "|u_turn_costs=" + turnCostProviderName;
-        }
-        return result;
+        return getName() + "|" + flagEncoder;
     }
 }

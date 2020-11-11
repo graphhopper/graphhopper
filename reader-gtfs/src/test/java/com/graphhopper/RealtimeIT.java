@@ -19,9 +19,10 @@
 package com.graphhopper;
 
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtRouteResource;
-import com.graphhopper.reader.gtfs.Request;
+import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.PtRouter;
+import com.graphhopper.gtfs.PtRouterImpl;
+import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
@@ -35,22 +36,22 @@ import java.time.*;
 import static com.google.transit.realtime.GtfsRealtime.TripDescriptor.ScheduleRelationship.ADDED;
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SCHEDULED;
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED;
-import static com.graphhopper.reader.gtfs.GtfsHelper.time;
+import static com.graphhopper.gtfs.GtfsHelper.time;
 import static org.junit.Assert.*;
 
 public class RealtimeIT {
 
     private static final String GRAPH_LOC = "target/RealtimeIT";
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static PtRouteResource.Factory graphHopperFactory;
+    private static PtRouterImpl.Factory graphHopperFactory;
     private static GraphHopperGtfs graphHopperGtfs;
 
     @BeforeClass
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.put("graph.flag_encoders", "car,foot");
-        ghConfig.put("gtfs.file", "files/sample-feed.zip");
-        ghConfig.put("graph.location", GRAPH_LOC);
+        ghConfig.putObject("graph.flag_encoders", "car,foot");
+        ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
+        ghConfig.putObject("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
@@ -60,7 +61,7 @@ public class RealtimeIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        graphHopperFactory = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
+        graphHopperFactory = PtRouterImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
     }
 
     @AfterClass
@@ -95,11 +96,11 @@ public class RealtimeIT {
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
 
-        PathWrapper possibleAlternative = response.getAll().stream().filter(a -> !a.isImpossible()).findFirst().get();
+        ResponsePath possibleAlternative = response.getAll().stream().filter(a -> !a.isImpossible()).findFirst().get();
         assertFalse(((Trip.PtLeg) possibleAlternative.getLegs().get(0)).stops.get(0).departureCancelled);
         assertEquals("I have to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), possibleAlternative.getTime(), 0.1);
 
-        PathWrapper impossibleAlternative = response.getAll().stream().filter(a -> a.isImpossible()).findFirst().get();
+        ResponsePath impossibleAlternative = response.getAll().stream().filter(a -> a.isImpossible()).findFirst().get();
         assertTrue(impossibleAlternative.isImpossible());
         assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(0)).stops.get(0).departureCancelled);
     }
@@ -133,12 +134,12 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(2, response.getAll().size());
 
-        PathWrapper best = response.getBest();
+        ResponsePath best = response.getBest();
         Trip.PtLeg bestPtLeg = (Trip.PtLeg) best.getLegs().get(0);
         assertEquals("It's better to wait half an hour for the next one (and ride 5 minutes).", LocalDateTime.parse("2007-01-01T07:19:00").atZone(zoneId).toInstant(), bestPtLeg.stops.get(bestPtLeg.stops.size()-1).plannedArrivalTime.toInstant());
         assertEquals("There is no predicted arrival time.", null, bestPtLeg.stops.get(bestPtLeg.stops.size()-1).predictedArrivalTime);
 
-        PathWrapper impossibleAlternative = response.getAll().get(1);
+        ResponsePath impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
         Trip.PtLeg impossiblePtLeg = (Trip.PtLeg) impossibleAlternative.getLegs().get(0);
         assertEquals("The impossible alternative is my planned 5-minute-trip", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), impossiblePtLeg.stops.get(impossiblePtLeg.stops.size()-1).plannedArrivalTime.toInstant());
@@ -206,7 +207,7 @@ public class RealtimeIT {
 
         assertEquals("I have to continue to STAGECOACH and then go back one stop with the 07:00 bus.", time(0, 21), response.getBest().getTime(), 0.1);
 
-        PathWrapper impossibleAlternative = response.getAll().get(2);
+        ResponsePath impossibleAlternative = response.getAll().get(2);
         assertTrue(impossibleAlternative.isImpossible());
         assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(0)).stops.get(1).arrivalCancelled);
     }
@@ -241,7 +242,7 @@ public class RealtimeIT {
 
         assertEquals("The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
 
-        PathWrapper impossibleAlternative = response.getAll().get(1);
+        ResponsePath impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
         assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(0)).stops.get(2).departureCancelled);
     }
@@ -300,7 +301,7 @@ public class RealtimeIT {
 
         assertEquals("Luckily, there is an extra service directly from my stop to the airport, at 6:45, taking 30 minutes", time(0, 31), response.getBest().getTime(), 0.1);
 
-        PathWrapper solution = response.getAll().get(0);
+        ResponsePath solution = response.getAll().get(0);
         Trip.PtLeg ptLeg = ((Trip.PtLeg) solution.getLegs().stream().filter(leg -> leg instanceof Trip.PtLeg).findFirst().get());
         assertEquals("EXTRA0", ptLeg.trip_id);
     }
@@ -547,7 +548,7 @@ public class RealtimeIT {
 
         assertEquals("The 6:44 bus will be late at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
 
-        PathWrapper impossibleAlternative = response.getAll().get(1);
+        ResponsePath impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
         Trip.Stop delayedStop = ((Trip.PtLeg) impossibleAlternative.getLegs().get(0)).stops.get(2);
         assertEquals("Five minutes late", 300, Duration.between(delayedStop.plannedArrivalTime.toInstant(), delayedStop.predictedArrivalTime.toInstant()).getSeconds());
@@ -674,13 +675,13 @@ public class RealtimeIT {
                 .setScheduleRelationship(SCHEDULED)
                 .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
 
-        PtRouteResource graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
+        PtRouter graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
         GHResponse response = graphHopper.route(ghRequest);
         assertEquals(2, response.getAll().size());
 
         assertEquals("The 7:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
 
-        PathWrapper impossibleAlternative = response.getAll().get(1);
+        ResponsePath impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
         Trip.Stop delayedStop = ((Trip.PtLeg) impossibleAlternative.getLegs().get(0)).stops.get(2);
         assertEquals("Five minutes late", 300, Duration.between(delayedStop.plannedArrivalTime.toInstant(), delayedStop.predictedArrivalTime.toInstant()).getSeconds());
@@ -716,7 +717,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SCHEDULED)
                 .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
 
-        PtRouteResource graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
+        PtRouter graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());

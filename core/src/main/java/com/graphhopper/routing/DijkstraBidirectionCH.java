@@ -21,7 +21,6 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.storage.RoutingCHEdgeExplorer;
 import com.graphhopper.storage.RoutingCHEdgeIterator;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.storage.SPTEntry;
 
 /**
  * Uses a very simple version of stall-on-demand (SOD) for CH queries to prevent exploring nodes that can not be part
@@ -57,8 +56,7 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
             if (iter.getEdge() == entry.edge) {
                 continue;
             }
-            int traversalId = getTraversalId(iter, reverse);
-            SPTEntry adjNode = bestWeightMap.get(traversalId);
+            SPTEntry adjNode = bestWeightMap.get(iter.getAdjNode());
             // we have to be careful because of rounded shortcut weights in combination with virtual via nodes, see #1574
             final double precision = 0.001;
             if (adjNode != null &&

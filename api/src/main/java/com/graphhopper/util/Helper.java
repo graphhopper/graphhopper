@@ -17,11 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.shapes.BBox;
-
 import java.io.*;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
@@ -35,9 +31,6 @@ import java.util.Map.Entry;
  * @author Peter Karich
  */
 public class Helper {
-    public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
-    public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
-    public static final AngleCalc ANGLE_CALC = new AngleCalc();
     public static final Charset UTF_CS = Charset.forName("UTF-8");
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
@@ -174,29 +167,6 @@ public class Helper {
         return "totalMB:" + getTotalMB() + ", usedMB:" + getUsedMB();
     }
 
-    public static int getUsedMBAfterGC() {
-        long before = getTotalGcCount();
-        // trigger gc
-        System.gc();
-        while (getTotalGcCount() == before) {
-            // wait for the gc to have completed
-        }
-        long result = (ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed() +
-                ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage().getUsed()) / (1024 * 1024);
-        return (int) result;
-    }
-
-    private static long getTotalGcCount() {
-        long sum = 0;
-        for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
-            long count = b.getCollectionCount();
-            if (count != -1) {
-                sum += count;
-            }
-        }
-        return sum;
-    }
-
     public static int getSizeOfObjectRef(int factor) {
         // pointer to class, flags, lock
         return factor * (4 + 4 + 4);
@@ -237,17 +207,6 @@ public class Helper {
             }
         }
         return false;
-    }
-
-    public static int calcIndexSize(BBox graphBounds) {
-        if (!graphBounds.isValid())
-            throw new IllegalArgumentException("Bounding box is not valid to calculate index size: " + graphBounds);
-
-        double dist = DIST_EARTH.calcDist(graphBounds.maxLat, graphBounds.minLon,
-                graphBounds.minLat, graphBounds.maxLon);
-        // convert to km and maximum is 50000km => 1GB
-        dist = Math.min(dist / 1000, 50000);
-        return Math.max(2000, (int) (dist * dist));
     }
 
     public static String pruneFileEnd(String file) {
@@ -359,23 +318,24 @@ public class Helper {
     }
 
     /**
-     * Round the value to the specified exponent
+     * Round the value to the specified number of decimal places, i.e. decimalPlaces=2 means we round to two decimal
+     * places. Using negative values like decimalPlaces=-2 means we round to two places before the decimal point.
      */
-    public static double round(double value, int exponent) {
-        double factor = Math.pow(10, exponent);
+    public static double round(double value, int decimalPlaces) {
+        double factor = Math.pow(10, decimalPlaces);
         return Math.round(value * factor) / factor;
     }
 
     public static double round6(double value) {
-        return Math.round(value * 1e6) / 1e6;
+        return round(value, 6);
     }
 
     public static double round4(double value) {
-        return Math.round(value * 1e4) / 1e4;
+        return round(value, 4);
     }
 
     public static double round2(double value) {
-        return Math.round(value * 100) / 100d;
+        return round(value, 2);
     }
 
     /**
@@ -408,6 +368,33 @@ public class Helper {
      */
     public static int toSignedInt(long x) {
         return (int) x;
+    }
+
+    /**
+     * This method probes the specified string for a boolean, int, long, float and double. If all this fails it returns
+     * the unchanged string.
+     */
+    public static Object toObject(String string) {
+        if ("true".equalsIgnoreCase(string) || "false".equalsIgnoreCase(string))
+            return Boolean.parseBoolean(string);
+        try {
+            return Integer.parseInt(string);
+        } catch (NumberFormatException ex) {
+            try {
+                return Long.parseLong(string);
+            } catch (NumberFormatException ex2) {
+                try {
+                    return Float.parseFloat(string);
+                } catch (NumberFormatException ex3) {
+                    try {
+                        return Double.parseDouble(string);
+                    } catch (NumberFormatException ex4) {
+                        // give up and simply return the string
+                        return string;
+                    }
+                }
+            }
+        }
     }
 
     public static String camelCaseToUnderScore(String key) {
@@ -458,5 +445,38 @@ public class Helper {
             sb.append(strings.get(i));
         }
         return sb.toString();
+    }
+
+    /**
+     * parses a string like [a,b,c]
+     */
+    public static List<String> parseList(String listStr) {
+        String trimmed = listStr.trim();
+        if (trimmed.length() < 2)
+            return Collections.emptyList();
+        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
+        List<String> result = new ArrayList<>();
+        for (String item : items) {
+            String s = item.trim();
+            if (!s.isEmpty()) {
+                result.add(s);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Produces a static hashcode for a string that is platform independent and still compatible to the default
+     * of openjdk. Do not use for performance critical applications.
+     *
+     * @see String#hashCode()
+     */
+    public static int staticHashCode(String str) {
+        int len = str.length();
+        int val = 0;
+        for (int idx = 0; idx < len; ++idx) {
+            val = 31 * val + str.charAt(idx);
+        }
+        return val;
     }
 }

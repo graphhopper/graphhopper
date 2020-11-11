@@ -70,7 +70,7 @@ public class CompressedArray {
      */
     public static byte[] compress(byte[] value, int offset, int length, int compressionLevel) {
         /* Create an expandable byte array to hold the compressed data.
-         * You cannot use an array that's the same size as the orginal because
+         * You cannot use an array that's the same size as the original because
          * there is no guarantee that the compressed data will be smaller than
          * the uncompressed data. */
         ByteArrayOutputStream bos = new ByteArrayOutputStream(length);

@@ -24,7 +24,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -43,6 +43,7 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  */
 public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected final Graph graph;
+    protected final NodeAccess nodeAccess;
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     protected EdgeExplorer edgeExplorer;
@@ -53,6 +54,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     public AbstractNonCHBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(tMode);
         this.weighting = weighting;
+        if (weighting.hasTurnCosts() && !tMode.isEdgeBased())
+            throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
         this.flagEncoder = weighting.getFlagEncoder();
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
@@ -68,14 +71,11 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
      * expansion.
      *
      * @param edge    the edge that is currently processed for the expansion
-     * @param incEdge the id of the edge that is incoming to the node the edge is pointed at. usually this is the same as
-     *                edge.getEdge(), but for edge-based CH and in case edge is a shortcut incEdge is the original edge
-     *                that is incoming to the node
      * @param weight  the weight the shortest path three entry should carry
      * @param parent  the parent entry of in the shortest path tree
      * @param reverse true if we are currently looking at the backward search, false otherwise
      */
-    protected abstract SPTEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse);
+    protected abstract SPTEntry createEntry(EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse);
 
     protected BidirPathExtractor createPathExtractor(Graph graph, Weighting weighting) {
         return new BidirPathExtractor(graph, weighting);
@@ -85,12 +85,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (fromOutEdge == ANY_EDGE) {
             fillEdgesFrom();
         } else {
-            fillEdgesFromUsingFilter(new EdgeFilter() {
-                @Override
-                public boolean accept(EdgeIteratorState edgeState) {
-                    return edgeState.getOrigEdgeFirst() == fromOutEdge;
-                }
-            });
+            fillEdgesFromUsingFilter(edgeState -> edgeState.getOrigEdgeFirst() == fromOutEdge);
         }
     }
 
@@ -98,12 +93,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         if (toInEdge == ANY_EDGE) {
             fillEdgesTo();
         } else {
-            fillEdgesToUsingFilter(new EdgeFilter() {
-                @Override
-                public boolean accept(EdgeIteratorState edgeState) {
-                    return edgeState.getOrigEdgeLast() == toInEdge;
-                }
-            });
+            fillEdgesToUsingFilter(edgeState -> edgeState.getOrigEdgeLast() == toInEdge);
         }
     }
 
@@ -164,23 +154,22 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
-            if (!accept(iter, currEdge, reverse))
+            if (!accept(iter, currEdge.edge))
                 continue;
 
             final double weight = calcWeight(iter, currEdge, reverse);
             if (Double.isInfinite(weight)) {
                 continue;
             }
-            final int origEdgeId = getOrigEdgeId(iter, reverse);
-            final int traversalId = getTraversalId(iter, origEdgeId, reverse);
+            final int traversalId = traversalMode.createTraversalId(iter, reverse);
             SPTEntry entry = bestWeightMap.get(traversalId);
             if (entry == null) {
-                entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
+                entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
                 prioQueue.remove(entry);
-                updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
+                updateEntry(entry, iter, weight, currEdge, reverse);
                 prioQueue.add(entry);
             } else
                 continue;
@@ -190,41 +179,31 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
                 double edgeWeight = traversalMode.isEdgeBased() ? weighting.calcEdgeWeight(iter, reverse) : Double.POSITIVE_INFINITY;
                 // todo: performance - if bestWeightMapOther.get(traversalId) == null, updateBestPath will exit early and we might
                 // have calculated the edgeWeight unnecessarily
-                updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
+                updateBestPath(edgeWeight, entry, EdgeIterator.NO_EDGE, traversalId, reverse);
             }
         }
     }
 
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
+    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
         entry.weight = weight;
         entry.parent = parent;
     }
 
-    protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        return accept(edge, getIncomingEdge(currEdge));
-    }
-
-    protected int getOrigEdgeId(EdgeIteratorState edge, boolean reverse) {
-        return edge.getEdge();
-    }
-
-    protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        return traversalMode.createTraversalId(edge, reverse);
-    }
-
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
-        // todo: for #1776/#1835 move access flag checks into weighting
+        // todo: for #1835 move access flag checks into weighting
         final boolean access = reverse ? inEdgeFilter.accept(iter) : outEdgeFilter.accept(iter);
         if (!access) {
             return Double.POSITIVE_INFINITY;
         }
-        return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
+        // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
+        // turn weights, see discussion in #1960
+        return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
     }
 
     @Override
     protected double getInEdgeWeight(SPTEntry entry) {
-        return weighting.calcEdgeWeight(graph.getEdgeIteratorState(getIncomingEdge(entry), entry.adjNode), false);
+        return weighting.calcEdgeWeight(graph.getEdgeIteratorState(entry.edge, entry.adjNode), false);
     }
 
     @Override

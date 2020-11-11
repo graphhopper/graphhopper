@@ -17,15 +17,11 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.storage.CHGraph;
-
 /**
  * The state returned from the EdgeIterator of a CHGraph
  * <p>
  *
  * @author Peter Karich
- * @see CHGraph
  * @see CHEdgeIterator
  */
 public interface CHEdgeIteratorState extends EdgeIteratorState {
@@ -52,13 +48,6 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
      * @see #getFwdAccess
      */
     boolean getBwdAccess();
-
-    /**
-     * This method is only used on preparation.
-     *
-     * @see PrepareEncoder#getScMergeStatus(int, int)
-     */
-    int getMergeStatus(int flags);
 
     /**
      * Returns the weight of this shortcut.

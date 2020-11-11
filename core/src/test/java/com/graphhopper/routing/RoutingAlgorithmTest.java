@@ -19,10 +19,12 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -34,11 +36,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -53,10 +52,12 @@ import java.util.Random;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static com.graphhopper.util.Helper.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
+import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
 import static org.junit.Assert.*;
 
 /**
@@ -641,12 +642,12 @@ public class RoutingAlgorithmTest {
         Path p = calcPath(graph, weighting, 4, 0);
         assertEquals(nodes(4, 1, 0), p.calcNodes());
         assertEquals(Helper.createPointList(0, 2, 1, 1.5, 1.5, 1, 1, 0.6), p.calcPoints());
-        assertEquals(274128, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
+        assertEquals(274128, new DistanceCalcEarth().calcDistance(p.calcPoints()), 1);
 
         p = calcPath(graph, weighting, 2, 1);
         assertEquals(nodes(2, 0, 1), p.calcNodes());
         assertEquals(Helper.createPointList(0, 0, 1, 0.6, 1.5, 1, 1, 1.5), p.calcPoints());
-        assertEquals(279482, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
+        assertEquals(279482, new DistanceCalcEarth().calcDistance(p.calcPoints()), 1);
     }
 
     @Test
@@ -745,9 +746,9 @@ public class RoutingAlgorithmTest {
     }
 
     /**
-     * Creates query result on edge (node1-node2) very close to node1.
+     * Creates snaps on edge (node1-node2) very close to node1.
      */
-    private QueryResult createQRBetweenNodes(Graph graph, int node1, int node2) {
+    private Snap createSnapBetweenNodes(Graph graph, int node1, int node2) {
         EdgeIteratorState edge = GHUtility.getEdge(graph, node1, node2);
         if (edge == null)
             throw new IllegalStateException("edge not found? " + node1 + "-" + node2);
@@ -758,11 +759,11 @@ public class RoutingAlgorithmTest {
         double latAdj = na.getLatitude(edge.getAdjNode());
         double lonAdj = na.getLongitude(edge.getAdjNode());
         // calculate query point near the base node but not directly on it!
-        QueryResult res = new QueryResult(lat + (latAdj - lat) * .1, lon + (lonAdj - lon) * .1);
+        Snap res = new Snap(lat + (latAdj - lat) * .1, lon + (lonAdj - lon) * .1);
         res.setClosestNode(edge.getBaseNode());
         res.setClosestEdge(edge);
         res.setWayIndex(0);
-        res.setSnappedPosition(QueryResult.Position.EDGE);
+        res.setSnappedPosition(Snap.Position.EDGE);
         res.calcSnappedPoint(DIST_EARTH);
         return res;
     }
@@ -854,6 +855,11 @@ public class RoutingAlgorithmTest {
             @Override
             public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
                 return tmpW.calcTurnMillis(inEdge, viaNode, outEdge);
+            }
+
+            @Override
+            public boolean hasTurnCosts() {
+                return tmpW.hasTurnCosts();
             }
 
             @Override
@@ -999,16 +1005,20 @@ public class RoutingAlgorithmTest {
      * Creates a GH storage supporting the given weightings for CH
      */
     private GraphHopperStorage createGHStorage(boolean is3D, Weighting... weightings) {
-        CHProfile[] chProfiles = new CHProfile[weightings.length];
+        CHConfig[] chConfigs = new CHConfig[weightings.length];
         for (int i = 0; i < weightings.length; i++) {
-            chProfiles[i] = new CHProfile(weightings[i], traversalMode.isEdgeBased());
+            chConfigs[i] = new CHConfig(getCHGraphName(weightings[i]), weightings[i], traversalMode.isEdgeBased());
         }
         return new GraphBuilder(encodingManager).set3D(is3D)
-                .setCHProfiles(chProfiles)
+                .setCHConfigs(chConfigs)
                 // this test should never include turn costs, but we have to set it to true to be able to
                 // run edge-based algorithms
                 .withTurnCosts(traversalMode.isEdgeBased())
                 .create();
+    }
+
+    private static String getCHGraphName(Weighting weighting) {
+        return weighting.getName() + "_" + weighting.getFlagEncoder().toString();
     }
 
     private Path calcPath(GraphHopperStorage ghStorage, int from, int to) {
@@ -1033,8 +1043,8 @@ public class RoutingAlgorithmTest {
 
     private Path calcPath(GraphHopperStorage ghStorage, Weighting weighting, int fromNode1, int fromNode2, int toNode1, int toNode2) {
         // lookup two edges: fromNode1-fromNode2 and toNode1-toNode2
-        QueryResult from = createQRBetweenNodes(ghStorage, fromNode1, fromNode2);
-        QueryResult to = createQRBetweenNodes(ghStorage, toNode1, toNode2);
+        Snap from = createSnapBetweenNodes(ghStorage, fromNode1, fromNode2);
+        Snap to = createSnapBetweenNodes(ghStorage, toNode1, toNode2);
         return pathCalculator.calcPath(ghStorage, weighting, traversalMode, defaultMaxVisitedNodes, from, to);
     }
 
@@ -1060,7 +1070,7 @@ public class RoutingAlgorithmTest {
 
         Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to);
 
-        Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to);
+        Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, Snap from, Snap to);
     }
 
     private static abstract class SimpleCalculator implements PathCalculator {
@@ -1075,14 +1085,14 @@ public class RoutingAlgorithmTest {
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to) {
             LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
             index.prepareIndex();
-            QueryResult fromQR = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
-            QueryResult toQR = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
-            return calcPath(graph, weighting, traversalMode, maxVisitedNodes, fromQR, toQR);
+            Snap fromSnap = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
+            Snap toSnap = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
+            return calcPath(graph, weighting, traversalMode, maxVisitedNodes, fromSnap, toSnap);
         }
 
         @Override
-        public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
-            QueryGraph queryGraph = QueryGraph.lookup(graph, from, to);
+        public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, Snap from, Snap to) {
+            QueryGraph queryGraph = QueryGraph.create(graph, from, to);
             RoutingAlgorithm algo = createAlgo(queryGraph, weighting, traversalMode);
             algo.setMaxVisitedNodes(maxVisitedNodes);
             return algo.calcPath(from.getClosestNode(), to.getClosestNode());
@@ -1154,18 +1164,17 @@ public class RoutingAlgorithmTest {
     private static abstract class CHCalculator implements PathCalculator {
         @Override
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, int from, int to) {
-            CHProfile chProfile = new CHProfile(weighting, traversalMode.isEdgeBased());
-            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
-            CHGraph chGraph = graph.getCHGraph(chProfile);
-            if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
+            CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
+            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+            RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
+            if (routingCHGraph.getEdges() == routingCHGraph.getBaseGraph().getEdges()) {
                 graph.freeze();
                 pch.doWork();
             }
-            RoutingAlgorithmFactory algoFactory = pch.getRoutingAlgorithmFactory();
-            AlgorithmOptions opts = AlgorithmOptions.start()
-                    .algorithm(getAlgorithm())
-                    .weighting(weighting).traversalMode(traversalMode).maxVisitedNodes(maxVisitedNodes).build();
-            RoutingAlgorithm algo = algoFactory.createAlgo(chGraph, opts);
+            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap()
+                    .putObject(ALGORITHM, getAlgorithm())
+                    .putObject(MAX_VISITED_NODES, maxVisitedNodes)
+            );
             return algo.calcPath(from, to);
         }
 
@@ -1173,26 +1182,25 @@ public class RoutingAlgorithmTest {
         public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to) {
             LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
             LocationIndex index = locationIndex.prepareIndex();
-            QueryResult fromQR = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
-            QueryResult toQR = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
-            return calcPath(graph, weighting, traversalMode, maxVisitedNodes, fromQR, toQR);
+            Snap fromSnap = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
+            Snap toSnap = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
+            return calcPath(graph, weighting, traversalMode, maxVisitedNodes, fromSnap, toSnap);
         }
 
         @Override
-        public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, QueryResult from, QueryResult to) {
-            CHProfile chProfile = new CHProfile(weighting, traversalMode.isEdgeBased());
-            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
-            CHGraph chGraph = graph.getCHGraph(chProfile);
-            if (chGraph.getEdges() == chGraph.getOriginalEdges()) {
+        public Path calcPath(GraphHopperStorage graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, Snap from, Snap to) {
+            CHConfig chConfig = new CHConfig(getCHGraphName(weighting), weighting, traversalMode.isEdgeBased());
+            PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
+            RoutingCHGraph routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
+            if (routingCHGraph.getEdges() == routingCHGraph.getBaseGraph().getEdges()) {
                 graph.freeze();
                 pch.doWork();
             }
-            QueryGraph queryGraph = QueryGraph.lookup(chGraph, from, to);
-            RoutingAlgorithmFactory algoFactory = pch.getRoutingAlgorithmFactory();
-            AlgorithmOptions opts = AlgorithmOptions.start()
-                    .algorithm(getAlgorithm())
-                    .weighting(weighting).traversalMode(traversalMode).maxVisitedNodes(maxVisitedNodes).build();
-            RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, opts);
+            QueryGraph queryGraph = QueryGraph.create(graph, Arrays.asList(from, to));
+            QueryRoutingCHGraph queryRoutingCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
+            RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(queryRoutingCHGraph).createAlgo(new PMap()
+                    .putObject(ALGORITHM, getAlgorithm())
+                    .putObject(MAX_VISITED_NODES, maxVisitedNodes));
             return algo.calcPath(from.getClosestNode(), to.getClosestNode());
 
         }

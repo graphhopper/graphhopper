@@ -18,9 +18,10 @@
 
 package com.graphhopper;
 
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtRouteResource;
-import com.graphhopper.reader.gtfs.Request;
+import com.graphhopper.gtfs.GraphHopperGtfs;
+import com.graphhopper.gtfs.PtRouter;
+import com.graphhopper.gtfs.PtRouterImpl;
+import com.graphhopper.gtfs.Request;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
@@ -31,28 +32,28 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-import static com.graphhopper.reader.gtfs.GtfsHelper.time;
+import static com.graphhopper.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class ExtendedRouteTypeIT {
 
     private static final String GRAPH_LOC = "target/ExtendedRouteType";
-    private static PtRouteResource ptRouteResource;
+    private static PtRouter ptRouter;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperGtfs graphHopperGtfs;
 
     @BeforeClass
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.put("graph.flag_encoders", "car,foot");
-        ghConfig.put("graph.location", GRAPH_LOC);
-        ghConfig.put("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
+        ghConfig.putObject("graph.flag_encoders", "car,foot");
+        ghConfig.putObject("graph.location", GRAPH_LOC);
+        ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouteResource = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = PtRouterImpl.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -71,7 +72,7 @@ public class ExtendedRouteTypeIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 9, 0, 0).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
-        GHResponse route = ptRouteResource.route(ghRequest);
+        GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());

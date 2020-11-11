@@ -20,9 +20,10 @@ package com.graphhopper.routing.util.spatialrules;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.storage.Graph;
@@ -40,6 +41,7 @@ import org.locationtech.jts.geom.Polygon;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static junit.framework.TestCase.assertFalse;
@@ -60,24 +62,24 @@ public class SpatialRuleLookupBuilderTest {
                 Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory());
 
         // Berlin
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).
-                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).
-                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
+                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
+                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
 
         // Paris -> empty rule
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).
-                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).
-                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
+                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.864716, 2.349014).
+                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
 
         // Austria
-        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRule(48.204484, 16.107888).
-                getAccess(RoadClass.TRACK, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).
-                getAccess(RoadClass.PRIMARY, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
-        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(48.210033, 16.363449).
-                getAccess(RoadClass.LIVING_STREET, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRules(48.204484, 16.107888).
+                getAccess(RoadClass.TRACK, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRules(48.210033, 16.363449).
+                getAccess(RoadClass.PRIMARY, TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(48.210033, 16.363449).
+                getAccess(RoadClass.LIVING_STREET, TransportationMode.CAR, RoadAccess.YES));
     }
 
     @Test
@@ -119,41 +121,22 @@ public class SpatialRuleLookupBuilderTest {
         final GeometryFactory fac = new GeometryFactory();
         org.locationtech.jts.geom.Polygon polygon = fac.createPolygon(new Coordinate[]{
                 new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0)});
-        final GermanySpatialRule germany = new GermanySpatialRule(Collections.singletonList(polygon));
+        final SpatialRule germany = new GermanySpatialRule(Collections.singletonList(polygon));
 
         SpatialRuleLookup index = new SpatialRuleLookup() {
             @Override
-            public SpatialRule lookupRule(double lat, double lon) {
+            public SpatialRuleSet lookupRules(double lat, double lon) {
                 for (Polygon polygon : germany.getBorders()) {
                     if (polygon.covers(fac.createPoint(new Coordinate(lon, lat)))) {
-                        return germany;
+                        return new SpatialRuleSet(Collections.singletonList(germany), 1);
                     }
                 }
-                return SpatialRule.EMPTY;
+                return SpatialRuleSet.EMPTY;
             }
-
+            
             @Override
-            public SpatialRule lookupRule(GHPoint point) {
-                return lookupRule(point.lat, point.lon);
-            }
-
-            @Override
-            public int getSpatialId(SpatialRule rule) {
-                if (germany.equals(rule)) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            }
-
-            @Override
-            public SpatialRule getSpatialRule(int spatialId) {
-                return SpatialRule.EMPTY;
-            }
-
-            @Override
-            public int size() {
-                return 2;
+            public List<SpatialRule> getRules() {
+                return Collections.singletonList(germany);
             }
 
             @Override
@@ -192,8 +175,8 @@ public class SpatialRuleLookupBuilderTest {
         e2.setFlags(em.handleWayTags(way2, map, relFlags));
         assertEquals(RoadAccess.YES, e2.get(tmpRoadAccessEnc));
 
-        assertEquals(index.getSpatialId(new GermanySpatialRule(Collections.singletonList(polygon))), e1.get(countrySpatialIdEnc));
-        assertEquals(index.getSpatialId(SpatialRule.EMPTY), e2.get(countrySpatialIdEnc));
+        assertEquals(index.getRules().indexOf(germany), e1.get(countrySpatialIdEnc)-1);
+        assertEquals(0, e2.get(countrySpatialIdEnc));
 
         ReaderWay livingStreet = new ReaderWay(29L);
         livingStreet.setTag("highway", "living_street");

@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
+import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -41,7 +41,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     protected double[] weights;
     private int[] parents;
     private int[] edgeIds;
-    private IntDoubleBinaryHeap heap;
+    private IntFloatBinaryHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
     private int endNode;
@@ -61,7 +61,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
         Arrays.fill(weights, Double.MAX_VALUE);
 
-        heap = new IntDoubleBinaryHeap(1000);
+        heap = new IntFloatBinaryHeap(1000);
         changedNodes = new IntArrayListWithCap();
     }
 
@@ -95,7 +95,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             path.addEdge(edge);
             node = parents[node];
         }
-        path.reverseEdges();
+        ArrayUtil.reverse(path.getEdges());
         path.setFromNode(fromNode);
         path.setEndNode(endNode);
         path.setFound(true);
@@ -149,12 +149,12 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             if (heap.isEmpty() || isMaxVisitedNodesExceeded())
                 return NOT_FOUND;
 
-            currNode = heap.poll_element();
+            currNode = heap.poll();
         }
 
         visitedNodes = 0;
 
-        // we call 'finished' before heap.peek_element but this would add unnecessary overhead for this special case so we do it outside of the loop
+        // we call 'finished' before heap.peekElement but this would add unnecessary overhead for this special case so we do it outside of the loop
         if (finished()) {
             // then we need a small workaround for special cases see #707
             if (heap.isEmpty())
@@ -181,14 +181,14 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
                 if (w == Double.MAX_VALUE) {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
-                    heap.insert_(tmpWeight, adjNode);
+                    heap.insert(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
 
                 } else if (w > tmpWeight) {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
-                    heap.update_(tmpWeight, adjNode);
+                    heap.update(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
                 }
@@ -198,11 +198,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
                 return NOT_FOUND;
 
             // calling just peek and not poll is important if the next query is cached
-            currNode = heap.peek_element();
+            currNode = heap.peekElement();
             if (finished())
                 return currNode;
 
-            heap.poll_element();
+            heap.poll();
         }
     }
 

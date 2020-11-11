@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
@@ -31,7 +32,6 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,6 +40,7 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -70,7 +71,7 @@ public class LandmarkStorageTest {
     public void testInfiniteWeight() {
         Directory dir = new RAMDirectory();
         EdgeIteratorState edge = ghStorage.edge(0, 1);
-        int res = new LandmarkStorage(ghStorage, dir, new LMProfile(new FastestWeighting(encoder) {
+        int res = new LandmarkStorage(ghStorage, dir, new LMConfig("c1", new FastestWeighting(encoder) {
             @Override
             public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
                 return Integer.MAX_VALUE * 2L;
@@ -79,7 +80,7 @@ public class LandmarkStorageTest {
         assertEquals(Integer.MAX_VALUE, res);
 
         dir = new RAMDirectory();
-        res = new LandmarkStorage(ghStorage, dir, new LMProfile(new FastestWeighting(encoder) {
+        res = new LandmarkStorage(ghStorage, dir, new LMConfig("c2", new FastestWeighting(encoder) {
             @Override
             public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
                 return Double.POSITIVE_INFINITY;
@@ -92,10 +93,10 @@ public class LandmarkStorageTest {
     public void testSetGetWeight() {
         ghStorage.edge(0, 1, 40, true);
         Directory dir = new RAMDirectory();
-        DataAccess da = dir.find("landmarks_fastest_car");
+        DataAccess da = dir.find("landmarks_c1");
         da.create(2000);
 
-        LandmarkStorage lms = new LandmarkStorage(ghStorage, dir, new LMProfile(new FastestWeighting(encoder)), 4).
+        LandmarkStorage lms = new LandmarkStorage(ghStorage, dir, new LMConfig("c1", new FastestWeighting(encoder)), 4).
                 setMaximumWeight(LandmarkStorage.PRECISION);
         // 2^16=65536, use -1 for infinity and -2 for maximum
         lms.setWeight(0, 65536);
@@ -124,7 +125,7 @@ public class LandmarkStorageTest {
         ghStorage.edge(4, 5, 10, true);
         ghStorage.edge(5, 6, 10, false);
 
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMProfile(new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMConfig("c1", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
         assertEquals(3, storage.getSubnetworksWithLandmarks());
@@ -142,7 +143,7 @@ public class LandmarkStorageTest {
         ghStorage.edge(3, 2, 10, false);
         ghStorage.edge(3, 4, 10, true);
 
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMProfile(new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(3);
         storage.createLandmarks();
         assertEquals(2, storage.getSubnetworksWithLandmarks());
@@ -160,7 +161,7 @@ public class LandmarkStorageTest {
         ghStorage.edge(4, 5, 10, true);
         ghStorage.edge(5, 2, 10, false);
 
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMProfile(new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
@@ -175,7 +176,7 @@ public class LandmarkStorageTest {
         GHUtility.setProperties(ghStorage.edge(1, 2).setDistance(10), encoder, 0.9, true, true);
         ghStorage.edge(2, 3, 10, true);
 
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMProfile(new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
@@ -187,7 +188,7 @@ public class LandmarkStorageTest {
     public void testWithBorderBlocking() {
         RoutingAlgorithmTest.initBiGraph(ghStorage);
 
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMProfile(new FastestWeighting(encoder)), 2);
+        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new LMConfig("c", new FastestWeighting(encoder)), 2);
         final SpatialRule ruleRight = new AbstractSpatialRule(Collections.<Polygon>emptyList()) {
             @Override
             public String getId() {
@@ -201,33 +202,24 @@ public class LandmarkStorageTest {
             }
         };
         final SpatialRuleLookup lookup = new SpatialRuleLookup() {
+            
+            private final List<SpatialRule> rules = Arrays.asList(ruleLeft, ruleRight);
 
             @Override
-            public SpatialRule lookupRule(double lat, double lon) {
-                if (lon > 0.00105)
-                    return ruleRight;
+            public SpatialRuleSet lookupRules(double lat, double lon) {
+                SpatialRule rule;
+                if (lon > 0.00105) {
+                    rule = ruleRight;
+                } else {
+                    rule = ruleLeft;
+                }
 
-                return ruleLeft;
+                return new SpatialRuleSet(Collections.singletonList(rule), rules.indexOf(rule)+1);
             }
-
+            
             @Override
-            public SpatialRule lookupRule(GHPoint point) {
-                return lookupRule(point.lat, point.lon);
-            }
-
-            @Override
-            public int getSpatialId(SpatialRule rule) {
-                throw new IllegalStateException();
-            }
-
-            @Override
-            public SpatialRule getSpatialRule(int spatialId) {
-                throw new IllegalStateException();
-            }
-
-            @Override
-            public int size() {
-                return 2;
+            public List<SpatialRule> getRules() {
+                return rules;
             }
 
             @Override

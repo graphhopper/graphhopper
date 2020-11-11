@@ -119,15 +119,15 @@ public class GraphHopperGeocoding {
             if (request.getQuery() == null)
                 throw new IllegalArgumentException("For forward geocoding you have to a string for the query");
             url += "reverse=false";
-            url += "&q=" + request.getQuery();
+            url += "&q=" + WebHelper.encodeURL(request.getQuery());
         }
 
         if (request.getPoint().isValid())
             url += "&point=" + request.getPoint().getLat() + "," + request.getPoint().getLon();
 
         url += "&limit=" + request.getLimit();
-        url += "&locale=" + request.getLocale();
-        url += "&provider=" + request.getProvider();
+        url += "&locale=" + WebHelper.encodeURL(request.getLocale());
+        url += "&provider=" + WebHelper.encodeURL(request.getProvider());
 
         if (!key.isEmpty()) {
             url += "&key=" + WebHelper.encodeURL(key);

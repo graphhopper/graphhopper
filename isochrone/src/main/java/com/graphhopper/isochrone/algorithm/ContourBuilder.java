@@ -15,8 +15,8 @@ package com.graphhopper.isochrone.algorithm;
 
 import org.locationtech.jts.algorithm.CGAlgorithms;
 import org.locationtech.jts.geom.*;
-import org.locationtech.jts.triangulate.quadedge.QuadEdge;
-import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
+import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.*;
 
@@ -32,21 +32,22 @@ import java.util.*;
 public class ContourBuilder {
 
     private static final double EPSILON = 0.000001;
-    private QuadEdgeSubdivision triangulation;
 
-    private GeometryFactory geometryFactory = new GeometryFactory();
+    // OpenStreetMap has 1E7 (coordinates with 7 decimal places), and we walk on the edges of that grid,
+    // so we use 1E8 so we can, in theory, always wedge a point petween any two OSM points.
+    private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(1E8));
+    private final ReadableTriangulation triangulation;
 
-    public ContourBuilder(QuadEdgeSubdivision triangulation) {
+    public ContourBuilder(ReadableTriangulation triangulation) {
         this.triangulation = triangulation;
     }
 
-    public MultiPolygon computeIsoline(double z0) {
-        Set<QuadEdge> processed = new HashSet<>();
+    public MultiPolygon computeIsoline(double z0, Collection<ReadableQuadEdge> seedEdges) {
+        Set<ReadableQuadEdge> processed = new HashSet<>();
         List<LinearRing> rings = new ArrayList<>();
 
-        Queue<QuadEdge> processQ = new ArrayDeque<>(getPrimaryEdges());
-        while (!processQ.isEmpty()) {
-            QuadEdge e = processQ.remove();
+        for (ReadableQuadEdge f : seedEdges) {
+            ReadableQuadEdge e = f.getPrimary();
             if (processed.contains(e))
                 continue;
             processed.add(e);
@@ -59,17 +60,18 @@ public class ContourBuilder {
             while (true) {
                 // Add a point to polyline
                 Coordinate cC;
-                if (triangulation.isFrameVertex(e.orig())) {
+                if (isFrameVertex(e.orig())) {
                     cC = moveEpsilonTowards(e.dest().getCoordinate(), e.orig().getCoordinate());
-                } else if (triangulation.isFrameVertex(e.dest())) {
+                } else if (isFrameVertex(e.dest())) {
                     cC = moveEpsilonTowards(e.orig().getCoordinate(), e.dest().getCoordinate());
                 } else {
                     cC = e.orig().midPoint(e.dest()).getCoordinate();
                 }
-                polyPoints.add(cC);
+                // Strip z coordinate
+                polyPoints.add(new Coordinate(cC.x, cC.y));
                 processed.add(e);
-                QuadEdge E1 = ccw ? e.oNext().getPrimary() : e.oPrev().getPrimary();
-                QuadEdge E2 = ccw ? e.dPrev().getPrimary() : e.dNext().getPrimary();
+                ReadableQuadEdge E1 = ccw ? e.oNext().getPrimary() : e.oPrev().getPrimary();
+                ReadableQuadEdge E2 = ccw ? e.dPrev().getPrimary() : e.dNext().getPrimary();
                 int cut1 = E1 == null ? 0 : cut(E1.orig().getZ(), E1.dest().getZ(), z0);
                 int cut2 = E2 == null ? 0 : cut(E2.orig().getZ(), E2.dest().getZ(), z0);
                 boolean ok1 = cut1 != 0 && !processed.contains(E1);
@@ -97,9 +99,8 @@ public class ContourBuilder {
         return geometryFactory.createMultiPolygon(isolinePolygons.toArray(new Polygon[isolinePolygons.size()]));
     }
 
-    @SuppressWarnings("unchecked") // JTS is not generified
-    private Collection<QuadEdge> getPrimaryEdges() {
-        return (Collection<QuadEdge>) triangulation.getPrimaryEdges(true);
+    private boolean isFrameVertex(Vertex v) {
+        return v.getZ() == Double.MAX_VALUE;
     }
 
     private Coordinate moveEpsilonTowards(Coordinate coordinate, Coordinate distantFrameCoordinate) {
@@ -114,32 +115,27 @@ public class ContourBuilder {
 
     @SuppressWarnings("unchecked")
     private List<Polygon> punchHoles(List<LinearRing> rings) {
-        List<Polygon> shells = new ArrayList<>(rings.size());
+        List<PreparedPolygon> shells = new ArrayList<>(rings.size());
         List<LinearRing> holes = new ArrayList<>(rings.size() / 2);
         // 1. Split the polygon list in two: shells and holes (CCW and CW)
         for (LinearRing ring : rings) {
             if (CGAlgorithms.signedArea(ring.getCoordinateSequence()) > 0.0)
                 holes.add(ring);
             else
-                shells.add(geometryFactory.createPolygon(ring));
+                shells.add(new PreparedPolygon(geometryFactory.createPolygon(ring)));
         }
         // 2. Sort the shells based on number of points to optimize step 3.
-        Collections.sort(shells, new Comparator<Polygon>() {
-            @Override
-            public int compare(Polygon o1, Polygon o2) {
-                return o2.getNumPoints() - o1.getNumPoints();
-            }
-        });
-        for (Polygon shell : shells) {
-            shell.setUserData(new ArrayList<LinearRing>());
+        shells.sort((o1, o2) -> o2.getGeometry().getNumPoints() - o1.getGeometry().getNumPoints());
+        for (PreparedPolygon shell : shells) {
+            shell.getGeometry().setUserData(new ArrayList<LinearRing>());
         }
         // 3. For each hole, determine which shell it fits in.
         for (LinearRing hole : holes) {
             outer: {
                 // Probably most of the time, the first shell will be the one
-                for (Polygon shell : shells) {
+                for (PreparedPolygon shell : shells) {
                     if (shell.contains(hole)) {
-                        ((List<LinearRing>) shell.getUserData()).add(hole);
+                        ((List<LinearRing>) shell.getGeometry().getUserData()).add(hole);
                         break outer;
                     }
                 }
@@ -148,9 +144,9 @@ public class ContourBuilder {
         }
         // 4. Build the list of punched polygons
         List<Polygon> punched = new ArrayList<>(shells.size());
-        for (Polygon shell : shells) {
-            List<LinearRing> shellHoles = ((List<LinearRing>) shell.getUserData());
-            punched.add(geometryFactory.createPolygon((LinearRing) (shell.getExteriorRing()),
+        for (PreparedPolygon shell : shells) {
+            List<LinearRing> shellHoles = ((List<LinearRing>) shell.getGeometry().getUserData());
+            punched.add(geometryFactory.createPolygon((LinearRing) (((Polygon) shell.getGeometry()).getExteriorRing()),
                     shellHoles.toArray(new LinearRing[shellHoles.size()])));
         }
         return punched;

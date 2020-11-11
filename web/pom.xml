@@ -3,19 +3,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.graphhopper</groupId>
   <artifactId>graphhopper-web</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <version>3.0-SNAPSHOT</version>
   <name>GraphHopper Web</name>
   <description>Use the GraphHopper routing engine as a web-service</description>
 
   <parent>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>3.0-SNAPSHOT</version>
   </parent>
   <properties>
+        <shade-phase>package</shade-phase>
     <jetty.version>9.4.2.v20170220</jetty.version>
   </properties>
 
@@ -35,9 +35,37 @@
       <version>${project.parent.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.dropwizard-bundles</groupId>
+      <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-nav</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard-bundles</groupId>
       <artifactId>dropwizard-configurable-assets-bundle</artifactId>
     </dependency>
+
+        <!-- Pt web client dependencies-->
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>react</artifactId>
+            <version>16.10.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>react-dom</artifactId>
+            <version>16.10.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>leaflet</artifactId>
+            <version>1.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>momentjs</artifactId>
+            <version>2.24.0</version>
+        </dependency>
+
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-testing</artifactId>
@@ -72,13 +100,44 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.10.0</version>
+                <executions>
+                    <execution>
+                        <id>install node and npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <nodeVersion>v12.3.1</nodeVersion>
+          <npmVersion>6.14.5</npmVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm run bundleProduction</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <arguments>run bundleProduction</arguments>
+                            <environmentVariables>
+                                <BROWSERIFYSWAP_ENV>development</BROWSERIFYSWAP_ENV>
+                            </environmentVariables>
         </configuration>
-      </plugin>
+      </execution>
+                </executions>
+            </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -98,7 +157,7 @@
         </configuration>
         <executions>
           <execution>
-            <phase>package</phase>
+            <phase>${shade-phase}</phase>
             <goals>
               <goal>shade</goal>
             </goals>
@@ -118,7 +177,15 @@
 
     </plugins>
   </build>
-
+    <profiles>
+        <profile>
+            <!-- use -Pskip-shaded-web-jar to build the web module as standard jar instead of the shaded fat jar -->
+            <id>skip-shaded-web-jar</id>
+            <properties>
+                <shade-phase>none</shade-phase>
+            </properties>
+        </profile>
+    </profiles>
 </project>
 
 

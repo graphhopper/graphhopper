@@ -19,11 +19,11 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -35,13 +35,10 @@ import com.graphhopper.util.shapes.BBox;
 public class Location2IDFullWithEdgesIndex implements LocationIndex {
     private final Graph graph;
     private final NodeAccess nodeAccess;
-    private DistanceCalc calc = Helper.DIST_EARTH;
+    private DistanceCalc calc = DistanceCalcEarth.DIST_EARTH;
     private boolean closed = false;
 
     public Location2IDFullWithEdgesIndex(Graph g) {
-        if (g instanceof CHGraph)
-            throw new IllegalArgumentException("Use base graph for LocationIndex instead of CHGraph");
-
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
     }
@@ -59,9 +56,9 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex {
     @Override
     public LocationIndex setApproximation(boolean approxDist) {
         if (approxDist) {
-            calc = Helper.DIST_PLANE;
+            calc = DistancePlaneProjection.DIST_PLANE;
         } else {
-            calc = Helper.DIST_EARTH;
+            calc = DistanceCalcEarth.DIST_EARTH;
         }
         return this;
     }
@@ -72,11 +69,11 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex {
     }
 
     @Override
-    public QueryResult findClosest(double queryLat, double queryLon, EdgeFilter filter) {
+    public Snap findClosest(double queryLat, double queryLon, EdgeFilter filter) {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
-        QueryResult res = new QueryResult(queryLat, queryLon);
+        Snap res = new Snap(queryLat, queryLon);
         double foundDist = Double.MAX_VALUE;
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {

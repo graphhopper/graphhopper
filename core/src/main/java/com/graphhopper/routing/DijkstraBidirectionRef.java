@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 
@@ -43,7 +42,7 @@ public class DijkstraBidirectionRef extends AbstractNonCHBidirAlgo {
     }
 
     @Override
-    protected SPTEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+    protected SPTEntry createEntry(EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
         SPTEntry entry = new SPTEntry(edge.getEdge(), edge.getAdjNode(), weight);
         entry.parent = parent;
         return entry;

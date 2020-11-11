@@ -24,10 +24,7 @@ import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.LinearKeyAlgo;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.BreadthFirstSearch;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -52,15 +49,12 @@ class Location2IDQuadtree implements LocationIndex {
     private final DataAccess index;
     private final Graph graph;
     private final NodeAccess nodeAccess;
-    protected DistanceCalc distCalc = Helper.DIST_PLANE;
+    protected DistanceCalc distCalc = DistancePlaneProjection.DIST_PLANE;
     private KeyAlgo keyAlgo;
     private double maxRasterWidth2InMeterNormed;
     private int lonSize, latSize;
 
     public Location2IDQuadtree(Graph g, Directory dir) {
-        if (g instanceof CHGraph)
-            throw new IllegalArgumentException("Use base graph for LocationIndex instead of CHGraph");
-
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
         index = dir.find("loc2id_index");
@@ -70,9 +64,9 @@ class Location2IDQuadtree implements LocationIndex {
     @Override
     public LocationIndex setApproximation(boolean approxDist) {
         if (approxDist)
-            distCalc = Helper.DIST_PLANE;
+            distCalc = DistancePlaneProjection.DIST_PLANE;
         else
-            distCalc = Helper.DIST_EARTH;
+            distCalc = DistanceCalcEarth.DIST_EARTH;
 
         return this;
     }
@@ -280,8 +274,8 @@ class Location2IDQuadtree implements LocationIndex {
     }
 
     @Override
-    public QueryResult findClosest(final double queryLat, final double queryLon,
-                                   final EdgeFilter edgeFilter) {
+    public Snap findClosest(final double queryLat, final double queryLon,
+                            final EdgeFilter edgeFilter) {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
@@ -306,7 +300,7 @@ class Location2IDQuadtree implements LocationIndex {
         final int id = index.getInt(key * 4);
         double mainLat = nodeAccess.getLatitude(id);
         double mainLon = nodeAccess.getLongitude(id);
-        final QueryResult res = new QueryResult(queryLat, queryLon);
+        final Snap res = new Snap(queryLat, queryLon);
         res.setClosestNode(id);
         res.setQueryDistance(distCalc.calcNormalizedDist(queryLat, queryLon, mainLat, mainLon));
         goFurtherHook(id);

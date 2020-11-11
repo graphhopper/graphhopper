@@ -1,8 +1,10 @@
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -10,7 +12,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
@@ -25,7 +27,6 @@ import org.junit.runners.Parameterized;
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
@@ -38,7 +39,7 @@ public class RandomCHRoutingTest {
     private EncodingManager encodingManager;
     private Weighting weighting;
     private GraphHopperStorage graph;
-    private CHProfile chProfile;
+    private CHConfig chConfig;
     private LocationIndexTree locationIndex;
 
     @Parameterized.Parameters(name = "{0}, u-turn-costs={1}")
@@ -62,10 +63,10 @@ public class RandomCHRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)
+                .setCHConfigStrings("p|car|fastest|" + (traversalMode.isEdgeBased() ? "edge" : "node") + "|" + uTurnCosts)
                 .create();
-        chProfile = graph.getCHGraph().getCHProfile();
-        weighting = chProfile.getWeighting();
+        chConfig = graph.getCHGraph().getCHConfig();
+        weighting = chConfig.getWeighting();
     }
 
     /**
@@ -137,23 +138,21 @@ public class RandomCHRoutingTest {
         locationIndex.prepareIndex();
 
         graph.freeze();
-        CHGraph chGraph = graph.getCHGraph(chProfile);
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
+        RoutingCHGraph chGraph = graph.getRoutingCHGraph(chConfig.getName());
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
         pch.doWork();
 
         int numQueryGraph = 25;
         for (int j = 0; j < numQueryGraph; j++) {
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
-            List<QueryResult> qrs = createQueryResults(rnd, numVirtualNodes);
-            QueryGraph queryGraph = QueryGraph.lookup(graph, qrs);
-            QueryGraph chQueryGraph = QueryGraph.lookup(chGraph, qrs);
+            List<Snap> snaps = createSnaps(rnd, numVirtualNodes);
+            QueryGraph queryGraph = QueryGraph.create(graph, snaps);
 
             int numQueries = 100;
             int numPathsNotFound = 0;
             List<String> strictViolations = new ArrayList<>();
             for (int i = 0; i < numQueries; i++) {
-                assertEquals("queryGraph and chQueryGraph should have equal number of nodes", queryGraph.getNodes(), chQueryGraph.getNodes());
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
                 Weighting w = queryGraph.wrapWeighting(weighting);
@@ -166,7 +165,8 @@ public class RandomCHRoutingTest {
                     continue;
                 }
 
-                RoutingAlgorithm algo = pch.getRoutingAlgorithmFactory().createAlgo(chQueryGraph, AlgorithmOptions.start().hints(new PMap().put("stall_on_demand", true)).build());
+                QueryRoutingCHGraph routingCHGraph = new QueryRoutingCHGraph(chGraph, queryGraph);
+                RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap().putObject("stall_on_demand", true));
                 Path path = algo.calcPath(from, to);
                 if (!path.isFound()) {
                     fail("path not found for " + from + "->" + to + ", expected weight: " + refWeight);
@@ -195,24 +195,24 @@ public class RandomCHRoutingTest {
         }
     }
 
-    private List<QueryResult> createQueryResults(Random rnd, int numVirtualNodes) {
+    private List<Snap> createSnaps(Random rnd, int numVirtualNodes) {
         BBox bbox = graph.getBounds();
         int count = 0;
-        List<QueryResult> qrs = new ArrayList<>(numVirtualNodes);
-        while (qrs.size() < numVirtualNodes) {
+        List<Snap> snaps = new ArrayList<>(numVirtualNodes);
+        while (snaps.size() < numVirtualNodes) {
             if (count > numVirtualNodes * 100) {
                 throw new IllegalArgumentException("Could not create enough virtual edges");
             }
-            QueryResult qr = findQueryResult(rnd, bbox);
-            if (qr.getSnappedPosition().equals(QueryResult.Position.EDGE)) {
-                qrs.add(qr);
+            Snap snap = findSnap(rnd, bbox);
+            if (snap.getSnappedPosition().equals(Snap.Position.EDGE)) {
+                snaps.add(snap);
             }
             count++;
         }
-        return qrs;
+        return snaps;
     }
 
-    private QueryResult findQueryResult(Random rnd, BBox bbox) {
+    private Snap findSnap(Random rnd, BBox bbox) {
         return locationIndex.findClosest(
                 randomDoubleInRange(rnd, bbox.minLat, bbox.maxLat),
                 randomDoubleInRange(rnd, bbox.minLon, bbox.maxLon),

@@ -18,62 +18,69 @@
 package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.config.Profile;
 import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.util.GraphHopperServerTestConfiguration;
-import static com.graphhopper.http.util.TestUtils.clientTarget;
 import com.graphhopper.util.Helper;
-import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.http.util.TestUtils.clientTarget;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
  */
+@ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceWithEleTest {
     private static final String dir = "./target/monaco-gh/";
+    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static final GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
-
-    static {
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                put("graph.elevation.provider", "srtm").
-                put("graph.elevation.cachedir", "../core/files/").
-                put("prepare.min_one_way_network_size", "0").
-                put("graph.flag_encoders", "car").
-                put("datareader.file", "../core/files/monaco.osm.gz").
-                put("graph.location", dir);
+                putObject("graph.elevation.provider", "srtm").
+                putObject("graph.elevation.cachedir", "../core/files/").
+                putObject("prepare.min_network_size", 0).
+                putObject("graph.flag_encoders", "car").
+                putObject("datareader.file", "../core/files/monaco.osm.gz").
+                putObject("graph.location", dir).
+                setProfiles(Collections.singletonList(
+                        new Profile("profile").setVehicle("car").setWeighting("fastest")
+                ));
+        return config;
     }
 
-    @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerTestConfiguration> app = new DropwizardAppRule(
-            GraphHopperApplication.class, config);
-
-
-    @AfterClass
+    @BeforeAll
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(dir));
     }
 
     @Test
-    public void testElevation() throws Exception {
-        final Response response = clientTarget(app, "/route?" + "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().buildGet().invoke();
+    public void testElevation() {
+        final Response response = clientTarget(app, "/route?profile=profile&" +
+                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 2500);
-        assertTrue("distance wasn't correct:" + distance, distance < 2700);
+        assertTrue(distance > 2500, "distance wasn't correct:" + distance);
+        assertTrue(distance < 2700, "distance wasn't correct:" + distance);
 
         JsonNode cson = path.get("points");
-        assertTrue("no elevation?", cson.toString().contains("[7.421392,43.7307,66.0]"));
+        assertTrue(cson.toString().contains("[7.421392,43.7307,66.0]"), "no elevation?");
 
         // Although we include elevation DO NOT include it in the bbox as bbox.toGeoJSON messes up when reading
         // or reading with and without elevation would be too complex for the client with no real use
@@ -81,28 +88,30 @@ public class RouteResourceWithEleTest {
     }
 
     @Test
-    public void testNoElevation() throws Exception {
+    public void testNoElevation() {
         // default is elevation=false
-        Response response = clientTarget(app, "/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().buildGet().invoke();
+        Response response = clientTarget(app, "/route?profile=profile&" +
+                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 2500);
-        assertTrue("distance wasn't correct:" + distance, distance < 2700);
+        assertTrue(distance > 2500, "distance wasn't correct:" + distance);
+        assertTrue(distance < 2700, "distance wasn't correct:" + distance);
         JsonNode cson = path.get("points");
-        assertTrue("Elevation should not be included!", cson.toString().contains("[7.421392,43.7307]"));
+        assertTrue(cson.toString().contains("[7.421392,43.7307]"), "Elevation should not be included!");
 
         // disable elevation
-        response = clientTarget(app, "/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().buildGet().invoke();
+        response = clientTarget(app, "/route?profile=profile&" +
+                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         json = response.readEntity(JsonNode.class);
         infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         path = json.get("paths").get(0);
         cson = path.get("points");
-        assertTrue("Elevation should not be included!", cson.toString().contains("[7.421392,43.7307]"));
+        assertTrue(cson.toString().contains("[7.421392,43.7307]"), "Elevation should not be included!");
     }
 }

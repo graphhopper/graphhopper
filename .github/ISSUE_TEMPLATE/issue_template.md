@@ -4,19 +4,16 @@ about: Create a report to help us improve
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is. Before creating an issue please create a new topic in [our forum](https://discuss.graphhopper.com/c/graphhopper).
-
-If you have an Android application that uses GraphHopper, use [this forum category](https://discuss.graphhopper.com/c/graphhopper/graphhopper-ios-and-android) and include logs and the version of
-your Android system.
+A clear and concise description of what the bug is. For questions or usage problems please create a new topic in [our forum](https://discuss.graphhopper.com/c/graphhopper) instead.
 
 **To Reproduce**
 
 Steps to reproduce the behavior. For examples:
 
 1. checkout recent and stable version of GraphHopper
-2. download a certain.pbf
-3. run e.g. graphhopper.sh script like: `./graphhopper.sh web certain.pbf`
-4. See error
+2. link to your OSM pbf
+3. include the config.yml you are using
+4. run `java -Ddw.graphhopper.datareader.file=your.osm.pbf -jar *.jar server config-example.yml`
 
 Instead of a manual reproduction it would be even better to have a unit or integration test reproducing the issue.
 

@@ -79,8 +79,7 @@ To get the coordinate from an address you will need a geocoding solution not par
 To get the closest node or edge id from a coordinate we provide you with an efficient lookup concept:
 the LocationIndex. There are multiple implementations
 where the LocationIndexTree is the most precise and scalable one and used in almost all places.
-See [here](./location-index.md) for more information. See #17 and #221.
-
+See [here](../example/src/main/java/com/graphhopper/example/LocationIndexExample.java) for more information. See #17 and #221.
 
 ## 4.2 QueryGraph
 

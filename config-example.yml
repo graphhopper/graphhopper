@@ -17,12 +17,14 @@ graphhopper:
 
   # Add additional information to every edge. Used for path details (#1548), better instructions (#1844) and tunnel/bridge interpolation (#798).
   # Default values are: road_class,road_class_link,road_environment,max_speed,road_access (since #1805)
-  # More are: surface,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type
+  # More are: surface,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type,
+  #           mtb_rating, hiking_rating, horse_rating
   # graph.encoded_values: surface,toll,track_type
 
   ##### Routing Profiles ####
 
-  # Routing can be done for the following list of profiles. The fields of each profile are as follows:
+  # Routing can be done for the following list of profiles. Note that it is required to specify all the profiles you
+  # would like to use here. The fields of each profile are as follows:
   # - name (required): a unique string identifier for the profile
   # - vehicle (required): refers to the `graph.flag_encoders` used for this profile
   # - weighting (required): the weighting used for this profile, e.g. fastest,shortest or short_fastest
@@ -34,6 +36,12 @@ graphhopper:
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
   #   in seconds, so for example it does not work with shortest weighting.
+  # - custom_model_file: when you specified "weighting: custom" you need to set a yaml file that defines the custom_model.
+  #   If you want an empty model you can also set "custom_model_file: empty".
+  #
+  #   For more information about profiles and especially custom profiles have a look into the documentation
+  #   at docs/core/profiles.md or the examples under web/src/test/resources/com/graphhopper/http/resources/ or
+  #   the CustomWeighting class for the raw details.
   #
   # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
   # profiles (see below). Otherwise you should at least limit the number of `routing.max_visited_nodes`.
@@ -62,12 +70,18 @@ graphhopper:
   # Hybrid mode:
   # Similar to speed mode, the hybrid mode (Landmarks, LM) also speeds up routing by doing calculating auxiliary data
   # in advance. Its not as fast as speed mode, but more flexible.
+  #
+  # Advanced usage: It is possible to use the same preparation for multiple profiles which saves memory and preparation
+  # time. To do this use e.g. `preparation_profile: my_other_profile` where `my_other_profile` is the name of another
+  # profile for which an LM profile exists. Important: This only will give correct routing results if the weights
+  # calculated for the profile are equal or larger (for every edge) than those calculated for the profile that was used
+  # for the preparation (`my_other_profile`)
   profiles_lm: []
 
   ##### Elevation #####
 
 
-  # To populate your graph with elevation data use SRTM, default is noop (no elevation)
+  # To populate your graph with elevation data use SRTM, default is noop (no elevation). Read more about it in docs/core/elevation.md
   # graph.elevation.provider: srtm
 
 
@@ -78,6 +92,19 @@ graphhopper:
   # If you have a slow disk or plenty of RAM change the default MMAP to:
   # graph.elevation.dataaccess: RAM_STORE
 
+
+  # To enable bilinear interpolation when sampling elevation at points (default uses nearest neighbor):
+  # graph.elevation.interpolate: bilinear
+
+
+  # To increase elevation profile resolution, use the following two parameters to tune the extra resolution you need
+  # against the additional storage space used for edge geometries. You should enable bilinear interpolation when using
+  # these features (see #1953 for details).
+  # - first, set the distance (in meters) at which elevation samples should be taken on long edges
+  # graph.elevation.long_edge_sampling_distance: 60
+  # - second, set the elevation tolerance (in meters) to use when simplifying polylines since the default ignores
+  #   elevation and will remove the extra points that long edge sampling added
+  # graph.elevation.way_point_max_distance: 10
 
 
   #### Speed, hybrid and flexible mode ####
@@ -94,11 +121,11 @@ graphhopper:
   # the default worked for you.
   # prepare.lm.threads: 1
 
-
-  # avoid being stuck in a (oneway) subnetwork, see https://discuss.graphhopper.com/t/93
+  # In many cases the road network consists of independent components without any routes going in between. In
+  # the most simple case you can imagine an island without a bridge or ferry connection. The following parameter
+  # allows setting a minimum size (number of nodes) for such detached components. This can be used to reduce the number
+  # of cases where a connection between locations might not be found.
   prepare.min_network_size: 200
-  prepare.min_one_way_network_size: 200
-
 
 
   ##### Routing #####
@@ -163,7 +190,7 @@ graphhopper:
 #
 # assets:
 #  overrides:
-#    /maps: web/src/main/resources/assets/
+#    /maps: web/target/classes/assets/
 
 # Dropwizard server configuration
 server:

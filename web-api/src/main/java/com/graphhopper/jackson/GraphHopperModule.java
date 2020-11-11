@@ -18,26 +18,25 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.graphhopper.*;
-import com.graphhopper.config.LMProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
+import com.graphhopper.MultiException;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.farmy.IdentifiedGHPoint3D;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import org.locationtech.jts.geom.Envelope;
 
 public class GraphHopperModule extends SimpleModule {
 
     public GraphHopperModule() {
         setMixInAnnotation(GHRequest.class, GHRequestMixIn.class);
-        setMixInAnnotation(ProfileConfig.class, ProfileConfigMixIn.class);
-        setMixInAnnotation(LMProfileConfig.class, LMProfileConfigMixIn.class);
-        setMixInAnnotation(GraphHopperConfig.class, GraphHopperConfigMixIn.class);
         addDeserializer(GHResponse.class, new GHResponseDeserializer());
-        addDeserializer(PathWrapper.class, new PathWrapperDeserializer());
-        addDeserializer(BBox.class, new BBoxDeserializer());
-        addSerializer(BBox.class, new BBoxSerializer());
+        addDeserializer(ResponsePath.class, new ResponsePathDeserializer());
+        addDeserializer(Envelope.class, new JtsEnvelopeDeserializer());
+        addSerializer(Envelope.class, new JtsEnvelopeSerializer());
         addDeserializer(GHPoint.class, new GHPointDeserializer());
         addSerializer(GHPoint.class, new GHPointSerializer());
         addDeserializer(PathDetail.class, new PathDetailDeserializer());

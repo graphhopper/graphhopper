@@ -25,8 +25,8 @@ import static com.graphhopper.util.Parameters.Curbsides.*;
 import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 
 public class DirectionResolverResult {
-    private static DirectionResolverResult UNRESTRICTED = new DirectionResolverResult(ANY_EDGE, ANY_EDGE, ANY_EDGE, ANY_EDGE);
-    private static DirectionResolverResult IMPOSSIBLE = new DirectionResolverResult(NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE);
+    private static final DirectionResolverResult UNRESTRICTED = new DirectionResolverResult(ANY_EDGE, ANY_EDGE, ANY_EDGE, ANY_EDGE);
+    private static final DirectionResolverResult IMPOSSIBLE = new DirectionResolverResult(NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE);
 
     private final int inEdgeRight;
     private final int outEdgeRight;

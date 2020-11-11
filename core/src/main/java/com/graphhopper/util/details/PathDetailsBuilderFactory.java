@@ -17,15 +17,12 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.coll.MapEntry;
-import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Parameters.Details.*;
@@ -49,6 +46,9 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(EDGE_ID))
             builders.add(new EdgeIdDetails());
 
+        if (requestedPathDetails.contains(EDGE_KEY))
+            builders.add(new EdgeKeyDetails());
+
         if (requestedPathDetails.contains(TIME))
             builders.add(new TimeDetails(weighting));
 
@@ -69,15 +69,20 @@ public class PathDetailsBuilderFactory {
                 builders.add(new DecimalDetails(key, evl.getDecimalEncodedValue(key)));
         }
 
-        for (Map.Entry entry : Arrays.asList(new MapEntry<>(RoadClass.KEY, RoadClass.class),
-                new MapEntry<>(RoadEnvironment.KEY, RoadEnvironment.class), new MapEntry<>(Surface.KEY, Surface.class),
-                new MapEntry<>(RoadAccess.KEY, RoadAccess.class), new MapEntry<>(Toll.KEY, Toll.class),
-                new MapEntry<>(TrackType.KEY, TrackType.class), new MapEntry<>(Hazmat.KEY, Hazmat.class),
-                new MapEntry<>(HazmatTunnel.KEY, HazmatTunnel.class), new MapEntry<>(HazmatWater.KEY, HazmatWater.class),
-                new MapEntry<>(Country.KEY, Country.class))) {
-            String key = (String) entry.getKey();
+        for (String key : Arrays.asList(Roundabout.KEY, RoadClassLink.KEY, GetOffBike.KEY)) {
             if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new EnumDetails(key, evl.getEnumEncodedValue(key, (Class<Enum>) entry.getValue())));
+                builders.add(new BooleanDetails(key, evl.getBooleanEncodedValue(key)));
+        }
+
+        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, RoadAccess.KEY,
+                Toll.KEY, TrackType.KEY, Hazmat.KEY, HazmatTunnel.KEY, HazmatWater.KEY, Country.KEY)) {
+            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
+                builders.add(new EnumDetails<>(key, evl.getEnumEncodedValue(key, Enum.class)));
+        }
+
+        for (String key : Arrays.asList(MtbRating.KEY, HikeRating.KEY, HorseRating.KEY)) {
+            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
+                builders.add(new IntDetails(key, evl.getIntEncodedValue(key)));
         }
 
         if (requestedPathDetails.size() != builders.size()) {

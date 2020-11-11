@@ -19,10 +19,10 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RouteNetwork;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -55,7 +55,7 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
             } else if ("iwn".equals(tag)) {
                 newFootNetwork = RouteNetwork.INTERNATIONAL;
             }
-            if (oldFootNetwork == RouteNetwork.OTHER || oldFootNetwork.ordinal() > newFootNetwork.ordinal())
+            if (oldFootNetwork == RouteNetwork.MISSING || oldFootNetwork.ordinal() > newFootNetwork.ordinal())
                 transformerRouteRelEnc.setEnum(false, relFlags, newFootNetwork);
         }
 

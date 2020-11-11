@@ -18,22 +18,22 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.profiles.RoadAccess.YES;
+import static com.graphhopper.routing.ev.RoadAccess.YES;
 
 public class OSMRoadAccessParser implements TagParser {
     protected final EnumEncodedValue<RoadAccess> roadAccessEnc;
     private final List<String> restrictions;
 
     public OSMRoadAccessParser() {
-        this(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class), Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
+        this(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class), toOSMRestrictions(TransportationMode.CAR));
     }
 
     public OSMRoadAccessParser(EnumEncodedValue<RoadAccess> roadAccessEnc, List<String> restrictions) {
@@ -57,11 +57,32 @@ public class OSMRoadAccessParser implements TagParser {
             }
         }
 
-        SpatialRule spatialRule = readerWay.getTag("spatial_rule", null);
-        if (spatialRule != null)
-            accessValue = spatialRule.getAccess(RoadClass.find(readerWay.getTag("highway", "")), TransportationMode.MOTOR_VEHICLE, YES);
+        SpatialRuleSet spatialRuleSet = readerWay.getTag("spatial_rule_set", null);
+        if (spatialRuleSet != null && spatialRuleSet != SpatialRuleSet.EMPTY) {
+            RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+            accessValue = spatialRuleSet.getAccess(roadClass, TransportationMode.CAR, YES);
+        }
 
         roadAccessEnc.setEnum(false, edgeFlags, accessValue);
         return edgeFlags;
+    }
+
+    public static List<String> toOSMRestrictions(TransportationMode mode) {
+        switch (mode) {
+            case FOOT:
+                return Arrays.asList("foot", "access");
+            case VEHICLE:
+                return Arrays.asList("vehicle", "access");
+            case BIKE:
+                return Arrays.asList("bicycle", "vehicle", "access");
+            case CAR:
+                return Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access");
+            case MOTORCYCLE:
+                return Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access");
+            case HGV:
+                return Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
+            default:
+                throw new IllegalArgumentException("Cannot convert TransportationMode " + mode + " to list of restrictions");
+        }
     }
 }

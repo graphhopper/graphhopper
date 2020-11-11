@@ -91,6 +91,7 @@ public class Parameters {
      * Parameters that can be passed as hints and influence routing per request.
      */
     public static final class Routing {
+        public static final String ALGORITHM = "algorithm";
         public static final String EDGE_BASED = "edge_based";
         public static final String TURN_COSTS = "turn_costs";
         public static final String U_TURN_COSTS = "u_turn_costs";
@@ -109,6 +110,7 @@ public class Parameters {
          */
         public static final String WAY_POINT_MAX_DISTANCE = "way_point_max_distance";
         public static final String INIT_WAY_POINT_MAX_DISTANCE = ROUTING_INIT_PREFIX + "way_point_max_distance";
+        public static final String ELEVATION_WAY_POINT_MAX_DISTANCE = "elevation_way_point_max_distance";
         /**
          * true or false. If routes at via points should avoid u-turns. (not for CH) See related
          * 'heading' parameter:
@@ -205,6 +207,7 @@ public class Parameters {
         public static final String AVERAGE_SPEED = "average_speed";
         public static final String STREET_NAME = "street_name";
         public static final String EDGE_ID = "edge_id";
+        public static final String EDGE_KEY = "edge_key";
         public static final String TIME = "time";
         public static final String WEIGHT = "weight";
         public static final String DISTANCE = "distance";

@@ -24,13 +24,7 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
-
-import java.util.PriorityQueue;
+import com.graphhopper.util.*;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
@@ -58,14 +52,14 @@ import java.util.PriorityQueue;
  * @author Peter Karich
  * @author jansoe
  */
-public class AStarBidirection extends AbstractNonCHBidirAlgo implements RecalculationHook {
+public class AStarBidirection extends AbstractNonCHBidirAlgo {
     private BalancedWeightApproximator weightApprox;
     double stoppingCriterionOffset;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
-        defaultApprox.setDistanceCalc(Helper.DIST_PLANE);
+        defaultApprox.setDistanceCalc(DistancePlaneProjection.DIST_PLANE);
         setApproximation(defaultApprox);
     }
 
@@ -91,7 +85,7 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
     }
 
     @Override
-    protected SPTEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+    protected SPTEntry createEntry(EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
         int neighborNode = edge.getAdjNode();
         double heapWeight = weight + weightApprox.approximate(neighborNode, reverse);
         AStarEntry entry = new AStarEntry(edge.getEdge(), neighborNode, heapWeight, weight);
@@ -100,7 +94,7 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
     }
 
     @Override
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
+    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
         entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
         ((AStarEntry) entry).weightOfVisitedPath = weight;
@@ -129,43 +123,7 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo implements Recalcul
     }
 
     @Override
-    public void afterHeuristicChange(boolean forward, boolean backward) {
-        updatePriorityQueues(pqOpenSetFrom, pqOpenSetTo, weightApprox, forward, backward);
-    }
-
-    @Override
     public String getName() {
         return Parameters.Algorithms.ASTAR_BI + "|" + weightApprox;
-    }
-
-    public static void updatePriorityQueues(PriorityQueue<SPTEntry> pqOpenSetFrom, PriorityQueue<SPTEntry> pqOpenSetTo, BalancedWeightApproximator weightApprox, boolean forward, boolean backward) {
-        if (forward) {
-            // update PQ due to heuristic change (i.e. weight changed)
-            if (!pqOpenSetFrom.isEmpty()) {
-                // copy into temporary array to avoid pointer change of PQ
-                AStarEntry[] entries = pqOpenSetFrom.toArray(new AStarEntry[pqOpenSetFrom.size()]);
-                pqOpenSetFrom.clear();
-                for (AStarEntry value : entries) {
-                    value.weight = value.weightOfVisitedPath + weightApprox.approximate(value.adjNode, false);
-                    // does not work for edge based
-                    // ignoreExplorationFrom.add(value.adjNode);
-
-                    pqOpenSetFrom.add(value);
-                }
-            }
-        }
-
-        if (backward) {
-            if (!pqOpenSetTo.isEmpty()) {
-                AStarEntry[] entries = pqOpenSetTo.toArray(new AStarEntry[pqOpenSetTo.size()]);
-                pqOpenSetTo.clear();
-                for (AStarEntry value : entries) {
-                    value.weight = value.weightOfVisitedPath + weightApprox.approximate(value.adjNode, true);
-                    // ignoreExplorationTo.add(value.adjNode);
-
-                    pqOpenSetTo.add(value);
-                }
-            }
-        }
     }
 }

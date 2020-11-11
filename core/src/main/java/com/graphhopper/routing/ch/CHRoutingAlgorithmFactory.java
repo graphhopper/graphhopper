@@ -19,83 +19,83 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_SHARE;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_WEIGHT;
+import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
+import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
 
-public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
-    private final CHProfile chProfile;
+/**
+ * Given a {@link RoutingCHGraph} and possibly a {@link QueryGraph} this class sets up and creates routing
+ * algorithm instances used for CH.
+ */
+public class CHRoutingAlgorithmFactory {
+    private final RoutingCHGraph routingCHGraph;
 
-    public CHRoutingAlgorithmFactory(CHGraph chGraph) {
-        this.chProfile = chGraph.getCHProfile();
+    public CHRoutingAlgorithmFactory(RoutingCHGraph routingCHGraph, QueryGraph queryGraph) {
+        this(new QueryRoutingCHGraph(routingCHGraph, queryGraph));
     }
 
-    @Override
-    public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
-        // todo: This method does not really fit for CH: We get a graph, but really we already know which
-        // graph we have to use: the CH graph. Same with  opts.weighting: The CHProfile already contains a weighting
-        // and we cannot really use it here. The real reason we do this the way its done atm is that graph might be
-        // a QueryGraph that wraps (our) CHGraph.
-        RoutingAlgorithm algo = doCreateAlgo(graph, opts);
-        algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+    public CHRoutingAlgorithmFactory(RoutingCHGraph routingCHGraph) {
+        this.routingCHGraph = routingCHGraph;
+    }
+
+    public BidirRoutingAlgorithm createAlgo(PMap opts) {
+        BidirRoutingAlgorithm algo = routingCHGraph.isEdgeBased()
+                ? createAlgoEdgeBased(routingCHGraph, opts)
+                : createAlgoNodeBased(routingCHGraph, opts);
+        if (opts.has(MAX_VISITED_NODES))
+            algo.setMaxVisitedNodes(opts.getInt(MAX_VISITED_NODES, Integer.MAX_VALUE));
         return algo;
     }
 
-    private RoutingAlgorithm doCreateAlgo(Graph graph, AlgorithmOptions opts) {
-        if (chProfile.isEdgeBased()) {
-            // important: do not simply take the turn cost storage from ghStorage, because we need the wrapped storage from
-            // query graph!
-            TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-            if (turnCostStorage == null) {
-                throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
-            }
-            RoutingCHGraph g = new RoutingCHGraphImpl(graph, graph.wrapWeighting(getWeighting()));
-            return createAlgoEdgeBased(g, opts);
-        } else {
-            RoutingCHGraph g = new RoutingCHGraphImpl(graph, chProfile.getWeighting());
-            return createAlgoNodeBased(g, opts);
-        }
-    }
-
-    private RoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, AlgorithmOptions opts) {
-        if (ASTAR_BI.equals(opts.getAlgorithm())) {
+    private BidirRoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, PMap opts) {
+        // todo: AStar is much faster for edge-based but currently we cannot make it the default because
+        //       of #2061
+        String defaultAlgo = DIJKSTRA_BI;
+        String algo = opts.getString(ALGORITHM, defaultAlgo);
+        if (Helper.isEmpty(algo))
+            algo = defaultAlgo;
+        if (ASTAR_BI.equals(algo)) {
             return new AStarBidirectionEdgeCHNoSOD(g)
-                    .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
-        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
+                    .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, getWeighting(), g.getBaseGraph().getNodeAccess()));
+        } else if (DIJKSTRA_BI.equals(algo)) {
             return new DijkstraBidirectionEdgeCHNoSOD(g);
+        } else if (ALT_ROUTE.equalsIgnoreCase(algo)) {
+            return new AlternativeRouteEdgeCH(g, opts);
         } else {
-            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for edge-based Contraction Hierarchies. Try with ch.disable=true");
+            throw new IllegalArgumentException("Algorithm " + algo + " not supported for edge-based Contraction Hierarchies. Try with ch.disable=true");
         }
     }
 
-    private RoutingAlgorithm createAlgoNodeBased(RoutingCHGraph g, AlgorithmOptions opts) {
-        if (ASTAR_BI.equals(opts.getAlgorithm())) {
+    private BidirRoutingAlgorithm createAlgoNodeBased(RoutingCHGraph g, PMap opts) {
+        // use dijkstra by default for node-based (its faster)
+        String defaultAlgo = DIJKSTRA_BI;
+        String algo = opts.getString(ALGORITHM, defaultAlgo);
+        if (Helper.isEmpty(algo))
+            algo = defaultAlgo;
+        if (ASTAR_BI.equals(algo)) {
             return new AStarBidirectionCH(g)
-                    .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, g.getGraph().getNodeAccess()));
-        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            if (opts.getHints().getBool("stall_on_demand", true)) {
+                    .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, getWeighting(), g.getBaseGraph().getNodeAccess()));
+        } else if (DIJKSTRA_BI.equals(algo) || Helper.isEmpty(algo)) {
+            if (opts.getBool("stall_on_demand", true)) {
                 return new DijkstraBidirectionCH(g);
             } else {
                 return new DijkstraBidirectionCHNoSOD(g);
             }
-        } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
-            AlternativeRouteCH altRouteAlgo = new AlternativeRouteCH(g);
-            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
-            altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
-            return altRouteAlgo;
+        } else if (ALT_ROUTE.equalsIgnoreCase(algo)) {
+            return new AlternativeRouteCH(g, opts);
         } else {
-            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for node-based Contraction Hierarchies. Try with ch.disable=true");
+            throw new IllegalArgumentException("Algorithm " + algo + " not supported for node-based Contraction Hierarchies. Try with ch.disable=true");
         }
     }
 
-    public Weighting getWeighting() {
-        return chProfile.getWeighting();
-    }
-
-    public CHProfile getCHProfile() {
-        return chProfile;
+    private Weighting getWeighting() {
+        return routingCHGraph.getWeighting();
     }
 }

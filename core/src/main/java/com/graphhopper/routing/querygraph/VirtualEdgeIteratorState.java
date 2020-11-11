@@ -17,12 +17,15 @@
  */
 package com.graphhopper.routing.querygraph;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PointList;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
@@ -30,9 +33,9 @@ import com.graphhopper.util.*;
  * Note, this class is not suited for public use and can change with minor releases unexpectedly or
  * even gets removed.
  */
-public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIteratorState {
+public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private final PointList pointList;
-    private final int edgeId;
+    private final int edgeKey;
     private final int baseNode;
     private final int adjNode;
     private final int originalEdgeKey;
@@ -44,10 +47,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
 
-    public VirtualEdgeIteratorState(int originalEdgeKey, int edgeId, int baseNode, int adjNode, double distance,
+    public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
                                     IntsRef edgeFlags, String name, PointList pointList, boolean reverse) {
         this.originalEdgeKey = originalEdgeKey;
-        this.edgeId = edgeId;
+        this.edgeKey = edgeKey;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
         this.distance = distance;
@@ -58,10 +61,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     /**
-     * This method returns the original edge via its key. I.e. also the direction is
+     * This method returns the original (not virtual!) edge key. I.e. also the direction is
      * already correctly encoded.
      *
-     * @see GHUtility#createEdgeKey(int, int, int, boolean)
+     * @see EdgeIteratorState#getEdgeKey()
      */
     public int getOriginalEdgeKey() {
         return originalEdgeKey;
@@ -69,7 +72,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
 
     @Override
     public int getEdge() {
-        return edgeId;
+        return GHUtility.getEdgeFromEdgeKey(edgeKey);
+    }
+
+    @Override
+    public int getEdgeKey() {
+        return edgeKey;
     }
 
     @Override
@@ -252,41 +260,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public boolean isShortcut() {
-        return false;
-    }
-
-    @Override
-    public boolean getFwdAccess() {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public boolean getBwdAccess() {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public int getMergeStatus(int flags) {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public int getSkippedEdge1() {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public int getSkippedEdge2() {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
     public int getOrigEdgeFirst() {
         return getEdge();
     }
@@ -313,21 +286,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     @Override
     public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState fromEdge) {
         throw new RuntimeException("Not supported.");
-    }
-
-    @Override
-    public CHEdgeIteratorState setWeight(double weight) {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public void setFlagsAndWeight(int flags, double weight) {
-        throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public double getWeight() {
-        throw new UnsupportedOperationException("Not supported.");
     }
 
     public void setReverseEdge(EdgeIteratorState reverseEdge) {

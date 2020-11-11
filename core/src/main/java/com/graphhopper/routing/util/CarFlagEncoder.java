@@ -18,9 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.UnsignedDecimalEncodedValue;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.UnsignedDecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -36,11 +35,10 @@ import java.util.*;
 public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
-
+    private boolean speedTwoDirections;
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
 
-    protected boolean speedTwoDirections;
     /**
      * A map which associates string to speed. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen
@@ -49,23 +47,19 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
     public CarFlagEncoder() {
-        this(5, 5, 0);
-    }
-
-    public CarFlagEncoder(PMap properties) {
-        this(properties.getInt("speed_bits", 5),
-                properties.getDouble("speed_factor", 5),
-                properties.getBool("turn_costs", false) ? 1 : 0);
-
-        blockPrivate(properties.getBool("block_private", true));
-        blockFords(properties.getBool("block_fords", false));
-        blockBarriersByDefault(properties.getBool("block_barriers", true));
-        speedTwoDirections = properties.getBool("speed_two_directions", false);
+        this(new PMap());
     }
 
     public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
-        restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
+        this(new PMap().putObject("speed_bits", speedBits).putObject("speed_factor", speedFactor).
+                putObject("max_turn_costs", maxTurnCosts));
+    }
+
+    public CarFlagEncoder(PMap properties) {
+        super(properties.getInt("speed_bits", 5),
+                properties.getDouble("speed_factor", 5),
+                properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
+
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -75,7 +69,13 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restrictedValues.add("emergency");
         restrictedValues.add("private");
 
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
+        blockBarriersByDefault(properties.getBool("block_barriers", true));
+        setSpeedTwoDirections(properties.getBool("speed_two_directions", false));
+
         intendedValues.add("yes");
+        intendedValues.add("designated");
         intendedValues.add("permissive");
 
         potentialBarriers.add("gate");
@@ -142,8 +142,14 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         speedDefault = defaultSpeedMap.get("secondary");
     }
 
+    public CarFlagEncoder setSpeedTwoDirections(boolean value) {
+        speedTwoDirections = value;
+        return this;
+    }
+
+    @Override
     public TransportationMode getTransportationMode() {
-        return TransportationMode.MOTOR_VEHICLE;
+        return TransportationMode.CAR;
     }
 
     @Override
@@ -299,7 +305,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
      */
     protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {
         // limit speed if bad surface
-        if (badSurfaceSpeed > 0 && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
+        if (badSurfaceSpeed > 0 && isValidSpeed(speed) && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
             speed = badSurfaceSpeed;
         return speed;
     }

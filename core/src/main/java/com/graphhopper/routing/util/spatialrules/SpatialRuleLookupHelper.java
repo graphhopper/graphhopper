@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.spatialrules;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.routing.profiles.Country;
+import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
@@ -78,7 +78,7 @@ public class SpatialRuleLookupHelper {
         }
         final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(reorder(jsonFeatureCollections, subset),
                 JSON_ID_FIELD, new CountriesSpatialRuleFactory(), maxBounds);
-        logger.info("Set spatial rule lookup with {} rules", index.size());
+        logger.info("Set spatial rule lookup with {} rules", index.getRules().size());
         final TagParserFactory oldTPF = graphHopper.getTagParserFactory();
         graphHopper.setTagParserFactory(new TagParserFactory() {
 

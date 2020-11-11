@@ -17,15 +17,12 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * @author Peter Karich
  */
 abstract class EdgeAccess {
-    private static final int NO_NODE = -1;
     final DataAccess edges;
     int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS;
 
@@ -49,16 +46,6 @@ abstract class EdgeAccess {
 
     abstract void setEdgeRef(int nodeId, int edgeId);
 
-    abstract int getEntryBytes();
-
-    final void invalidateEdge(long edgePointer) {
-        edges.setInt(edgePointer + E_NODEB, NO_NODE);
-    }
-
-    static boolean isInvalidNodeB(int node) {
-        return node == EdgeAccess.NO_NODE;
-    }
-
     final void readFlags(long edgePointer, IntsRef edgeFlags) {
         int size = edgeFlags.ints.length;
         for (int i = 0; i < size; i++) {
@@ -75,8 +62,11 @@ abstract class EdgeAccess {
 
     /**
      * Writes a new edge to the array of edges and adds it to the linked list of edges at nodeA and nodeB
+     *
+     * @param connectB if false the edge is not registered at / will not be visible from nodeB, this is useful for
+     *                 CH.
      */
-    final int internalEdgeAdd(int newEdgeId, int nodeA, int nodeB) {
+    final int internalEdgeAdd(int newEdgeId, int nodeA, int nodeB, boolean connectB) {
         writeEdge(newEdgeId, nodeA, nodeB, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
         long edgePointer = toPointer(newEdgeId);
 
@@ -85,7 +75,7 @@ abstract class EdgeAccess {
             edges.setInt(E_LINKA + edgePointer, edge);
         setEdgeRef(nodeA, newEdgeId);
 
-        if (nodeA != nodeB) {
+        if (connectB && nodeA != nodeB) {
             edge = getEdgeRef(nodeB);
             if (edge > EdgeIterator.NO_EDGE)
                 edges.setInt(E_LINKB + edgePointer, edge);
@@ -134,26 +124,4 @@ abstract class EdgeAccess {
         return edgePointer;
     }
 
-    /**
-     * This method disconnects the specified edge from the list of edges of the specified node. It
-     * does not release the freed space to be reused.
-     *
-     * @param edgeToUpdatePointer if it is negative then the nextEdgeId will be saved to refToEdges of nodes
-     */
-    final long internalEdgeDisconnect(int edgeToRemove, long edgeToUpdatePointer, int baseNode) {
-        long edgeToRemovePointer = toPointer(edgeToRemove);
-        // an edge is shared across the two nodes even if the edge is not in both directions
-        // so we need to know two edge-pointers pointing to the edge before edgeToRemovePointer
-        int nextEdgeId = getNodeA(edgeToRemovePointer) == baseNode ? getLinkA(edgeToRemovePointer) : getLinkB(edgeToRemovePointer);
-        if (edgeToUpdatePointer < 0) {
-            setEdgeRef(baseNode, nextEdgeId);
-        } else {
-            // adjNode is different for the edge we want to update with the new link
-            long link = getNodeA(edgeToUpdatePointer) == baseNode ? edgeToUpdatePointer + E_LINKA : edgeToUpdatePointer + E_LINKB;
-            edges.setInt(link, nextEdgeId);
-        }
-        return edgeToRemovePointer;
-    }
-
-    abstract EdgeIteratorState getEdgeProps(int edgeId, int adjNode, EdgeFilter edgeFilter);
 }

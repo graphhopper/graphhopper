@@ -29,14 +29,14 @@ import java.util.List;
 import static com.graphhopper.routing.querygraph.QueryGraph.*;
 
 /**
- * Helper class for {@link GraphModificationBuilder}
+ * Helper class for {@link QueryOverlayBuilder}
  *
  * @see #build(IntArrayList, List, int, IntObjectMap)
  */
 class EdgeChangeBuilder {
     private final IntArrayList closestEdges;
     private final List<VirtualEdgeIteratorState> virtualEdges;
-    private final IntObjectMap<GraphModification.EdgeChanges> edgeChangesAtRealNodes;
+    private final IntObjectMap<QueryOverlay.EdgeChanges> edgeChangesAtRealNodes;
     private final int firstVirtualNodeId;
 
     /**
@@ -45,11 +45,11 @@ class EdgeChangeBuilder {
      * @param edgeChangesAtRealNodes output parameter, you need to pass an empty & modifiable map and the results will
      *                               be added to it
      */
-    static void build(IntArrayList closestEdges, List<VirtualEdgeIteratorState> virtualEdges, int firstVirtualNodeId, IntObjectMap<GraphModification.EdgeChanges> edgeChangesAtRealNodes) {
+    static void build(IntArrayList closestEdges, List<VirtualEdgeIteratorState> virtualEdges, int firstVirtualNodeId, IntObjectMap<QueryOverlay.EdgeChanges> edgeChangesAtRealNodes) {
         new EdgeChangeBuilder(closestEdges, virtualEdges, firstVirtualNodeId, edgeChangesAtRealNodes).build();
     }
 
-    private EdgeChangeBuilder(IntArrayList closestEdges, List<VirtualEdgeIteratorState> virtualEdges, int firstVirtualNodeId, IntObjectMap<GraphModification.EdgeChanges> edgeChangesAtRealNodes) {
+    private EdgeChangeBuilder(IntArrayList closestEdges, List<VirtualEdgeIteratorState> virtualEdges, int firstVirtualNodeId, IntObjectMap<QueryOverlay.EdgeChanges> edgeChangesAtRealNodes) {
         this.closestEdges = closestEdges;
         this.virtualEdges = virtualEdges;
         this.firstVirtualNodeId = firstVirtualNodeId;
@@ -66,7 +66,7 @@ class EdgeChangeBuilder {
         //    these adjacent real nodes so we can use them in the next step
         for (int i = 0; i < getNumVirtualNodes(); i++) {
             // base node
-            EdgeIteratorState baseRevEdge = getVirtualEdge(i * 4 + VE_BASE_REV);
+            EdgeIteratorState baseRevEdge = getVirtualEdge(i * 4 + SNAP_BASE);
             int towerNode = baseRevEdge.getAdjNode();
             if (!isVirtualNode(towerNode)) {
                 towerNodesToChange.add(towerNode);
@@ -74,7 +74,7 @@ class EdgeChangeBuilder {
             }
 
             // adj node
-            EdgeIteratorState adjEdge = getVirtualEdge(i * 4 + VE_ADJ);
+            EdgeIteratorState adjEdge = getVirtualEdge(i * 4 + SNAP_ADJ);
             towerNode = adjEdge.getAdjNode();
             if (!isVirtualNode(towerNode)) {
                 towerNodesToChange.add(towerNode);
@@ -95,14 +95,14 @@ class EdgeChangeBuilder {
      * Adds the virtual edges adjacent to the real tower nodes
      */
     private void addVirtualEdges(boolean base, int node, int virtNode) {
-        GraphModification.EdgeChanges edgeChanges = edgeChangesAtRealNodes.get(node);
+        QueryOverlay.EdgeChanges edgeChanges = edgeChangesAtRealNodes.get(node);
         if (edgeChanges == null) {
-            edgeChanges = new GraphModification.EdgeChanges(2, 2);
+            edgeChanges = new QueryOverlay.EdgeChanges(2, 2);
             edgeChangesAtRealNodes.put(node, edgeChanges);
         }
         EdgeIteratorState edge = base
-                ? getVirtualEdge(virtNode * 4 + VE_BASE)
-                : getVirtualEdge(virtNode * 4 + VE_ADJ_REV);
+                ? getVirtualEdge(virtNode * 4 + BASE_SNAP)
+                : getVirtualEdge(virtNode * 4 + ADJ_SNAP);
         edgeChanges.getAdditionalEdges().add(edge);
     }
 
@@ -115,7 +115,7 @@ class EdgeChangeBuilder {
         if (isVirtualNode(towerNode))
             throw new IllegalStateException("Node should not be virtual:" + towerNode + ", " + edgeChangesAtRealNodes);
 
-        GraphModification.EdgeChanges edgeChanges = edgeChangesAtRealNodes.get(towerNode);
+        QueryOverlay.EdgeChanges edgeChanges = edgeChangesAtRealNodes.get(towerNode);
         List<EdgeIteratorState> existingEdges = edgeChanges.getAdditionalEdges();
         IntArrayList removedEdges = edgeChanges.getRemovedEdges();
         for (EdgeIteratorState existingEdge : existingEdges) {

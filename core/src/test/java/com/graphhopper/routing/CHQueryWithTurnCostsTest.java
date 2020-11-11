@@ -20,13 +20,15 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.TurnCost;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.MotorcycleFlagEncoder;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Test;
@@ -48,9 +50,8 @@ import static org.junit.Assert.assertFalse;
 @RunWith(Parameterized.class)
 public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
-    private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
+    private final FlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost).setSpeedTwoDirections(true);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
-    private final Weighting weighting;
     private final GraphHopperStorage graph;
     private final CHGraph chGraph;
     private final String algoString;
@@ -63,9 +64,8 @@ public class CHQueryWithTurnCostsTest {
     public CHQueryWithTurnCostsTest(String algoString) {
         this.algoString = algoString;
         graph = new GraphBuilder(encodingManager)
-                .setCHProfileStrings("motorcycle|shortest|edge")
+                .setCHConfigStrings("profile|car|shortest|edge")
                 .create();
-        weighting = graph.getCHProfiles().get(0).getWeighting();
         chGraph = graph.getCHGraph();
     }
 
@@ -381,7 +381,7 @@ public class CHQueryWithTurnCostsTest {
     @Test
     public void testFindPath_doNotMakeUTurn_toLowerLevelNode() {
         // in this case it would be forbidden to take the shortcut from A to B because B has lower level than A and
-        // because we can not do a shortcut at node A. The optimization to not check the node levels in LevelEdgeFilter
+        // because we cannot do a shortcut at node A. The optimization to not check the node levels in CHLevelEdgeFilter
         // that relies on shortcuts to lower level nodes being disconnected can 'hide' a u-turn bug here.
         checkUTurnNotBeingUsed(true);
     }
@@ -711,8 +711,8 @@ public class CHQueryWithTurnCostsTest {
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
         return "astar".equals(algoString) ?
-                new AStarBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting)) :
-                new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph, weighting));
+                new AStarBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph)) :
+                new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph));
     }
 
     private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {

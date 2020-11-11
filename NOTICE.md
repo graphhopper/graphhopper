@@ -60,3 +60,4 @@ android:
 | SRTMGL1 elevation | [acknowledgement](https://lpdaac.usgs.gov/citing_our_data) | no | no
 |OpenTopography mirror for SRTMGL1 | [acknowledgement OpenTopoGraphy](http://www.opentopography.org/citations) and [data source](http://opentopo.sdsc.edu/datasetMetadata?otCollectionID=OT.042013.4326.1) + SRTMGL1 | no | no
 | GMTED | [public domain, acknowledgment](https://lta.cr.usgs.gov/citation) | no | no
+| Tilezen Joerd (Skadi) | [acknowledgment](https://github.com/tilezen/joerd/blob/master/docs/attribution.md) | no | no

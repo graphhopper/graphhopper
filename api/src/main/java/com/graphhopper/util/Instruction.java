@@ -42,9 +42,7 @@ public class Instruction {
     public static final int PT_START_TRIP = 101;
     public static final int PT_TRANSFER = 102;
     public static final int PT_END_TRIP = 103;
-    private static final AngleCalc AC = Helper.ANGLE_CALC;
     protected PointList points;
-    protected final InstructionAnnotation annotation;
     protected boolean rawName;
     protected int sign;
     protected String name;
@@ -56,11 +54,10 @@ public class Instruction {
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Instruction(int sign, String name, InstructionAnnotation ia, PointList pl) {
+    public Instruction(int sign, String name, PointList pl) {
         this.sign = sign;
         this.name = name;
         this.points = pl;
-        this.annotation = ia;
     }
 
     /**
@@ -69,10 +66,6 @@ public class Instruction {
      */
     public void setUseRawName() {
         rawName = true;
-    }
-
-    public InstructionAnnotation getAnnotation() {
-        return annotation;
     }
 
     /**
@@ -147,42 +140,6 @@ public class Instruction {
         sb.append(time);
         sb.append(')');
         return sb.toString();
-    }
-
-    /**
-     * Return the direction like 'NE' based on the first tracksegment of the instruction. If
-     * Instruction does not contain enough coordinate points, an empty string will be returned.
-     */
-    public String calcDirection(Instruction nextI) {
-        double azimuth = calcAzimuth(nextI);
-        if (Double.isNaN(azimuth))
-            return "";
-
-        return AC.azimuth2compassPoint(azimuth);
-    }
-
-    /**
-     * Return the azimuth in degree based on the first tracksegment of this instruction. If this
-     * instruction contains less than 2 points then NaN will be returned or the specified
-     * instruction will be used if that is the finish instruction.
-     */
-    public double calcAzimuth(Instruction nextI) {
-        double nextLat;
-        double nextLon;
-
-        if (points.getSize() >= 2) {
-            nextLat = points.getLatitude(1);
-            nextLon = points.getLongitude(1);
-        } else if (nextI != null && points.getSize() == 1) {
-            nextLat = nextI.points.getLatitude(0);
-            nextLon = nextI.points.getLongitude(0);
-        } else {
-            return Double.NaN;
-        }
-
-        double lat = points.getLatitude(0);
-        double lon = points.getLongitude(0);
-        return AC.calcAzimuth(lat, lon, nextLat, nextLon);
     }
 
     /**

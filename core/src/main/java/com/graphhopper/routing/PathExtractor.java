@@ -20,11 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 
 public class PathExtractor {
     private final Graph graph;
@@ -56,7 +52,7 @@ public class PathExtractor {
 
     private void extractPath(SPTEntry sptEntry) {
         SPTEntry currEdge = followParentsUntilRoot(sptEntry);
-        path.reverseEdges();
+        ArrayUtil.reverse(path.getEdges());
         path.setFromNode(currEdge.adjNode);
         path.setEndNode(sptEntry.adjNode);
     }
@@ -73,7 +69,7 @@ public class PathExtractor {
     }
 
     private void setExtractionTime(long nanos) {
-        path.setDebugInfo("path extraction: " + nanos / 1000 + " micros");
+        path.setDebugInfo("path extraction: " + nanos / 1000 + " μs");
     }
 
     protected void onEdge(int edge, int adjNode, int prevEdge) {

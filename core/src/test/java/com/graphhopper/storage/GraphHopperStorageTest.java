@@ -18,8 +18,8 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.CHProfileConfig;
-import com.graphhopper.config.ProfileConfig;
+import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
@@ -159,47 +159,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void internalDisconnect() {
-        GraphHopperStorage storage = createGHStorage();
-        BaseGraph graph = (BaseGraph) storage.getBaseGraph();
-        EdgeIteratorState iter0 = graph.edge(0, 1, 10, true);
-        EdgeIteratorState iter2 = graph.edge(1, 2, 10, true);
-        EdgeIteratorState iter3 = graph.edge(0, 3, 10, true);
-
-        EdgeExplorer explorer = graph.createEdgeExplorer();
-
-        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-        // remove edge "1-2" but only from 1 not from 2
-        graph.edgeAccess.internalEdgeDisconnect(iter2.getEdge(), -1, iter2.getBaseNode());
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-        assertEquals(GHUtility.asSet(1), GHUtility.getNeighbors(explorer.setBaseNode(2)));
-        // let 0 unchanged -> no side effects
-        assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-
-        // remove edge "0-1" but only from 0
-        graph.edgeAccess.internalEdgeDisconnect(iter0.getEdge(), (long) iter3.getEdge() * graph.edgeEntryBytes,
-                iter0.getBaseNode());
-        assertEquals(GHUtility.asSet(3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(3)));
-        assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
-        storage.close();
-    }
-
-    @Test
-    public void testEnsureSize() {
-        Directory dir = new RAMDirectory();
-        graph = newGHStorage(dir, false).create(defaultSize);
-        int roughEdgeRowLength = 4 * 8;
-        int testIndex = dir.find("edges", DAType.RAM_INT).getSegmentSize() * 3 / roughEdgeRowLength;
-        // we need a big node index to trigger multiple segments, but low enough to avoid OOM
-        graph.edge(0, testIndex, 10, true);
-
-        // test if optimize works without error
-        graph.optimize();
-    }
-
-    @Test
     public void testBigDataEdge() {
         Directory dir = new RAMDirectory();
         GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false);
@@ -217,11 +176,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         graph.close();
 
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true);
-        try {
-            graph.loadExisting();
-            fail();
-        } catch (Exception ex) {
-        }
+        assertThrows(Exception.class, () -> graph.loadExisting());
     }
 
     @Test
@@ -310,9 +265,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         // load without configured FlagEncoders
         GraphHopper hopper = new GraphHopper();
-        hopper.setProfiles(Collections.singletonList(new ProfileConfig("fastest_car_node").setVehicle("car").setWeighting("fastest")));
+        hopper.setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         if (ch) {
-            hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("fastest_car_node"));
+            hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
         }
         assertTrue(hopper.load(defaultGraphLoc));
         graph = hopper.getGraphHopperStorage();
@@ -323,9 +278,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         // load via explicitly configured FlagEncoders
         hopper = new GraphHopper()
                 .setEncodingManager(encodingManager)
-                .setProfiles(Collections.singletonList(new ProfileConfig("fastest_car_node").setVehicle("car").setWeighting("fastest")));
+                .setProfiles(Collections.singletonList(new Profile("p_car").setVehicle("car").setWeighting("fastest")));
         if (ch) {
-            hopper.getCHPreparationHandler().setCHProfileConfigs(new CHProfileConfig("fastest_car_node"));
+            hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p_car"));
         }
         assertTrue(hopper.load(defaultGraphLoc));
         graph = hopper.getGraphHopperStorage();
@@ -336,4 +291,40 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         Helper.removeDir(new File(defaultGraphLoc));
     }
 
+    @Test
+    public void testEdgeKey() {
+        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+        g.edge(0, 1, 10, true);
+        // storage direction
+        assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 1, false, 0, 0);
+        // reverse direction
+        assertEdge(g.getEdgeIteratorState(0, 0), 1, 0, true, 0, 1);
+        // now use the edge key to retrieve the edge
+        assertEdge(g.getEdgeIteratorStateForKey(0), 0, 1, false, 0, 0);
+        // opposite direction
+        assertEdge(g.getEdgeIteratorStateForKey(1), 1, 0, true, 0, 1);
+    }
+
+    @Test
+    public void testEdgeKey_loop() {
+        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+        g.edge(0, 0, 10, true);
+        // storage direction
+        assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 0, false, 0, 0);
+        // reverse direction cannot be retrieved, we get forward direction anyway
+        assertEdge(g.getEdgeIteratorState(0, 0), 0, 0, false, 0, 0);
+        // now use the edge key to retrieve the edge
+        assertEdge(g.getEdgeIteratorStateForKey(0), 0, 0, false, 0, 0);
+        // opposite direction could be retrieved like this but to be consistent with getEdgeIteratorState(edge,adj)
+        // we return the forward direction anyway! todo: is this really what we should do? probably related to #1631
+        assertEdge(g.getEdgeIteratorStateForKey(1), 0, 0, false, 0, 0);
+    }
+
+    private void assertEdge(EdgeIteratorState edge, int base, int adj, boolean reverse, int edgeId, int key) {
+        assertEquals(base, edge.getBaseNode());
+        assertEquals(adj, edge.getAdjNode());
+        assertEquals(reverse, edge.get(REVERSE_STATE));
+        assertEquals(edgeId, edge.getEdge());
+        assertEquals(key, edge.getEdgeKey());
+    }
 }

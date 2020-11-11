@@ -18,7 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -76,7 +76,7 @@ public class GHUtilityTest {
             // This is meant to verify that all of the same edges (including tower nodes)
             // are included in the copied graph. Can not use iter.getDistance() since it
             // does not verify new geometry. See #1732
-            distance += iter.fetchWayGeometry(FetchMode.ALL).calcDistance(calc);
+            distance += calc.calcDistance(iter.fetchWayGeometry(FetchMode.ALL));
         }
         return distance;
     }
@@ -139,7 +139,7 @@ public class GHUtilityTest {
         EdgeIteratorState edgeState = g.edge(6, 5, 11, true);
         edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
 
-        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(new FastestWeighting(carEncoder))).create();
+        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHConfigs(CHConfig.nodeBased("p2", new FastestWeighting(carEncoder))).create();
         Graph lg = new GraphBuilder(encodingManager).create();
         GHUtility.copyTo(g, lg);
         newStore.freeze();

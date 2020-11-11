@@ -17,11 +17,10 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
@@ -49,11 +48,11 @@ public class FastestWeighting extends AbstractWeighting {
     private final double destinationPenalty, privatePenalty;
 
     public FastestWeighting(FlagEncoder encoder) {
-        this(encoder, new HintsMap(0));
+        this(encoder, new PMap(0));
     }
 
     public FastestWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        this(encoder, new HintsMap(0), turnCostProvider);
+        this(encoder, new PMap(0), turnCostProvider);
     }
 
     public FastestWeighting(FlagEncoder encoder, PMap map) {
@@ -70,9 +69,9 @@ public class FastestWeighting extends AbstractWeighting {
             throw new IllegalArgumentException("road_access is not available but expected for FastestWeighting");
 
         // ensure that we do not need to change getMinWeight, i.e. road_access_factor >= 1
-        double defaultDestinationFactor = encoder.getTransportationMode() == TransportationMode.MOTOR_VEHICLE ? 10 : 1;
+        double defaultDestinationFactor = encoder.getTransportationMode().isMotorVehicle()? 10 : 1;
         destinationPenalty = checkBounds("road_access_destination_factor", map.getDouble("road_access_destination_factor", defaultDestinationFactor), 1, 10);
-        double defaultPrivateFactor = encoder.getTransportationMode() == TransportationMode.MOTOR_VEHICLE ? 10 : 1.2;
+        double defaultPrivateFactor = encoder.getTransportationMode().isMotorVehicle()? 10 : 1.2;
         privatePenalty = checkBounds("road_access_private_factor", map.getDouble("road_access_private_factor", defaultPrivateFactor), 1, 10);
         roadAccessEnc = destinationPenalty > 1 || privatePenalty > 1 ? encoder.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class) : null;
     }
@@ -89,7 +88,6 @@ public class FastestWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
 
         double time = edgeState.getDistance() / speed * SPEED_CONV;
-
         if (roadAccessEnc != null) {
             RoadAccess access = edgeState.get(roadAccessEnc);
             if (access == RoadAccess.DESTINATION)

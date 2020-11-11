@@ -21,9 +21,9 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -338,36 +338,13 @@ public class InstructionListTest {
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
 
         // query on first edge, get instruction for second edge
-        assertEquals("2-3", wayList.find(15.05, 10, 1000).getName());
+        assertEquals("2-3", Instructions.find(wayList, 15.05, 10, 1000).getName());
 
         // query east of first edge, get instruction for second edge
-        assertEquals("2-3", wayList.find(15.05, 10.001, 1000).getName());
+        assertEquals("2-3", Instructions.find(wayList, 15.05, 10.001, 1000).getName());
 
         // query south-west of node 3, get instruction for third edge
-        assertEquals("3-4", wayList.find(15.099, 9.9, 1000).getName());
-    }
-
-    @Test
-    public void simpleAnnotations() {
-        Graph graph = createTestGraph();
-
-        EnumEncodedValue<RoadEnvironment> roadEnvEnc = carManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
-        EnumEncodedValue<RoadAccess> roadAccessEnc = carManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-        EdgeIteratorState edge1 = GHUtility.getEdge(graph, 7, 8);
-        edge1.set(roadEnvEnc, RoadEnvironment.FERRY);
-
-        EdgeIteratorState edge2 = GHUtility.getEdge(graph, 8, 9);
-        edge2.set(roadAccessEnc, RoadAccess.PRIVATE);
-
-        Weighting weighting = new FastestWeighting(carEncoder);
-        final InstructionList ways = new InstructionList(usTR);
-        InstructionsFromEdges instrFromEdges = new InstructionsFromEdges(graph, weighting, carManager, usTR, ways);
-        instrFromEdges.next(edge1, 0, EdgeIterator.NO_EDGE);
-        instrFromEdges.next(edge2, 1, edge1.getEdge());
-        instrFromEdges.finish();
-
-        assertEquals("take the ferry", ways.get(0).getAnnotation().getMessage());
-        assertEquals("private road", ways.get(1).getAnnotation().getMessage());
+        assertEquals("3-4", Instructions.find(wayList, 15.099, 9.9, 1000).getName());
     }
 
     private void compare(List<List<Double>> expected, List<List<Double>> actual) {

@@ -18,10 +18,11 @@
 
 package com.graphhopper.resources;
 
+import com.graphhopper.gtfs.*;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
+import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -30,7 +31,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.*;
@@ -97,9 +98,9 @@ public class PtIsochroneResource {
 
         GeometryFactory geometryFactory = new GeometryFactory();
         final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
-        QueryResult queryResult = locationIndex.findClosest(source.lat, source.lon, filter);
-        QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.singletonList(queryResult));
-        if (!queryResult.isValid()) {
+        Snap snap = locationIndex.findClosest(source.lat, source.lon, filter);
+        QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.singletonList(snap));
+        if (!snap.isValid()) {
             throw new IllegalArgumentException("Cannot find point: " + source);
         }
 
@@ -116,11 +117,11 @@ public class PtIsochroneResource {
         };
 
         if (format.equals("multipoint")) {
-            router.calcLabels(queryResult.getClosestNode(), initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
+            router.calcLabels(snap.getClosestNode(), initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
             return wrap(exploredPoints);
         } else {
-            router.calcLabels(queryResult.getClosestNode(), initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
+            router.calcLabels(snap.getClosestNode(), initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
             // Get at least all nodes within our bounding box (I think convex hull would be enough.)
@@ -160,8 +161,9 @@ public class PtIsochroneResource {
                 }
             }
 
-            ContourBuilder contourBuilder = new ContourBuilder(tin);
-            MultiPolygon isoline = contourBuilder.computeIsoline(targetZ);
+            ReadableTriangulation triangulation = ReadableTriangulation.wrap(tin);
+            ContourBuilder contourBuilder = new ContourBuilder(triangulation);
+            MultiPolygon isoline = contourBuilder.computeIsoline(targetZ, triangulation.getEdges());
 
             // debugging tool
             if (format.equals("triangulation")) {

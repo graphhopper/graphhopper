@@ -297,24 +297,6 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public void trimTo(long capacity) {
-        if (capacity > getCapacity()) {
-            throw new IllegalStateException("Cannot increase capacity (" + getCapacity() + ") to " + capacity
-                    + " via trimTo. Use ensureCapacity instead. ");
-        }
-
-        if (capacity < segmentSizeInBytes)
-            capacity = segmentSizeInBytes;
-
-        int remainingSegments = (int) (capacity / segmentSizeInBytes);
-        if (capacity % segmentSizeInBytes != 0) {
-            remainingSegments++;
-        }
-
-        segments = Arrays.copyOf(segments, remainingSegments);
-    }
-
-    @Override
     public void rename(String newName) {
         if (!checkBeforeRename(newName)) {
             return;

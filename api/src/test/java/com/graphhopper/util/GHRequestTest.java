@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -34,7 +35,7 @@ public class GHRequestTest {
     @Test
     public void testGetHint() {
         GHRequest instance = new GHRequest(10, 12, 12, 10);
-        instance.getHints().put("something", "1");
+        instance.getHints().putObject("something", 1);
         assertEquals(1, instance.getHints().getInt("something", 2));
         // #173 - will throw an error: Integer cannot be cast to Double
         assertEquals(1, instance.getHints().getDouble("something", 2d), 1e1);
@@ -49,57 +50,44 @@ public class GHRequestTest {
         points.add(new GHPoint(lat1, lon1));
         points.add(new GHPoint(lat2, lon2));
         List<Double> favoredHeadings = Arrays.asList(3.14, 4.15, Double.NaN);
-        List<Double> emptyHeadings = Arrays.asList(Double.NaN, Double.NaN, Double.NaN);
-
         GHRequest instance;
 
         instance = new GHRequest(points, favoredHeadings);
         compareFavoredHeadings(instance, favoredHeadings);
-        assertEquals("Points not initialized correct", points, instance.getPoints());
+        comparePoints(instance, points);
 
         instance = new GHRequest(points.get(0), points.get(1), favoredHeadings.get(0), favoredHeadings.get(1));
         compareFavoredHeadings(instance, favoredHeadings.subList(0, 2));
-        assertEquals("Points not initialized correct", points.subList(0, 2), instance.getPoints());
+        comparePoints(instance, points.subList(0, 2));
 
         instance = new GHRequest(lat0, lon0, lat1, lon1, favoredHeadings.get(0), favoredHeadings.get(1));
         compareFavoredHeadings(instance, favoredHeadings.subList(0, 2));
-        assertEquals("Points not initialized correct", points.subList(0, 2), instance.getPoints());
-
-        instance = new GHRequest(3).addPoint(points.get(0), favoredHeadings.get(0)).
-                addPoint(points.get(1), favoredHeadings.get(1)).
-                addPoint(points.get(2), favoredHeadings.get(2));
-        compareFavoredHeadings(instance, favoredHeadings);
-        assertEquals("Points not initialized correct", points, instance.getPoints());
-
-        instance = new GHRequest().addPoint(points.get(0), favoredHeadings.get(0)).
-                addPoint(points.get(1), favoredHeadings.get(1)).
-                addPoint(points.get(2), favoredHeadings.get(2));
-        assertEquals("Points not initialized correct", points, instance.getPoints());
-        compareFavoredHeadings(instance, favoredHeadings);
+        comparePoints(instance, points.subList(0, 2));
 
         // check init without favoredHeadings
         instance = new GHRequest(points);
-        assertEquals("Points not initialized correct", points, instance.getPoints());
-        compareFavoredHeadings(instance, emptyHeadings);
+        comparePoints(instance, points);
+        compareFavoredHeadings(instance, emptyList());
 
         instance = new GHRequest(points.get(0), points.get(1));
-        assertEquals("Points not initialized correct", points.subList(0, 2), instance.getPoints());
-        compareFavoredHeadings(instance, emptyHeadings.subList(0, 2));
+        comparePoints(instance, points.subList(0, 2));
+        compareFavoredHeadings(instance, emptyList());
 
         instance = new GHRequest(lat0, lon0, lat1, lon1);
-        assertEquals("Points not initialized correct", points.subList(0, 2), instance.getPoints());
-        compareFavoredHeadings(instance, emptyHeadings.subList(0, 2));
+        comparePoints(instance, points.subList(0, 2));
+        compareFavoredHeadings(instance, emptyList());
+    }
 
-        instance = new GHRequest().addPoint(points.get(0)).addPoint(points.get(1)).addPoint(points.get(2));
-        assertEquals("Points not initialized correct", points, instance.getPoints());
-        compareFavoredHeadings(instance, emptyHeadings);
+    private void comparePoints(GHRequest request, List<GHPoint> points) {
+        assertEquals("Points do not match", points, request.getPoints());
     }
 
     private void compareFavoredHeadings(GHRequest request, List<Double> expected) {
-        for (int ind = 0; ind < expected.size(); ind++) {
-            double favoredHeading = request.getFavoredHeading(ind);
-            assertEquals(ind + " favored Heading does not match" + expected.get(ind) + " vs ." + favoredHeading,
-                    expected.get(ind), favoredHeading, 0.01);
+        assertEquals(expected.size(), request.getHeadings().size());
+        for (int i = 0; i < expected.size(); i++) {
+            double favoredHeading = request.getHeadings().get(i);
+            assertEquals(i + " favored Heading does not match" + expected.get(i) + " vs ." + favoredHeading,
+                    expected.get(i), favoredHeading, 0.01);
         }
 
     }
