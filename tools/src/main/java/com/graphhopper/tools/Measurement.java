@@ -581,7 +581,7 @@ public class Measurement {
             }
         };
 
-        final SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO_A3", rulePerCountryFactory);
+        final SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO3166-1:alpha3", rulePerCountryFactory);
 
         // generate random points in central Europe
         final List<GHPoint> randomPoints = new ArrayList<>(count);
