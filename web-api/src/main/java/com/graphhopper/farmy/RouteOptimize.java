@@ -103,7 +103,7 @@ public class RouteOptimize {
             vehicleHashMap.addProperty("transportTime", this.analyser.getTransportTime(route));
             vehicleHashMap.addProperty("cost", this.analyser.getVariableTransportCosts(route) + this.analyser.getFixedCosts(route));
 
-            optimizedRoutesMap.add(this.routeVehicleId(route, optimizedRoutesMap.entrySet().stream(), 0), vehicleHashMap);
+            optimizedRoutesMap.add(route.getVehicle().getId(), vehicleHashMap);
         }
 
         allMap.add("OptimizedRoutes", optimizedRoutesMap);
@@ -266,17 +266,5 @@ public class RouteOptimize {
         System.out.println("#number_of_deliveries: " + analyser.getNumberOfDeliveriesAtEnd());
         System.out.println("#unnasigned_jobs: " + this.solution.getUnassignedJobs().size());
 
-    }
-
-    private String routeVehicleId(VehicleRoute route, Stream allMap, int routeNumber) {
-//          Check if vehicle is already added
-        String vehicleId = route.getVehicle().getId().replaceAll("\\s+", "");
-        int finalRouteNumber = routeNumber;
-        if (allMap.anyMatch(a -> a.equals(String.format("%s", finalRouteNumber)))) {
-            routeNumber++;
-            return this.routeVehicleId(route, allMap, routeNumber);
-        } else {
-            return String.format("%s", routeNumber);
-        }
     }
 }
