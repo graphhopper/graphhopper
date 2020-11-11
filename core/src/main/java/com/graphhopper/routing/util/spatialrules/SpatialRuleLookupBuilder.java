@@ -15,10 +15,6 @@ import static com.graphhopper.util.Helper.toLowerCase;
 
 public class SpatialRuleLookupBuilder {
 
-    public interface SpatialRuleFactory {
-        SpatialRule createSpatialRule(String id, final List<Polygon> borders);
-    }
-
     private static final Logger logger = LoggerFactory.getLogger(SpatialRuleLookupBuilder.class);
 
     /**

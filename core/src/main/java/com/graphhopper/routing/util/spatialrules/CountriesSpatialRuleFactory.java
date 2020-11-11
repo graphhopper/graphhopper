@@ -9,7 +9,7 @@ import java.util.List;
 
 import static com.graphhopper.util.Helper.toUpperCase;
 
-public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.SpatialRuleFactory {
+public class CountriesSpatialRuleFactory implements SpatialRuleFactory {
 
     @Override
     public SpatialRule createSpatialRule(String id, List<Polygon> polygons) {
