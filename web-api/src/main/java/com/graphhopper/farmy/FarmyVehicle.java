@@ -18,7 +18,7 @@ import java.util.Map;
         "costsPerTransportTime",
         "costsPerServiceTime",
         "costPerWaitingTime",
-        "earliestStart",
+        "earliestDeparture",
         "latestArrival"
 })
 public class FarmyVehicle {
@@ -47,8 +47,8 @@ public class FarmyVehicle {
     private double costsPerServiceTime;
     @JsonProperty("costPerWaitingTime")
     private double costPerWaitingTime;
-    @JsonProperty("earliestStart")
-    private double earliestStart;
+    @JsonProperty("earliestDeparture")
+    private double earliestDeparture;
     @JsonProperty("latestArrival")
     private double latestArrival;
 
@@ -136,9 +136,9 @@ public class FarmyVehicle {
     @JsonAnySetter
     public void setCostPerWaitingTime(double costPerWaitingTime) { this.costPerWaitingTime = costPerWaitingTime; }
     @JsonAnyGetter
-    public double getEarliestStart() { return earliestStart; }
+    public double getEarliestDeparture() { return earliestDeparture; }
     @JsonAnySetter
-    public void setEarliestStart(double earliestStart) {this.earliestStart = earliestStart; }
+    public void setEarliestDeparture(double earliestDeparture) {this.earliestDeparture = earliestDeparture; }
     @JsonAnyGetter
     public double getLatestArrival() { return latestArrival; }
     @JsonAnySetter
