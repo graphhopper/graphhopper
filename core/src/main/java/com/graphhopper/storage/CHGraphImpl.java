@@ -604,6 +604,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                 return true;
             } else if (edgeId < baseGraph.edgeCount + shortcutCount) {
                 edgePointer = toPointer(edgeId);
+                // todonow: do not need either?
                 baseNode = getNodeA(edgePointer);
                 adjNode = getNodeB(edgePointer);
                 freshFlags = false;
@@ -681,8 +682,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     return true;
                 } else if (expectedAdjNode == baseNode) {
                     reverse = true;
-                    baseNode = adjNode;
-                    adjNode = expectedAdjNode;
+//                    baseNode = adjNode;
+//                    adjNode = expectedAdjNode;
                     return true;
                 }
                 return false;
@@ -691,12 +692,17 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public int getBaseNode() {
-            return edgeId < baseGraph.edgeCount ? edgeIterable.getBaseNode() : baseNode;
+            if (edgeId < baseGraph.edgeCount)
+                return edgeIterable.getBaseNode();
+            return reverse ? getNodeB(edgePointer) : baseNode;
+//            return reverse ? adjNode : baseNode;
         }
 
         @Override
         public int getAdjNode() {
-            return edgeId < baseGraph.edgeCount ? edgeIterable.getAdjNode() : getNodeB(edgePointer);
+            if (edgeId < baseGraph.edgeCount)
+                return edgeIterable.getAdjNode();
+            return reverse ? baseNode : getNodeB(edgePointer);
         }
 
         @Override
