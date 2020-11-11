@@ -541,6 +541,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             end = (getLevel(baseNode) < (getNodes() - 1)) ? CHGraphImpl.this.getEdgeRef(getLevel(baseNode) + 1) : getEdges();
             if (edgeId > end)
                 throw new IllegalStateException("todonow");
+            this.baseNode = baseNode;
             return this;
         }
 
@@ -559,9 +560,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     break;
                 }
                 edgePointer = toPointer(edgeId);
-                baseNode = getNodeA(edgePointer);
+//                baseNode = getNodeA(edgePointer);
                 // todonow: do we even need these?
-                adjNode = getNodeB(edgePointer);
+//                adjNode = getNodeB(edgePointer);
                 reverse = false;
                 freshFlags = false;
 //                 todonow: do we need this? for shortcuts?
@@ -695,7 +696,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public int getAdjNode() {
-            return edgeId < baseGraph.edgeCount ? edgeIterable.getAdjNode() : adjNode;
+            return edgeId < baseGraph.edgeCount ? edgeIterable.getAdjNode() : getNodeB(edgePointer);
         }
 
         @Override
