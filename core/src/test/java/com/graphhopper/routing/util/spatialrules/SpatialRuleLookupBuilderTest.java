@@ -53,13 +53,13 @@ import static org.junit.Assert.assertEquals;
  */
 public class SpatialRuleLookupBuilderTest {
 
-    private static final String COUNTRIES_FILE = "../core/files/spatialrules/countries.geo.json";
+    private static final String COUNTRIES_FILE = "../core/files/spatialrules/countries.geojson";
 
     @Test
     public void testIndex() throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory());
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3", new CountriesSpatialRuleFactory());
 
         // Berlin
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRules(52.5243700, 13.4105300).
@@ -86,7 +86,7 @@ public class SpatialRuleLookupBuilderTest {
     public void testBounds() throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3", new CountriesSpatialRuleFactory());
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3", new CountriesSpatialRuleFactory());
         Envelope almostWorldWide = new Envelope(-179, 179, -89, 89);
 
         // Might fail if a polygon is defined outside the above coordinates
@@ -101,7 +101,7 @@ public class SpatialRuleLookupBuilderTest {
         */
         final FileReader reader = new FileReader(COUNTRIES_FILE);
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3",
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3",
                 new CountriesSpatialRuleFactory(), new Envelope(9, 10, 51, 52));
         assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
     }
@@ -110,7 +110,7 @@ public class SpatialRuleLookupBuilderTest {
     public void testNoIntersection() throws IOException {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO_A3",
+                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3",
                 new CountriesSpatialRuleFactory(), new Envelope(-180, -179, -90, -89));
         assertEquals(SpatialRuleLookup.EMPTY, spatialRuleLookup);
     }
