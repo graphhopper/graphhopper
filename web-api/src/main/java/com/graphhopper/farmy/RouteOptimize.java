@@ -1,6 +1,5 @@
 package com.graphhopper.farmy;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -21,10 +20,8 @@ import com.graphhopper.jsprit.core.util.Coordinate;
 import com.graphhopper.jsprit.core.util.Solutions;
 import com.graphhopper.jsprit.core.util.UnassignedJobReasonTracker;
 import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
-import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 public class RouteOptimize {
 
@@ -44,13 +41,6 @@ public class RouteOptimize {
         this.graphHopper = graphHopper;
         this.routePlanReader = new RoutePlanReader(farmyOrders);
         this.depotPoint = depotPoint;
-        build(this.routePlanReader.getIdentifiedPointList(), farmyVehicles);
-    }
-
-    public RouteOptimize(GraphHopperAPI graphHopper, FarmyOrder[] farmyOrders, FarmyVehicle[] farmyVehicles) throws Exception {
-        this.graphHopper = graphHopper;
-        this.routePlanReader = new RoutePlanReader(farmyOrders);
-        this.depotPoint = this.routePlanReader.depotPoint();
         build(this.routePlanReader.getIdentifiedPointList(), farmyVehicles);
     }
 
@@ -79,6 +69,8 @@ public class RouteOptimize {
                 // Get Job as DeliveryService
                 IdentifiedGHPoint3D idPoint = this.pointList.find(service.getId()); // Find point by service id
                 idPoint.setPlannedTime(activity.getArrTime()); // set arrtime from activity
+                idPoint.setEarliestOperationStartTime(activity.getTheoreticalEarliestOperationStartTime());
+                idPoint.setLatestOperationStartTime(activity.getTheoreticalLatestOperationStartTime());
                 waypoints.add(idPoint.toJsonObject()); // add the point to waypoints
 //              Calc for distance
 
@@ -152,9 +144,6 @@ public class RouteOptimize {
 //            System.out.println(this.pointList);
             throw new Exception("Point List is Empty");
         }
-
-
-        this.depotPoint = this.routePlanReader.depotPoint();
 
         PointMatrixList pointMatrixList = new PointMatrixList(graphHopper, this.pointList, this.depotPoint);
 

@@ -11,13 +11,15 @@ import java.util.HashMap;
 
 public class IdentifiedGHPoint3D extends GHPoint3D {
 
-    public String id;
-    public String direction;
-    public double serviceTime;
-    public TimeWindow timeWindow;
-    public double plannedTime;
-    public double weight;
-    public double distance;
+    private String id;
+    private String direction;
+    private double serviceTime;
+    private TimeWindow timeWindow;
+    private double plannedTime;
+    private double weight;
+    private double distance;
+    private double earliestOperationStartTime;
+    private double latestOperationStartTime;
 
     public IdentifiedGHPoint3D(double lat, double lon, double elevation, String id) {
         super(lat, lon, elevation);
@@ -122,6 +124,22 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
         this.distance = distance;
     }
 
+    public double getEarliestOperationStartTime() {
+        return earliestOperationStartTime;
+    }
+
+    public void setEarliestOperationStartTime(double earliestOperationStartTime) {
+        this.earliestOperationStartTime = earliestOperationStartTime;
+    }
+
+    public double getLatestOperationStartTime() {
+        return latestOperationStartTime;
+    }
+
+    public void setLatestOperationStartTime(double latestOperationStartTime) {
+        this.latestOperationStartTime = latestOperationStartTime;
+    }
+
     @Override
     public String toString() {
         return super.toString() + "," + id;
@@ -140,6 +158,8 @@ public class IdentifiedGHPoint3D extends GHPoint3D {
         jsonObject.addProperty("plannedTime", String.valueOf(getPlannedTime()));
         jsonObject.addProperty("weight",  String.valueOf(getWeight()));
         jsonObject.addProperty("distance", String.valueOf(getDistance()));
+        jsonObject.addProperty("earliestOperationStartTime", String.valueOf(getEarliestOperationStartTime()));
+        jsonObject.addProperty("latestOperationStartTime", String.valueOf(getLatestOperationStartTime()));
         return jsonObject;
     }
 

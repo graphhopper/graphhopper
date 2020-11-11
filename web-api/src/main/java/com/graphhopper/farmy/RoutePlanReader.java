@@ -84,10 +84,8 @@ public class RoutePlanReader {
 
     public RoutePlanReader(FarmyOrder[] farmyOrders) throws IOException, ParseException {
         this.identifiedPointList = new IdentifiedPointList();
-//        if(this.identifiedPointList.findDepot().getId().equals("NOT_FOUND_POINT"))
-//            identifiedPointList.add(depotPoint());
         for (FarmyOrder farmyOrder : farmyOrders) {
-//            System.out.println(farmyOrder);
+
             if (farmyOrder.latitude != null && farmyOrder.longitude != null && identifiedPointList.find(farmyOrder.getNumber()).getId().equals("NOT_FOUND_POINT")) {
                 identifiedPointList.add(new IdentifiedGHPoint3D(new GHPoint(farmyOrder.latitude, farmyOrder.longitude), farmyOrder.number)
                         .setWeight(farmyOrder.weight)
