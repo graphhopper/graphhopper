@@ -64,8 +64,8 @@ public class EdgeBasedShortcutInserter implements EdgeBasedNodeContractor.Shortc
             // todo: performance, ideally this loop would start with the first *shortcut* not edge
             if (!iter.isShortcut())
                 continue;
-            int skip1 = getShortcutForArc(iter.getSkippedEdge1());
-            int skip2 = getShortcutForArc(iter.getSkippedEdge2());
+            int skip1 = getShortcutForPrepareEdge(iter.getSkippedEdge1());
+            int skip2 = getShortcutForPrepareEdge(iter.getSkippedEdge2());
             iter.setSkippedEdges(skip1, skip2);
         }
     }
@@ -77,7 +77,7 @@ public class EdgeBasedShortcutInserter implements EdgeBasedNodeContractor.Shortc
         shortcutsByPrepareEdges.set(index, shortcut);
     }
 
-    private int getShortcutForArc(int prepareEdge) {
+    private int getShortcutForPrepareEdge(int prepareEdge) {
         if (prepareEdge < origEdges)
             return prepareEdge;
         int index = prepareEdge - origEdges;
