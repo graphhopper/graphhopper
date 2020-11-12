@@ -2,14 +2,13 @@ package com.graphhopper.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.farmy.*;
-import com.graphhopper.jsprit.core.problem.Location;
+import com.graphhopper.farmy.FarmyOrder;
+import com.graphhopper.farmy.FarmyVehicle;
+import com.graphhopper.farmy.IdentifiedGHPoint3D;
+import com.graphhopper.farmy.RouteOptimize;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -17,19 +16,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
-
-@Path("optimize-route")
-public class OptimizeRouteResource {
-
-    private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
+@Path("single-optimize-route")
+public class SingleOptimizeRouteResource {
 
     private final GraphHopperAPI graphHopperAPI;
 
     @Inject
-    public OptimizeRouteResource(GraphHopperAPI graphHopperAPI) {
+    public SingleOptimizeRouteResource(GraphHopperAPI graphHopperAPI) {
         this.graphHopperAPI = graphHopperAPI;
     }
 
@@ -39,6 +34,7 @@ public class OptimizeRouteResource {
     public Response doPost(@FormDataParam("orders") String farmyOrdersStr,
                            @FormDataParam("vehicles") String farmyVehicleStr,
                            @FormDataParam("startLocation") String depotPointStr) throws IOException {
+
         ObjectMapper mapper = new ObjectMapper();
 
         FarmyOrder[] farmyOrders = mapper.readValue(farmyOrdersStr, FarmyOrder[].class);
@@ -55,26 +51,4 @@ public class OptimizeRouteResource {
         }
         return Response.ok().entity(routeOptimize.getOptimizedRoutes().toString()).build();
     }
-
-//    @POST
-//    @Consumes(MediaType.MULTIPART_FORM_DATA)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    public Response doPost(@FormDataParam("orders") String farmyOrdersStr,
-//                           @FormDataParam("vehicles") String farmyVehicleStr) throws IOException {
-//        ObjectMapper mapper = new ObjectMapper();
-//
-//        FarmyOrder[] farmyOrders = mapper.readValue(farmyOrdersStr, FarmyOrder[].class);
-//        FarmyVehicle[] farmyVehicles = mapper.readValue(farmyVehicleStr, FarmyVehicle[].class);
-//
-//        RouteOptimize routeOptimize = null;
-//        try {
-//            routeOptimize = new RouteOptimize(this.graphHopper, farmyOrders, farmyVehicles);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return Response.serverError().build();
-//        }
-//        return Response.ok().entity(routeOptimize.getOptimizedRoutes().toString()).build();
-//    }
-
-
 }

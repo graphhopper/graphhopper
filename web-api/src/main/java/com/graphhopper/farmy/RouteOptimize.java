@@ -155,25 +155,7 @@ public class RouteOptimize {
 
 
         for (FarmyVehicle vehicle : farmyVehicles) {
-            VehicleType type = VehicleTypeImpl.Builder.newInstance(String.format("[TYPE] #%s", vehicle.getId()))
-                    .setFixedCost(vehicle.getFixedCosts()) //Fixe Bedienzeit
-                    .setCostPerDistance(vehicle.getCostsPerDistance())
-                    .setCostPerTransportTime(vehicle.getCostsPerTransportTime())
-                    .setCostPerServiceTime(vehicle.getCostsPerServiceTime())
-                    .setCostPerWaitingTime(vehicle.getCostPerWaitingTime())
-                    .addCapacityDimension(0, vehicle.getCapacity())
-                    .setMaxVelocity(vehicle.isPlus() ? 50.0/3.6 : 80.0/3.6) // ~50km/h // ~80km/h // 1 ~= 3.85
-                    .build();
-
-            vrpBuilder.addVehicle(VehicleImpl.Builder.newInstance(String.format("%s", vehicle.getId()))
-                    .setStartLocation(this.getDepotLocation())
-                    .setEndLocation(this.getDepotLocation())
-                    .setReturnToDepot(vehicle.isReturnToDepot())
-                    .setEarliestStart(vehicle.getEarliestDeparture()) // 14:00
-                    .setLatestArrival(vehicle.getLatestArrival())
-                    .setType(type)
-                    .build());
-
+            vrpBuilder.addVehicle(this.buildVehicle(vehicle));
             System.out.println("isReturnToDepot: " + vehicle.isReturnToDepot());
         }
 
@@ -186,16 +168,8 @@ public class RouteOptimize {
         VehicleRoutingTransportCostsMatrix.Builder costMatrixBuilder = VehicleRoutingTransportCostsMatrix.Builder.newInstance(true);
 
         for (IdentifiedGHPoint3D point : this.pointList) {
-//            System.out.println(String.format("#################\n%s\n#################", point));
             if (point.getTimeWindow() != null)
-                vrpBuilder.addJob(Delivery.Builder.newInstance(point.getId())
-                        .addSizeDimension(0, (int) point.getWeight())
-                        .setLocation(Location.Builder.newInstance().setId(point.getId()).setCoordinate(
-                                Coordinate.newInstance(point.getLat(), point.getLon())).build()
-                        )
-                        .setTimeWindow(point.getTimeWindow())
-                        .setServiceTime(point.getServiceTime())
-                        .build());
+                vrpBuilder.addJob(this.buildService(point));
         }
 
         for (PointMatrix pointMatrix : pointMatrixList) {
@@ -256,4 +230,36 @@ public class RouteOptimize {
         System.out.println("#unnasigned_jobs: " + this.solution.getUnassignedJobs().size());
 
     }
+
+    private VehicleImpl buildVehicle(FarmyVehicle vehicle) {
+        VehicleType type = VehicleTypeImpl.Builder.newInstance(String.format("[TYPE] #%s", vehicle.getId()))
+                .setFixedCost(vehicle.getFixedCosts()) //Fixe Bedienzeit
+                .setCostPerDistance(vehicle.getCostsPerDistance())
+                .setCostPerTransportTime(vehicle.getCostsPerTransportTime())
+                .setCostPerServiceTime(vehicle.getCostsPerServiceTime())
+                .setCostPerWaitingTime(vehicle.getCostPerWaitingTime())
+                .addCapacityDimension(0, vehicle.getCapacity())
+                .setMaxVelocity(vehicle.isPlus() ? 50.0/3.6 : 80.0/3.6) // ~50km/h // ~80km/h // 1 ~= 3.85
+                .build();
+
+        return VehicleImpl.Builder.newInstance(String.format("%s", vehicle.getId()))
+                .setStartLocation(this.getDepotLocation())
+                .setEndLocation(this.getDepotLocation())
+                .setReturnToDepot(vehicle.isReturnToDepot())
+                .setEarliestStart(vehicle.getEarliestDeparture()) // 14:00
+                .setLatestArrival(vehicle.getLatestArrival())
+                .setType(type)
+                .build();
+    }
+    private Service buildService(IdentifiedGHPoint3D point) {
+        return Delivery.Builder.newInstance(point.getId())
+                .addSizeDimension(0, (int) point.getWeight())
+                .setLocation(Location.Builder.newInstance().setId(point.getId()).setCoordinate(
+                        Coordinate.newInstance(point.getLat(), point.getLon())).build()
+                )
+                .setTimeWindow(point.getTimeWindow())
+                .setServiceTime(point.getServiceTime())
+                .build();
+    }
+
 }
