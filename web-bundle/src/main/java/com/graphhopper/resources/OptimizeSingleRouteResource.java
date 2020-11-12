@@ -1,11 +1,9 @@
 package com.graphhopper.resources;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.farmy.FarmyOrder;
-import com.graphhopper.farmy.FarmyVehicle;
-import com.graphhopper.farmy.IdentifiedGHPoint3D;
-import com.graphhopper.farmy.RouteOptimize;
+import com.graphhopper.farmy.*;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.inject.Inject;
@@ -18,13 +16,13 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@Path("single-optimize-route")
-public class SingleOptimizeRouteResource {
+@Path("optimize-single-route")
+public class OptimizeSingleRouteResource {
 
     private final GraphHopperAPI graphHopperAPI;
 
     @Inject
-    public SingleOptimizeRouteResource(GraphHopperAPI graphHopperAPI) {
+    public OptimizeSingleRouteResource(GraphHopperAPI graphHopperAPI) {
         this.graphHopperAPI = graphHopperAPI;
     }
 
@@ -40,9 +38,15 @@ public class SingleOptimizeRouteResource {
         FarmyOrder[] farmyOrders = mapper.readValue(farmyOrdersStr, FarmyOrder[].class);
         FarmyVehicle[] farmyVehicles = mapper.readValue(farmyVehicleStr, FarmyVehicle[].class);
 
-        IdentifiedGHPoint3D depotPoint = new IdentifiedGHPoint3D(mapper.readValue(depotPointStr, ArrayList.class), "Depot");
+        IdentifiedGHPoint3D depotPoint;
 
-        RouteOptimize routeOptimize = null;
+        if (depotPointStr.isEmpty()) {
+            depotPoint = new IdentifiedGHPoint3D(mapper.readValue(depotPointStr, ArrayList.class), "Depot");
+        } else {
+            depotPoint = RoutePlanReader.depotPoint();
+        }
+
+        RouteOptimize routeOptimize;
         try {
             routeOptimize = new RouteOptimize(this.graphHopperAPI, farmyOrders, farmyVehicles, depotPoint);
         } catch (Exception e) {

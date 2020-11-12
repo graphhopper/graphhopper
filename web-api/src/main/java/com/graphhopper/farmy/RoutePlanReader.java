@@ -82,7 +82,7 @@ public class RoutePlanReader {
 
     }
 
-    public RoutePlanReader(FarmyOrder[] farmyOrders) throws IOException, ParseException {
+    public RoutePlanReader(FarmyOrder[] farmyOrders) {
         this.identifiedPointList = new IdentifiedPointList();
         for (FarmyOrder farmyOrder : farmyOrders) {
 
@@ -100,7 +100,7 @@ public class RoutePlanReader {
         return identifiedPointList;
     }
 
-    public IdentifiedGHPoint3D depotPoint() {
+    static public IdentifiedGHPoint3D depotPoint() {
         IdentifiedGHPoint3D identifiedGHPoint3D = new IdentifiedGHPoint3D(new GHPoint(47.3822499, 8.4857342), "Depot");
         identifiedGHPoint3D.setWeight(0);
         identifiedGHPoint3D.setServiceTime(1200);
