@@ -8,6 +8,7 @@ public class CustomProfile extends Profile {
     public CustomProfile(Profile profile) {
         this(profile.getName());
         setVehicle(profile.getVehicle());
+        setTurnCosts(profile.isTurnCosts());
         getHints().putAll(profile.getHints());
     }
 
