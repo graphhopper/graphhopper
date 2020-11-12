@@ -24,10 +24,14 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -55,6 +59,7 @@ public class EncodingManager implements EncodedValueLookup {
     private EncodedValue.InitializerConfig turnCostConfig;
     private EncodedValue.InitializerConfig relationConfig;
     private EncodedValue.InitializerConfig edgeConfig;
+    private SpatialRuleLookup spatialRuleLookup = SpatialRuleLookup.EMPTY;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
@@ -201,6 +206,12 @@ public class EncodingManager implements EncodedValueLookup {
         public Builder addAll(TagParserFactory factory, String tagParserString) {
             check();
             em.add(tagParsers, factory, tagParserString);
+            return this;
+        }
+
+        public Builder setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
+            check();
+            em.setSpatialRuleLookup(spatialRuleLookup);
             return this;
         }
 
@@ -428,6 +439,10 @@ public class EncodingManager implements EncodedValueLookup {
             returnList.add(tp);
         }
     }
+    
+    private void setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
+        this.spatialRuleLookup = spatialRuleLookup;
+    }
 
     static String fixWayName(String str) {
         if (str == null)
@@ -610,6 +625,13 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
+        if (spatialRuleLookup != SpatialRuleLookup.EMPTY) {
+            GHPoint estimatedCenter = way.getTag("estimated_center", null);
+            if (estimatedCenter != null) {
+                SpatialRuleSet ruleSet = spatialRuleLookup.lookupRules(estimatedCenter.lat, estimatedCenter.lon);
+                way.setTag("spatial_rule_set", ruleSet);
+            }
+        }
         for (TagParser parser : edgeTagParsers) {
             parser.handleWayTags(edgeFlags, way, acceptWay.isFerry(), relationFlags);
         }
@@ -658,6 +680,18 @@ public class EncodingManager implements EncodedValueLookup {
                 str.append(",");
 
             str.append(ev.toString());
+        }
+
+        return str.toString();
+    }
+
+    public String toSpatialRulesAsString() {
+        StringBuilder str = new StringBuilder();
+        for (SpatialRule rule : spatialRuleLookup.getRules()) {
+            if (str.length() > 0)
+                str.append(",");
+
+            str.append(rule.getId());
         }
 
         return str.toString();
@@ -796,6 +830,11 @@ public class EncodingManager implements EncodedValueLookup {
         if (ev == null)
             throw new IllegalArgumentException("Cannot find EncodedValue " + key + " in collection: " + ev);
         return (T) ev;
+    }
+    
+    @Override
+    public SpatialRuleLookup getSpatialRuleLookup() {
+        return spatialRuleLookup;
     }
 
     private static final String SPECIAL_SEPARATOR = ".";

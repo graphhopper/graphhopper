@@ -40,6 +40,7 @@ import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupJTS;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
@@ -561,6 +562,8 @@ public class GraphHopper implements GraphHopperAPI {
             emBuilder.setEnableInstructions(ghConfig.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", ""));
             emBuilder.setDateRangeParser(DateRangeParser.createInstance(ghConfig.getString("datareader.date_range_parser_day", "")));
+            if (!ghConfig.getSpatialRules().isEmpty())
+                emBuilder.setSpatialRuleLookup(new SpatialRuleLookupJTS(ghConfig.getSpatialRules()));
             return emBuilder.build();
         }
     }

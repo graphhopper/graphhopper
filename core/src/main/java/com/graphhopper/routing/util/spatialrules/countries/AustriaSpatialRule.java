@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.locationtech.jts.geom.Polygon;
 
-import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
@@ -33,6 +32,8 @@ import com.graphhopper.routing.util.TransportationMode;
  * @author Robin Boldt
  */
 public class AustriaSpatialRule extends AbstractSpatialRule {
+    
+    public static final String ID = "aut";
 
     public AustriaSpatialRule(List<Polygon> borders) {
         super(borders);
@@ -94,6 +95,6 @@ public class AustriaSpatialRule extends AbstractSpatialRule {
 
     @Override
     public String getId() {
-        return Country.AUT.toString();
+        return ID;
     }
 }

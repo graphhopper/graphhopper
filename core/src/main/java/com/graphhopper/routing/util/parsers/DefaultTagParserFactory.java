@@ -29,7 +29,6 @@ public class DefaultTagParserFactory implements TagParserFactory {
         if (!name.equals(toLowerCase(name)))
             throw new IllegalArgumentException("Use lower case for TagParsers: " + name);
 
-        // for Country (SpatialRuleParser) see SpatialRuleLookupHelper
         if (Roundabout.KEY.equals(name))
             return new OSMRoundaboutParser();
         else if (name.equals(RoadClass.KEY))
@@ -70,9 +69,10 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHikeRatingParser();
         else if (name.equals(HorseRating.KEY))
             return new OSMHorseRatingParser();
-        else if (name.equals(Country.KEY))
-            throw new IllegalArgumentException("The property spatial_rules.borders_directory is required in the configuration " +
-                    "when using 'country' in encoded_values");
+        else if (name.equals(SpatialRuleId.KEY))
+            return new SpatialRuleParser();
+        else if (name.equals("country"))
+            throw new IllegalArgumentException("country has been replaced by " + SpatialRuleId.KEY);
 
         throw new IllegalArgumentException("entry in encoder list not supported " + name);
     }

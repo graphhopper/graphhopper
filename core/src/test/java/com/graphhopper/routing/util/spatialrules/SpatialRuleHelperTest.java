@@ -51,10 +51,10 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Robin Boldt
  */
-public class SpatialRuleLookupBuilderTest {
+public class SpatialRuleHelperTest {
 
     private static final String COUNTRIES_FILE = "../core/files/spatialrules/countries.geojson";
-
+    
     private static SpatialRuleLookup createLookup() throws IOException {
         return createLookup(new Envelope(-180, 180, -90, 90));
     }
@@ -63,7 +63,8 @@ public class SpatialRuleLookupBuilderTest {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
         List<JsonFeatureCollection> feats = Collections.singletonList(
                         Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class));
-        return SpatialRuleLookupBuilder.buildIndex(feats, "ISO3166-1:alpha3", new CountriesSpatialRuleFactory());
+        List<SpatialRule> rules = SpatialRuleHelper.buildSpatialRules(feats, "ADM0_A3", new CountriesSpatialRuleFactory(), maxBounds);
+        return new SpatialRuleLookupJTS(rules);
     }
 
     @Test
@@ -93,9 +94,7 @@ public class SpatialRuleLookupBuilderTest {
 
     @Test
     public void testBounds() throws IOException {
-        final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3", new CountriesSpatialRuleFactory());
+        SpatialRuleLookup spatialRuleLookup = createLookup();
         Envelope almostWorldWide = new Envelope(-179, 179, -89, 89);
 
         // Might fail if a polygon is defined outside the above coordinates
@@ -108,20 +107,14 @@ public class SpatialRuleLookupBuilderTest {
          We are creating a BBox smaller than Germany. We have the German Spatial rule activated by default.
          So the BBox should not contain a Point lying somewhere close in Germany.
         */
-        final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3",
-                new CountriesSpatialRuleFactory(), new Envelope(9, 10, 51, 52));
+        SpatialRuleLookup spatialRuleLookup = createLookup(new Envelope(9, 10, 51, 52));
         assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
     }
 
     @Test
     public void testNoIntersection() throws IOException {
-        final FileReader reader = new FileReader(COUNTRIES_FILE);
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Collections.singletonList(
-                Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class)), "ISO3166-1:alpha3",
-                new CountriesSpatialRuleFactory(), new Envelope(-180, -179, -90, -89));
-        assertEquals(SpatialRuleLookup.EMPTY, spatialRuleLookup);
+        SpatialRuleLookup spatialRuleLookup = createLookup(new Envelope(-180, -179, -90, -89));
+        assertTrue(spatialRuleLookup.getRules().isEmpty());
     }
 
 
@@ -154,8 +147,9 @@ public class SpatialRuleLookupBuilderTest {
             }
         };
 
-        EncodingManager em = new EncodingManager.Builder().add(new SpatialRuleParser(index, Country.create())).add(new CarFlagEncoder(new PMap())).build();
-        IntEncodedValue countrySpatialIdEnc = em.getIntEncodedValue(Country.KEY);
+        EncodingManager em = new EncodingManager.Builder().setSpatialRuleLookup(index)
+                        .add(new SpatialRuleParser()).add(new CarFlagEncoder(new PMap())).build();
+        IntEncodedValue spatialRuleIdEnc = em.getIntEncodedValue(SpatialRuleId.KEY);
         EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
 
@@ -184,8 +178,8 @@ public class SpatialRuleLookupBuilderTest {
         e2.setFlags(em.handleWayTags(way2, map, relFlags));
         assertEquals(RoadAccess.YES, e2.get(tmpRoadAccessEnc));
 
-        assertEquals(index.getRules().indexOf(germany), e1.get(countrySpatialIdEnc)-1);
-        assertEquals(0, e2.get(countrySpatialIdEnc));
+        assertEquals(index.getRules().indexOf(germany), e1.get(spatialRuleIdEnc)-1);
+        assertEquals(0, e2.get(spatialRuleIdEnc));
 
         ReaderWay livingStreet = new ReaderWay(29L);
         livingStreet.setTag("highway", "living_street");

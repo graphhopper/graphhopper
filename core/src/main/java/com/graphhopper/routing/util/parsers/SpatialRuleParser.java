@@ -21,10 +21,9 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.ev.SpatialRuleId;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleSet;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.List;
 
@@ -33,27 +32,18 @@ import java.util.List;
  */
 public class SpatialRuleParser implements TagParser {
 
-    private final IntEncodedValue spatialRuleEnc;
-    private SpatialRuleLookup spatialRuleLookup;
-
-    public SpatialRuleParser(SpatialRuleLookup spatialRuleLookup, IntEncodedValue spatialRuleEnc) {
-        this.spatialRuleLookup = spatialRuleLookup;
-        if (spatialRuleEnc == null)
-            throw new IllegalStateException("SpatialRuleLookup was not initialized before building the EncodingManager");
-        this.spatialRuleEnc = spatialRuleEnc;
-    }
+    private IntEncodedValue spatialRuleEnc;
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
+        this.spatialRuleEnc = SpatialRuleId.create(lookup.getSpatialRuleLookup().getRules().size());
         registerNewEncodedValue.add(spatialRuleEnc);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        GHPoint estimatedCenter = way.getTag("estimated_center", null);
-        if (estimatedCenter != null) {
-            SpatialRuleSet ruleSet = spatialRuleLookup.lookupRules(estimatedCenter.lat, estimatedCenter.lon);
-            way.setTag("spatial_rule_set", ruleSet);
+        SpatialRuleSet ruleSet = way.getTag("spatial_rule_set", SpatialRuleSet.EMPTY);
+        if (ruleSet != SpatialRuleSet.EMPTY) {
             spatialRuleEnc.setInt(false, edgeFlags, ruleSet.getSpatialId());
         }
         return edgeFlags;

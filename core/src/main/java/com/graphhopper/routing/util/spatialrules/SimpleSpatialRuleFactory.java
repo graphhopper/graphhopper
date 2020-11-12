@@ -15,40 +15,32 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
+package com.graphhopper.routing.util.spatialrules;
 
-/**
- * This enum defines a country value that can be stored per edge.
- */
-public enum Country {
-    DEFAULT("default"), DEU("deu"), AUT("aut");
-    public static final String KEY = "country";
+import java.util.List;
 
-    private final String name;
+import org.locationtech.jts.geom.Polygon;
 
-    Country(String name) {
-        this.name = name;
-    }
 
-    public static EnumEncodedValue<Country> create() {
-        return new EnumEncodedValue<>(Country.KEY, Country.class);
-    }
-    
-    public static Country find(String name) {
-        if (name == null || name.isEmpty())
-            return DEFAULT;
-        
-        for (Country country : values()) {
-            if (country.name.equalsIgnoreCase(name)) {
-                return country;
-            }
-        }
-        
-        return DEFAULT;
-    }
+public final class SimpleSpatialRuleFactory implements SpatialRuleFactory {
 
     @Override
-    public String toString() {
-        return name;
+    public SpatialRule createSpatialRule(String id, List<Polygon> borders) {
+        return new SimpleSpatialRule(id, borders);
+    }
+
+    private static class SimpleSpatialRule extends AbstractSpatialRule {
+        
+        private final String id;
+
+        public SimpleSpatialRule(String id, List<Polygon> borders) {
+            super(borders);
+            this.id = id;
+        }
+        
+        @Override
+        public String getId() {
+            return id;
+        }
     }
 }

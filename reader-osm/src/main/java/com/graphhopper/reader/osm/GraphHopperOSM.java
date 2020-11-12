@@ -21,16 +21,17 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
+import com.graphhopper.routing.util.spatialrules.SimpleSpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleHelper;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupJTS;
 import com.graphhopper.storage.GraphHopperStorage;
 import org.locationtech.jts.geom.Polygon;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class is the simplified entry to all functionality if you import from OpenStreetMap data.
@@ -74,20 +75,9 @@ public class GraphHopperOSM extends GraphHopper {
             return;
 
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(
-                    Collections.singletonList(landmarkSplittingFeatureCollection), "area",
-                    new SpatialRuleFactory() {
-                        @Override
-                        public SpatialRule createSpatialRule(final String id,
-                                        List<Polygon> polygons) {
-                            return new AbstractSpatialRule(polygons) {
-                                @Override
-                                public String getId() {
-                                    return id;
-                                }
-                            };
-                        }
-                    });
+            List<SpatialRule> rules = SpatialRuleHelper.buildSpatialRules(Collections.singletonList(landmarkSplittingFeatureCollection), "area",
+                            new SimpleSpatialRuleFactory());
+            SpatialRuleLookup ruleLookup = new SpatialRuleLookupJTS(rules);
             for (PrepareLandmarks prep : getLMPreparationHandler().getPreparations()) {
                 // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
                 if (ruleLookup != null && !ruleLookup.getRules().isEmpty()) {

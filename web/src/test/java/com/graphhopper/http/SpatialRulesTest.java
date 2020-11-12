@@ -49,11 +49,9 @@ public class SpatialRulesTest {
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
-        // The EncodedValue "country" requires the setting "spatial_rules.borders_directory" as "country" does not load via DefaultTagParserFactory
-        // TODO should we automatically detect this somehow and include a default country file?
         config.getGraphHopperConfiguration().
                 putObject("graph.flag_encoders", "car").
-                putObject("graph.encoded_values", "country,road_environment,road_class,road_access,max_speed").
+                putObject("graph.encoded_values", "spatial_rule,road_environment,road_class,road_access,max_speed").
                 putObject("spatial_rules.borders_directory", "../core/files/spatialrules").
                 putObject("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").

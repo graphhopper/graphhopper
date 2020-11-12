@@ -193,6 +193,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
         properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
+        properties.put("graph.spatial_rules", encodingManager.toSpatialRulesAsString());
 
         properties.put("graph.byte_order", dir.getByteOrder());
         properties.put("graph.dimension", baseGraph.nodeAccess.getDimension());
@@ -246,6 +247,14 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                         + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
 
+            String spatialRulesStr = properties.get("graph.spatial_rules");
+            if (!encodingManager.toSpatialRulesAsString().equalsIgnoreCase(spatialRulesStr)) {
+                throw new IllegalStateException("Spatial rules do not match:"
+                        + "\nGraphhopper config: " + encodingManager.toSpatialRulesAsString()
+                        + "\nGraph: " + spatialRulesStr
+                        + "\nChange configuration to match the graph or delete " + dir.getLocation());
+            }
+            
             String byteOrder = properties.get("graph.byte_order");
             if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
                 throw new IllegalStateException("Configured graph.byte_order (" + dir.getByteOrder() + ") is not equal to loaded " + byteOrder + "");

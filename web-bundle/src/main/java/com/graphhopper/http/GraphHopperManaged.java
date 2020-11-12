@@ -30,7 +30,9 @@ import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.CustomModel;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
+import com.graphhopper.routing.util.spatialrules.CountriesSpatialRuleFactory;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleHelper;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.Parameters;
@@ -90,7 +92,13 @@ public class GraphHopperManaged implements Managed {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            SpatialRuleLookupHelper.buildAndInjectCountrySpatialRules(graphHopper, maxBounds, jsonFeatureCollections);
+            List<SpatialRule> spatialRules = SpatialRuleHelper.buildSpatialRules(
+                            jsonFeatureCollections, "ISO3166-1:alpha3", new CountriesSpatialRuleFactory(),
+                            maxBounds);
+            if (!spatialRules.isEmpty()) {
+                logger.info("Loaded the following spatial rules: {}", spatialRules);
+                configuration.setSpatialRules(spatialRules);
+            }
         }
 
         ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));

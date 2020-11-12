@@ -25,6 +25,7 @@ import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -425,6 +426,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     @Override
     public <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType) {
         return encodedValueLookup.getEnumEncodedValue(key, enumType);
+    }
+    
+    @Override
+    public SpatialRuleLookup getSpatialRuleLookup() {
+        return encodedValueLookup.getSpatialRuleLookup();
     }
 
     public void setEncodedValueLookup(EncodedValueLookup encodedValueLookup) {

@@ -19,6 +19,8 @@ package com.graphhopper.routing.ev;
 
 import java.util.List;
 
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+
 public interface EncodedValueLookup {
 
     List<EncodedValue> getAllShared();
@@ -34,4 +36,6 @@ public interface EncodedValueLookup {
     <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType);
 
     boolean hasEncodedValue(String key);
+    
+    SpatialRuleLookup getSpatialRuleLookup();
 }
