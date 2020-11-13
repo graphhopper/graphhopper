@@ -72,8 +72,9 @@ public class Examples {
     public void matrix() {
         // Hint: create this thread safe instance only once in your application to allow the underlying library to cache the costly initial https handshake
         GraphHopperMatrixWeb matrixClient = new GraphHopperMatrixWeb();
+        // for very large matrices you need:
+        // GraphHopperMatrixWeb matrixClient = new GraphHopperMatrixWeb(new GHMatrixBatchRequester());
         matrixClient.setKey(apiKey);
-GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb(new GHMatrixSyncRequester());
 
         GHMRequest ghmRequest = new GHMRequest();
         ghmRequest.addOutArray("distances");
