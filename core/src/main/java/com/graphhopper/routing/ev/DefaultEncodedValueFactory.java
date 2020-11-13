@@ -20,17 +20,20 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.util.Helper;
 
 public class DefaultEncodedValueFactory implements EncodedValueFactory {
+    
+    private static final String EV_SEPARATOR_REGEX = "\\|";
+    private static final String BIT_SIZE_PREFIX = "bits=";
+    
     @Override
     public EncodedValue create(String string) {
         if (Helper.isEmpty(string))
             throw new IllegalArgumentException("No string provided to load EncodedValue");
 
         final EncodedValue enc;
-        String name = string.split("\\|")[0];
+        String name = string.split(EV_SEPARATOR_REGEX)[0];
         if (name.isEmpty())
             throw new IllegalArgumentException("To load EncodedValue a name is required. " + string);
 
-        // creating the Country EV is done while SpatialRuleIndex is created and not here
         if (Roundabout.KEY.equals(name)) {
             enc = Roundabout.create();
         } else if (GetOffBike.KEY.equals(name)) {
@@ -69,9 +72,21 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
         } else if (HazmatWater.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
+        } else if (SpatialRuleId.KEY.equals(name)) {
+            int bits = getBitSize(string);
+            enc = SpatialRuleId.createBits(bits);
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }
         return enc;
+    }
+    
+    private int getBitSize(String string) {
+        for (String field : string.split(EV_SEPARATOR_REGEX)) {
+            if (field.startsWith(BIT_SIZE_PREFIX)) {
+                return Integer.parseInt(field.substring(BIT_SIZE_PREFIX.length()));
+            }
+        }
+        throw new IllegalArgumentException("EncodedValue doesn't provide bit size. " + string);
     }
 }
