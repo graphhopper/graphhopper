@@ -28,6 +28,8 @@ import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
@@ -44,6 +46,9 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Polygon;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,6 +69,7 @@ public class GraphHopperOSMTest {
     private static final String testOsm = "./src/test/resources/com/graphhopper/reader/osm/test-osm.xml";
     private static final String testOsm3 = "./src/test/resources/com/graphhopper/reader/osm/test-osm3.xml";
     private static final String testOsm8 = "./src/test/resources/com/graphhopper/reader/osm/test-osm8.xml";
+    private static final GeometryFactory FAC = new GeometryFactory();
     private GraphHopper instance;
 
     @Before
@@ -592,6 +598,66 @@ public class GraphHopperOSMTest {
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoded values do not match"));
         }
+    }
+    
+    @Test
+    public void testFailForWrongSpatialRules() {
+        Polygon deBorder = FAC.createPolygon(new Coordinate[] { new Coordinate(1, 1), new Coordinate(2, 1), new Coordinate(2, 2), new Coordinate(1, 2), new Coordinate(1, 1) });
+        SpatialRule germany = new AbstractSpatialRule(deBorder) {
+            @Override
+            public String getId() {
+                return "DEU";
+            }
+        };
+        
+        Polygon atBorder = FAC.createPolygon(new Coordinate[] { new Coordinate(5, 5), new Coordinate(6, 5), new Coordinate(6, 6), new Coordinate(5, 6), new Coordinate(5, 5) });
+        SpatialRule austria = new AbstractSpatialRule(atBorder) {
+            @Override
+            public String getId() {
+                return "AUT";
+            }
+        };
+        
+        Polygon frBorder = FAC.createPolygon(new Coordinate[] { new Coordinate(2, 2), new Coordinate(3, 2), new Coordinate(3, 3), new Coordinate(2, 3), new Coordinate(2, 2) });
+        SpatialRule france = new AbstractSpatialRule(frBorder) {
+            @Override
+            public String getId() {
+                return "FRA";
+            }
+        };
+        
+        instance = new GraphHopperOSM().init(
+                        new GraphHopperConfig().
+                                putObject("datareader.file", testOsm3).
+                                putObject("datareader.dataaccess", "RAM").
+                                putObject("graph.flag_encoders", "foot,car").
+                                setSpatialRules(Arrays.asList(germany, austria))).
+                        setProfiles(Arrays.asList(
+                                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                                new Profile("car").setVehicle("car").setWeighting("fastest")
+                        )).
+                        setGraphHopperLocation(ghLoc);
+                instance.importOrLoad();
+                instance.close();
+
+                // different spatial rules should fail to load
+                instance = new GraphHopperOSM().init(
+                        new GraphHopperConfig().
+                                putObject("datareader.file", testOsm3).
+                                putObject("datareader.dataaccess", "RAM").
+                                putObject("graph.flag_encoders", "foot,car").
+                                setSpatialRules(Arrays.asList(germany, austria, france))).
+                        setProfiles(Arrays.asList(
+                                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
+                                new Profile("car").setVehicle("car").setWeighting("fastest")
+                        )).
+                        setDataReaderFile(testOsm3);
+                try {
+                    instance.load(ghLoc);
+                    fail();
+                } catch (Exception ex) {
+                    assertTrue(ex.getMessage(), ex.getMessage().startsWith("Spatial rules do not match"));
+                }
     }
 
     @Test
