@@ -101,7 +101,7 @@ public class SpatialRuleHelper {
      * @param maxBBox
      * @return the borders partitioned by the selected ID field
      */
-    private static Map<String, List<Polygon>> getBorders(
+    protected static Map<String, List<Polygon>> getBorders(
                     List<JsonFeatureCollection> jsonFeatureCollections, String jsonIdField,
                     Envelope maxBBox) {
         Geometry bboxGeometry = FAC.toGeometry(maxBBox);

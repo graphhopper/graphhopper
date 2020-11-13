@@ -36,12 +36,14 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static junit.framework.TestCase.assertFalse;
@@ -192,5 +194,31 @@ public class SpatialRuleHelperTest {
         livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e4.setFlags(em.handleWayTags(livingStreet2, map, relFlags));
         assertEquals(MaxSpeed.UNSET_SPEED, e4.get(tmpCarMaxSpeedEnc), .1);
+    }
+    
+    @Test
+    public void testBorderBBox() throws IOException {
+        final FileReader reader = new FileReader(COUNTRIES_FILE);
+        List<JsonFeatureCollection> feats = Collections.singletonList(
+                        Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class));
+        Envelope aroundSanMarino = new Envelope(11.3, 13.5, 43.3, 44.4);
+        
+        Map<String, List<Polygon>> borderMap = SpatialRuleHelper.getBorders(feats, "ADM0_A3", aroundSanMarino);
+        assertEquals(2, borderMap.size());
+        assertTrue(borderMap.containsKey("ita"));
+        assertFalse(borderMap.get("ita").isEmpty());
+        assertTrue(borderMap.containsKey("smr"));
+        assertFalse(borderMap.get("smr").isEmpty());
+        
+        Point sanMarinoCenter = new GeometryFactory().createPoint(new Coordinate(43.93, 12.45));
+        assertFalse("Italian border should not cover San Marino", borderMap.get("ita").get(0).contains(sanMarinoCenter));
+        
+        Envelope mergedBBox = new Envelope();
+        for (List<Polygon> ruleBorders : borderMap.values()) {
+            for (Polygon ruleBorder : ruleBorders) {
+                mergedBBox.expandToInclude(ruleBorder.getEnvelopeInternal());
+            }
+        }
+        assertTrue("Border polygons should be limited by max bbox", aroundSanMarino.covers(mergedBBox));
     }
 }
