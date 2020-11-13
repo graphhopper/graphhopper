@@ -6,6 +6,8 @@ import com.google.gson.JsonParser;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.farmy.*;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -21,13 +23,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-@Path("optimize-route")
-public class OptimizeRouteResource {
+
+@Path("optimize-routes")
+public class OptimizeRoutesResource {
+
+    private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
     private final GraphHopperAPI graphHopperAPI;
 
     @Inject
-    public OptimizeRouteResource(GraphHopperAPI graphHopperAPI) {
+    public OptimizeRoutesResource(GraphHopperAPI graphHopperAPI) {
         this.graphHopperAPI = graphHopperAPI;
     }
 
@@ -48,9 +53,9 @@ public class OptimizeRouteResource {
 
         IdentifiedGHPoint3D depotPoint = new IdentifiedGHPoint3D(mapper.readValue(depotPointStr, ArrayList.class), "Depot");
 
-        SingleRouteOptimizer routeOptimizer;
+        RouteOptimizer routeOptimizer;
         try {
-            routeOptimizer = new SingleRouteOptimizer(this.graphHopperAPI, farmyOrders, farmyVehicles, depotPoint);
+            routeOptimizer = new RouteOptimizer(this.graphHopperAPI, farmyOrders, farmyVehicles, depotPoint);
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().build();
@@ -89,4 +94,6 @@ public class OptimizeRouteResource {
         }
         return Response.ok().entity(routeOptimizer.getOptimizedRoutes().toString()).build();
     }
+
+
 }

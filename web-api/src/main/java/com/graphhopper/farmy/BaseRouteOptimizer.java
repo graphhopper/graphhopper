@@ -9,10 +9,14 @@ import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.analysis.SolutionAnalyser;
 import com.graphhopper.jsprit.core.problem.Location;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
-import com.graphhopper.jsprit.core.problem.job.*;
+import com.graphhopper.jsprit.core.problem.job.Delivery;
+import com.graphhopper.jsprit.core.problem.job.Job;
+import com.graphhopper.jsprit.core.problem.job.Service;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
-import com.graphhopper.jsprit.core.problem.solution.route.activity.*;
+import com.graphhopper.jsprit.core.problem.solution.route.activity.DeliverService;
+import com.graphhopper.jsprit.core.problem.solution.route.activity.PickupService;
+import com.graphhopper.jsprit.core.problem.solution.route.activity.TourActivity;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleType;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleTypeImpl;
@@ -21,27 +25,26 @@ import com.graphhopper.jsprit.core.util.Solutions;
 import com.graphhopper.jsprit.core.util.UnassignedJobReasonTracker;
 import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class RouteOptimize {
+public class BaseRouteOptimizer {
 
     private VehicleRoutingProblemSolution solution;
     private IdentifiedPointList pointList;
     private final GraphHopperAPI graphHopper;
-    private IdentifiedGHPoint3D depotPoint;
-    private RoutePlanReader routePlanReader;
+    private final IdentifiedGHPoint3D depotPoint;
     private UnassignedJobReasonTracker reasonTracker;
     private SolutionAnalyser analyser;
+    private VehicleRoutingTransportCostsMatrix vrtcm;
+    private final List<Double> speedAvg = new ArrayList<>();
 
-    public VehicleRoutingTransportCostsMatrix vrtcm;
-
-    public List<Double> speedAvg = new ArrayList<>();
-
-    public RouteOptimize(GraphHopperAPI graphHopper, FarmyOrder[] farmyOrders, FarmyVehicle[] farmyVehicles, IdentifiedGHPoint3D depotPoint) throws Exception {
+    public BaseRouteOptimizer(GraphHopperAPI graphHopper, FarmyOrder[] farmyOrders, FarmyVehicle[] farmyVehicles, IdentifiedGHPoint3D depotPoint) throws Exception {
         this.graphHopper = graphHopper;
-        this.routePlanReader = new RoutePlanReader(farmyOrders);
+        RoutePlanReader routePlanReader = new RoutePlanReader(farmyOrders);
         this.depotPoint = depotPoint;
-        build(this.routePlanReader.getIdentifiedPointList(), farmyVehicles);
+        build(routePlanReader.getIdentifiedPointList(), farmyVehicles);
     }
 
     public JsonObject getOptimizedRoutes() {
@@ -133,7 +136,6 @@ public class RouteOptimize {
     public GraphHopperAPI getGraphHopper() {
         return graphHopper;
     }
-
 
     private void build(IdentifiedPointList pointList, FarmyVehicle[] farmyVehicles) throws Exception {
 
