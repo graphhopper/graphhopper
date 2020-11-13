@@ -271,77 +271,6 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(IntArrayList.from(4, 5, 6, 7), p.calcNodes());
     }
 
-    private void initUnpackingGraph(GraphHopperStorage g, CHGraph lg, Weighting w) {
-        final IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        carEncoder.getAccessEnc().setBool(false, edgeFlags, true);
-        carEncoder.getAccessEnc().setBool(true, edgeFlags, false);
-        carEncoder.getAverageSpeedEnc().setDecimal(false, edgeFlags, 30.0);
-        double dist = 1;
-        g.edge(10, 0).setDistance(dist).setFlags(edgeFlags);
-        EdgeIteratorState edgeState01 = g.edge(0, 1);
-        edgeState01.setDistance(dist).setFlags(edgeFlags);
-        EdgeIteratorState edgeState12 = g.edge(1, 2).setDistance(dist).setFlags(edgeFlags);
-        EdgeIteratorState edgeState23 = g.edge(2, 3).setDistance(dist).setFlags(edgeFlags);
-        EdgeIteratorState edgeState34 = g.edge(3, 4).setDistance(dist).setFlags(edgeFlags);
-        EdgeIteratorState edgeState45 = g.edge(4, 5).setDistance(dist).setFlags(edgeFlags);
-        EdgeIteratorState edgeState56 = g.edge(5, 6).setDistance(dist).setFlags(edgeFlags);
-        int oneDirFlags = PrepareEncoder.getScFwdDir();
-
-        int tmpEdgeId = edgeState01.getEdge();
-        g.freeze();
-        double weight = w.calcEdgeWeight(edgeState01, false) + w.calcEdgeWeight(edgeState12, false);
-        int sc0_2 = lg.shortcut(0, 2, oneDirFlags, w.calcEdgeWeight(edgeState01, false) + w.calcEdgeWeight(edgeState12, false), tmpEdgeId, edgeState12.getEdge());
-
-        tmpEdgeId = sc0_2;
-        weight += w.calcEdgeWeight(edgeState23, false);
-        int sc0_3 = lg.shortcut(0, 3, oneDirFlags, weight, tmpEdgeId, edgeState23.getEdge());
-
-        tmpEdgeId = sc0_3;
-        weight += w.calcEdgeWeight(edgeState34, false);
-        int sc0_4 = lg.shortcut(0, 4, oneDirFlags, weight, tmpEdgeId, edgeState34.getEdge());
-
-        tmpEdgeId = sc0_4;
-        weight += w.calcEdgeWeight(edgeState45, false);
-        int sc0_5 = lg.shortcut(0, 5, oneDirFlags, weight, tmpEdgeId, edgeState45.getEdge());
-
-        tmpEdgeId = sc0_5;
-        weight += w.calcEdgeWeight(edgeState56, false);
-        int sc0_6 = lg.shortcut(0, 6, oneDirFlags, weight, tmpEdgeId, edgeState56.getEdge());
-
-        lg.setLevel(0, 10);
-        lg.setLevel(6, 9);
-        lg.setLevel(5, 8);
-        lg.setLevel(4, 7);
-        lg.setLevel(3, 6);
-        lg.setLevel(2, 5);
-        lg.setLevel(1, 4);
-        lg.setLevel(10, 3);
-    }
-
-    @Test
-    public void testUnpackingOrder() {
-        initUnpackingGraph(g, lg, weighting);
-        createPrepareContractionHierarchies(g);
-        // do not call prepare.doWork() here
-        RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap());
-        Path p = algo.calcPath(10, 6);
-        assertEquals(7, p.getDistance(), 1e-5);
-        assertEquals(IntArrayList.from(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
-    }
-
-    @Test
-    public void testUnpackingOrder_Fastest() {
-        Weighting w = new FastestWeighting(carEncoder);
-        initUnpackingGraph(g, lg, w);
-
-        createPrepareContractionHierarchies(g);
-        // do not call prepare.doWork() here
-        RoutingAlgorithm algo = new CHRoutingAlgorithmFactory(routingCHGraph).createAlgo(new PMap());
-        Path p = algo.calcPath(10, 6);
-        assertEquals(7, p.getDistance(), 1e-1);
-        assertEquals(IntArrayList.from(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
-    }
-
     @Test
     public void testDisconnects() {
         //            4
@@ -364,17 +293,7 @@ public class PrepareContractionHierarchiesTest {
         g.freeze();
 
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g)
-                .useFixedNodeOrdering(new NodeOrderingProvider() {
-                    @Override
-                    public int getNodeIdForLevel(int level) {
-                        return level;
-                    }
-
-                    @Override
-                    public int getNumNodes() {
-                        return g.getNodes();
-                    }
-                });
+                .useFixedNodeOrdering(NodeOrderingProvider.identity(g.getNodes()));
         prepare.doWork();
         CHEdgeExplorer explorer = lg.createEdgeExplorer();
         // shortcuts (and edges) leading to or coming from lower level nodes should be disconnected
@@ -452,17 +371,7 @@ public class PrepareContractionHierarchiesTest {
 
         // prepare ch, use node ids as levels
         PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, chConfig);
-        pch.useFixedNodeOrdering(new NodeOrderingProvider() {
-            @Override
-            public int getNodeIdForLevel(int level) {
-                return level;
-            }
-
-            @Override
-            public int getNumNodes() {
-                return g.getNodes();
-            }
-        }).doWork();
+        pch.useFixedNodeOrdering(NodeOrderingProvider.identity(g.getNodes())).doWork();
         assertEquals("there should be exactly two (bidirectional) shortcuts (2-3) and (3-4)", 2, lg.getEdges() - lg.getOriginalEdges());
 
         // insert virtual node and edges
@@ -673,17 +582,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     private void useNodeOrdering(PrepareContractionHierarchies prepare, int[] nodeOrdering) {
-        prepare.useFixedNodeOrdering(new NodeOrderingProvider() {
-            @Override
-            public int getNodeIdForLevel(int level) {
-                return nodeOrdering[level];
-            }
-
-            @Override
-            public int getNumNodes() {
-                return nodeOrdering.length;
-            }
-        });
+        prepare.useFixedNodeOrdering(NodeOrderingProvider.fromArray(nodeOrdering));
     }
 
 }

@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -29,7 +28,6 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
@@ -49,57 +47,14 @@ public class DijkstraBidirectionCHTest {
 
     private final EncodingManager encodingManager;
     private final FlagEncoder carEncoder;
-    private final FlagEncoder footEncoder;
     private final FlagEncoder bike2Encoder;
     private final FlagEncoder motorCycleEncoder;
 
     public DijkstraBidirectionCHTest() {
         encodingManager = EncodingManager.create("car,foot,bike2,motorcycle");
         carEncoder = encodingManager.getEncoder("car");
-        footEncoder = encodingManager.getEncoder("foot");
         bike2Encoder = encodingManager.getEncoder("bike2");
         motorCycleEncoder = encodingManager.getEncoder("motorcycle");
-    }
-
-    @Test
-    public void testPathRecursiveUnpacking() {
-        // use an encoder where it is possible to store 2 weights per edge        
-        ShortestWeighting weighting = new ShortestWeighting(bike2Encoder);
-        GraphHopperStorage g = createGHStorage(weighting);
-        g.edge(0, 1, 1, true);
-        EdgeIteratorState iter1_1 = g.edge(0, 2, 1.4, false);
-        EdgeIteratorState iter1_2 = g.edge(2, 5, 1.4, false);
-        g.edge(1, 2, 1, true);
-        g.edge(1, 3, 3, true);
-        g.edge(2, 3, 1, true);
-        g.edge(4, 3, 1, true);
-        g.edge(2, 5, 1.4, true);
-        g.edge(3, 5, 1, true);
-        g.edge(5, 6, 1, true);
-        g.edge(4, 6, 1, true);
-        g.edge(6, 7, 1, true);
-        EdgeIteratorState iter2_2 = g.edge(5, 7);
-        iter2_2.setDistance(1.4).setFlags(GHUtility.setProperties(encodingManager.createEdgeFlags(), bike2Encoder, 10, true, false));
-        g.freeze();
-
-        CHGraph lg = g.getCHGraph();
-        // simulate preparation
-        int sc2_1 = lg.shortcut(0, 5, PrepareEncoder.getScFwdDir(), 1, iter1_1.getEdge(), iter1_2.getEdge());
-        lg.shortcut(0, 7, PrepareEncoder.getScFwdDir(), 1, sc2_1, iter2_2.getEdge());
-        lg.setLevel(1, 0);
-        lg.setLevel(3, 1);
-        lg.setLevel(4, 2);
-        lg.setLevel(6, 3);
-        lg.setLevel(2, 4);
-        lg.setLevel(5, 5);
-        lg.setLevel(7, 6);
-        lg.setLevel(0, 7);
-
-        Path p = createCHAlgo(g.getRoutingCHGraph(lg.getCHConfig().getName()), true).calcPath(0, 7);
-
-        assertEquals(IntArrayList.from(0, 2, 5, 7), p.calcNodes());
-        assertEquals(1064, p.getTime());
-        assertEquals(4.2, p.getDistance(), 1e-5);
     }
 
     @Test

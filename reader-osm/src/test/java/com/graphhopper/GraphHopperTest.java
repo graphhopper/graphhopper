@@ -1087,16 +1087,14 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors());
         ResponsePath res = rsp.getBest();
         assertEquals(6932.2, res.getDistance(), .1);
-        assertEquals(104, res.getPoints().getSize());
+        assertEquals(103, res.getPoints().getSize());
 
         InstructionList il = res.getInstructions();
-        assertEquals(21, il.size());
+        assertEquals(19, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
-        assertEquals("get off the bike", il.get(0).getAnnotation().getMessage());
         assertEquals(69.28, (Double) il.get(0).getExtraInfoJSON().get("heading"), .01);
         assertEquals("turn left onto Kirchengasse", il.get(1).getTurnDescription(tr));
-        assertEquals("get off the bike", il.get(1).getAnnotation().getMessage());
 
         assertEquals("turn right onto Pfarrplatz", il.get(2).getTurnDescription(tr));
         assertEquals("turn right onto Margarethenstraße", il.get(3).getTurnDescription(tr));
@@ -1107,8 +1105,7 @@ public class GraphHopperTest {
         assertEquals("keep left onto Austraße", il.get(10).getTurnDescription(tr));
         assertEquals("keep left onto Rechte Kremszeile", il.get(11).getTurnDescription(tr));
         //..
-        assertEquals("turn right onto Treppelweg", il.get(17).getTurnDescription(tr));
-        assertEquals("cycleway", il.get(17).getAnnotation().getMessage());
+        assertEquals("turn right onto Treppelweg", il.get(15).getTurnDescription(tr));
 
         // do not return 'get off bike' for foot
         rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.411172, 15.600371).
@@ -1116,7 +1113,6 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors());
         il = rsp.getBest().getInstructions();
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
-        assertEquals("", il.get(0).getAnnotation().getMessage());
     }
 
     @Test

@@ -23,12 +23,12 @@ package com.graphhopper.util;
 public class ViaInstruction extends Instruction {
     private int viaPosition = -1;
 
-    public ViaInstruction(String name, InstructionAnnotation ia, PointList pl) {
-        super(REACHED_VIA, name, ia, pl);
+    public ViaInstruction(String name, PointList pl) {
+        super(REACHED_VIA, name, pl);
     }
 
     public ViaInstruction(Instruction instr) {
-        this(instr.getName(), instr.getAnnotation(), instr.getPoints());
+        this(instr.getName(), instr.getPoints());
         setDistance(instr.getDistance());
         setTime(instr.getTime());
         this.extraInfo = instr.extraInfo;

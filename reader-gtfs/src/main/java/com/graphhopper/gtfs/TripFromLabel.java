@@ -106,7 +106,7 @@ class TripFromLabel {
                 final PointList pl;
                 if (!ptLeg.isInSameVehicleAsPrevious) {
                     pl = new PointList();
-                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, InstructionAnnotation.EMPTY, pl);
+                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, pl);
                     departureInstruction.setDistance(leg.getDistance());
                     departureInstruction.setTime(ptLeg.travelTime);
                     instructions.add(departureInstruction);
@@ -123,7 +123,7 @@ class TripFromLabel {
                 final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
                 arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
                 pointsList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
-                Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, InstructionAnnotation.EMPTY, arrivalPointList);
+                Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, arrivalPointList);
                 if (ptLeg.isInSameVehicleAsPrevious) {
                     instructions.set(instructions.size() - 1, arrivalInstruction);
                 } else {
@@ -373,7 +373,7 @@ class TripFromLabel {
         } else {
             InstructionList instructions = new InstructionList(tr);
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(graph,
-                    weighting, weighting.getFlagEncoder(), tr, instructions);
+                    weighting, weighting.getFlagEncoder(), instructions);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
                 if (path.get(i).edge.edgeType != GtfsStorage.EdgeType.HIGHWAY) {
