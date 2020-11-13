@@ -148,16 +148,15 @@ public class CHQueryWithTurnCostsTest {
 
         graph.freeze();
 
-        // from contracting node 1
-        addShortcut(4, 3, 3, 4, 3, 4, 2);
-        // from contracting node 2
-        addShortcut(3, 4, 5, 6, 5, 6, 2);
-        // from contracting node 3
-        addShortcut(4, 4, 3, 6, 9, 10, 4);
-        // from contracting node 4
-        addShortcut(8, 4, 2, 6, 2, 11, 5);
-        addShortcut(8, 6, 2, 7, 12, 7, 6);
         setLevelEqualToNodeIdForAllNodes();
+        // from contracting nodes 1&2
+        addShortcut(3, 4, 3, 4, 3, 4, 2, true);
+        addShortcut(3, 4, 5, 6, 5, 6, 2, false);
+        // from contracting node 3
+        addShortcut(4, 4, 3, 6, 9, 10, 4, false);
+        // from contracting node 4
+        addShortcut(4, 8, 2, 6, 2, 11, 5, true);
+        addShortcut(6, 8, 2, 7, 12, 7, 6, true);
 
         testPathCalculation(0, 5, 9, IntArrayList.from(0, 7, 8, 4, 1, 3, 2, 4, 6, 5));
     }
@@ -184,16 +183,15 @@ public class CHQueryWithTurnCostsTest {
         setRestriction(1, 4, 7);
         graph.freeze();
 
-        // from contracting node 1
-        addShortcut(4, 3, 2, 3, 2, 3, 2);
-        // from contracting node 2
-        addShortcut(3, 4, 4, 5, 4, 5, 2);
-        // from contracting node 3
-        addShortcut(4, 4, 2, 5, 9, 10, 4);
-        // from contracting node 4
-        addShortcut(6, 4, 1, 5, 1, 11, 5);
-        addShortcut(6, 7, 1, 6, 12, 6, 6);
         setLevelEqualToNodeIdForAllNodes();
+        // from contracting nodes 1&2
+        addShortcut(3, 4, 2, 3, 2, 3, 2, true);
+        addShortcut(3, 4, 4, 5, 4, 5, 2, false);
+        // from contracting node 3
+        addShortcut(4, 4, 2, 5, 9, 10, 4, false);
+        // from contracting node 4
+        addShortcut(4, 6, 1, 5, 1, 11, 5, true);
+        addShortcut(6, 7, 1, 6, 12, 6, 6, false);
 
         testPathCalculation(5, 0, 9, IntArrayList.from(5, 6, 4, 1, 3, 2, 4, 7, 8, 0));
     }
@@ -214,8 +212,8 @@ public class CHQueryWithTurnCostsTest {
         graph.freeze();
 
         // only when node 0 is contracted a shortcut is added
-        addShortcut(2, 3, 1, 2, 1, 2, 7);
         setLevelEqualToNodeIdForAllNodes();
+        addShortcut(2, 3, 1, 2, 1, 2, 7, false);
 
         // when we are searching a path to the highest level node, the backward search will not expand any edges
         testPathCalculation(1, 4, 11, IntArrayList.from(1, 2, 0, 3, 4), 8);
@@ -231,21 +229,21 @@ public class CHQueryWithTurnCostsTest {
     public void testFindPathWithTurnCosts_directed_single_shortcut_fwdSearchStopsQuickly() {
         //     0
         //    / \
-        // 1-3-s-2-4
-        graph.edge(1, 3, 2, false);
-        graph.edge(3, 0, 3, false);
-        graph.edge(0, 2, 1, false);
-        graph.edge(2, 4, 3, false);
+        // 1-2-s-3-4
+        graph.edge(1, 2, 2, false);
+        graph.edge(2, 0, 3, false);
+        graph.edge(0, 3, 1, false);
+        graph.edge(3, 4, 3, false);
         graph.freeze();
 
-        setTurnCost(1, 3, 0, 2);
-        setTurnCost(0, 2, 4, 4);
+        setTurnCost(1, 2, 0, 2);
+        setTurnCost(0, 3, 4, 4);
 
-        // from contracting node 0
-        addShortcut(3, 2, 1, 2, 1, 2, 4);
         setLevelEqualToNodeIdForAllNodes();
+        // from contracting node 0
+        addShortcut(2, 3, 1, 2, 1, 2, 4, false);
 
-        testPathCalculation(1, 4, 9, IntArrayList.from(1, 3, 0, 2, 4), 6);
+        testPathCalculation(1, 4, 9, IntArrayList.from(1, 2, 0, 3, 4), 6);
     }
 
     @Test
@@ -263,10 +261,10 @@ public class CHQueryWithTurnCostsTest {
         setTurnCost(1, 0, 4, 1);
         graph.freeze();
 
-        // contraction of node 0 and 1 each yield a single shortcut
-        addShortcut(1, 4, 2, 3, 2, 3, 6);
-        addShortcut(3, 4, 1, 3, 1, 4, 10);
         setLevelEqualToNodeIdForAllNodes();
+        // contraction of node 0 and 1 each yield a single shortcut
+        addShortcut(1, 4, 2, 3, 2, 3, 6, false);
+        addShortcut(3, 4, 1, 3, 1, 4, 10, false);
 
         // the turn costs have to be accounted for also when the shortcuts are used
         testPathCalculation(2, 4, 11, IntArrayList.from(2, 3, 1, 0, 4), 8);
@@ -345,8 +343,8 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(0, 3, 14, false);
         graph.edge(3, 2, 9, false);
         graph.freeze();
-        addShortcut(1, 3, 0, 1, 0, 1, 23);
         setLevelEqualToNodeIdForAllNodes();
+        addShortcut(1, 3, 0, 1, 0, 1, 23, false);
         testPathCalculation(0, 2, 23, IntArrayList.from(0, 3, 2));
     }
 
@@ -406,8 +404,12 @@ public class CHQueryWithTurnCostsTest {
         setRestriction(0, 3, nodeB);
 
         // one shortcut when contracting node 3
-        addShortcut(nodeA, nodeB, e3toA.getEdge(), e3toB.getEdge(), e3toA.getEdge(), e3toB.getEdge(), 2);
         setLevelEqualToNodeIdForAllNodes();
+        if (toLowerLevelNode) {
+            addShortcut(nodeB, nodeA, e3toA.getEdge(), e3toB.getEdge(), e3toA.getEdge(), e3toB.getEdge(), 2, true);
+        } else {
+            addShortcut(nodeA, nodeB, e3toA.getEdge(), e3toB.getEdge(), e3toA.getEdge(), e3toB.getEdge(), 2, false);
+        }
 
         // without u-turns the only 'possible' path 0-3-A-3-B-2 is forbidden
         testPathCalculation(0, 2, -1, IntArrayList.from());
@@ -498,9 +500,9 @@ public class CHQueryWithTurnCostsTest {
         setRestriction(edge1, edge4, 2);
         graph.freeze();
 
-        // contracting node 0 yields (the only) shortcut - and its a loop
-        addShortcut(2, 2, edge2.getEdge(), edge3.getEdge(), edge2.getEdge(), edge3.getEdge(), 2);
         setLevelEqualToNodeIdForAllNodes();
+        // contracting node 0 yields (the only) shortcut - and its a loop
+        addShortcut(2, 2, edge2.getEdge(), edge3.getEdge(), edge2.getEdge(), edge3.getEdge(), 2, false);
 
         // node 2 is the bridge node where the forward and backward searches meet (highest level). since there is a turn restriction
         // at node 2 we cannot go from 4 to 1 directly, but we need to take the loop at 2 first. when the backward
@@ -528,11 +530,11 @@ public class CHQueryWithTurnCostsTest {
         setRestriction(3, 4, 2);
         graph.freeze();
 
-        // contracting node 0
-        addShortcut(4, 1, 1, 2, 1, 2, 4);
-        // contracting node 1
-        addShortcut(4, 4, 1, 3, 5, 3, 9);
         setLevelEqualToNodeIdForAllNodes();
+        // contracting node 0
+        addShortcut(1, 4, 1, 2, 1, 2, 4, true);
+        // contracting node 1
+        addShortcut(4, 4, 1, 3, 5, 3, 9, false);
 
         testPathCalculation(3, 2, 15, IntArrayList.from(3, 4, 0, 1, 4, 2));
     }
@@ -573,10 +575,10 @@ public class CHQueryWithTurnCostsTest {
         graph.edge(nodeB, 7, 2, false);
         setRestriction(nodeA, 5, nodeB);
         graph.freeze();
-        addShortcut(3, 5, 4, 5, 4, 5, 3);
-        addShortcut(5, 3, 2, 3, 2, 3, 3);
-        addShortcut(5, 5, 2, 5, 9, 8, 6);
         setLevelEqualToNodeIdForAllNodes();
+        addShortcut(3, 5, 4, 5, 4, 5, 3, false);
+        addShortcut(3, 5, 2, 3, 2, 3, 3, true);
+        addShortcut(5, 5, 2, 5, 9, 8, 6, false);
 
         testPathCalculation(4, 7, 12, IntArrayList.from(4, nodeA, 5, 2, 3, 1, 5, nodeB, 7));
     }
@@ -614,18 +616,17 @@ public class CHQueryWithTurnCostsTest {
         setRestriction(e5to7, e4to7, 7);
         graph.freeze();
 
-        // contracting node 0 and 1
-        addShortcut(6, 1, 2, 0, 2, 0, 6);
-        addShortcut(6, 6, 2, 1, 9, 1, 7);
-        // contracting node 2 and 3
-        addShortcut(6, 3, 3, 4, 3, 4, 8);
-        addShortcut(6, 6, 3, 5, 11, 5, 10);
+        setLevelEqualToNodeIdForAllNodes();
+        // contracting node 0,1,2,3
+        addShortcut(1, 6, 2, 0, 2, 0, 6, true);
+        addShortcut(3, 6, 3, 4, 3, 4, 8, true);
+        addShortcut(6, 6, 2, 1, 9, 1, 7, false);
+        addShortcut(6, 6, 3, 5, 10, 5, 10, false);
         // contracting node 4 and 5 yields no shortcuts
         // contracting node 6 --> three shortcuts to account for double loop (we nest shortcuts inside each other)
-        addShortcut(7, 6, 6, 1, 6, 10, 8);
-        addShortcut(7, 6, 6, 5, 13, 12, 18);
-        addShortcut(7, 7, 6, 6, 14, 6, 19);
-        setLevelEqualToNodeIdForAllNodes();
+        addShortcut(6, 7, 6, 1, 6, 11, 8, true);
+        addShortcut(6, 7, 6, 5, 13, 12, 18, true);
+        addShortcut(7, 7, 6, 6, 14, 6, 19, false);
 
         testPathCalculation(4, 5, 24, IntArrayList.from(4, 7, 6, 0, 1, 6, 2, 3, 6, 7, 5));
         testPathCalculation(5, 4, 24, IntArrayList.from(5, 7, 6, 0, 1, 6, 2, 3, 6, 7, 4));
@@ -656,19 +657,19 @@ public class CHQueryWithTurnCostsTest {
         setRestriction(3, 6, 2);
         graph.freeze();
 
+        setLevelEqualToNodeIdForAllNodes();
         // contracting node 0
-        addShortcut(5, 1, 2, 0, 2, 0, 3);
+        addShortcut(1, 5, 2, 0, 2, 0, 3, true);
         // contracting node 1
-        addShortcut(5, 5, 2, 1, 8, 1, 4);
+        addShortcut(5, 5, 2, 1, 8, 1, 4, false);
         // contracting node 2 & 3 does not yield any shortcuts
         // contracting node 4
-        addShortcut(5, 6, 3, 5, 3, 5, 9);
+        addShortcut(5, 6, 3, 5, 3, 5, 9, false);
         // contracting node 5 --> two shortcuts to account for loop (we nest shortcuts inside each other)
-        addShortcut(6, 5, 4, 1, 4, 9, 7);
-        addShortcut(6, 6, 4, 4, 11, 4, 10);
+        addShortcut(5, 6, 4, 1, 4, 9, 7, true);
+        addShortcut(6, 6, 4, 4, 11, 4, 10, false);
         // contracting node 6 --> no more shortcuts
 
-        setLevelEqualToNodeIdForAllNodes();
 
         List<List<Integer>> distMatrix = Arrays.asList(
                 // -1 if no path is expected
@@ -715,8 +716,9 @@ public class CHQueryWithTurnCostsTest {
                 new DijkstraBidirectionEdgeCHNoSOD(new RoutingCHGraphImpl(chGraph));
     }
 
-    private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {
-        chGraph.shortcutEdgeBased(from, to, PrepareEncoder.getScFwdDir(), weight, skipped1, skipped2, firstOrigEdge, lastOrigEdge);
+    private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight, boolean reverse) {
+        int flags = reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir();
+        chGraph.shortcutEdgeBased(from, to, flags, weight, skipped1, skipped2, firstOrigEdge, lastOrigEdge);
     }
 
     private void setLevelEqualToNodeIdForAllNodes() {
