@@ -28,4 +28,11 @@ public class DefaultEncodedValueFactoryTest {
         BooleanEncodedValue loadedEnc = (BooleanEncodedValue) factory.create(enc.toString());
         assertEquals(loadedEnc, enc);
     }
+
+    @Test
+    public void loadSpatialRuleId() {
+        EncodedValue enc = SpatialRuleId.create(255);
+        IntEncodedValue loadedEnc = (IntEncodedValue) factory.create(enc.toString());
+        assertEquals(loadedEnc, enc);
+    }
 }
