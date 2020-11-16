@@ -31,6 +31,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -44,13 +45,16 @@ import org.locationtech.jts.geom.TopologyException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 /**
@@ -68,7 +72,7 @@ public class SpatialRuleHelperTest {
         final FileReader reader = new FileReader(COUNTRIES_FILE);
         List<JsonFeatureCollection> feats = Collections.singletonList(
                         Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class));
-        List<SpatialRule> rules = SpatialRuleHelper.buildSpatialRules(feats, "ADM0_A3", new CountriesSpatialRuleFactory(), maxBounds);
+        List<SpatialRule> rules = SpatialRuleHelper.buildSpatialRules(feats, "ISO3166-1:alpha3", new CountriesSpatialRuleFactory(), maxBounds);
         return new SpatialRuleLookupJTS(rules);
     }
 
@@ -206,7 +210,7 @@ public class SpatialRuleHelperTest {
                         Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class));
         Envelope aroundSanMarino = new Envelope(11.3, 13.5, 43.3, 44.4);
         
-        Map<String, List<Polygon>> borderMap = SpatialRuleHelper.getBorders(feats, "ADM0_A3", aroundSanMarino);
+        Map<String, List<Polygon>> borderMap = SpatialRuleHelper.getBorders(feats, "ISO3166-1:alpha3", aroundSanMarino);
         assertEquals(2, borderMap.size());
         assertTrue(borderMap.containsKey("ita"));
         assertFalse(borderMap.get("ita").isEmpty());
@@ -232,15 +236,34 @@ public class SpatialRuleHelperTest {
         bowtie.setGeometry(factory.createPolygon(new Coordinate[] { new Coordinate(9, 50),
                         new Coordinate(9, 51), new Coordinate(11, 50), new Coordinate(11, 51),
                         new Coordinate(9, 50) }));
-        bowtie.setProperties(Collections.singletonMap("ADM0_A3", "bowtie"));
+        bowtie.setProperties(Collections.singletonMap("ISO3166-1:alpha3", "bowtie"));
         JsonFeatureCollection coll = new JsonFeatureCollection();
         coll.getFeatures().add(bowtie);
         
         try {
-            SpatialRuleHelper.getBorders(Collections.singletonList(coll), "ADM0_A3", new Envelope(-180, 180, -90, 90));
+            SpatialRuleHelper.getBorders(Collections.singletonList(coll), "ISO3166-1:alpha3", new Envelope(-180, 180, -90, 90));
             fail("Border polygon generation should fail for invalid topologies");
         } catch (Exception e) {
             assertTrue(e instanceof TopologyException);
         }
+    }
+    
+    @Test
+    public void testCountriesFile() throws IOException {
+        final FileReader reader = new FileReader(COUNTRIES_FILE);
+        JsonFeatureCollection featureCollection = Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class);
+        
+        Set<String> ids = new HashSet<>();
+        for (JsonFeature feature : featureCollection.getFeatures()) {
+            String id = (String) feature.getProperty("ISO3166-1:alpha3");
+            assertTrue("Each feature should have a valid id: " + feature.getProperties(), id != null && !id.isEmpty());
+            assertTrue("Duplicate feature ID: " + id, ids.add(Helper.toLowerCase(id)));
+            assertNotNull("Feature has a null geometry: " + id, feature.getGeometry());
+            assertFalse("Feature has an empty geometry: " + id, feature.getGeometry().isEmpty());
+            assertTrue("Feature has an invalid geometry: " + id, feature.getGeometry().isValid());
+        }
+
+        assertTrue("Missing border polygons for austria", ids.contains("aut"));
+        assertTrue("Missing border polygons for germany", ids.contains("deu"));
     }
 }
